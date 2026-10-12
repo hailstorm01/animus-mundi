@@ -1,33 +1,33 @@
-﻿Name,Card Type,Types,Requisition Cost,Tactics Cost,Deployment Zones,Text,Power,Health,Requisition Value,Tactics Value,Rarity,Current Proxy?,Needs Rework?
-Chainbreaker Sneak,Unit,"specialist, chainbreaker",1,0,Main,versatile,1,2,1,1,C,Yes,No
-Hammerhand Brigands,Unit,"infantry, hammerhand",1,0,Reserves,unbowed: scratch once,2,1,1,2,C,Yes,No
-Eerie Remnant,Unit,"skeleton, reaver",1,0,Reserves,"This unit deploys exhausted.
-When this unit is put into your discard from your hand, you may deploy it for free instead.",3,1,0,0,U,Yes,No
-Brigand Highlander,Unit,"officer, hammerhand",1,1,Main,cornered: +2 power,2,3,1,2,C,Yes,No
-blind defile,Structure,territory,2,0,Main,"when an opposing unit attacks, you may kill this structure and the attacking unit",0,2,0,2,C,Yes,No
-rogue fleshshaper,Unit,"specialist, reaver",2,0,Reserves,"when this unit deploys, choose one: 
+﻿"Name","Card Type","Faction","Types","Requisition Cost","Tactics Cost","Deployment Zones","Text","Power","Health","Requisition Value","Tactics Value","Rarity","Current Proxy?","Needs Rework?"
+"Chainbreaker Sneak","Unit","Path","specialist, chainbreaker","1","0","Main","versatile","1","2","1","1","C","Yes","No"
+"Hammerhand Brigands","Unit","Path","infantry, hammerhand","1","0","Reserves","unbowed: scratch once","2","1","1","2","C","Yes","No"
+"Eerie Remnant","Unit","Path","skeleton, reaver","1","0","Reserves","This unit deploys exhausted.
+When this unit is put into your discard from your hand, you may deploy it for free instead.","3","1","0","0","U","Yes","No"
+"Brigand Highlander","Unit","Path","officer, hammerhand","1","1","Main","cornered: +2 power","2","3","1","2","C","Yes","No"
+"blind defile","Structure","Path","territory","2","0","Main","when an opposing unit attacks, you may kill this structure and the attacking unit","0","2","0","2","C","Yes","No"
+"rogue fleshshaper","Unit","Path","specialist, reaver","2","0","Reserves","when this unit deploys, choose one: 
 chosen asset heals 1 
-deal 1 damage to chosen non-scratch asset",2,3,1,2,C,Yes,No
-macabre dancers,Unit,"specialist, reaver",2,2,Reserves,"unbowed: heal 2
-cornered: resistant 1",3,6,1,2,R,Yes,No
-Chainbreaker Sappers,Unit,"specialist, chainbreaker",2,0,Reserves,"when this unit deploys, deal 1 damage to chosen structure or headquarters.",3,2,1,2,C,Yes,No
-Broken Horn Armorer,Unit,"devilhorn, specialist",2,0,Reserves,"when this unit moves to a new zone, chosen asset in the same zone gains 1 armor.",2,2,1,2,C,Yes,No
-Devilhorn Captain,Unit,"officer, devilhorn",2,0,Reserves,unbowed: deal 1 damage to chosen asset in the main theater.,2,3,1,2,U,Yes,No
-Trailblazer,Unit,"specialist, devilhorn",3,0,Main,versatile,2,3,1,1,C,Yes,No
-Improvised Bastion,Structure,tower,3,0,Main,guardian,0,7,1,1,R,Yes,No
-Saboteur,Unit,"specialist, hammerhand",3,0,Reserves,"when this unit deploys, deal 2 damage to chosen opposing non-scratch unit and 1 damage to chosen allied unit",3,3,1,2,U,Yes,No
-Hammerhand Bivouac,Structure,"Territory, hammerhand",3,0,Main,"At the start of your turn, distribute 1 armor among allied units in the same zone",0,7,2,2,C,Yes,No
-Chainbreaker Irregulars,Unit,"infantry, chainbreaker",3,0,Reserves,"unbowed: draw a card, then discard a card.",2,5,1,2,C,No,No
-Necropolis Hunt,Unit,"reaver, cavalry",3,3,Main,"when this unit is killed, deal damage equal to its power to chosen non-HQ asset",5,2,1,2,M,Yes,No
-boneyard scavenger,Unit,"specialist, reaver",4,0,Reserves,"1T, exhaust: kill this unit and return a maneuver from your discard pile to your hand.",4,5,1,2,U,Yes,No
-ancestral monument,Structure,tower,4,0,Main,other allied assets in the same zone as this structure have cornered: resistant 1,0,9,2,2,R,Yes,No
-Chainbreaker Phalanx,Unit,"infantry, chainbreaker",4,0,Reserves,"when this unit moves to the main theater, you may move chosen allied unit from your reserves to the main theater. That unit gains 2 armor.",4,5,1,2,R,Yes,No
-Devilhorn Guerillas,Unit,"infantry, devilhorn",4,0,"Main, Reserves","when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit.",3,5,2,0,U,Yes,No
-ruin partisans,Unit,"infantry, reaver",5,0,Reserves,"T2, exhaust: kill this unit and return a unit card from your discard pile to your hand.",4,7,1,2,U,Yes,No
-"Allshan, Chainbreaker Revenant",Unit,specialist,5,0,Reserves,"unbowed: this unit gains 2 armor 
-cornered: when this unit attacks, it gets +3 power until end of turn.",5,6,0,0,M,No,No
-Hammerhand Brigade,Unit,"Infantry, hammerhand",5,0,Main,Armor 2,5,6,1,2,R,Yes,No
-Ironclad Colossus,Unit,"hammerhand, giant",6,0,Reserves,"When this unit deploys or attacks, chosen unit gains 2 armor.",6,7,2,2,R,Yes,No
-"Arkha, Sun's Fury",Unit,"officer, devilhorn",6,0,Main,"When this unit attacks, you may put a unit card from your discard on the bottom of your deck. If you do, deal 3 damage to chosen opposing HQ.",8,7,1,2,M,Yes,No
-Solarheart Monk,Unit,"specialist, devilhorn",8,0,Reserves,"when this unit is put into your discard, chosen asset heals 2.",6,8,2,2,C,No,No
-boneyard amalgam,Unit,"skeleton, giant",10,0,Reserves,this unit costs R1 less to deploy for each unit in your discard,8,6,3,3,R,Yes,No
+deal 1 damage to chosen non-scratch asset","2","3","1","2","C","Yes","No"
+"macabre dancers","Unit","Path","specialist, reaver","2","2","Reserves","unbowed: heal 2
+cornered: resistant 1","3","6","1","2","R","Yes","No"
+"Chainbreaker Sappers","Unit","Path","specialist, chainbreaker","2","0","Reserves","when this unit deploys, deal 1 damage to chosen structure or headquarters.","3","2","1","2","C","Yes","No"
+"Broken Horn Armorer","Unit","Path","devilhorn, specialist","2","0","Reserves","when this unit moves to a new zone, chosen asset in the same zone gains 1 armor.","2","2","1","2","C","Yes","No"
+"Devilhorn Captain","Unit","Path","officer, devilhorn","2","0","Reserves","unbowed: deal 1 damage to chosen asset in the main theater.","2","3","1","2","U","Yes","No"
+"Trailblazer","Unit","Path","specialist, devilhorn","3","0","Main","versatile","2","3","1","1","C","Yes","No"
+"Improvised Bastion","Structure","Path","tower","3","0","Main","guardian","0","7","1","1","R","Yes","No"
+"Saboteur","Unit","Path","specialist, hammerhand","3","0","Reserves","when this unit deploys, deal 2 damage to chosen opposing non-scratch unit and 1 damage to chosen allied unit","3","3","1","2","U","Yes","No"
+"Hammerhand Bivouac","Structure","Path","Territory, hammerhand","3","0","Main","At the start of your turn, distribute 1 armor among allied units in the same zone","0","7","2","2","C","Yes","No"
+"Chainbreaker Irregulars","Unit","Path","infantry, chainbreaker","3","0","Reserves","unbowed: draw a card, then discard a card.","2","5","1","2","C","No","No"
+"Necropolis Hunt","Unit","Path","reaver, cavalry","3","3","Main","when this unit is killed, deal damage equal to its power to chosen non-HQ asset","5","2","1","2","M","Yes","No"
+"boneyard scavenger","Unit","Path","specialist, reaver","4","0","Reserves","1T, exhaust: kill this unit and return a maneuver from your discard pile to your hand.","4","5","1","2","U","Yes","No"
+"ancestral monument","Structure","Path","tower","4","0","Main","other allied assets in the same zone as this structure have cornered: resistant 1","0","9","2","2","R","Yes","No"
+"Chainbreaker Phalanx","Unit","Path","infantry, chainbreaker","4","0","Reserves","when this unit moves to the main theater, you may move chosen allied unit from your reserves to the main theater. That unit gains 2 armor.","4","5","1","2","R","Yes","No"
+"Devilhorn Guerillas","Unit","Path","infantry, devilhorn","4","0","Main, Reserves","when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit.","3","5","2","0","U","Yes","No"
+"ruin partisans","Unit","Path","infantry, reaver","5","0","Reserves","T2, exhaust: kill this unit and return a unit card from your discard pile to your hand.","4","7","1","2","U","Yes","No"
+"Allshan, Chainbreaker Revenant","Unit","Path","specialist","5","0","Reserves","unbowed: this unit gains 2 armor 
+cornered: when this unit attacks, it gets +3 power until end of turn.","5","6","0","0","M","No","No"
+"Hammerhand Brigade","Unit","Path","Infantry, hammerhand","5","0","Main","Armor 2","5","6","1","2","R","Yes","No"
+"Ironclad Colossus","Unit","Path","hammerhand, giant","6","0","Reserves","When this unit deploys or attacks, chosen unit gains 2 armor.","6","7","2","2","R","Yes","No"
+"Arkha, Sun's Fury","Unit","Path","officer, devilhorn","6","0","Main","When this unit attacks, you may put a unit card from your discard on the bottom of your deck. If you do, deal 3 damage to chosen opposing HQ.","8","7","1","2","M","Yes","No"
+"Solarheart Monk","Unit","Path","specialist, devilhorn","8","0","Reserves","when this unit is put into your discard, chosen asset heals 2.","6","8","2","2","C","No","No"
+"boneyard amalgam","Unit","Path","skeleton, giant","10","0","Reserves","this unit costs R1 less to deploy for each unit in your discard","8","6","3","3","R","Yes","No"

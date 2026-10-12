@@ -1,15 +1,15 @@
-﻿Name,Requisition Cost,Tactics Cost,Text,Rarity,Current Proxy?,Needs Rework?
-disorienting pulse,0,1,return chosen opposing unit in the main theater to its owner's hand,C,Yes,No
-animoceps spores,0,2,"scratch twice, then return a allied scratch company unit to its owner's hand",C,Yes,No
-deafening aria,0,2,deal 1 damage to all opposing units in the main theater,C,Yes,No
-feed the despoiler,0,1,"As an additional cost to enact this maneuver, kill an allied unit. Draw 2 cards.",C,Yes,No
-conversion spike,0,2,deal 1 damage to chosen opposing unit and chosen allied unit or structure heals 1,U,Yes,No
-ensnaring mist,0,2,"move chosen unit to its controller's reserves.
-chosen unit gets -1 power until the end of your turn.",U,Yes,No
-mutation swell,0,3,"kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free.",R,Yes,No
-rhapsody's embrace,0,3,"As an additional cost to enact this maneuver, kill an allied unit. Kill chosen opposing unit.",C,Yes,No
-despoiler's emergence,0,4,"deal 4 damage to all opposing assets in the main theater. 
-deal 2 damage to all opposing non-scratch assets in opponents' reserves.",M,Yes,No
-rapturous sermon,0,4,move all allied scratch company units to the main theater. allied scratch company units gain +2 power until end of turn.,R,Yes,No
-forced mutation,0,4,chosen opposing unit is turned face down and becomes a scratch company unit,C,Yes,No
-funeral fungus,0,1,exhaust chosen ready allied unit and return 1 unit card from your discard pile to your hand.,U,Yes,No
+﻿"Name","Card Type","Faction","Requisition Cost","Tactics Cost","Text","Rarity","Current Proxy?","Needs Rework?"
+"disorienting pulse","Maneuver","Animus","0","1","return chosen opposing unit in the main theater to its owner's hand","C","Yes","No"
+"animoceps spores","Maneuver","Animus","0","2","scratch twice, then return an allied scratch company unit to its owner's hand","C","Yes","No"
+"deafening aria","Maneuver","Animus","0","2","deal 1 damage to all opposing units in the main theater","C","Yes","No"
+"feed the despoiler","Maneuver","Animus","0","1","As an additional cost to enact this maneuver, kill an allied unit. Draw 2 cards.","C","Yes","No"
+"conversion spike","Maneuver","Animus","0","2","deal 1 damage to chosen opposing unit and chosen allied unit or structure heals 1","U","Yes","No"
+"ensnaring mist","Maneuver","Animus","0","2","move chosen unit to its controller's reserves.
+chosen unit gets -1 power until the end of your turn.","U","Yes","No"
+"mutation swell","Maneuver","Animus","0","3","kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free.","R","Yes","No"
+"rhapsody's embrace","Maneuver","Animus","0","3","As an additional cost to enact this maneuver, kill an allied unit. Kill chosen opposing unit.","C","Yes","No"
+"despoiler's emergence","Maneuver","Animus","0","4","deal 4 damage to all opposing assets in the main theater. 
+deal 2 damage to all opposing non-scratch assets in opponents' reserves.","M","Yes","No"
+"rapturous sermon","Maneuver","Animus","0","4","move all allied scratch company units to the main theater. allied scratch company units gain +2 power until end of turn.","R","Yes","No"
+"forced mutation","Maneuver","Animus","0","4","chosen opposing unit is turned face down and becomes a scratch company unit","C","Yes","No"
+"funeral fungus","Maneuver","Animus","0","1","exhaust chosen ready allied unit and return 1 unit card from your discard pile to your hand.","U","Yes","No"

@@ -1,4 +1,4 @@
-﻿# Game Rules & Card Modeling - Functional Requirements Document (Master FRD v3.0)
+# Game Rules & Card Modeling - Functional Requirements Document (Master FRD v3.0)
 **Unified Match Engine Architecture, Entity Modeling & Rules Specification**
 
 ---
@@ -146,8 +146,8 @@ Every `CardBlueprint` validates against the following property schema:
 | `health` | `Integer` | Base Maximum Health (>= 1; null for Maneuvers). |
 | `requisitionYield`| `Integer` | Resources generated when exhausted for Requisition (>= 0). |
 | `tacticsYield` | `Integer` | Resources generated when exhausted for Tactics (>= 0). |
-| `deploymentZones` | `Array<Enum>` | Valid zones for initial deployment: `RESERVES`, `MAIN_THEATER`. |
-| `rarity` | `Enum` | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`. |
+| `deploymentZones` | `Array<Enum>` | Valid zones for initial deployment: `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`. |
+| `rarity` | `Enum` | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | `rulesText` | `String` | Raw printed card rules text. |
 | `abilities` | `Array<AbilityDef>` | Declarative definitions of keywords, triggers, actions, and maneuvers. |
 
@@ -167,7 +167,7 @@ Every `CardBlueprint` validates against the following property schema:
 #### FR-ZON-003: Entity Nomenclature & Asset Classification
 - **Battlefield Entities (Assets)**: Entities occupying an active battlefield zone (HQ Zone, Reserves Zone, Main Theater Zone) are designated as **Assets** (Headquarters, Unit, or Structure). Rules text referring to "assets" or "non-scratch assets" (e.g. *bring it down*, *Dolus Macrocannon*) intentionally includes Headquarters and Structures as eligible targets in addition to non-Scratch units.
 - **Non-Battlefield Entities (Cards)**: Entities residing in non-battlefield zones (Hand, Deck, Discard, Attached) carry the Card suffix (HQ Card, Unit Card, Structure Card, Maneuver Card).
-- **Card Types & Subtypes (`FR-CRD-001`, `FR-CRD-002`, `FR-CRD-003`)**: Card Types are mutually exclusive (`HEADQUARTERS`, `UNIT`, `STRUCTURE`, `MANEUVER`). Standardized Scratch Company units possess both `Infantry` and `Scratch Company` subtypes.
+- **Card Types & Subtypes (`FR-CRD-101`, `FR-ZON-003`)**: Card Types are mutually exclusive (`HEADQUARTERS`, `UNIT`, `STRUCTURE`, `MANEUVER`). Standardized Scratch Company units possess both `Infantry` and `Scratch Company` subtypes.
 
 ---
 
@@ -176,18 +176,18 @@ Every `CardBlueprint` validates against the following property schema:
 #### FR-ZON-002: Asset Movement, Immutability & Control Transfer
 - **Headquarters & Structure Movement Immunity**: Headquarters and Structures cannot execute movement actions (March) and are permanently immune to and ineligible targets for any effect that changes battlefield zones (`MOVE_ZONE`). They are strictly bound to their initial zones. They may be destroyed (routing to Discard) or returned to Hand via card abilities.
 - **Unit Battlefield Movement**: Units change battlefield zones between Reserves and Main Theater via the inherent March action or card abilities.
-- **Control Transfer Scope & Zone Invariance**: When a player gains control of an opposing Asset (via `GAIN_CONTROL`), the asset does **not** change zones. Mind-control effects (*Rhapsody's hollow*) are strictly scoped to eligible opposing units in the **Main Theater Zone**, preventing foreign assets from occupying an opponent's private Reserves backline.
+- **Control Transfer Scope & Zone Invariance**: When a player gains control of an opposing Asset (via `GAIN_CONTROL`), the asset does **not** change zones immediately. Mind-control effects (*Rhapsody's hollow*) are strictly scoped to eligible opposing units in the **Main Theater Zone**, preventing foreign assets from directly deploying into an opponent's private Reserves backline. If the new controller subsequently commands that unit to execute an inherent March action from the Main Theater, the unit moves into its **controller's** Reserves Zone (arriving exhausted; `FR-CAP-001`). Upon destruction, the asset is deallocated and routed strictly to its **owner's** Discard zone (`EVENT_DESTROY`).
 - **Destruction**: When an Asset's Health drops to 0 or below, it is destroyed immediately and routed to its owner's Discard zone (`EVENT_DESTROY`).
 
 #### FR-ZON-004 & FR-ZON-101: Non-Battlefield Zone Transition & State Reset
 - Whenever an Asset transitions from a battlefield zone to a non-battlefield zone (`HAND`, `DISCARD`, `DECK`):
   1. The `AssetInstance` is deallocated.
-  2. All persistent state attributesâ€”accumulated damage, dynamic Armor, temporary stat modifiers, continuous aura registrations, and keywordsâ€”are wiped.
+  2. All persistent state attributes—accumulated damage, dynamic Armor, temporary stat modifiers, continuous aura registrations, and keywords—are wiped.
   3. The entity reverts strictly to its printed base card statistics.
 - **Intra-Battlefield Movements (March)**: Moving between Reserves and Main Theater does **not** wipe attributes or buffs; dynamic state is fully preserved.
 
 #### FR-SNP-101: Last-Known State Snapshotting
-- Immediately prior to an Asset's destruction (`EVENT_DESTROY`) or departure from an active zone, the engine captures an immutable `AssetSnapshot` (`FR-TRG-006`). Secondary triggers evaluate criteria strictly against this snapshot.
+- Immediately prior to an Asset's destruction (`EVENT_DESTROY`) or departure from an active zone, the engine captures an immutable `AssetSnapshot` (`FR-SNP-101`). Secondary triggers evaluate criteria strictly against this snapshot.
 
 #### FR-ZON-005 & FR-ENT-101: Scratch Company Fog of War & Double-Blind Lifecycle
 - **Double-Blind Deployment**: When a Scratch Company unit is deployed, its underlying card identity is strictly **unknown to BOTH players**. The engine enforces complete double-blind information maskingâ€”neither the controlling player nor the opponent may inspect its underlying card face or identity.
@@ -249,12 +249,12 @@ Resource costs clamp at zero. Free cast effects force resource costs to 0 while 
 
 #### FR-CAP-001: Unified Asset Capability Query Matrix
 Inherent actions execute directly as instantaneous state operations bypassing the Resolution Stack, requiring `readiness == READIED` and `Stack.isEmpty() == true`:
-- **`canMarch()`**: Permitted strictly for `UNIT`. Moves between Reserves and Main Theater.
-- **`canAttack()`**: Permitted for `UNIT` in Main Theater and `HEADQUARTERS`. Prohibited for `STRUCTURE`. Units/HQs with effective Power <= 0 are permitted to declare attacks (dealing 0 damage).
+- **`canMarch()`**: Permitted strictly for `UNIT`. Moves the unit between Reserves and Main Theater. Executing March transitions the unit's readiness state from `READIED` to `EXHAUSTED` (emitting `EVENT_EXHAUST` and `EVENT_MARCH`). The unit remains exhausted until the Ready Phase of its controller's next turn. *(Sequence note: For units like Piston Fist Prototype that move back to Reserves upon attacking, they remain exhausted until readied on a subsequent turn, after which marching back to the Main Theater again arrives exhausted).*
+- **`canAttack()`**: Permitted for `UNIT` in Main Theater and `HEADQUARTERS`. Prohibited for `STRUCTURE`. Exhausts the attacker upon declaration (`FR-CBT-002`). Units/HQs with effective Power <= 0 are permitted to declare attacks (dealing 0 damage). Direct cross-board attacks against opposing HQs are permitted from Turn 1.
 - **`canGenerateResources()` & `getAvailableResourceTypes()`**:
-  - *Standard Units*: Reserves &rarr; `["REQUISITION"]`; Main Theater &rarr; `["TACTICS"]`.
-  - *Versatile Units (`FR-KWD-002i`)*: Reserves or Main Theater &rarr; `["REQUISITION", "TACTICS"]` (controller chooses).
-  - *Structures & Headquarters*: Any zone &rarr; `["REQUISITION", "TACTICS"]` (controller chooses).
+  - *Standard Units*: Reserves &rarr; `["REQUISITION"]`; Main Theater &rarr; `["TACTICS"]`. Exhausts unit upon generation.
+  - *Versatile Units (`FR-KWD-002i`)*: Reserves or Main Theater &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts unit upon generation.
+  - *Structures & Headquarters*: Any zone &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts asset upon generation.
 - **`canDeployScratch()`**: Permitted strictly for `HEADQUARTERS`. Exhausts HQ to execute Scratch 1 (`FR-INH-004`).
 
 ---
@@ -264,7 +264,7 @@ Inherent actions execute directly as instantaneous state operations bypassing th
 ### Section 4.1: Inherent Actions
 
 #### FR-INH-001 through FR-INH-004: Inherent Actions
-- **Inherent Action Rules**: Execute instantaneously as direct state operations upon payment/exhaustion without placing items on the stack. Require clean stack (`Stack.isEmpty() == true`). Emit synchronous event hooks (`EVENT_MARCH`, `EVENT_ATTACK_DECLARE`, `EVENT_GENERATE_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SCRATCH_COMPANY`).
+- **Inherent Action Rules**: Execute instantaneously as direct state operations upon payment/exhaustion without placing items on the stack. Require clean stack (`Stack.isEmpty() == true`). March, Attack, Resource Generation, and Scratch deployments all require the source asset to be `READIED` and transition that asset to `EXHAUSTED`. Emit synchronous event hooks (`EVENT_MARCH`, `EVENT_ATTACK_DECLARE`, `EVENT_GENERATE_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SCRATCH_COMPANY`, `EVENT_EXHAUST`).
 - **Deploy Scratch Company (`FR-INH-004`)**: Direct deck-to-battlefield move (`DECK` &rarr; `RESERVES`). Double-blind to both players. Does not emit `EVENT_DRAW_CARD`. Safe on 0-card deck (creates 0 units without triggering empty deck loss).
 
 ---
@@ -311,6 +311,9 @@ The engine provides a standardized catalog of atomic effect primitives:
 | `MORPH_SCRATCH` | `none` | Turns asset face-down into Scratch Company (`FR-ENT-103`). |
 | `GENERATE_RESOURCE`| `resourceType: Enum, amount: ValueToken` | Adds resources to active temporary pool (`FR-RES-001`). |
 | `RECYCLE_DISCARD_TO_DECK`| `targetPlayer: Enum` | Bulk transfers Discard to Deck with mandatory shuffle (`FR-DEK-002`). |
+| `REDIRECT_DAMAGE_TARGET`| `newTarget: TargetRef` | Intercepts incoming damage in Stage 1 and re-routes uncommitted damage to new target (`FR-REP-004`). |
+| `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], targetCard: TargetRef` | Places target card at specified deck position without triggering a deck search shuffle (unless SHUFFLED_IN; `FR-DEK-001`). |
+| `EXHAUST` | `targetAsset: TargetRef` | Transitions target asset readiness state to EXHAUSTED (emitting `EVENT_EXHAUST`). |
 
 ---
 
@@ -325,7 +328,7 @@ The engine provides a standardized catalog of atomic effect primitives:
 - **Quantifiers & Allocations (`FR-TGT-002`)**: Single Target, Bounded Multi-Target, Unbounded Global Target; Fixed Constant Allocation or Distributed Pool Allocation.
 
 #### FR-TGT-003 & FR-TGT-103: Target Validation & Fizzle Rules
-- Verified at declaration and re-verified prior to resolution. If a subset of targets becomes invalid, resolves against remaining valid targets. If all targets become invalid, effect fizzles completely.
+- Verified at declaration and re-verified prior to resolution. If a subset of targets becomes invalid, resolves against remaining valid targets. If all targets become invalid, targeted effect clauses fizzle completely. For composite actions containing both targeted clauses and non-targeted global clauses (e.g. *All out War*), invalidation of all target bindings fizzles only the targeted clauses; non-targeted clauses resolve to the fullest extent possible.
 
 #### FR-TGT-101: Bound Action Payload Model
 Clients submit fully bound payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices`, `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SACRIFICE_COST`, `DISCARD_COST`), and `deckSelectionIndices`.
@@ -355,7 +358,7 @@ When stack execution requires interactive decisions:
 #### FR-TRG-001: Trigger Event Hook Taxonomy
 Standardized event hooks across core categories:
 - **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
-- **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`
+- **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
 - **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
 - **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
 - **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
@@ -364,10 +367,21 @@ Standardized event hooks across core categories:
 #### FR-QUE-001: Centralized LIFO Stack & Clean Stack Invariant
 - **Clean Stack Rule**: Player-initiated manual actions (Deploying cards, Enacting Maneuvers, Activating abilities) require `Stack.isEmpty() == true` to declare.
 - **Triggered Exception**: Triggered abilities, in-resolution free deployments, and cascading triggers bypass the clean stack requirement and push/resolve directly on the active stack.
-- **APNAP Sequencing (`FR-TRG-003`)**: Non-active player triggers push first; active player triggers push on top and resolve first.
-- **Cascading Triggers (`FR-TRG-004`)**: Push directly to top of stack, resolving in context.
-- **Non-Resource Costs (`FR-TRG-005`)**: Triggered abilities cannot demand Requisition or Tactics costs.
-- **Context Lineage (`FR-TRG-007`)**: Preserves parent-child causal tracking.
+
+#### FR-TRG-002: Inactive Player Agency & 15s Action Clock
+- When stack resolution requires interactive choices from the inactive player or active player, the engine issues a choice prompt with a 15-second action clock (`FR-MOD-001`). Prompts resolve deterministically via fallbacks if the timer expires.
+
+#### FR-TRG-003: APNAP Push Sequencing
+- Triggers occurring simultaneously push via Active Player, Non-Active Player (APNAP) order: non-active player triggers push first; active player triggers push on top and resolve first. Allied triggers are ordered by their controller.
+
+#### FR-TRG-004: Cascading Trigger Enqueuing
+- Secondary triggers generated during the resolution of a stack item push directly to the top of the stack, resolving immediately in context before downstream stack items resolve.
+
+#### FR-TRG-005: Non-Resource Trigger Costs Prohibition
+- Triggered abilities cannot demand Requisition or Tactics resource costs. Triggered abilities may demand game-state conditions or non-resource costs (e.g. sacrifices).
+
+#### FR-TRG-007: Event Causality Context Lineage
+- Each event preserves causal lineage (parent event ID, root action ID, source entity snapshot) to enable deterministic replacement resolution and trigger scope validation.
 
 ---
 
@@ -401,7 +415,7 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 
 #### FR-LAY-003: Keyword Resolution & Duration Rules
 - **Full-Round Durations**: Modifiers lasting *"until the end of your opponent's turn"* (*blindside*, *Comms Relay*) persist through the opponent's turn and expire during Sub-Phase 4c of the recipient's turn.
-- **Cornered (`FR-KWD-002e`)**: For triggered abilities, Cornered is an enqueue condition evaluated strictly at trigger event emission; once enqueued, it resolves unconditionally.
+- **Cornered (`FR-KWD-002e`)**: Evaluates `count(opponentMainTheaterAssets) > count(playerMainTheaterAssets)` across all battlefield Assets (Units and Structures). For triggered abilities, Cornered is an enqueue condition evaluated strictly at trigger event emission; once enqueued, it resolves unconditionally.
 
 ---
 
@@ -434,7 +448,7 @@ Incoming Damage Instance
 
 1. **Stage 1 (Redirection)**: Evaluates downstream stages against new target's defenses.
 2. **Stage 2 (Resistant)**: Subtracts Resistant N. Negative Resistant amplifies damage. Floors at 0.
-3. **Stage 3 (Stalwart)**: Applies strictly if `isCombatDamage == true` and target has Stalwart. Evaluates as `damage = min(damage, 1)`. Does not raise damage <= 0. Non-combat damage (maneuvers, abilities like *soul whip*) bypasses Stalwart entirely.
+3. **Stage 3 (Stalwart)**: Applies strictly if `isCombatDamage == true` and target has Stalwart. Evaluates as `damage = min(damage, 1)`. Does not raise damage <= 0. Non-combat damage (maneuvers, abilities like *soul whip*) bypasses Stalwart entirely. *(Design Invariant: Stage 2 flat reductions executing prior to Stage 3 combat capping is intentional by design to prevent combining Resistant and Stalwart into complete combat damage invulnerability).*
 4. **Stage 4 (Armor)**: Deducts damage 1-for-1 from Armor pool. Damage absorbed by Armor counts as damage taken.
 5. **Stage 5 (Health Commit & Trigger Emission)**: Remaining damage added to `accumulatedDamage`. `EVENT_TAKE_DAMAGE` fires if and only if actual damage is absorbed by Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`).
 
@@ -470,7 +484,7 @@ Combat execution proceeds through three deterministic steps:
    - If both combatants remain valid, combat damage is dealt **simultaneously** equal to effective Combat Power.
    - Retaliation is 100% symmetric across all combat pairings (Unit vs Unit, Unit vs Structure, Unit vs HQ, HQ vs HQ).
    - Combat retaliation is combat damage (`isCombatDamage = true`); Stalwart applies.
-   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`).
+   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`). When defending against multi-target Berserk attacks (`FR-KWD-002o`), each defender's retaliation is processed as an independent, discrete damage instance sequentially routed through `FR-REP-004`.
 
 #### FR-CBT-003: Persistent Damage, Defeat Rules & Match Draws
 - Damage remains marked across turns. When an HQ reaches <= 0 Health, its controller loses immediately.
@@ -512,9 +526,9 @@ Combat execution proceeds through three deterministic steps:
           "tacticsYield": { "type": "integer", "minimum": 0 },
           "deploymentZones": { 
             "type": "array", 
-            "items": { "type": "string", "enum": ["RESERVES", "MAIN_THEATER"] } 
+            "items": { "type": "string", "enum": ["RESERVES", "MAIN_THEATER", "HEADQUARTERS"] } 
           },
-          "rarity": { "type": "string", "enum": ["COMMON", "UNCOMMON", "RARE", "MYTHIC"] },
+          "rarity": { "type": "string", "enum": ["COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ"] },
           "rulesText": { "type": "string" },
           "abilities": { "type": "array", "items": { "type": "object" } }
         }
@@ -635,11 +649,11 @@ Combat execution proceeds through three deterministic steps:
 
 ## APPENDIX A: KEYWORD MECHANICS DICTIONARY
 
-- **FR-KWD-002a: Unbowed**: Triggered ability firing on `EVENT_TAKE_DAMAGE`. Triggers whenever actual damage is absorbed by dynamic Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`). If damage was reduced to 0 in Stage 2, Unbowed does not trigger.
+- **FR-KWD-002a: Unbowed**: Triggered ability firing on `EVENT_TAKE_DAMAGE`. Triggers whenever actual damage is absorbed by dynamic Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`). If damage was reduced to 0 in Stage 2, Unbowed does not trigger. If a unit takes lethal damage, Unbowed triggers and enqueues before state-based actions kill it; however, upon stack resolution, if the unit has died and transitioned to Discard, any self-referential heal or stat modification targeting itself fizzles under `FR-TGT-103` and `FR-ZON-101`.
 - **FR-KWD-002b: Resistant N**: Replacement watcher modifying incoming damage by N in Stage 2 of `FR-REP-004`. Can be negative (amplifies damage; does not clamp).
 - **FR-KWD-002c: Stalwart**: Replacement watcher capping incoming combat damage at max 1 in Stage 3 of `FR-REP-004` (`min(damage, 1)`). Standardized rules text: *"All combat damage taken is reduced to 1"*. Applies strictly to combat damage resulting from an inherent Attack declaration or combat retaliation (`FR-CBT-002`). Has zero interaction with non-combat damage (maneuvers, abilities pass through unmodified).
 - **FR-KWD-002d: Heal N**: Atomic primitive removing up to N accumulated damage counters.
-- **FR-KWD-002e: Cornered**: Conditional gate evaluating `count(opponentMainTheater) > count(playerMainTheater)`. For triggered abilities, evaluates strictly as an enqueue check upon event emission.
+- **FR-KWD-002e: Cornered**: Conditional gate evaluating `count(opponentMainTheaterAssets) > count(playerMainTheaterAssets)` across all battlefield Assets (Units and Structures). For triggered abilities, evaluates strictly as an enqueue check upon event emission.
 - **FR-KWD-002f: Aggressive N**: Triggered ability firing on `EVENT_ATTACK_DECLARE`, granting +N Power until end of turn.
 - **FR-KWD-002g: Ethereal**: Static restriction excluding asset from combat attack declarations. Overrides Guardian.
 - **FR-KWD-002h: Ward**: Static combat restriction. This asset cannot be chosen by opponents except to attack in combat. Opponents cannot select this asset with non-combat abilities or Maneuvers.
@@ -649,7 +663,7 @@ Combat execution proceeds through three deterministic steps:
 - **FR-KWD-002l: Deploys Exhausted**: Replacement watcher intercepting `WOULD_DEPLOY`, setting initial readiness to Exhausted.
 - **FR-KWD-002m: Scratch N**: Sequentially executes `Deploy Scratch Company` N times. Direct deck-to-battlefield move; double-blind; safe on empty deck. Creates token units with subtypes `["Infantry", "Scratch Company"]` prohibited from starting decks.
 - **FR-KWD-002n: Regroup N**: Atomic primitive transitioning up to N chosen exhausted allied assets to Readied.
-- **FR-KWD-002o: Berserk**: Static combat ability. May choose up to two assets as targets when attacking. Deals full Combat Power to each target; both simultaneously retaliate (`FR-CBT-002`).
+- **FR-KWD-002o: Berserk**: Static combat ability. May choose up to two assets as targets when attacking. Deals full Combat Power to each target; both defenders retaliate as two independent, discrete damage instances routed through `FR-REP-004` (`FR-CBT-002`).
 
 ---
 
@@ -661,22 +675,19 @@ Combat execution proceeds through three deterministic steps:
 | **FR-SET-002** | Match Initialization & Partial Mulligan | Section 1.2 (`FR-SET-002`) |
 | **FR-SET-003** | First Player Determination Protocol | Section 1.2 (`FR-SET-003`) |
 | **FR-SET-004** | First-Turn Rules & Draw Skip | Section 1.2 (`FR-SET-004`) |
-| **FR-DEK-001** | Deck Search Engine Primitive | Section 1.3 (`FR-DEK-001`), Section 4.5 (`FR-PRM-001`) |
-| **FR-DEK-002** | Deck Shuffling Primitive | Section 1.3 (`FR-DEK-002`), Section 4.5 (`FR-PRM-001`) |
-| **FR-WIN-001** | Empty Deck Loss Condition | Section 1.3 (`FR-WIN-001`), Section 4.5 (`FR-PRM-001`) |
+| **FR-DEK-001** | Deck Search Engine Primitive | Section 1.3 (`FR-DEK-001`), Section 4.3 (`FR-PRM-001`) |
+| **FR-DEK-002** | Deck Shuffling Primitive | Section 1.3 (`FR-DEK-002`), Section 4.3 (`FR-PRM-001`) |
+| **FR-WIN-001** | Empty Deck Loss Condition | Section 1.3 (`FR-WIN-001`), Section 4.3 (`FR-PRM-001`) |
 | **FR-ENT-001** | CardBlueprint Master Architecture | Section 2.1 (`FR-ENT-001`), Section 8.1 |
 | **FR-ENT-002** | CardInstance Session Entity | Section 2.1 (`FR-ENT-002`) |
 | **FR-ENT-003** | AssetInstance Battlefield Entity | Section 2.1 (`FR-ENT-003`) |
 | **FR-CRD-101** | Blueprint Property Validation Schema | Section 2.2 (`FR-CRD-101`), Section 8.1 |
 | **FR-ZON-001** | Battlefield & Non-Battlefield Zones | Section 2.3 (`FR-ZON-001`) |
 | **FR-ZON-003** | Entity Nomenclature & Asset Taxonomy | Section 2.3 (`FR-ZON-003`) |
-| **FR-CRD-001** | Metadata & Factions Classification | Section 2.3 (`FR-CRD-001`), Section 8.1 |
-| **FR-CRD-002** | Numeric Attributes & Costing Schema | Section 2.3 (`FR-CRD-002`), Section 8.1 |
-| **FR-CRD-003** | Unit Specific Attributes | Section 2.3 (`FR-CRD-003`), Section 8.1 |
 | **FR-ZON-002** | Movement, Immutability & Control Transfer | Section 2.4 (`FR-ZON-002`) |
 | **FR-ZON-004** | Non-Battlefield Zone Transition Reset | Section 2.4 (`FR-ZON-004`, `FR-ZON-101`) |
 | **FR-ZON-101** | Clean Asset Deallocation | Section 2.4 (`FR-ZON-101`) |
-| **FR-SNP-101** | Last-Known State Snapshotting | Section 2.4 (`FR-SNP-101`, `FR-TRG-006`) |
+| **FR-SNP-101** | Last-Known State Snapshotting | Section 2.4 (`FR-SNP-101`) |
 | **FR-ZON-005** | Scratch Fog of War Lifecycle | Section 2.4 (`FR-ZON-005`, `FR-ENT-101`) |
 | **FR-ENT-101** | Scratch Double-Blind Proxy Wrapper | Section 2.4 (`FR-ENT-101`) |
 | **FR-ENT-102** | Tucked Sub-Entities Container (NO-AH-5) | Section 2.4 (`FR-ENT-102`), Section 8.2 |
@@ -711,7 +722,6 @@ Combat execution proceeds through three deterministic steps:
 | **FR-TRG-003** | APNAP Push Sequencing | Section 6.1 (`FR-TRG-003`) |
 | **FR-TRG-004** | Cascading Trigger Enqueuing | Section 6.1 (`FR-TRG-004`) |
 | **FR-TRG-005** | Non-Resource Trigger Costs Prohibition | Section 6.1 (`FR-TRG-005`) |
-| **FR-TRG-006** | Last-Known State Snapshotting | Section 6.1 (`FR-TRG-006`) |
 | **FR-TRG-007** | Event Causality Context Lineage | Section 6.1 (`FR-TRG-007`) |
 | **FR-LAY-001** | Combat Power Clamping & Layer Pipeline | Section 6.2 (`FR-LAY-001`) |
 | **FR-LAY-002** | Health, Damage & Armor Invariants | Section 6.2 (`FR-LAY-002`) |

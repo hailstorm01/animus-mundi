@@ -72,7 +72,7 @@ This document defines the network architecture, communication transport, client-
 
 #### FR-SES-001: Connection Handshake & Version Verification
 - Upon WebSocket connection establishment, the client transmits a `ClientHandshake`:
-  - `clientEngineVersion`: String (e.g., `"2.2.0"`). Must **strictly match** the server's engine version.
+  - `clientEngineVersion`: String (e.g., `"3.0.0"`). Must **strictly match** the server's engine version.
   - `protocolVersion`: Integer (e.g., `1`).
   - `matchAuthToken`: Cryptographically signed JWT issued by the matchmaking API.
 - If the protocol version or engine version does not strictly match, the server immediately returns a `HandshakeReject` packet with an error code and closes the connection.
@@ -107,7 +107,7 @@ This document defines the network architecture, communication transport, client-
      - The server transmits `MulliganResultNotification` containing the finalized opening hand to each respective player and notifying opponents of the number of cards swapped.
 
 #### FR-SES-005: Disconnect Grace Window & State Rehydration
-- In compliance with **FR-TRG-002**:
+- In compliance with **FR-MOD-001** and **FR-NET-004**:
   - If a player disconnects mid-match (detected within 3,000 ms of silence via `FR-NET-004`), the server enters a **10-second Disconnect Grace Window**.
   - **Prompt Action Clock Pausing & Retrospective Compensation**: If the disconnect occurs while an interactive choice prompt is active, the server pauses the action clock and compensates for undetected silent time:
     ```text
@@ -536,7 +536,8 @@ message ControlChangedEvent {
 message TuckedCardsPurgedEvent {
   string host_asset_id = 1;
   repeated string purged_card_instance_ids = 2;
-  string destination_zone = 3; // "DISCARD"
+  repeated string revealed_blueprint_ids = 3;
+  string destination_zone = 4; // "DISCARD"
 }
 ```
 
@@ -563,11 +564,17 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
     string description = 3;
   }
 
+  message PartitionedSelection {
+    string category_or_zone = 1; // e.g. "HAND", "DISCARD", "TOP_OF_DECK", "BOTTOM_OF_DECK"
+    repeated int32 option_indices = 2;
+  }
+
   message ChoiceResponse {
     string prompt_id = 1;
     repeated int32 selected_option_indices = 2;
     repeated int32 bottom_deck_ordered_indices = 3; // Ordered card indices returned to bottom of deck
-    bool pass_or_decline = 4; // True to decline optional prompt
+    repeated PartitionedSelection partitioned_selections = 4; // Multi-destination partitioned choices
+    bool pass_or_decline = 5; // True to decline optional prompt
   }
   ```
 - **Deadline Enforcement**: The client UI displays an active countdown based on `deadline_epoch_ms - currentServerTimeMs()`.
@@ -580,13 +587,14 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 ```text
 [ Server Engine Thread ]                   [ Godot Client ]
          │                                         │
-         │ 1. EventBatch (Seq 42-45)               │
+         │ 1. EventBatch (Seq 42-46)               │
          ├────────────────────────────────────────►│ [ Receives Batch ]
-         │    - March (Seq 42)                     │ ├── Enqueues to FIFO Queue
-         │    - Attack (Seq 43)                    │ ├── Pop 42: Animate March
-         │    - Damage Stage 1-5 (Seq 44)          │ ├── Pop 43: Animate Attack
-         │    - Asset Destroyed (Seq 45)           │ ├── Pop 44: Animate 5-Stage Mit.
-         │                                         │ └── Pop 45: Animate Death/Reveal
+         │    - March (Seq 42: Unit Exhausts)      │ ├── Enqueues to FIFO Queue
+         │    - Regroup (Seq 43: Unit Readies)     │ ├── Pop 42: Animate March (Exhausts)
+         │    - Attack (Seq 44)                    │ ├── Pop 43: Animate Regroup (Readies)
+         │    - Damage Stage 1-5 (Seq 45)          │ ├── Pop 44: Animate Attack
+         │    - Asset Destroyed (Seq 46)           │ ├── Pop 45: Animate 5-Stage Mit.
+         │                                         │ └── Pop 46: Animate Death/Reveal
          │ 2. Ready for Next Command               │
          │    (Server state committed immediately) │
 ```
@@ -597,7 +605,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 - The Godot client maintains a decoupled, local `AnimationEventQueue`.
 - When a `ServerEventStream` packet arrives, the client immediately stores the latest state in an unrendered mirror state cache, while passing the atomic event structs into the queue.
 - Visual components consume the queue sequentially:
-  - `EVENT_MARCH` triggers sprite translation across the board.
+  - `EVENT_MARCH` triggers sprite translation across the board and transitions the unit to Exhausted (`FR-INH-001`, `FR-CAP-001`). Attacks require a readied asset, so marching units cannot attack without an intervening readying effect (e.g. `Regroup`).
   - `EVENT_DAMAGE_APPLIED` spawns floating combat text and flashes defensive shields.
   - `EVENT_DESTROY` plays death dissolve and triggers the reveal flip if a Scratch Company proxy is destroyed.
 
@@ -614,23 +622,30 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - The 5-stage automated damage mitigation pipeline executes instantaneously as a single atomic transaction on the server.
   - To enable rich visual presentation without roundtrip stalls, the server outputs an array of discrete sub-stage results in a single event packet:
     ```protobuf
+    enum SourceEntityType {
+      SOURCE_ENTITY_TYPE_UNSPECIFIED = 0;
+      SOURCE_ENTITY_TYPE_ASSET = 1; // Unit, Structure, or HQ on battlefield (AssetInstance ID)
+      SOURCE_ENTITY_TYPE_CARD = 2;  // Maneuver or CardInstance from Hand/Discard/Stack
+    }
+
     message DamagePipelineStageEvent {
-      string source_asset_id = 1;
-      string initial_target_asset_id = 2;
-      int32 raw_damage_amount = 3;
+      SourceEntityType source_entity_type = 1;
+      string source_entity_id = 2; // AssetInstance ID or CardInstance ID
+      string initial_target_asset_id = 3;
+      int32 raw_damage_amount = 4;
       
       // Stage 1: Redirection
-      string final_target_asset_id = 4;
+      string final_target_asset_id = 5;
       // Stage 2: Resistant Flat Reduction
-      int32 resistant_absorbed = 5;
+      int32 resistant_absorbed = 6;
       // Stage 3: Stalwart Capping
-      int32 stalwart_capped_amount = 6;
+      int32 stalwart_capped_amount = 7;
       // Stage 4: Dynamic Armor Absorption
-      int32 armor_absorbed = 7;
-      int32 remaining_armor = 8;
+      int32 armor_absorbed = 8;
+      int32 remaining_armor = 9;
       // Stage 5: Health Damage Committed
-      int32 health_damage_committed = 9;
-      int32 final_current_health = 10;
+      int32 health_damage_committed = 10;
+      int32 final_current_health = 11;
     }
     ```
   - The Godot client sequences this single packet into a fluid visual cascade (Shield Deflect &rarr; Stalwart Flash &rarr; Armor Cracking &rarr; Health Bar Drop) without requiring server roundtrips.
@@ -641,7 +656,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 
 #### FR-PAC-004: Public State Checksum Calculation
 - At the conclusion of every phase transition and stack unwinding sequence, the server computes a 64-bit CRC/FNV-1a hash of the **Public Board State**:
-  - Combined Health and Combat Power of all assets in HQ, Reserves, and Main Theater.
+  - Combined Health, dynamic Armor pools, and Combat Power of all assets in HQ, Reserves, and Main Theater.
   - Readiness states (`READIED` / `EXHAUSTED`) of all assets.
   - Total card counts in Hand, Deck, and Attached zones for each player.
   - Complete list of card blueprint IDs in both public Discard piles.
