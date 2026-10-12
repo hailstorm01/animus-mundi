@@ -14,4 +14,5 @@ A strategy card game engine and client built with Godot.
 - `tools/` - Development utilities, linters, and asset pipelines.
   - `tools/linter/` - FRD requirement cross-reference and CSV validation tools.
   - `tools/importer/` - Pipelines converting raw balance data into engine resources.
+  - `tools/sheets/` - Publishes `data/cards` CSVs to the Card Town Google Sheets (one tab per faction).
 - `src/` - Godot project root (`res://`).

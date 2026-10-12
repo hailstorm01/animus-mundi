@@ -24,7 +24,8 @@ Write-Host "[1/3] Auditing FRD Requirement References..." -ForegroundColor Yello
 
 $frdFiles = @(
     "Game_Rules_and_Card_Modeling_FRD.md",
-    "Client_Engine_Protocol_Networking_FRD.md"
+    "Client_Engine_Protocol_Networking_FRD.md",
+    "Card_Data_Pipeline_FRD.md"
 )
 
 $reqDefs = @{}

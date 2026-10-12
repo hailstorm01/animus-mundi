@@ -1,0 +1,18 @@
+"Name","Card Type","Faction","Requisition Cost","Tactics Cost","Text","Rarity","Current Proxy?","Needs Rework?"
+"Disorienting Pulse","MANEUVER","ANIMUS","0","1","Return chosen opposing unit in the Main Theater to its owner's hand.","COMMON","Yes","No"
+"Animoceps Spores","MANEUVER","ANIMUS","0","2","Scratch 2, then return chosen allied Scratch Company unit to its owner's hand.","COMMON","Yes","No"
+"Deafening Aria","MANEUVER","ANIMUS","0","2","Deal 1 damage to all opposing units in the Main Theater.","COMMON","Yes","No"
+"Feed the Despoiler","MANEUVER","ANIMUS","0","1","As an additional cost to enact this maneuver, kill an allied unit.
+Draw 2 cards.","COMMON","Yes","No"
+"Conversion Spike","MANEUVER","ANIMUS","0","2","Deal 1 damage to chosen opposing unit, and chosen allied unit or structure heals 1.","UNCOMMON","Yes","No"
+"Ensnaring Mist","MANEUVER","ANIMUS","0","2","Move chosen unit to its controller's Reserves.
+Chosen unit gets -1 power until end of turn.","UNCOMMON","Yes","No"
+"Mutation Swell","MANEUVER","ANIMUS","0","3","Kill up to 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free.","RARE","Yes","No"
+"Rhapsody's Embrace","MANEUVER","ANIMUS","0","3","As an additional cost to enact this maneuver, kill an allied unit.
+Kill chosen opposing unit.","COMMON","Yes","No"
+"Despoiler's Emergence","MANEUVER","ANIMUS","0","4","Deal 4 damage to all opposing assets in the Main Theater.
+Deal 2 damage to all opposing non-Scratch assets in opponents' Reserves.","MYTHIC","Yes","No"
+"Rapturous Sermon","MANEUVER","ANIMUS","0","4","Move all allied Scratch Company units to the Main Theater. Allied Scratch Company units get +2 power until end of turn.","RARE","Yes","No"
+"Forced Mutation","MANEUVER","ANIMUS","0","4","Turn chosen opposing unit face down. It becomes a Scratch Company unit.","COMMON","Yes","No"
+"Funeral Fungus","MANEUVER","ANIMUS","0","1","As an additional cost to enact this maneuver, exhaust a readied allied unit.
+Return chosen unit card from your discard pile to your hand.","UNCOMMON","Yes","No"

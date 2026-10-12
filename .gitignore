@@ -26,3 +26,6 @@ $RECYCLE.BIN/
 build/
 export/
 *.tmp
+
+# Google OAuth credentials (tools/sheets)
+client_secret*.json
