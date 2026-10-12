@@ -1,0 +1,19 @@
+﻿Name,Requisition Cost,Tactics Cost,Text,Rarity,Current Proxy?,Needs Rework?
+fortify,0,1,chosen allied unit gains 3 armor,C,Yes,No
+chainbreaker's tenacity,0,1,Chosen allied unit gains +1 power until end of turn and gains 2 armor.,C,Yes,No
+tactical withdrawal,0,1,return up to one allied unit to its owner's hand. draw 1 card.,C,Yes,No
+blindside,0,2,chosen opposing unit gets -3 power until the end of your opponent's turn,C,Yes,No
+Reaver's rush,0,3,deploy chosen unit card with power 3 or less from your discard pile for free.,C,Yes,No
+devilhorn scouting party,0,2,"You may deploy a unit card that costs R3 or less from among the top 3 cards of your deck for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.",U,Yes,No
+improvised orders,0,2,"draw 3 cards, then discard 1 card",U,Yes,No
+steel rain,0,4,"discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset.
+then, if you have no cards left in your hand, draw 2 cards.",R,Yes,No
+devilhorn sanction,0,3,kill chosen opposing unit.,U,Yes,No
+Pincer Tactics,0,3,deal 1 damage to up to 2 allied units. Deal 2 damage to chosen non-scratch asset.,C,Yes,No
+allshan's battle trance,0,4,deploy chosen unit from your discard pile to the main theater. It gains stalwart and +2 power until the end of your turn.,M,Yes,No
+ambush tactics,0,4,"choose two: 
+kill chosen unit.
+return chosen unit to its owner's hand.
+chosen unit deals damage equal to its power to chosen unit. 
+put chosen unit on top of its owner's deck.",R,Yes,No
+poisoned rations,0,3,chosen unit gets -3 max health until end of your turn.,R,Yes,No
