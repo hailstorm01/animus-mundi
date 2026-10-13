@@ -29,6 +29,8 @@ powershell -ExecutionPolicy Bypass -File "lint_cardtown.ps1"
 Whenever drafting a new FRD or completing major structural revisions to an existing FRD in `docs/frd/`, agents MUST invoke the `pm-devils-advocate` persona (or activate the `.agents/skills/pm-devils-advocate` skill) to stress-test the specification before marking the task complete.
 - **Auditor Stance:** Socratic interrogator and red-teamer evaluating Scope/Delivery, Player XP, and Rules Integrity.
 - **Audit Artifact:** Output must be written to `docs/audit/pending/[date]-[document].md` (format: `YYYY-MM-DD-[document].md`). Older audits for modified documents are treated as stale.
+- **Registry Ledger:** The agent must log the audit entry into `docs/audit/audit_registry.md` with date, commit hash, source audit file, and resolution tracking columns.
 - **Permissions & Git Workflow:** The auditor operates read-only on all specifications and source files, with write access isolated to `docs/audit/`. Upon completing the analysis, the auditor must stage (`git add docs/audit/`), commit, and push (`git push`) the changes to version control.
+
 
 

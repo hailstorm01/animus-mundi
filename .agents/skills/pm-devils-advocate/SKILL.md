@@ -49,13 +49,14 @@ The **Product Manager Devil's Advocate** is a specialized agent persona designed
 
 ---
 
-## 3. Storage Hierarchy & Staleness Tracking
+## 3. Storage Hierarchy & Tracking Registry
 
-All active audits are saved into the `pending/` subfolder using date-prefixed filenames:
+All active audits and lifecycle logs are organized within `docs/audit/`:
 
 ```text
 docs/audit/
 ├── README.md
+├── audit_registry.md       # Master registry tracking dates, commits, and resolution
 └── pending/
     └── [YYYY-MM-DD]-[document].md
 ```
@@ -68,6 +69,17 @@ docs/audit/
 The `[date]` prefix (`YYYY-MM-DD`) establishes the timestamp of evaluation. An audit in `pending/` is considered **stale** if:
 1. The target FRD in `docs/frd/` has been modified/committed since the audit's date, or
 2. A newer dated audit file exists for the same document in `pending/`.
+
+### Master Registry (`docs/audit/audit_registry.md`)
+The registry maintains a ledger of all audits with the following schema:
+- **Date Generated:** ISO date (`YYYY-MM-DD`) of audit generation.
+- **Commit Hash:** Git commit hash associated with creating/auditing the document.
+- **Source Audit File:** Path to the generated audit in `docs/audit/pending/`.
+- **Target Document:** Relative path to the audited FRD in `docs/frd/`.
+- **Status:** Lifecycle state (`PENDING`, `RESOLVED`, `STALE`).
+- **Resolution Date:** Date when the audit punch-list was addressed (`-` while pending).
+- **Resolution Commit:** Commit hash containing resolution changes (`-` while pending).
+- **Source of Resolution:** PR number, commit description, or resolving document (`-` while pending).
 
 ---
 
@@ -84,7 +96,7 @@ The `[date]` prefix (`YYYY-MM-DD`) establishes the timestamp of evaluation. An a
   {
     "TypeName": "pm-devils-advocate",
     "Role": "Product Manager Devil's Advocate",
-    "Prompt": "Perform a rigorous Socratic red-team audit of [PATH_TO_FRD] against the pm-devils-advocate skill. Inspect Scope/Delivery, Player XP, and Rules Integrity. Write the resulting punch-list to docs/audit/pending/[YYYY-MM-DD]-[FRD_BASE_NAME].md, then commit and push the changes."
+    "Prompt": "Perform a rigorous Socratic red-team audit of [PATH_TO_FRD] against the pm-devils-advocate skill. Inspect Scope/Delivery, Player XP, and Rules Integrity. Write the resulting punch-list to docs/audit/pending/[YYYY-MM-DD]-[FRD_BASE_NAME].md, update docs/audit/audit_registry.md, then commit and push the changes."
   }
   ```
 
@@ -107,12 +119,21 @@ The `[date]` prefix (`YYYY-MM-DD`) establishes the timestamp of evaluation. An a
      - 🔵 **Low / Clarification:** Minor phrasing ambiguity, cosmetic redundancy, or Socratic questions for designer clarification.
 4. **Artifact Generation:**
    - Write the audit report to `docs/audit/pending/[YYYY-MM-DD]-[Target_FRD_Base_Name].md`.
-5. **Commit and Push:**
+5. **Registry Update:**
+   - Append or update the entry in `docs/audit/audit_registry.md` with:
+     - Date Generated
+     - Commit Hash (current git HEAD or audit commit)
+     - Source Audit File link
+     - Target Document path
+     - Status (`PENDING`)
+     - Hyphens (`-`) for Resolution Date, Resolution Commit, and Source of Resolution.
+6. **Commit and Push:**
    - Stage the changes: `git add docs/audit/`
    - Commit: `git commit -m "docs(audit): add [YYYY-MM-DD] PM Devil's Advocate audit for [Target_FRD_Base_Name]"`
    - Push: `git push`
-6. **Executive Communication:**
-   - Provide a concise summary in chat linking to the generated audit file.
+7. **Executive Communication:**
+   - Provide a concise summary in chat linking to the generated audit file and registry.
+
 
 ---
 
