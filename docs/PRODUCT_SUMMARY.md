@@ -27,7 +27,8 @@ animus-mundi/
 │   └── frd/
 │       ├── Game_Rules_and_Card_Modeling_FRD.md       # Master FRD v3.0 (Rules & Modeling)
 │       ├── Client_Engine_Protocol_Networking_FRD.md  # FRD v1.1 (Networking & Wire Protocol)
-│       └── Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
+│       ├── Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
+│       └── Card_Compiler_FRD.md                      # FRD v1.0 (Compiler CLI, Grammar & Parity)
 ├── data/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
@@ -113,8 +114,8 @@ With the rules codified and the authoring balance CSVs normalized, the immediate
 
 ### 3.1 Deliverables in Phase 2
 
-1. **Card Compiler Functional Requirements Document (`Card_Compiler_FRD.md`)**:
-   - Technical specification detailing compiler CLI interface, parsing grammar, AST synthesis rules, validation invariants, and failure modes.
+1. **[Card Compiler Functional Requirements Document](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Card_Compiler_FRD.md) (`Card_Compiler_FRD.md`) [CODIFIED & COMPLETE]**:
+   - Technical specification detailing compiler CLI interface (`FR-CMP-001`), parsing grammar (`FR-CMP-008`), AST synthesis rules (`FR-CMP-013`), two-tier sidecar overrides (`FR-CMP-017`), parity validation invariants (`FR-CMP-019`), and failure modes (`FR-CMP-027`).
 2. **Formal JSON Schemas (`data/schemas/`)**:
    - `CardBlueprint.schema.json`: Complete JSON schema validation for production blueprints (`FR-DAT-005`).
    - `AbilityDef.schema.json`: Polymorphic schema validating ability archetypes, condition gates, cost models, and targeting filters (`FR-ABL-001` - `FR-ABL-007`).

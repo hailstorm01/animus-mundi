@@ -6,10 +6,11 @@ This directory houses the authoritative master specifications and card balance d
 - **Master Game Rules & Modeling Spec:** `Game_Rules_and_Card_Modeling_FRD.md` (Master FRD v3.0, combining match state machine, 3-tier entity taxonomy, 6-layer attribute pipeline, and declarative ability schemas).
 - **Master Networking & Protocol Spec:** `Client_Engine_Protocol_Networking_FRD.md` (Master wire contract, Protobuf schemas, WebSockets, Fog of War, and choice prompt schemas).
 - **Master Card Data Pipeline Spec:** `Card_Data_Pipeline_FRD.md` (Master FRD v1.0, data ingestion lifecycle, declarative ability AST, MTG-aligned text standards, and review register).
+- **Master Card Compiler Spec:** `Card_Compiler_FRD.md` (Master FRD v1.0, CLI compiler interface, parsing grammar, AST synthesis, parity verification, and cryptographic fingerprinting).
 - **Card Data Sheets:** 10 CSV spreadsheets across Concordia, Soulless, Path, Animus, HQ, and Common.
 
 ## Mandatory Linter & Health Checks
-Whenever modifying `Game_Rules_and_Card_Modeling_FRD.md`, `Client_Engine_Protocol_Networking_FRD.md`, `Card_Data_Pipeline_FRD.md`, or any `.csv` card sheet, you MUST run the automated linter to guarantee zero regressions:
+Whenever modifying `Game_Rules_and_Card_Modeling_FRD.md`, `Client_Engine_Protocol_Networking_FRD.md`, `Card_Data_Pipeline_FRD.md`, `Card_Compiler_FRD.md`, or any `.csv` card sheet, you MUST run the automated linter to guarantee zero regressions:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "lint_cardtown.ps1"

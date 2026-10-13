@@ -137,7 +137,7 @@ function Save-RefreshToken([string]$token) {
 }
 
 function Read-RefreshToken {
-    $secure = Get-Content $TokenPath -Raw | ConvertTo-SecureString
+    $secure = (Get-Content $TokenPath -Raw).Trim() | ConvertTo-SecureString
     $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
