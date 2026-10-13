@@ -23,7 +23,7 @@ docs/audit/pending/[date]-[doc].md (Status: PENDING)
 └──────────────────────────┘
             │
             ├─► Updates target FRD in docs/frd/
-            ├─► Validates zero regressions via tools/linter/lint_cardtown.ps1
+            ├─► Validates zero regressions via tools/linter/lint_frd.ps1
             ├─► Deletes audit file from pending/
             ├─► Commits FRD revisions & deletion
             ├─► Logs timestamp, commit hash & source in audit_registry.md
@@ -41,7 +41,7 @@ docs/audit/pending/[date]-[doc].md (Status: PENDING)
   - Reads active punch-lists in `docs/audit/pending/`.
   - Formulates concrete potential resolutions (surgical fixes, de-scoping, or trade-off decisions).
   - Drives an interactive conversation with the designer to align on fixes.
-  - Applies approved changes to `docs/frd/` and runs the linter (`tools/linter/lint_cardtown.ps1`).
+  - Applies approved changes to `docs/frd/` and runs the FRD linter (`tools/linter/lint_frd.ps1`).
   - Purges the pending audit file from `pending/`.
   - Commits the remediations and records completion (date & time, commit hash, and source) in `docs/audit/audit_registry.md`.
   - Pushes changes to version control.

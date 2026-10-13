@@ -1,0 +1,42 @@
+#!/bin/sh
+# Card Town Git Pre-Commit Hook
+# Selectively invokes linters based on staged files.
+
+STAGED_FRD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^docs/frd/.*\.md$')
+STAGED_CSV=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^data/cards/.*\.csv$')
+
+FAILED=0
+
+# 1. FRD Linter (runs when changes are made to an FRD)
+if [ -n "$STAGED_FRD" ]; then
+    echo "=========================================================="
+    echo "  [Pre-Commit] Staged FRD changes detected. Auditing FRDs..."
+    echo "=========================================================="
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1
+    if [ $? -ne 0 ]; then
+        FAILED=1
+    fi
+fi
+
+# 2. Sheet Integrity & Syntax / Terminology Linters (runs when CSV modified or created)
+if [ -n "$STAGED_CSV" ]; then
+    echo "=========================================================="
+    echo "  [Pre-Commit] Staged CSV changes detected. Auditing Sheets & Syntax..."
+    echo "=========================================================="
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1
+    if [ $? -ne 0 ]; then
+        FAILED=1
+    fi
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1
+    if [ $? -ne 0 ]; then
+        FAILED=1
+    fi
+fi
+
+if [ $FAILED -ne 0 ]; then
+    echo ""
+    echo "Pre-commit linting failed! Please resolve errors before committing."
+    exit 1
+fi
+
+exit 0

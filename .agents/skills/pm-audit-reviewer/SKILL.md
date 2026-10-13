@@ -43,9 +43,9 @@ Unlike the read-only operational boundary of `pm-devils-advocate`, the **PM Audi
 - **Strictly Read-Only Locations:**
   - Source code and balance data outside documentation (e.g., `src/`, `data/cards/`, `tools/`) unless explicitly directed by the user.
 - **Mandatory Quality Gate:**
-  - Before committing any modifications to `docs/frd/`, the agent must run the Card Town automated linter:
+  - Before committing any modifications to `docs/frd/`, the agent must run the Card Town FRD requirement linter:
     ```powershell
-    powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1
+    powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1
     ```
     All 160+ requirement IDs and cross-references must resolve cleanly without dangling pointers or syntax regressions.
 - **Version Control Authorization:**
@@ -145,11 +145,11 @@ Maintain a live tracking tally of items:
 
 ### Step 4: FRD Remediation & Quality Gate Linting
 1. Once resolutions are agreed upon, apply the edits directly to the target FRD in `docs/frd/`.
-2. Run the Card Town linter:
+2. Run the Card Town FRD requirement linter:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1
+   powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1
    ```
-3. If the linter reports dangling references or invalid terminology, fix them immediately until the linter passes with zero errors.
+3. If the linter reports dangling references, fix them immediately until the linter passes with zero errors.
 
 ### Step 5: Verification & Audit Closure
 Verify that **all items** in the pending audit report have been resolved (accepted, modified, or dismissed with rationale).

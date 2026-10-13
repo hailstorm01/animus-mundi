@@ -30,7 +30,7 @@ powershell -ExecutionPolicy Bypass -File tools\sheets\publish_audit.ps1 -DryRun
 powershell -ExecutionPolicy Bypass -File tools\sheets\publish_card_sheets.ps1 -ReAuth
 ```
 
-Run the linter (`tools/linter/lint_cardtown.ps1`) before publishing.
+Run the card sheet linters (`tools/linter/lint_card_sheets.ps1` and `tools/linter/lint_card_syntax.ps1`, or `tools/linter/lint_cardtown.ps1 -Cards`) before publishing.
 
 ### Published Artifacts
 
