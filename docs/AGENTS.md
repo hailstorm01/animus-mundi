@@ -24,3 +24,10 @@ powershell -ExecutionPolicy Bypass -File "lint_cardtown.ps1"
    - Use `power` / `Combat Power` instead of `attack`.
    - Never use raw MTG shorthand like `~`.
    - Use standard keyword syntax (e.g., `Armor 2` instead of `2 armor`).
+
+## Mandatory PM Devil's Advocate Review
+Whenever drafting a new FRD or completing major structural revisions to an existing FRD in `docs/frd/`, agents MUST invoke the `pm-devils-advocate` persona (or activate the `.agents/skills/pm-devils-advocate` skill) to stress-test the specification before marking the task complete.
+- **Auditor Stance:** Socratic interrogator and red-teamer evaluating Scope/Delivery, Player XP, and Rules Integrity.
+- **Audit Artifact:** Output must be written to `docs/audit/<FRD_Base_Name>_DA_Audit.md`.
+- **Permissions:** The auditor operates read-only on all specifications and source files, with write access strictly isolated to `docs/audit/`.
+
