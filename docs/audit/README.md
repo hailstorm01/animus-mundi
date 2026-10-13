@@ -4,7 +4,7 @@ This directory contains formal audit reports and red-team critiques generated fo
 
 ## Audit Workflow & Lifecycle
 
-The audit lifecycle is driven by two complementary agent personas:
+The audit lifecycle is driven by collaborative agent personas:
 
 ```text
 Draft / Revision in docs/frd/
@@ -21,6 +21,17 @@ docs/audit/pending/[date]-[doc].md (Status: PENDING)
 ┌──────────────────────────┐
 │    pm-audit-reviewer     │  ──► Ingests punch-list, synthesizes resolutions, interactive dialogue
 └──────────────────────────┘
+            │
+            ├─► Options [A, B, C, D] (Direct accept, modify, dismiss, defer)
+            │
+            ├─► Option [E] Start Design Discussion
+            │        │
+            │        ▼
+            │   ┌──────────────────────────┐
+            │   │      game-designer       │  ──► Interactive dialogue, asks clarifying questions,
+            │   └──────────────────────────┘      explores alternatives, emits Resolution Directive
+            │        │
+            │        └────────────────────────► Returns directive to pm-audit-reviewer
             │
             ├─► Updates target FRD in docs/frd/
             ├─► Validates zero regressions via tools/linter/lint_frd.ps1
@@ -40,12 +51,21 @@ docs/audit/pending/[date]-[doc].md (Status: PENDING)
 - **Behavior:**
   - Reads active punch-lists in `docs/audit/pending/`.
   - Formulates concrete potential resolutions (surgical fixes, de-scoping, or trade-off decisions).
-  - Drives an interactive conversation with the designer to align on fixes.
+  - Drives an interactive conversation presenting options `[A] Accept`, `[B] Modify`, `[C] Dismiss`, `[D] Defer`, and `[E] Start Design Discussion`.
   - Applies approved changes to `docs/frd/` and runs the FRD linter (`tools/linter/lint_frd.ps1`).
   - Purges the pending audit file from `pending/`.
   - Commits the remediations and records completion (date & time, commit hash, and source) in `docs/audit/audit_registry.md`.
   - Pushes changes to version control.
 - **Helper Tooling:** Can use `powershell -ExecutionPolicy Bypass -File tools/audit/resolve_audit.ps1 -AuditFile "<file>" -Source "Agentic (pm-audit-reviewer)"` for automated, atomic resolution logging.
+
+### 3. Deep Design Exploration (`game-designer`)
+- **Triggers:** Escalated when the designer selects Option `[E] Start Design Discussion` during audit triage, or manually via `@game-designer`.
+- **Behavior:**
+  - Examines the PM Auditor's proposed fix and critiques its systemic and player experience implications.
+  - Asks clarifying questions regarding player fantasy, design philosophy, and trade-offs.
+  - Proposes 2-3 structured mechanical alternatives with pros and cons.
+  - Aligns with the designer on the preferred solution.
+  - Emits a standardized Resolution Directive with exact requirement modifications (`FR-XXX-YYY`) for `pm-audit-reviewer` to execute and verify.
 
 ## Directory Structure & Tracking
 - **[`audit_registry.md`](audit_registry.md)**: Master index logging every audit run, generation dates, commit hashes, target documents, resolution timestamps, commits, and sources.

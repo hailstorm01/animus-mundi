@@ -45,7 +45,15 @@ Whenever drafting a new FRD or completing major structural revisions to an exist
 ## PM Audit Review & Resolution
 Whenever active audit punch-lists exist in `docs/audit/pending/` or upon explicit request (mentioning `@pm-audit-reviewer`), agents invoke the `pm-audit-reviewer` persona (or activate the `.agents/skills/pm-audit-reviewer` skill) to remediate findings:
 - **Reviewer Stance:** Collaborative resolution partner and design harmonizer synthesizing actionable solutions.
-- **Interactive Triage:** Prompts an interactive conversation presenting findings, potential resolutions, and structured decision pathways (`[A] Accept`, `[B] Modify`, `[C] Dismiss with rationale`, `[D] Defer`).
+- **Interactive Triage:** Prompts an interactive conversation presenting findings, potential resolutions, and structured decision pathways (`[A] Accept`, `[B] Modify`, `[C] Dismiss with rationale`, `[D] Defer`, `[E] Start Design Discussion`).
 - **Remediation Execution:** Updates target FRDs in `docs/frd/` and runs `tools/linter/lint_frd.ps1` to verify zero dangling references.
 - **Audit Closure & Registry Tracking:** Once all items are marked resolved, the reviewer deletes the pending audit file from `docs/audit/pending/`, commits the changes, logs completion (date & time, commit hash, and source: manual or agentic) in `docs/audit/audit_registry.md`, and pushes to version control.
 - **Helper Tooling:** Can execute `powershell -ExecutionPolicy Bypass -File tools/audit/resolve_audit.ps1 -AuditFile "<file>" -Source "Agentic (pm-audit-reviewer)"` for automated, atomic resolution logging.
+
+## Game Designer Consultation & Design Discussion
+When complex mechanical, UX, or architectural trade-offs arise during audit triage, selecting `[E] Start Design Discussion` invokes the `game-designer` persona (or activates the `.agents/skills/game-designer` skill):
+- **Designer Stance:** Systems designer and mechanics architect probing gameplay experience, rules elegance, cognitive friction, and system-level trade-offs.
+- **Interactive Exploration:** Analyzes the proposed PM auditor solution, asks clarifying questions regarding player fantasy and systemic priorities, and leads an interactive discussion presenting viable architectural alternatives.
+- **Resolution Directives:** Synthesizes the discussion into concrete resolution instructions and spec diffs for `pm-audit-reviewer` to execute and verify.
+- **Operational Boundaries:** Operates read-only on specifications and source files during the design consultation, routing all specification changes through `pm-audit-reviewer`.
+
