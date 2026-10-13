@@ -74,12 +74,14 @@ The `[date]` prefix (`YYYY-MM-DD`) establishes the timestamp of evaluation. An a
 The registry maintains a ledger of all audits with the following schema:
 - **Date Generated:** ISO date (`YYYY-MM-DD`) of audit generation.
 - **Commit Hash:** Git commit hash associated with creating/auditing the document.
-- **Source Audit File:** Path to the generated audit in `docs/audit/pending/`.
+- **Source Audit File:** Path to the generated audit in `docs/audit/pending/` (unlinked when purged upon resolution).
 - **Target Document:** Relative path to the audited FRD in `docs/frd/`.
 - **Status:** Lifecycle state (`PENDING`, `RESOLVED`, `STALE`).
-- **Resolution Date:** Date when the audit punch-list was addressed (`-` while pending).
+- **Resolution Date:** Date & time (`YYYY-MM-DD HH:MM:SS`) when the audit punch-list was resolved by `pm-audit-reviewer` (`-` while pending).
 - **Resolution Commit:** Commit hash containing resolution changes (`-` while pending).
-- **Source of Resolution:** PR number, commit description, or resolving document (`-` while pending).
+- **Source of Resolution:** Author/method of resolution (`Agentic (pm-audit-reviewer)` or `Manual`), PR number, or resolving description (`-` while pending).
+
+*(Audits are subsequently ingested, triaged, and resolved by the companion persona **PM Audit Reviewer** (`pm-audit-reviewer`).)*
 
 ---
 

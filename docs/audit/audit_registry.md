@@ -1,6 +1,6 @@
 # Audit Registry
 
-This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`), recording when audits are generated, the associated git commits, and their eventual resolution.
+This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
 ## Audit Log
 
@@ -16,9 +16,9 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 ## Column Descriptions
 - **Date Generated:** ISO date (`YYYY-MM-DD`) when the audit was performed.
 - **Commit Hash:** Git commit hash at the time the audit was created or committed.
-- **Source Audit File:** Path to the markdown audit artifact in `docs/audit/pending/`.
+- **Source Audit File:** Path to the markdown audit artifact in `docs/audit/pending/`. Once resolved and deleted from `pending/`, this link is converted to inline code (e.g. `` `2026-10-13-Card_Compiler_FRD.md` ``) to prevent broken links while preserving historical reference.
 - **Target Document:** Specification file that was evaluated.
-- **Status:** Current state (`PENDING`, `RESOLVED`, `STALE`).
-- **Resolution Date:** Date when the punch-list issues were addressed or accepted.
+- **Status:** Current lifecycle state (`PENDING`, `RESOLVED`, `STALE`).
+- **Resolution Date:** Date & time (`YYYY-MM-DD HH:MM:SS`) when all punch-list items were resolved.
 - **Resolution Commit:** Git commit hash containing the changes that resolved the audit.
-- **Source of Resolution:** PR number, resolving commit, or description of the mitigating changes.
+- **Source of Resolution:** Author/method of resolution (`Agentic (pm-audit-reviewer)` or `Manual`), PR number, or resolving description.

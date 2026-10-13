@@ -13,7 +13,7 @@ This directory houses the authoritative master specifications and card balance d
 Whenever modifying `Game_Rules_and_Card_Modeling_FRD.md`, `Client_Engine_Protocol_Networking_FRD.md`, `Card_Data_Pipeline_FRD.md`, `Card_Compiler_FRD.md`, or any `.csv` card sheet, you MUST run the automated linter to guarantee zero regressions:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "lint_cardtown.ps1"
+powershell -ExecutionPolicy Bypass -File "tools/linter/lint_cardtown.ps1"
 ```
 
 ### Linter Invariants
@@ -32,5 +32,10 @@ Whenever drafting a new FRD or completing major structural revisions to an exist
 - **Registry Ledger:** The agent must log the audit entry into `docs/audit/audit_registry.md` with date, commit hash, source audit file, and resolution tracking columns.
 - **Permissions & Git Workflow:** The auditor operates read-only on all specifications and source files, with write access isolated to `docs/audit/`. Upon completing the analysis, the auditor must stage (`git add docs/audit/`), commit, and push (`git push`) the changes to version control.
 
-
-
+## PM Audit Review & Resolution
+Whenever active audit punch-lists exist in `docs/audit/pending/` or upon explicit request (mentioning `@pm-audit-reviewer`), agents invoke the `pm-audit-reviewer` persona (or activate the `.agents/skills/pm-audit-reviewer` skill) to remediate findings:
+- **Reviewer Stance:** Collaborative resolution partner and design harmonizer synthesizing actionable solutions.
+- **Interactive Triage:** Prompts an interactive conversation presenting findings, potential resolutions, and structured decision pathways (`[A] Accept`, `[B] Modify`, `[C] Dismiss with rationale`, `[D] Defer`).
+- **Remediation Execution:** Updates target FRDs in `docs/frd/` and runs `tools/linter/lint_cardtown.ps1` to verify zero dangling references or terminology errors.
+- **Audit Closure & Registry Tracking:** Once all items are marked resolved, the reviewer deletes the pending audit file from `docs/audit/pending/`, commits the changes, logs completion (date & time, commit hash, and source: manual or agentic) in `docs/audit/audit_registry.md`, and pushes to version control.
+- **Helper Tooling:** Can execute `powershell -ExecutionPolicy Bypass -File tools/audit/resolve_audit.ps1 -AuditFile "<file>" -Source "Agentic (pm-audit-reviewer)"` for automated, atomic resolution logging.
