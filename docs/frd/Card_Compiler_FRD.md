@@ -36,7 +36,7 @@ The Card Compiler operates as the fourth core architectural pillar of the Animus
 │                     (data/schemas/blueprints.json)                     │
 │   - Immutable Singleton Catalog (FR-ENT-001, FR-DAT-005)               │
 │   - Full Declarative Ability AST (FR-ABL-001 - 012)                    │
-│   - 64-Bit Cryptographic catalogChecksum (FR-DAT-004, FR-CMP-025)      │
+│   - 256-Bit Cryptographic catalogChecksum (FR-DAT-004, FR-CMP-025)     │
 │   - Semantic cardDataVersion (FR-DAT-004, FR-CMP-026)                  │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
@@ -59,7 +59,7 @@ The Card Compiler operates as the fourth core architectural pillar of the Animus
 5. **Two-Tier Hybrid Architecture & Sidecar Overrides Registry (`FR-CMP-017` - `FR-CMP-018`)**: Production-grade architecture combining automated text synthesis with an explicit sidecar overrides registry (`data/schemas/ast_overrides.json`) for complex multi-clause mechanics.
 6. **Bidirectional Parity Verification Engine (`FR-CMP-019` - `FR-CMP-021`)**: Implementation of `FR-VAL-002` guaranteeing zero dangling printed rules and zero unexpressed AST abilities.
 7. **JSON Schema Emission & Structural Validation (`FR-CMP-022` - `FR-CMP-023`)**: Validation against `CardBlueprint.schema.json` and `AbilityDef.schema.json` conforming to JSON Schema Draft 2020-12.
-8. **Cryptographic Fingerprinting & Semantic Versioning (`FR-CMP-024` - `FR-CMP-026`)**: RFC 8785 canonical serialization, 64-bit truncated SHA-256 `catalogChecksum`, and semantic dataset versioning.
+8. **Cryptographic Fingerprinting & Semantic Versioning (`FR-CMP-024` - `FR-CMP-026`)**: RFC 8785 canonical serialization, 256-bit SHA-256 `catalogChecksum`, and semantic dataset versioning.
 9. **Structured Error Diagnostics & CI/CD Tooling (`FR-CMP-027` - `FR-CMP-028`)**: Actionable error taxonomy (`ERR_*`), line/cell references, and standardized exit codes.
 
 ---
@@ -69,16 +69,16 @@ The Card Compiler operates as the fourth core architectural pillar of the Animus
 The following significant design and architectural decisions represent inferences drawn from the foundational requirements to establish a production-grade compilation pipeline. Each decision is flagged for product and engineering sign-off:
 
 > [!IMPORTANT]
-> **DECISION 1: Two-Tier Hybrid Architecture (Parser + Sidecar Overrides Registry) (`FR-CMP-017`)**
+> **DECISION 1: Two-Tier Hybrid Architecture & Sidecar Overrides Registry (`FR-CMP-017`)**
 > - **Inference**: MTG-style natural language text covers 85%+ of card behaviors (keywords, stat buffs, standard costs, simple triggers). However, highly complex mechanics (*NO-AH-5* card tucking `FR-ENT-102`, *Samsara, Living Tempest* dual top-deck inspection and conditional maneuver damage, *Ambush Tactics* 4-option modal targeting `FR-ABL-010`) cannot be reliably parsed with naive regular expressions without introducing extreme parser fragility.
-> - **Decision**: We adopt an industry-standard two-tier compiler architecture: (1) An automated grammar synthesizer parses standard patterns; (2) A sidecar overrides registry (`data/schemas/ast_overrides.json`) supplies authoritative declarative ASTs for bespoke cards. When an override is present, the compiler validates that the card exists, that the override conforms to the JSON schema, and that bidirectional parity (`FR-VAL-002`) holds against the printed text.
+> - **Decision**: We adopt an industry-standard two-tier compiler architecture: (1) An automated grammar synthesizer parses standard patterns; (2) A sidecar overrides registry (`data/schemas/ast_overrides.json`) supplies authoritative declarative ASTs for bespoke cards. To prevent desynchronization, overrides must record the expected raw `rulesText` matching the CSV (`FR-CMP-017`). For overridden cards, forward parity verification exempts deep NLP clause mapping, enforcing structural keyword checks, schema conformance, CSV text string matching, and explicit designer sign-off (`FR-CMP-019`).
 > - **Alternative Considered**: Pure 100% regex parsing (causes fragile edge-case bugs when designers adjust wording) vs 100% manual JSON authoring (burdens designers with raw JSON).
 
 > [!IMPORTANT]
-> **DECISION 2: 64-Bit Cryptographic Checksum via Truncated SHA-256 (`FR-CMP-025`)**
-> - **Inference**: `FR-DAT-004` requires a 64-bit cryptographic checksum (`catalogChecksum`), but Master FRD v3.0 does not specify the exact hash algorithm or normalization standard.
-> - **Decision**: We specify canonical JSON serialization (RFC 8785: alphabetically sorted keys, no formatting whitespace, UTF-8 encoded without BOM) hashed via standard SHA-256, taking the leading 16 hexadecimal characters (64 bits). This guarantees 100% platform-independent parity across PowerShell 5.1/7+, Godot 4.x (GDScript/C#), Python, and server daemons (Go/C#) without requiring external native hashing libraries.
-> - **Alternative Considered**: xxHash64 (requires native compiled DLLs/extensions in PowerShell and Godot) or CRC64 (insufficient collision resistance).
+> **DECISION 2: 256-Bit Cryptographic Checksum via Full SHA-256 (`FR-CMP-025`)**
+> - **Inference**: `FR-DAT-004` requires a cryptographic checksum (`catalogChecksum`), but Master FRD v3.0 does not specify the exact hash algorithm or normalization standard.
+> - **Decision**: We specify canonical JSON serialization (RFC 8785: alphabetically sorted keys, no formatting whitespace, UTF-8 encoded without BOM) hashed via standard SHA-256, retaining the full 256-bit hexadecimal string (64 characters prefixed with `0x`). This guarantees 100% platform-independent parity across PowerShell 5.1/7+, Godot 4.x (GDScript/C#), Python, and server daemons (Go/C#) while eliminating birthday collision risks as the card catalog expands.
+> - **Alternative Considered**: Truncating to 64 bits (discards 75% of entropy with negligible storage savings) or xxHash64 (requires native compiled DLLs/extensions).
 
 > [!IMPORTANT]
 > **DECISION 3: Indented Repository Output with Canonical Hashing (`FR-CMP-023`)**
@@ -189,13 +189,13 @@ The compilation process executes in 10 strictly sequential, deterministic stages
 - **Stage 6 (Sidecar AST Overrides Binding)**: Binds bespoke AST definitions from the overrides registry for complex cards (`FR-CMP-017`).
 - **Stage 7 (Bidirectional Parity Verification)**: Verifies 1-to-1 parity between printed rules text and compiled AST abilities (`FR-VAL-002`, `FR-CMP-019` - `FR-CMP-020`).
 - **Stage 8 (Formal JSON Schema Validation)**: Validates all generated blueprint objects against `CardBlueprint.schema.json` and `AbilityDef.schema.json` (`FR-CMP-022`).
-- **Stage 9 (Catalog Assembly & Fingerprinting)**: Assembles the master catalog, applies RFC 8785 canonical serialization, and computes the 64-bit `catalogChecksum` (`FR-DAT-004`, `FR-CMP-025`).
-- **Stage 10 (Atomic Emission & Reporting)**: Writes output files via atomic file replacement (`FR-CMP-003`) and prints summary telemetry. Total compilation time for 200 cards must not exceed 2,000 milliseconds on standard hardware.
+- **Stage 9 (Catalog Assembly & Fingerprinting)**: Assembles the master catalog, applies RFC 8785 canonical serialization, and computes the 256-bit `catalogChecksum` (`FR-DAT-004`, `FR-CMP-025`).
+- **Stage 10 (Atomic Emission & Reporting)**: Writes output files via atomic file replacement (`FR-CMP-003`) and prints summary telemetry. Total compilation time for 200 cards must not exceed 5,000 milliseconds in PowerShell 7+ (< 10,000 ms in Windows PowerShell 5.1) on standard hardware for warm execution runs.
 
 #### FR-CMP-003: Atomic Emission, File Staging & Rollback Guarantee
 In fulfillment of **FR-DAT-003**:
 1. The compiler must **never** write directly to the target output file (`blueprints.json`).
-2. All compiled output is written to a temporary staging file located in the target directory: `<OutputDir>/blueprints.json.tmp`.
+2. All compiled output is written to a process-unique temporary staging file located in the target directory: `<OutputDir>/blueprints.json.tmp.$PID`.
 3. Only after Stage 9 completes with zero errors and 100% schema validation is the staging file atomically renamed or replaced over the production target file (`blueprints.json`).
 4. If an error occurs during any compilation stage, the temporary staging file is deleted immediately, leaving the existing production `blueprints.json` completely unmodified. Partial compilation or corrupted catalog emissions are strictly impossible.
 
@@ -225,16 +225,10 @@ In fulfillment of **FR-DAT-003**:
    - In standard mode, proxies compile normally to facilitate gameplay testing. Under `-Strict` mode, any card with `needsRework == TRUE` or `currentProxy == TRUE` triggers fatal compilation error `ERR_STRICT_PROTOTYPE_REJECTED`.
 
 #### FR-CMP-006: Deterministic Blueprint ID Derivation & Slug Collision Invariant
-The compiler executes the deterministic slug derivation algorithm codified in **FR-DAT-002**:
-1. Extract card title (`name`) and faction (`faction`).
-2. Strip all punctuation: remove apostrophes (`'`), commas (`,`), hyphens (`-`), periods (`.`), exclamation marks (`!`), question marks (`?`), and quotation marks (`"`).
-3. Convert all uppercase letters to lowercase.
-4. Replace whitespace sequences with a single underscore (`_`).
-5. Prefix with faction slug:
-   - For `NEUTRAL` cards: prefix with `neutral_` (e.g., `Scratch Company` &rarr; `neutral_scratch_company`).
-   - For Headquarters cards: prefix with the faction slug (e.g., `Animus Rift` &rarr; `animus_rift`).
-   - For all other faction cards: prefix with `<faction>_` (e.g., `CONCORDIA` + `Furnace Golem` &rarr; `concordia_furnace_golem`).
-6. **Zero-Collision Invariant**: The compiler maintains a global lookup table of all derived slug IDs. If two rows produce identical IDs, compilation terminates immediately with `ERR_SLUG_COLLISION`, reporting both card titles and source files.
+The compiler derives canonical blueprint IDs strictly conforming to the deterministic slug derivation algorithm codified in **FR-DAT-002**:
+1. Extracts `name` and `faction`, strips punctuation, converts to lowercase, and replaces whitespace sequences with a single underscore (`_`).
+2. Prepends canonical faction prefixes (`neutral_` for `NEUTRAL`, faction prefix for Headquarters and faction assets) per **FR-DAT-002**.
+3. **Zero-Collision Invariant**: The compiler maintains a global lookup table of all derived slug IDs. If two rows produce identical IDs, compilation terminates immediately with `ERR_SLUG_COLLISION`, reporting both card titles and source files.
 
 #### FR-CMP-007: Attribute Type Coercion & Range Clamping Invariants
 In fulfillment of **FR-DAT-005** and **FR-DAT-006**, all CSV string values are coerced to strictly typed JSON fields:
@@ -252,7 +246,7 @@ In fulfillment of **FR-DAT-005** and **FR-DAT-006**, all CSV string values are c
 | `requisitionYield` | Integer | For Maneuvers: must be `0`.<br>For Assets: integer `>= 0`. | `ERR_NUM_NEGATIVE_YIELD` |
 | `tacticsYield` | Integer | For Maneuvers: must be `0`.<br>For Assets: integer `>= 0`. | `ERR_NUM_NEGATIVE_YIELD` |
 | `deploymentZones` | Array of Enums | Units/Structures: at least one of `RESERVES`, `MAIN_THEATER`.<br>HQs: strictly `["HEADQUARTERS"]`.<br>Maneuvers: strictly empty array `[]` (`FR-DAT-008`). | `ERR_ENUM_INVALID_ZONE` |
-| `subtypes` | Array of Strings | Split on commas, trim whitespace. If value is `"--"`, emits empty array `[]` (`FR-DAT-007`). | `ERR_SUBTYPES_INVALID` |
+| `subtypes` | Array of Strings | Split on commas, trim whitespace, and filter out empty or whitespace-only tokens. If value is `"--"` or empty, emits empty array `[]` (`FR-DAT-007`). | `ERR_SUBTYPES_INVALID` |
 | `rulesText` | String | Trimmed. If empty, emits empty string `""`. | N/A |
 
 ---
@@ -339,28 +333,11 @@ In fulfillment of **FR-ABL-007**, stat expressions and numbers are compiled into
 ### Section 4.1: Polymorphic Ability AST Generation
 
 #### FR-CMP-013: Canonical Keyword AST Synthesizer
-The compiler translates keyword declarations into declarative AST nodes matching **FR-ABL-012**:
-
-| Keyword Syntax | Emitted AST Archetype | Emitted Node Payload |
-| :--- | :--- | :--- |
-| `Unbowed` | `TRIGGERED` | `triggerHook: "EVENT_TAKE_DAMAGE"`, `condition: { property: "damageTaken", operator: "GT", value: 0 }` |
-| `Resistant N` | `REPLACEMENT_WATCHER` | `interceptHook: "WOULD_TAKE_DAMAGE"`, `replacementAction: "STAGE_2_FLAT_REDUCTION"`, `amount: N` |
-| `Stalwart` | `REPLACEMENT_WATCHER` | `interceptHook: "WOULD_TAKE_DAMAGE"`, `replacementAction: "STAGE_3_COMBAT_CAP"`, `cap: 1` |
-| `Aggressive N` | `TRIGGERED` | `triggerHook: "EVENT_ATTACK_DECLARE"`, `effect: { primitive: "MODIFY_STAT", attribute: "COMBAT_POWER", value: N, duration: "UNTIL_END_OF_TURN" }` |
-| `Ward` | `STATIC_RESTRICTION` | `restrictionType: "TARGETING_IMMUNITY"`, `scope: "OPPOSING_NON_COMBAT"` |
-| `Ethereal` | `STATIC_RESTRICTION` | `restrictionType: "ATTACK_IMMUNITY"`, `scope: "ALL_ATTACKS"` |
-| `Versatile` | `CAPABILITY_FLAG` | `capability: "VERSATILE_GENERATION"` |
-| `Guardian` | `STATIC_RESTRICTION` | `restrictionType: "MANDATORY_COMBAT_TARGET"` |
-| `Armor N` | `STATIC_ATTRIBUTE` | `attribute: "INITIAL_ARMOR"`, `value: N` |
-| `Deploys Exhausted`| `REPLACEMENT_WATCHER` | `interceptHook: "WOULD_DEPLOY"`, `replacementAction: "SET_INITIAL_READINESS"`, `readiness: "EXHAUSTED"` |
-| `Scratch N` | `ATOMIC_PRIMITIVE` | `primitive: "DEPLOY_SCRATCH"`, `count: N` |
-| `Regroup N` | `ATOMIC_PRIMITIVE` | `primitive: "REGROUP"`, `count: N` |
-| `Heal N` | `ATOMIC_PRIMITIVE` | `primitive: "HEAL"`, `amount: N` |
-| `Berserk` | `STATIC_RESTRICTION` | `restrictionType: "MULTI_ATTACK_DECLARATION"`, `maxTargets: 2` |
-
-- **Conditional Keywords (Cornered)**: Lines matching `Cornered: [Keyword/Buff]` are compiled with an enclosing `conditionGate: { type: "CORNERED" }` (`FR-KWD-002e`). For example:
-  - `Cornered: Resistant 1` &rarr; `REPLACEMENT_WATCHER` with `conditionGate: { type: "CORNERED" }`, flat reduction 1.
-  - `Cornered: This unit has +2 power.` &rarr; `CONTINUOUS_AURA` evaluated in Layer 4 with `conditionGate: { type: "CORNERED" }`, power `+2`.
+The compiler translates standalone keyword declarations and numeric keyword variants into declarative AST nodes matching the canonical keyword specifications defined in **FR-ABL-012** (and Master FRD `FR-KWD-002a` through `FR-KWD-002o`):
+1. **Keyword Mapping**: Standalone keyword tokens (`Stalwart`, `Resistant N`, `Ward`, `Unbowed`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Scratch N`, `Regroup N`, `Heal N`, `Berserk`) are mapped directly to their corresponding declarative `AbilityDef` AST structures (Triggered, Replacement Watcher, Static Restriction, Static Attribute, Capability Flag, or Atomic Primitive) as codified in **FR-ABL-012**.
+2. **Conditional Keywords (Cornered)**: Lines matching `Cornered: [Keyword/Buff]` are compiled with an enclosing `conditionGate: { type: "CORNERED" }` (`FR-KWD-002e`). For example:
+   - `Cornered: Resistant 1` &rarr; `REPLACEMENT_WATCHER` with `conditionGate: { type: "CORNERED" }`, flat reduction 1.
+   - `Cornered: This unit has +2 power.` &rarr; `CONTINUOUS_AURA` evaluated in Layer 4 with `conditionGate: { type: "CORNERED" }`, power `+2`.
 
 #### FR-CMP-014: Triggered & Activated Ability AST Synthesizer
 1. **Triggered Abilities (`FR-ABL-002`)**:
@@ -400,6 +377,10 @@ To guarantee 100% engine reliability without creating an unmaintainable natural 
      "$schema": "https://json-schema.org/draft/2020-12/schema",
      "overrides": {
        "<blueprint_id>": {
+         "rulesText": "Exact raw rules text string matching source CSV",
+         "parityVerified": true,
+         "verifiedBy": "designer-alias",
+         "verifiedAt": "2026-10-13T00:00:00Z",
          "rationale": "Description of why this card requires an explicit AST definition",
          "abilities": [ ... AbilityDef structures ... ]
        }
@@ -414,6 +395,10 @@ To guarantee 100% engine reliability without creating an unmaintainable natural 
    - Every card referenced in `ast_overrides.json` **must** exist in at least one CSV sheet. Orphaned overrides trigger fatal error `ERR_ORPHAN_OVERRIDE`.
    - Every override's `abilities` payload is strictly validated against `AbilityDef.schema.json`. Invalid schemas trigger fatal error `ERR_OVERRIDE_SCHEMA_INVALID`.
    - Every override must pass bidirectional parity verification (`FR-CMP-019` - `FR-CMP-020`) against the card's printed `rulesText`.
+4. **Desynchronization Check (Sanitized String Match)**:
+   - To prevent silent divergence between design balance spreadsheets and the sidecar overrides registry, every entry in `ast_overrides.json` must declare the expected raw `rulesText`.
+   - `compile_blueprints.ps1` executes a sanitized, whitespace-normalized string comparison between `overrides[id].rulesText` and the card's `rulesText` from the source CSV.
+   - If the text differs, compilation halts immediately with `ERR_OVERRIDE_TEXT_MISMATCH`, forcing the designer or engineer to review and synchronize the sidecar override AST.
 
 #### FR-CMP-018: Bespoke Mechanics Integration & Validation
 The sidecar overrides registry houses formal AST definitions for cards featuring multi-clause or specialized engine interactions, including:
@@ -430,11 +415,17 @@ The sidecar overrides registry houses formal AST definitions for cards featuring
 ### Section 6.1: Parity Checker Implementation (`FR-VAL-002`)
 
 #### FR-CMP-019: Forward Parity Verification (Text-to-AST)
-The compiler inspects every card's printed `rulesText` and verifies that every semantic element corresponds to an active AST node:
-1. **Keyword Coverage**: If `rulesText` contains a recognized keyword (e.g., `Stalwart`, `Ward`, `Aggressive 2`), the card's `abilities` array must contain the corresponding AST node.
-2. **Trigger Coverage**: If `rulesText` contains a trigger preamble (`When`, `Whenever`, `At`), the card must declare a `TRIGGERED` ability with the matching `triggerHook`.
-3. **Activated Ability Coverage**: If `rulesText` contains a colon (`:`), the card must declare an `ACTIVATED` ability with matching costs.
-4. **Failure Condition**: Any printed rule clause that fails to map to an AST node triggers compilation error `ERR_PARITY_UNMAPPED_TEXT`.
+The compiler verifies that card rules text is faithfully represented in the compiled AST:
+1. **Standard Cards (Automated Synthesis)**: The compiler inspects every non-overridden card's printed `rulesText` and verifies that every semantic element corresponds to an active AST node:
+   - **Keyword Coverage**: If `rulesText` contains a recognized keyword (e.g., `Stalwart`, `Ward`, `Aggressive 2`), the card's `abilities` array must contain the corresponding AST node (`FR-CMP-013`).
+   - **Trigger Coverage**: If `rulesText` contains a trigger preamble (`When`, `Whenever`, `At`), the card must declare a `TRIGGERED` ability with the matching `triggerHook` (`FR-CMP-009`).
+   - **Activated Ability Coverage**: If `rulesText` contains a colon (`:`), the card must declare an `ACTIVATED` ability with matching costs (`FR-CMP-010`).
+   - **Failure Condition**: Any printed rule clause that fails to map to an AST node triggers compilation error `ERR_PARITY_UNMAPPED_TEXT`.
+2. **Overridden Cards (`ast_overrides.json`)**: Cards defined in the sidecar overrides registry are exempt from deep NLP clause segmentation. Instead, the compiler verifies:
+   - **Keyword Presence**: If `rulesText` contains recognized standalone keywords (e.g., `Stalwart`, `Versatile`), the override's `abilities` array must contain the corresponding keyword AST nodes.
+   - **Schema Conformance**: The override must strictly validate against `AbilityDef.schema.json`.
+   - **Rules Text Parity**: Must match the source CSV `rulesText` via sanitized string comparison (`FR-CMP-017`).
+   - **Designer Sign-Off Invariant**: Must declare `"parityVerified": true`, `verifiedBy`, and `verifiedAt`. If `"parityVerified"` is missing or `false`, compilation fails with `ERR_OVERRIDE_UNVERIFIED`.
 
 #### FR-CMP-020: Reverse Parity Verification (AST-to-Text)
 The compiler verifies that no blueprint possesses "zombie" or "ghost" abilities absent from its printed text:
@@ -455,9 +446,9 @@ In fulfillment of **Domain 7 of Card Data Pipeline FRD**:
 ### Section 7.1: Production Schemas & Catalog Generation
 
 #### FR-CMP-022: Formal JSON Schema Generation & Conformance
-The compiler validates every blueprint against canonical JSON schemas conforming to **JSON Schema Draft 2020-12**:
-1. **`CardBlueprint.schema.json`**: Located at `data/schemas/CardBlueprint.schema.json`. Validates top-level card metadata, stats, costs, enums, and the `abilities` array.
-2. **`AbilityDef.schema.json`**: Located at `data/schemas/AbilityDef.schema.json`. Validates polymorphic ability types, condition gates, cost arrays, filter criteria, and targeting selectors (`FR-ABL-001` - `FR-ABL-007`).
+The compiler validates every blueprint against canonical JSON schemas conforming to **JSON Schema Draft 2020-12** (cross-referencing **FR-DAT-005** and Section 8.1 of Master FRD):
+1. **`CardBlueprint.schema.json`**: Located at `data/schemas/CardBlueprint.schema.json`. Validates top-level card metadata, stats, costs, enums, and the `abilities` array against canonical definitions in **FR-DAT-005**.
+2. **`AbilityDef.schema.json`**: Located at `data/schemas/AbilityDef.schema.json`. Validates polymorphic ability types, condition gates, cost arrays, filter criteria, and targeting selectors (`FR-ABL-001` - `FR-ABL-012`).
 3. **`-EmitSchemas` Flag**: When executed with `-EmitSchemas`, the compiler regenerates and overwrites both schema files with authoritative schema definitions, guaranteeing synchronization between code and schemas.
 
 #### FR-CMP-023: Production Catalog Emission
@@ -466,7 +457,7 @@ The compiled production bundle is emitted to `data/schemas/blueprints.json`:
    ```json
    {
      "$schema": "./CardBlueprint.schema.json",
-     "catalogChecksum": "0x4f8a1c9e2b3d7a01",
+     "catalogChecksum": "0x4f8a1c9e2b3d7a016f4e8b2c1d9a3e5f7a0b2c4d6e8f1a3b5c7d9e1f3a5b7c9d",
      "cardDataVersion": "1.0.0",
      "generatedAt": "2026-10-13T13:30:00Z",
      "totalCardCount": 167,
@@ -492,13 +483,14 @@ To guarantee that the catalog checksum is 100% reproducible across different pla
    - Character strings are normalized to UTF-8 without byte order marks (BOM).
    - Numeric values are formatted without trailing zeroes (e.g. `1` rather than `1.0`).
 2. Catalog serialization is strictly independent of host operating system line endings (`CRLF` vs `LF`).
+3. **PowerShell Implementation Strategy**:
+   To guarantee strict RFC 8785 compliance and avoid the non-compliant quirks of native `ConvertTo-Json` in Windows PowerShell 5.1 (unordered properties, floating-point localization, arbitrary whitespace), `compile_blueprints.ps1` executes canonical serialization via an embedded C# JCS helper class compiled in-memory via `Add-Type`. This compiles with zero external dependencies across both Windows PowerShell 5.1 (.NET Framework 4.7.2+) and PowerShell 7+ (.NET Core), providing deterministic UTF-16 code unit key sorting and high-throughput serialization.
 
-#### FR-CMP-025: 64-Bit Cryptographic Checksum Computation (`catalogChecksum`)
+#### FR-CMP-025: 256-Bit Cryptographic Checksum Computation (`catalogChecksum`)
 In fulfillment of **FR-DAT-004**, **FR-SES-001**, and **FR-SPC-002**:
 1. The compiler computes the cryptographic hash of the RFC 8785 canonical bytes using **SHA-256**.
-2. The resulting 256-bit hash is truncated to its leading 64 bits (first 16 hexadecimal characters).
-3. The checksum is formatted as a 0x-prefixed 16-character hexadecimal string: e.g. `"0x4f8a1c9e2b3d7a01"`.
-4. This checksum is embedded in the catalog envelope (`blueprints.json`), checked during server session handshakes (`FR-SES-001`), and recorded in historical match replay headers (`ReplayHeader`; `FR-SPC-002`).
+2. Retains the full standard 256-bit hash formatted as a 0x-prefixed 64-character lowercase hexadecimal string: e.g. `"0x4f8a1c9e2b3d7a016f4e8b2c1d9a3e5f7a0b2c4d6e8f1a3b5c7d9e1f3a5b7c9d"`.
+3. This checksum is embedded in the catalog envelope (`blueprints.json`), checked during server session handshakes (`FR-SES-001`), and recorded in historical match replay headers (`ReplayHeader`; `FR-SPC-002`).
 
 #### FR-CMP-026: Semantic Dataset Versioning Contract (`cardDataVersion`)
 1. The `cardDataVersion` string conforms to Semantic Versioning 2.0 (`MAJOR.MINOR.PATCH`):
@@ -545,8 +537,10 @@ The compiler implements the following standardized error taxonomy:
 | | `ERR_ENUM_INVALID_RARITY` | `rarity` does not match `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | | `ERR_ENUM_INVALID_ZONE` | `deploymentZones` contains illegal zone identifiers. |
 | **Identity & Slugs** | `ERR_SLUG_COLLISION` | Two cards derive identical slug IDs (`FR-DAT-002`, `FR-CMP-006`). |
-| **AST Synthesis** | `ERR_SYNTAX_UNPARSEABLE` | Rules text sentence cannot be parsed by lexer or grammar engine. |
+| **AST Synthesis & Overrides** | `ERR_SYNTAX_UNPARSEABLE` | Rules text sentence cannot be parsed by lexer or grammar engine. |
 | | `ERR_OVERRIDE_SCHEMA_INVALID`| Sidecar override entry fails schema validation. |
+| | `ERR_OVERRIDE_TEXT_MISMATCH`| Sidecar override rulesText does not match source CSV rulesText (`FR-CMP-017`). |
+| | `ERR_OVERRIDE_UNVERIFIED` | Sidecar override missing required designer parityVerified flag (`FR-CMP-019`). |
 | | `ERR_ORPHAN_OVERRIDE` | Override entry defined for non-existent blueprint slug. |
 | **Parity Validation** | `ERR_PARITY_UNMAPPED_TEXT` | Printed rules clause has no corresponding AST node (`FR-VAL-002`). |
 | | `ERR_PARITY_ORPHAN_AST` | AST ability node has no corresponding printed rules text. |
@@ -595,7 +589,7 @@ The compiler process terminates with standardized process exit codes to enable s
 | **FR-CMP-022** | Formal JSON Schema Generation & Conformance | `FR-DAT-005`, `FR-ABL-001`, `FR-VAL-001` |
 | **FR-CMP-023** | Production Catalog Emission | `FR-DAT-003`, `FR-ENT-001` |
 | **FR-CMP-024** | Canonical JSON Normalization (RFC 8785) | `FR-DAT-004`, `FR-PAC-004` |
-| **FR-CMP-025** | 64-Bit Cryptographic Checksum (`catalogChecksum`)| `FR-DAT-004`, `FR-SES-001`, `FR-SPC-002` |
+| **FR-CMP-025** | 256-Bit Cryptographic Checksum (`catalogChecksum`)| `FR-DAT-004`, `FR-SES-001`, `FR-SPC-002` |
 | **FR-CMP-026** | Semantic Dataset Versioning (`cardDataVersion`)| `FR-DAT-004`, `FR-SES-001` |
 | **FR-CMP-027** | Structured Diagnostic Reporting & Error Taxonomy | `FR-VAL-001`, `FR-ERR-001` |
 | **FR-CMP-028** | Non-Zero Exit Code Contract & CI/CD Integration | `FR-VAL-001`, `FR-NET-001` |

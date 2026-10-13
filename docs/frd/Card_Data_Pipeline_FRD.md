@@ -88,7 +88,7 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 
 #### FR-DAT-004: Engine Version Binding & Replay Compatibility
 - In fulfillment of **FR-SES-001** and **FR-SPC-002**:
-  - The compiled blueprint dataset includes a 64-bit cryptographic content checksum (`catalogChecksum`) and a semantic dataset version (`cardDataVersion`, e.g., `"1.0.0"`).
+  - The compiled blueprint dataset includes a 256-bit cryptographic content checksum (`catalogChecksum`) and a semantic dataset version (`cardDataVersion`, e.g., `"1.0.0"`).
   - During connection negotiation (`FR-SES-001`), the server validates that the client's `clientEngineVersion` and `catalogChecksum` match the server's authoritative version.
   - Historical replay recordings (`.rec` files; `FR-SPC-002`) archive the active `catalogChecksum` within `ReplayHeader` to ensure deterministic playback across balance patches.
 
