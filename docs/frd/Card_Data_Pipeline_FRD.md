@@ -77,7 +77,7 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 3. Replace consecutive space characters with a single underscore (`_`).
 4. Prefix the resulting string with the card's lowercase faction slug followed by an underscore: `<faction>_<slug>`.
 5. **Neutral / HQ Exception**:
-   - Neutral cards are prefixed with `neutral_` (e.g., `Scratch Company` &rarr; `neutral_scratch_company`, matching token alias `common_scratch_company`).
+   - Neutral cards are prefixed with `neutral_` (e.g., `Scratch Company` &rarr; `neutral_scratch_company`). The match-generated token entity is universally identified by the blueprint ID `neutral_scratch_company`.
    - Headquarters cards retain their faction prefix (e.g., `Animus Rift` &rarr; `animus_rift`).
 6. **Invariance Rule**: Blueprint IDs are permanently immutable. Renaming a card's display title in design balance sheets does not alter its canonical `id` unless an explicit database migration is executed.
 
@@ -119,22 +119,22 @@ The production blueprint data structure extends `FR-CRD-101` with explicit metad
 | `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
 | `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
 
-#### FR-DAT-006: Zero-Aliasing Target Enum Enforcement in CSVs
-To eliminate fragile translation layers and ensure absolute schema fidelity, all authoring CSV files in `data/cards/` must strictly serialize canonical target enum strings. Shorthand aliases are prohibited:
-1. **`Card Type`**: Must equal strictly `UNIT`, `STRUCTURE`, `MANEUVER`, or `HEADQUARTERS`. Values such as `"Unit"`, `"Structure"`, `"Maneuver"`, and `"HQ"` are illegal.
-2. **`Faction`**: Must equal strictly `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`. Title-cased values (e.g. `"Animus"`, `"Concordia"`) are illegal.
-3. **`Rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
-4. **`Deployment Zones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"RESERVES, MAIN_THEATER"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
+#### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
+To eliminate translation layers and ensure absolute schema fidelity, all authoring CSV files in `data/cards/` use column headers that directly mirror canonical Blueprint JSON property names (`name`, `cardType`, `faction`, `subtypes`, `requisitionCost`, `tacticsCost`, `deploymentZones`, `rulesText`, `power`, `health`, `requisitionYield`, `tacticsYield`, `rarity`, `currentProxy`, `needsRework`). Furthermore, enum cells must strictly serialize canonical target enum strings with zero aliases:
+1. **`cardType`**: Must equal strictly `UNIT`, `STRUCTURE`, `MANEUVER`, or `HEADQUARTERS`. Values such as `"Unit"`, `"Structure"`, `"Maneuver"`, and `"HQ"` are illegal.
+2. **`faction`**: Must equal strictly `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`. Title-cased values (e.g. `"Animus"`, `"Concordia"`) are illegal.
+3. **`rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
+4. **`deploymentZones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"MAIN_THEATER, RESERVES"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
 
 #### FR-DAT-007: Subtype Taxonomy & Normalization
-- Card subtypes in the `Types` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
+- Card subtypes in the `subtypes` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
 - Where a card possesses no subtypes (e.g. Headquarters), the field must contain the literal sentinel string `"--"`.
 - The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique strings.
 
 #### FR-DAT-008: Deployment Zone Array Schema & Invariants
 - **Units & Structures**: Every Unit and Structure blueprint must declare at least one legal deployment zone (`["RESERVES"]`, `["MAIN_THEATER"]`, or `["RESERVES", "MAIN_THEATER"]`). Headquarters cards declare strictly `["HEADQUARTERS"]`.
 - **Maneuver Exemption**: Maneuvers resolve on the stack (`FR-QUE-001`, `FR-MNV-001`) and never occupy battlefield zones. Maneuver blueprints serialize `deploymentZones: []` (or `null`).
-- **Zone Order Normalization**: In CSV authoring sheets where multi-zone deployment is permitted, zones are normalized alphabetically: `"RESERVES, MAIN_THEATER"`.
+- **Zone Order Normalization**: In CSV authoring sheets where multi-zone deployment is permitted, zones are normalized alphabetically: `"MAIN_THEATER, RESERVES"`.
 
 ---
 
@@ -201,6 +201,7 @@ In compliance with **FR-TRG-001** through **FR-TRG-007**:
   - `targeting`: Optional targeting declaration (`TargetingDef`) if the trigger requires player target selection.
   - `effect`: Execution payload specifying atomic primitive (`FR-PRM-001`) and parameter bindings.
   - `maxPerTurn`: Optional integer (`>= 1`) restricting maximum trigger frequency per turn (`FR-ABL-008`).
+- **Upfront Target Binding for Conditional Resolution**: For composite triggers where an effect's magnitude or occurrence depends on an action resolved during execution (*Samsara, Living Tempest*), all external targets (e.g. `chosen asset`) are designated and locked upfront when the trigger is enqueued onto the stack (`FR-TGT-101`). During resolution, if the condition is not met (e.g. no maneuver discarded), the conditional damage clause simply does not execute against the pre-locked target, avoiding secondary interactive prompts.
 
 #### FR-ABL-003: ActivatedAbilityDef Schema & Cost Models
 In compliance with **FR-ACT-001**, **FR-ACT-002**, and **FR-QUE-001**:
@@ -216,8 +217,8 @@ In compliance with **Section 6.2 of Master FRD v3.0 (`FR-LAY-001` - `FR-LAY-003`
 - Evaluates continuously across board assets, registering static modifiers into Layer 4 (Auras) of the 6-layer attribute pipeline.
 - Schema properties:
   - `scope`: `SELF`, `ALLIED_IN_ZONE`, `OPPOSING_IN_ZONE`, or `ALL_IN_ZONE`.
-  - `filter`: Optional subtype or entity type filter (`FilterDef`, e.g., `{ "subtypes": ["Horror"] }`).
-  - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `ARMOR`, `KEYWORD_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`).
+  - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `KEYWORD_GRANT`, `SUBTYPE_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`). (Note: Armor cannot be granted continuously by an aura; it exists strictly as a dynamic entity pool modified via one-shot events).
+  - `abilityGrants`: Optional `Array<AbilityDef>` allowing continuous auras to project compound abilities (e.g. conditional keywords such as `Cornered: Resistant 1` on *Ancestral Monument*) onto scoped assets.
 
 #### FR-ABL-005: ReplacementWatcherDef Schema & Event Interception
 In compliance with **FR-REP-001** through **FR-REP-004**:
@@ -248,6 +249,7 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
         "negateSubtypes": { "type": "boolean" },
         "excludeScratch": { "type": "boolean" },
         "excludeHQ": { "type": "boolean" },
+        "excludeUnits": { "type": "boolean" },
         "readiness": { "type": "string", "enum": ["READIED", "EXHAUSTED", "ANY"] },
         "zone": { "type": "string", "enum": ["SAME_ZONE", "RESERVES", "MAIN_THEATER", "HEADQUARTERS", "DISCARD", "HAND", "DECK"] }
       }
@@ -259,7 +261,8 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
         "type": { "type": "string", "enum": ["STATIC", "DYNAMIC", "VARIABLE_X"] },
         "value": { "type": "integer" },
         "source": { "type": "string", "enum": ["SELF", "TARGET", "GAME_STATE"] },
-        "property": { "type": "string", "enum": ["COMBAT_POWER", "HEALTH", "COUNT_TUCKED_CARDS", "COUNT_DISCARD_CARDS", "COUNT_STRUCTURES_REQUISITION_YIELD"] },
+        "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "COUNT_TUCKED_CARDS", "COUNT_DISCARD_CARDS", "COUNT_STRUCTURES_REQUISITION_YIELD", "COUNT_STRUCTURES_TACTICS_YIELD"] },
+        "filter": { "$ref": "#/definitions/FilterDef" },
         "multiplier": { "type": "integer" }
       }
     },
@@ -336,6 +339,8 @@ All 15 engine keywords defined in Master FRD v3.0 Appendix A map directly to sta
 | **Regroup N** | `ATOMIC_PRIMITIVE` | Transitions up to `N` exhausted assets to Readied (`FR-KWD-002n`). |
 | **Berserk** | `STATIC_RESTRICTION` | Enables attack declaration targeting up to 2 assets (`FR-KWD-002o`). |
 
+- **Dynamic & Continuous Grants**: Keywords and subtypes may also be granted dynamically via atomic primitives `GRANT_KEYWORD` and `GRANT_SUBTYPE` (`FR-PRM-001`) or continuously via `ContinuousAuraDef` modifiers (`KEYWORD_GRANT`, `SUBTYPE_GRANT`) and compound `abilityGrants` (Layer 6; `FR-ABL-004`).
+
 ---
 
 ## DOMAIN 5: MTG-ALIGNED RULES TEXT TEMPLATING STANDARD & GRAMMAR
@@ -411,9 +416,8 @@ The automated linter (`tools/linter/lint_cardtown.ps1`) enforces three validatio
 - The compilation pipeline executes automated parity checks ensuring that card abilities defined in text correspond 1-to-1 with compiled AST structures.
 - A card declaring `Stalwart` in rules text must contain a `REPLACEMENT_WATCHER` AST entry with `min(damage, 1)` logic; a card declaring an attack trigger must bind to `EVENT_ATTACK_DECLARE` or `EVENT_ATTACK_RESOLVED`.
 
-#### FR-VAL-003: Placeholder Row Handling & Incomplete Blueprint Policy
-- To support work-in-progress game design, CSV rows lacking a `Name` (e.g. blank placeholder rows reserved for future expansion) must declare a valid target enum `Rarity` (`UNCOMMON`, etc.).
-- The compilation pipeline skips blank placeholder rows when generating `blueprints.json`, preventing uninitialized stubs from entering production engine builds.
+#### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All")
+- Balance sheet validation requirements apply uniformly across all rows with zero exceptions for placeholder rows ("must fit all"). Every row in an authoring sheet must fully define all mandatory target enum fields (`Card Type`, `Faction`, `Deployment Zones`, `Rarity`) and pass schema validation. Incomplete rows lacking required attributes are rejected during pipeline linting.
 
 ---
 
@@ -468,7 +472,7 @@ The following register details all cards where rules text was modified or requir
 | **Light of the World Soul** | `maneuvers-concordia.csv` | `look at the top 7 cards of your deck. you may deploy up to 2 unit cards for free, and put up to 1 card into your hand. Put the rest on the bottom of your deck in any order.` | `Look at the top 7 cards of your deck. You may deploy up to 2 unit cards from among them for free, and put up to 1 of those cards into your hand. Put the rest on the bottom of your deck in any order.` | Clarified card partitioning from top-7 inspection pool (`FR-MOD-001`). |
 | **Devilhorn Scouting Party** | `maneuvers-path.csv` | `You may deploy a unit card that costs R3 or less from among the top 3 cards of your deck for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.` | `Look at the top 3 cards of your deck. You may deploy a unit card with Requisition cost 3 or less from among them for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.` | Added explicit "Look at the top 3 cards..." preamble. |
 | **Steel Rain** | `maneuvers-path.csv` | `discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. then, if you have no cards left in your hand, draw 2 cards.` | `Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. Then, if you have no cards in hand, draw 2 cards.` | Confirm if "chosen asset" is selected once or independently per card discarded. |
-| **Ambush Tactics** | `maneuvers-path.csv` | `choose two: kill chosen unit. return chosen unit to its owner's hand. chosen unit deals damage equal to its power to chosen unit. put chosen unit on top of its owner's deck.` | `Choose two: - Kill chosen unit. - Return chosen unit to its owner's hand. - Chosen unit deals damage equal to its power to chosen unit. - Put chosen unit on top of its owner's deck.` | Modal choice list formatting applied (`FR-ABL-010`). |
+| **Ambush Tactics** | `maneuvers-path.csv` | `choose two: kill chosen unit. return chosen unit to its owner's hand. chosen unit deals damage equal to its power to chosen unit. put chosen unit on top of its owner's deck.` | `Choose two: - Kill chosen unit. - Return chosen unit to its owner's hand. - Chosen unit deals damage equal to its power to another chosen unit. - Put chosen unit on top of its owner's deck.` | Modal choice list formatting applied (`FR-ABL-010`); disambiguated target strike role with "another chosen unit". |
 | **Mage Seeker's Inquisition** | `maneuvers-soulless.csv` | `Chosen player reveals their hand and discards a unit of your choice.` | `Chosen opponent reveals their hand. You choose a unit card from it. That player discards that card.` | Harmonized with hand inspection workflow `FR-MOD-001`. |
 | **Macrocannon Barrage** | `maneuvers-soulless.csv` | `deal 5 damage distributed among up to 5 chosen units` | `Distribute 5 damage among up to 5 chosen units.` | Templated as distributed damage pool (`FR-ABL-011`). |
 | **All-Out War** | `maneuvers-soulless.csv` | `Discard your hand, then: - chosen allied asset gains power... - scratch a number of times... - regroup all...` | `Discard your hand. Then: - Chosen allied asset gets power equal to the number of cards discarded this way until end of turn. - Scratch X, where X is the number of cards discarded this way. - Regroup all Scratch Company units in your Reserves.` | Title hyphenated ("All-Out War"); list templating standardized. |
@@ -488,7 +492,7 @@ The following register details all cards where rules text was modified or requir
 | **Samsara, Living Tempest** | `units-and-structures-concordia.csv` | `when this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard. If the discarded card was a maneuver, deal 2 damage to chosen asset.` | `Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset.` | Clarified causality of discarded maneuver condition. |
 | **World Soul Messenger** | `units-and-structures-concordia.csv` | `when this unit deploys, you may search your deck for an Elemental and deploy it for free. If you do, shuffle your deck.` | `When this unit deploys, you may search your deck for an Elemental card and deploy it for free, then shuffle your deck.` | Added explicit shuffle clause required by `FR-DEK-001`. |
 | **Hammerhand Brigands** | `units-and-structures-path.csv` | `unbowed: scratch once` | `Unbowed: Scratch 1.` | Standardized to "Unbowed: Scratch 1.". |
-| **Eerie Remnant** | `units-and-structures-path.csv` | `This unit deploys exhausted. When this unit is put into your discard from your hand, you may deploy it for free instead.` | `Deploys Exhausted When this card is put into your discard pile from your hand, you may deploy it for free instead.` | Specified "card" and "discard pile". |
+| **Eerie Remnant** | `units-and-structures-path.csv` | `This unit deploys exhausted. When this unit is put into your discard from your hand, you may deploy it for free instead.` | `Deploys Exhausted When this card is put into your discard pile from your hand, you may deploy it from your discard pile for free.` | Simplified deploy trigger removing "instead" ambiguity; deploys directly from discard pile. |
 | **Brigand Highlander** | `units-and-structures-path.csv` | `cornered: +2 power` | `Cornered: This unit has +2 power.` | Standardized to "Cornered: This unit has +2 power.". |
 | **Blind Defile** | `units-and-structures-path.csv` | `when an opposing unit attacks, you may kill this structure and the attacking unit` | `Whenever an opposing unit attacks, you may kill this structure and that attacking unit.` | Refined reference to "that attacking unit" (`FR-CBT-002`). |
 | **Rogue Fleshshaper** | `units-and-structures-path.csv` | `when this unit deploys, choose one: chosen asset heals 1 deal 1 damage to chosen non-scratch asset` | `When this unit deploys, choose one: - Chosen asset heals 1. - Deal 1 damage to chosen non-Scratch asset.` | Modal choice list formatting applied (`FR-ABL-010`). |
@@ -498,6 +502,7 @@ The following register details all cards where rules text was modified or requir
 | **Boneyard Scavenger** | `units-and-structures-path.csv` | `1T, exhaust: kill this unit and return a maneuver from your discard pile to your hand.` | `T1, exhaust, kill this unit: Return chosen maneuver card from your discard pile to your hand.` | Standardized cost ordering and "1T" -> "T1". |
 | **Ancestral Monument** | `units-and-structures-path.csv` | `other allied assets in the same zone as this structure have cornered: resistant 1` | `Other allied assets in the same zone have Cornered: Resistant 1.` | Templated ability grant syntax. |
 | **Devilhorn Guerrillas** | `units-and-structures-path.csv` | `when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit.` | `When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit.` | Title spelling corrected ("Devilhorn Guerrillas"). |
+| **Hammerhand Bivouac** | `units-and-structures-path.csv` | `distribute 1 armor among allied units in the same zone` | `Distribute 2 armor among allied units in the same zone.` | Rebalanced armor pool distribution from 1 to 2 (`FR-ABL-011`). |
 | **Ruin Partisans** | `units-and-structures-path.csv` | `T2, exhaust: kill this unit and return a unit card from your discard pile to your hand.` | `T2, exhaust, kill this unit: Return chosen unit card from your discard pile to your hand.` | Standardized cost ordering. |
 | **Allshan, Chainbreaker Revenant** | `units-and-structures-path.csv` | `unbowed: this unit gains 2 armor cornered: when this unit attacks, it gets +3 power until end of turn.` | `Unbowed: This unit gains 2 armor. Cornered: Whenever this unit attacks, it gets +3 power until end of turn.` | Standardized ability words. |
 | **Solarheart Monk** | `units-and-structures-path.csv` | `when this unit is put into your discard, chosen asset heals 2.` | `When this card is put into your discard pile, chosen asset heals 2.` | Clarified trigger on "this card" rather than "this unit" while entering discard (`FR-ZON-003`). |
@@ -505,7 +510,10 @@ The following register details all cards where rules text was modified or requir
 | **Mage Hunter Brigade** | `units-and-structures-soulless.csv` | `Ward (cannot be chosen by opponents except to attack)` | `Ward` | Reminder text stripped. |
 | **NO-AH-5** | `units-and-structures-soulless.csv` | `ward R2: kill chosen allied non HQ asset and put it face down under this unit. This unit has +2 power for each card underneath it.` | `Ward R2: Kill chosen allied non-Headquarters asset and tuck it face down under this unit. This unit has +2 power for each card tucked under it.` | Harmonized with canonical benchmark in Master FRD Section 8.2 (`FR-ENT-102`). |
 | **Mobile Armory** | `units-and-structures-soulless.csv` | `Exhaust: chosen allied unit in the same zone gets +1 power this turn` | `Exhaust: Chosen allied unit in the same zone gets +1 power until end of turn.` | Changed "this turn" to "until end of turn". |
-| **Piston Fist Prototype** | `units-and-structures-soulless.csv` | `After this unit attacks, move this unit to your Reserves.` | `After this unit attacks, move this unit to your Reserves.` | Harmonized with Master FRD Section 8.2 benchmark. |
+| **Piston Fist Prototype** | `units-and-structures-soulless.csv` | `After this unit attacks, move this unit to your Reserves.` | `Aggressive 9 After this unit attacks, move this unit to your Reserves.` | Rebalanced to 3R/3T 1/9 with Aggressive 9 and post-attack recoil to Reserves (`FR-KWD-002f`). |
+| **MAX-8 Autonomous Warsuit** | `units-and-structures-soulless.csv` | `When this unit deploys, deal 2 damage to chosen asset and chosen asset heals 2.` | `When this unit deploys, deal 2 damage to chosen asset. Chosen asset heals 2.` | Separated damage and heal into two discrete sequential effect clauses. |
+| **Gemstone Titan** | `units-and-structures-concordia.csv` | `when this unit deploys, kill chosen structure with current Health less than this unit's power` | `When this unit deploys, kill chosen opposing structure with current Health less than this unit's power.` | Added opposing qualification; filters structures by current Health less than deployer's power. |
+| **Daggerspine Rangers** | `units-and-structures-concordia.csv` | Subtypes: `Mending, Specialists` | Subtypes: `Mending, Specialist` | Normalized plural subtype "Specialists" to canonical singular "Specialist" (`FR-DAT-007`). |
 
 ---
 

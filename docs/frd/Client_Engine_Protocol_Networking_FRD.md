@@ -13,7 +13,7 @@ This document defines the network architecture, communication transport, client-
 3. **Heartbeat & Grace Window De-racing**: Tuned heartbeat cadence to 1,000 ms and disconnect threshold to 3,000 ms (`FR-NET-004`); configured prompt action clock (15s) with retrospective compensation based on last-received packet timestamp during Disconnect Grace Window (`FR-SES-005`).
 4. **Target Roles & Cost Serialization**: Enriched `TargetBinding` with `TARGET_ROLE_SACRIFICE_COST` and `TARGET_ROLE_DISCARD_COST`; added `source_zone` to `DeployCardCommand` (`FR-MSG-003`).
 5. **State Hash Mask Synchronization**: Explicitly mandated that public checksum hashing consumes effective Layer 6 values to eliminate Scratch false desyncs (`FR-PAC-004`).
-6. **Deck Legality & Cross-Spec Alignment**: Formally enforced starting deck prohibition for `common_scratch_company` (`FR-SES-002`); aligned sequential `FR-SET-00X` and `FR-REP-004` references. Strict version matching enforced on handshake (`FR-SES-001`).
+6. **Deck Legality & Cross-Spec Alignment**: Formally enforced starting deck prohibition for `neutral_scratch_company` (`FR-SES-002`); aligned sequential `FR-SET-00X` and `FR-REP-004` references. Strict version matching enforced on handshake (`FR-SES-001`).
 7. **Inherent Action Wire Schemas & Resource Choice**: Defined explicit Protobuf schemas for `GenerateResourceCommand`, `MarchCommand`, `AttackCommand` (supporting Berserk multi-target attacks), `DeployScratchCommand`, and `ConvertResourceCommand` (`FR-MSG-003`). Added `ChoiceResponse` schema with bottom-deck ordering (`FR-MSG-005`).
 
 ---
@@ -85,7 +85,7 @@ This document defines the network architecture, communication transport, client-
     2. All main deck cards match the HQ's faction or the Neutral faction.
     3. Main deck contains >= 50 cards.
     4. Rarity copy limits are strictly adhered to: Common (max 4), Uncommon (max 3), Rare (max 2), Mythic (max 1).
-    5. The card `common_scratch_company` is strictly excluded (match-generated tokens are prohibited from deck construction).
+    5. The card `neutral_scratch_company` is strictly excluded (match-generated tokens are prohibited from deck construction).
   - If validation fails, the match aborts with `DECK_LEGALITY_VIOLATION`.
 
 #### FR-SES-003: First-Player Determination Protocol
@@ -117,10 +117,12 @@ This document defines the network architecture, communication transport, client-
   - If the disconnected player reconnects within the 10-second window:
     1. The client sends `ReconnectRequest` with the active `matchAuthToken`.
     2. The server responds with a complete `FullStateSnapshot` containing:
+       - Match stage enum (`STAGE_FIRST_PLAYER_CHOICE`, `STAGE_MULLIGAN`, `STAGE_MAIN_MATCH`).
+       - Setup stage context if reconnecting during pre-game (initial 6-card hand instances, pending `MulliganPrompt` or `FirstPlayerChoicePrompt` with remaining action clock).
        - Public board state (all assets across HQ, Reserves, Main Theater).
        - Controller's private hand instances.
        - Discard pile public contents.
-       - Current phase, active player, and resource pools.
+       - Current phase, active player, resource pools, and Main Phase Turn Clock deadline (`FR-TRN-001`).
        - Active stack items and pending prompts (with remaining paused `remainingClockMs` restored).
        - Last processed `sequenceId`.
     3. The client renders the state instantaneously, clears its animation queue, unpauses the prompt clock, and resumes play.
@@ -347,7 +349,7 @@ message MarchCommand {
 
 message AttackCommand {
   string attacker_asset_id = 1;
-  // Standard attack targets 1 asset or HQ; Berserk units (FR-KWD-002o) may target up to 2 assets
+  // Standard attack targets 1 asset or HQ; Berserk units (FR-KWD-002o) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002)
   repeated string target_asset_ids = 2; 
 }
 
@@ -367,8 +369,10 @@ enum TargetRole {
   TARGET_ROLE_UNSPECIFIED = 0;
   TARGET_ROLE_SOURCE = 1;
   TARGET_ROLE_TARGET = 2;
-  TARGET_ROLE_SACRIFICE_COST = 3; // For additional deployment/activation sacrifice costs
-  TARGET_ROLE_DISCARD_COST = 4;   // For activated ability hand discard costs
+  TARGET_ROLE_SACRIFICE_COST = 3;   // For additional deployment/activation sacrifice costs
+  TARGET_ROLE_DISCARD_COST = 4;     // For activated ability hand discard costs
+  TARGET_ROLE_EXHAUST_COST = 5;     // For additional enactment exhaust costs (Funeral Fungus)
+  TARGET_ROLE_DESTINATION_ZONE = 6; // For target destination zone selections (Sandstorm Lightbringer)
 }
 
 message DeployCardCommand {
@@ -490,6 +494,7 @@ message PhaseTransitionEvent {
   string new_phase = 1; // "READY_PHASE", "DRAW_PHASE", "MAIN_PHASE", "END_PHASE"
   string active_player_id = 2;
   int32 turn_number = 3;
+  uint64 phase_deadline_epoch_ms = 4; // Deadline for 75s Main Phase Turn Clock; auto-ends turn on timeout (FR-TRN-001)
 }
 
 message MatchConcludedEvent {
@@ -523,7 +528,7 @@ message AssetDeployedEvent {
 message AssetMorphedEvent {
   string asset_instance_id = 1;
   bool is_face_down = 2;
-  string effective_blueprint_id = 3; // "common_scratch_company"
+  string effective_blueprint_id = 3; // "neutral_scratch_company"
 }
 
 message ControlChangedEvent {
@@ -551,7 +556,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   ```protobuf
   message PlayerChoicePrompt {
     string prompt_id = 1;
-    string prompt_type = 2; // "LOOK_TOP_CARDS", "MODAL_SELECT", "TARGET_SELECT"
+    string prompt_type = 2; // "LOOK_TOP_CARDS", "MODAL_SELECT", "TARGET_SELECT", "TRIGGER_ORDER_SELECT"
     uint64 deadline_epoch_ms = 3; // Exact UTC millisecond deadline
     int32 min_selections = 4;
     int32 max_selections = 5;
@@ -575,10 +580,11 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
     repeated int32 bottom_deck_ordered_indices = 3; // Ordered card indices returned to bottom of deck
     repeated PartitionedSelection partitioned_selections = 4; // Multi-destination partitioned choices
     bool pass_or_decline = 5; // True to decline optional prompt
+    repeated int32 ordered_trigger_indices = 6; // Stack placement order for simultaneous allied triggers (FR-MSG-005, FR-TRG-002)
   }
   ```
-- **Deadline Enforcement**: The client UI displays an active countdown based on `deadline_epoch_ms - currentServerTimeMs()`.
-- If the client's `ChoiceResponse` is received after `deadline_epoch_ms`, the server rejects it and commits the deterministic fallback (`FR-MOD-001`).
+- **Deadline Enforcement & Deterministic Fallbacks**: The client UI displays an active countdown based on `deadline_epoch_ms - currentServerTimeMs()`.
+- If the client's `ChoiceResponse` is received after `deadline_epoch_ms`, the server rejects it and commits the deterministic fallback (`FR-MOD-001`). For `TRIGGER_ORDER_SELECT`, the server defaults to the natural order of trigger registration.
 
 ---
 

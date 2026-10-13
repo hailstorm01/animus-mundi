@@ -113,7 +113,48 @@ foreach ($csv in $csvFiles) {
 
         # Test Import-Csv
         $imported = Import-Csv -Path $csv.FullName -ErrorAction Stop
-        Write-Host "  [PASS] $($csv.Name) ($($imported.Count) rows, $($headerParts.Count) columns)" -ForegroundColor Green
+        
+        # Validate target enums & required fields (FR-DAT-006, FR-VAL-003)
+        $legalCardTypes = @("UNIT", "STRUCTURE", "HEADQUARTERS", "MANEUVER")
+        $legalFactions = @("CONCORDIA", "SOULLESS", "PATH", "ANIMUS", "NEUTRAL")
+        $legalRarities = @("COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ")
+        $legalZones = @("RESERVES", "MAIN_THEATER", "HEADQUARTERS", "MAIN_THEATER, RESERVES")
+
+        $csvErrors = 0
+        for ($i = 0; $i -lt $imported.Count; $i++) {
+            $r = $imported[$i]
+            $rowNum = $i + 2
+            
+            # Skip empty placeholder rows awaiting final design
+            if ([string]::IsNullOrWhiteSpace($r.name)) {
+                continue
+            }
+            
+            if ($r.cardType -and $legalCardTypes -notcontains $r.cardType) {
+                Write-Host "  [ENUM ERROR] $($csv.Name):$rowNum -> Invalid cardType '$($r.cardType)'" -ForegroundColor Red
+                $csvErrors++
+            }
+            if ($r.faction -and $legalFactions -notcontains $r.faction) {
+                Write-Host "  [ENUM ERROR] $($csv.Name):$rowNum -> Invalid faction '$($r.faction)'" -ForegroundColor Red
+                $csvErrors++
+            }
+            if ($r.rarity -and $legalRarities -notcontains $r.rarity) {
+                Write-Host "  [ENUM ERROR] $($csv.Name):$rowNum -> Invalid rarity '$($r.rarity)'" -ForegroundColor Red
+                $csvErrors++
+            }
+            if ($r.PSObject.Properties['deploymentZones'] -and $r.deploymentZones) {
+                if ($legalZones -notcontains $r.deploymentZones) {
+                    Write-Host "  [ENUM ERROR] $($csv.Name):$rowNum -> Invalid deploymentZones '$($r.deploymentZones)'" -ForegroundColor Red
+                    $csvErrors++
+                }
+            }
+        }
+
+        if ($csvErrors -eq 0) {
+            Write-Host "  [PASS] $($csv.Name) ($($imported.Count) rows, $($headerParts.Count) columns)" -ForegroundColor Green
+        } else {
+            $hasErrors = $true
+        }
     } catch {
         Write-Host "  [FAIL] $($csv.Name): Import error: $_" -ForegroundColor Red
         $hasErrors = $true
@@ -138,8 +179,8 @@ foreach ($csv in $csvFiles) {
         $imported = Import-Csv -Path $csv.FullName
         for ($i = 0; $i -lt $imported.Count; $i++) {
             $row = $imported[$i]
-            $cardName = if ($row.Name) { $row.Name } else { "Row $($i+1)" }
-            $text = $row.Text
+            $cardName = if ($row.name) { $row.name } elseif ($row.Name) { $row.Name } else { "Row $($i+1)" }
+            $text = if ($row.rulesText) { $row.rulesText } else { $row.Text }
             if (-not [string]::IsNullOrWhiteSpace($text)) {
                 foreach ($rule in $forbiddenPatterns) {
                     if ($text -match $rule.Pattern) {

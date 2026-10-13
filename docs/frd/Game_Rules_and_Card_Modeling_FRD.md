@@ -18,7 +18,7 @@ This document establishes the authoritative unified specification for the Collec
 8. **Hand Inspection Protocol (`FR-MOD-001`)**: Guaranteed a client inspection window for revealed opponent hands (*drifting concept*, *mage seeker's inquisition*) before auto-discard resolution.
 9. **Atomic Primitives Formalization (`FR-PRM-001`)**: Formally defined the atomic effect primitive catalog in Section 4.5.
 10. **Cornered Gate Timing (`FR-KWD-002e`)**: Codified Cornered as an enqueue gate evaluated strictly at event emission for triggered abilities.
-11. **Piston Fist Prototype Respecification**: Rebalanced *Piston Fist Prototype* to an 8-drop 9/8 aggressive statline with pneumatic recoil (`"After this unit attacks, move this unit to your Reserves."`).
+11. **Piston Fist Prototype Respecification**: Rebalanced *Piston Fist Prototype* to a 6-drop 3R/3T 1/9 statline with Aggressive 9 and pneumatic recoil (`"Aggressive 9\nAfter this unit attacks, move this unit to your Reserves."`).
 
 ---
 
@@ -31,7 +31,7 @@ This document establishes the authoritative unified specification for the Collec
 - **Headquarters Card**: Exactly 1 designated Headquarters (HQ) card is selected during deck construction and resides outside the main deck stack. HQ cards are strictly prohibited from being included in the main deck. An HQ card must belong to a specific faction (Concordia, Soulless, Path, Animus) and cannot be Neutral.
 - **Faction Deck Legality**: A deck may only contain cards matching the faction of its designated Headquarters card and cards belonging to the **Neutral** faction.
 - **Neutral Cards**: Neutral cards may be included in any deck regardless of the chosen Headquarters card's faction.
-- **Scratch Company Deck Prohibition**: The card `common_scratch_company` is a match-generated token entity and is strictly prohibited from being included in a starting main deck.
+- **Scratch Company Deck Prohibition**: The card `neutral_scratch_company` is a match-generated token entity and is strictly prohibited from being included in a starting main deck.
 - **Rarity Copy Limits**: The maximum permitted duplicate copies sharing the same card identity/name in a main deck are governed strictly by rarity:
   - **Common**: Maximum of 4 copies
   - **Uncommon**: Maximum of 3 copies
@@ -110,7 +110,7 @@ This document establishes the authoritative unified specification for the Collec
 #### FR-ENT-001: CardBlueprint (Master Definition)
 - **Immutability**: Read-only singleton data structure instantiated once during application startup.
 - **Scope**: Canonical printed profile of a card identity. All runtime cards of the same identity reference the identical `CardBlueprint`.
-- **Identity Key**: Unique alphanumeric slug (e.g., `animus_veil_render`, `common_scratch_company`).
+- **Identity Key**: Unique alphanumeric slug (e.g., `animus_veil_render`, `neutral_scratch_company`).
 - **Deck Building Compliance (`FR-SET-001`)**: Exposes `rarity`, `faction`, and `cardType` to enforce legal deck construction.
 
 #### FR-ENT-002: CardInstance (Session Card Entity)
@@ -157,9 +157,10 @@ Every `CardBlueprint` validates against the following property schema:
 
 #### FR-ZON-001: Zone Definitions
 - **Headquarters Zone**: Per-player battlefield zone housing the designated HQ card. May generate either Requisition or Tactics yield upon exhausting (`FR-INH-004`).
-- **Reserves Zone**: Per-player backline battlefield zone for safe deployment and resource generation. Protected from direct combat attacks (`FR-CBT-001`). Units occupying Reserves exhaust to generate **Requisition** (`FR-INH-002`).
-- **Main Theater Zone**: Shared central battlefield zone where engagement and combat occur. Units occupying Main Theater exhaust to generate **Tactics** (`FR-INH-002`).
+- **Reserves Zone**: Per-player backline battlefield zone for safe deployment and resource generation with uncapped capacity (no maximum entity limit). Protected from direct combat attacks (`FR-CBT-001`). Units occupying Reserves exhaust to generate **Requisition** (`FR-INH-002`).
+- **Main Theater Zone**: Shared central battlefield zone where engagement and combat occur with uncapped capacity (no maximum entity limit). Units occupying Main Theater exhaust to generate **Tactics** (`FR-INH-002`).
 - **Player Hand**: Private hand area per player with uncapped capacity (no maximum hand size).
+- **Zone Capacity Universal Invariant**: All zones (Hand, Reserves, Main Theater, Discard) are uncapped with no upper maximum entity capacity.
 - **Player Deck**: Ordered draw stack for remaining cards in the deck.
 - **Player Discard**: Public depository for destroyed Assets and spent Maneuvers.
 - **Attached Zone**: Non-battlefield sub-container zone housing cards tucked under or attached to battlefield assets (`FR-ENT-102`).
@@ -176,7 +177,7 @@ Every `CardBlueprint` validates against the following property schema:
 #### FR-ZON-002: Asset Movement, Immutability & Control Transfer
 - **Headquarters & Structure Movement Immunity**: Headquarters and Structures cannot execute movement actions (March) and are permanently immune to and ineligible targets for any effect that changes battlefield zones (`MOVE_ZONE`). They are strictly bound to their initial zones. They may be destroyed (routing to Discard) or returned to Hand via card abilities.
 - **Unit Battlefield Movement**: Units change battlefield zones between Reserves and Main Theater via the inherent March action or card abilities.
-- **Control Transfer Scope & Zone Invariance**: When a player gains control of an opposing Asset (via `GAIN_CONTROL`), the asset does **not** change zones immediately. Mind-control effects (*Rhapsody's hollow*) are strictly scoped to eligible opposing units in the **Main Theater Zone**, preventing foreign assets from directly deploying into an opponent's private Reserves backline. If the new controller subsequently commands that unit to execute an inherent March action from the Main Theater, the unit moves into its **controller's** Reserves Zone (arriving exhausted; `FR-CAP-001`). Upon destruction, the asset is deallocated and routed strictly to its **owner's** Discard zone (`EVENT_DESTROY`).
+- **Control Transfer Scope & Zone Invariance**: When a player gains control of an opposing Asset (via `GAIN_CONTROL`), the asset does **not** change zones immediately. Mind-control effects (*Rhapsody's hollow*) are strictly scoped to eligible opposing units in the **Main Theater Zone**, preventing foreign assets from directly deploying into an opponent's private Reserves backline. When control is transferred, the asset retains its current readiness state (`READIED` remains `READIED`, `EXHAUSTED` remains `EXHAUSTED`). In accordance with the absence of summoning sickness (`FR-SET-004`), a Readied stolen unit may legally declare attacks or activate abilities on the same turn it is acquired. If the new controller subsequently commands that unit to execute an inherent March action from the Main Theater, the unit moves into its **controller's** Reserves Zone (arriving exhausted; `FR-CAP-001`). Upon destruction, the asset is deallocated and routed strictly to its **owner's** Discard zone (`EVENT_DESTROY`).
 - **Destruction**: When an Asset's Health drops to 0 or below, it is destroyed immediately and routed to its owner's Discard zone (`EVENT_DESTROY`).
 
 #### FR-ZON-004 & FR-ZON-101: Non-Battlefield Zone Transition & State Reset
@@ -201,6 +202,7 @@ Every `CardBlueprint` validates against the following property schema:
 
 #### FR-ENT-103: Face-Down Transformation (`forced mutation`)
 - Sets `isFaceDown = true` while retaining existing `underlyingCardInstance`. Stat masking overrides values to `1/1/1/1 Scratch Company`. Evaluates damage against new Max Health of 1 (dies if accumulated damage >= 1).
+- **Departure to Private Zone & Face Reversion**: If a face-down Scratch Company unit (whether match-generated or morphed via *forced mutation*) departs the battlefield to a private zone (returned to hand via *Disorienting Pulse*, *Icewind Regent*, or *Ambush Tactics*, or placed into a deck), the `AssetInstance` is deallocated and its underlying card face is revealed strictly to its owner (`FR-ZON-005`). The entity reverts to its printed base identity in the owner's hand or deck, where it may subsequently be played normally as that card (`FR-ZON-004`).
 
 ---
 
@@ -226,7 +228,9 @@ Every `CardBlueprint` validates against the following property schema:
 #### FR-TRN-001: Phase Sequence
 1. **Ready Phase**: Engine automatically transitions all exhausted controlled Assets to `READIED`.
 2. **Draw Phase**: Active player draws exactly 1 card from their Deck (skipped on Turn 1 by Player 1; `FR-SET-004`).
-3. **Main Phase**: Active player deploys cards, executes inherent actions, converts resources, enacts Maneuvers, and activates abilities.
+3. **Main Phase**:
+   - **Start-of-Turn & Draw Trigger Frame**: Prior to granting the active player priority for manual action declarations, all pending "At the start of your turn" triggers (*Hammerhand Bivouac*) and Draw Phase triggers (*Portent Scrivener*) enqueue onto the Resolution Stack and auto-resolve completely (active player orders allied triggers; APNAP applies between players; `FR-TRG-003`).
+   - **Action Priority & Turn Clock**: Once the start-of-turn trigger stack clears (`Stack.isEmpty() == true`), the active player may freely deploy cards, execute inherent actions, convert resources, enact Maneuvers, and activate abilities. Enforces an authoritative server-side **75-second Main Phase Turn Clock** (`turnClockMs`). If the timer expires without an action or manual phase handover, the engine broadcasts an automated warning at 20 seconds remaining (fuse/rope visual) and deterministically commits an `AutoEndTurnCommand` upon expiration, transitioning the match directly to the End Phase.
 4. **End Phase**: Executes deterministically across four sequential sub-phases:
    - **Sub-Phase 4a (Event Emission & Trigger Enqueuing)**: Emits `EVENT_END_PHASE`. All "at end of turn" triggers and pending delayed triggers (e.g. *Redline Infusion*) enqueue onto the Resolution Stack. Active player orders allied triggers; APNAP sequencing applies between players (`FR-TRG-003`).
    - **Sub-Phase 4b (Trigger & Cascade Resolution)**: Auto-resolves the stack completely, including cascading triggers. Interactive prompts enforce the 15-second action clock (`FR-TRG-002`).
@@ -314,6 +318,8 @@ The engine provides a standardized catalog of atomic effect primitives:
 | `REDIRECT_DAMAGE_TARGET`| `newTarget: TargetRef` | Intercepts incoming damage in Stage 1 and re-routes uncommitted damage to new target (`FR-REP-004`). |
 | `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], targetCard: TargetRef` | Places target card at specified deck position without triggering a deck search shuffle (unless SHUFFLED_IN; `FR-DEK-001`). |
 | `EXHAUST` | `targetAsset: TargetRef` | Transitions target asset readiness state to EXHAUSTED (emitting `EVENT_EXHAUST`). |
+| `GRANT_SUBTYPE` | `subtype: String, duration: Enum` | Temporarily grants specified subtype to target asset until designated duration (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
+| `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum` | Temporarily grants specified keyword to target asset until designated duration (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
 
 ---
 
@@ -323,15 +329,18 @@ The engine provides a standardized catalog of atomic effect primitives:
 
 #### FR-TGT-001 & FR-TGT-102: Targeting Schema Definition
 - Evaluates eligibility via conjunction: `[Allegiance] AND [Health State] AND [Subtype Filter] AND [EntityType] AND [Zone]`.
-- **Subtype Negation**: Supports `negateSubtypes: boolean` and `excludeScratch: boolean` shorthand.
+- **Subtype & Entity Negation**: Supports `negateSubtypes: boolean`, `excludeScratch: boolean`, `excludeHQ: boolean`, and `excludeUnits: boolean` shorthand. Setting `entityType: "ASSET"` with `excludeUnits: true` targets Structures and Headquarters (*Chainbreaker Sappers*).
 - **Headquarters Filtering**: By default, generic `ASSET` targets include Headquarters unless filtered via `excludeHQ: true`.
+- **Health State Filters**: Health filters explicitly support `CURRENT_HEALTH` (`Current Health = Max Health - Accumulated Damage`) and `MAX_HEALTH` (*Cathedral of Self*, *Gemstone Titan*).
 - **Quantifiers & Allocations (`FR-TGT-002`)**: Single Target, Bounded Multi-Target, Unbounded Global Target; Fixed Constant Allocation or Distributed Pool Allocation.
 
-#### FR-TGT-003 & FR-TGT-103: Target Validation & Fizzle Rules
 - Verified at declaration and re-verified prior to resolution. If a subset of targets becomes invalid, resolves against remaining valid targets. If all targets become invalid, targeted effect clauses fizzle completely. For composite actions containing both targeted clauses and non-targeted global clauses (e.g. *All out War*), invalidation of all target bindings fizzles only the targeted clauses; non-targeted clauses resolve to the fullest extent possible.
+- **Distributed Pool Invalidation**: For actions distributing a pool of values (*Macrocannon Barrage*, `DISTRIBUTED_POOL`), values allocated to any target that becomes invalid prior to resolution evaporate completely and are **not** redistributed among remaining valid targets.
+- **Deployment Trigger Target Availability**: The absence of legal opposing targets for an asset's deployment trigger (e.g. *Saboteur*) does **not** cause the deployment command to fail validation. The asset deploys legally; upon resolution, any clauses with legal targets resolve (such as mandatory friendly damage, which targets the deploying unit itself if no other allied assets exist), while clauses lacking legal targets fizzle.
 
 #### FR-TGT-101: Bound Action Payload Model
-Clients submit fully bound payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices`, `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SACRIFICE_COST`, `DISCARD_COST`), and `deckSelectionIndices`.
+Clients submit fully bound payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices`, `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`), and `deckSelectionIndices`.
+- **Upfront Target Locking for Conditional Triggers (Blast of Genius Model)**: For composite abilities where secondary damage or effects depend on an outcome evaluated during resolution (*Samsara, Living Tempest*), all external targets (e.g. `chosen asset`) are selected and bound upfront when the trigger enqueues onto the stack. Upon resolution, the initial actions execute (e.g. inspect top cards, put one into discard); if the condition is satisfied (e.g. the discarded card was a maneuver), the damage is committed to the locked target. If the condition is not satisfied, the damage clause does not execute (no-op on the pre-locked target), completing execution in a single atomic resolution without requiring a secondary interactive prompt.
 
 ---
 
@@ -412,9 +421,10 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 #### FR-LAY-002: Health, Damage & Armor Invariants
 - `Current Health = Max Health - Accumulated Damage`. Destruction flags immediately if `Accumulated Damage >= Max Health` or if Max Health drops to <= 0.
 - Temporary Max Health debuffs (*poisoned rations*) alter Max Health in Layer 5 without modifying `accumulatedDamage`. If the unit survives, restoring Max Health effectively increases Current Health.
+- **Dynamic Armor Invariants**: Dynamic Armor is a persistent, consumable defensive pool initialized upon deployment (`Armor N`) or incremented via `ADD_ARMOR` effect primitives. Armor does **not** expire at end of turn, does not decay, and stacks additively from discrete addition events. Armor absorbs incoming damage 1-for-1 in Stage 4 of `FR-REP-004`. Armor cannot be granted continuously by Layer 4 static auras (it exists strictly as an entity pool modified by discrete events).
 
 #### FR-LAY-003: Keyword Resolution & Duration Rules
-- **Full-Round Durations**: Modifiers lasting *"until the end of your opponent's turn"* (*blindside*, *Comms Relay*) persist through the opponent's turn and expire during Sub-Phase 4c of the recipient's turn.
+- **Full-Round Durations**: Modifiers lasting *"until the end of your opponent's turn"* (*blindside*, *Comms Relay*) persist through the current turn and the opponent's subsequent turn, expiring deterministically during Sub-Phase 4c of that opponent's turn.
 - **Cornered (`FR-KWD-002e`)**: Evaluates `count(opponentMainTheaterAssets) > count(playerMainTheaterAssets)` across all battlefield Assets (Units and Structures). For triggered abilities, Cornered is an enqueue condition evaluated strictly at trigger event emission; once enqueued, it resolves unconditionally.
 
 ---
@@ -422,34 +432,34 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 ### Section 6.3: Deterministic Damage Mitigation Pipeline
 
 #### FR-REP-001 through FR-REP-003: Replacement Interception
-Replacement watchers intercept prospective hooks (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) inline, bypassing the Resolution Stack. Applied at most once per root event.
+Replacement watchers intercept prospective hooks (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) inline, bypassing the Resolution Stack. Applied at most once per root event; for replacement watchers intercepting entity destruction (*Shifting Impossibility*), each asset's prospective destruction emits an individual interceptable death hook, permitting multiple simultaneous entity destructions from a single root damage event to each be replaced.
 
 #### FR-REP-004: Deterministic 5-Stage Damage Mitigation Pipeline
 Every incoming damage instance resolves through 5 sequential automated stages:
 
 ```text
 Incoming Damage Instance
-    â”‚
-    â–¼
-[ Stage 1: Target Redirection ] â”€â”€â”€â”€â–º Moves uncommitted damage to new target (e.g. Spore Cloud)
-    â”‚
-    â–¼
-[ Stage 2: Flat Reductions ] â”€â”€â”€â”€â”€â”€â”€â–º Modifies damage by target's total Resistant N (negatives amplify)
-    â”‚
-    â–¼
-[ Stage 3: Combat Damage Capping ] â”€â–º Applies Stalwart to combat damage (min(dmg, 1); no-op on non-combat)
-    â”‚
-    â–¼
-[ Stage 4: Dynamic Armor ] â”€â”€â”€â”€â”€â”€â”€â”€â–º Deducts damage 1-for-1 from target's current Armor pool
-    â”‚
-    â–¼
-[ Stage 5: Health Counter Commit ] â”€â–º Remaining damage added to accumulatedDamage
+    │
+    ▼
+[ Stage 1: Target Redirection ] ────► Moves uncommitted damage to new target (e.g. Spore Cloud)
+    │
+    ▼
+[ Stage 2: Flat Reductions ] ───────► Modifies damage by target's total Resistant N (negatives amplify)
+    │
+    ▼
+[ Stage 3: Combat Damage Capping ] ─► Applies Stalwart to combat damage (min(dmg, 1); no-op on non-combat)
+    │
+    ▼
+[ Stage 4: Dynamic Armor ] ─────────► Deducts damage 1-for-1 from target's current Armor pool
+    │
+    ▼
+[ Stage 5: Health Counter Commit ] ─► Remaining damage added to accumulatedDamage
 ```
 
 1. **Stage 1 (Redirection)**: Evaluates downstream stages against new target's defenses.
-2. **Stage 2 (Resistant)**: Subtracts Resistant N. Negative Resistant amplifies damage. Floors at 0.
+2. **Stage 2 (Resistant)**: Subtracts Resistant N. Negative Resistant amplifies damage: an incoming damage instance of 0 raw damage against a target with `Resistant -1` is amplified to 1 damage ($0 - (-1) = 1$). Floors at 0 for positive reductions.
 3. **Stage 3 (Stalwart)**: Applies strictly if `isCombatDamage == true` and target has Stalwart. Evaluates as `damage = min(damage, 1)`. Does not raise damage <= 0. Non-combat damage (maneuvers, abilities like *soul whip*) bypasses Stalwart entirely. *(Design Invariant: Stage 2 flat reductions executing prior to Stage 3 combat capping is intentional by design to prevent combining Resistant and Stalwart into complete combat damage invulnerability).*
-4. **Stage 4 (Armor)**: Deducts damage 1-for-1 from Armor pool. Damage absorbed by Armor counts as damage taken.
+4. **Stage 4 (Armor)**: Deducts damage 1-for-1 from target's dynamic Armor pool. Damage absorbed by Armor counts as damage taken and reduces the asset's dynamic Armor pool accordingly (consuming the armor). When a target possesses both Stalwart and Armor, Stalwart caps incoming combat damage to 1 in Stage 3, and Stage 4 absorbs that 1 damage by depleting 1 point from the dynamic Armor pool.
 5. **Stage 5 (Health Commit & Trigger Emission)**: Remaining damage added to `accumulatedDamage`. `EVENT_TAKE_DAMAGE` fires if and only if actual damage is absorbed by Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`).
 
 ---
@@ -476,15 +486,16 @@ Combat execution proceeds through three deterministic steps:
 1. **Step 1 (Declaration & Exhaustion)**:
    - Attacker exhausts and designates target(s). Berserk units (`FR-KWD-002o`) may designate up to 2 targets.
    - Synchronous `EVENT_ATTACK_DECLARE` emits.
-2. **Step 2 (Reaction & Trigger Window)**:
+2. **Step 2 (Reaction & Trigger Window & Action Lock)**:
    - All `EVENT_ATTACK_DECLARE` triggers enqueue onto the Resolution Stack (e.g. *blind defile*, *Aggressive N*, *Arkha, Sun's Fury*).
    - The stack auto-resolves completely.
+   - **Combat Action Lock Invariant**: Declaration of an attack initiates an atomic, uninterruptible combat transaction. Manual player action declarations (deploying cards, enacting maneuvers, activating abilities) are strictly locked out for both players; once all Step 2 triggers resolve, the match advances immediately to Step 3 damage resolution without an intervening player priority window.
    - If an off-turn trigger destroys or removes the attacker (e.g. *blind defile*) or defender prior to Step 3, combat immediately terminates for that entity with zero damage dealt.
 3. **Step 3 (Simultaneous Combat Damage Resolution & Retaliation)**:
    - If both combatants remain valid, combat damage is dealt **simultaneously** equal to effective Combat Power.
    - Retaliation is 100% symmetric across all combat pairings (Unit vs Unit, Unit vs Structure, Unit vs HQ, HQ vs HQ).
    - Combat retaliation is combat damage (`isCombatDamage = true`); Stalwart applies.
-   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`). When defending against multi-target Berserk attacks (`FR-KWD-002o`), each defender's retaliation is processed as an independent, discrete damage instance sequentially routed through `FR-REP-004`.
+   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`). When defending against multi-target Berserk attacks (`FR-KWD-002o`), each defender's retaliation is processed as an independent, discrete damage instance sequentially routed through `FR-REP-004`; the attacking player designates the sequential resolution order of the defender retaliations upon attack declaration.
 
 #### FR-CBT-003: Persistent Damage, Defeat Rules & Match Draws
 - Damage remains marked across turns. When an HQ reaches <= 0 Health, its controller loses immediately.
@@ -586,7 +597,7 @@ Combat execution proceeds through three deterministic steps:
 }
 ```
 
-#### 2. `Piston Fist Prototype` (Soulless Mythic Unit - 8-Drop Pneumatic Recoil)
+#### 2. `Piston Fist Prototype` (Soulless Mythic Unit - 6-Drop Pneumatic Recoil)
 ```json
 {
   "id": "soulless_piston_fist_prototype",
@@ -594,16 +605,17 @@ Combat execution proceeds through three deterministic steps:
   "cardType": "UNIT",
   "faction": "SOULLESS",
   "subtypes": ["Mechanized"],
-  "requisitionCost": 4,
-  "tacticsCost": 4,
-  "power": 9,
-  "health": 8,
+  "requisitionCost": 3,
+  "tacticsCost": 3,
+  "power": 1,
+  "health": 9,
   "requisitionYield": 1,
   "tacticsYield": 2,
   "deploymentZones": ["RESERVES"],
   "rarity": "MYTHIC",
-  "rulesText": "After this unit attacks, move this unit to your Reserves.",
+  "rulesText": "Aggressive 9\nAfter this unit attacks, move this unit to your Reserves.",
   "abilities": [
+    { "abilityType": "KEYWORD", "keyword": "AGGRESSIVE", "parameter": 9 },
     {
       "abilityType": "TRIGGERED",
       "triggerHook": "EVENT_ATTACK_RESOLVED",
@@ -645,11 +657,71 @@ Combat execution proceeds through three deterministic steps:
 }
 ```
 
+#### 4. `Samsara, Living Tempest` (Concordia Mythic Unit - Upfront Bound Trigger & Composite Partition)
+```json
+{
+  "id": "concordia_samsara_living_tempest",
+  "name": "Samsara, Living Tempest",
+  "cardType": "UNIT",
+  "faction": "CONCORDIA",
+  "subtypes": ["Elemental", "Tempest"],
+  "requisitionCost": 6,
+  "tacticsCost": 0,
+  "power": 6,
+  "health": 7,
+  "requisitionYield": 0,
+  "tacticsYield": 2,
+  "deploymentZones": ["MAIN_THEATER"],
+  "rarity": "MYTHIC",
+  "rulesText": "Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset.",
+  "abilities": [
+    {
+      "abilityType": "TRIGGERED",
+      "triggerHook": "EVENT_ATTACK_DECLARE",
+      "condition": { "source": "SELF" },
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "entityType": "ASSET" },
+        "count": 1,
+        "bindingPolicy": "UPFRONT_LOCK"
+      },
+      "effect": {
+        "primitive": "COMPOSITE_SEQUENCE",
+        "steps": [
+          {
+            "primitive": "LOOK_TOP_CARDS",
+            "count": 2,
+            "partition": {
+              "destinations": [
+                { "zone": "HAND", "count": 1 },
+                { "zone": "DISCARD", "count": 1, "trackAs": "discardedCard" }
+              ]
+            }
+          },
+          {
+            "primitive": "CONDITIONAL_CLAUSE",
+            "condition": {
+              "targetRef": "discardedCard",
+              "cardType": "MANEUVER"
+            },
+            "effect": {
+              "primitive": "DEAL_DAMAGE",
+              "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+              "amount": { "type": "STATIC", "value": 2 }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
 ---
 
 ## APPENDIX A: KEYWORD MECHANICS DICTIONARY
 
-- **FR-KWD-002a: Unbowed**: Triggered ability firing on `EVENT_TAKE_DAMAGE`. Triggers whenever actual damage is absorbed by dynamic Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`). If damage was reduced to 0 in Stage 2, Unbowed does not trigger. If a unit takes lethal damage, Unbowed triggers and enqueues before state-based actions kill it; however, upon stack resolution, if the unit has died and transitioned to Discard, any self-referential heal or stat modification targeting itself fizzles under `FR-TGT-103` and `FR-ZON-101`.
+- **FR-KWD-002a: Unbowed**: Triggered ability firing on `EVENT_TAKE_DAMAGE`. Triggers whenever actual damage is absorbed by dynamic Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`). If damage was reduced to 0 in Stage 2, Unbowed does not trigger. If a unit takes lethal damage, Unbowed triggers and enqueues before state-based actions kill it. Because non-self effect clauses (e.g. *Hammerhand Brigands* `Scratch 1`, *Devilhorn Captain* `Deal 1 damage to chosen asset in the Main Theater`, *Chainbreaker Irregulars* `Draw a card, then discard a card`) do not depend on the deceased source unit remaining on the battlefield, they resolve completely from the grave. Only self-referential mutations targeting the deceased source unit itself (such as healing or buffing itself; *Macabre Dancers*, *Allshan, Chainbreaker Revenant*) fizzle upon stack resolution under `FR-TGT-103` and `FR-ZON-101`.
 - **FR-KWD-002b: Resistant N**: Replacement watcher modifying incoming damage by N in Stage 2 of `FR-REP-004`. Can be negative (amplifies damage; does not clamp).
 - **FR-KWD-002c: Stalwart**: Replacement watcher capping incoming combat damage at max 1 in Stage 3 of `FR-REP-004` (`min(damage, 1)`). Standardized rules text: *"All combat damage taken is reduced to 1"*. Applies strictly to combat damage resulting from an inherent Attack declaration or combat retaliation (`FR-CBT-002`). Has zero interaction with non-combat damage (maneuvers, abilities pass through unmodified).
 - **FR-KWD-002d: Heal N**: Atomic primitive removing up to N accumulated damage counters.
