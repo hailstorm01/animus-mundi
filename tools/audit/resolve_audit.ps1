@@ -84,9 +84,16 @@ if ($targetLineIndex -eq -1) {
 Write-Host "[1/4] Found matching entry in audit_registry.md (Line $($targetLineIndex + 1))" -ForegroundColor Green
 Write-Host "      Current: $originalLine" -ForegroundColor DarkGray
 
+# Extract target document path from registry row
+$rawCols = $originalLine.Split("|")
+$targetDocRel = ""
+if ($rawCols.Length -ge 5) {
+    $targetDocRel = $rawCols[4].Trim().Trim('`')
+}
+
 if ($DryRun) {
     Write-Host "[DRY-RUN] Would delete: $pendingFilePath" -ForegroundColor Yellow
-    Write-Host "[DRY-RUN] Would commit FRD changes and file deletion" -ForegroundColor Yellow
+    Write-Host "[DRY-RUN] Would commit FRD changes ($targetDocRel) and file deletion" -ForegroundColor Yellow
     Write-Host "[DRY-RUN] Would update registry status to RESOLVED and commit" -ForegroundColor Yellow
     return
 }
@@ -105,8 +112,12 @@ if ([string]::IsNullOrWhiteSpace($CommitMessage)) {
     $CommitMessage = "docs(frd): resolve PM devil's advocate audit for $docBaseName"
 }
 
-# Add FRD changes and deleted file
-git -C $RepoRoot add "docs/frd/" "docs/audit/pending/$auditFileName"
+# Add specifically targeted FRD changes (or fallback to docs/frd/) and deleted file
+if ($targetDocRel -and (Test-Path (Join-Path $RepoRoot $targetDocRel))) {
+    git -C $RepoRoot add $targetDocRel "docs/audit/pending/$auditFileName"
+} else {
+    git -C $RepoRoot add "docs/frd/" "docs/audit/pending/$auditFileName"
+}
 
 # Check if there are staged changes
 $stagedDiff = git -C $RepoRoot diff --cached --name-only

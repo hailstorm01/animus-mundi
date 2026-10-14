@@ -24,13 +24,27 @@ $expectedFiles = @(
     "Card_Compiler_FRD.md"
 )
 
+$existingFrds = Get-ChildItem -Path $frdDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+
 # Collect all FRD files to inspect
 if ($Files.Count -gt 0) {
-    $targetFiles = $Files | ForEach-Object {
-        if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { Join-Path $RepoRoot $_ }
+    $rawFiles = @()
+    foreach ($entry in $Files) {
+        $rawFiles += ($entry -split '[,;\r\n]')
+    }
+    $targetFiles = @()
+    foreach ($f in $rawFiles) {
+        $trimmed = $f.Trim()
+        if (-not $trimmed) { continue }
+        $p = if ([System.IO.Path]::IsPathRooted($trimmed)) { $trimmed } else { Join-Path $RepoRoot $trimmed }
+        if (Test-Path $p) {
+            $targetFiles += $p
+        } else {
+            Write-Host "  [ERROR] Specified file not found: $trimmed" -ForegroundColor Red
+            $hasErrors = $true
+        }
     }
 } else {
-    $existingFrds = Get-ChildItem -Path $frdDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
     $targetFiles = $existingFrds
 }
 
@@ -43,16 +57,9 @@ foreach ($ef in $expectedFiles) {
     }
 }
 
+# Step 1: Scan ALL existing FRDs to build the complete requirement definition catalog
 $reqDefs = @{}
-$reqRefs = @()
-
-foreach ($filePath in $targetFiles) {
-    if (-not (Test-Path $filePath)) {
-        Write-Host "  [ERROR] File not found: $filePath" -ForegroundColor Red
-        $hasErrors = $true
-        continue
-    }
-
+foreach ($filePath in $existingFrds) {
     $fileName = Split-Path $filePath -Leaf
     $lines = Get-Content $filePath
     for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -66,12 +73,26 @@ foreach ($filePath in $targetFiles) {
                     $reqDefs[$val] = @{ File = $fileName; Line = ($i + 1); Text = $line.Trim() }
                 }
             }
-            $reqRefs += [PSCustomObject]@{ Req = $val; File = $fileName; Line = ($i + 1); Text = $line.Trim() }
         }
     }
 }
 
-Write-Host "  Discovered $($reqDefs.Count) defined requirement IDs across $($targetFiles.Count) FRD files." -ForegroundColor Gray
+Write-Host "  Discovered $($reqDefs.Count) defined requirement IDs across $($existingFrds.Count) FRD files." -ForegroundColor Gray
+
+# Step 2: Scan target file(s) for references to validate against the master definitions
+$reqRefs = @()
+foreach ($filePath in $targetFiles) {
+    $fileName = Split-Path $filePath -Leaf
+    $lines = Get-Content $filePath
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        $matches = [regex]::Matches($line, 'FR-[A-Z]{3}-\d{3}[a-z]?')
+        foreach ($m in $matches) {
+            $reqRefs += [PSCustomObject]@{ Req = $m.Value; File = $fileName; Line = ($i + 1); Text = $line.Trim() }
+        }
+    }
+}
+Write-Host "  Checking $($reqRefs.Count) requirement references across $($targetFiles.Count) target FRD file(s)..." -ForegroundColor Gray
 
 # Check for dangling references
 $uniqueRefs = $reqRefs | Select-Object -ExpandProperty Req -Unique | Sort-Object

@@ -12,7 +12,8 @@ if [ -n "$STAGED_FRD" ]; then
     echo "=========================================================="
     echo "  [Pre-Commit] Staged FRD changes detected. Auditing FRDs..."
     echo "=========================================================="
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1
+    FRD_LIST=$(echo "$STAGED_FRD" | tr '\n' ',' | sed 's/,$//')
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1 -Files "$FRD_LIST"
     if [ $? -ne 0 ]; then
         FAILED=1
     fi

@@ -1,6 +1,6 @@
 # Full card standardizer and audit logger
 param(
-    [string]$RepoRoot = "c:\Users\blade\animus-mundi\animus-mundi"
+    [string]$RepoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 )
 
 $cardsDir = Join-Path $RepoRoot "data\cards"
