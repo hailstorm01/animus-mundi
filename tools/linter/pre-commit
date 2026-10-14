@@ -23,11 +23,12 @@ if [ -n "$STAGED_CSV" ]; then
     echo "=========================================================="
     echo "  [Pre-Commit] Staged CSV changes detected. Auditing Sheets & Syntax..."
     echo "=========================================================="
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1
+    CSV_LIST=$(echo "$STAGED_CSV" | tr '\n' ',' | sed 's/,$//')
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1 -Files "$CSV_LIST"
     if [ $? -ne 0 ]; then
         FAILED=1
     fi
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1 -Files "$CSV_LIST"
     if [ $? -ne 0 ]; then
         FAILED=1
     fi

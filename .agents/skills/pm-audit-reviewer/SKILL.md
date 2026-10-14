@@ -141,6 +141,9 @@ For each finding, formulate:
 
 Depending on how the review was triggered, proceed via **Path A (Interactive Mode)** or **Path B (Batch Clearing Loop)**:
 
+> [!CAUTION] Human-Triggered Swarms Only
+> Autonomous swarm loops, batch clearing cycles, or multi-agent cascades must NEVER be started autonomously by agents. They strictly require explicit human initiation (e.g., `@pm-audit-reviewer --clear-backlog` or explicit user instruction to run an autonomous clearing loop). The default mode is ALWAYS Path A (Interactive Mode).
+
 #### Path A: Standard Interactive Consultation (Default)
 Initiate an interactive conversation with the user to review findings item-by-item or in severity tiers:
 - **Options for the Designer:**
@@ -157,8 +160,8 @@ Initiate an interactive conversation with the user to review findings item-by-it
   - `[D] Defer`: Mark item for separate tracking outside this FRD.
   - `[E] Start Design Discussion`: Launch a separate interactive conversation with the `game-designer` persona.
 
-#### Path B: Human-Triggered Backlog Clearing Loop (`@pm-audit-reviewer --clear-backlog` or explicit user trigger)
-When the user explicitly launches a batch/backlog clearing cycle (e.g., *"Clear out the straightforward audit findings"* or *"Run the resolver-DA cycle on backlog"*):
+#### Path B: Explicitly Human-Triggered Backlog Clearing Loop (`@pm-audit-reviewer --clear-backlog`)
+Only when the user explicitly commands a batch/backlog clearing cycle (e.g., *"@pm-audit-reviewer --clear-backlog"*, *"Clear out the straightforward audit findings"* or *"Run the resolver-DA cycle on backlog"*):
 1. **Sweep Tier 1 Items:**
    - Automatically apply clean phrasing fixes, tie-breakers, and redundancy de-scoping for Tier 1 findings.
    - Run `powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1` to ensure references remain valid.

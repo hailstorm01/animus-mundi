@@ -19,13 +19,19 @@ $hasErrors = $false
 
 # Determine which CSV files to audit
 if ($Files.Count -gt 0) {
+    $rawFiles = @()
+    foreach ($entry in $Files) {
+        $rawFiles += ($entry -split '[,;\r\n]')
+    }
     $csvFiles = @()
-    foreach ($f in $Files) {
-        $p = if ([System.IO.Path]::IsPathRooted($f)) { $f } else { Join-Path $RepoRoot $f }
+    foreach ($f in $rawFiles) {
+        $trimmed = $f.Trim()
+        if (-not $trimmed) { continue }
+        $p = if ([System.IO.Path]::IsPathRooted($trimmed)) { $trimmed } else { Join-Path $RepoRoot $trimmed }
         if (Test-Path $p) {
             $csvFiles += Get-Item $p
         } else {
-            Write-Host "  [ERROR] Specified file not found: $f" -ForegroundColor Red
+            Write-Host "  [ERROR] Specified file not found: $trimmed" -ForegroundColor Red
             $hasErrors = $true
         }
     }
