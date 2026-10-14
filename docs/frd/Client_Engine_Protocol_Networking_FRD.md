@@ -38,8 +38,9 @@ This document defines the network architecture, communication transport, client-
 
 #### FR-NET-004: Connection Liveness, Ping/Pong & Latency Tracking
 - **Heartbeat Cadence**: The client transmits an empty `Ping` frame every 1,000 ms. The server responds immediately with a `Pong` frame echoing the client's local timestamp and appending the current server timestamp (`serverEpochMs`).
+- **Heartbeat Rate-Limiting & DoS Protection**: The server enforces a strict sliding-window rate ceiling permitting a maximum of **5 `Ping` frames per 1,000 ms window** (absorbing normal network jitter/packet bunching). If a client exceeds 5 pings in a rolling 1-second interval, the server terminates the WebSocket connection with close code `1008` (`POLICY_VIOLATION`) and flags the session for forfeit due to protocol abuse.
 - **Round-Trip Time (RTT)**: The client computes rolling smoothed RTT to dynamically adjust local animation playback rates.
-- **Connection Timeout**: If no frames (data or heartbeat) are received from a client for 3,000 ms, the server flags the connection as severed and initiates the Disconnect Grace Window (`FR-SES-005`).
+- **Connection Timeout**: If no frames (data or heartbeat) are received from a client for 3,000 ms, the server flags the connection as severed and initiates disconnection handling and reserve bank tracking (`FR-SES-005`).
 
 ---
 
@@ -54,16 +55,16 @@ This document defines the network architecture, communication transport, client-
        ├─────────────────────────────────────────────►│
        │ 2. HandshakeAck (Protocol & Engine Version)  │
        │◄─────────────────────────────────────────────┤
-       │ 3. MatchJoinRequest (MatchToken + DeckList)  │
+       │ 3. MatchJoinRequest (MatchToken + Token)     │
        ├─────────────────────────────────────────────►│
        │ 4. MatchValidate & DeckLegality (FR-SET-001) │
-       │    [Server validates HQ, neutral, 50+ cards] │
+       │    [Server fetches deck from backend storage]│
        │ 5. MatchStartNotification (Coin Toss/P1)     │
        │◄─────────────────────────────────────────────┤
        │ 6. MulliganPrompt (6 Initial Cards)          │
        │◄─────────────────────────────────────────────┤
        │ 7. MulliganCommit (Selected indices set aside)│
-       ├─────────────────────────────────────────────►│
+       │├─────────────────────────────────────────────►│
        │ 8. Turn 1 Setup (Draws, HQ placement)        │
        │◄─────────────────────────────────────────────┤
 ```
@@ -77,16 +78,13 @@ This document defines the network architecture, communication transport, client-
   - `matchAuthToken`: Cryptographically signed JWT issued by the matchmaking API.
 - If the protocol version or engine version does not strictly match, the server immediately returns a `HandshakeReject` packet with an error code and closes the connection.
 
-#### FR-SES-002: Deck Registration & Server Validation
+#### FR-SES-002: Secure Match Entry & Server-Side Deck Validation
 - In compliance with **FR-SET-001**:
-  - The client submits its complete deck payload: 1 designated Headquarters card ID and 50+ main deck card blueprint IDs.
-  - The server verifies:
-    1. The HQ card belongs strictly to Concordia, Soulless, Path, or Animus (cannot be Neutral).
-    2. All main deck cards match the HQ's faction or the Neutral faction.
-    3. Main deck contains >= 50 cards.
-    4. Rarity copy limits are strictly adhered to: Common (max 4), Uncommon (max 3), Rare (max 2), Mythic (max 1).
-    5. The card `neutral_scratch_company` is strictly excluded (match-generated tokens are prohibited from deck construction).
-  - If validation fails, the match aborts with `DECK_LEGALITY_VIOLATION`.
+  - To prevent client-side packet sniffing and strategic meta disclosure during connection negotiation, clients **never** transmit card blueprint arrays over the game WebSocket.
+  - The client submits `MatchJoinCommand` containing strictly the `match_token` (JWT issued by matchmaking) and an optional signed `deck_registration_token`.
+  - The authoritative match container retrieves the player's registered deck directly from secure backend session storage via internal match coordinator APIs.
+  - The server validates the retrieved deck strictly against canonical deck construction legality in **FR-SET-001** (HQ faction designation, main deck faction purity, minimum 50 cards, rarity copy limits, and prohibition of `neutral_scratch_company`).
+  - If validation fails, match initialization aborts with `DECK_LEGALITY_VIOLATION`.
 
 #### FR-SES-003: First-Player Determination Protocol
 - In compliance with **FR-SET-003**:
@@ -100,33 +98,38 @@ This document defines the network architecture, communication transport, client-
 - In compliance with **FR-SET-002**:
   1. The server initializes each player's deck, executes a cryptographically secure shuffle (`FR-DEK-002`), and generates an initial hand of 6 cards for each player.
   2. The server sends `MulliganPrompt` to each player containing only their own 6 cards.
-  3. Players have a 25-second countdown to return `MulliganCommitRequest` containing an array of zero or more card instance IDs to set aside.
+  3. Players have a 25-second countdown to return `MulliganCommitCommand` containing an array of zero or more card instance IDs to set aside.
+     - **Continuous Progression & Disconnect Fallback**: Conforming to the continuous timer progression in `FR-SES-005`, the 25-second mulligan countdown never pauses upon disconnect. If the 25-second countdown expires without a commit (whether due to client timeout or disconnection), the server deterministically defaults to **keep all 6 cards** (zero cards swapped).
+     - **Pre-Game Reserve Preservation**: The player's 60-second Reserve Time Bank (`FR-SES-005`) is not drawn down during the pre-game mulligan. The match transitions directly to Turn 1 setup without stalling the opponent, preserving the player's full 60s reserve bank for in-match rehydration.
   4. Upon receiving both commits (or timer expiration):
      - The server draws replacement cards for the set-aside cards.
      - The set-aside cards are shuffled back into the deck.
      - The server transmits `MulliganResultNotification` containing the finalized opening hand to each respective player and notifying opponents of the number of cards swapped.
 
-#### FR-SES-005: Disconnect Grace Window & State Rehydration
+#### FR-SES-005: Disconnection Handling, Unified Reserve Time Bank & State Rehydration
 - In compliance with **FR-MOD-001** and **FR-NET-004**:
-  - If a player disconnects mid-match (detected within 3,000 ms of silence via `FR-NET-004`), the server enters a **10-second Disconnect Grace Window**.
-  - **Prompt Action Clock Pausing & Retrospective Compensation**: If the disconnect occurs while an interactive choice prompt is active, the server pauses the action clock and compensates for undetected silent time:
-    ```text
-    remainingClockMs = max(1000, deadlineEpochMs - lastReceivedClientPacketEpochMs)
-    ```
-    This completely eliminates network silent-countdown race conditions where a prompt could expire before disconnection was detected.
-  - If the disconnected player reconnects within the 10-second window:
-    1. The client sends `ReconnectRequest` with the active `matchAuthToken`.
-    2. The server responds with a complete `FullStateSnapshot` containing:
-       - Match stage enum (`STAGE_FIRST_PLAYER_CHOICE`, `STAGE_MULLIGAN`, `STAGE_MAIN_MATCH`).
-       - Setup stage context if reconnecting during pre-game (initial 6-card hand instances, pending `MulliganPrompt` or `FirstPlayerChoicePrompt` with remaining action clock).
-       - Public board state (all assets across HQ, Reserves, Main Theater).
-       - Controller's private hand instances.
-       - Discard pile public contents.
-       - Current phase, active player, resource pools, and Main Phase Turn Clock deadline (`FR-TRN-001`).
-       - Active stack items and pending prompts (with remaining paused `remainingClockMs` restored).
-       - Last processed `sequenceId`.
-    3. The client renders the state instantaneously, clears its animation queue, unpauses the prompt clock, and resumes play.
-  - If the player fails to reconnect within the 10-second grace window, the server commits deterministic fallbacks for any active choices and begins a 60-second match forfeit countdown.
+  - **Unified Reserve Time Bank**: Rather than pausing clocks or maintaining an opaque disconnect mode, the server allocates each player a cumulative **60,000 ms (60-second) Reserve Time Bank** (`timeBankMs`) per match.
+  - **Authoritative Continuous Timer Progression**: Neither the 75-second Main Phase Turn Clock (`FR-TRN-001`) nor the 15-second choice prompt clocks (`FR-MSG-005`) pause when a player disconnects or encounters network silence. 
+  - **Reserve Bank Depletion & Deterministic Fallbacks**:
+    - When any active turn clock or choice prompt expires (whether the player is connected or offline):
+      - If the player's `timeBankMs > 0`, the match timer transitions into Reserve Time, drawing down `timeBankMs` millisecond-for-millisecond while displaying an active rope/fuse burning effect to both clients.
+      - If `timeBankMs == 0` (or burns to 0):
+        - For an active `PlayerChoicePrompt`: The server commits the deterministic fallback immediately (`FR-MOD-001`) and execution advances without stalling.
+        - For the Main Phase Turn Clock: The server commits an automated `AutoEndTurnCommand`, immediately handing turn priority to the opponent.
+    - If a disconnected player remains offline with `timeBankMs == 0` and is not currently facing an active prompt or turn, a 60-second connection timeout countdown initiates. If the player fails to reconnect before this timeout expires, the server declares match forfeiture (`FORFEIT_TIMEOUT`).
+  - **State Rehydration on Reconnect**:
+    - If the disconnected player reconnects:
+      1. The client sends `ReconnectRequest` with the active `matchAuthToken`.
+      2. The server responds with a complete `FullStateSnapshot` containing:
+         - Match stage enum (`STAGE_FIRST_PLAYER_CHOICE`, `STAGE_MULLIGAN`, `STAGE_MAIN_MATCH`).
+         - Setup stage context if reconnecting during pre-game (initial 6-card hand instances, pending `MulliganPrompt` or `FirstPlayerChoicePrompt` with active deadlines).
+         - Public board state (all assets across HQ, Reserves, Main Theater).
+         - Controller's private hand instances.
+         - Discard pile public contents.
+         - Current phase, active player, resource pools, remaining `timeBankMs`, and Main Phase Turn Clock deadline (`FR-TRN-001`).
+         - Active stack items and pending prompts (with remaining deadline).
+         - Last processed `sequenceId`.
+      3. The client renders the state instantaneously, clears its animation queue, and synchronizes its local timer displays with the server deadlines.
 
 ---
 
@@ -307,8 +310,7 @@ In fulfillment of **FR-INH-001** through **FR-INH-004** and **FR-TGT-101**:
 
 message MatchJoinCommand {
   string match_token = 1;
-  string hq_blueprint_id = 2;
-  repeated string deck_blueprint_ids = 3;
+  string deck_registration_token = 2; // Signed token bound to backend deck registration
 }
 
 enum FirstPlayerChoice {
@@ -358,7 +360,7 @@ message DeployScratchCommand {
 }
 
 message ConvertResourceCommand {
-  int32 requisition_spent = 1; // Positive multiple of 2 (converts 2R -> 1T instantaneously, FR-RES-003)
+  int32 tactics_requested = 1; // Number of Tactics desired; server deterministically deducts (tactics_requested * 2) Requisition (FR-RES-003)
 }
 
 // ============================================================================
@@ -607,17 +609,21 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 
 ### Section 5.1: Decoupled Animation Queue
 
-#### FR-PAC-001: Client-Side FIFO Event Queue
+#### FR-PAC-001: Client-Side FIFO Event Queue & Server Animation Grace Buffer
 - The Godot client maintains a decoupled, local `AnimationEventQueue`.
 - When a `ServerEventStream` packet arrives, the client immediately stores the latest state in an unrendered mirror state cache, while passing the atomic event structs into the queue.
 - Visual components consume the queue sequentially:
   - `EVENT_MARCH` triggers sprite translation across the board and transitions the unit to Exhausted (`FR-INH-001`, `FR-CAP-001`). Attacks require a readied asset, so marching units cannot attack without an intervening readying effect (e.g. `Regroup`).
   - `EVENT_DAMAGE_APPLIED` spawns floating combat text and flashes defensive shields.
   - `EVENT_DESTROY` plays death dissolve and triggers the reveal flip if a Scratch Company proxy is destroyed.
+- **Server Turn Handover Animation Grace Buffer**:
+  - Upon broadcasting a `PhaseTransitionEvent` entering a player's Main Phase (`FR-TRN-001`), the server grants an authoritative **5,000 ms Animation Grace Window** before the 75-second Main Phase Turn Clock countdown begins (`turnClockDeadlineEpochMs = currentServerTimeMs() + 5000 + 75000`).
+  - If the active player submits any valid command during this 5,000 ms window, the grace period ends immediately and standard turn execution begins without delay.
+  - This bounded server-side buffer ensures incoming players are never deprived of playable turn time by complex prior-turn animation cascades ("turn theft"), while preventing malicious clients from withholding completion ACKs.
 
-#### FR-PAC-002: Animation Fast-Forwarding on Inbound Prompts
-- If an interactive `PlayerChoicePrompt` arrives while the client's `AnimationEventQueue` has pending background visual items:
-  - The client automatically accelerates animation playback rates (e.g., 3.0x speed) or collapses non-essential visual transitions to guarantee that the player is presented with the prompt UI with maximum remaining time on their action clock.
+#### FR-PAC-002: Animation Fast-Forwarding on Inbound Prompts & Phase Transitions
+- If an interactive `PlayerChoicePrompt` arrives, or if a `PhaseTransitionEvent` entering the player's Main Phase is received while the client's `AnimationEventQueue` has pending background visual items:
+  - If the animation queue backlog exceeds 2,000 ms of playback time, the Godot client automatically accelerates animation playback rates (up to 3.0x speed) or collapses non-essential visual transitions (e.g., snapping floating combat numbers and death dissolves to finalized states) to guarantee that the player is presented with the prompt or turn UI with maximum remaining time on their action clock.
 
 ---
 
@@ -660,8 +666,8 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 
 ### Section 5.3: Desync Verification via Public State Hashing
 
-#### FR-PAC-004: Public State Checksum Calculation
-- At the conclusion of every phase transition and stack unwinding sequence, the server computes a 64-bit CRC/FNV-1a hash of the **Public Board State**:
+#### FR-PAC-004: Public State Checksum Calculation & Per-Batch Verification
+- At the conclusion of every event stream batch transmitted to clients—including inherent actions (March, Attack, Resource Generation, Conversion, Scratch Deploy), phase transitions, and stack unwinding sequences—the server computes a 64-bit CRC/FNV-1a hash of the **Public Board State**:
   - Combined Health, dynamic Armor pools, and Combat Power of all assets in HQ, Reserves, and Main Theater.
   - Readiness states (`READIED` / `EXHAUSTED`) of all assets.
   - Total card counts in Hand, Deck, and Attached zones for each player.
@@ -669,32 +675,20 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - Current Requisition and Tactics pools.
   - *Secret card identities in hands, decks, and face-down Scratch proxies are strictly excluded from the hash.*
 - **Effective Layer 6 Attribute Rule**: To eliminate desync vulnerabilities with masked entities, the state hasher calculates asset Health and Combat Power strictly using post-mask effective values from Layer 6 of the Attribute Pipeline (`FR-LAY-001`, `FR-ENT-101`), guaranteeing 100% hash parity with client-visible proxy states.
-- The hash is transmitted via `PublicStateHash`.
-- The Godot client computes the identical hash across its mirrored public state cache:
-  - If a hash mismatch is detected, the client flags a desync and automatically requests a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board without disconnecting.
+- **Per-Batch Emission**: The hash is transmitted via `ServerEventStream.state_hash` (`FR-MSG-004`).
+- **Immediate Single-Frame Recovery**: The Godot client computes the identical hash across its mirrored public state cache upon draining each event stream batch:
+  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and automatically requests a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
 
 ---
 
-## DOMAIN 6: SPECTATOR ARCHITECTURE & REPLAY SYSTEM
+## DOMAIN 6: MATCH REPLAY ARCHITECTURE
 
-### Section 6.1: Live Spectator Protocol
-
-#### FR-SPC-001: Spectator Fog-of-War Enforcement
-- Live spectators connecting via a `SpectatorToken` are treated by the server as a **neutral 3rd-party observer**.
-- The server applies full Fog-of-War sanitization (`FR-SEC-001`, `FR-SEC-002`):
-  - Spectators **cannot** view either player's private hand contents.
-  - Spectators receive the identical double-blind `scratch_proxy_id` representation for all Scratch Companies on the battlefield and in attached zones.
-  - Spectators only see underlying card identities when an asset enters a public Discard pile.
-- **Anti-Sniping Protection**: This eliminates any incentive or possibility of players using live spectator feeds to cheat or gain hidden information.
-
----
-
-### Section 6.2: Match Replay File Format (`.rec`)
+### Section 6.1: Match Replay File Format (`.rec`)
 
 #### FR-SPC-002: Master Replay Data Architecture
 - Upon match conclusion, the server compiles and archives a complete match recording (`.rec` file).
 - **Zero Information Hiding in Replays**:
-  - Unlike live broadcasts, the replay file contains the **100% unmasked historical truth**.
+  - The replay file contains the **100% unmasked historical truth**.
   - Includes initial shuffled deck order arrays, exact card IDs of all drawn cards, and the real underlying card identities of all Scratch Companies.
 - **File Structure**:
   - `ReplayHeader`: Match GUID, Engine Version, Date, Player Metadata, Deck Lists.
