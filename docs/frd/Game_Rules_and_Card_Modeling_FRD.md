@@ -181,8 +181,8 @@ Every `CardBlueprint` validates against the following property schema:
 - **Destruction**: When an Asset's Health drops to 0 or below, it is destroyed immediately and routed to its owner's Discard zone (`EVENT_DESTROY`).
 
 #### FR-ZON-004 & FR-ZON-101: Non-Battlefield Zone Transition & State Reset
-- Whenever an Asset transitions from a battlefield zone to a non-battlefield zone (`HAND`, `DISCARD`, `DECK`):
-  1. The `AssetInstance` is deallocated.
+- **FR-ZON-004 (Subsumes FR-ZON-101)**: Whenever an Asset transitions from a battlefield zone to a non-battlefield zone (`HAND`, `DISCARD`, `DECK`):
+  1. The `AssetInstance` is deallocated (`FR-ZON-101`).
   2. All persistent state attributes—accumulated damage, dynamic Armor, temporary stat modifiers, continuous aura registrations, and keywords—are wiped.
   3. The entity reverts strictly to its printed base card statistics.
 - **Intra-Battlefield Movements (March)**: Moving between Reserves and Main Theater does **not** wipe attributes or buffs; dynamic state is fully preserved.
@@ -191,14 +191,19 @@ Every `CardBlueprint` validates against the following property schema:
 - Immediately prior to an Asset's destruction (`EVENT_DESTROY`) or departure from an active zone, the engine captures an immutable `AssetSnapshot` (`FR-SNP-101`). Secondary triggers evaluate criteria strictly against this snapshot.
 
 #### FR-ZON-005 & FR-ENT-101: Scratch Company Fog of War & Double-Blind Lifecycle
-- **Double-Blind Deployment**: When a Scratch Company unit is deployed, its underlying card identity is strictly **unknown to BOTH players**. The engine enforces complete double-blind information maskingâ€”neither the controlling player nor the opponent may inspect its underlying card face or identity.
-- **Departure to Public Zone (Discard)**: When a Scratch Company unit enters Discard, it transitions face-up; its underlying card identity is revealed to **both players**.
-- **Departure to Private Zone (Hand, Deck)**: When returned to Hand or Deck, it reverts to a Card; its underlying identity is revealed **strictly to the owner of that private zone**.
-- **Transition to Attached Zone (Tucked / NO-AH-5)**: When tucked into `ATTACHED` under an asset (`FR-ENT-102`), it remains a battlefield sub-entity; its identity remains strictly **hidden from BOTH players**.
+- **FR-ZON-005 (Subsumes FR-ENT-101)**:
+  - **Double-Blind Deployment**: When a Scratch Company unit is deployed, its underlying card identity is strictly **unknown to BOTH players**. The engine enforces complete double-blind information masking—neither the controlling player nor the opponent may inspect its underlying card face or identity (`FR-ENT-101`).
+  - **Departure to Public Zone (Discard)**: When a Scratch Company unit enters Discard, it transitions face-up; its underlying card identity is revealed to **both players**.
+  - **Departure to Private Zone (Hand, Deck)**: When returned to Hand or Deck, it reverts to a Card; its underlying identity is revealed **strictly to the owner of that private zone**.
+  - **Transition to Attached Zone (Tucked / NO-AH-5)**: When tucked into `ATTACHED` under an asset (`FR-ENT-102`), it remains a battlefield sub-entity; its identity remains strictly **hidden from BOTH players**.
 
-#### FR-ENT-102: Tucked Sub-Entities Container (`NO-AH-5`)
-- When an asset is tucked under a host: the asset is killed, emitting `EVENT_DESTROY`, with its destination redirected to `ATTACHED` under the host.
-- **Host Departure**: If the host leaves the battlefield, all tucked cards immediately route to their respective owners' `DISCARD` piles face-up, revealing identities to both players without emitting `EVENT_DESTROY`.
+#### FR-ENT-102: Tucked Sub-Entities Container (`ATTACHED` Sub-Zone)
+- **Spatial Container Definition**: `TUCK_UNDER` transitions a target card from any legal source zone (`BATTLEFIELD`, `HAND`, `DECK`, `DISCARD`) into the `ATTACHED` sub-container under a specified host asset. Tucking does **not** inherently imply entity destruction.
+  - If an active battlefield `AssetInstance` is tucked, its `AssetInstance` deallocates from the battlefield. `EVENT_DESTROY` emits if and only if an explicit `KILL` primitive was executed as part of the card ability (e.g. *NO-AH-5*: *"Kill chosen allied non-Headquarters asset and tuck it face down under this unit"*).
+  - Tucked cards can be attached `faceDown = true` (masked identity, as in *NO-AH-5*) or `faceDown = false` as mandated by the ability.
+- **Host Departure & Discard Routing**: If the host leaves the battlefield (destroyed, bounced, or exiled), all tucked cards immediately route to their respective owners' `DISCARD` piles face-up, revealing their identities to both players.
+  - Each routed card emits an `EVENT_DISCARD_CARD` event. Discard-entry triggers (*Solarheart Monk*, *Eerie Remnant*) resolve normally.
+  - Routing from `ATTACHED` to `DISCARD` does **not** emit `EVENT_DESTROY` (the cards were sub-entities, not battlefield combatants dying on the field).
 
 #### FR-ENT-103: Face-Down Transformation (`forced mutation`)
 - Sets `isFaceDown = true` while retaining existing `underlyingCardInstance`. Stat masking overrides values to `1/1/1/1 Scratch Company`. Evaluates damage against new Max Health of 1 (dies if accumulated damage >= 1).
@@ -310,7 +315,7 @@ The engine provides a standardized catalog of atomic effect primitives:
 | `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef` | Deploys matching card suppressing resource costs (`FR-TRN-003a`). |
 | `SEARCH_DECK` | `filter: FilterDef, destination: Enum` | Searches deck; executes mandatory shuffle (`FR-DEK-001`). |
 | `LOOK_TOP_CARDS`| `count: Integer, operations: Array<OpDef>` | Inspects top N cards with 15s action clock (`FR-MOD-001`). |
-| `TUCK_UNDER` | `hostTarget: TargetRef` | Kills asset and tucks underlying card under host (`FR-ENT-102`). |
+| `TUCK_UNDER` | `hostTarget: TargetRef, faceDown: Boolean` | Transitions target card/asset into ATTACHED zone under host asset without implicit kill (`FR-ENT-102`). |
 | `GAIN_CONTROL` | `targetPlayer: Enum` | Transfers controller for Main Theater asset (`FR-ZON-002`). |
 | `MORPH_SCRATCH` | `none` | Turns asset face-down into Scratch Company (`FR-ENT-103`). |
 | `GENERATE_RESOURCE`| `resourceType: Enum, amount: ValueToken` | Adds resources to active temporary pool (`FR-RES-001`). |
@@ -328,13 +333,14 @@ The engine provides a standardized catalog of atomic effect primitives:
 ### Section 5.1: Declarative Targeting Filters
 
 #### FR-TGT-001 & FR-TGT-102: Targeting Schema Definition
-- Evaluates eligibility via conjunction: `[Allegiance] AND [Health State] AND [Subtype Filter] AND [EntityType] AND [Zone]`.
+- **FR-TGT-001 (Subsumes FR-TGT-102)**: Evaluates eligibility via conjunction: `[Allegiance] AND [Health State] AND [Subtype Filter] AND [EntityType] AND [Zone]`.
 - **Subtype & Entity Negation**: Supports `negateSubtypes: boolean`, `excludeScratch: boolean`, `excludeHQ: boolean`, and `excludeUnits: boolean` shorthand. Setting `entityType: "ASSET"` with `excludeUnits: true` targets Structures and Headquarters (*Chainbreaker Sappers*).
 - **Headquarters Filtering**: By default, generic `ASSET` targets include Headquarters unless filtered via `excludeHQ: true`.
 - **Health State Filters**: Health filters explicitly support `CURRENT_HEALTH` (`Current Health = Max Health - Accumulated Damage`) and `MAX_HEALTH` (*Cathedral of Self*, *Gemstone Titan*).
 - **Quantifiers & Allocations (`FR-TGT-002`)**: Single Target, Bounded Multi-Target, Unbounded Global Target; Fixed Constant Allocation or Distributed Pool Allocation.
 
-- Verified at declaration and re-verified prior to resolution. If a subset of targets becomes invalid, resolves against remaining valid targets. If all targets become invalid, targeted effect clauses fizzle completely. For composite actions containing both targeted clauses and non-targeted global clauses (e.g. *All out War*), invalidation of all target bindings fizzles only the targeted clauses; non-targeted clauses resolve to the fullest extent possible.
+#### FR-TGT-003 & FR-TGT-103: Target Validation & Fizzle Rules
+- **FR-TGT-003 (Subsumes FR-TGT-103)**: Verified at declaration and re-verified prior to resolution. If a subset of targets becomes invalid, resolves against remaining valid targets. If all targets become invalid, targeted effect clauses fizzle completely. For composite actions containing both targeted clauses and non-targeted global clauses (e.g. *All out War*), invalidation of all target bindings fizzles only the targeted clauses; non-targeted clauses resolve to the fullest extent possible.
 - **Distributed Pool Invalidation**: For actions distributing a pool of values (*Macrocannon Barrage*, `DISTRIBUTED_POOL`), values allocated to any target that becomes invalid prior to resolution evaporate completely and are **not** redistributed among remaining valid targets.
 - **Deployment Trigger Target Availability**: The absence of legal opposing targets for an asset's deployment trigger (e.g. *Saboteur*) does **not** cause the deployment command to fail validation. The asset deploys legally; upon resolution, any clauses with legal targets resolve (such as mandatory friendly damage, which targets the deploying unit itself if no other allied assets exist), while clauses lacking legal targets fizzle.
 
@@ -348,15 +354,16 @@ Clients submit fully bound payloads specifying `actionSourceId`, `blueprintAbili
 
 #### FR-MOD-001: Synchronous Choice Prompts & Fallbacks
 When stack execution requires interactive decisions:
-1. **15-Second Action Clock**: Client has 15 seconds to return selection packet.
-2. **Revealed Hand Inspection Window**: When `REVEAL_HAND` executes (*drifting concept*, *mage seeker's inquisition*), the choosing player is guaranteed an active inspection window to view the opponent's hand before any auto-discard completes.
-3. **Partitioned Deck Inspections**: For multi-destination inspections (*light of the world soul*, *devilhorn scouting party*), choice payloads support explicit partitioning across deployment, hand, and bottom-deck ordering.
-4. **Deterministic Fallbacks on Expiry**:
+1. **Single-Option Fast-Path**: If exactly one legal target or valid option exists for a required choice, the engine auto-selects it immediately and resolves without issuing an interactive client prompt or pausing match execution.
+2. **Action Clocks**: Active player choice prompts enforce a 15-second action clock. Inactive player choice prompts enforce a streamlined 10-second action clock (`FR-TRG-002`) to preserve active turn momentum.
+3. **Revealed Hand Inspection Window**: When `REVEAL_HAND` executes (*drifting concept*, *mage seeker's inquisition*), the choosing player is guaranteed an active inspection window to view the opponent's hand before any auto-discard completes.
+4. **Partitioned Deck Inspections**: For multi-destination inspections (*light of the world soul*, *devilhorn scouting party*), choice payloads support explicit partitioning across deployment, hand, and bottom-deck ordering.
+5. **Deterministic Fallbacks on Expiry**:
    - `LOOK_TOP_CARDS`: Auto-picks index 0; routes rest to bottom.
    - Modal choices: Auto-selects lowest available indices.
    - Optional triggers: Defaults to Decline / Pass.
    - Mandatory targets: Selects random legal target.
-5. **Disconnect Grace Window**: Allows 10 seconds to reconnect with frozen clock before fallback commits.
+6. **Disconnect Grace Window**: Allows 10 seconds to reconnect with frozen clock before fallback commits.
 
 ---
 
@@ -377,8 +384,8 @@ Standardized event hooks across core categories:
 - **Clean Stack Rule**: Player-initiated manual actions (Deploying cards, Enacting Maneuvers, Activating abilities) require `Stack.isEmpty() == true` to declare.
 - **Triggered Exception**: Triggered abilities, in-resolution free deployments, and cascading triggers bypass the clean stack requirement and push/resolve directly on the active stack.
 
-#### FR-TRG-002: Inactive Player Agency & 15s Action Clock
-- When stack resolution requires interactive choices from the inactive player or active player, the engine issues a choice prompt with a 15-second action clock (`FR-MOD-001`). Prompts resolve deterministically via fallbacks if the timer expires.
+#### FR-TRG-002: Inactive Player Agency & Streamlined Action Clocks
+- When stack resolution requires interactive choices from the active player (15s clock) or inactive player (streamlined 10s clock; `FR-MOD-001`), the engine issues a choice prompt. If exactly one legal option exists, the engine fast-paths auto-selection without issuing a prompt. Prompts resolve deterministically via fallbacks if the timer expires.
 
 #### FR-TRG-003: APNAP Push Sequencing
 - Triggers occurring simultaneously push via Active Player, Non-Active Player (APNAP) order: non-active player triggers push first; active player triggers push on top and resolve first. Allied triggers are ordered by their controller.
@@ -432,7 +439,11 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 ### Section 6.3: Deterministic Damage Mitigation Pipeline
 
 #### FR-REP-001 through FR-REP-003: Replacement Interception
-Replacement watchers intercept prospective hooks (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) inline, bypassing the Resolution Stack. Applied at most once per root event; for replacement watchers intercepting entity destruction (*Shifting Impossibility*), each asset's prospective destruction emits an individual interceptable death hook, permitting multiple simultaneous entity destructions from a single root damage event to each be replaced.
+- **Inline Execution**: Replacement watchers intercept prospective hooks (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) inline, modifying or replacing event payloads prior to event emission and bypassing the Resolution Stack.
+- **Single Application per Event**: A replacement effect applies at most once per discrete event.
+- **Simultaneous Replacement Conflicts & Controller Choice**: If multiple replacement watchers attempt to intercept the exact same event, the controller of the affected asset designates the application order. Once a replacement effect alters the event (e.g. prospective death is replaced by return-to-hand), any competing replacement watchers whose trigger conditions are no longer met immediately fizzle without effect.
+- **Consequential Event Isolation**: Any damage or state mutations occurring as a direct consequence of a replacement effect (e.g. self-inflicted damage on *Shifting Impossibility*) emit as independent, discrete child events and cannot circularly replace their parent event.
+- **Entity Destruction Interception**: For replacement watchers intercepting entity destruction (*Shifting Impossibility*), each asset's prospective destruction emits an individual interceptable death hook, permitting multiple simultaneous entity destructions from a single root damage event to each be replaced sequentially until the intercepting watcher's health is depleted.
 
 #### FR-REP-004: Deterministic 5-Stage Damage Mitigation Pipeline
 Every incoming damage instance resolves through 5 sequential automated stages:
@@ -474,7 +485,7 @@ Incoming Damage Instance
 - Assets with `Ethereal` (`FR-KWD-002g`) cannot be targeted by attacks.
 - **Base Racing & Direct HQ Attacks**: Attack declarations may target the opposing Headquarters directly regardless of Main Theater occupants, subject only to Guardian priority.
 - **Guardian Priority ("If Able")**: Attack declarations must target a Main Theater asset with Guardian when able. Guardian in Reserves cannot be attacked and does not redirect attacks. Ethereal overrides Guardian.
-- **Zero-Power Attacks**: Units and HQs with Combat Power <= 0 may legally declare attacks (dealing 0 damage, firing `EVENT_ATTACK_DECLARE`).
+- **Zero-Power Attacks**: Units and HQs with Combat Power <= 0 may legally declare attacks (dealing 0 raw combat damage, firing `EVENT_ATTACK_DECLARE`, routing through `FR-REP-004` where negative Resistant may amplify: $0 - (-1) = 1$).
 
 ---
 
@@ -484,7 +495,7 @@ Incoming Damage Instance
 Combat execution proceeds through three deterministic steps:
 
 1. **Step 1 (Declaration & Exhaustion)**:
-   - Attacker exhausts and designates target(s). Berserk units (`FR-KWD-002o`) may designate up to 2 targets.
+   - Attacker exhausts and designates a single valid target (`target`).
    - Synchronous `EVENT_ATTACK_DECLARE` emits.
 2. **Step 2 (Reaction & Trigger Window & Action Lock)**:
    - All `EVENT_ATTACK_DECLARE` triggers enqueue onto the Resolution Stack (e.g. *blind defile*, *Aggressive N*, *Arkha, Sun's Fury*).
@@ -495,7 +506,8 @@ Combat execution proceeds through three deterministic steps:
    - If both combatants remain valid, combat damage is dealt **simultaneously** equal to effective Combat Power.
    - Retaliation is 100% symmetric across all combat pairings (Unit vs Unit, Unit vs Structure, Unit vs HQ, HQ vs HQ).
    - Combat retaliation is combat damage (`isCombatDamage = true`); Stalwart applies.
-   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`). When defending against multi-target Berserk attacks (`FR-KWD-002o`), each defender's retaliation is processed as an independent, discrete damage instance sequentially routed through `FR-REP-004`; the attacking player designates the sequential resolution order of the defender retaliations upon attack declaration.
+   - Damage instances route through respective 5-stage pipelines (`FR-REP-004`).
+   - Following damage application, state-based destruction checks evaluate (`FR-LAY-002`, `FR-CBT-003`). If an attacking unit with `Berserk` (`FR-KWD-002o`) destroyed its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
 
 #### FR-CBT-003: Persistent Damage, Defeat Rules & Match Draws
 - Damage remains marked across turns. When an HQ reaches <= 0 Health, its controller loses immediately.
@@ -735,7 +747,7 @@ Combat execution proceeds through three deterministic steps:
 - **FR-KWD-002l: Deploys Exhausted**: Replacement watcher intercepting `WOULD_DEPLOY`, setting initial readiness to Exhausted.
 - **FR-KWD-002m: Scratch N**: Sequentially executes `Deploy Scratch Company` N times. Direct deck-to-battlefield move; double-blind; safe on empty deck. Creates token units with subtypes `["Infantry", "Scratch Company"]` prohibited from starting decks.
 - **FR-KWD-002n: Regroup N**: Atomic primitive transitioning up to N chosen exhausted allied assets to Readied.
-- **FR-KWD-002o: Berserk**: Static combat ability. May choose up to two assets as targets when attacking. Deals full Combat Power to each target; both defenders retaliate as two independent, discrete damage instances routed through `FR-REP-004` (`FR-CBT-002`).
+- **FR-KWD-002o: Berserk**: Static combat ability. Whenever this unit attacks and destroys an opposing asset in the Main Theater, deal its excess combat damage (effective combat damage dealt minus damage required to destroy the target) to another chosen opposing asset in the Main Theater as discrete non-combat effect damage routed through `FR-REP-004`. Excess damage cannot target Reserves or Headquarters, and dissipates if no other opposing asset occupies the Main Theater.
 
 ---
 
@@ -757,11 +769,11 @@ Combat execution proceeds through three deterministic steps:
 | **FR-ZON-001** | Battlefield & Non-Battlefield Zones | Section 2.3 (`FR-ZON-001`) |
 | **FR-ZON-003** | Entity Nomenclature & Asset Taxonomy | Section 2.3 (`FR-ZON-003`) |
 | **FR-ZON-002** | Movement, Immutability & Control Transfer | Section 2.4 (`FR-ZON-002`) |
-| **FR-ZON-004** | Non-Battlefield Zone Transition Reset | Section 2.4 (`FR-ZON-004`, `FR-ZON-101`) |
-| **FR-ZON-101** | Clean Asset Deallocation | Section 2.4 (`FR-ZON-101`) |
+| **FR-ZON-004** | Non-Battlefield Zone Transition Reset | Section 2.4 (`FR-ZON-004`; subsumes `FR-ZON-101`) |
+| **FR-ZON-101** | Clean Asset Deallocation | Section 2.4 (Subsumed by `FR-ZON-004`) |
 | **FR-SNP-101** | Last-Known State Snapshotting | Section 2.4 (`FR-SNP-101`) |
-| **FR-ZON-005** | Scratch Fog of War Lifecycle | Section 2.4 (`FR-ZON-005`, `FR-ENT-101`) |
-| **FR-ENT-101** | Scratch Double-Blind Proxy Wrapper | Section 2.4 (`FR-ENT-101`) |
+| **FR-ZON-005** | Scratch Fog of War Lifecycle | Section 2.4 (`FR-ZON-005`; subsumes `FR-ENT-101`) |
+| **FR-ENT-101** | Scratch Double-Blind Proxy Wrapper | Section 2.4 (Subsumed by `FR-ZON-005`) |
 | **FR-ENT-102** | Tucked Sub-Entities Container (NO-AH-5) | Section 2.4 (`FR-ENT-102`), Section 8.2 |
 | **FR-ENT-103** | Face-Down Transformation (forced mutation)| Section 2.4 (`FR-ENT-103`) |
 | **FR-RES-001** | Resource Accumulation & Pools | Section 3.1 (`FR-RES-001`) |
@@ -781,16 +793,16 @@ Combat execution proceeds through three deterministic steps:
 | **FR-TRN-003a**| Alternative Deployments & Sacrifices | Section 4.2 (`FR-TRN-003a`) |
 | **FR-MNV-001** | Maneuver Resolution Lifecycle | Section 4.2 (`FR-MNV-001`) |
 | **FR-PRM-001** | Standard Atomic Effect Primitives Table | Section 4.3 (`FR-PRM-001`) |
-| **FR-TGT-001** | Universal Modular Target Filtering | Section 5.1 (`FR-TGT-001`) |
+| **FR-TGT-001** | Universal Modular Target Filtering | Section 5.1 (`FR-TGT-001`; subsumes `FR-TGT-102`) |
 | **FR-TGT-002** | Target Quantifiers & Value Allocation | Section 5.1 (`FR-TGT-002`) |
-| **FR-TGT-003** | Target Validation & Fizzle Rules | Section 5.1 (`FR-TGT-003`) |
+| **FR-TGT-003** | Target Validation & Fizzle Rules | Section 5.1 (`FR-TGT-003`; subsumes `FR-TGT-103`) |
 | **FR-TGT-101** | Bound Action Payload Model | Section 5.1 (`FR-TGT-101`) |
-| **FR-TGT-102** | Declarative Targeting Filters | Section 5.1 (`FR-TGT-102`) |
-| **FR-TGT-103** | Two-Stage Target Verification | Section 5.1 (`FR-TGT-103`) |
+| **FR-TGT-102** | Declarative Targeting Filters | Section 5.1 (Subsumed by `FR-TGT-001`) |
+| **FR-TGT-103** | Two-Stage Target Verification | Section 5.1 (Subsumed by `FR-TGT-003`) |
 | **FR-MOD-001** | Inspection, Hand Reveals & Timeouts | Section 5.2 (`FR-MOD-001`) |
 | **FR-TRG-001** | Trigger Event Hook Taxonomy | Section 6.1 (`FR-TRG-001`) |
 | **FR-QUE-001** | Centralized LIFO Stack & Clean Stack Rule| Section 6.1 (`FR-QUE-001`) |
-| **FR-TRG-002** | Inactive Player Agency & 15s Action Clock| Section 6.1 (`FR-TRG-002`) |
+| **FR-TRG-002** | Inactive Player Agency & Action Clocks | Section 6.1 (`FR-TRG-002`) |
 | **FR-TRG-003** | APNAP Push Sequencing | Section 6.1 (`FR-TRG-003`) |
 | **FR-TRG-004** | Cascading Trigger Enqueuing | Section 6.1 (`FR-TRG-004`) |
 | **FR-TRG-005** | Non-Resource Trigger Costs Prohibition | Section 6.1 (`FR-TRG-005`) |
