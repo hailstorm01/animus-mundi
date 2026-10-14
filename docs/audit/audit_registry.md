@@ -7,7 +7,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 | Date Generated | Commit Hash | Source Audit File | Target Document | Status | Resolution Date | Resolution Commit | Source of Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 2026-10-13 | `f293299` | `2026-10-13-Game_Rules_and_Card_Modeling_FRD.md` | `docs/frd/Game_Rules_and_Card_Modeling_FRD.md` | RESOLVED | 2026-10-13 20:07:14 | `5ed6a60` | Agentic (pm-audit-reviewer + game-designer) |
-| 2026-10-13 | `f293299` | [2026-10-13-Client_Engine_Protocol_Networking_FRD.md](pending/2026-10-13-Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
+| 2026-10-13 | `f293299` | `2026-10-13-Client_Engine_Protocol_Networking_FRD.md` | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | RESOLVED | 2026-10-14 16:40:36 | `a64a972` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `8dc6306` | `2026-10-14-Card_Data_Pipeline_FRD.md` | `docs/frd/Card_Data_Pipeline_FRD.md` | RESOLVED | 2026-10-14 10:22:05 | `c7d41d5` | Agentic (pm-audit-reviewer) |
 | 2026-10-13 | `f293299` | `2026-10-13-Card_Compiler_FRD.md` | `docs/frd/Card_Compiler_FRD.md` | RESOLVED | 2026-10-13 13:39:26 | `e10d2a0` | Agentic (pm-audit-reviewer) |
 
