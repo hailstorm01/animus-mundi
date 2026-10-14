@@ -6,7 +6,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 
 | Date Generated | Commit Hash | Source Audit File | Target Document | Status | Resolution Date | Resolution Commit | Source of Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-14 | `cee3bf2` | [2026-10-14-Card_Compiler_FRD.md](pending/2026-10-14-Card_Compiler_FRD.md) | `docs/frd/Card_Compiler_FRD.md` | PENDING | - | - | - |
+| 2026-10-14 | `cee3bf2` | `2026-10-14-Card_Compiler_FRD.md` | `docs/frd/Card_Compiler_FRD.md` | RESOLVED | 2026-10-14 19:58:25 | `d970e02` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `cee3bf2` | [2026-10-14-Card_Data_Pipeline_FRD.md](pending/2026-10-14-Card_Data_Pipeline_FRD.md) | `docs/frd/Card_Data_Pipeline_FRD.md` | PENDING | - | - | - |
 | 2026-10-14 | `cee3bf2` | [2026-10-14-Client_Engine_Protocol_Networking_FRD.md](pending/2026-10-14-Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Game_Rules_and_Card_Modeling_FRD.md` | `docs/frd/Game_Rules_and_Card_Modeling_FRD.md` | RESOLVED | 2026-10-14 19:33:18 | `9cfdba7` | Agentic (pm-audit-reviewer) |
