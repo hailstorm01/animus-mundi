@@ -24,17 +24,17 @@ This document establishes the authoritative technical specification for the card
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│     Card Town Master Google Spreadsheets (Cloud)       │
+│     Google Spreadsheets (Cloud Viewer & Mobile Mirror) │
 │  - maneuvers (animus, concordia, path, soulless)       │
 │  - units-and-structures (animus, concordia, etc.)      │
-└───────────────────────────┬────────────────────────────┘
+└───────────────────────────▲────────────────────────────┘
                             │
                tools/sheets/publish_card_sheets.ps1
+               (Downstream export from repository)
                             │
-                            ▼
-┌────────────────────────────────────────────────────────┐
+┌───────────────────────────┴────────────────────────────┐
 │     Authoring Balance CSV Sheets (data/cards/*.csv)    │
-│  - 10 RFC-4180 UTF-8 CSV Files                         │
+│  - 10 RFC-4180 UTF-8 CSV Files (Repository Truth)      │
 │  - Strict Target Enum Values (FR-DAT-006)              │
 │  - MTG-Aligned Standardized Rules Text (FR-TXT-001)    │
 └───────────────────────────┬────────────────────────────┘
@@ -61,14 +61,18 @@ This document establishes the authoritative technical specification for the card
 
 ### Section 1.1: Single Source of Truth & Pipeline Flow
 
-#### FR-DAT-001: Data Ingestion Lifecycle & Single Source of Truth
-- **Tier 1 (Design Source)**: The Google Sheets workbooks located in the team drive (`maneuvers` and `units-and-structures`) serve as the collaborative authoring interface for game designers.
-- **Tier 2 (Repository Source of Truth)**: The 10 per-faction CSV files in `data/cards/` constitute the authoritative version-controlled repository source of truth. Any discrepancy between cloud spreadsheets and repository CSVs resolves in favor of git-committed CSVs.
+#### FR-DAT-001: Data Ingestion Lifecycle & Absolute CSV Source of Truth
+- **Tier 1 (Authoritative Repository Source of Truth)**: The 10 per-faction RFC-4180 CSV files residing in `data/cards/` constitute the absolute, definitive source of truth for all card definitions, rules text, and balance statistics. Version control (Git) governs all official card changes.
+- **Tier 2 (Cloud Inspection & Mobile Review Mirror)**: The Google Sheets workbooks located in the team drive (`maneuvers` and `units-and-structures`) serve purely as an outward-facing mirror and convenience viewer for designers to inspect card catalogs on mobile devices and explore balance experiments. The Google Sheets are downstream representations; any edits in Google Drive do not affect game builds and must be manually brought into Git CSVs to become authoritative.
 - **Tier 3 (Compiled Production Catalog)**: The compiled `blueprints.json` artifact (generated into `data/schemas/` or embedded in the game engine runtime) represents the authoritative machine-readable catalog consumed by the server engine process and Godot client builds.
-- **Automated Flow**:
-  1. `tools/sheets/publish_card_sheets.ps1` synchronizes local `data/cards/*.csv` sheets with Google Drive.
-  2. `tools/linter/lint_cardtown.ps1` audits schema integrity, requirement links, and text terminology.
-  3. The compilation pipeline parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+- **Automated Pipeline Flow**:
+  1. Local `data/cards/*.csv` files are directly edited, reviewed, and committed into Git.
+  2. `tools/sheets/publish_card_sheets.ps1` publishes the local repository CSV content to Google Sheets. It treats local CSVs as the authoritative input and unconditionally updates Google Sheets to reflect Git state without depending on or checking remote Sheet modifications.
+  3. `tools/linter/lint_cardtown.ps1` audits schema integrity, requirement links, and text terminology.
+  4. The compilation pipeline (`tools/importer/compile_blueprints.ps1`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+
+> [!NOTE] Product Vision: Standalone Interactive Card & Set Designer Tool
+> Long-term tooling roadmap includes a dedicated, standalone **Interactive Card & Set Designer Tool**. This application will use a structured database model (outside of the client/server runtime engines) to manage card balance schemas, keyword catalogs, set dependencies, and migration tracking, replacing manual spreadsheet authoring while serializing directly into canonical version-controlled formats.
 
 #### FR-DAT-002: Deterministic Blueprint ID & Slug Derivation
 Every `CardBlueprint` requires a globally unique, immutable string identifier (`id`) complying with `FR-ENT-001`. The blueprint ID is derived deterministically from the card's printed name and faction via the following algorithmic rules:
@@ -99,7 +103,7 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 ### Section 2.1: Target Enum Enforcement
 
 #### FR-DAT-005: Canonical Blueprint Schema Specification
-The production blueprint data structure extends `FR-CRD-101` with explicit metadata and AST fields:
+The production blueprint data structure defined in this section serves as the canonical technical schema for the data ingestion and compilation pipeline. It incorporates and extends the fundamental entity schema defined in `FR-CRD-101` (Master Rules FRD) with explicit ingestion metadata and declarative AST fields:
 
 | Field | Type | Constraint | Description |
 | :--- | :--- | :--- | :--- |
@@ -126,10 +130,11 @@ To eliminate translation layers and ensure absolute schema fidelity, all authori
 3. **`rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
 4. **`deploymentZones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"MAIN_THEATER, RESERVES"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
 
-#### FR-DAT-007: Subtype Taxonomy & Normalization
-- Card subtypes in the `subtypes` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
-- Where a card possesses no subtypes (e.g. Headquarters), the field must contain the literal sentinel string `"--"`.
-- The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique strings.
+#### FR-DAT-007: Subtype & Vanilla Ability Sentinel Normalization
+- **Subtype Taxonomy**: Card subtypes in the `subtypes` (or `Types`) CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
+- **Null Subtypes Sentinel**: Where a card possesses no subtypes (e.g. Headquarters), the field typically contains the literal sentinel string `"--"`. The ingestion pipeline treats empty strings (`""`), whitespace-only cells, `"N/A"`, and `"--"` identically, normalizing them into an empty array `[]`.
+- **Vanilla Ability Sentinel**: In rules text columns (`rulesText` or `Text`), the sentinel string `"--"` is explicitly recognized as representing a vanilla card with no printed abilities (e.g., *Forest Heavies*, *Old Growth Elders*), compiling into an empty `abilities: []` array.
+- **Normalization Engine**: The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique strings.
 
 #### FR-DAT-008: Deployment Zone Array Schema & Invariants
 - **Units & Structures**: Every Unit and Structure blueprint must declare at least one legal deployment zone (`["RESERVES"]`, `["MAIN_THEATER"]`, or `["RESERVES", "MAIN_THEATER"]`). Headquarters cards declare strictly `["HEADQUARTERS"]`.
@@ -190,6 +195,9 @@ Every entry in a blueprint's `abilities` array conforms to the polymorphic `Abil
   }
 }
 ```
+
+> [!NOTE] Design Rationale (DA-XP-001)
+> The declarative, polymorphic Ability AST architecture is intentional and non-negotiable. Digital card games that rely on ad-hoc imperative scripts or stopgap code hooks (such as early MTGO architecture) suffer from compounding technical debt, desync vulnerabilities, and fragile client-server state replication. A fully declarative JSON AST ensures deterministic replay verification, clean client-side visual effect binding, robust schema validation, and long-term extensibility without engine recompilation.
 
 #### FR-ABL-002: TriggeredAbilityDef Schema & Hook Bindings
 In compliance with **FR-TRG-001** through **FR-TRG-007**:
@@ -373,23 +381,26 @@ To ensure total clarity regarding trigger frequency:
 2. **Additional Enactment Costs**: Formatted as a leading preamble sentence on its own line:
    - *"As an additional cost to enact this maneuver, kill an allied unit."*
 
-#### FR-TXT-004: Conjunction Targeting Phrasing
+#### FR-TXT-004: Conjunction Targeting Phrasing & Two-Stage Verification
 Card Town's targeting engine (`FR-TGT-001`) utilizes declarative conjunctions. Rules text must use the canonical targeting verb **"chosen"** rather than MTG's "target":
 - *"chosen allied unit"*
 - *"chosen opposing non-Scratch unit"*
 - *"chosen asset in the Main Theater"*
 - Multi-target distributions: *"each of up to 2 chosen opposing assets"*, *"distribute 5 damage among up to 5 chosen units"*.
+- **Two-Stage Dynamic Filter Invalidation**: In compliance with `FR-TGT-103`, abilities with dynamic target filters (such as *Consuming Earth*: *"Kill chosen opposing unit with power less than or equal to the total Requisition yield of all structures you control."*) validate target legality both when placed on the stack and immediately prior to effect resolution. If the target no longer satisfies the dynamic filter criteria at resolution (e.g., allied structures were destroyed or the target's power increased), the effect fizzles against that target without executing.
 
 #### FR-TXT-005: Stat & Defense Modification Phrasing
-1. **Temporary Modifiers (Layer 5)**: Use the verb **"gets"**:
-   - *"Chosen allied unit gets +1 power until end of turn."*
+1. **Temporary Modifiers (Layer 5)**: Use the verb **"gets"** for singular subjects and **"get"** for plural subjects:
+   - Singular: *"Chosen allied unit gets +1 power until end of turn."*
+   - Plural: *"Up to 2 chosen units get -1 power until end of turn."*
    - Debuffs: *"Chosen opposing unit gets -3 power until the end of your opponent's turn."*
-2. **Continuous Auras (Layer 4)**: Use the verb **"have"**:
-   - *"Other allied assets in the same zone have +1 power."*
-   - *"Allied Horror units in the same zone have Resistant 1."*
-3. **Keyword Grants**: Use the verb **"gains"**:
+2. **Continuous Auras (Layer 4)**: Use the verb **"has"** for singular subjects and **"have"** for plural subjects:
+   - Singular (Self / Individual): *"This unit has +2 power."*, *"Chosen asset has Stalwart."*
+   - Plural (Collective / Scoped): *"Other allied assets in the same zone have +1 power."*, *"Allied Horror units in the same zone have Resistant 1."*
+3. **Keyword Grants**: Use the verb **"gains"** for singular subjects and **"gain"** for plural subjects:
    - *"Chosen unit gains Stalwart until end of turn."*
    - *"This unit gains 1 armor."*
+   - *"Allied units in the same zone gain 1 armor."*
 
 #### FR-TXT-006: Zone Naming, Card Reference & Cardinality Conventions
 1. **Zone Names**: Always capitalized and complete: `Main Theater`, `Reserves`, `Headquarters Zone`, `discard pile`, `deck`.
@@ -416,8 +427,10 @@ The automated linter (`tools/linter/lint_cardtown.ps1`) enforces three validatio
 - The compilation pipeline executes automated parity checks ensuring that card abilities defined in text correspond 1-to-1 with compiled AST structures.
 - A card declaring `Stalwart` in rules text must contain a `REPLACEMENT_WATCHER` AST entry with `min(damage, 1)` logic; a card declaring an attack trigger must bind to `EVENT_ATTACK_DECLARE` or `EVENT_ATTACK_RESOLVED`.
 
-#### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All")
-- Balance sheet validation requirements apply uniformly across all rows with zero exceptions for placeholder rows ("must fit all"). Every row in an authoring sheet must fully define all mandatory target enum fields (`Card Type`, `Faction`, `Deployment Zones`, `Rarity`) and pass schema validation. Incomplete rows lacking required attributes are rejected during pipeline linting.
+#### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All") & Review Card Compilability
+- **Universal Compilability Invariant**: Balance sheet validation requirements apply uniformly across all rows with zero exceptions for placeholder rows ("must fit all"). Every row in an authoring sheet must fully define all mandatory target enum fields (`Card Type`, `Faction`, `Deployment Zones`, `Rarity`), pass CSV schema validation, and possess complete, syntactically valid declarative ability bindings (`FR-ABL-001` - `FR-ABL-007`). Incomplete rows lacking required attributes or cards with incomplete/unbound ability logic are rejected during pipeline linting and compiler execution.
+- **Review Card Compilability Contract**: Cards undergoing active game balance or rules text review (e.g., the 52 cards listed in Domain 7) must still compile cleanly with complete, functional ability bindings in developmental and pull-request builds. Work-in-progress or exploratory cards are not permitted to bypass compilation or remain in an unbindable state.
+- **Production Gating**: While review cards must remain 100% compilable for test matches and CI validation, production release builds require formal designer sign-off clearing all pending review flags from Domain 7.
 
 ---
 
@@ -442,8 +455,8 @@ All 167 cards across the 10 CSV sheets were comprehensively audited and standard
    - *Design Call*: Confirmed self-damage interaction on Headquarters; Headquarters is eligible target for damage mitigation (`FR-REP-004`).
 4. **Mutation Swell (Maneuver - Animus)**:
    - *Previous*: `"kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free."`
-   - *Standardized*: `"Kill up to 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free."`
-   - *Design Call*: Clarified MTG causality clause ("killed this way"). Designer should confirm rounding if an odd number of units is killed (integer division defaults to floor).
+   - *Standardized*: `"Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free."`
+   - *Design Call*: Clarified MTG causality clause ("killed this way") and restricted targets to discrete multiples (2 or 4) to eliminate fractional casualty floor ambiguity.
 5. **Steel Rain & Macrocannon Barrage (Path / Soulless)**:
    - *Standardized*: Formalized distributed damage allocation syntax matching `DISTRIBUTED_POOL` (`FR-ABL-011`).
 6. **Title Spellings**:
@@ -463,7 +476,7 @@ The following register details all cards where rules text was modified or requir
 | **Animoceps Rager** | `units-and-structures-HQ.csv` | `When this HQ is dealt damage, scratch once. This effect happens once per turn.` | `Whenever this Headquarters is dealt damage, Scratch 1. This ability triggers only once each turn.` | Confirm "triggers only once each turn" limit syntax (`FR-ABL-008`). |
 | **Encampment** | `units-and-structures-HQ.csv` | `discard a card, exhaust: deal 1 damage to up to 2 chosen non scratch company units` | `Discard a card, exhaust: Deal 1 damage to each of up to 2 chosen non-Scratch Company units.` | Review multi-target distributed damage phrasing. |
 | **Ensnaring Mist** | `maneuvers-animus.csv` | `move chosen unit to its controller's reserves. chosen unit gets -1 power until the end of your turn.` | `Move chosen unit to its controller's Reserves. Chosen unit gets -1 power until end of turn.` | Changed "until the end of your turn" to canonical "until end of turn". |
-| **Mutation Swell** | `maneuvers-animus.csv` | `kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free.` | `Kill up to 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free.` | Confirm rounding if odd number of Scratch Company units were killed. |
+| **Mutation Swell** | `maneuvers-animus.csv` | `kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free.` | `Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free.` | Standardized to discrete target multiples (2 or 4) to eliminate fractional casualty floor ambiguity. |
 | **Forced Mutation** | `maneuvers-animus.csv` | `chosen opposing unit is turned face down and becomes a scratch company unit` | `Turn chosen opposing unit face down. It becomes a Scratch Company unit.` | Review morph rules text alignment with `FR-ENT-103`. |
 | **Funeral Fungus** | `maneuvers-animus.csv` | `exhaust chosen ready allied unit and return 1 unit card from your discard pile to your hand.` | `As an additional cost to enact this maneuver, exhaust a readied allied unit. Return chosen unit card from your discard pile to your hand.` | Templated exhaust as additional enactment cost rather than spell effect. |
 | **Reverberating Terror** | `maneuvers-concordia.csv` | `up to 2 chosen units and structures get -1 power until end of turn.` | `Up to 2 chosen units and structures get -1 power until end of turn.` | Title spelling corrected ("Reverberating Terror"). |
@@ -513,7 +526,7 @@ The following register details all cards where rules text was modified or requir
 | **Piston Fist Prototype** | `units-and-structures-soulless.csv` | `After this unit attacks, move this unit to your Reserves.` | `Aggressive 9 After this unit attacks, move this unit to your Reserves.` | Rebalanced to 3R/3T 1/9 with Aggressive 9 and post-attack recoil to Reserves (`FR-KWD-002f`). |
 | **MAX-8 Autonomous Warsuit** | `units-and-structures-soulless.csv` | `When this unit deploys, deal 2 damage to chosen asset and chosen asset heals 2.` | `When this unit deploys, deal 2 damage to chosen asset. Chosen asset heals 2.` | Separated damage and heal into two discrete sequential effect clauses. |
 | **Gemstone Titan** | `units-and-structures-concordia.csv` | `when this unit deploys, kill chosen structure with current Health less than this unit's power` | `When this unit deploys, kill chosen opposing structure with current Health less than this unit's power.` | Added opposing qualification; filters structures by current Health less than deployer's power. |
-| **Daggerspine Rangers** | `units-and-structures-concordia.csv` | Subtypes: `Mending, Specialists` | Subtypes: `Mending, Specialist` | Normalized plural subtype "Specialists" to canonical singular "Specialist" (`FR-DAT-007`). |
+| **Daggerspine Rangers** | `units-and-structures-concordia.csv` | Subtypes: `Mending, Specialists` | Subtypes: `Mending, Specialist` | Normalized plural subtype "Specialists" to canonical singular "Specialist" (`FR-DAT-007`). **Flagged for card rename review** (prior art / IP collision with Warcraft "Daggerspine"). |
 
 ---
 
