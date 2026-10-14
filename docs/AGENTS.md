@@ -15,5 +15,5 @@ This directory houses the authoritative master specifications and card balance d
 ## Linting
 Run `tools/linter/lint_cardtown.ps1` (auto-detects changed files; `-All` forces everything). Details live in the `cardtown-linter` skill. The pre-commit hook lints staged FRDs and CSVs automatically.
 
-## FRD Audits
-Workflow, severity taxonomy, and registry: see `audit/README.md`. Persona behavior lives only in `.agents/skills/` (`pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`).
+## FRD Authoring & Audits
+FRD authoring from product vision and roadmap documentation is driven by `pm-frd-drafter`. Audit workflow, severity taxonomy, and registry: see `audit/README.md`. Persona behavior lives only in `.agents/skills/` (`pm-frd-drafter`, `pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`).
