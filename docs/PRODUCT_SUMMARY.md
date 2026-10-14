@@ -108,8 +108,9 @@ With the game rules codified across all four Master FRDs and the authoring balan
 
 ```mermaid
 flowchart TD
-    subgraph Tier1["Tier 1: Card Design & Balance (Cloud)"]
+    subgraph Tier1["Tier 1: Card Design & Authoring (Cloud & Tools)"]
         GS["Google Sheets Workbooks<br/><i>(Authoring Balance Workbooks)</i>"]
+        Studio["Card Portfolio Designer Studio<br/><i>(Interactive Card & Set Authoring Tool)</i>"]
     end
 
     subgraph Tier2["Tier 2: Version-Controlled Source of Truth (data/cards/)"]
@@ -142,6 +143,8 @@ flowchart TD
     end
 
     GS <-->|"publish_card_sheets.ps1"| CSV
+    Studio -->|"Direct Export / Sync"| CSV
+    Studio -.->|"Generates Sidecars"| Overrides
     CSV -->|"Schema & Terminology Lint"| LinterSuite
     CSV -->|"Multi-Sheet Ingestion"| Pipeline
     Overrides -.->|"Stage 6 Override Merge"| Pipeline
@@ -185,7 +188,7 @@ flowchart LR
     Phase3["<b>Phase 3</b><br/>Headless Engine Core<br/><i>(PLANNED)</i>"]
     Phase4["<b>Phase 4</b><br/>Server Networking & Daemon<br/><i>(PLANNED)</i>"]
     Phase5["<b>Phase 5</b><br/>Godot 4.x Client & UX<br/><i>(PLANNED)</i>"]
-    Phase6["<b>Phase 6</b><br/>Metagame & Balance Ops<br/><i>(PLANNED)</i>"]
+    Phase6["<b>Phase 6</b><br/>Metagame, Deckbuilder & Card Studio<br/><i>(PLANNED)</i>"]
 
     Phase1 --> Phase2 --> Phase3 --> Phase4 --> Phase5 --> Phase6
 ```
@@ -237,11 +240,18 @@ flowchart LR
 - **Audio, VFX & Visual Feedback**:
   - Attack animation paths, damage counters, card exhaust/ready rotation tweens, and phase banner announcements.
 
-### Phase 6: Metagame, Deckbuilder & Balance Lifecycle
+### Phase 6: Metagame, Deckbuilder, Authoring Studio & Balance Lifecycle
 - **In-Game Deckbuilder**:
   - Visual deck construction enforcing HQ selection, faction color identity, 50-card minimum, and rarity copy caps (Common 4, Uncommon 3, Rare 2, Mythic 1; Scratch Company exclusion).
   - Deck export/import codes.
+- **Card Portfolio & Set Designer Studio (Interactive Card Authoring Tool)**:
+  - Standalone interactive workstation (web/desktop application) replacing manual spreadsheet maintenance with structured card and set portfolio design (`FR-DAT-001`).
+  - **Form-Based Card Inspector**: Real-time attribute validation, faction/type gating, subtype taggers, and zone assignment enforcing `CardBlueprint.schema.json` (`FR-DAT-005`, `FR-DAT-006`).
+  - **Visual Ability AST Builder**: Declarative block editor for assembling polymorphic ability trees (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `MANEUVER_EFFECT`), condition gates, cost tokens, and target filters without hand-writing raw JSON (`FR-ABL-001` - `FR-ABL-012`).
+  - **Live Syntax & Parity Engine**: Real-time bidirectional translation between MTG-aligned rules text (`FR-TXT-001` - `FR-TXT-006`) and declarative AST nodes, with instant parity verification (`FR-VAL-002`, `FR-CMP-019`) and canonical keyword autocomplete.
+  - **Set & Portfolio Management**: Multi-set cataloging, expansion tagging, card versioning, rarity curves, and deterministic slug derivation (`FR-DAT-002`, `FR-CMP-006`).
+  - **Version-Controlled Serialization**: Direct round-trip export into Git-versioned CSV balance sheets (`data/cards/*.csv`) and sidecar override definitions (`data/schemas/overrides/`, `FR-CMP-017`), preserving version control as the single source of truth.
 - **Automated Balance Pipeline Integration**:
-  - Live round-trip synchronization: Designer edits Google Sheets $\rightarrow$ `publish_card_sheets.ps1` $\rightarrow$ `compile_blueprints.ps1` $\rightarrow$ automated engine regression tests.
+  - Live round-trip synchronization: Designer edits Google Sheets or Card Studio $\rightarrow$ `publish_card_sheets.ps1` $\rightarrow$ `compile_blueprints.ps1` $\rightarrow$ automated engine regression tests.
 - **Telemetry & Match Analytics**:
   - Win-rate tracking per faction, card play frequency, and turn-duration metrics to guide future balance patches.
