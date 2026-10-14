@@ -2,7 +2,8 @@
 
 - **Target Document:** [Card_Data_Pipeline_FRD.md](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Card_Data_Pipeline_FRD.md)
 - **Auditor:** PM Devil's Advocate (`pm-devils-advocate`)
-- **Date:** 2026-10-13
+- **Evaluation Date:** 2026-10-14
+- **Status:** PENDING (Active review queue)
 - **Verdict:** REVISE WITH BLOCKERS
 
 ---
