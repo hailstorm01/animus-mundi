@@ -1,86 +1,41 @@
 # Product Management & Design Audits
 
-This directory contains formal audit reports and red-team critiques generated for Card Town Functional Requirements Documents (FRDs) and game systems specifications.
+Formal audit reports and red-team critiques for Card Town FRDs. Persona behavior is defined only in `.agents/skills/` (`pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`); this page is the human-facing overview.
 
-## Audit Workflow & Lifecycle
-
-The audit lifecycle is driven by collaborative agent personas:
+## Workflow
 
 ```text
-Draft / Revision in docs/frd/
-            │
-            ▼
-┌──────────────────────────┐
-│    pm-devils-advocate    │  ──► Socratic red-teaming, hole-poking, creates punch-list
-└──────────────────────────┘
-            │
-            ▼
-docs/audit/pending/[date]-[doc].md (Status: PENDING)
-            │
-            ▼
-┌──────────────────────────┐
-│    pm-audit-reviewer     │  ──► Ingests punch-list, synthesizes resolutions, interactive dialogue
-└──────────────────────────┘
-            │
-            ├─► Options [A, B, C, D] (Direct accept, modify, dismiss, defer)
-            │
-            ├─► Option [E] Start Design Discussion
-            │        │
-            │        ▼
-            │   ┌──────────────────────────┐
-            │   │      game-designer       │  ──► Interactive dialogue, asks clarifying questions,
-            │   └──────────────────────────┘      explores alternatives, emits Resolution Directive
-            │        │
-            │        └────────────────────────► Returns directive to pm-audit-reviewer
-            │
-            ├─► Updates target FRD in docs/frd/
-            ├─► Validates zero regressions via tools/linter/lint_frd.ps1
-            ├─► Deletes audit file from pending/
-            ├─► Commits FRD revisions & deletion
-            ├─► Logs timestamp, commit hash & source in audit_registry.md
-            └─► Pushes changes to version control
+FRD drafted/revised in docs/frd/
+        │  (agent-drafted FRDs trigger the DA automatically; reviewer edits do not)
+        ▼
+pm-devils-advocate ──► docs/audit/pending/[date]-[doc].md (PENDING, committed locally)
+        │
+        ▼  (human asks for review)
+pm-audit-reviewer ── interactive: [A] Accept [B] Modify [C] Dismiss [D] Defer [E] Design discussion ──► game-designer
+        │
+        ▼
+tools/audit/resolve_audit.ps1 ──► lint, purge pending file, commit FRD, mark RESOLVED in audit_registry.md
 ```
 
-### 1. Generation (`pm-devils-advocate`)
-- **Triggers:** Automatically invoked whenever an agent finishes drafting or revising an FRD in `docs/frd/`, or manually via `@pm-devils-advocate`.
-- **Behavior:** Stress-tests Scope/Delivery, Player XP, and Rules Integrity. Emits severity-ranked punch-lists to `docs/audit/pending/[YYYY-MM-DD]-[document].md`.
-- **Registry:** Logs entry in `docs/audit/audit_registry.md` with status `PENDING`.
+Nothing pushes automatically. Agents commit locally; push when you decide to.
 
-### 2. Triage & Resolution (`pm-audit-reviewer`)
-- **Triggers:** Invoked when pending audits exist, or manually via `@pm-audit-reviewer`.
-- **Behavior:**
-  - Reads active punch-lists in `docs/audit/pending/`.
-  - Formulates concrete potential resolutions (surgical fixes, de-scoping, or trade-off decisions).
-  - Drives an interactive conversation presenting options `[A] Accept`, `[B] Modify`, `[C] Dismiss`, `[D] Defer`, and `[E] Start Design Discussion`.
-  - Applies approved changes to `docs/frd/` and runs the FRD linter (`tools/linter/lint_frd.ps1`).
-  - Purges the pending audit file from `pending/`.
-  - Commits the remediations and records completion (date & time, commit hash, and source) in `docs/audit/audit_registry.md`.
-  - Pushes changes to version control.
-- **Helper Tooling:** Can use `powershell -ExecutionPolicy Bypass -File tools/audit/resolve_audit.ps1 -AuditFile "<file>" -Source "Agentic (pm-audit-reviewer)"` for automated, atomic resolution logging.
+## Clearing Loop (human-started only)
 
-### 3. Deep Design Exploration (`game-designer`)
-- **Triggers:** Escalated when the designer selects Option `[E] Start Design Discussion` during audit triage, or manually via `@game-designer`.
-- **Behavior:**
-  - Examines the PM Auditor's proposed fix and critiques its systemic and player experience implications.
-  - Asks clarifying questions regarding player fantasy, design philosophy, and trade-offs.
-  - Proposes 2-3 structured mechanical alternatives with pros and cons.
-  - Aligns with the designer on the preferred solution.
-  - Emits a standardized Resolution Directive with exact requirement modifications (`FR-XXX-YYY`) for `pm-audit-reviewer` to execute and verify.
+Say `@pm-audit-reviewer --clear-backlog` to run reviewer -> DA -> reviewer passes that auto-fix findings below 🔴 Blocker / 🟠 High (and not rule-changing), up to 5 passes per FRD. It stops when only human-required items remain, on no-progress/oscillation, or when the DA returns `CONVERGED / PASS`, and then reports what needs you. It never starts on its own.
 
-## Directory Structure & Tracking
-- **[`audit_registry.md`](audit_registry.md)**: Master index logging every audit run, generation dates, commit hashes, target documents, resolution timestamps, commits, and sources.
-- **`pending/`**: Holds active audit punch-lists awaiting designer review, triage, or remediation.
-  - Path format: `docs/audit/pending/[date]-[document].md`
-  - Example: `docs/audit/pending/2026-10-13-Game_Rules_and_Card_Modeling_FRD.md`
+## Tooling
+- `tools/audit/audit_status.ps1`: read-only status of pending audits (commit-based `STALE`/`CURRENT`, severity counts, human-required flag).
+- `tools/audit/resolve_audit.ps1 -AuditFile <file> [-DryRun] [-Push]`: atomic close-out. Lints first, rolls back on failure, pushes only with `-Push`.
 
-- **Staleness Rule:**
-  - The `[date]` prefix (`YYYY-MM-DD`) establishes the timestamp of the evaluation.
-  - An audit is considered **stale** if:
-    1. The target FRD in `docs/frd/` has been modified/committed since the audit's date, or
-    2. A newer dated audit file exists for the same document in `pending/`.
+## Layout
+- [`audit_registry.md`](audit_registry.md): ledger of every audit (dates, commits, targets, resolution).
+- `pending/`: active punch-lists as `[YYYY-MM-DD]-[document].md`.
+
+## Staleness
+An audit is stale when its target FRD has commits after the audited commit recorded in the registry (Commit Hash column), or a newer audit exists for the same document. `audit_status.ps1` computes this.
 
 ## Severity Taxonomy
-- 🔴 **Blocker / Critical**: Unresolvable game loops, state deadlocks, catastrophic mechanical exploits, or severe requirement redundancies that invalidate architecture.
-- 🟠 **High**: Major player onboarding friction, deep cognitive complexity, significant mechanical ambiguity, or clear competitive abuse vectors.
-- 🟡 **Medium**: Unnecessary over-engineering, subtle edge-case friction, or overlapping requirements that could be collapsed.
-- 🔵 **Low / Clarification**: Phrasing ambiguity, minor cosmetic overlap, or Socratic questions for designer clarification.
+- 🔴 **Blocker / Critical:** unresolvable loops, deadlocks, catastrophic exploits. Human required.
+- 🟠 **High:** major onboarding friction, significant ambiguity, clear abuse vectors. Human required.
+- 🟡 **Medium:** over-engineering, subtle edge-case friction, collapsible overlap. Loop-eligible.
+- 🔵 **Low / Clarification:** phrasing ambiguity, cosmetic overlap, Socratic questions (questions always need a human).
