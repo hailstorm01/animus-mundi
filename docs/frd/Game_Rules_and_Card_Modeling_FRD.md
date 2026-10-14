@@ -165,6 +165,9 @@ Every `CardBlueprint` validates against the following property schema:
 - **Player Discard**: Public depository for destroyed Assets and spent Maneuvers.
 - **Attached Zone**: Non-battlefield sub-container zone housing cards tucked under or attached to battlefield assets (`FR-ENT-102`).
 
+> [!NOTE] Design Rationale (DA-RULES-003)
+> Uncapped Reserves capacity and combat attack immunity are foundational pillars of Card Town's backline resource economy. Turtling in Reserves without deploying units to the Main Theater leaves the player's Headquarters completely vulnerable to direct attacks from opposing Main Theater units. In the absence of Guardian units in the Main Theater, aggressive opponents can close matches by Turn 4–5 through direct HQ strikes before a turtling player can deploy high-cost assets or accumulate excessive armor. Physical UI display constraints are handled through client-side card compaction and stacking, not artificial rules-level slot caps.
+
 #### FR-ZON-003: Entity Nomenclature & Asset Classification
 - **Battlefield Entities (Assets)**: Entities occupying an active battlefield zone (HQ Zone, Reserves Zone, Main Theater Zone) are designated as **Assets** (Headquarters, Unit, or Structure). Rules text referring to "assets" or "non-scratch assets" (e.g. *bring it down*, *Dolus Macrocannon*) intentionally includes Headquarters and Structures as eligible targets in addition to non-Scratch units.
 - **Non-Battlefield Entities (Cards)**: Entities residing in non-battlefield zones (Hand, Deck, Discard, Attached) carry the Card suffix (HQ Card, Unit Card, Structure Card, Maneuver Card).
@@ -265,6 +268,9 @@ Inherent actions execute directly as instantaneous state operations bypassing th
   - *Versatile Units (`FR-KWD-002i`)*: Reserves or Main Theater &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts unit upon generation.
   - *Structures & Headquarters*: Any zone &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts asset upon generation.
 - **`canDeployScratch()`**: Permitted strictly for `HEADQUARTERS`. Exhausts HQ to execute Scratch 1 (`FR-INH-004`).
+
+> [!NOTE] Design Rationale (DA-RULES-001)
+> Permitting Headquarters to attack is intentional and fully integrated into the game's resource economy. Attacking with a Headquarters requires `readiness == READIED` and immediately transitions the HQ to `EXHAUSTED` (`FR-INH-001`, `FR-CAP-001`). Because an exhausted HQ cannot execute `canGenerateResources()` or `canDeployScratch()`, spending early turns attacking with an HQ starves the player of basic resource generation, freezing their board development entirely. The opposing player is free to generate resources, deploy battlefield units, establish structures, and overwhelm the attacker. Resource development and combat declarations share the identical readiness economy; assuming a player can race with HQ attacks without suffering catastrophic board loss is fundamentally flawed.
 
 ---
 
@@ -432,7 +438,7 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 
 #### FR-LAY-003: Keyword Resolution & Duration Rules
 - **Full-Round Durations**: Modifiers lasting *"until the end of your opponent's turn"* (*blindside*, *Comms Relay*) persist through the current turn and the opponent's subsequent turn, expiring deterministically during Sub-Phase 4c of that opponent's turn.
-- **Cornered (`FR-KWD-002e`)**: Evaluates `count(opponentMainTheaterAssets) > count(playerMainTheaterAssets)` across all battlefield Assets (Units and Structures). For triggered abilities, Cornered is an enqueue condition evaluated strictly at trigger event emission; once enqueued, it resolves unconditionally.
+- **Cornered (`FR-KWD-002e`)**: Evaluates `count(opponentMainTheaterAssets) > count(playerMainTheaterAssets)` across all battlefield Assets (Units and Structures). For triggered abilities, Cornered is an enqueue condition evaluated strictly at trigger event emission; once enqueued, it resolves unconditionally. For continuous auras and static abilities during simultaneous resolution sequences (such as board wipes, multi-target maneuvers, or Step 3 combat damage and retaliation; `FR-CBT-002`), all continuous condition gates (including Cornered count checks) are snapshotted at the start of the resolution step and locked throughout all simultaneous damage and mitigation calculations. Continuous auras re-evaluate only after all simultaneous damage has been committed and state-based destruction checks have completed.
 
 ---
 
@@ -444,6 +450,7 @@ Layer 6: Mathematical Clamping & Effective Value (Effective Power = max(0, Raw P
 - **Simultaneous Replacement Conflicts & Controller Choice**: If multiple replacement watchers attempt to intercept the exact same event, the controller of the affected asset designates the application order. Once a replacement effect alters the event (e.g. prospective death is replaced by return-to-hand), any competing replacement watchers whose trigger conditions are no longer met immediately fizzle without effect.
 - **Consequential Event Isolation**: Any damage or state mutations occurring as a direct consequence of a replacement effect (e.g. self-inflicted damage on *Shifting Impossibility*) emit as independent, discrete child events and cannot circularly replace their parent event.
 - **Entity Destruction Interception**: For replacement watchers intercepting entity destruction (*Shifting Impossibility*), each asset's prospective destruction emits an individual interceptable death hook, permitting multiple simultaneous entity destructions from a single root damage event to each be replaced sequentially until the intercepting watcher's health is depleted.
+- **Pipeline Precedence Invariant**: Damage-phase replacement watchers (Stage 1 Redirection, Stage 2 Flat Reductions; `FR-REP-004`) operate strictly on prospective damage instances and evaluate prior to damage commitment. Entity-lifecycle replacement watchers (intercepting `WOULD_BE_DESTROYED`) evaluate strictly in Stage 5 after accumulated damage is verified to be lethal. Damage redirected away from an entity in Stage 1 cannot cause that entity to enter a prospective destruction state.
 
 #### FR-REP-004: Deterministic 5-Stage Damage Mitigation Pipeline
 Every incoming damage instance resolves through 5 sequential automated stages:
@@ -487,6 +494,9 @@ Incoming Damage Instance
 - **Guardian Priority ("If Able")**: Attack declarations must target a Main Theater asset with Guardian when able. Guardian in Reserves cannot be attacked and does not redirect attacks. Ethereal overrides Guardian.
 - **Zero-Power Attacks**: Units and HQs with Combat Power <= 0 may legally declare attacks (dealing 0 raw combat damage, firing `EVENT_ATTACK_DECLARE`, routing through `FR-REP-004` where negative Resistant may amplify: $0 - (-1) = 1$).
 
+> [!NOTE] Design Rationale (DA-RULES-005)
+> Permitting attacks with Combat Power <= 0 is an intentional design rule. It enables keyword interactions such as Aggressive N (which grants power during the Step 2 trigger window prior to Step 3 damage resolution) and allows attacks against targets with negative Resistant to amplify damage. Retaliation is 100% symmetric, ensuring zero-power attacks are not risk-free against armed defenders.
+
 ---
 
 ### Section 7.2: Formalized 3-Step Combat Lifecycle
@@ -507,6 +517,7 @@ Combat execution proceeds through three deterministic steps:
    - Retaliation is 100% symmetric across all combat pairings (Unit vs Unit, Unit vs Structure, Unit vs HQ, HQ vs HQ).
    - Combat retaliation is combat damage (`isCombatDamage = true`); Stalwart applies.
    - Damage instances route through respective 5-stage pipelines (`FR-REP-004`).
+   - **Continuous Aura Snapshot Lock**: Continuous aura condition gates (including Cornered count checks; `FR-LAY-003`) are snapshotted and locked at the entry of Step 3; all simultaneous damage and retaliation calculations evaluate against this locked state.
    - Following damage application, state-based destruction checks evaluate (`FR-LAY-002`, `FR-CBT-003`). If an attacking unit with `Berserk` (`FR-KWD-002o`) destroyed its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
 
 #### FR-CBT-003: Persistent Damage, Defeat Rules & Match Draws
@@ -770,10 +781,10 @@ Combat execution proceeds through three deterministic steps:
 | **FR-ZON-003** | Entity Nomenclature & Asset Taxonomy | Section 2.3 (`FR-ZON-003`) |
 | **FR-ZON-002** | Movement, Immutability & Control Transfer | Section 2.4 (`FR-ZON-002`) |
 | **FR-ZON-004** | Non-Battlefield Zone Transition Reset | Section 2.4 (`FR-ZON-004`; subsumes `FR-ZON-101`) |
-| **FR-ZON-101** | Clean Asset Deallocation | Section 2.4 (Subsumed by `FR-ZON-004`) |
+| **FR-ZON-101** | Clean Asset Deallocation | Section 2.4 (Subsumed by `FR-ZON-004`; historical archive reference) |
 | **FR-SNP-101** | Last-Known State Snapshotting | Section 2.4 (`FR-SNP-101`) |
 | **FR-ZON-005** | Scratch Fog of War Lifecycle | Section 2.4 (`FR-ZON-005`; subsumes `FR-ENT-101`) |
-| **FR-ENT-101** | Scratch Double-Blind Proxy Wrapper | Section 2.4 (Subsumed by `FR-ZON-005`) |
+| **FR-ENT-101** | Scratch Double-Blind Proxy Wrapper | Section 2.4 (Subsumed by `FR-ZON-005`; historical archive reference) |
 | **FR-ENT-102** | Tucked Sub-Entities Container (NO-AH-5) | Section 2.4 (`FR-ENT-102`), Section 8.2 |
 | **FR-ENT-103** | Face-Down Transformation (forced mutation)| Section 2.4 (`FR-ENT-103`) |
 | **FR-RES-001** | Resource Accumulation & Pools | Section 3.1 (`FR-RES-001`) |
@@ -797,8 +808,8 @@ Combat execution proceeds through three deterministic steps:
 | **FR-TGT-002** | Target Quantifiers & Value Allocation | Section 5.1 (`FR-TGT-002`) |
 | **FR-TGT-003** | Target Validation & Fizzle Rules | Section 5.1 (`FR-TGT-003`; subsumes `FR-TGT-103`) |
 | **FR-TGT-101** | Bound Action Payload Model | Section 5.1 (`FR-TGT-101`) |
-| **FR-TGT-102** | Declarative Targeting Filters | Section 5.1 (Subsumed by `FR-TGT-001`) |
-| **FR-TGT-103** | Two-Stage Target Verification | Section 5.1 (Subsumed by `FR-TGT-003`) |
+| **FR-TGT-102** | Declarative Targeting Filters | Section 5.1 (Subsumed by `FR-TGT-001`; historical archive reference) |
+| **FR-TGT-103** | Two-Stage Target Verification | Section 5.1 (Subsumed by `FR-TGT-003`; historical archive reference) |
 | **FR-MOD-001** | Inspection, Hand Reveals & Timeouts | Section 5.2 (`FR-MOD-001`) |
 | **FR-TRG-001** | Trigger Event Hook Taxonomy | Section 6.1 (`FR-TRG-001`) |
 | **FR-QUE-001** | Centralized LIFO Stack & Clean Stack Rule| Section 6.1 (`FR-QUE-001`) |
