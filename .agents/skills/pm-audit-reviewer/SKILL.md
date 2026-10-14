@@ -118,33 +118,59 @@ stateDiagram-v2
 3. If multiple pending audits exist and no specific file was requested, present the list to the user and prompt for selection.
 4. Check for staleness: Compare the audit evaluation date against the git modification history of the target FRD in `docs/frd/`. If the FRD was modified after the audit, alert the user.
 
-### Step 2: Problem Extraction & Solution Engineering
-Parse the pending audit file and extract all findings across sections:
-- 🔴 **Blocker / Critical** findings
-- 🟠 **High** findings
-- 🟡 **Medium** findings
-- 🔵 **Low / Clarification** findings
-- **Redundancy & De-Scoping Ledger** entries
-- **Socratic Interrogation Register** questions
+### Step 2: Problem Extraction & Two-Tier Triage
+Parse the pending audit file and classify findings into two operational tiers:
+
+- **Tier 1: Autonomous Remediation (Low-Hanging Fruit / High Confidence):**
+  - Minor phrasing clarifications, cosmetic ambiguities, explicit tie-breakers that do not alter core mechanics.
+  - De-scoping of redundant requirements cleanly subsumed by existing ones.
+  - Fixing dangling or malformed cross-references (`FR-XXX-YYY`).
+- **Tier 2: Escalation to Human / Game Designer (Architectural / High Impact):**
+  - 🔴 **Blocker / Critical** exploits, state deadlocks, loop conditions.
+  - 🟠 **High** gameplay or competitive balance concerns.
+  - Fundamental design philosophy divergences, player cognitive load trade-offs, or questions from the Socratic Interrogation Register.
 
 For each finding, formulate:
 - **Finding Summary:** The core flaw, deadlock, or vulnerability identified by `pm-devils-advocate`.
 - **Target Citations:** Specific `FR-XXX-YYY` requirement IDs or architecture sections affected.
-- **Potential Resolution:** A concrete, draft-ready specification revision or architectural adjustment.
+- **Potential Resolution:** A concrete, draft-ready specification revision, de-scoping edit, or Design Rationale block.
 
-### Step 3: Interactive Designer Consultation
-Initiate an interactive conversation with the user to review findings. You may present items one-by-one or in severity tiers (starting with Blocker/Critical).
+---
 
-For each item, present:
-- **Item ID & Title:** e.g., `[DA-RULES-001] The Parity Verification Paradox`
-- **Vulnerability / Flaw:** Concise description of the issue.
-- **Potential Resolution:** Proposed remedy and concrete FRD change.
+### Step 3: Resolution Pathways & Interactive Dialogue
+
+Depending on how the review was triggered, proceed via **Path A (Interactive Mode)** or **Path B (Batch Clearing Loop)**:
+
+#### Path A: Standard Interactive Consultation (Default)
+Initiate an interactive conversation with the user to review findings item-by-item or in severity tiers:
 - **Options for the Designer:**
   - `[A] Accept Proposed Resolution`: Apply the recommended text or architectural revision.
   - `[B] Modify Resolution`: Provide custom guidance or alternative mitigation.
-  - `[C] Dismiss / Accept Risk`: Reject the Devil's Advocate finding with a documented designer rationale (e.g., intentional constraint, non-issue).
+  - `[C] Dismiss / Accept Risk (Enforce Inline Design Rationale)`:
+    > [!IMPORTANT]
+    > Whenever an item is dismissed as *"as designed"* or accepted risk, `pm-audit-reviewer` must append an inline callout directly below the requirement in the target FRD:
+    > ```markdown
+    > > [!NOTE] Design Rationale ([FINDING_ID])
+    > > [Brief rationale explaining why this behavior is intentional and accepted by design.]
+    > ```
+    > This suppresses duplicate findings in future audits.
   - `[D] Defer`: Mark item for separate tracking outside this FRD.
-  - `[E] Start Design Discussion`: Launch a separate interactive conversation with the `game-designer` persona to examine the proposed solution, ask clarifying questions, explore in-depth mechanical alternatives, and synthesize concrete resolution instructions for this punch-list item.
+  - `[E] Start Design Discussion`: Launch a separate interactive conversation with the `game-designer` persona.
+
+#### Path B: Human-Triggered Backlog Clearing Loop (`@pm-audit-reviewer --clear-backlog` or explicit user trigger)
+When the user explicitly launches a batch/backlog clearing cycle (e.g., *"Clear out the straightforward audit findings"* or *"Run the resolver-DA cycle on backlog"*):
+1. **Sweep Tier 1 Items:**
+   - Automatically apply clean phrasing fixes, tie-breakers, and redundancy de-scoping for Tier 1 findings.
+   - Run `powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1` to ensure references remain valid.
+2. **Collect Tier 2 Items:**
+   - Do NOT attempt to guess on Tier 2 blockers or mechanical shifts. Group all unresolved Tier 2 findings into a concise triage summary for the user.
+3. **Trigger DA Verification Pass:**
+   - Invoke `pm-devils-advocate` to re-audit the updated FRD.
+   - Thanks to the `Design Rationale` suppression rule, DA will evaluate the cleaned document without re-flagging dismissed or accepted trade-offs.
+   - Loop exits when either:
+     - The only remaining items in the audit are Tier 2 items awaiting designer input, or
+     - DA returns a `CONVERGED / PASS` verdict.
+4. **Report Back to User:** Present the cleaned FRD, the remaining high-severity items requiring human decisions, and pause for human guidance.
 
 Maintain a live tracking tally of items:
 `[Pending: X | In Discussion: Y | Resolved: Z / Total: N]`
