@@ -69,10 +69,15 @@ The Card Compiler operates as the fourth core architectural pillar of the Animus
 The following significant design and architectural decisions represent inferences drawn from the foundational requirements to establish a production-grade compilation pipeline. Each decision is flagged for product and engineering sign-off:
 
 > [!IMPORTANT]
-> **DECISION 1: Two-Tier Hybrid Architecture & Sidecar Overrides Registry (`FR-CMP-017`)**
-> - **Inference**: MTG-style natural language text covers 85%+ of card behaviors (keywords, stat buffs, standard costs, simple triggers). However, highly complex mechanics (*NO-AH-5* card tucking `FR-ENT-102`, *Samsara, Living Tempest* dual top-deck inspection and conditional maneuver damage, *Ambush Tactics* 4-option modal targeting `FR-ABL-010`) cannot be reliably parsed with naive regular expressions without introducing extreme parser fragility.
-> - **Decision**: We adopt an industry-standard two-tier compiler architecture: (1) An automated grammar synthesizer parses standard patterns; (2) A sidecar overrides registry (`data/schemas/ast_overrides.json`) supplies authoritative declarative ASTs for bespoke cards. To prevent desynchronization, overrides must record the expected raw `rulesText` matching the CSV (`FR-CMP-017`). For overridden cards, forward parity verification exempts deep NLP clause mapping, enforcing structural keyword checks, schema conformance, CSV text string matching, and explicit designer sign-off (`FR-CMP-019`).
-> - **Alternative Considered**: Pure 100% regex parsing (causes fragile edge-case bugs when designers adjust wording) vs 100% manual JSON authoring (burdens designers with raw JSON).
+> **DECISION 1: Decoupled Declarative Catalog Model & Sidecar Overrides Registry (`FR-CMP-017`)**
+> - **Inference**: Attempting to implement a full natural language processing (NLP) compiler across arbitrary English rules text in PowerShell regular expressions is fragile and introduces high operational risk (`DA-CMP-002`). Minor phrasing adjustments, modal choices, or composite triggers inevitably break regex heuristics or cause silent miscompilations.
+> - **Decision**: We adopt the **Decoupled Declarative Catalog Model (Direction B)**:
+>   1. **CSV Authority**: RFC-4180 balance CSVs (`data/cards/*.csv`) authoritatively own card metadata, base numerical stats, resource costs, combat zones, and the human-readable printed `rulesText` displayed on client UI tooltips and card frames.
+>   2. **Declarative Ability AST Authority**: Authoritative, executable ability logic lives in declarative JSON AST format (`data/schemas/ast_overrides.json` or card JSON catalogs).
+>   3. **Retired Complex Regex NLP**: Automated text synthesis in `compile_blueprints.ps1` is strictly scoped to canonical keywords (`FR-CMP-013`), standard cost headers (`FR-CMP-010`), and simple single-clause triggers (`FR-CMP-009`). Any card with composite logic, modal branches, dynamic values, or non-trivial mechanics bypasses regex parsing and is defined directly in declarative JSON.
+>   4. **AI Card Compiler Assistant**: An AI card compiler authoring persona guides designers from natural language rules text intent into verified, schema-compliant JSON AST definitions.
+>   5. **Reverse Parity Scoping (`FR-CMP-020`)**: Overridden cards are exempt from automated reverse AST-to-text NLP mapping. Parity is enforced strictly via explicit designer sign-off (`"parityVerified": true`, `verifiedBy`, `verifiedAt`) and exact sanitized CSV rulesText matching (`FR-CMP-017`, `FR-CMP-019`).
+> - **Alternative Considered**: Full regex NLP parser in PowerShell (rejected due to fragility on context-sensitive text and high maintenance burden) vs 100% raw JSON authoring without CSV balance sheets (rejected due to designer workflow friction).
 
 > [!IMPORTANT]
 > **DECISION 2: 256-Bit Cryptographic Checksum via Full SHA-256 (`FR-CMP-025`)**
@@ -170,14 +175,27 @@ param(
 
 1. **`-SourceDir`**: Path to directory containing the 10 authoritative RFC-4180 balance CSV sheets (`FR-DAT-001`). Defaults to `<repoRoot>/data/cards`.
 2. **`-OutputDir`**: Target directory where compiled JSON catalogs (`blueprints.json`, `blueprints.min.json`) are written. Defaults to `<repoRoot>/data/schemas`.
-3. **`-SchemaDir`**: Directory housing canonical JSON schemas (`CardBlueprint.schema.json`, `AbilityDef.schema.json`). Defaults to `<repoRoot>/data/schemas`.
+3. **`-SchemaDir`**: Directory housing canonical JSON schemas (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, `ast_overrides.schema.json`). Defaults to `<repoRoot>/data/schemas`.
 4. **`-OverridesFile`**: Path to the sidecar AST overrides registry (`FR-CMP-017`). Defaults to `<repoRoot>/data/schemas/ast_overrides.json`.
 5. **`-ValidateOnly`**: Dry-run mode. Executes full ingestion, AST synthesis, parity checking, and schema validation without writing output files to disk. Returns exit code 0 on success.
-6. **`-EmitSchemas`**: Emits or refreshes the standalone JSON Schema validation files (`CardBlueprint.schema.json`, `AbilityDef.schema.json`) into `-SchemaDir` during compilation.
+6. **`-EmitSchemas`**: Emits or refreshes the standalone JSON Schema validation files (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, `ast_overrides.schema.json`) into `-SchemaDir` during compilation (`FR-CMP-022`).
 7. **`-Strict`**: Enables strict validation mode. Treats all designer review items (`Section 7.2 of Card Data Pipeline FRD`), prototype proxies, and syntax warnings as fatal compilation errors.
 8. **`-Minify`**: Emits an additional minified production artifact (`blueprints.min.json`) alongside the formatted `blueprints.json`.
 9. **`-Version`**: Overrides the semantic `cardDataVersion` string embedded in the catalog header (`FR-DAT-004`). Must match Semantic Versioning 2.0 (e.g., `"1.0.0"`).
 10. **`-VerboseOutput`**: Prints comprehensive per-card compilation logs, AST token streams, and parity reconciliation steps to standard output.
+
+##### Process Exit Code Contract (Subsumes FR-CMP-028)
+The compiler terminates with standardized process exit codes to enable seamless integration into CI/CD pipelines and pre-commit hooks:
+
+| Exit Code | Classification | Trigger Scenarios & Error Taxonomy (`FR-CMP-027`) |
+| :---: | :--- | :--- |
+| **`0`** | **Success** | Compilation succeeded completely; output artifact verified and emitted. |
+| **`1`** | **Environment / I/O** | Missing, unreadable, or locked CSV sheet or schema file (`ERR_*_IO`). |
+| **`2`** | **CSV Syntax / Parsing** | Malformed CSV row, unclosed quote, or header mismatch (`ERR_CSV_*`, `ERR_NAME_EMPTY`). |
+| **`3`** | **Type / Enum Constraint** | Illegal enum value, negative cost, or type coercion failure (`ERR_ENUM_*`, `ERR_NUM_*`). |
+| **`4`** | **AST Synthesis / Schema** | Override schema invalid, override text mismatch, unverified override (`ERR_SYNTAX_*`, `ERR_OVERRIDE_*`). |
+| **`5`** | **Parity / Strict Gate** | Text-to-AST parity failure, proxy/rework rejected under strict (`ERR_PARITY_*`, `ERR_STRICT_*`). |
+
 
 #### FR-CMP-002: Multi-Stage Compilation Pipeline & Lifecycle Invariants
 The compilation process executes in 10 strictly sequential, deterministic stages. If any stage encounters a fatal error, execution halts immediately, and subsequent stages are suppressed:
@@ -218,11 +236,15 @@ In fulfillment of **FR-DAT-003**:
 #### FR-CMP-005: Dataset Sanitation, Empty Rows & Prototype Filtering
 1. **Empty Row Sanitation**: Trailing or intermediate rows where all columns are empty or contain only whitespace are cleanly ignored and excluded from the catalog.
 2. **Mandatory Row Identification**: Any row possessing a non-empty `name` column is treated as a card declaration and must satisfy all schema requirements.
-3. **Proxy & Rework Handling**:
+3. **Harmonized Prototype & Rework Policy (FR-VAL-003 Alignment)**:
    - The CSV columns `currentProxy` and `needsRework` are evaluated as boolean flags (`TRUE`/`FALSE`).
    - If `currentProxy` is `TRUE`, the compiled blueprint sets `"proxy": true` in its metadata block.
    - If `needsRework` is `TRUE`, the compiled blueprint sets `"needsRework": true` in its metadata block.
-   - In standard mode, proxies compile normally to facilitate gameplay testing. Under `-Strict` mode, any card with `needsRework == TRUE` or `currentProxy == TRUE` triggers fatal compilation error `ERR_STRICT_PROTOTYPE_REJECTED`.
+   - **Development & Playtest Mode**: To support rapid gameplay iteration and playtesting, prototype or rework cards compile cleanly into blueprints with these metadata flags intact, enabling game clients and simulation harnesses to filter or flag them.
+   - **Strict Mode Production Gate**: Under `-Strict` mode (enforced in CI/CD release builds and pre-commit production gates), any card marked with `needsRework == TRUE`, `currentProxy == TRUE`, or containing incomplete placeholder rules text triggers fatal compilation error `ERR_STRICT_PROTOTYPE_REJECTED`, guaranteeing zero prototype leakage into release bundles.
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-004)**: Eliminates contradictory behavior between `lint_cardtown.ps1` and `compile_blueprints.ps1`. Both tools permit WIP prototype cards during local development, but enforce a zero-tolerance gate under `-Strict` compilation.
 
 #### FR-CMP-006: Deterministic Blueprint ID Derivation & Slug Collision Invariant
 The compiler derives canonical blueprint IDs strictly conforming to the deterministic slug derivation algorithm codified in **FR-DAT-002**:
@@ -252,6 +274,10 @@ In fulfillment of **FR-DAT-005** and **FR-DAT-006**, all CSV string values are c
 ---
 
 ## DOMAIN 3: NATURAL LANGUAGE RULES TEXT PARSER & TOKENIZER
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-002: Decoupled Declarative Catalog Model)**:
+> In accordance with Direction B, automated regex parsing within `compile_blueprints.ps1` is deliberately restricted to well-bounded, predictable syntactic patterns: standalone canonical keywords (`FR-CMP-013`), standard activated ability cost headers (`FR-CMP-010`), and simple single-clause triggers (`FR-CMP-009`). Any card with compound costs, modal branching (`Choose one:`), dynamic state variables, or complex non-combat mechanics bypasses regex parsing and is authored directly as declarative JSON in `data/schemas/ast_overrides.json` (supported by the AI Card Compiler authoring persona). This eliminates the fragility of regular-expression NLP on context-sensitive rules prose.
 
 ### Section 3.1: Lexical Analysis & Clause Segmentation
 
@@ -298,24 +324,8 @@ In fulfillment of **FR-TXT-003**, **FR-ACT-001**, and **FR-ABL-009**, activated 
    - Sentences matching `^As an additional cost to enact this maneuver,\s*(.+)\.$` are compiled into an `additionalCosts` array attached to `ManeuverEffectDef`.
 
 #### FR-CMP-011: Declarative Target Filter & Selector Synthesizer
-In fulfillment of **FR-TXT-004** and **FR-TGT-001**, targeting phrases are translated into canonical `TargetRef` and `FilterDef` AST nodes:
-1. **Target Verb**: The parser matches canonical targeting verbs (`chosen`, `each of up to N chosen`). Non-standard verbs like `target` trigger a warning under normal mode and fatal error `ERR_PARITY_VERB` under `-Strict`.
-2. **Target Selectors**:
-   - `chosen (.+)` &rarr; `selector: "CHOSEN", count: 1`.
-   - `up to (\d+) chosen (.+)` &rarr; `selector: "CHOSEN", count: N, optional: true`.
-   - `each of up to (\d+) chosen (.+)` &rarr; `selector: "CHOSEN", count: N`.
-   - `distribute (\d+) (damage|armor) among up to (\d+) chosen (.+)` &rarr; `selector: "DISTRIBUTED_POOL", poolValue: N, count: M` (`FR-ABL-011`).
-   - `all (.+)` &rarr; `selector: "ALL"`.
-3. **Filter Conjunctions**:
-   - `allied` &rarr; `allegiance: "ALLIED"`.
-   - `opposing` &rarr; `allegiance: "OPPOSING"`.
-   - `unit` &rarr; `entityType: "UNIT"`.
-   - `structure` &rarr; `entityType: "STRUCTURE"`.
-   - `asset` &rarr; `entityType: "ASSET"`.
-   - `non-Scratch` &rarr; `excludeScratch: true`.
-   - `non-Headquarters` / `non-HQ` &rarr; `excludeHQ: true`.
-   - `in the Main Theater` &rarr; `zone: "MAIN_THEATER"`.
-   - `in the same zone` &rarr; `zone: "SAME_ZONE"`.
+*(Subsumed by FR-TXT-004 & FR-TGT-001)*
+Targeting grammar, selector parsing (`chosen`, `each of up to N chosen`, `distribute`), and filter conjunctions are canonically defined in **FR-TXT-004** and **FR-TGT-001**. The compiler maps canonical targeting verbs (`chosen`, `each of up to N chosen`) and filter conjunctions (`allied`, `opposing`, `unit`, `structure`, `asset`, `non-Scratch`, `non-Headquarters`, `in the Main Theater`, `in the same zone`) to `TargetRef` and `FilterDef` AST nodes directly per **FR-TGT-001**. Non-canonical targeting verbs (e.g., `target`) trigger fatal error `ERR_PARITY_VERB` under `-Strict`.
 
 #### FR-CMP-012: Numerical & Value Token Synthesizer
 In fulfillment of **FR-ABL-007**, stat expressions and numbers are compiled into `ValueToken` structures:
@@ -429,15 +439,25 @@ The compiler verifies that card rules text is faithfully represented in the comp
 
 #### FR-CMP-020: Reverse Parity Verification (AST-to-Text)
 The compiler verifies that no blueprint possesses "zombie" or "ghost" abilities absent from its printed text:
-1. Every `AbilityDef` in a blueprint's `abilities` array must correspond to a recognizable clause in `rulesText`.
-2. Blueprints are prohibited from declaring hidden, silent, or unprinted capabilities (excluding universal inherent actions: March, Attack, Generate; `FR-INH-001` - `FR-INH-004`).
-3. Failure Condition: Any unrepresented AST node triggers compilation error `ERR_PARITY_ORPHAN_AST`.
+1. **Standard Synthesized Cards**: Every `AbilityDef` in a blueprint's `abilities` array generated via automated synthesis must correspond to a recognizable clause in `rulesText`. Any unrepresented AST node triggers compilation error `ERR_PARITY_ORPHAN_AST`.
+2. **Sidecar Overridden Cards**: Cards defined in `ast_overrides.json` are formally exempt from automated reverse AST-to-text NLP mapping. Because bespoke AST structures cannot be algorithmically decompiled into arbitrary English prose, reverse parity for overridden cards is strictly satisfied via:
+   - Explicit designer verification metadata (`"parityVerified": true`, `verifiedBy`, `verifiedAt`) per `FR-CMP-017` and `FR-CMP-019`.
+   - Sanitized, whitespace-normalized string equality between `overrides[id].rulesText` and the source CSV `rulesText`.
+   - Complete schema conformance against `AbilityDef.schema.json`.
+3. Blueprints are prohibited from declaring hidden, silent, or unprinted capabilities (excluding universal inherent actions: March, Attack, Generate; `FR-INH-001` - `FR-INH-004`).
+4. **Failure Condition**: Any unrepresented AST node on a standard synthesized card triggers compilation error `ERR_PARITY_ORPHAN_AST`.
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-001)**: Resolves the architectural deadlock where `FR-CMP-020` would otherwise fail compilation on bespoke cards in `ast_overrides.json` (such as *NO-AH-5*, *Samsara*, or *Ambush Tactics*). Sidecar overrides bypass automated reverse prose mapping in favor of explicit designer sign-off, schema validation, and CSV rulesText string matching.
 
 #### FR-CMP-021: Strict Mode Enforcement & Designer Review Flags
 In fulfillment of **Domain 7 of Card Data Pipeline FRD**:
-1. When invoked with `-Strict`, the compiler verifies that all 52 cards listed in the Master Review Register have resolved design approvals.
+1. When invoked with `-Strict`, the compiler verifies that all cards flagged with unresolved review items in the Master Review Register have resolved design approvals.
 2. If a card is flagged with unresolved design questions and `-Strict` is active, compilation fails with `ERR_STRICT_UNRESOLVED_REVIEW`.
 3. In standard mode, review warnings are printed to standard error as non-fatal diagnostic notes.
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-005)**: Replaced hardcoded "52 cards" with dynamic evaluation against unresolved items in the Master Review Register, preventing requirement obsolescence as cards are reviewed and approved.
 
 ---
 
@@ -449,7 +469,11 @@ In fulfillment of **Domain 7 of Card Data Pipeline FRD**:
 The compiler validates every blueprint against canonical JSON schemas conforming to **JSON Schema Draft 2020-12** (cross-referencing **FR-DAT-005** and Section 8.1 of Master FRD):
 1. **`CardBlueprint.schema.json`**: Located at `data/schemas/CardBlueprint.schema.json`. Validates top-level card metadata, stats, costs, enums, and the `abilities` array against canonical definitions in **FR-DAT-005**.
 2. **`AbilityDef.schema.json`**: Located at `data/schemas/AbilityDef.schema.json`. Validates polymorphic ability types, condition gates, cost arrays, filter criteria, and targeting selectors (`FR-ABL-001` - `FR-ABL-012`).
-3. **`-EmitSchemas` Flag**: When executed with `-EmitSchemas`, the compiler regenerates and overwrites both schema files with authoritative schema definitions, guaranteeing synchronization between code and schemas.
+3. **`ast_overrides.schema.json`**: Located at `data/schemas/ast_overrides.schema.json`. Validates the structure of the sidecar overrides registry envelope, ensuring mandatory presence of `rulesText`, `parityVerified`, `verifiedBy`, `verifiedAt`, and valid polymorphic `abilities` payloads (`FR-CMP-017`).
+4. **`-EmitSchemas` Flag**: When executed with `-EmitSchemas`, the compiler regenerates and overwrites all canonical schema files (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, `ast_overrides.schema.json`) with authoritative schema definitions, guaranteeing synchronization between code and schemas.
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-006)**: Authoritative JSON schema added for `ast_overrides.json` sidecar registry, enabling IDE schema validation and upfront syntax linting for bespoke card abilities.
 
 #### FR-CMP-023: Production Catalog Emission
 The compiled production bundle is emitted to `data/schemas/blueprints.json`:
@@ -483,8 +507,13 @@ To guarantee that the catalog checksum is 100% reproducible across different pla
    - Character strings are normalized to UTF-8 without byte order marks (BOM).
    - Numeric values are formatted without trailing zeroes (e.g. `1` rather than `1.0`).
 2. Catalog serialization is strictly independent of host operating system line endings (`CRLF` vs `LF`).
-3. **PowerShell Implementation Strategy**:
-   To guarantee strict RFC 8785 compliance and avoid the non-compliant quirks of native `ConvertTo-Json` in Windows PowerShell 5.1 (unordered properties, floating-point localization, arbitrary whitespace), `compile_blueprints.ps1` executes canonical serialization via an embedded C# JCS helper class compiled in-memory via `Add-Type`. This compiles with zero external dependencies across both Windows PowerShell 5.1 (.NET Framework 4.7.2+) and PowerShell 7+ (.NET Core), providing deterministic UTF-16 code unit key sorting and high-throughput serialization.
+3. **PowerShell Implementation & Session Caching Strategy**:
+   - To guarantee strict RFC 8785 compliance and avoid the non-compliant quirks of native `ConvertTo-Json` in Windows PowerShell 5.1 (unordered properties, floating-point localization, arbitrary whitespace), `compile_blueprints.ps1` executes canonical serialization via an embedded C# JCS helper or native BCL serialization.
+   - **Session Caching**: To prevent `Add-Type` from invoking `csc.exe` out-of-process on repeated executions, the script checks if the type is already loaded in the active session (`if (-not ([System.Management.Automation.PSTypeName]'CardTown.CanonicalJson').Type)`). If present, compilation is bypassed entirely.
+   - **Pre-Compiled Assembly / Native BCL Support**: The compiler supports loading a pre-compiled standalone assembly (`CardTown.CanonicalJson.dll`) or utilizing native PowerShell 7+ .NET Core APIs (`System.Text.Json` with custom ordered property writers and `System.Security.Cryptography.SHA256`), eliminating the 1,500–3,500 ms in-memory compilation penalty during git pre-commit hook runs.
+
+> [!NOTE]
+> **Design Rationale (DA-CMP-003)**: Session caching and native BCL / pre-compiled assembly support eliminate recurring `csc.exe` invocation latency, ensuring git pre-commit hooks easily meet the 5,000 ms SLA under `FR-CMP-002`.
 
 #### FR-CMP-025: 256-Bit Cryptographic Checksum Computation (`catalogChecksum`)
 In fulfillment of **FR-DAT-004**, **FR-SES-001**, and **FR-SPC-002**:
@@ -549,13 +578,8 @@ The compiler implements the following standardized error taxonomy:
 | | `ERR_STRICT_UNRESOLVED_REVIEW` | Flagged review item encountered while `-Strict` is enabled. |
 
 #### FR-CMP-028: Non-Zero Exit Code Contract & CI/CD Integration
-The compiler process terminates with standardized process exit codes to enable seamless integration into CI/CD pipelines and pre-commit hooks:
-- **`0`**: Compilation succeeded completely; output artifact verified and emitted.
-- **`1`**: Environment, file I/O, or command-line parameter error (`ERR_*_IO`).
-- **`2`**: CSV syntax, column structure, or parsing failure (`ERR_CSV_*`).
-- **`3`**: Enum, type, or constraint validation failure (`ERR_ENUM_*`, `ERR_NUM_*`).
-- **`4`**: AST synthesis, overrides, or schema conformance failure (`ERR_SYNTAX_*`, `ERR_OVERRIDE_*`).
-- **`5`**: Text-to-AST parity check failure or strict mode violation (`ERR_PARITY_*`, `ERR_STRICT_*`).
+*(Subsumed by FR-CMP-001 & FR-CMP-027)*
+The standardized non-zero process exit codes (`0` through `5`) are incorporated directly into the CLI Invocation Contract in `FR-CMP-001` and the Structured Diagnostic Error Taxonomy in `FR-CMP-027`. For CI/CD and pre-commit automation, any non-zero exit code halts pipeline execution immediately.
 
 ---
 
