@@ -129,21 +129,16 @@ The following foundational design decisions represent inferences drawn from prod
   - Zero Cgo compilation requirements for core rules evaluation; compiles with pure `CGO_ENABLED=0`.
   - Deterministic execution: identical inputs and seeds MUST produce bit-for-bit identical state histories across Linux (x86_64/ARM64), Windows, and macOS.
 
-#### FR-ENG-002: Isolated Multi-Stream PRNG Architecture
+#### FR-ENG-002: Isolated Multi-Stream PRNG Architecture & Seed Derivation
 - **Functional Contract**: The engine MUST isolate pseudo-random number generation across independent streams using the PCG32 or SplitMix64 algorithmic generator to prevent seed consumption side-effects from altering unrelated match events.
-- **Streams**:
-  1. `StreamShuffle`: Dedicated exclusively to initial deck shuffling ([`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45)) and mid-match deck shuffles ([`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L525)).
-  2. `StreamTargeting`: Dedicated exclusively to resolving non-deterministic card targeting (e.g. *"deal 2 damage to a random enemy unit"*).
-  3. `StreamMatchDecisions`: Dedicated to pre-game coin toss ([`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54)) and tie-breaking procedures.
-- **Invariants**: Shuffling a deck MUST NOT advance or alter the sequence of random target selections during combat.
+- **Streams & Salt Derivation**: Child stream seeds are deterministically derived from the master 64-bit seed (`MasterSeed`) using fixed, non-colliding 64-bit cryptographic salt constants:
+  1. `StreamShuffle`: Dedicated exclusively to initial deck shuffling ([`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45)) and mid-match deck shuffles ([`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L304)). Derived via `SeedShuffle = MasterSeed ^ 0x9E3779B97F4A7C15`.
+  2. `StreamTargeting`: Dedicated exclusively to resolving non-deterministic card targeting (e.g. *"deal 2 damage to a random enemy unit"*). Derived via `SeedTargeting = MasterSeed ^ 0xBF58476D1CE4E5B9`.
+  3. `StreamMatchDecisions`: Dedicated to pre-game coin toss ([`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54)) and tie-breaking procedures. Derived via `SeedMatchDecisions = MasterSeed ^ 0x94D049BB133111EB`.
+- **Invariants**: Shuffling a deck MUST NOT advance or alter the sequence of random target selections during combat. Supplying a seed of `0` MUST be rejected with `ERR_INVALID_COMMAND_ARGUMENTS` or initialized from a non-zero cryptographic entropy source.
 
-#### FR-ENG-003: Deterministic Seed Derivation & Salt Invariants
-- **Functional Contract**: The engine MUST derive child PRNG stream seeds from the master 64-bit seed using fixed, non-colliding 64-bit cryptographic salt constants:
-  - `SeedShuffle = MasterSeed ^ 0x9E3779B97F4A7C15`
-  - `SeedTargeting = MasterSeed ^ 0xBF58476D1CE4E5B9`
-  - `SeedMatchDecisions = MasterSeed ^ 0x94D049BB133111EB`
-- **Output**: Each stream advances deterministically on each invocation (`NextUint32()`, `NextIntBounded(max)`).
-- **Error Handling**: Supplying a seed of `0` MUST be rejected with `ERR_ENG_INVALID_SEED` or re-seeded using a non-zero cryptographic entropy source.
+#### FR-ENG-003: Subsumed by FR-ENG-002
+- *Deterministic seed derivation and cryptographic salt constants are formally subsumed into [`FR-ENG-002`](#fr-eng-002-isolated-multi-stream-prng-architecture--seed-derivation).*
 
 #### FR-ENG-004: Pure Discrete Integer Arithmetic & Rounding Invariants
 - **Functional Contract**: All numeric calculations within the engine MUST execute using discrete 32-bit signed integers (`int32`).
@@ -154,7 +149,7 @@ The following foundational design decisions represent inferences drawn from prod
 
 #### FR-ENG-005: Frame Tick Invariants & Rolling State Hash Generation
 - **Functional Contract**: The engine MUST maintain a strictly monotonic 64-bit tick counter (`TickNumber`) incremented on every committed transaction and phase transition.
-- **State Checksum**: At the conclusion of every turn sub-phase and stack frame resolution, the engine MUST calculate a rolling 64-bit MurmurHash3 or FNV-1a state checksum (`StateChecksum`) across all public entity states, zone contents, and resource pools in conformance with [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L450).
+- **State Checksum**: At the conclusion of every turn sub-phase and stack frame resolution, the engine MUST calculate a rolling 64-bit FNV-1a state checksum (`StateChecksum`) across all public entity states, zone contents, and resource pools in strict conformance with [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L690).
 - **Output**: Transmitted to clients within periodic synchronization frames to detect desync divergence immediately.
 
 ---
@@ -210,7 +205,7 @@ The following foundational design decisions represent inferences drawn from prod
   - `MatchID`: Unique string identifier.
   - `TurnNumber`: Monotonically increasing turn counter (starts at 1).
   - `ActivePlayer`: ID of the player currently taking their turn (0 or 1).
-  - `CurrentPhase`: Current match phase (`PHASE_READY`, `PHASE_DRAW`, `PHASE_MAIN`, `PHASE_END`).
+  - `CurrentPhase`: Current match phase (`PHASE_READY`, `PHASE_DRAW`, `PHASE_MAIN`, `PHASE_END`, `STATE_CONCLUDED`).
   - `Zones`: Zone topology container ([`FR-ZON-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L398) – [`FR-ZON-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L430)).
   - `ResolutionStack`: The LIFO execution stack ([`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110)).
   - `ResourcePools`: Requisition and Tactics counters per player.
@@ -222,34 +217,32 @@ The following foundational design decisions represent inferences drawn from prod
   2. Populates `DeckZone` with the 50+ card instances and performs initial Fisher-Yates shuffle via `StreamShuffle`.
   3. Deals initial 6-card hand into `HandZone` ([`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45)).
   4. Initiates the 25-second partial mulligan window ([`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45), [`FR-SES-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L94)).
-  5. Determines first player via `StreamMatchDecisions` ([`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54)).
+  5. Determines first player decision-maker via `StreamMatchDecisions` ([`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54)).
 
 #### FR-ENG-008: Transaction Checkpoint, Delta-Rollback & Commit Lifecycle
 - **Functional Contract**: Every player command, stack resolution step, and phase transition MUST execute inside an atomic transaction:
   - `tx := match.BeginTransaction()`
-  - Before modifying state, the transaction records a lightweight delta-snapshot of touched entities, zones, and resource balances.
-  - **On Failure / Illegal Command**: `tx.Rollback()` restores touched entities to their pre-transaction values, purges `EventBuffer`, and returns a structured error code (`ERR_ENG_*`). The active state remains uncorrupted.
+  - Before modifying state, the transaction records a lightweight delta-snapshot of touched entities, zones, resource balances, and internal monotonic sequence counters of all active PRNG streams ([`FR-ENG-002`](#fr-eng-002-isolated-multi-stream-prng-architecture--seed-derivation)).
+  - **On Failure / Illegal Command**: `tx.Rollback()` restores touched entities, resource balances, and PRNG stream counters to their exact pre-transaction state, purges `EventBuffer`, and returns a structured error code ([`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L745)). The active match state and PRNG sequence determinism remain completely uncorrupted.
   - **On Success**: `tx.Commit()` applies state mutations permanently, calculates the rolling state hash ([`FR-ENG-005`](#fr-eng-005-frame-tick-invariants--rolling-state-hash-generation)), flushes `EventBuffer` to the outgoing network/replay channel, and discards the delta-snapshot.
 
 #### FR-ENG-009: Deterministic Turn Sequencing & Sub-Phase Transitions
-- **Functional Contract**: The engine MUST execute turn phases in strict sequential order:
-  - **Phase 1: Ready Phase**:
-    - *Sub-Phase 1a (Unexhaust)*: Unexhaust all exhausted assets in the active player's Reserves, Main Theater, and HQ Zone.
-    - *Sub-Phase 1b (Requisition)*: Add base turn Requisition income and reset unspent turn Tactics.
-  - **Phase 2: Draw Phase**:
-    - *Sub-Phase 2a (Draw)*: Draw 1 card from `DeckZone` into `HandZone`. Skipped on Turn 1 for the player taking the first turn ([`FR-SET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L57)).
-  - **Phase 3: Main Phase**:
-    - Window for player-initiated deployments, maneuvers, asset exhaustion, and combat declarations.
+- **Functional Contract**: The engine MUST execute turn phases and associated sub-phase behaviors in strict sequential order conforming to [`FR-TRN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L236):
+  - **Phase 1: Ready Phase**: Unexhausts all controlled assets in Reserves, Main Theater, and HQ Zone; grants base Requisition income and resets unspent Tactics.
+  - **Phase 2: Draw Phase**: Active player draws 1 card from `DeckZone` into `HandZone`. Skipped on Turn 1 for the player taking the first turn ([`FR-SET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L57)).
+  - **Phase 3: Main Phase**: Clean-stack action priority window for player-initiated deployments, maneuvers, inherent actions, and combat declarations.
   - **Phase 4: End Phase**:
-    - *Sub-Phase 4a (End-of-Turn Triggers)*: Emit `EVENT_END_OF_TURN` and resolve queued abilities.
-    - *Sub-Phase 4b (Hand Size Cleanup)*: Assert hand size $\le 10$; prompt or discard excess cards.
-    - *Sub-Phase 4c (Temporary Modifier Decay)*: Deterministically purge all temporary buffs/debuffs whose duration has expired ([`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247)).
-    - *Handover*: Increment `TurnNumber` and toggle `ActivePlayer`.
+    - *Sub-Phase 4a (Event Emission & Trigger Enqueue)*: Emits `EVENT_END_PHASE`; enqueues end-of-turn triggers via APNAP ([`FR-TRG-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L396)).
+    - *Sub-Phase 4b (Trigger Cascade Resolution)*: Resolution stack auto-resolves to completion.
+    - *Sub-Phase 4c (Resource Depletion & Expiration)*: Unspent Requisition and Tactics pools reset to 0 ([`FR-RES-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L225)); temporary Layer 5 modifiers expiring at end-of-turn expire ([`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L439)).
+    - *Sub-Phase 4d (Turn Handover)*: Increment `TurnNumber` and toggle `ActivePlayer`. Universal uncapped hand capacity is preserved per [`FR-ZON-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L162) with zero hand-size discard checks.
 
-#### FR-ENG-010: Clean-Stack Manual Action Constraint & Priority Windows
-- **Functional Contract**: Manual player actions (playing a maneuver card, deploying a unit/structure, manually exhausting an asset for resources, or declaring combat) MUST assert that `ResolutionStack.IsEmpty() == true` per [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) and [`FR-TRN-003a`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L16).
-- **Exceptions**: Reactive triggered abilities, in-resolution free deployments, and replacement watchers execute without clean-stack constraints.
-- **Violation**: If a player attempts a manual action while the stack contains pending items, the engine MUST abort the transaction with `ERR_ENG_DIRTY_STACK_ACTION`.
+#### FR-ENG-010: Clean-Stack Manual Action Constraint & Inherent Actions
+- **Functional Contract**: Manual player actions (playing a maneuver card, deploying a unit/structure, declaring combat, or executing inherent actions) MUST assert that `ResolutionStack.IsEmpty() == true` per [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) and [`FR-INH-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L281):
+  - **Inherent March**: Enforces unit movement between Reserves and Main Theater per [`FR-INH-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L264), arriving `EXHAUSTED` (emitting `EVENT_MARCH` and `EVENT_EXHAUST`).
+  - **Inherent Resource Operations**: Enforces resource generation per [`FR-RES-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L221) and instantaneous conversion per [`FR-RES-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L228) (spending 2 Requisition adds 1 Tactics without placing items on the stack).
+- **Exceptions**: Reactive triggered abilities, in-resolution free deployments ([`FR-TRN-003a`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L296)), and replacement watchers execute without clean-stack constraints.
+- **Violation**: If a player attempts a manual action while the stack contains pending items, the engine MUST abort the transaction with `ERR_STACK_NOT_EMPTY`.
 
 #### FR-ENG-011: Turn-Clock Timeout Resolution & Auto-Pass Invariants
 - **Functional Contract**: The engine MUST track active turn duration against the 75-second turn clock ([`FR-TRN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L508)) and 60-second Reserve Time Bank ([`FR-SES-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L100)).
@@ -315,20 +308,20 @@ The following foundational design decisions represent inferences drawn from prod
   - Tactics cost ([`FR-SET-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29)).
   - Physical exhaustion requirement (asset must currently be unexhausted).
   - Explicit sacrifice or discard costs ([`FR-ABL-007`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L273)).
-- **Failure**: If any cost component cannot be paid in full, the transaction aborts with `ERR_ENG_INSUFFICIENT_RESOURCE` or `ERR_ENG_ASSET_EXHAUSTED`. Zero partial deduction permitted.
+- **Failure**: If any cost component cannot be paid in full, the transaction aborts with `ERR_INSUFFICIENT_RESOURCES` or `ERR_ASSET_EXHAUSTED`. Zero partial deduction permitted.
 
 #### FR-ENG-014: APNAP Trigger Dispatching & Simultaneous Event Ordering
-- **Functional Contract**: When an in-game event triggers multiple abilities simultaneously, the engine MUST queue them onto the stack using the **APNAP (Active Player, Non-Active Player)** convention:
-  1. All triggers controlled by the **Active Player** are pushed onto the stack in timestamp order.
-  2. All triggers controlled by the **Non-Active Player** are pushed onto the stack on top of the Active Player's triggers.
-- **Invariants**: Because the stack is LIFO, the Non-Active Player's triggers resolve first, preserving deterministic priority without race conditions.
+- **Functional Contract**: When an in-game event triggers multiple abilities simultaneously, the engine MUST queue them onto the stack using the **APNAP (Active Player, Non-Active Player)** convention in conformance with [`FR-TRG-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L396):
+  1. All triggers controlled by the **Active Player** are pushed onto the stack first.
+  2. All triggers controlled by the **Non-Active Player** are pushed onto the stack second on top of the Active Player's triggers.
+- **Invariants**: Because the stack is LIFO, the Non-Active Player's triggers resolve first, preserving deterministic priority without race conditions. Where a player controls multiple simultaneous triggers, allied triggers are ordered by their controller (falling back to deterministic blueprint ID sorting for bot/automated simulation).
 
 #### FR-ENG-015: Dynamic Target Verification & Invalidation Invariants
 - **Functional Contract**: Targets selected upon action declaration MUST be re-verified for legality immediately prior to execution when the stack frame pops:
   - Target entity must still exist in its declared zone ([`FR-TGT-102`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L16)).
   - Target must still satisfy all `FilterDef` constraints ([`FR-ABL-008`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L292)).
 - **Partial Invalidation**: If an ability targets multiple entities and at least one target remains legal, the ability executes against the remaining legal targets.
-- **Complete Invalidation**: If all declared targets have become invalid, the stack frame **fizzles**: effect execution is skipped, the card is sent to the discard pile, and `ERR_ENG_TARGET_INVALID` is logged.
+- **Complete Invalidation**: If all declared targets have become invalid, the stack frame **fizzles**: effect execution is skipped, the card is sent to the discard pile, and `ERR_INVALID_TARGET` is logged.
 
 #### FR-ENG-016: Reactive Replacement Watcher Interceptor Pipeline
 - **Functional Contract**: Replacement effects ([`FR-REP-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14) – [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14)) MUST intercept and modify event payloads *before* they are applied to state or pushed to the stack.
@@ -340,10 +333,10 @@ The following foundational design decisions represent inferences drawn from prod
 
 #### FR-ENG-017: Choice Prompt Yield & Resumption Protocol
 - **Functional Contract**: When an effect requires runtime player selection (scry/look-at-top-N cards, modal choice, distributed damage allocation; [`FR-MSG-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L400), [`FR-MOD-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L18)), the engine MUST suspend execution of the active stack frame:
-  1. Emits `ChoicePrompt` payload to the target player client.
+  1. Emits `PlayerChoicePrompt` payload to the target player client with 3,000 ms grace window ([`DA-NET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L14)).
   2. Sets engine state to `STATE_AWAITING_CHOICE`.
-  3. Freezes turn clock and starts the 30-second choice countdown timer.
-  4. Resumes stack execution immediately upon receiving a valid `ChoiceResponse` matching prompt UUID.
+  3. Freezes turn clock and starts the action clock (15s for active player, 10s for inactive player per [`FR-TRG-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L394)).
+  4. Resumes stack execution immediately upon receiving a valid `ChoiceResponse` matching prompt UUID, or applies deterministic fallbacks upon expiration ([`FR-MOD-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L361)).
 
 ---
 
@@ -403,28 +396,20 @@ The following foundational design decisions represent inferences drawn from prod
   - `PROPERTY_OF_TARGET`: Value derived from a target entity (e.g., target's power).
   - `EXHAUSTED_ASSET_COUNT`: Current count of exhausted assets.
 
-#### FR-ENG-021: The 14 Atomic Primitives Execution Contracts
-- **Functional Contract**: The engine MUST implement discrete execution handlers for all 14 atomic effect primitives defined in [`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L525):
-  1. `DEAL_DAMAGE`: Applies damage to target asset with armor absorption and reduction.
-  2. `HEAL`: Removes accumulated damage counters; cannot exceed effective defense.
-  3. `DRAW_CARD`: Transfers card from `DeckZone` to `HandZone`; triggers fatigue if deck empty.
-  4. `DISCARD_CARD`: Transfers card from `HandZone` to `GraveyardZone`.
-  5. `DEPLOY_SCRATCH`: Deploys token asset `neutral_scratch_company` to Reserves.
-  6. `EXHAUST_ASSET`: Sets asset exhaustion state to `true`.
-  7. `READY_ASSET`: Sets asset exhaustion state to `false`.
-  8. `BUFF_STATS`: Creates temporary stat modifier in Layer 5 with duration tracker.
-  9. `DEBUFF_STATS`: Creates temporary stat reduction in Layer 5.
-  10. `DESTROY_ASSET`: Transitions asset directly to Graveyard regardless of damage counters.
-  11. `MOVE_ZONE`: Transitions asset between Reserves and Main Theater ([`FR-ZON-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L407)).
-  12. `ADD_REQUISITION`: Adds immediate Requisition currency to player pool.
-  13. `ADD_TACTICS`: Adds immediate Tactics currency to player pool.
-  14. `GAIN_KEYWORD`: Adds temporary keyword grant to entity in Layer 3 or 5.
+#### FR-ENG-021: Atomic Effect Primitives Execution Engine
+- **Functional Contract**: The engine MUST implement discrete execution handlers dispatching 1:1 to the canonical catalog of 25 atomic effect primitives codified in [`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L304).
+- **Execution Model**: The polymorphic AST type-switch interpreter ([`FR-ENG-018`](#fr-eng-018-polymorphic-ability-ast-interpreter--type-switch-visitor)) maps each canonical primitive identifier (`DEAL_DAMAGE`, `HEAL`, `ADD_ARMOR`, `MODIFY_STAT`, `MOVE_ZONE`, `RETURN_TO_HAND`, `KILL`, `DRAW_CARD`, `DISCARD_CARD`, `REVEAL_HAND`, `SCRATCH`, `REGROUP`, `DEPLOY_FREE`, `SEARCH_DECK`, `LOOK_TOP_CARDS`, `TUCK_UNDER`, `GAIN_CONTROL`, `MORPH_SCRATCH`, `GENERATE_RESOURCE`, `RECYCLE_DISCARD_TO_DECK`, `REDIRECT_DAMAGE_TARGET`, `PUT_CARD_ON_DECK`, `EXHAUST`, `GRANT_SUBTYPE`, `GRANT_KEYWORD`) directly to its dedicated runtime Go execution contract within the active transaction context.
+- **Safety Invariant**: Any unhandled or unrecognized primitive encountered within an ability AST payload MUST abort the transaction with structured error code `ERR_INVALID_COMMAND_ARGUMENTS`.
 
-#### FR-ENG-022: Scratch Token Deployment & Pool Constraints
-- **Functional Contract**: When resolving `DEPLOY_SCRATCH`, the engine MUST instantiate a new `AssetInstance` referencing `neutral_scratch_company` ([`FR-SET-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L34)):
-  - Placed directly into the controlling player's `ReservesZone`.
-  - Enters the battlefield unexhausted unless modified by `Deploys Exhausted` ([`FR-KWD-002l`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L758)).
-  - Token instances leaving the battlefield (destruction, bounce) are deleted permanently and never enter the graveyard deck.
+#### FR-ENG-022: Double-Blind Scratch Company Lifecycle Engine
+- **Functional Contract**: When executing `SCRATCH` ([`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L304), [`FR-KWD-002m`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L759)) or the Headquarters inherent action ([`FR-INH-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L283)), the engine MUST execute a direct deck-to-battlefield transition conforming to [`FR-ZON-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L196) and [`FR-SEC-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L164):
+  1. **Deployment (`DECK` &rarr; `RESERVES`)**: Pops the top card of the controlling player's `DeckZone` and moves it directly into `ReservesZone` wrapped in an `AssetInstance` with `isFaceDown = true`, effective base stats `1/1/1/1 Infantry Scratch Company`, and an opaque proxy ID (`proxy_scratch_*`). Does NOT emit `EVENT_DRAW_CARD`.
+  2. **Double-Blind Invariant**: The server never transmits the underlying `cardInstanceId` or `blueprintId` to either client while on the battlefield ([`FR-SEC-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L164)). Neither player may inspect the underlying card face.
+  3. **Empty Deck Protection**: Executing Scratch on a 0-card deck is a safe no-op: creates 0 units and does NOT trigger empty deck loss ([`FR-INH-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L283)).
+  4. **Zone Departures & Reveals**: Conforming to [`FR-ZON-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L196) and [`FR-SEC-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L171):
+     - *Departure to Public Zone (`DISCARD`)*: Asset deallocates; underlying card moves face-up to Discard, revealing its identity to both players.
+     - *Departure to Private Zone (`HAND`, `DECK`)*: Asset deallocates; underlying card reverts to base printed card in owner's private zone ([`FR-ENT-103`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L211), [`FR-ZON-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L186)).
+     - *Tucked (`ATTACHED`)*: Under host asset via `TUCK_UNDER`, remains a double-blind face-down sub-entity ([`FR-ENT-102`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L203)).
 
 #### FR-ENG-023: Continuous Aura Grant & Revocation Engine
 - **Functional Contract**: Continuous auras (`CONTINUOUS_AURA`, [`FR-ABL-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L217), [`FR-TXT-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L457)) MUST continuously apply while the host asset is on the battlefield and immediately cease when the host leaves the battlefield.
@@ -467,14 +452,14 @@ The following foundational design decisions represent inferences drawn from prod
 ### Section 5.1: Layer Evaluation & Dirty Caching
 
 #### FR-ENG-025: Deterministic 6-Layer Attribute Pipeline Architecture
-- **Functional Contract**: The engine MUST calculate all dynamic entity attributes (effective power, effective defense, keywords, armor) using the strict 6-layer pipeline codified in [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201) – [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247).
-- **Layer Precedence**:
-  - **Layer 1 (Base Stats)**: Raw values from `CardBlueprint` ([`FR-DAT-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L107)).
-  - **Layer 2 (Blueprint Modifiers)**: Global modifications modifying card definition templates.
-  - **Layer 3 (Instance Modifiers)**: Card-specific permanent modifiers, intrinsic keywords.
-  - **Layer 4 (Continuous Auras)**: Dynamic field buffs evaluated in timestamp order.
-  - **Layer 5 (Temporary Effects)**: Turn-duration stat buffs/debuffs with expiration timestamps.
-  - **Layer 6 (Counters & Final Clamping)**: `+1/+1` counters, discrete tokens, and non-negative clamping.
+- **Functional Contract**: The engine MUST enforce continuous dynamic attribute evaluation across all battlefield entities in strict compliance with the 6-layer pipeline codified in [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L431) through [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L439):
+  - **Layer 1 (Base Stats)**: Base Blueprint Values (or Scratch base stats `1/1/1/1` if `isFaceDown == true`).
+  - **Layer 2 (Identity Grants)**: Type, Subtype & Identity Grants (`GRANT_SUBTYPE`, `MORPH_SCRATCH`).
+  - **Layer 3 (Keyword Grants)**: Dynamic Keyword Grants & Suppressions (`GRANT_KEYWORD`).
+  - **Layer 4 (Continuous Auras)**: Continuous static field buffs evaluated in timestamp order.
+  - **Layer 5 (Temporary Modifiers)**: Dynamic turn modifiers & temporary buffs/debuffs (`MODIFY_STAT`).
+  - **Layer 6 (Mathematical Clamping)**: Mathematical clamping (`EffectivePower = max(0, RawPower)`; Combat Power is the sole clamped stat per `FR-LAY-001`).
+- **Timestamp & Clamping Precedence**: Modifiers within the same layer evaluate in chronological timestamp order. Base modifiers evaluate before multiplicative modifiers.
 
 #### FR-ENG-026: Dirty-Flag Propagation & Topological Dependency Caching
 - **Functional Contract**: To maintain high simulation throughput, the engine MUST implement dirty-flag caching (`isDirty` bitmask):
@@ -482,17 +467,11 @@ The following foundational design decisions represent inferences drawn from prod
   - Attribute queries on clean entities return cached effective stats in $O(1)$ time without re-evaluating the layer stack.
   - Recalculation executes lazily upon next attribute query or immediately before combat damage calculation.
 
-#### FR-ENG-027: Layer Recalculation Ordering & Mutator Precedence
-- **Functional Contract**: Modifiers within the same layer MUST evaluate in strict chronological **Timestamp Order** (the order in which the modifier or aura source entered the active zone).
-- **Stat Invariants**:
-  - Modifiers modifying base stats evaluate before multiplicative modifiers.
-  - Keyword grants in Layer 3/4 grant full keyword functionality immediately upon layer resolution.
+#### FR-ENG-027: Subsumed by FR-ENG-025
+- *Timestamp ordering within layers is formally subsumed into [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture).*
 
-#### FR-ENG-028: Effective Stat Clamping & Non-Negative Invariants
-- **Functional Contract**: At the conclusion of Layer 6:
-  - Effective power MUST clamp to a minimum of 0 (`EffectivePower = max(0, calculatedPower)`). Negative power values are prohibited.
-  - Effective defense MUST clamp to a minimum of 0.
-  - Damage counters accumulate on the asset; an asset is destroyed when `AccumulatedDamage >= EffectiveDefense`.
+#### FR-ENG-028: Subsumed by FR-ENG-025 & FR-ENG-041
+- *Effective attribute clamping at Layer 6 is formally subsumed into [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) and codified as System Invariant 1 in [`FR-ENG-041`](#fr-eng-041-system-invariants--diagnostic-assertion-protocol).*
 
 #### FR-ENG-029: Round-Duration Cleanup Sub-Phase Execution
 - **Functional Contract**: During Sub-Phase 4c of the End Phase ([`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247)), the engine MUST iterate all active entities and purge temporary Layer 5 modifiers whose duration criteria are met:
@@ -530,42 +509,54 @@ The following foundational design decisions represent inferences drawn from prod
 
 #### FR-ENG-030: Combat Cycle Orchestration & Zone Restrictions
 - **Functional Contract**: Combat declarations MUST strictly adhere to the spatial battlefield topology defined in [`FR-CBT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L282) and [`FR-ZON-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L407):
-  - Only units positioned in the **Main Theater** may declare attacks.
-  - Units in the Reserves Zone are prohibited from attacking.
-  - Valid targets: Enemy units/structures in the Main Theater, or enemy Headquarters in the HQ Zone ([`FR-ZON-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L420)).
+  - Valid Attackers: Units positioned in the **Main Theater** and Headquarters in the **HQ Zone** ([`FR-CAP-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L265)).
+  - Prohibited Attackers: Units in the Reserves Zone and Structures.
+  - Valid Targets: Opposing Assets in the Main Theater, or opposing Headquarters in the HQ Zone ([`FR-ZON-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L420)). Reserves Zone assets are strictly protected from attacks.
 
 #### FR-ENG-031: Step 1: Declaration, Legality Gates & Exhaustion Lock
 - **Functional Contract**: Upon receiving `DeclareAttackCommand`, the engine MUST validate all preconditions within an atomic transaction:
   1. Active player has priority and stack is clean (`Stack.IsEmpty() == true`, [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110)).
-  2. Attacking unit is currently **unexhausted**.
-  3. Attacker is not constrained by summoning sickness (unless possessing `Aggressive N`, [`FR-KWD-002f`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L752)).
-  4. Target is legal and unshielded by `Guardian` ([`FR-KWD-002j`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L756)).
-- **Execution**: The attacking unit is set to `exhausted = true` immediately upon declaration.
+  2. Attacking asset is currently **readied** (`exhausted == false`).
+  3. Target is legal and satisfies Guardian priority ([`FR-KWD-002j`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L756)). Bypassing an eligible opposing Guardian in the Main Theater aborts the transaction with `ERR_GUARDIAN_PRIORITY_VIOLATION`.
+- **Execution**: The attacking asset transitions immediately to `exhausted = true` upon declaration (`EVENT_EXHAUST`, `EVENT_ATTACK_DECLARE`).
+
+> [!NOTE] System Invariant: Absence of Summoning Sickness
+> Unlike other card games that require an asset to be controlled across a turn transition before acting (often termed "summoning sickness"), in Card Town any asset that deploys readied may declare attacks or exhaust on that same turn ([`FR-SET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L57), [`FR-ZON-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L183)). Pacing is governed organically by the spatial battlefield economy: units deploy into Reserves, and marching into Main Theater arrives exhausted ([`FR-INH-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L264)).
 
 #### FR-ENG-032: Step 2: Reaction Window & Combat Interruption Frames
-- **Functional Contract**: Prior to damage calculation, the engine MUST emit `EVENT_ATTACK_DECLARED` and open a priority reaction window ([`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295)):
+- **Functional Contract**: Prior to damage calculation, the engine MUST emit `EVENT_ATTACK_DECLARED` and process reactive triggers ([`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295)):
   - Triggers responding to attack declaration are queued onto the Resolution Stack via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)).
-  - The stack resolves to completion.
+  - The stack auto-resolves to completion. Declaration initiates an atomic combat transaction locking out manual card plays; once Step 2 triggers resolve, the match advances immediately to Step 3 without an intervening priority window.
   - **Target Survival Check**: If the target asset is destroyed or removed from the battlefield during Step 2, combat terminates without dealing damage.
 
-#### FR-ENG-033: Step 3: Simultaneous Combat Damage & Retaliation Calculation
+#### FR-ENG-033: Step 3: Simultaneous Combat Damage & Symmetric Retaliation
 - **Functional Contract**: When Step 2 concludes with both attacker and defender surviving on the battlefield, the engine MUST resolve combat damage **simultaneously** per [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295):
+  - **Continuous Aura Snapshot Lock**: All continuous aura condition gates (including *Cornered* count checks; [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L441)) are snapshotted and locked at the entry of Step 3; all simultaneous damage and retaliation calculations evaluate against this locked state.
   - Attacker calculates incoming damage to target = `Attacker.EffectivePower`.
-  - If target is a unit (not structure/HQ), target calculates retaliation damage = `Target.EffectivePower`.
-  - Both damage payloads apply concurrently within the same frame tick.
+  - Retaliation damage = `Target.EffectivePower` (evaluated symmetrically across all defending targets with effective power > 0 per [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L517)).
+  - Both damage payloads route through their respective 5-stage mitigation pipelines ([`FR-ENG-034`](#fr-eng-034-canonical-5-stage-damage-mitigation-pipeline)) and apply concurrently within the same frame tick.
 
-#### FR-ENG-034: Damage Absorption Hierarchy (Armor, Stalwart, Resistant)
-- **Functional Contract**: When applying incoming combat damage to an asset, the engine MUST evaluate defensive keywords in the strict canonical order codified in [`FR-KWD-002c`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14) and [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14):
-  1. **Armor N**: Armor points absorb incoming damage on a 1-to-1 basis until Armor reaches 0.
-  2. **Stalwart**: If remaining combat damage $> 1$, damage is capped strictly to 1.
-  3. **Resistant N**: Flat damage reduction subtracts $N$ from remaining damage (`damage = max(0, damage - N)`).
-  4. **Base Defense**: Remaining net damage is added to `AccumulatedDamage`.
+#### FR-ENG-034: Canonical 5-Stage Damage Mitigation Pipeline
+- **Functional Contract**: When applying incoming combat or effect damage to an asset, the engine MUST evaluate defensive keywords in the strict canonical order codified in [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L455):
+  1. **Stage 1 (Target Redirection)**: Evaluates uncommitted damage against redirection targets ([`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L455)).
+  2. **Stage 2 (Flat Reductions)**: Subtracts `Resistant N` (`damage = max(0, damage - N)` for positive; negative Resistant amplifies damage: $0 - (-1) = 1$).
+  3. **Stage 3 (Combat Damage Capping)**: If `isCombatDamage == true` and target has `Stalwart` ([`FR-KWD-002c`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L749)), combat damage is capped strictly to 1 (`min(damage, 1)`). Has zero effect on non-combat damage.
+  4. **Stage 4 (Dynamic Armor)**: Dynamic Armor absorbs damage 1-to-1 from target's current Armor pool ([`FR-KWD-002k`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L757)), depleting the pool accordingly. When a target has both Stalwart and Armor, Stalwart caps incoming combat damage to 1 in Stage 3, and Stage 4 absorbs that 1 damage by depleting 1 point of Armor.
+  5. **Stage 5 (Health Damage Commit)**: Remaining damage is added to `AccumulatedDamage`. `EVENT_TAKE_DAMAGE` fires if and only if actual damage is absorbed by Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`).
 
 #### FR-ENG-035: State-Based Death Sweep & Graveyard Transition Batching
 - **Functional Contract**: Immediately following damage application, the engine MUST execute a state-based death check sweep ([`FR-ENT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L17)):
   - Any asset with `AccumulatedDamage >= EffectiveDefense` is marked as destroyed.
-  - All marked assets are transitioned to `GraveyardZone` simultaneously in a single atomic batch.
-  - `EVENT_ENTITY_DESTROYED` events are emitted, queuing death triggers onto the stack via APNAP.
+  - All marked assets are transitioned to their owners' `GraveyardZone` simultaneously in a single atomic batch (`EVENT_ENTITY_DESTROYED`).
+  - If an attacking unit has `Berserk` ([`FR-KWD-002o`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L761)) and destroys its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
+  - Queues death triggers onto the stack via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)).
+
+#### FR-ENG-042: Authoritative Match Conclusion & Victory Condition Engine
+- **Functional Contract**: The engine MUST continuously evaluate match termination conditions during state-based sweeps and draw operations:
+  1. **Headquarters Destruction**: When an HQ asset reaches `AccumulatedDamage >= EffectiveDefense` (`CurrentHealth <= 0`), its controller immediately suffers defeat ([`FR-CBT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L523)).
+  2. **Simultaneous Defeat & Match Draw**: If both Headquarters reach Health <= 0 within the exact same atomic frame tick (e.g. simultaneous combat strike or symmetric effect), the match terminates immediately as a **Match Draw** (`RESULT_MATCH_DRAW`, [`FR-CBT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L523)).
+  3. **Empty Deck Fatigue**: When a player is required to draw a card from their `DeckZone` and their deck contains 0 cards (`count(DeckZone) == 0`), that player immediately suffers defeat ([`FR-WIN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L75)).
+  4. **Match Concluded Transition**: Upon any terminal condition, the engine emits `MatchConcludedEvent` (`FR-PAC-003`), halts the transaction tick loop, transitions `MatchState` to immutable `STATE_CONCLUDED`, and flushes final `.rec` replay telemetry.
 
 ---
 
@@ -628,17 +619,21 @@ The following foundational design decisions represent inferences drawn from prod
 
 ## DOMAIN 8: ERROR TAXONOMY, RESILIENCE & DIAGNOSTICS
 
-### Section 8.1: Error Code Registry
-| Error Code | Severity | Trigger Condition | System Action | Client Presentation |
+### Section 8.1: Error Code Registry & Wire Parity
+The headless engine module enforces zero-drift error parity with the client-engine networking protocol. All transaction rollbacks and validation failures emit structured error codes conforming directly to [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L745):
+
+| Error Code | Severity | Trigger Condition | System Action | Wire Traceability |
 | :--- | :--- | :--- | :--- | :--- |
-| `ERR_ENG_INVALID_SEED` | Fatal | Master seed provided is 0 or malformed. | Abort match initialization. | "Initialization failed: Invalid match seed." |
-| `ERR_ENG_DIRTY_STACK_ACTION` | Error | Manual action attempted while stack non-empty (`FR-QUE-001`). | Abort transaction; rollback delta. | "Action prohibited: Cannot perform manual action while stack is resolving." |
-| `ERR_ENG_INSUFFICIENT_RESOURCE` | Error | Player lacks Requisition or Tactics to pay cost. | Abort transaction; rollback delta. | "Cannot play card: Insufficient resources." |
-| `ERR_ENG_ASSET_EXHAUSTED` | Error | Attempted to attack or activate ability with exhausted asset. | Abort transaction; rollback delta. | "Asset is exhausted and cannot act." |
-| `ERR_ENG_TARGET_INVALID` | Warning | Target became illegal or moved zones prior to stack pop. | Fizzle stack frame; log diagnostic. | "Spell fizzled: Target is no longer valid." |
-| `ERR_ENG_ZONE_RESTRICTION` | Error | Action violates spatial zone rules (e.g. attacking from Reserves). | Abort transaction; rollback delta. | "Action prohibited: Unit is not in the Main Theater." |
-| `ERR_ENG_DESYNC_DETECTED` | Fatal | StateChecksum mismatch between client and server (`FR-PAC-004`). | Terminate match; emit replay dump. | "Match terminated due to desynchronization." |
-| `ERR_ENG_INFINITE_LOOP` | Fatal | Stack execution depth exceeds 100 frames. | Force-clear stack; emit fatal log. | "Match error: Infinite trigger loop detected." |
+| `ERR_STACK_NOT_EMPTY` | Error | Manual action attempted while stack non-empty (`FR-QUE-001`, `FR-INH-001`). | Abort transaction; rollback delta. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L746) |
+| `ERR_INSUFFICIENT_RESOURCES` | Error | Player lacks Requisition or Tactics to pay cost (`FR-RES-001`). | Abort transaction; rollback delta. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L747) |
+| `ERR_INVALID_TARGET` | Warning | Target became illegal or moved zones prior to stack pop (`FR-TGT-001`). | Fizzle stack frame; log diagnostic. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L748) |
+| `ERR_GUARDIAN_PRIORITY_VIOLATION` | Error | Combat attack bypassed an eligible opposing Guardian in Main Theater (`FR-KWD-002j`). | Abort transaction; flash Guardian UI. | [`DA-NET-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L749) |
+| `ERR_INVALID_COMMAND_ARGUMENTS` | Error | Command arguments malformed or out of bounds (`FR-MSG-003`). | Abort transaction; rollback delta. | [`DA-NET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L750) |
+| `ERR_ASSET_EXHAUSTED` | Error | Attempted action requiring Readied state (`FR-INH-001`, `FR-CAP-001`). | Abort transaction; rollback delta. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L751) |
+| `ERR_INVALID_RESOURCE_CHOICE` | Error | Invalid resource generation for current zone or keyword (`FR-INH-002`). | Abort transaction; rollback delta. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L752) |
+| `ERR_ACTION_CLOCK_EXPIRED` | Warning | Choice prompt timed out without player selection (`FR-TRG-002`). | Apply deterministic fallback (`FR-MOD-001`). | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L753) |
+| `ERR_DESYNC_DETECTED` | Fatal | StateChecksum mismatch between client and server (`FR-PAC-004`). | Terminate match; emit replay dump. | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L690) |
+| `ERR_INFINITE_LOOP` | Fatal | Stack execution depth exceeds 100 frames. | Force-clear stack; emit fatal log. | [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L745) |
 
 ### Section 8.2: Parity & State Invariants
 #### FR-ENG-041: System Invariants & Diagnostic Assertion Protocol
@@ -653,43 +648,44 @@ The following foundational design decisions represent inferences drawn from prod
 | Requirement ID | Scope Summary | Interoperability Target |
 | :--- | :--- | :--- |
 | `FR-ENG-001` | Pure Go engine modularity & zero graphics dependency | [`FR-ENT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29), [`FR-SES-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L68) |
-| `FR-ENG-002` | Isolated multi-stream PRNG generator | [`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45), [`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54) |
-| `FR-ENG-003` | Deterministic seed derivation with cryptographic salts | [`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54), [`FR-SPC-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L735) |
-| `FR-ENG-004` | Pure discrete integer arithmetic | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201), [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295) |
-| `FR-ENG-005` | Monotonic tick counter & state checksum generation | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L450) |
-| `FR-ENG-006` | Transactional event-emitting match state model | [`FR-ENT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29), [`FR-ZON-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L398) |
+| `FR-ENG-002` | Isolated multi-stream PRNG generator & seed derivation | [`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45), [`FR-SET-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L54) |
+| `FR-ENG-003` | Deterministic seed derivation with cryptographic salts | Subsumed by [`FR-ENG-002`](#fr-eng-002-isolated-multi-stream-prng-architecture--seed-derivation) |
+| `FR-ENG-004` | Pure discrete integer arithmetic | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L431), [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L504) |
+| `FR-ENG-005` | Monotonic tick counter & 64-bit FNV-1a state checksum | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L690) |
+| `FR-ENG-006` | Transactional event-emitting match state model & CONCLUDED state | [`FR-ENT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29), [`FR-ZON-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L398) |
 | `FR-ENG-007` | Match setup, zone initialization & mulligan execution | [`FR-SET-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29), [`FR-SET-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L45), [`FR-SES-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L94) |
-| `FR-ENG-008` | Transaction checkpoint & delta-rollback engine | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
-| `FR-ENG-009` | Turn sub-phase transitions & cleanup execution | [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247), [`FR-SET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L57) |
-| `FR-ENG-010` | Clean-stack constraint enforcement on manual actions | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110), [`FR-TRN-003a`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L16) |
+| `FR-ENG-008` | Transaction checkpoint & delta-rollback engine with PRNG restore | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110), [`FR-ERR-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L745) |
+| `FR-ENG-009` | Turn sub-phase transitions conforming to FR-TRN-001 | [`FR-TRN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L236), [`FR-SET-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L57) |
+| `FR-ENG-010` | Clean-stack constraint enforcement & inherent actions | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110), [`FR-INH-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L281), [`FR-INH-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L264), [`FR-RES-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L228) |
 | `FR-ENG-011` | Turn-clock timeout & Reserve Time Bank exhaustion | [`FR-TRN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L508), [`FR-SES-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L100) |
 | `FR-ENG-012` | LIFO resolution stack & frame taxonomy | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
 | `FR-ENG-013` | Atomic cost validation, reservation & deduction | [`FR-SET-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L29), [`FR-ABL-007`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L273) |
-| `FR-ENG-014` | APNAP simultaneous trigger dispatching order | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
+| `FR-ENG-014` | APNAP simultaneous trigger dispatching order | [`FR-TRG-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L396) |
 | `FR-ENG-015` | Target verification immediately prior to stack pop | [`FR-TGT-102`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L16), [`FR-ABL-008`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L292) |
-| `FR-ENG-016` | Reactive replacement watcher interceptor pipeline | [`FR-REP-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14), [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14) |
-| `FR-ENG-017` | Choice prompt modal yield & execution suspension | [`FR-MSG-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L400), [`FR-MOD-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L18) |
+| `FR-ENG-016` | Reactive replacement watcher interceptor pipeline | [`FR-REP-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14), [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L455) |
+| `FR-ENG-017` | Choice prompt modal yield & action clock execution | [`FR-MSG-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L400), [`FR-MOD-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L361) |
 | `FR-ENG-018` | Polymorphic ability AST type-switch visitor | [`FR-ABL-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L154) – [`FR-ABL-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L236) |
 | `FR-ENG-019` | Dynamic filter evaluator against effective attributes | [`FR-ABL-008`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L292) – [`FR-ABL-011`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L368) |
 | `FR-ENG-020` | ValueToken expression resolver & condition gate | [`FR-ABL-006`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L254), [`FR-ABL-012`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L391) |
-| `FR-ENG-021` | The 14 atomic primitives execution contracts | [`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L525) |
-| `FR-ENG-022` | Token Scratch Company instantiation & pool rules | [`FR-SET-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L34), [`FR-KWD-002l`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L758) |
+| `FR-ENG-021` | Canonical atomic effect primitives execution engine | [`FR-PRM-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L304) |
+| `FR-ENG-022` | Double-blind Scratch Company deck-to-battlefield lifecycle | [`FR-ZON-005`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L196), [`FR-SEC-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L164) |
 | `FR-ENG-023` | Continuous aura registration & revocation engine | [`FR-ABL-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L217), [`FR-TXT-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md#L457) |
 | `FR-ENG-024` | Maneuver card resolution & graveyard transition | [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
-| `FR-ENG-025` | 6-layer attribute calculation pipeline execution | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201) – [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247) |
-| `FR-ENG-026` | Dirty-flag caching & topological dependency invalidation | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201) |
-| `FR-ENG-027` | Timestamp precedence within attribute calculation layers | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201) |
-| `FR-ENG-028` | Effective attribute clamping and non-negative invariants | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L201) |
-| `FR-ENG-029` | Round-duration temporary modifier cleanup | [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L247) |
-| `FR-ENG-030` | Spatial zone combat restrictions (Main Theater only) | [`FR-CBT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L282), [`FR-ZON-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L407) |
-| `FR-ENG-031` | Step 1 attack declaration, validation & exhaustion lock | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295), [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
-| `FR-ENG-032` | Step 2 reaction window & trigger queue | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295) |
-| `FR-ENG-033` | Step 3 simultaneous combat damage & retaliation | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L295) |
-| `FR-ENG-034` | Canonical damage absorption hierarchy (Armor/Stalwart/Resistant) | [`FR-KWD-002c`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14), [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L14) |
+| `FR-ENG-025` | 6-layer attribute calculation pipeline execution | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L431) – [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L439) |
+| `FR-ENG-026` | Dirty-flag caching & topological dependency invalidation | [`FR-LAY-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L431) |
+| `FR-ENG-027` | Timestamp precedence within attribute calculation layers | Subsumed by [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) |
+| `FR-ENG-028` | Effective attribute clamping and non-negative invariants | Subsumed by [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) & [`FR-ENG-041`](#fr-eng-041-system-invariants--diagnostic-assertion-protocol) |
+| `FR-ENG-029` | Round-duration temporary modifier cleanup | [`FR-LAY-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L439) |
+| `FR-ENG-030` | Spatial zone combat restrictions (Main Theater and HQ Zone) | [`FR-CBT-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L282), [`FR-CAP-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L265) |
+| `FR-ENG-031` | Step 1 attack declaration, validation & readiness lock | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L504), [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
+| `FR-ENG-032` | Step 2 reaction window & trigger queue | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L504) |
+| `FR-ENG-033` | Step 3 simultaneous combat damage & symmetric retaliation | [`FR-CBT-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L504) |
+| `FR-ENG-034` | Canonical 5-stage damage mitigation pipeline (Redirection/Resistant/Stalwart/Armor) | [`FR-KWD-002c`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L749), [`FR-REP-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L455) |
 | `FR-ENG-035` | State-based death check sweep & graveyard transition | [`FR-ENT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L17) |
 | `FR-ENG-036` | Headless engine CLI test runner architecture | [`FR-SES-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L68) |
-| `FR-ENG-037` | Scripted scenario fixture DSL & assertion framework | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L450) |
+| `FR-ENG-037` | Scripted scenario fixture DSL & assertion framework | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L690) |
 | `FR-ENG-038` | Deterministic .rec match replay recording & validation | [`FR-SPC-002`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L735) |
-| `FR-ENG-039` | Combinatorial monkey/fuzz testing orchestrator | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L450) |
+| `FR-ENG-039` | Combinatorial monkey/fuzz testing orchestrator | [`FR-PAC-004`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L690) |
 | `FR-ENG-040` | Engine performance benchmarks & throughput gates | [`FR-ENG-001`](#fr-eng-001-engine-modularity--zero-engine-dependency-invariant) |
 | `FR-ENG-041` | System invariants & diagnostic assertions | [`FR-ENT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L17), [`FR-QUE-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
+| `FR-ENG-042` | Authoritative match conclusion & victory condition engine | [`FR-WIN-001`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L75), [`FR-CBT-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md#L523), [`FR-PAC-003`](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md#L430) |
