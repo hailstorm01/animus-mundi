@@ -8,7 +8,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Card_Compiler_FRD.md` | `docs/frd/Card_Compiler_FRD.md` | RESOLVED | 2026-10-14 19:58:25 | `d970e02` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Card_Data_Pipeline_FRD.md` | `docs/frd/Card_Data_Pipeline_FRD.md` | RESOLVED | 2026-10-14 20:10:31 | `36bdfc9` | Agentic (pm-audit-reviewer + game-designer) |
-| 2026-10-14 | `cee3bf2` | [2026-10-14-Client_Engine_Protocol_Networking_FRD.md](pending/2026-10-14-Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
+| 2026-10-14 | `cee3bf2` | `2026-10-14-Client_Engine_Protocol_Networking_FRD.md` | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | RESOLVED | 2026-10-14 20:16:07 | `233a90c` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Game_Rules_and_Card_Modeling_FRD.md` | `docs/frd/Game_Rules_and_Card_Modeling_FRD.md` | RESOLVED | 2026-10-14 19:33:18 | `9cfdba7` | Agentic (pm-audit-reviewer) |
 | 2026-10-13 | `f293299` | `2026-10-13-Game_Rules_and_Card_Modeling_FRD.md` | `docs/frd/Game_Rules_and_Card_Modeling_FRD.md` | RESOLVED | 2026-10-13 20:07:14 | `5ed6a60` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-13 | `f293299` | `2026-10-13-Client_Engine_Protocol_Networking_FRD.md` | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | RESOLVED | 2026-10-14 16:40:36 | `a64a972` | Agentic (pm-audit-reviewer + game-designer) |
