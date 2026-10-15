@@ -5,7 +5,7 @@
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Master Game Rules & Card Modeling FRD (v3.0 - `Game_Rules_and_Card_Modeling_FRD.md`)**.
+This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Master Game Rules & Card Modeling FRD (v3.0 - `01_Game_Rules_and_Card_Modeling_FRD.md`)**.
 
 ### Revision Summary (v1.1 -> v1.2):
 1. **Opponent-Turn Forfeiture Protection**: Eliminated erroneous 60s forfeiture timers during opponent turns; disconnection counters draw down strictly when the offline player holds active priority or an unanswered prompt (`FR-SES-005`, `DA-NET-001`).

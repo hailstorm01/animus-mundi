@@ -591,7 +591,7 @@ function Generate-MarkdownReport {
     [void]$sb.AppendLine("# Card Town: Card Standardization Audit Report")
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine("> **Scope**: Complete audit of all 167 cards across 10 balance sheets  ")
-    [void]$sb.AppendLine("> **Companion FRD**: [Card Data Pipeline FRD](file:///docs/frd/Card_Data_Pipeline_FRD.md) (Domain 7)  ")
+    [void]$sb.AppendLine("> **Companion FRD**: [Card Data Pipeline FRD](file:///docs/frd/02_Card_Data_Pipeline_FRD.md) (Domain 7)  ")
     [void]$sb.AppendLine("> **Grammar Standard**: Magic: The Gathering (MTG) syntax & Zero-Aliasing Target Enums (`FR-DAT-006`)")
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine("---")
@@ -614,9 +614,9 @@ function Generate-MarkdownReport {
         $man = ($fCards | Where-Object { $_.CardType -eq "MANEUVER" }).Count
         $us = ($fCards | Where-Object { $_.CardType -in @("UNIT", "STRUCTURE") }).Count
         $hq = ($fCards | Where-Object { $_.CardType -eq "HEADQUARTERS" }).Count
-        [void]$sb.AppendLine("| **$f** | $fCards.Count | $man | $us | $hq |")
+        [void]$sb.AppendLine("| **$f** | $($fCards.Count) | $man | $us | $hq |")
     }
-    $cCards = $audit | Where-Object { $_.Faction -in @("COMMON", "NEUTRAL") }
+    $cCards = @($audit | Where-Object { $_.Faction -in @("COMMON", "NEUTRAL") })
     [void]$sb.AppendLine("| **COMMON / NEUTRAL** | $($cCards.Count) | 0 | $($cCards.Count) | 0 |")
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine("---")
@@ -647,7 +647,7 @@ function Generate-MarkdownReport {
         $prio = if ($c.StandardizedName -in $highPriorityNames) { "**[HIGH]** " } else { "" }
         $stdClean = $c.StandardizedText -replace "`r`n", "<br>" -replace "`n", "<br>"
         $prevClean = $c.OriginalText -replace "`r`n", "<br>" -replace "`n", "<br>"
-        [void]$sb.AppendLine("| $prio**$($c.StandardizedName)** | $($c.Faction) | $($c.CardType) | $($c.Rarity) | $($c.Flag) | $($c.Note) | `$stdClean` | `$prevClean` |")
+        [void]$sb.AppendLine("| $prio**$($c.StandardizedName)** | $($c.Faction) | $($c.CardType) | $($c.Rarity) | $($c.Flag) | $($c.Note) | $stdClean | $prevClean |")
     }
 
     return $sb.ToString()

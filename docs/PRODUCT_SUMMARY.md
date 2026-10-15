@@ -26,10 +26,10 @@ animus-mundi/
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
 │   ├── audit/                             # Socratic audit registry, guidelines & pending reviews
 │   └── frd/
-│       ├── Game_Rules_and_Card_Modeling_FRD.md       # Master FRD v3.0 (Rules & Modeling)
-│       ├── Client_Engine_Protocol_Networking_FRD.md  # FRD v1.1 (Networking & Wire Protocol)
-│       ├── Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
-│       └── Card_Compiler_FRD.md                      # FRD v1.0 (Compiler CLI, Grammar & Parity)
+│       ├── 01_Game_Rules_and_Card_Modeling_FRD.md       # Master FRD v3.0 (Rules & Modeling)
+│       ├── 02_Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
+│       ├── 03_Card_Compiler_FRD.md                      # FRD v1.0 (Compiler CLI, Grammar & Parity)
+│       └── 04_Client_Engine_Protocol_Networking_FRD.md  # FRD v1.2 (Networking & Wire Protocol)
 ├── data/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
@@ -46,13 +46,14 @@ animus-mundi/
     │   ├── card_standardization_audit.json# 167-card audit & review log
     │   └── standardize_all_cards.ps1      # Automated normalization pipeline
     └── sheets/
-        ├── publish_card_sheets.ps1        # Bidirectional sync to Google Sheets
+        ├── publish_card_sheets.ps1        # One-way export from local CSVs to Google Sheets
+        ├── import_card_sheets.ps1         # Planned Phase 2: Ingest remote Sheets edits with diff
         └── publish_audit.ps1              # Card standardization audit Google Drive publisher
 ```
 
 ### 2.1 The Four Master FRDs (Core Architectural Pillars)
 
-1. **[Master Game Rules & Card Modeling FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Game_Rules_and_Card_Modeling_FRD.md) (Master FRD v3.0)**
+1. **[Master Game Rules & Card Modeling FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md) (Master FRD v3.0)**
    - **Three-Tier Entity Taxonomy**: Formal separation between immutable blueprint definitions (`CardBlueprint`), session-level instances (`CardInstance`), and battlefield objects (`AssetInstance`).
    - **Six-Layer Attribute Calculation Pipeline (`FR-LAY-001` - `FR-LAY-003`)**: Continuous evaluation order: Layer 1 (Base Stats) $\rightarrow$ Layer 2 (Blueprint Modifiers) $\rightarrow$ Layer 3 (Instance Modifiers) $\rightarrow$ Layer 4 (Continuous Auras) $\rightarrow$ Layer 5 (Temporary Effects) $\rightarrow$ Layer 6 (Counters / Effective Stats).
    - **Match State Machine**: Complete turn sequencing spanning Ready Phase, Draw Phase, Main Phase, and End Phase, coupled with a clean-stack execution model (`FR-QUE-001`).
@@ -60,28 +61,28 @@ animus-mundi/
    - **Canonical Keywords Catalog**: Formal definitions for all 15 core game keywords (Stalwart, Resistant N, Aggressive N, Unbowed, Ward, Ethereal, Cornered, Versatile, Guardian, Armor N, Deploys Exhausted, Scratch N, Regroup N, Berserk).
    - **Spatial Zone Model**: Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard Pile, and the Resolution Stack.
 
-2. **[Client-Engine Protocol & Networking FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Client_Engine_Protocol_Networking_FRD.md) (FRD v1.1)**
-   - **Transport Architecture**: Secure WebSockets over TLS (`wss://`) utilizing Godot 4.x's native `WebSocketPeer`.
-   - **Wire Protocol**: Protocol Buffers v3 (`Protobuf`) binary encoding with uncompressed JSON fallback for development/debugging.
-   - **Fog-of-War Security Boundary (`FR-FOG-001`)**: Strict server-side event masking preventing hidden data leaks (opponent hands, deck order, face-down cards).
-   - **Full Command & Event Taxonomy**: Protobuf schemas for 15 core engine events, match commands, choice prompts (`ChoicePrompt`), and public state hash masks (`FR-PAC-004`) for instantaneous desync detection.
-   - **Resilience & Replay**: 1,000 ms heartbeat, 3,000 ms disconnect detection, 15-second action clock with retrospective latency compensation (`FR-SES-005`), and deterministic `.rec` replay formats (`FR-SPC-002`).
-
-3. **[Card Data Pipeline & Ability Authoring FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Card_Data_Pipeline_FRD.md) (FRD v1.0)**
+2. **[Card Data Pipeline & Ability Authoring FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/02_Card_Data_Pipeline_FRD.md) (FRD v1.0)**
    - **Data Authority Lifecycle**: Tier 1 (Cloud Google Sheets) $\rightarrow$ Tier 2 (Repository CSVs) $\rightarrow$ Tier 3 (Compiled Production `blueprints.json`).
    - **Zero-Aliasing Target Enums (`FR-DAT-006`)**: Direct schema header parity on all CSVs with zero runtime aliases (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`).
    - **Deterministic Slug ID Derivation (`FR-DAT-002`)**: Algorithmically derived, immutable slugs (`<faction>_<snake_case_title>`).
    - **Declarative Ability AST Specification (`FR-ABL-001` - `FR-ABL-012`)**: Polymorphic schemas for `TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, and `KEYWORD_GRANT` abilities, supported by `FilterDef`, `ValueToken`, `CostDef`, and `TargetRef` primitives.
    - **MTG-Aligned Rules Text Standards (`FR-TXT-001` - `FR-TXT-006`)**: Standardized capitalization, trigger preambles (*When*, *Whenever*, *At*), cost notation (`[Cost]: [Effect].`), passive aura phrasing (*have*), stat modification phrasing (*gets*), and canonical targeting syntax (*chosen*).
 
-4. **[Card Compiler & Blueprint Ingestion FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Card_Compiler_FRD.md) (FRD v1.0)**
+3. **[Card Compiler & Blueprint Ingestion FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/03_Card_Compiler_FRD.md) (FRD v1.0)**
    - **Ten-Stage Compilation Pipeline (`FR-CMP-001`)**: End-to-end ingestion orchestrator transforming authoring CSV sheets and sidecar overrides into immutable JSON catalog assets.
    - **Atomic Ingestion & Encoding Contract (`FR-CMP-004`)**: Strict UTF-8 RFC-4180 parsing across all 10 CSV sheets with atomic transaction rollback on failure.
    - **Deterministic Slug & Collision Invariants (`FR-CMP-006`)**: Global lookup guaranteeing zero slug collisions across factions and neutral assets.
    - **Natural Language AST Synthesizer (`FR-CMP-008` - `FR-CMP-016`)**: Deterministic recursive descent parser and regex grammar mapping MTG-style card rules text into polymorphic `AbilityDef` AST structures.
-   - **Two-Tier Sidecar Overrides (`FR-CMP-017` - `FR-CMP-018`)**: Authoritative sidecar override files (`data/schemas/overrides/`) for complex abilities exceeding pure natural language synthesis.
+   - **Two-Tier Sidecar Overrides (`FR-CMP-017` - `FR-CMP-018`)**: Authoritative sidecar override registry (`data/schemas/ast_overrides.json`) and schema (`ast_overrides.schema.json`) for complex abilities exceeding pure natural language synthesis.
    - **Bidirectional Text-to-AST Parity Checker (`FR-CMP-019` - `FR-CMP-021`)**: Strict parity verification asserting that every rules text clause has a corresponding executable AST node.
    - **Cryptographic Fingerprinting (`FR-CMP-025` - `FR-CMP-026`)**: 256-bit SHA-256 catalog checksum (`catalogChecksum`) and semantic version stamping (`cardDataVersion`) enforcing client-server data parity.
+
+4. **[Client-Engine Protocol & Networking FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/04_Client_Engine_Protocol_Networking_FRD.md) (FRD v1.2)**
+   - **Transport Architecture**: Secure WebSockets over TLS (`wss://`) utilizing Godot 4.x's native `WebSocketPeer`.
+   - **Wire Protocol**: Protocol Buffers v3 (`Protobuf`) binary encoding with uncompressed JSON fallback for development/debugging.
+   - **Fog-of-War Security Boundary (`FR-SEC-001` - `FR-SEC-005`, `FR-ZON-005`)**: Strict server-side event masking preventing hidden data leaks (opponent hands, deck order, face-down cards).
+   - **Full Command & Event Taxonomy**: Protobuf schemas for 15 core engine events, match commands, choice prompts (`ChoicePrompt`), and public state hash masks (`FR-PAC-004`) for instantaneous desync detection.
+   - **Resilience & Replay**: 1,000 ms heartbeat, 3,000 ms disconnect detection, 75-second turn clock (`FR-TRN-001`), 60-second Reserve Time Bank (`FR-SES-005`), 3,000 ms prompt animation buffer (`FR-PAC-001`), and deterministic `.rec` replay formats (`FR-SPC-002`).
 
 ### 2.2 Balance Datasets & Card Standardization
 - **10 Clean RFC-4180 CSV Balance Sheets** in `data/cards/` covering 4 distinct factions (Animus, Concordia, Path, Soulless), Neutral/Common units, and Headquarters.
@@ -91,7 +92,7 @@ animus-mundi/
 
 ### 2.3 Verification & Quality Assurance Tooling
 - **Automated Linter Suite ([`tools/linter/lint_cardtown.ps1`](file:///c:/Users/blade/animus-mundi/animus-mundi/tools/linter/lint_cardtown.ps1))**:
-  - Validates **160 defined requirement IDs** across all 4 FRDs and verifies **992 cross-references** with **0 dangling references** (`lint_frd.ps1`).
+  - Validates **159 defined requirement IDs** across all 4 FRDs and verifies **1040 cross-references** with **0 dangling references** (`lint_frd.ps1`).
   - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`lint_card_sheets.ps1`).
   - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`lint_card_syntax.ps1`).
 - **Audit Lifecycle & Pre-commit Hooks**:
@@ -115,20 +116,20 @@ flowchart TD
 
     subgraph Tier2["Tier 2: Version-Controlled Source of Truth (data/cards/)"]
         CSV["10 RFC-4180 CSV Balance Sheets<br/><i>(Clean & Linter-Verified)</i>"]
-        Overrides["Sidecar Ability Overrides<br/><i>(data/schemas/overrides/*.json)</i>"]
+        Overrides["Sidecar Ability Overrides<br/><i>(data/schemas/ast_overrides.json)</i>"]
         LinterSuite["Card Town Linter Suite<br/><i>(tools/linter/lint_cardtown.ps1)</i>"]
     end
 
     subgraph Specs["Authoritative Specifications (docs/frd/)"]
-        FRD_Rules["Game Rules & Card Modeling<br/><i>(FRD v3.0)</i>"]
-        FRD_Net["Client-Engine Protocol<br/><i>(FRD v1.1)</i>"]
-        FRD_Pipe["Card Data Pipeline<br/><i>(FRD v1.0)</i>"]
-        FRD_Comp["Card Compiler & Ingestion<br/><i>(FRD v1.0, FR-CMP-001 - 027)</i>"]
+        FRD_Rules["01 Game Rules & Card Modeling<br/><i>(FRD v3.0)</i>"]
+        FRD_Pipe["02 Card Data Pipeline<br/><i>(FRD v1.0)</i>"]
+        FRD_Comp["03 Card Compiler & Ingestion<br/><i>(FRD v1.0, FR-CMP-001 - 028)</i>"]
+        FRD_Net["04 Client-Engine Protocol<br/><i>(FRD v1.2)</i>"]
     end
 
     subgraph Compiler["Phase 2: Compiler Pipeline (tools/importer/)"]
         Pipeline["compile_blueprints.ps1<br/><i>(10-Stage Compilation Engine)</i>"]
-        Schemas["JSON Schemas Draft 2020-12<br/><i>(CardBlueprint & AbilityDef)</i>"]
+        Schemas["JSON Schemas Draft 2020-12<br/><i>(CardBlueprint, AbilityDef, ast_overrides)</i>"]
         Parity["Bidirectional Parity Check<br/><i>(FR-CMP-019 Text-to-AST)</i>"]
     end
 
@@ -160,11 +161,12 @@ flowchart TD
 
 ### 3.1 Deliverables in Phase 2
 
-1. **[Card Compiler Functional Requirements Document](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/Card_Compiler_FRD.md) (`Card_Compiler_FRD.md`) [CODIFIED & COMPLETE]**:
+1. **[Card Compiler Functional Requirements Document](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/03_Card_Compiler_FRD.md) (`03_Card_Compiler_FRD.md`) [CODIFIED & COMPLETE]**:
    - Technical specification detailing compiler CLI interface (`FR-CMP-001`), parsing grammar (`FR-CMP-008`), AST synthesis rules (`FR-CMP-013`), two-tier sidecar overrides (`FR-CMP-017`), parity validation invariants (`FR-CMP-019`), and failure modes (`FR-CMP-027`).
 2. **Formal JSON Schemas (`data/schemas/`)**:
    - `CardBlueprint.schema.json`: Complete JSON schema validation for production blueprints (`FR-DAT-005`).
    - `AbilityDef.schema.json`: Polymorphic schema validating ability archetypes, condition gates, cost models, and targeting filters (`FR-ABL-001` - `FR-ABL-007`).
+   - `ast_overrides.schema.json`: Formal schema validating the sidecar overrides registry (`FR-CMP-017`, `FR-CMP-022`).
 3. **Card Compiler Script (`tools/importer/compile_blueprints.ps1`)**:
    - **CSV Ingestion**: Parse all 10 CSV sheets atomically, strictly validating types and enums (`FR-VAL-003`, `FR-CMP-004`).
    - **Slug Derivation**: Compute canonical IDs (`<faction>_<slug>`) per `FR-DAT-002`, `FR-CMP-006`.
@@ -173,7 +175,7 @@ flowchart TD
    - **Catalog Fingerprinting**: Compute the 256-bit cryptographic `catalogChecksum` and semantic `cardDataVersion` (`FR-DAT-004`, `FR-CMP-025`, `FR-CMP-026`).
    - **Catalog Emission**: Generate `data/schemas/blueprints.json` atomically with temporary file staging.
 4. **Resolution of Domain 7 Designer Review Items**:
-   - Designer review and sign-off on the 52 flagged cards in the Master Review Register to finalize card behaviors prior to engine consumption.
+   - Designer review and sign-off on the 52 flagged cards in the Master Review Register to finalize card behaviors prior to engine consumption. In development builds, rework cards compile with `"proxy": true` / `"needsRework": true` metadata flags, but are strictly gated under `-Strict` mode (`FR-CMP-005`, `FR-CMP-021`).
 
 ---
 
@@ -215,12 +217,12 @@ flowchart LR
 - **Session Lifecycle & Match Orchestration**:
   - Handshake protocol, version checks (`FR-SES-001`), and server-side deck legality validation (`FR-SET-001`, `FR-SES-002`).
   - First-player coin toss and 25-second partial mulligan negotiation (`FR-SES-003`, `FR-SES-004`).
-- **Fog of War & Anti-Cheat Boundary (`FR-FOG-001`)**:
+- **Fog of War & Anti-Cheat Boundary (`FR-SEC-001` - `FR-SEC-005`, `FR-ZON-005`)**:
   - Dynamic payload filtering ensuring clients receive only public or owned private information.
 - **State Checksum Synchronization (`FR-PAC-004`)**:
   - Rolling state checksum validation between client and server to catch desyncs immediately.
 - **Disconnect Handling & Replay Recording**:
-  - Heartbeat tracking, 15-second prompt grace window (`FR-SES-005`), and `.rec` deterministic match recording (`FR-SPC-002`).
+  - Heartbeat tracking, 60-second Reserve Time Bank (`FR-SES-005`), 3,000 ms prompt animation buffer (`FR-PAC-001`), and `.rec` deterministic match recording (`FR-SPC-002`).
 
 ### Phase 5: Godot Client Development & User Experience (`src/`)
 - **Godot 4.x Client Scaffolding**:
@@ -250,8 +252,21 @@ flowchart LR
   - **Visual Ability AST Builder**: Declarative block editor for assembling polymorphic ability trees (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `MANEUVER_EFFECT`), condition gates, cost tokens, and target filters without hand-writing raw JSON (`FR-ABL-001` - `FR-ABL-012`).
   - **Live Syntax & Parity Engine**: Real-time bidirectional translation between MTG-aligned rules text (`FR-TXT-001` - `FR-TXT-006`) and declarative AST nodes, with instant parity verification (`FR-VAL-002`, `FR-CMP-019`) and canonical keyword autocomplete.
   - **Set & Portfolio Management**: Multi-set cataloging, expansion tagging, card versioning, rarity curves, and deterministic slug derivation (`FR-DAT-002`, `FR-CMP-006`).
-  - **Version-Controlled Serialization**: Direct round-trip export into Git-versioned CSV balance sheets (`data/cards/*.csv`) and sidecar override definitions (`data/schemas/overrides/`, `FR-CMP-017`), preserving version control as the single source of truth.
+  - **Version-Controlled Serialization**: Direct round-trip export into Git-versioned CSV balance sheets (`data/cards/*.csv`) and sidecar override definitions (`data/schemas/ast_overrides.json`, `FR-CMP-017`), preserving version control as the single source of truth.
 - **Automated Balance Pipeline Integration**:
   - Live round-trip synchronization: Designer edits Google Sheets or Card Studio $\rightarrow$ `publish_card_sheets.ps1` $\rightarrow$ `compile_blueprints.ps1` $\rightarrow$ automated engine regression tests.
 - **Telemetry & Match Analytics**:
   - Win-rate tracking per faction, card play frequency, and turn-duration metrics to guide future balance patches.
+
+---
+
+### 4.1 Master Specification Roadmap (Phases 3–6)
+
+In alignment with the requirement prefix taxonomy reserved in `.agents/skills/pm-frd-drafter/SKILL.md`, the following future Functional Requirements Documents will govern the remaining roadmap phases:
+
+| Roadmap Phase | Target Specification Document | Domain Prefix | Primary Scope | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Phase 3** | `05_Headless_Game_Engine_FRD.md` | `FR-ENG-` | Authoritative game loop, deterministic RNG seeding, stack runner, and headless test harnesses | Planned |
+| **Phase 4** | `06_Server_Daemon_Matchmaking_FRD.md` | `FR-SRV-` | Dedicated server process, GCP Agones container lifecycle, matchmaker orchestration, and JWT auth | Planned |
+| **Phase 5** | `07_Godot_Client_Architecture_FRD.md` | `FR-CLN-` | Godot 4.x scene graph, presentation layer, prediction caches, input dispatchers, and audio/VFX | Planned |
+| **Phase 6** | `08_Deckbuilder_and_Card_Studio_FRD.md` | `FR-DCK-` | In-game visual deckbuilder, export codes, and standalone Card Portfolio Designer Studio | Planned |

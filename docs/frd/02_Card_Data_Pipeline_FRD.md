@@ -6,8 +6,8 @@
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
 This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), rules text templating standards, and dataset validation for the Collectible Card Game (CCG). It serves as the authoritative bridge between balance spreadsheets, compiled engine blueprint definitions, and game client presentation, operating as the third foundational pillar alongside:
-1. **Master Game Rules & Card Modeling FRD (`Game_Rules_and_Card_Modeling_FRD.md` - Master FRD v3.0)**
-2. **Client-Engine Protocol & Networking FRD (`Client_Engine_Protocol_Networking_FRD.md` - FRD v1.1)**
+1. **Master Game Rules & Card Modeling FRD (`01_Game_Rules_and_Card_Modeling_FRD.md` - Master FRD v3.0)**
+2. **Client-Engine Protocol & Networking FRD (`04_Client_Engine_Protocol_Networking_FRD.md` - FRD v1.2)**
 
 ### Initial Specification Scope (v1.0):
 1. **Zero-Aliasing Data Contract (`FR-DAT-006`)**: Codified strict enum target conformance across all authoring CSV balance sheets. Prohibited runtime shorthand aliasing; all raw card sheets must directly serialize canonical target enum identifiers (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`; `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`; `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`).

@@ -5,7 +5,7 @@
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document establishes the authoritative unified specification for the Collectible Card Game (CCG) engine, combining the master state machine, zone topology, execution pipelines, entity taxonomy, declarative ability schemas, and card modeling specifications into a single cohesive architectural standard. It supersedes and consolidates **Engine FRD (v2.2)** and **Card Modeling FRD (v1.2)** into **Master FRD v3.0**, serving as the definitive game rules and data architecture reference alongside the **Client-Engine Protocol Networking FRD (`Client_Engine_Protocol_Networking_FRD.md`)**.
+This document establishes the authoritative unified specification for the Collectible Card Game (CCG) engine, combining the master state machine, zone topology, execution pipelines, entity taxonomy, declarative ability schemas, and card modeling specifications into a single cohesive architectural standard. It supersedes and consolidates **Engine FRD (v2.2)** and **Card Modeling FRD (v1.2)** into **Master FRD v3.0**, serving as the definitive game rules and data architecture reference alongside the **Client-Engine Protocol Networking FRD (`04_Client_Engine_Protocol_Networking_FRD.md` - FRD v1.2)**.
 
 ### Consolidated Revision Summary (v2.2 / v1.2 -> v3.0):
 1. **Unified Architecture Consolidation**: Merged match execution state machine, three-tier entity architecture, and declarative ability engine into a contiguous master specification, eliminating cross-spec version drift.
