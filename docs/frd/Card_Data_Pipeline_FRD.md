@@ -63,13 +63,17 @@ This document establishes the authoritative technical specification for the card
 
 #### FR-DAT-001: Data Ingestion Lifecycle & Absolute CSV Source of Truth
 - **Tier 1 (Authoritative Repository Source of Truth)**: The 10 per-faction RFC-4180 CSV files residing in `data/cards/` constitute the absolute, definitive source of truth for all card definitions, rules text, and balance statistics. Version control (Git) governs all official card changes.
-- **Tier 2 (Cloud Inspection & Mobile Review Mirror)**: The Google Sheets workbooks located in the team drive (`maneuvers` and `units-and-structures`) serve purely as an outward-facing mirror and convenience viewer for designers to inspect card catalogs on mobile devices and explore balance experiments. The Google Sheets are downstream representations; any edits in Google Drive do not affect game builds and must be manually brought into Git CSVs to become authoritative.
+- **Tier 2 (Cloud Inspection & Mobile Review Mirror)**: The Google Sheets workbooks located in the team drive (`maneuvers` and `units-and-structures`) serve purely as an outward-facing mirror and convenience viewer for designers to inspect card catalogs on mobile devices and explore balance experiments. The Google Sheets are downstream representations; any edits in Google Drive do not affect game builds and must be brought into Git CSVs via the ingestion workflow to become authoritative.
 - **Tier 3 (Compiled Production Catalog)**: The compiled `blueprints.json` artifact (generated into `data/schemas/` or embedded in the game engine runtime) represents the authoritative machine-readable catalog consumed by the server engine process and Godot client builds.
 - **Automated Pipeline Flow**:
   1. Local `data/cards/*.csv` files are directly edited, reviewed, and committed into Git.
-  2. `tools/sheets/publish_card_sheets.ps1` publishes the local repository CSV content to Google Sheets. It treats local CSVs as the authoritative input and unconditionally updates Google Sheets to reflect Git state without depending on or checking remote Sheet modifications.
-  3. `tools/linter/lint_cardtown.ps1` audits schema integrity, requirement links, and text terminology.
-  4. The compilation pipeline (`tools/importer/compile_blueprints.ps1`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+  2. `tools/sheets/publish_card_sheets.ps1` publishes local repository CSV content to Google Sheets. To prevent accidental loss of remote designer work, `publish_card_sheets.ps1` executes a pre-publish freshness check comparing remote Google Drive revision timestamps against local Git commit timestamps. If un-synced remote edits exist, publication halts immediately with a collision warning unless the `--Force` switch is explicitly supplied.
+  3. **Bidirectional Ingestion Tooling**: The pipeline provides a companion ingestion script (`tools/sheets/import_card_sheets.ps1`) to safely pull remote Google Sheets modifications into local `data/cards/*.csv` files, rendering an interactive terminal visual diff for designer confirmation before staging.
+  4. `tools/linter/lint_cardtown.ps1` audits schema integrity, requirement links, and text terminology.
+  5. The compilation pipeline (`tools/importer/compile_blueprints.ps1`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+
+> [!NOTE]
+> **Design Rationale (DA-DAT-001)**: Mandating pre-publish freshness checks and introducing `import_card_sheets.ps1` prevents unconditional overwrites of remote designer balance work in Google Drive, establishing a safe bidirectional workflow.
 
 > [!NOTE] Product Vision: Standalone Interactive Card & Set Designer Tool
 > Long-term tooling roadmap includes a dedicated, standalone **Interactive Card & Set Designer Tool**. This application will use a structured database model (outside of the client/server runtime engines) to manage card balance schemas, keyword catalogs, set dependencies, and migration tracking, replacing manual spreadsheet authoring while serializing directly into canonical version-controlled formats.
@@ -103,7 +107,8 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 ### Section 2.1: Target Enum Enforcement
 
 #### FR-DAT-005: Canonical Blueprint Schema Specification
-The production blueprint data structure defined in this section serves as the canonical technical schema for the data ingestion and compilation pipeline. It incorporates and extends the fundamental entity schema defined in `FR-CRD-101` (Master Rules FRD) with explicit ingestion metadata and declarative AST fields:
+*(Subsumed by FR-CRD-101)*
+The canonical technical blueprint schema, property constraints, and entity taxonomy are authoritatively defined in **FR-CRD-101** of the Master Game Rules & Card Modeling FRD. The table below outlines the ingested schema fields validated during compilation:
 
 | Field | Type | Constraint | Description |
 | :--- | :--- | :--- | :--- |
@@ -134,7 +139,10 @@ To eliminate translation layers and ensure absolute schema fidelity, all authori
 - **Subtype Taxonomy**: Card subtypes in the `subtypes` (or `Types`) CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
 - **Null Subtypes Sentinel**: Where a card possesses no subtypes (e.g. Headquarters), the field typically contains the literal sentinel string `"--"`. The ingestion pipeline treats empty strings (`""`), whitespace-only cells, `"N/A"`, and `"--"` identically, normalizing them into an empty array `[]`.
 - **Vanilla Ability Sentinel**: In rules text columns (`rulesText` or `Text`), the sentinel string `"--"` is explicitly recognized as representing a vanilla card with no printed abilities (e.g., *Forest Heavies*, *Old Growth Elders*), compiling into an empty `abilities: []` array.
-- **Normalization Engine**: The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique strings.
+- **Normalization Engine & Casing Semantics**: The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique Title Case strings for serialization and card frame rendering. During engine execution, all subtype filter comparisons (`FilterDef.subtypes`, `FR-TGT-001`) evaluate criteria using case-insensitive string matching to prevent casing mismatches from causing targeting failures.
+
+> [!NOTE]
+> **Design Rationale (DA-DAT-006)**: Authoring CSVs enforce Title Case for human readability and UI presentation, while the runtime engine performs case-insensitive subtype comparison to guarantee robust filter matching across platforms.
 
 #### FR-DAT-008: Deployment Zone Array Schema & Invariants
 - **Units & Structures**: Every Unit and Structure blueprint must declare at least one legal deployment zone (`["RESERVES"]`, `["MAIN_THEATER"]`, or `["RESERVES", "MAIN_THEATER"]`). Headquarters cards declare strictly `["HEADQUARTERS"]`.
@@ -228,6 +236,9 @@ In compliance with **Section 6.2 of Master FRD v3.0 (`FR-LAY-001` - `FR-LAY-003`
   - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `KEYWORD_GRANT`, `SUBTYPE_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`). (Note: Armor cannot be granted continuously by an aura; it exists strictly as a dynamic entity pool modified via one-shot events).
   - `abilityGrants`: Optional `Array<AbilityDef>` allowing continuous auras to project compound abilities (e.g. conditional keywords such as `Cornered: Resistant 1` on *Ancestral Monument*) onto scoped assets.
 
+> [!NOTE]
+> **Design Rationale (DA-DAT-004)**: Armor is an ephemeral consumable damage buffer (absorbed 1-for-1 before health deduction in Stage 4 of `FR-REP-004`). It exists strictly as a stateful pool modified via one-shot discrete events (e.g. *"When this unit deploys"*, *"Chosen unit gains 2 armor"*, *"Distribute 2 armor"*). A continuous aura granting "+1 Armor" is semantically equivalent to granting `Resistant 1` (`FR-KWD-002b`); granting dynamic Armor continuously would create undefined state loops (either continually regenerating depleted armor after each combat hit, creating an unintended infinite damage barrier, or requiring complex stateful damage tracking in a stateless aura layer). Defensive continuous auras must instead grant stat modifiers or damage reduction keywords (`Resistant N`, `Stalwart`).
+
 #### FR-ABL-005: ReplacementWatcherDef Schema & Event Interception
 In compliance with **FR-REP-001** through **FR-REP-004**:
 - Intercepts prospective state events inline (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) without utilizing the Resolution Stack.
@@ -266,10 +277,19 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "type": "string", "enum": ["STATIC", "DYNAMIC", "VARIABLE_X"] },
+        "type": { "type": "string", "enum": ["STATIC", "DYNAMIC", "QUERY", "VARIABLE_X"] },
         "value": { "type": "integer" },
-        "source": { "type": "string", "enum": ["SELF", "TARGET", "GAME_STATE"] },
-        "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "COUNT_TUCKED_CARDS", "COUNT_DISCARD_CARDS", "COUNT_STRUCTURES_REQUISITION_YIELD", "COUNT_STRUCTURES_TACTICS_YIELD"] },
+        "source": { "type": "string", "enum": ["SELF", "TARGET", "GAME_STATE", "CAUSALITY_CONTEXT"] },
+        "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "BASE_REQUISITION_COST", "BASE_TACTICS_COST"] },
+        "query": {
+          "type": "object",
+          "properties": {
+            "zone": { "type": "string", "enum": ["ATTACHED", "DISCARD", "BATTLEFIELD", "HAND", "RESERVES", "MAIN_THEATER"] },
+            "filter": { "$ref": "#/definitions/FilterDef" },
+            "aggregate": { "type": "string", "enum": ["COUNT", "SUM_ATTRIBUTE"] },
+            "targetAttribute": { "type": "string", "enum": ["REQUISITION_YIELD", "TACTICS_YIELD", "COMBAT_POWER", "HEALTH"] }
+          }
+        },
         "filter": { "$ref": "#/definitions/FilterDef" },
         "multiplier": { "type": "integer" }
       }
@@ -297,6 +317,10 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
   }
 }
 ```
+
+> [!NOTE]
+> **Design Rationale (DA-DAT-002: Composable Query Primitives)**:
+> Replaces ad-hoc, card-specific property enums (`COUNT_TUCKED_CARDS`, `COUNT_DISCARD_CARDS`, `COUNT_STRUCTURES_REQUISITION_YIELD`) with a generic, composable `query` object within `ValueToken`. This fulfills the core declarative AST architectural mandate (`Design Rationale DA-XP-001`), allowing game designers to introduce arbitrary entity counts and attribute aggregates (e.g. cards tucked under a host, cards in discard piles, or cumulative yields of controlled assets) without requiring engine recompilation or schema enum expansions.
 
 ---
 
@@ -418,19 +442,20 @@ Card Town's targeting engine (`FR-TGT-001`) utilizes declarative conjunctions. R
 ### Section 6.1: Verification Suite Extensions
 
 #### FR-VAL-001: Ingestion Pipeline Linter Specification
-The automated linter (`tools/linter/lint_cardtown.ps1`) enforces three validation phases:
-1. **Requirement Integrity**: Scans all FRDs in `docs/frd/` (`Game_Rules_and_Card_Modeling_FRD.md`, `Client_Engine_Protocol_Networking_FRD.md`, `Card_Data_Pipeline_FRD.md`), verifying that every referenced requirement ID is defined (zero dangling references).
-2. **CSV Table & Enum Integrity**: Verifies that all 10 CSVs parse without errors, column counts are invariant, no duplicate headers exist, and every enum cell matches target enum values (`FR-DAT-006`).
-3. **Rules Text Terminology**: Audits rules text against forbidden terminology patterns (`friendly` &rarr; `allied`, raw `~`, raw `attack` &rarr; `power`).
+*(Subsumed by FR-CMP-001 & FR-CMP-022)*
+The automated linter (`tools/linter/lint_cardtown.ps1`) and compiler pre-flight validation phases (`FR-CMP-001`) enforce requirement cross-reference integrity across all FRDs, CSV RFC-4180 parsing, and canonical schema conformance (`FR-CMP-022`).
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
 - The compilation pipeline executes automated parity checks ensuring that card abilities defined in text correspond 1-to-1 with compiled AST structures.
 - A card declaring `Stalwart` in rules text must contain a `REPLACEMENT_WATCHER` AST entry with `min(damage, 1)` logic; a card declaring an attack trigger must bind to `EVENT_ATTACK_DECLARE` or `EVENT_ATTACK_RESOLVED`.
 
 #### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All") & Review Card Compilability
-- **Universal Compilability Invariant**: Balance sheet validation requirements apply uniformly across all rows with zero exceptions for placeholder rows ("must fit all"). Every row in an authoring sheet must fully define all mandatory target enum fields (`Card Type`, `Faction`, `Deployment Zones`, `Rarity`), pass CSV schema validation, and possess complete, syntactically valid declarative ability bindings (`FR-ABL-001` - `FR-ABL-007`). Incomplete rows lacking required attributes or cards with incomplete/unbound ability logic are rejected during pipeline linting and compiler execution.
-- **Review Card Compilability Contract**: Cards undergoing active game balance or rules text review (e.g., the 52 cards listed in Domain 7) must still compile cleanly with complete, functional ability bindings in developmental and pull-request builds. Work-in-progress or exploratory cards are not permitted to bypass compilation or remain in an unbindable state.
-- **Production Gating**: While review cards must remain 100% compilable for test matches and CI validation, production release builds require formal designer sign-off clearing all pending review flags from Domain 7.
+- **Development & Prototyping Flexibility**: To support rapid game balance exploration and branch prototyping, placeholder or exploratory cards explicitly marked with `currentProxy == TRUE` or `needsRework == TRUE` compile normally into blueprints with `"proxy": true` / `"needsRework": true` metadata flags intact (`FR-CMP-005`). This enables designers to test rough mechanics in development sandboxes without failing local toolchains.
+- **Universal Production Gating**: Release builds and CI production pipelines operating under strict mode (`-Strict`) enforce a zero-tolerance validation gate. Any card possessing incomplete ability logic, unreviewed placeholder text, or marked with `currentProxy == TRUE` / `needsRework == TRUE` triggers compilation error `ERR_STRICT_PROTOTYPE_REJECTED`, guaranteeing zero prototype leakage into release bundles.
+- **Review Card Compilability Contract**: Cards undergoing active game balance or rules text review must maintain complete, functional ability bindings in development builds. Production releases require formal designer sign-off clearing all pending review flags from Domain 7.
+
+> [!NOTE]
+> **Design Rationale (DA-DAT-005)**: Harmonizes `FR-VAL-003` with `FR-CMP-005`. By permitting prototype cards to compile with explicit metadata flags during local development while blocking them under `-Strict`, designers can explore experimental concepts without compromising production build integrity.
 
 ---
 
@@ -452,17 +477,19 @@ All 167 cards across the 10 CSV sheets were comprehensively audited and standard
 3. **Rift (Headquarters - Animus)**:
    - *Previous*: `"discard a card, exhaust: scratch 2, deal 5 damage to this asset"`
    - *Standardized*: `"Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters."`
-   - *Design Call*: Confirmed self-damage interaction on Headquarters; Headquarters is eligible target for damage mitigation (`FR-REP-004`).
+   - *Design Call*: Confirmed self-damage interaction on Headquarters; emits `EVENT_TAKE_DAMAGE` and routes through damage mitigation (`FR-REP-004`). Damage-reactive triggers (e.g. Unbowed) trigger normally.
 4. **Mutation Swell (Maneuver - Animus)**:
    - *Previous*: `"kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free."`
    - *Standardized*: `"Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free."`
    - *Design Call*: Clarified MTG causality clause ("killed this way") and restricted targets to discrete multiples (2 or 4) to eliminate fractional casualty floor ambiguity.
 5. **Steel Rain & Macrocannon Barrage (Path / Soulless)**:
-   - *Standardized*: Formalized distributed damage allocation syntax matching `DISTRIBUTED_POOL` (`FR-ABL-011`).
-6. **Title Spellings**:
+   - *Steel Rain*: Confirmed multi-targeting. Discarding up to 3 cards grants that many discrete instances of "deal 2 damage to chosen asset", allowing players to select up to 3 distinct assets or concentrate multiple instances on a single asset.
+   - *Macrocannon Barrage*: Formalized distributed damage allocation syntax matching `DISTRIBUTED_POOL` (`FR-ABL-011`).
+6. **Title Spellings & Renames**:
    - `reverbating terror` corrected to **Reverberating Terror**.
    - `Devilhorn Guerillas` corrected to **Devilhorn Guerrillas**.
    - `All out War` hyphenated to **All-Out War**.
+   - `Daggerspine Rangers` renamed to **Spoil Forest Irregulars** (eliminating Warcraft "Daggerspine" prior art / IP collision).
 
 ---
 
@@ -472,7 +499,7 @@ The following register details all cards where rules text was modified or requir
 
 | Card Title | Sheet | Previous Text | Standardized Rules Text | Designer Review Flag / Rationale |
 | :--- | :--- | :--- | :--- | :--- |
-| **Rift** | `units-and-structures-HQ.csv` | `discard a card, exhaust: scratch 2, deal 5 damage to this asset` | `Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters.` | Review Headquarters self-damage keyword interaction (Unbowed). |
+| **Rift** | `units-and-structures-HQ.csv` | `discard a card, exhaust: scratch 2, deal 5 damage to this asset` | `Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters.` | Resolved: Confirmed Headquarters self-damage emits `EVENT_TAKE_DAMAGE` and routes through damage mitigation pipeline (`FR-REP-004`); damage-reactive keywords evaluate normally. |
 | **Animoceps Rager** | `units-and-structures-HQ.csv` | `When this HQ is dealt damage, scratch once. This effect happens once per turn.` | `Whenever this Headquarters is dealt damage, Scratch 1. This ability triggers only once each turn.` | Confirm "triggers only once each turn" limit syntax (`FR-ABL-008`). |
 | **Encampment** | `units-and-structures-HQ.csv` | `discard a card, exhaust: deal 1 damage to up to 2 chosen non scratch company units` | `Discard a card, exhaust: Deal 1 damage to each of up to 2 chosen non-Scratch Company units.` | Review multi-target distributed damage phrasing. |
 | **Ensnaring Mist** | `maneuvers-animus.csv` | `move chosen unit to its controller's reserves. chosen unit gets -1 power until the end of your turn.` | `Move chosen unit to its controller's Reserves. Chosen unit gets -1 power until end of turn.` | Changed "until the end of your turn" to canonical "until end of turn". |
@@ -484,7 +511,7 @@ The following register details all cards where rules text was modified or requir
 | **Consuming Earth** | `maneuvers-concordia.csv` | `kill chosen opposing unit with power less than or equal to the total requisition value of all structures you control.` | `Kill chosen opposing unit with power less than or equal to the total Requisition yield of all structures you control.` | Term "requisition value" replaced with canonical "Requisition yield" (`FR-CRD-101`). |
 | **Light of the World Soul** | `maneuvers-concordia.csv` | `look at the top 7 cards of your deck. you may deploy up to 2 unit cards for free, and put up to 1 card into your hand. Put the rest on the bottom of your deck in any order.` | `Look at the top 7 cards of your deck. You may deploy up to 2 unit cards from among them for free, and put up to 1 of those cards into your hand. Put the rest on the bottom of your deck in any order.` | Clarified card partitioning from top-7 inspection pool (`FR-MOD-001`). |
 | **Devilhorn Scouting Party** | `maneuvers-path.csv` | `You may deploy a unit card that costs R3 or less from among the top 3 cards of your deck for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.` | `Look at the top 3 cards of your deck. You may deploy a unit card with Requisition cost 3 or less from among them for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.` | Added explicit "Look at the top 3 cards..." preamble. |
-| **Steel Rain** | `maneuvers-path.csv` | `discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. then, if you have no cards left in your hand, draw 2 cards.` | `Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. Then, if you have no cards in hand, draw 2 cards.` | Confirm if "chosen asset" is selected once or independently per card discarded. |
+| **Steel Rain** | `maneuvers-path.csv` | `discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. then, if you have no cards left in your hand, draw 2 cards.` | `Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. Then, if you have no cards in hand, draw 2 cards.` | Resolved: Multi-targeting confirmed. Resolves as iterative targeting instances per card discarded (e.g. discarding 3 cards yields 3 distinct choices of "chosen asset" dealing 2 damage each). |
 | **Ambush Tactics** | `maneuvers-path.csv` | `choose two: kill chosen unit. return chosen unit to its owner's hand. chosen unit deals damage equal to its power to chosen unit. put chosen unit on top of its owner's deck.` | `Choose two: - Kill chosen unit. - Return chosen unit to its owner's hand. - Chosen unit deals damage equal to its power to another chosen unit. - Put chosen unit on top of its owner's deck.` | Modal choice list formatting applied (`FR-ABL-010`); disambiguated target strike role with "another chosen unit". |
 | **Mage Seeker's Inquisition** | `maneuvers-soulless.csv` | `Chosen player reveals their hand and discards a unit of your choice.` | `Chosen opponent reveals their hand. You choose a unit card from it. That player discards that card.` | Harmonized with hand inspection workflow `FR-MOD-001`. |
 | **Macrocannon Barrage** | `maneuvers-soulless.csv` | `deal 5 damage distributed among up to 5 chosen units` | `Distribute 5 damage among up to 5 chosen units.` | Templated as distributed damage pool (`FR-ABL-011`). |
@@ -526,7 +553,14 @@ The following register details all cards where rules text was modified or requir
 | **Piston Fist Prototype** | `units-and-structures-soulless.csv` | `After this unit attacks, move this unit to your Reserves.` | `Aggressive 9 After this unit attacks, move this unit to your Reserves.` | Rebalanced to 3R/3T 1/9 with Aggressive 9 and post-attack recoil to Reserves (`FR-KWD-002f`). |
 | **MAX-8 Autonomous Warsuit** | `units-and-structures-soulless.csv` | `When this unit deploys, deal 2 damage to chosen asset and chosen asset heals 2.` | `When this unit deploys, deal 2 damage to chosen asset. Chosen asset heals 2.` | Separated damage and heal into two discrete sequential effect clauses. |
 | **Gemstone Titan** | `units-and-structures-concordia.csv` | `when this unit deploys, kill chosen structure with current Health less than this unit's power` | `When this unit deploys, kill chosen opposing structure with current Health less than this unit's power.` | Added opposing qualification; filters structures by current Health less than deployer's power. |
-| **Daggerspine Rangers** | `units-and-structures-concordia.csv` | Subtypes: `Mending, Specialists` | Subtypes: `Mending, Specialist` | Normalized plural subtype "Specialists" to canonical singular "Specialist" (`FR-DAT-007`). **Flagged for card rename review** (prior art / IP collision with Warcraft "Daggerspine"). |
+| **Spoil Forest Irregulars** | `units-and-structures-concordia.csv` | Previous name: `Daggerspine Rangers`, Subtypes: `Mending, Specialists` | Subtypes: `Mending, Specialist` | Resolved: Renamed to Spoil Forest Irregulars to resolve Warcraft IP collision. Normalized plural subtype "Specialists" to canonical singular "Specialist" (`FR-DAT-007`). |
+
+> [!NOTE]
+> **Design Rationale (DA-DAT-003: Core Set Mechanical Triage)**:
+> Resolves open ambiguities identified in audit:
+> - **Steel Rain**: Multi-targeting confirmed; resolves as iterative targeting instances per card discarded.
+> - **Rift**: Headquarters self-damage emits `EVENT_TAKE_DAMAGE` and routes through damage mitigation (`FR-REP-004`).
+> - **Card Rename**: Renamed *Daggerspine Rangers* to *Spoil Forest Irregulars* to eliminate Blizzard IP collision risk.
 
 ---
 
