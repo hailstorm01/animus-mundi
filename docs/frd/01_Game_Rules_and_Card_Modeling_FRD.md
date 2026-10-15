@@ -394,7 +394,7 @@ Standardized event hooks across core categories:
 - When stack resolution requires interactive choices from the active player (15s clock) or inactive player (streamlined 10s clock; `FR-MOD-001`), the engine issues a choice prompt. If exactly one legal option exists, the engine fast-paths auto-selection without issuing a prompt. Prompts resolve deterministically via fallbacks if the timer expires.
 
 #### FR-TRG-003: APNAP Push Sequencing
-- Triggers occurring simultaneously push via Active Player, Non-Active Player (APNAP) order: non-active player triggers push first; active player triggers push on top and resolve first. Allied triggers are ordered by their controller.
+- Triggers occurring simultaneously push via Active Player, Non-Active Player (APNAP) order: triggers controlled by the active player push onto the Resolution Stack first; triggers controlled by the non-active player push second on top of the active player's triggers. Because the stack is LIFO, non-active player triggers resolve first. Where multiple simultaneous triggers are controlled by the same player, allied triggers are ordered by their controller (falling back to deterministic blueprint ID sorting for automated resolution).
 
 #### FR-TRG-004: Cascading Trigger Enqueuing
 - Secondary triggers generated during the resolution of a stack item push directly to the top of the stack, resolving immediately in context before downstream stack items resolve.
