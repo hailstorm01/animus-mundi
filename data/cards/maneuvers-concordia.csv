@@ -1,4 +1,4 @@
-﻿"Name","Card Type","Faction","Requisition Cost","Tactics Cost","Text","Rarity","Current Proxy?","Needs Rework?"
+"Name","Card Type","Faction","Requisition Cost","Tactics Cost","Text","Rarity","Current Proxy?","Needs Rework?"
 "Growing Legion","MANEUVER","CONCORDIA","0","1","Scratch 1.","UNCOMMON","Yes","No"
 "Natural Attunement","MANEUVER","CONCORDIA","0","1","Generate 2 Requisition. Draw a card.","COMMON","Yes","No"
 "Reverberating Terror","MANEUVER","CONCORDIA","0","1","Up to 2 chosen units and structures get -1 power until end of turn.","UNCOMMON","Yes","No"
@@ -9,5 +9,6 @@
 "Awaken Nightmare","MANEUVER","CONCORDIA","0","3","Move chosen opposing unit from the Main Theater to its owner's Reserves. All opposing units get -1 power until end of turn.","COMMON","Yes","No"
 "Consuming Earth","MANEUVER","CONCORDIA","0","3","Kill chosen opposing unit with power less than or equal to the total Requisition yield of all structures you control.","RARE","Yes","No"
 "Rage's Wake","MANEUVER","CONCORDIA","0","3","Chosen unit gets +2 power until end of turn. When that unit is killed this turn, deploy it from your discard pile to your Reserves for free.","COMMON","Yes","No"
-"Seismic Instability","MANEUVER","CONCORDIA","0","4","Deal 4 damage to all opposing structures.","RARE","No","Yes"
+"Seismic Instability","MANEUVER","CONCORDIA","0","4","Deal 3 damage to all assets in the Main Theater.
+Deal 4 damage to all structures in the Main Theater.","RARE","No","No"
 "Light of the World Soul","MANEUVER","CONCORDIA","0","5","Look at the top 7 cards of your deck. You may deploy up to 2 unit cards from among them for free, and put up to 1 of those cards into your hand. Put the rest on the bottom of your deck in any order.","MYTHIC","Yes","No"
