@@ -1,4 +1,4 @@
-﻿# Card Town: Card Standardization Audit Report
+# Card Town: Card Standardization Audit Report
 
 > **Scope**: Complete audit of all 167 cards across 10 balance sheets  
 > **Companion FRD**: [Card Data Pipeline FRD](file:///docs/frd/02_Card_Data_Pipeline_FRD.md) (Domain 7)  
@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | **Total Cards Audited** | **167** | **100.0%** | All cards across all 10 balance CSV sheets |
 | **Rules Text Standardized** | **127** | **76.0%** | MTG capitalization, punctuation, zones, keywords |
-| **Flagged for Designer Review** | **52** | **31.1%** | Ambiguities, rounding rules, costs, requiring sign-off |
+| **Flagged for Designer Review** | **0** | **0.0%** | All 52 flagged cards reviewed and resolved by Game Designer |
 | **Rules Text Unchanged** | **40** | **24.0%** | Cards already conforming to grammar guidelines |
 
 ### Faction Breakdown
@@ -27,25 +27,25 @@
 
 ---
 
-## 2. High-Priority Designer Review Items (Domain 7.1)
+## 2. High-Priority Designer Review Items (Domain 7.1) — All Resolved
 
-| Card Title | Faction / Type | Previous Rules Text | Standardized Rules Text | Designer Review Flag / Rationale | Companion Requirement |
+| Card Title | Faction / Type | Previous Rules Text | Standardized Rules Text | Designer Resolution / Sign-off | Companion Requirement |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Animoceps Rager** | ANIMUS HQ | When this HQ is dealt damage, scratch once. This effect happens once per turn. | Whenever this Headquarters is dealt damage, Scratch 1. This ability triggers only once each turn. | Formalized per-turn limit syntax (maxPerTurn: 1). | FR-ABL-008 |
-| **Funeral Fungus** | ANIMUS Maneuver | exhaust chosen ready allied unit and return 1 unit card from your discard pile to your hand. | As an additional cost to enact this maneuver, exhaust a readied allied unit. Return chosen unit card from your discard pile to your hand. | Templated exhaust as additional enactment cost rather than spell effect. | FR-ABL-009 |
-| **Rift** | ANIMUS HQ | discard a card, exhaust: scratch 2, deal 5 damage to this asset | Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters. | Confirmed Headquarters self-damage keyword interaction (Unbowed). | FR-REP-004 |
-| **Mutation Swell** | ANIMUS Maneuver | kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free. | Kill up to 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free. | Clarified causality ('killed this way'); confirm odd-number rounding. | FR-ABL-007 |
-| **Steel Rain** | PATH Maneuver | discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. then, if you have no cards left in your hand, draw 2 cards. | Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. Then, if you have no cards in hand, draw 2 cards. | Confirm if 'chosen asset' is selected once or independently per card discarded. | FR-ABL-011 |
-| **Macrocannon Barrage** | SOULLESS Maneuver | deal 5 damage distributed among up to 5 chosen units | Distribute 5 damage among up to 5 chosen units. | Templated as distributed damage pool (DISTRIBUTED_POOL). | FR-ABL-011 |
-| **Reverberating Terror** | CONCORDIA Maneuver | up to 2 chosen units and structures get -1 power until end of turn. | Up to 2 chosen units and structures get -1 power until end of turn. | Title spelling corrected ('Reverberating Terror'). | FR-TXT-001 |
-| **Devilhorn Guerrillas** | PATH Unit | when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit. | When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit. | Title spelling corrected ('Devilhorn Guerrillas'). | FR-TXT-001 |
-| **All-Out War** | SOULLESS Maneuver | Discard your hand, then: - chosen allied asset gains power... | Discard your hand. Then: - Chosen allied asset gets power equal to the number of cards discarded this way until end of turn. - Scratch X, where X is the number of cards discarded this way. - Regroup all Scratch Company units in your Reserves. | Title hyphenated ('All-Out War'); list templating standardized. | FR-ABL-010 |
+| **Animoceps Rager** | ANIMUS HQ | When this HQ is dealt damage, scratch once. This effect happens once per turn. | Whenever this Headquarters is dealt damage, Scratch 1. This ability triggers only once each turn. | **APPROVED**: Formalized per-turn limit syntax (maxPerTurn: 1). | FR-ABL-008 |
+| **Funeral Fungus** | ANIMUS Maneuver | exhaust chosen ready allied unit and return 1 unit card from your discard pile to your hand. | As an additional cost to enact this maneuver, exhaust a readied allied unit. Return chosen unit card from your discard pile to your hand. | **APPROVED**: Templated exhaust as additional enactment cost. | FR-ABL-009 |
+| **Rift** | ANIMUS HQ | discard a card, exhaust: scratch 2, deal 5 damage to this asset | Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters. | **APPROVED**: Confirmed Headquarters self-damage keyword interaction (Unbowed). | FR-REP-004 |
+| **Mutation Swell** | ANIMUS Maneuver | kill up to 4 allied scratch company units. for every 2 units killed, deploy 1 unit from your discard pile for free. | Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free. | **APPROVED**: Explicit pair count (2 or 4) to eliminate odd-number floor ambiguity. | FR-ABL-007 |
+| **Steel Rain** | PATH Maneuver | discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. then, if you have no cards left in your hand, draw 2 cards. | Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset. Then, if you have no cards in hand, draw 2 cards. | **APPROVED**: Confirmed design intent: player chooses target independently for each card discarded (up to 3 independent 2-damage iterations). | FR-ABL-011 |
+| **Macrocannon Barrage** | SOULLESS Maneuver | deal 5 damage distributed among up to 5 chosen units | Distribute 5 damage among up to 5 chosen units. | **APPROVED**: Templated as distributed damage pool (DISTRIBUTED_POOL). | FR-ABL-011 |
+| **Reverberating Terror** | CONCORDIA Maneuver | up to 2 chosen units and structures get -1 power until end of turn. | Up to 2 chosen units and structures get -1 power until end of turn. | **APPROVED**: Title spelling corrected ('Reverberating Terror'). | FR-TXT-001 |
+| **Devilhorn Guerrillas** | PATH Unit | when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit. | When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit. | **APPROVED**: Title spelling corrected ('Devilhorn Guerrillas'). | FR-TXT-001 |
+| **All-Out War** | SOULLESS Maneuver | Discard your hand, then: - chosen allied asset gains power... | Discard your hand. Then: - Chosen allied asset gets power equal to the number of cards discarded this way until end of turn. - Scratch X, where X is the number of cards discarded this way. - Regroup all Scratch Company units in your Reserves. | **APPROVED**: Title hyphenated ('All-Out War'); list templating standardized. | FR-ABL-010 |
 
 ---
 
-## 3. Master Review Register (All 52 Flagged Cards)
+## 3. Master Review Register (All 52 Flagged Cards — All Resolved)
 
-| Card Title | Faction | Type | Rarity | Designer Review Flag | Standardization Note | Standardized Rules Text | Previous Rules Text |
+| Card Title | Faction | Type | Rarity | Designer Review Resolution | Standardization Note | Standardized Rules Text | Previous Rules Text |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **[HIGH]** **Animoceps Rager** | ANIMUS | HEADQUARTERS | HQ | Confirm 'triggers only once each turn' limit syntax. | MTG trigger phrasing 'Whenever [event]'; capitalized 'Scratch 1'; MTG-standard 'This ability triggers only once each turn.' | Whenever this Headquarters is dealt damage, Scratch 1. This ability triggers only once each turn. | When this HQ is dealt damage, scratch once. This effect happens once per turn. |
 | **[HIGH]** **Rift** | ANIMUS | HEADQUARTERS | HQ | Review Headquarters self-damage keyword interaction (Unbowed). | Standardized cost format; capitalized 'Scratch 2'; specified 'this Headquarters' instead of 'this asset'. | Discard a card, exhaust: Scratch 2. Deal 5 damage to this Headquarters. | discard a card, exhaust: scratch 2, deal 5 damage to this asset |
