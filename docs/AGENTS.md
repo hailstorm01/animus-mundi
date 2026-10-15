@@ -7,6 +7,7 @@ This directory houses the authoritative master specifications and card balance d
 - **Master Card Data Pipeline Spec:** `frd/02_Card_Data_Pipeline_FRD.md` (ingestion lifecycle, declarative ability AST, MTG-aligned text standards, review register).
 - **Master Card Compiler Spec:** `frd/03_Card_Compiler_FRD.md` (CLI compiler, parsing grammar, AST synthesis, parity verification, fingerprinting).
 - **Master Networking & Protocol Spec:** `frd/04_Client_Engine_Protocol_Networking_FRD.md` (wire contract, Protobuf schemas, WebSockets, Fog of War, choice prompts).
+- **Master Headless Game Engine Spec:** `frd/05_Headless_Game_Engine_FRD.md` (Go headless kernel, seeded PRNG, transactional state, stack runner, AST evaluator, 6-layer pipeline, test harness).
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 
 > [!TIP]

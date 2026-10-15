@@ -29,7 +29,8 @@ animus-mundi/
 │       ├── 01_Game_Rules_and_Card_Modeling_FRD.md       # Master FRD v3.0 (Rules & Modeling)
 │       ├── 02_Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FRD v1.0 (Compiler CLI, Grammar & Parity)
-│       └── 04_Client_Engine_Protocol_Networking_FRD.md  # FRD v1.2 (Networking & Wire Protocol)
+│       ├── 04_Client_Engine_Protocol_Networking_FRD.md  # FRD v1.2 (Networking & Wire Protocol)
+│       └── 05_Headless_Game_Engine_FRD.md               # Master FRD v1.0 (Headless Kernel, Determinism & Stack)
 ├── data/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
@@ -51,7 +52,7 @@ animus-mundi/
         └── publish_audit.ps1              # Card standardization audit Google Drive publisher
 ```
 
-### 2.1 The Four Master FRDs (Core Architectural Pillars)
+### 2.1 The Five Master FRDs (Core Architectural Pillars)
 
 1. **[Master Game Rules & Card Modeling FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/01_Game_Rules_and_Card_Modeling_FRD.md) (Master FRD v3.0)**
    - **Three-Tier Entity Taxonomy**: Formal separation between immutable blueprint definitions (`CardBlueprint`), session-level instances (`CardInstance`), and battlefield objects (`AssetInstance`).
@@ -83,6 +84,15 @@ animus-mundi/
    - **Fog-of-War Security Boundary (`FR-SEC-001` - `FR-SEC-005`, `FR-ZON-005`)**: Strict server-side event masking preventing hidden data leaks (opponent hands, deck order, face-down cards).
    - **Full Command & Event Taxonomy**: Protobuf schemas for 15 core engine events, match commands, choice prompts (`ChoicePrompt`), and public state hash masks (`FR-PAC-004`) for instantaneous desync detection.
    - **Resilience & Replay**: 1,000 ms heartbeat, 3,000 ms disconnect detection, 75-second turn clock (`FR-TRN-001`), 60-second Reserve Time Bank (`FR-SES-005`), 3,000 ms prompt animation buffer (`FR-PAC-001`), and deterministic `.rec` replay formats (`FR-SPC-002`).
+
+5. **[Headless Game Engine FRD](file:///c:/Users/blade/animus-mundi/animus-mundi/docs/frd/05_Headless_Game_Engine_FRD.md) (Master FRD v1.0)**
+   - **Standalone Go Kernel (`FR-ENG-001` - `FR-ENG-005`)**: Pure Go (Golang) headless engine with multi-stream PCG32/SplitMix64 PRNG, pure discrete integer math, and rolling 64-bit state checksums (`FR-PAC-004`).
+   - **Transactional Event-Emitting State Model (`FR-ENG-006` - `FR-ENG-011`)**: In-place mutable state wrapped in explicit transaction boundaries with delta-memento rollback and buffered event emission.
+   - **LIFO Stack Runner & APNAP Dispatcher (`FR-ENG-012` - `FR-ENG-017`)**: LIFO resolution stack, atomic cost deduction, APNAP simultaneous trigger ordering, and reactive replacement watchers.
+   - **Declarative Ability AST Interpreter (`FR-ENG-018` - `FR-ENG-024`)**: Type-switch AST evaluator resolving polymorphic `AbilityDef` nodes and executing the 14 atomic primitives (`FR-PRM-001`).
+   - **Continuous 6-Layer Attribute Pipeline (`FR-ENG-025` - `FR-ENG-029`)**: Dirty-flag cached evaluation order with timestamp precedence, non-negative clamping, and round-duration cleanup.
+   - **3-Step Combat & Retaliation Engine (`FR-ENG-030` - `FR-ENG-035`)**: Spatial Main Theater attacks, simultaneous damage and retaliation (`FR-CBT-002`), canonical damage absorption (Armor $\rightarrow$ Stalwart $\rightarrow$ Resistant), and batched death checks.
+   - **Headless Test Harness & Simulation Suite (`FR-ENG-036` - `FR-ENG-040`)**: Standalone CLI runner (`engine-sim`), scripted YAML/JSON scenarios, deterministic `.rec` replay verification (`FR-SPC-002`), and combinatorial fuzzing.
 
 ### 2.2 Balance Datasets & Card Standardization
 - **10 Clean RFC-4180 CSV Balance Sheets** in `data/cards/` covering 4 distinct factions (Animus, Concordia, Path, Soulless), Neutral/Common units, and Headquarters.
@@ -266,7 +276,7 @@ In alignment with the requirement prefix taxonomy reserved in `.agents/skills/pm
 
 | Roadmap Phase | Target Specification Document | Domain Prefix | Primary Scope | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Phase 3** | `05_Headless_Game_Engine_FRD.md` | `FR-ENG-` | Authoritative game loop, deterministic RNG seeding, stack runner, and headless test harnesses | Planned |
+| **Phase 3** | `05_Headless_Game_Engine_FRD.md` | `FR-ENG-` | Authoritative game loop, deterministic RNG seeding, stack runner, and headless test harnesses | Codified (v1.0) |
 | **Phase 4** | `06_Server_Daemon_Matchmaking_FRD.md` | `FR-SRV-` | Dedicated server process, GCP Agones container lifecycle, matchmaker orchestration, and JWT auth | Planned |
 | **Phase 5** | `07_Godot_Client_Architecture_FRD.md` | `FR-CLN-` | Godot 4.x scene graph, presentation layer, prediction caches, input dispatchers, and audio/VFX | Planned |
 | **Phase 6** | `08_Deckbuilder_and_Card_Studio_FRD.md` | `FR-DCK-` | In-game visual deckbuilder, export codes, and standalone Card Portfolio Designer Studio | Planned |
