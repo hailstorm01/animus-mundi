@@ -1,4 +1,4 @@
-﻿# Audit Registry
+# Audit Registry
 
 This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
@@ -6,6 +6,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 
 | Date Generated | Commit Hash | Source Audit File | Target Document | Status | Resolution Date | Resolution Commit | Source of Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-10-15 | `c753018` | [2026-10-15-05_Headless_Game_Engine_FRD.md](pending/2026-10-15-05_Headless_Game_Engine_FRD.md) | `docs/frd/05_Headless_Game_Engine_FRD.md` | PENDING | - | - | - |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Card_Compiler_FRD.md` | `docs/frd/Card_Compiler_FRD.md` | RESOLVED | 2026-10-14 19:58:25 | `d970e02` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Card_Data_Pipeline_FRD.md` | `docs/frd/Card_Data_Pipeline_FRD.md` | RESOLVED | 2026-10-14 20:10:31 | `36bdfc9` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-14 | `cee3bf2` | `2026-10-14-Client_Engine_Protocol_Networking_FRD.md` | `docs/frd/Client_Engine_Protocol_Networking_FRD.md` | RESOLVED | 2026-10-14 20:16:07 | `233a90c` | Agentic (pm-audit-reviewer + game-designer) |
