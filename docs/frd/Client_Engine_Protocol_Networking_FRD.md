@@ -1,4 +1,4 @@
-# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.1)
+# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.2)
 **Master Network Topology, Message Taxonomy, Fog-of-War & Wire Protocol Specification**
 
 ---
@@ -7,14 +7,14 @@
 
 This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Master Game Rules & Card Modeling FRD (v3.0 - `Game_Rules_and_Card_Modeling_FRD.md`)**.
 
-### Revision Summary (v1.0 -> v1.1):
-1. **Client Command Completion**: Added missing match orchestration commands (`MatchJoinCommand`, `FirstPlayerChoiceCommand`, `MulliganCommitCommand`) to `ClientCommand` (`FR-MSG-002`).
-2. **Event Stream Expansion & Complete Schemas**: Expanded `EngineEvent` to include full Protobuf schemas for all 15 core engine events (`CardDrawnEvent`, `CombatResolvedEvent`, `AssetDeployedEvent`, `ControlChangedEvent`, etc.; `FR-MSG-004`).
-3. **Heartbeat & Grace Window De-racing**: Tuned heartbeat cadence to 1,000 ms and disconnect threshold to 3,000 ms (`FR-NET-004`); configured prompt action clock (15s) with retrospective compensation based on last-received packet timestamp during Disconnect Grace Window (`FR-SES-005`).
-4. **Target Roles & Cost Serialization**: Enriched `TargetBinding` with `TARGET_ROLE_SACRIFICE_COST` and `TARGET_ROLE_DISCARD_COST`; added `source_zone` to `DeployCardCommand` (`FR-MSG-003`).
-5. **State Hash Mask Synchronization**: Explicitly mandated that public checksum hashing consumes effective Layer 6 values to eliminate Scratch false desyncs (`FR-PAC-004`).
-6. **Deck Legality & Cross-Spec Alignment**: Formally enforced starting deck prohibition for `neutral_scratch_company` (`FR-SES-002`); aligned sequential `FR-SET-00X` and `FR-REP-004` references. Strict version matching enforced on handshake (`FR-SES-001`).
-7. **Inherent Action Wire Schemas & Resource Choice**: Defined explicit Protobuf schemas for `GenerateResourceCommand`, `MarchCommand`, `AttackCommand` (supporting Berserk multi-target attacks), `DeployScratchCommand`, and `ConvertResourceCommand` (`FR-MSG-003`). Added `ChoiceResponse` schema with bottom-deck ordering (`FR-MSG-005`).
+### Revision Summary (v1.1 -> v1.2):
+1. **Opponent-Turn Forfeiture Protection**: Eliminated erroneous 60s forfeiture timers during opponent turns; disconnection counters draw down strictly when the offline player holds active priority or an unanswered prompt (`FR-SES-005`, `DA-NET-001`).
+2. **State Snapshot Flood Protection**: Imposed authoritative rate-limiting of 1 `FullStateSnapshot` per 3,000 ms with backoff after 3 consecutive failures to neutralize DOS packet storms (`FR-SES-005`, `FR-PAC-004`, `DA-NET-002`).
+3. **Wire Command Boundary Clamping**: Mandated range validation for `tactics_requested` [1..50] and clamped `AttackCommand.target_asset_ids` to 1 (or 2 for Berserk), rejecting violations with `ERR_INVALID_COMMAND_ARGUMENTS` (`FR-MSG-003`, `FR-ERR-001`, `DA-NET-003`).
+4. **Choice Prompt Animation Buffering**: Added an automatic 3,000 ms grace window on interactive `PlayerChoicePrompt` issuances before the 10s decision clock initiates, preventing cascading animation truncation (`FR-PAC-001`, `DA-NET-004`).
+5. **Guardian Priority Wire Error Code**: Introduced explicit `ERR_GUARDIAN_PRIORITY_VIOLATION` to `FR-ERR-001`, enabling client UI to flash the mandatory Guardian target asset (`DA-NET-005`).
+6. **Replay Anti-Scouting Quarantine**: Quarantined unmasked `.rec` replay telemetry on the server until match-set (e.g. Best-of-3) conclusion, preventing opponent deck scouting during tournament sets (`FR-SPC-002`, `DA-NET-006`).
+7. **Redundancy Cleanup**: Folded `FR-MSG-002` into unified `FR-MSG-003` schema specification.
 
 ---
 
@@ -109,15 +109,18 @@ This document defines the network architecture, communication transport, client-
 #### FR-SES-005: Disconnection Handling, Unified Reserve Time Bank & State Rehydration
 - In compliance with **FR-MOD-001** and **FR-NET-004**:
   - **Unified Reserve Time Bank**: Rather than pausing clocks or maintaining an opaque disconnect mode, the server allocates each player a cumulative **60,000 ms (60-second) Reserve Time Bank** (`timeBankMs`) per match.
-  - **Authoritative Continuous Timer Progression**: Neither the 75-second Main Phase Turn Clock (`FR-TRN-001`) nor the 15-second choice prompt clocks (`FR-MSG-005`) pause when a player disconnects or encounters network silence. 
+  - **Authoritative Continuous Timer Progression**: Neither the 75-second Main Phase Turn Clock (`FR-TRN-001`) nor the choice prompt clocks (`FR-MSG-005`) pause when a player disconnects or encounters network silence.
+  - **No Opponent-Turn Disconnection Forfeiture (DA-NET-001)**:
+    - A disconnected player **never** forfeits while their opponent has priority and they face no pending interactive prompts. The server does not run an offline forfeiture countdown during opponent turns.
+    - If a player is offline when their own turn begins, their 75-second Main Phase Turn Clock runs normally. Upon expiration, their remaining Reserve Time Bank (`timeBankMs`) drains millisecond-for-millisecond. Match forfeiture (`FORFEIT_TIMEOUT`) occurs strictly if their own turn clock AND full reserve time bank are completely exhausted to 0 without reconnection.
+    - If an offline player is presented with a `PlayerChoicePrompt` during an opponent's turn, the prompt action clock (including the 3,000 ms animation buffer; `FR-PAC-001`) runs first, followed by Reserve Time Bank depletion. If `timeBankMs` hits 0 before a response is received, the server commits the deterministic fallback immediately (`FR-MOD-001`), and the match continues without declaring forfeiture.
   - **Reserve Bank Depletion & Deterministic Fallbacks**:
     - When any active turn clock or choice prompt expires (whether the player is connected or offline):
       - If the player's `timeBankMs > 0`, the match timer transitions into Reserve Time, drawing down `timeBankMs` millisecond-for-millisecond while displaying an active rope/fuse burning effect to both clients.
       - If `timeBankMs == 0` (or burns to 0):
         - For an active `PlayerChoicePrompt`: The server commits the deterministic fallback immediately (`FR-MOD-001`) and execution advances without stalling.
         - For the Main Phase Turn Clock: The server commits an automated `AutoEndTurnCommand`, immediately handing turn priority to the opponent.
-    - If a disconnected player remains offline with `timeBankMs == 0` and is not currently facing an active prompt or turn, a 60-second connection timeout countdown initiates. If the player fails to reconnect before this timeout expires, the server declares match forfeiture (`FORFEIT_TIMEOUT`).
-  - **State Rehydration on Reconnect**:
+  - **State Rehydration & Snapshot Rate-Limiting (DA-NET-002)**:
     - If the disconnected player reconnects:
       1. The client sends `ReconnectRequest` with the active `matchAuthToken`.
       2. The server responds with a complete `FullStateSnapshot` containing:
@@ -130,6 +133,12 @@ This document defines the network architecture, communication transport, client-
          - Active stack items and pending prompts (with remaining deadline).
          - Last processed `sequenceId`.
       3. The client renders the state instantaneously, clears its animation queue, and synchronizes its local timer displays with the server deadlines.
+    - **Snapshot Throttling**: The server authoritatively enforces a rate limit of at most 1 `FullStateSnapshot` per 3,000 ms per client. If a client triggers 3 consecutive desync mismatches within 15 seconds, automated requests are suppressed and the client is placed in a throttled recovery state with a user-facing re-synchronization prompt, mitigating snapshot request storm denial-of-service risks (`DA-NET-002`, `FR-PAC-004`).
+
+> [!NOTE]
+> **Design Rationale (DA-NET-001 & DA-NET-002)**:
+> - **DA-NET-001**: Eliminates erroneous forfeitures while an opponent is thinking on their turn. Disconnection timers only drain when the offline player has active priority or an unanswered prompt.
+> - **DA-NET-002**: Throttles state snapshots to 1 per 3,000 ms with backoff after 3 consecutive failures, eliminating potential denial-of-service flooding from desynced clients.
 
 ---
 
@@ -263,7 +272,8 @@ message GameEnvelope {
 ### Section 4.2: Client Command Taxonomy (Client -> Server)
 
 #### FR-MSG-002: Client Commands
-Clients issue explicit commands corresponding directly to Engine FRD actions:
+*(Subsumed by FR-MSG-003)*
+The top-level `ClientCommand` message wrapper encapsulates client intent and is unified directly with the concrete action schemas specified in **FR-MSG-003**:
 
 ```protobuf
 message ClientCommand {
@@ -351,7 +361,8 @@ message MarchCommand {
 
 message AttackCommand {
   string attacker_asset_id = 1;
-  // Standard attack targets 1 asset or HQ; Berserk units (FR-KWD-002o) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002)
+  // Standard attack targets strictly 1 asset or HQ; Berserk units (FR-KWD-002o) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002).
+  // Clamped to max 1 (or max 2 for Berserk); excess targets rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
   repeated string target_asset_ids = 2; 
 }
 
@@ -360,7 +371,10 @@ message DeployScratchCommand {
 }
 
 message ConvertResourceCommand {
-  int32 tactics_requested = 1; // Number of Tactics desired; server deterministically deducts (tactics_requested * 2) Requisition (FR-RES-003)
+  // Number of Tactics desired; strictly validated to range 1 <= tactics_requested <= 50.
+  // Non-positive integers (<= 0) or values > 50 reject with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
+  // Server deterministically deducts (tactics_requested * 2) Requisition (FR-RES-003).
+  int32 tactics_requested = 1; 
 }
 
 // ============================================================================
@@ -620,6 +634,13 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - Upon broadcasting a `PhaseTransitionEvent` entering a player's Main Phase (`FR-TRN-001`), the server grants an authoritative **5,000 ms Animation Grace Window** before the 75-second Main Phase Turn Clock countdown begins (`turnClockDeadlineEpochMs = currentServerTimeMs() + 5000 + 75000`).
   - If the active player submits any valid command during this 5,000 ms window, the grace period ends immediately and standard turn execution begins without delay.
   - This bounded server-side buffer ensures incoming players are never deprived of playable turn time by complex prior-turn animation cascades ("turn theft"), while preventing malicious clients from withholding completion ACKs.
+- **Interactive Choice Prompt Animation Buffer (DA-NET-004)**:
+  - When issuing any `PlayerChoicePrompt` (`FR-MSG-005`), the server grants an automatic **3,000 ms Animation Buffer** before the 10-second action clock begins ticking down (`deadlineEpochMs = currentServerTimeMs() + 3000 + 10000`).
+  - If the client submits a valid `ChoiceResponse` during this buffer, it is processed immediately.
+  - This bounded buffer prevents cascading animations from prior actions (such as combat resolutions or complex maneuver board wipes) from truncating the inactive player's decision window.
+
+> [!NOTE]
+> **Design Rationale (DA-NET-004)**: The 3,000 ms prompt animation buffer guarantees that players always receive the full intended 10 seconds of decision time, even after extensive visual death and combat animations.
 
 #### FR-PAC-002: Animation Fast-Forwarding on Inbound Prompts & Phase Transitions
 - If an interactive `PlayerChoicePrompt` arrives, or if a `PhaseTransitionEvent` entering the player's Main Phase is received while the client's `AnimationEventQueue` has pending background visual items:
@@ -676,8 +697,9 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - *Secret card identities in hands, decks, and face-down Scratch proxies are strictly excluded from the hash.*
 - **Effective Layer 6 Attribute Rule**: To eliminate desync vulnerabilities with masked entities, the state hasher calculates asset Health and Combat Power strictly using post-mask effective values from Layer 6 of the Attribute Pipeline (`FR-LAY-001`, `FR-ENT-101`), guaranteeing 100% hash parity with client-visible proxy states.
 - **Per-Batch Emission**: The hash is transmitted via `ServerEventStream.state_hash` (`FR-MSG-004`).
-- **Immediate Single-Frame Recovery**: The Godot client computes the identical hash across its mirrored public state cache upon draining each event stream batch:
-  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and automatically requests a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
+- **Immediate Single-Frame Recovery & Rate-Limiting**: The Godot client computes the identical hash across its mirrored public state cache upon draining each event stream batch:
+  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and requests a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
+  - **Snapshot Flood Protection**: In accordance with `FR-SES-005` (DA-NET-002), snapshot requests are authoritatively throttled to at most 1 per 3,000 ms, with automated backoff after 3 consecutive failures to eliminate denial-of-service packet storms.
 
 ---
 
@@ -697,6 +719,12 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 - **Client Playback**: The Godot client's Replay Viewer reads the `.rec` file, offering analytical toggles:
   - *Fog-of-War Mode*: Simulates what Player 1 or Player 2 saw in real time.
   - *Omniscient Mode*: Unmasks all face-down Scratch Companies, tucked sub-cards, and hand contents for tournament broadcasting, coaching, and balance analysis.
+- **Replay Distribution & Anti-Scouting Quarantine (DA-NET-006)**:
+  - Unmasked `.rec` replay files are strictly quarantined on the authoritative game server until the entire match-set (e.g. Best-of-3 or Best-of-5 tournament series) concludes.
+  - Clients and external API consumers cannot access unmasked replay telemetry between individual games of an active series, eliminating competitive deck scouting and information leaks prior to series completion.
+
+> [!NOTE]
+> **Design Rationale (DA-NET-006)**: Quarantining unmasked match replays until tournament series conclusion ensures competitive integrity while preserving rich omniscient replay analytics post-match.
 
 ---
 
@@ -718,10 +746,17 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - `ERR_STACK_NOT_EMPTY`: Manual action declared while resolution stack is active (`FR-QUE-001`).
   - `ERR_INSUFFICIENT_RESOURCES`: Requisition/Tactics pool unable to pay cost (`FR-RES-001`).
   - `ERR_INVALID_TARGET`: Target failed conjunction filter or is protected by Ward/Ethereal (`FR-TGT-001`, `FR-KWD-002g`, `FR-KWD-002h`).
+  - `ERR_GUARDIAN_PRIORITY_VIOLATION`: Attack declaration illegally bypassed an eligible enemy Guardian asset in Main Theater (`FR-CBT-001`, `FR-KWD-002j`, `DA-NET-005`). Allows the Godot client UI to flash the mandatory Guardian target and guide the player.
+  - `ERR_INVALID_COMMAND_ARGUMENTS`: Command parameters out of bounds or malformed (e.g. non-positive tactics conversion value, invalid target count; `FR-MSG-003`, `DA-NET-003`).
   - `ERR_ASSET_EXHAUSTED`: Attempted action requiring Readied state (`FR-INH-001`).
   - `ERR_INVALID_RESOURCE_CHOICE`: Attempted resource generation invalid for current zone/keywords (e.g. non-Versatile unit generating Tactics in Reserves, or selecting an unsupported resource type; `FR-INH-002`, `FR-KWD-002i`).
   - `ERR_ACTION_CLOCK_EXPIRED`: Choice response received past deadline (`FR-TRG-002`).
 - Upon receiving a rejection, the Godot client rolls back any local optimistic drag-and-drop animation and plays an invalid-action audio cue.
+
+> [!NOTE]
+> **Design Rationale (DA-NET-003 & DA-NET-005)**:
+> - **DA-NET-003**: `ERR_INVALID_COMMAND_ARGUMENTS` guarantees wire-level protection against malformed or negative payload attacks.
+> - **DA-NET-005**: Distinct `ERR_GUARDIAN_PRIORITY_VIOLATION` empowers client UI to give direct tactical feedback pointing to the blocking Guardian rather than a generic targeting failure.
 
 ---
 
