@@ -1,5 +1,5 @@
 "Name","Card Type","Faction","Types","Requisition Cost","Tactics Cost","Deployment Zones","Text","Power","Health","Requisition Value","Tactics Value","Rarity","Current Proxy?","Needs Rework?"
-"Dumb Thing","UNIT","CONCORDIA","Tempest, Cavalry","1","1","RESERVES","Aggressive 1","2","1","1","1","UNCOMMON","No","No"
+"Hurricane Outrigger","UNIT","CONCORDIA","Cavalry, Tempest","2","0","RESERVES","When this unit deploys, your Headquarters gets +1 power until the end of your turn.","2","1","1","1","UNCOMMON","No","No"
 "Flickering Ember","UNIT","CONCORDIA","Elemental","1","0","RESERVES","T4: Allied assets in the same zone get +1 power until end of turn.","2","1","1","2","COMMON","No","No"
 "Foundry Artisan","UNIT","CONCORDIA","Forge, Construct","1","0","RESERVES","Stalwart","1","2","1","2","COMMON","Yes","No"
 "Grove Tender","UNIT","CONCORDIA","Mage, Mending","1","0","RESERVES","Deploys Exhausted","0","1","2","0","COMMON","Yes","No"
