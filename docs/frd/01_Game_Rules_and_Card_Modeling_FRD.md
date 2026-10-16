@@ -220,6 +220,7 @@ Every `CardBlueprint` validates against the following property schema:
 
 #### FR-RES-001: Resource Accumulation & Pool Isolation
 - Generated resources accumulate in the active player's temporary Requisition and Tactics pools during the Main Phase.
+- **Instantaneous Economic Execution**: Inherent resource generation (`canGenerateResources()`, `FR-CAP-001`) executes **instantaneously as a direct economic state operation** bypassing the Resolution Stack and does **not** require `Stack.isEmpty() == true` (permitting resource generation while stack frames are pending when an active choice or future out-of-sequence action window allows cost payment).
 - **Upfront Resource Requirement**: Players must explicitly generate resources into their pools prior to declaring card plays or ability activations. The engine **will not** auto-exhaust assets during cost payment.
 
 #### FR-RES-002: End-of-Turn Resource Reset
@@ -227,7 +228,7 @@ Every `CardBlueprint` validates against the following property schema:
 
 #### FR-RES-003: Requisition to Tactics Conversion
 - During the Main Phase, spending 2 Requisition adds 1 Tactics to the pool (unidirectional exchange).
-- **Execution Model**: Conversion executes **instantaneously as an economic state operation** bypassing the Resolution Stack. May be performed at any time during the Main Phase while `Stack.isEmpty() == true`. Emits `EVENT_CONVERT_REQUISITION`.
+- **Execution Model**: Conversion executes **instantaneously as an economic state operation** bypassing the Resolution Stack and does **not** require `Stack.isEmpty() == true`. Emits `EVENT_CONVERT_REQUISITION`.
 
 ---
 
@@ -260,14 +261,14 @@ Effective Cost = max(0, Base Cost + Sum(Instance Modifiers) + Sum(Aura Modifiers
 Resource costs clamp at zero. Free cast effects force resource costs to 0 while requiring non-resource costs to be satisfied.
 
 #### FR-CAP-001: Unified Asset Capability Query Matrix
-Inherent actions execute directly as instantaneous state operations bypassing the Resolution Stack, requiring `readiness == READIED` and `Stack.isEmpty() == true`:
-- **`canMarch()`**: Permitted strictly for `UNIT`. Moves the unit between Reserves and Main Theater. Executing March transitions the unit's readiness state from `READIED` to `EXHAUSTED` (emitting `EVENT_EXHAUST` and `EVENT_MARCH`). The unit remains exhausted until the Ready Phase of its controller's next turn. *(Sequence note: For units like Piston Fist Prototype that move back to Reserves upon attacking, they remain exhausted until readied on a subsequent turn, after which marching back to the Main Theater again arrives exhausted).*
-- **`canAttack()`**: Permitted for `UNIT` in Main Theater and `HEADQUARTERS`. Prohibited for `STRUCTURE`. Exhausts the attacker upon declaration (`FR-CBT-002`). Units/HQs with effective Power <= 0 are permitted to declare attacks (dealing 0 damage). Direct cross-board attacks against opposing HQs are permitted from Turn 1.
-- **`canGenerateResources()` & `getAvailableResourceTypes()`**:
-  - *Standard Units*: Reserves &rarr; `["REQUISITION"]`; Main Theater &rarr; `["TACTICS"]`. Exhausts unit upon generation.
-  - *Versatile Units (`FR-KWD-002i`)*: Reserves or Main Theater &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts unit upon generation.
-  - *Structures & Headquarters*: Any zone &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts asset upon generation.
-- **`canDeployScratch()`**: Permitted strictly for `HEADQUARTERS`. Exhausts HQ to execute Scratch 1 (`FR-INH-004`).
+All inherent asset capabilities require the source asset to have `readiness == READIED` and transition that asset to `EXHAUSTED` upfront as an activation cost (`costType: "EXHAUST_SELF"`, emitting `EVENT_EXHAUST`). Capabilities divide into **Stack-Pushed Tactical Actions** (requiring `Stack.isEmpty() == true`) and **Instantaneous Economic Operations** (bypassing the stack without a clean-stack requirement):
+- **`canMarch()` (Stack-Pushed Tactical Action)**: Permitted strictly for `UNIT` while `Stack.isEmpty() == true`. Exhausts the unit upfront upon declaration (`EVENT_EXHAUST`) and pushes a March frame onto the Resolution Stack. When the frame resolves, moves the unit between Reserves and Main Theater (`EVENT_MARCH`, `EVENT_ZONE_CHANGE`). The unit remains exhausted until the Ready Phase of its controller's next turn. *(Sequence note: For units like Piston Fist Prototype that move back to Reserves upon attacking, they remain exhausted until readied on a subsequent turn, after which marching back to the Main Theater again exhausts them as the March cost).*
+- **`canAttack()` (Stack-Pushed Tactical Action)**: Permitted for `UNIT` in Main Theater and `HEADQUARTERS` while `Stack.isEmpty() == true`. Prohibited for `STRUCTURE`. Exhausts the attacker upfront upon declaration (`EVENT_EXHAUST`, `EVENT_ATTACK_DECLARE`) and pushes an Attack frame (`FRAME_ATTACK`) onto the Resolution Stack (`FR-CBT-002`). Units/HQs with effective Power <= 0 are permitted to declare attacks (dealing 0 damage). Direct cross-board attacks against opposing HQs are permitted from Turn 1.
+- **`canDeployScratch()` (Stack-Pushed Tactical Action)**: Permitted strictly for `HEADQUARTERS` while `Stack.isEmpty() == true`. Exhausts the HQ upfront upon declaration (`EVENT_EXHAUST`) and pushes a Scratch frame onto the Resolution Stack to execute `Scratch 1` upon resolution (`FR-INH-004`).
+- **`canGenerateResources()` & `getAvailableResourceTypes()` (Instantaneous Economic Operation)**: Bypasses the Resolution Stack and does not require `Stack.isEmpty() == true`:
+  - *Standard Units*: Reserves &rarr; `["REQUISITION"]`; Main Theater &rarr; `["TACTICS"]`. Exhausts unit immediately upon generation.
+  - *Versatile Units (`FR-KWD-002i`)*: Reserves or Main Theater &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts unit immediately upon generation.
+  - *Structures & Headquarters*: Any zone &rarr; `["REQUISITION", "TACTICS"]` (controller chooses). Exhausts asset immediately upon generation.
 
 > [!NOTE] Design Rationale (DA-RULES-001)
 > Permitting Headquarters to attack is intentional and fully integrated into the game's resource economy. Attacking with a Headquarters requires `readiness == READIED` and immediately transitions the HQ to `EXHAUSTED` (`FR-INH-001`, `FR-CAP-001`). Because an exhausted HQ cannot execute `canGenerateResources()` or `canDeployScratch()`, spending early turns attacking with an HQ starves the player of basic resource generation, freezing their board development entirely. The opposing player is free to generate resources, deploy battlefield units, establish structures, and overwhelm the attacker. Resource development and combat declarations share the identical readiness economy; assuming a player can race with HQ attacks without suffering catastrophic board loss is fundamentally flawed.
@@ -279,8 +280,10 @@ Inherent actions execute directly as instantaneous state operations bypassing th
 ### Section 4.1: Inherent Actions
 
 #### FR-INH-001 through FR-INH-004: Inherent Actions
-- **Inherent Action Rules**: Execute instantaneously as direct state operations upon payment/exhaustion without placing items on the stack. Require clean stack (`Stack.isEmpty() == true`). March, Attack, Resource Generation, and Scratch deployments all require the source asset to be `READIED` and transition that asset to `EXHAUSTED`. Emit synchronous event hooks (`EVENT_MARCH`, `EVENT_ATTACK_DECLARE`, `EVENT_GENERATE_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SCRATCH_COMPANY`, `EVENT_EXHAUST`).
-- **Deploy Scratch Company (`FR-INH-004`)**: Direct deck-to-battlefield move (`DECK` &rarr; `RESERVES`). Double-blind to both players. Does not emit `EVENT_DRAW_CARD`. Safe on 0-card deck (creates 0 units without triggering empty deck loss).
+- **Inherent Action Cost & Execution Split (`FR-INH-001`)**: All inherent actions (March, Attack, Deploy Scratch Company, and Resource Generation) require the source asset to be `READIED` and transition that asset to `EXHAUSTED` upfront as their activation cost (`EVENT_EXHAUST`):
+  - **Tactical Inherent Actions (`March` [`FR-INH-002`], `Attack` [`FR-INH-002`, `FR-CBT-002`], `Deploy Scratch Company` [`FR-INH-004`])**: Require `Stack.isEmpty() == true` to declare and push an execution frame onto the Resolution Stack (`FR-QUE-001`). Reactive triggers responding to the upfront cost/declaration events (`EVENT_EXHAUST`, `EVENT_ATTACK_DECLARE`) enqueue on top of the action frame via APNAP (`FR-TRG-003`) and resolve prior to the action frame popping (`EVENT_MARCH`, `EVENT_ATTACK_RESOLVED`, `EVENT_SCRATCH_COMPANY`).
+  - **Economic Inherent Operations (`Generate Resources` [`FR-INH-002`, `FR-INH-003`, `FR-RES-001`] and `Convert Requisition` [`FR-RES-003`])**: Execute instantaneously as direct state operations bypassing the Resolution Stack (`FR-QUE-001`) and do **not** require `Stack.isEmpty() == true`. Emit synchronous resource hooks (`EVENT_GENERATE_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_CONVERT_REQUISITION`).
+- **Deploy Scratch Company (`FR-INH-004`)**: Pushes a Scratch action frame onto the stack upon exhausting the HQ; when the frame resolves, executes a direct deck-to-battlefield move (`DECK` &rarr; `RESERVES`). Double-blind to both players. Does not emit `EVENT_DRAW_CARD`. Safe on 0-card deck (creates 0 units without triggering empty deck loss).
 
 ---
 
@@ -387,8 +390,10 @@ Standardized event hooks across core categories:
 - **Phase & Turn Lifecycle**: `EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`, `EVENT_TURN_START`, `EVENT_TURN_END`
 
 #### FR-QUE-001: Centralized LIFO Stack & Clean Stack Invariant
-- **Clean Stack Rule**: Player-initiated manual actions (Deploying cards, Enacting Maneuvers, Activating abilities) require `Stack.isEmpty() == true` to declare.
-- **Triggered Exception**: Triggered abilities, in-resolution free deployments, and cascading triggers bypass the clean stack requirement and push/resolve directly on the active stack.
+- **Clean Stack Rule**: All non-resource manual player actions—Deploying Asset Cards (`FR-TRN-003`), Enacting Maneuvers (`FR-MNV-001`), Activating Custom Abilities (`FR-ACT-001`), and Tactical Inherent Actions (`March`, `Attack`, and `Deploy Scratch Company`; `FR-INH-001`)—push an execution frame onto the LIFO Resolution Stack and require `Stack.isEmpty() == true` to declare.
+- **Stack-Exempt Exceptions**:
+  1. **Economic Resource Operations (`FR-RES-001`, `FR-RES-003`)**: Inherent resource generation and Requisition-to-Tactics conversion execute instantaneously off-stack and do **not** require `Stack.isEmpty() == true`.
+  2. **Triggered & In-Resolution Effects**: Triggered abilities (`FR-TRG-001`), cascading triggers (`FR-TRG-004`), in-resolution free deployments (`FR-TRN-003a`), and inline replacement watchers (`FR-REP-001`) execute without a clean-stack constraint.
 
 #### FR-TRG-002: Inactive Player Agency & Streamlined Action Clocks
 - When stack resolution requires interactive choices from the active player (15s clock) or inactive player (streamlined 10s clock; `FR-MOD-001`), the engine issues a choice prompt. If exactly one legal option exists, the engine fast-paths auto-selection without issuing a prompt. Prompts resolve deterministically via fallbacks if the timer expires.
@@ -502,23 +507,21 @@ Incoming Damage Instance
 ### Section 7.2: Formalized 3-Step Combat Lifecycle
 
 #### FR-CBT-002: Combat Resolution Sequence & Symmetric Retaliation
-Combat execution proceeds through three deterministic steps:
+Combat executes natively on the LIFO Resolution Stack (`FR-QUE-001`, `FR-INH-001`) across three deterministic steps:
 
-1. **Step 1 (Declaration & Exhaustion)**:
-   - Attacker exhausts and designates a single valid target (`target`).
-   - Synchronous `EVENT_ATTACK_DECLARE` emits.
-2. **Step 2 (Reaction & Trigger Window & Action Lock)**:
-   - All `EVENT_ATTACK_DECLARE` triggers enqueue onto the Resolution Stack (e.g. *blind defile*, *Aggressive N*, *Arkha, Sun's Fury*).
-   - The stack auto-resolves completely.
-   - **Combat Action Lock Invariant**: Declaration of an attack initiates an atomic, uninterruptible combat transaction. Manual player action declarations (deploying cards, enacting maneuvers, activating abilities) are strictly locked out for both players; once all Step 2 triggers resolve, the match advances immediately to Step 3 damage resolution without an intervening player priority window.
-   - If an off-turn trigger destroys or removes the attacker (e.g. *blind defile*) or defender prior to Step 3, combat immediately terminates for that entity with zero damage dealt.
-3. **Step 3 (Simultaneous Combat Damage Resolution & Retaliation)**:
-   - If both combatants remain valid, combat damage is dealt **simultaneously** equal to effective Combat Power.
+1. **Step 1 (Declaration, Upfront Exhaustion & Stack Push)**:
+   - Requiring `Stack.isEmpty() == true`, the attacking asset pays its upfront `EXHAUST_SELF` cost (transitioning from `READIED` to `EXHAUSTED`, emitting `EVENT_EXHAUST`), designates a single valid target (`target`), pushes a root `FRAME_ATTACK` onto the Resolution Stack, and synchronously emits `EVENT_ATTACK_DECLARE`.
+2. **Step 2 (Reaction & Trigger Window on Stack)**:
+   - All `EVENT_EXHAUST` and `EVENT_ATTACK_DECLARE` triggers enqueue onto the Resolution Stack **on top of `FRAME_ATTACK`** via APNAP (e.g. *blind defile*, *Aggressive N*, *Arkha, Sun's Fury*; `FR-TRG-003`).
+   - Because `FRAME_ATTACK` occupies the bottom of the stack, all manual non-resource player action declarations are locked out by the Clean Stack Rule (`FR-QUE-001`). The stack auto-resolves top-down through all triggers above `FRAME_ATTACK` until `FRAME_ATTACK` reaches the top of the stack.
+3. **Step 3 (`FRAME_ATTACK` Resolution: Simultaneous Combat Damage & Retaliation)**:
+   - **Combatant Survival & Zone Legality Check**: When `FRAME_ATTACK` pops from the stack, if either the attacking asset (e.g. via *blind defile*) or the target asset was destroyed, removed from the battlefield, or moved out of a legal combat zone while triggers resolved in Step 2, `FRAME_ATTACK` immediately fizzles with zero combat or retaliation damage dealt.
+   - If both combatants remain valid in legal combat zones, combat damage is dealt **simultaneously** equal to effective Combat Power.
    - Retaliation is 100% symmetric across all combat pairings (Unit vs Unit, Unit vs Structure, Unit vs HQ, HQ vs HQ).
    - Combat retaliation is combat damage (`isCombatDamage = true`); Stalwart applies.
    - Damage instances route through respective 5-stage pipelines (`FR-REP-004`).
-   - **Continuous Aura Snapshot Lock**: Continuous aura condition gates (including Cornered count checks; `FR-LAY-003`) are snapshotted and locked at the entry of Step 3; all simultaneous damage and retaliation calculations evaluate against this locked state.
-   - Following damage application, state-based destruction checks evaluate (`FR-LAY-002`, `FR-CBT-003`). If an attacking unit with `Berserk` (`FR-KWD-002o`) destroyed its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
+   - **Continuous Aura Snapshot Lock**: Continuous aura condition gates (including Cornered count checks; `FR-LAY-003`) are snapshotted and locked at the entry of Step 3 (`FRAME_ATTACK` pop); all simultaneous damage and retaliation calculations evaluate against this locked state.
+   - Following damage application, state-based destruction checks evaluate (`FR-LAY-002`, `FR-CBT-003`) and `EVENT_ATTACK_RESOLVED` emits (enqueuing post-attack triggers such as *Piston Fist Prototype*). If an attacking unit with `Berserk` (`FR-KWD-002o`) destroyed its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
 
 #### FR-CBT-003: Persistent Damage, Defeat Rules & Match Draws
 - Damage remains marked across turns. When an HQ reaches <= 0 Health, its controller loses immediately.

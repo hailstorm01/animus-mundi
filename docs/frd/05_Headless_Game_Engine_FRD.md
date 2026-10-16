@@ -24,7 +24,7 @@ The engine is engineered as a standalone, dependency-free **Go (Golang)** module
 |               v                                        v                          |
 |  +-------------------------+   +-----------------------+-----------------------+  |
 |  |  6-Layer Attribute Calc |   |            Resolution Stack                   |  |
-|  | Pipeline & Dirty Caching|   |       LIFO Frames & Trigger Queue             |  |
+|  |   Stateless On-Demand   |   |       LIFO Frames & Trigger Queue             |  |
 |  |  (Layers 1 to 6 / Clamps)   |   |        (APNAP Dispatcher / Rollback)          |  |
 |  +------------+------------+   +-----------------------+-----------------------+  |
 |               |                                        |                          |
@@ -33,7 +33,7 @@ The engine is engineered as a standalone, dependency-free **Go (Golang)** module
 |                                   v                                               |
 |  +-----------------------------------------------------------------------------+  |
 |  |                     Declarative Ability AST Interpreter                     |  |
-|  |            (Type-Switch Visitor & 14 Atomic Primitives Execution)           |  |
+|  |            (Type-Switch Visitor & 25 Atomic Primitives Execution)           |  |
 |  +--------------------------------+--------------------------------------------+  |
 |                                   |                                               |
 |                                   v                                               |
@@ -54,8 +54,8 @@ The engine is engineered as a standalone, dependency-free **Go (Golang)** module
 1. **Deterministic Engine Kernel & PRNG Subsystem (`FR-ENG-001` - `FR-ENG-005`)**: Multi-stream pseudo-random number generator, pure integer arithmetic, and rolling state hash generation.
 2. **Authoritative Match State Machine & Phase Engine (`FR-ENG-006` - `FR-ENG-011`)**: Transactional event-emitting state model, delta-rollback checkpoints, turn sub-phases, and clean-stack action constraints.
 3. **Resolution Stack & APNAP Trigger Dispatcher (`FR-ENG-012` - `FR-ENG-017`)**: LIFO stack runner, atomic cost deduction, APNAP simultaneous trigger ordering, and reactive replacement watchers.
-4. **Declarative Ability AST Interpreter & Atomic Primitives (`FR-ENG-018` - `FR-ENG-024`)**: Polymorphic AST type-switch evaluator, target filtering, condition gates, and execution contracts for the 14 atomic primitives.
-5. **6-Layer Attribute Recalculation Pipeline (`FR-ENG-025` - `FR-ENG-029`)**: Continuous evaluation engine, dirty-flag propagation, aura caching, and round-duration cleanup.
+4. **Declarative Ability AST Interpreter & Atomic Primitives (`FR-ENG-018` - `FR-ENG-024`)**: Polymorphic AST type-switch evaluator, target filtering, condition gates, and execution contracts for the 25 atomic primitives.
+5. **6-Layer Attribute Recalculation Pipeline (`FR-ENG-025` - `FR-ENG-029`)**: Stateless continuous on-demand evaluation engine and round-duration cleanup.
 6. **Combat Resolution & Retaliation Engine (`FR-ENG-030` - `FR-ENG-035`)**: 3-step combat cycle orchestration, exhaustion locks, armor absorption, Stalwart caps, and state-based death batching.
 7. **Headless Test Harness, Replay & Simulation Suite (`FR-ENG-036` - `FR-ENG-040`)**: Headless CLI runner, scripted scenario DSL, deterministic `.rec` replay validator, and combinatorial fuzz testing.
 8. **Error Taxonomy, Resilience & Diagnostics**: Structured error code catalog (`ERR_ENG_*`) and parity assertion rules.
@@ -237,12 +237,10 @@ The following foundational design decisions represent inferences drawn from prod
     - *Sub-Phase 4c (Resource Depletion & Expiration)*: Unspent Requisition and Tactics pools reset to 0 ([`FR-RES-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L225)); temporary Layer 5 modifiers expiring at end-of-turn expire ([`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L439)).
     - *Sub-Phase 4d (Turn Handover)*: Increment `TurnNumber` and toggle `ActivePlayer`. Universal uncapped hand capacity is preserved per [`FR-ZON-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L162) with zero hand-size discard checks.
 
-#### FR-ENG-010: Clean-Stack Manual Action Constraint & Inherent Actions
-- **Functional Contract**: Manual player actions (playing a maneuver card, deploying a unit/structure, declaring combat, or executing inherent actions) MUST assert that `ResolutionStack.IsEmpty() == true` per [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L110) and [`FR-INH-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L281):
-  - **Inherent March**: Enforces unit movement between Reserves and Main Theater per [`FR-INH-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L264), arriving `EXHAUSTED` (emitting `EVENT_MARCH` and `EVENT_EXHAUST`).
-  - **Inherent Resource Operations**: Enforces resource generation per [`FR-RES-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L221) and instantaneous conversion per [`FR-RES-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L228) (spending 2 Requisition adds 1 Tactics without placing items on the stack).
-- **Exceptions**: Reactive triggered abilities, in-resolution free deployments ([`FR-TRN-003a`](01_Game_Rules_and_Card_Modeling_FRD.md#L296)), and replacement watchers execute without clean-stack constraints.
-- **Violation**: If a player attempts a manual action while the stack contains pending items, the engine MUST abort the transaction with `ERR_STACK_NOT_EMPTY`.
+#### FR-ENG-010: Clean-Stack Manual Action Constraint & Inherent Action Routing
+- **Functional Contract**: The engine MUST enforce the action routing and clean-stack invariants codified in [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L392), [`FR-CAP-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L260), and [`FR-INH-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L278):
+  - **Stack-Pushed Manual Actions (`ResolutionStack.IsEmpty() == true` Required)**: Deploying asset cards (`FR-TRN-003`), enacting maneuvers (`FR-MNV-001`), activating custom abilities (`FR-ACT-001`), and declaring tactical inherent actions (`March` [`FR-INH-002`], `Attack` [`FR-CBT-002`], and `Deploy Scratch Company` [`FR-INH-004`]) push frames onto the Resolution Stack. Attempting any of these while `ResolutionStack.IsEmpty() == false` aborts the transaction with `ERR_STACK_NOT_EMPTY`.
+  - **Stack-Exempt Operations (No Clean-Stack Requirement)**: Economic resource operations—Inherent Resource Generation ([`FR-RES-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L221)) and 2R&rarr;1T Resource Conversion ([`FR-RES-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L226))—execute instantaneously off-stack without requiring `ResolutionStack.IsEmpty() == true`, alongside triggered abilities (`FR-TRG-001`), in-resolution free deployments ([`FR-TRN-003a`](01_Game_Rules_and_Card_Modeling_FRD.md#L298)), and inline replacement watchers ([`FR-REP-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L450)).
 
 #### FR-ENG-011: Turn-Clock Timeout Resolution & Auto-Pass Invariants
 - **Functional Contract**: The engine MUST track active turn duration against the 75-second turn clock ([`FR-TRN-001`](04_Client_Engine_Protocol_Networking_FRD.md#L508)) and 60-second Reserve Time Bank ([`FR-SES-005`](04_Client_Engine_Protocol_Networking_FRD.md#L100)).
@@ -273,7 +271,8 @@ The following foundational design decisions represent inferences drawn from prod
                   |        Resolution Stack (LIFO)          |
                   |  [Top: Non-Active Player Trigger]       |  <-- Pops and executes first
                   |  [Mid: Active Player Trigger]           |
-                  |  [Bot: Initiating Maneuver Card]        |
+                  |  [Bot: Root Action (Deploy / Maneuver / |
+                  |        Ability / March / Attack / HQ)]  |
                   +--------------------+--------------------+
                                        |
                                        v
@@ -294,21 +293,20 @@ The following foundational design decisions represent inferences drawn from prod
 ### Section 3.1: Stack Execution & Trigger Ordering
 
 #### FR-ENG-012: LIFO Stack Architecture & Stack Frame Taxonomy
-- **Functional Contract**: The engine MUST implement the Resolution Stack as a Last-In, First-Out (`LIFO`) data structure storing strongly-typed `StackFrame` instances.
-- **Frame Types**:
-  - `FRAME_MANEUVER`: A played maneuver spell awaiting resolution.
-  - `FRAME_TRIGGERED_ABILITY`: An ability queued in response to an in-game event.
-  - `FRAME_ACTIVATED_ABILITY`: An ability activated by paying an asset cost.
-  - `FRAME_REPLACEMENT_WATCHER`: A modifier intercepting a pending effect.
-- **Invariants**: When priority passes and all players pass sequentially, the engine pops and resolves the top stack frame.
+- **Functional Contract**: The engine MUST implement the Resolution Stack as a Last-In, First-Out (`LIFO`) data structure storing strongly-typed `StackFrame` instances conforming to [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L392):
+  - `FRAME_DEPLOYMENT`: A played Unit or Structure card awaiting battlefield instantiation in its declared zone (`RESERVES` or `MAIN_THEATER`; [`FR-TRN-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L295)).
+  - `FRAME_MANEUVER`: A played Maneuver spell awaiting effect resolution ([`FR-MNV-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L295)).
+  - `FRAME_ACTIVATED_ABILITY`: A custom activated ability ([`FR-ACT-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L291)) or tactical inherent ability (`March` [`FR-INH-002`] or `Deploy Scratch Company` [`FR-INH-004`]) queued by paying its upfront `CostDef` array.
+  - `FRAME_ATTACK`: An inherent combat attack declaration awaiting simultaneous damage and retaliation resolution ([`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509)).
+  - `FRAME_TRIGGERED_ABILITY`: A reactive ability queued in response to an emitted engine event ([`FR-TRG-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L382)).
+- **Invariants**: Once a root action and any resulting APNAP triggers are pushed, the stack auto-resolves top-down (LIFO), pausing only for synchronous choice prompts ([`FR-ENG-017`](#fr-eng-017-choice-prompt-yield--resumption-protocol)). Replacement watchers intercept prospective events inline via [`FR-ENG-016`](#fr-eng-016-reactive-replacement-watcher-interceptor-pipeline) without pushing stack frames.
 
 #### FR-ENG-013: Atomic Cost Validation, Resource Reservation & Deduction
-- **Functional Contract**: Prior to pushing an action or ability to the stack, the engine MUST atomically validate and deduct all required costs:
-  - Requisition cost ([`FR-SET-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L29)).
-  - Tactics cost ([`FR-SET-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L29)).
-  - Physical exhaustion requirement (asset must currently be unexhausted).
-  - Explicit sacrifice or discard costs ([`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md#L273)).
-- **Failure**: If any cost component cannot be paid in full, the transaction aborts with `ERR_INSUFFICIENT_RESOURCES` or `ERR_ASSET_EXHAUSTED`. Zero partial deduction permitted.
+- **Functional Contract**: Prior to executing an economic operation or pushing an action frame onto the stack, the engine MUST atomically validate and deduct all required `CostDef` components per [`FR-CST-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L255), [`FR-INH-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L278), [`FR-ACT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L291), [`FR-TRN-003a`](01_Game_Rules_and_Card_Modeling_FRD.md#L298), [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md#L297), and [`FR-ABL-009`](02_Card_Data_Pipeline_FRD.md#L335):
+  - **Resource Costs (`RESOURCE`)**: Deducts Effective Requisition and/or Tactics costs (`FR-CST-001`) from the player's active resource pools.
+  - **Conditional Physical Exhaustion (`EXHAUST_SELF`)**: Enforces `readiness == READIED` (`exhausted == false`) and immediately transitions the source asset to `EXHAUSTED` (emitting `EVENT_EXHAUST`) **if and only if** the action requires exhaustion—specifically all inherent capabilities (`FR-CAP-001`, `FR-INH-001`) and custom activated abilities whose `CostDef` array includes `costType: "EXHAUST_SELF"` (`FR-ABL-009`). Custom activated abilities without `EXHAUST_SELF` do not require the source asset to be unexhausted (`FR-ACT-002`).
+  - **Non-Resource Costs (`KILL_ASSET`, `SACRIFICE_ALLY`, `DISCARD_CARD`)**: Validates and executes required sacrifices or discards upfront upon declaration (`FR-TRN-003a`, `FR-CMP-010`).
+- **Failure**: If any cost component cannot be paid in full, the transaction aborts with `ERR_INSUFFICIENT_RESOURCES` or `ERR_ASSET_EXHAUSTED` with zero partial deduction.
 
 #### FR-ENG-014: APNAP Trigger Dispatching & Simultaneous Event Ordering
 - **Functional Contract**: When an in-game event triggers multiple abilities simultaneously, the engine MUST queue them onto the stack using the **APNAP (Active Player, Non-Active Player)** convention in conformance with [`FR-TRG-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L396):
@@ -361,12 +359,16 @@ The following foundational design decisions represent inferences drawn from prod
          +---------------------------+------------------------------+
                                      |
                                      v
-                  +-----------------------------------------+
-                  |        14 Atomic Primitives             |
-                  |  DEAL_DAMAGE   | HEAL     | DRAW_CARD   |
-                  |  EXHAUST_ASSET | READY    | BUFF_STATS  |
-                  |  DEPLOY_SCRATCH| DISCARD  | DESTROY     |
-                  +-----------------------------------------+
+    +-------------------------------------------------------------------+
+    |              25 Canonical Atomic Primitives (FR-PRM-001)          |
+    |  DEAL_DAMAGE     | HEAL            | ADD_ARMOR     | MODIFY_STAT  |
+    |  MOVE_ZONE       | RETURN_TO_HAND  | KILL          | DRAW_CARD    |
+    |  DISCARD_CARD    | REVEAL_HAND     | SCRATCH       | REGROUP      |
+    |  DEPLOY_FREE     | SEARCH_DECK     | LOOK_TOP_CARDS| TUCK_UNDER   |
+    |  GAIN_CONTROL    | MORPH_SCRATCH   | EXHAUST       | GRANT_SUBTYPE|
+    |  GRANT_KEYWORD   | PUT_CARD_ON_DECK| GENERATE_RESOURCE            |
+    |  REDIRECT_DAMAGE_TARGET            | RECYCLE_DISCARD_TO_DECK      |
+    +-------------------------------------------------------------------+
 ```
 
 ### Section 4.1: Ability Evaluation & Execution Engine
@@ -426,46 +428,14 @@ The following foundational design decisions represent inferences drawn from prod
 
 ## DOMAIN 5: 6-LAYER ATTRIBUTE RECALCULATION PIPELINE
 
-```text
-  +-----------------------------------------------------------------------------+
-  |              6-LAYER CONTINUOUS ATTRIBUTE CALCULATION PIPELINE              |
-  |                                                                             |
-  |  Layer 1: Base Blueprint Stats (Immutable Power / Defense from CSV)         |
-  |                                |                                            |
-  |                                v                                            |
-  |  Layer 2: Blueprint Modifiers (Static set-wide rules adjustments)           |
-  |                                |                                            |
-  |                                v                                            |
-  |  Layer 3: Instance Modifiers (Permanent attachments / intrinsic keywords)   |
-  |                                |                                            |
-  |                                v                                            |
-  |  Layer 4: Continuous Auras (Dynamic passive field buffs: "Allied units have")|
-  |                                |                                            |
-  |                                v                                            |
-  |  Layer 5: Temporary Modifiers ("Gets +2/+0 until end of turn")              |
-  |                                |                                            |
-  |                                v                                            |
-  |  Layer 6: Counters & Effective Clamping (Floor at 0; Effective Stats)       |
-  +-----------------------------------------------------------------------------+
-```
-
-### Section 5.1: Layer Evaluation & Dirty Caching
+### Section 5.1: Stateless Layer Evaluation & Cleanup
 
 #### FR-ENG-025: Deterministic 6-Layer Attribute Pipeline Architecture
-- **Functional Contract**: The engine MUST enforce continuous dynamic attribute evaluation across all battlefield entities in strict compliance with the 6-layer pipeline codified in [`FR-LAY-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L431) through [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L439):
-  - **Layer 1 (Base Stats)**: Base Blueprint Values (or Scratch base stats `1/1/1/1` if `isFaceDown == true`).
-  - **Layer 2 (Identity Grants)**: Type, Subtype & Identity Grants (`GRANT_SUBTYPE`, `MORPH_SCRATCH`).
-  - **Layer 3 (Keyword Grants)**: Dynamic Keyword Grants & Suppressions (`GRANT_KEYWORD`).
-  - **Layer 4 (Continuous Auras)**: Continuous static field buffs evaluated in timestamp order.
-  - **Layer 5 (Temporary Modifiers)**: Dynamic turn modifiers & temporary buffs/debuffs (`MODIFY_STAT`).
-  - **Layer 6 (Mathematical Clamping)**: Mathematical clamping (`EffectivePower = max(0, RawPower)`; Combat Power is the sole clamped stat per `FR-LAY-001`).
-- **Timestamp & Clamping Precedence**: Modifiers within the same layer evaluate in chronological timestamp order. Base modifiers evaluate before multiplicative modifiers.
+- **Functional Contract**: The engine MUST enforce stateless, on-demand dynamic attribute evaluation across all battlefield entities in strict compliance with the canonical 6-layer pipeline, timestamp ordering, and Combat Power clamping (`EffectivePower = max(0, RawPower)`) codified in Section 6.2 ([`FR-LAY-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L413) through [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L442)).
+- **Stateless On-Demand Evaluation**: Because battlefield entity counts are bounded and `ValueToken` / `Cornered` predicates depend on cross-zone state (`FR-LAY-003`), effective attributes are computed on-demand directly from the 6-layer pipeline without stateful `isDirty` flag caching, subject only to explicit snapshot locking during simultaneous resolution sequences ([`FR-ENG-033`](#fr-eng-033-step-3-frame_attack-resolution-simultaneous-combat-damage--retaliation)).
 
-#### FR-ENG-026: Dirty-Flag Propagation & Topological Dependency Caching
-- **Functional Contract**: To maintain high simulation throughput, the engine MUST implement dirty-flag caching (`isDirty` bitmask):
-  - Modifying an entity, adding/removing an aura host, or transitioning zones sets `isDirty = true`.
-  - Attribute queries on clean entities return cached effective stats in $O(1)$ time without re-evaluating the layer stack.
-  - Recalculation executes lazily upon next attribute query or immediately before combat damage calculation.
+#### FR-ENG-026: Subsumed by FR-ENG-025
+- *Dirty-flag caching (`isDirty`) and topological dependency invalidation are formally de-scoped and subsumed into stateless on-demand evaluation in [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture).*
 
 #### FR-ENG-027: Subsumed by FR-ENG-025
 - *Timestamp ordering within layers is formally subsumed into [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture).*
@@ -474,82 +444,32 @@ The following foundational design decisions represent inferences drawn from prod
 - *Effective attribute clamping at Layer 6 is formally subsumed into [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) and codified as System Invariant 1 in [`FR-ENG-041`](#fr-eng-041-system-invariants--diagnostic-assertion-protocol).*
 
 #### FR-ENG-029: Round-Duration Cleanup Sub-Phase Execution
-- **Functional Contract**: During Sub-Phase 4c of the End Phase ([`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L247)), the engine MUST iterate all active entities and purge temporary Layer 5 modifiers whose duration criteria are met:
-  - *"Until the end of turn"*: Purged at the end of the current player's turn.
-  - *"Until the end of your opponent's turn"*: Purged at the end of the recipient's opponent's turn.
-  - Flagging `isDirty = true` on affected entities for immediate layer recalculation.
+- **Functional Contract**: During Sub-Phase 4c of the End Phase, the engine MUST iterate all active entities and purge temporary Layer 5 modifiers whose duration criteria (*"until end of turn"* or *"until the end of your opponent's turn"*) are met per [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L442).
 
 ---
 
 ## DOMAIN 6: COMBAT RESOLUTION & RETALIATION ENGINE
 
-```text
-  +-----------------------------------------------------------------------------+
-  |                        3-STEP COMBAT CYCLE (FR-CBT-002)                     |
-  |                                                                             |
-  |  Step 1: Declaration & Exhaustion Lock                                      |
-  |  - Attacker in Main Theater targets enemy asset or HQ                       |
-  |  - Attacker exhausts physically                                             |
-  |                                |                                            |
-  |                                v                                            |
-  |  Step 2: Reaction & Trigger Window                                          |
-  |  - Emit EVENT_ATTACK_DECLARED                                               |
-  |  - Queue triggers on Stack via APNAP (FR-ENG-014)                           |
-  |  - Resolve priority passes                                                  |
-  |                                |                                            |
-  |                                v                                            |
-  |  Step 3: Simultaneous Combat Damage Resolution & Retaliation                |
-  |  - Evaluate Stalwart, Resistant, and Armor absorption                       |
-  |  - Apply simultaneous damage ticks                                          |
-  |  - Execute state-based death sweep batch                                    |
-  +-----------------------------------------------------------------------------+
-```
+### Section 6.1: Deterministic Stack-Based Combat Resolution
 
-### Section 6.1: Deterministic Combat Resolution
+#### FR-ENG-030: Combat Zone Eligibility Enforcement
+- **Functional Contract**: The engine MUST enforce the spatial combat attacker and target eligibility rules codified in [`FR-CBT-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L492), [`FR-CAP-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L260), and [`FR-ZON-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L180) (restricting attackers to Main Theater Units and HQ Zone Headquarters, and protecting Reserves Zone assets and `Ethereal` assets from attack declarations).
 
-#### FR-ENG-030: Combat Cycle Orchestration & Zone Restrictions
-- **Functional Contract**: Combat declarations MUST strictly adhere to the spatial battlefield topology defined in [`FR-CBT-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L282) and [`FR-ZON-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L407):
-  - Valid Attackers: Units positioned in the **Main Theater** and Headquarters in the **HQ Zone** ([`FR-CAP-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L265)).
-  - Prohibited Attackers: Units in the Reserves Zone and Structures.
-  - Valid Targets: Opposing Assets in the Main Theater, or opposing Headquarters in the HQ Zone ([`FR-ZON-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L420)). Reserves Zone assets are strictly protected from attacks.
+#### FR-ENG-031: Step 1: Attack Declaration, Upfront Exhaustion & `FRAME_ATTACK` Push
+- **Functional Contract**: Upon receiving `DeclareAttackCommand`, the engine MUST validate clean-stack priority (`ResolutionStack.IsEmpty() == true`, [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L392)), `READIED` state (`exhausted == false`), and `Guardian` target priority ([`FR-KWD-002j`](01_Game_Rules_and_Card_Modeling_FRD.md#L756); aborting with `ERR_GUARDIAN_PRIORITY_VIOLATION` if bypassed). Upon validation, the engine atomically transitions the attacker to `exhausted = true` (`FR-ENG-013`), pushes a root `FRAME_ATTACK` onto the Resolution Stack (`FR-ENG-012`), and emits `EVENT_EXHAUST` and `EVENT_ATTACK_DECLARE` per [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509).
 
-#### FR-ENG-031: Step 1: Declaration, Legality Gates & Exhaustion Lock
-- **Functional Contract**: Upon receiving `DeclareAttackCommand`, the engine MUST validate all preconditions within an atomic transaction:
-  1. Active player has priority and stack is clean (`Stack.IsEmpty() == true`, [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L110)).
-  2. Attacking asset is currently **readied** (`exhausted == false`).
-  3. Target is legal and satisfies Guardian priority ([`FR-KWD-002j`](01_Game_Rules_and_Card_Modeling_FRD.md#L756)). Bypassing an eligible opposing Guardian in the Main Theater aborts the transaction with `ERR_GUARDIAN_PRIORITY_VIOLATION`.
-- **Execution**: The attacking asset transitions immediately to `exhausted = true` upon declaration (`EVENT_EXHAUST`, `EVENT_ATTACK_DECLARE`).
+#### FR-ENG-032: Step 2: Pre-Combat Trigger Enqueue & LIFO Resolution
+- **Functional Contract**: Conforming to Step 2 of [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509), all reactive triggers responding to `EVENT_EXHAUST` and `EVENT_ATTACK_DECLARE` enqueue **on top of `FRAME_ATTACK`** via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)) and auto-resolve top-down before `FRAME_ATTACK` pops.
+- **Combatant Survival & Zone Legality Check**: When `FRAME_ATTACK` pops from the stack at the conclusion of Step 2, if either the **attacking asset** (e.g., destroyed by *Blind Defile*) or the **target asset** was destroyed, removed from the battlefield, or moved out of a legal combat zone during Step 2, `FRAME_ATTACK` fizzles immediately with zero combat or retaliation damage dealt ([`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509)).
 
-> [!NOTE] System Invariant: Absence of Summoning Sickness
-> Unlike other card games that require an asset to be controlled across a turn transition before acting (often termed "summoning sickness"), in Card Town any asset that deploys readied may declare attacks or exhaust on that same turn ([`FR-SET-004`](01_Game_Rules_and_Card_Modeling_FRD.md#L57), [`FR-ZON-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L183)). Pacing is governed organically by the spatial battlefield economy: units deploy into Reserves, and marching into Main Theater arrives exhausted ([`FR-INH-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L264)).
-
-#### FR-ENG-032: Step 2: Reaction Window & Combat Interruption Frames
-- **Functional Contract**: Prior to damage calculation, the engine MUST emit `EVENT_ATTACK_DECLARED` and process reactive triggers ([`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L295)):
-  - Triggers responding to attack declaration are queued onto the Resolution Stack via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)).
-  - The stack auto-resolves to completion. Declaration initiates an atomic combat transaction locking out manual card plays; once Step 2 triggers resolve, the match advances immediately to Step 3 without an intervening priority window.
-  - **Target Survival Check**: If the target asset is destroyed or removed from the battlefield during Step 2, combat terminates without dealing damage.
-
-#### FR-ENG-033: Step 3: Simultaneous Combat Damage & Symmetric Retaliation
-- **Functional Contract**: When Step 2 concludes with both attacker and defender surviving on the battlefield, the engine MUST resolve combat damage **simultaneously** per [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L295):
-  - **Continuous Aura Snapshot Lock**: All continuous aura condition gates (including *Cornered* count checks; [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L441)) are snapshotted and locked at the entry of Step 3; all simultaneous damage and retaliation calculations evaluate against this locked state.
-  - Attacker calculates incoming damage to target = `Attacker.EffectivePower`.
-  - Retaliation damage = `Target.EffectivePower` (evaluated symmetrically across all defending targets with effective power > 0 per [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L517)).
-  - Both damage payloads route through their respective 5-stage mitigation pipelines ([`FR-ENG-034`](#fr-eng-034-canonical-5-stage-damage-mitigation-pipeline)) and apply concurrently within the same frame tick.
+#### FR-ENG-033: Step 3: `FRAME_ATTACK` Resolution: Simultaneous Combat Damage & Retaliation
+- **Functional Contract**: When `FRAME_ATTACK` pops with both attacker and defender surviving in legal combat zones, the engine MUST snapshot and lock continuous aura condition gates (`Cornered`; [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L442)) and resolve simultaneous combat damage (`Attacker.EffectivePower`) and 100% symmetric retaliation (`Target.EffectivePower`) in strict conformance with Step 3 of [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509).
 
 #### FR-ENG-034: Canonical 5-Stage Damage Mitigation Pipeline
-- **Functional Contract**: When applying incoming combat or effect damage to an asset, the engine MUST evaluate defensive keywords in the strict canonical order codified in [`FR-REP-004`](01_Game_Rules_and_Card_Modeling_FRD.md#L455):
-  1. **Stage 1 (Target Redirection)**: Evaluates uncommitted damage against redirection targets ([`FR-REP-004`](01_Game_Rules_and_Card_Modeling_FRD.md#L455)).
-  2. **Stage 2 (Flat Reductions)**: Subtracts `Resistant N` (`damage = max(0, damage - N)` for positive; negative Resistant amplifies damage: $0 - (-1) = 1$).
-  3. **Stage 3 (Combat Damage Capping)**: If `isCombatDamage == true` and target has `Stalwart` ([`FR-KWD-002c`](01_Game_Rules_and_Card_Modeling_FRD.md#L749)), combat damage is capped strictly to 1 (`min(damage, 1)`). Has zero effect on non-combat damage.
-  4. **Stage 4 (Dynamic Armor)**: Dynamic Armor absorbs damage 1-to-1 from target's current Armor pool ([`FR-KWD-002k`](01_Game_Rules_and_Card_Modeling_FRD.md#L757)), depleting the pool accordingly. When a target has both Stalwart and Armor, Stalwart caps incoming combat damage to 1 in Stage 3, and Stage 4 absorbs that 1 damage by depleting 1 point of Armor.
-  5. **Stage 5 (Health Damage Commit)**: Remaining damage is added to `AccumulatedDamage`. `EVENT_TAKE_DAMAGE` fires if and only if actual damage is absorbed by Armor or committed to Health (`(armorAbsorbed + healthDamageCommitted) > 0`).
+- **Functional Contract**: All incoming combat and effect damage instances MUST route sequentially through the canonical 5-stage mitigation pipeline (**Stage 1: Target Redirection** &rarr; **Stage 2: Flat `Resistant N` Reductions** &rarr; **Stage 3: `Stalwart` Combat Damage Capping** &rarr; **Stage 4: Dynamic `Armor` Absorption** &rarr; **Stage 5: Health Commit & `EVENT_TAKE_DAMAGE` Emission**) codified in [`FR-REP-004`](01_Game_Rules_and_Card_Modeling_FRD.md#L458).
 
 #### FR-ENG-035: State-Based Death Sweep & Graveyard Transition Batching
-- **Functional Contract**: Immediately following damage application, the engine MUST execute a state-based death check sweep ([`FR-ENT-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L17)):
-  - Any asset with `AccumulatedDamage >= EffectiveDefense` is marked as destroyed.
-  - All marked assets are transitioned to their owners' `GraveyardZone` simultaneously in a single atomic batch (`EVENT_ENTITY_DESTROYED`).
-  - If an attacking unit has `Berserk` ([`FR-KWD-002o`](01_Game_Rules_and_Card_Modeling_FRD.md#L761)) and destroys its Main Theater target, its excess combat damage routes to another chosen opposing asset in the Main Theater as discrete non-combat effect damage.
-  - Queues death triggers onto the stack via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)).
+- **Functional Contract**: Immediately following damage commitment, the engine MUST execute a state-based death sweep per [`FR-LAY-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L437) and [`FR-CBT-002`](01_Game_Rules_and_Card_Modeling_FRD.md#L509): transitioning all assets with `AccumulatedDamage >= MaxHealth` (or `MaxHealth <= 0`) to their owners' `Discard` zones in a single atomic batch (`EVENT_DESTROY`), routing `Berserk` excess combat damage ([`FR-KWD-002o`](01_Game_Rules_and_Card_Modeling_FRD.md#L761)), emitting `EVENT_ATTACK_RESOLVED`, and queueing resulting triggers onto the stack via APNAP ([`FR-ENG-014`](#fr-eng-014-apnap-trigger-dispatching--simultaneous-event-ordering)).
 
 #### FR-ENG-042: Authoritative Match Conclusion & Victory Condition Engine
 - **Functional Contract**: The engine MUST continuously evaluate match termination conditions during state-based sweeps and draw operations:
@@ -671,8 +591,8 @@ The headless engine module enforces zero-drift error parity with the client-engi
 | `FR-ENG-022` | Double-blind Scratch Company deck-to-battlefield lifecycle | [`FR-ZON-005`](01_Game_Rules_and_Card_Modeling_FRD.md#L196), [`FR-SEC-001`](04_Client_Engine_Protocol_Networking_FRD.md#L164) |
 | `FR-ENG-023` | Continuous aura registration & revocation engine | [`FR-ABL-004`](02_Card_Data_Pipeline_FRD.md#L217), [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md#L457) |
 | `FR-ENG-024` | Maneuver card resolution & graveyard transition | [`FR-QUE-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L110) |
-| `FR-ENG-025` | 6-layer attribute calculation pipeline execution | [`FR-LAY-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L431) – [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L439) |
-| `FR-ENG-026` | Dirty-flag caching & topological dependency invalidation | [`FR-LAY-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L431) |
+| `FR-ENG-025` | Stateless 6-layer attribute calculation pipeline execution | [`FR-LAY-001`](01_Game_Rules_and_Card_Modeling_FRD.md#L431) – [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L439) |
+| `FR-ENG-026` | Dirty-flag caching & topological dependency invalidation | Subsumed by [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) |
 | `FR-ENG-027` | Timestamp precedence within attribute calculation layers | Subsumed by [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) |
 | `FR-ENG-028` | Effective attribute clamping and non-negative invariants | Subsumed by [`FR-ENG-025`](#fr-eng-025-deterministic-6-layer-attribute-pipeline-architecture) & [`FR-ENG-041`](#fr-eng-041-system-invariants--diagnostic-assertion-protocol) |
 | `FR-ENG-029` | Round-duration temporary modifier cleanup | [`FR-LAY-003`](01_Game_Rules_and_Card_Modeling_FRD.md#L439) |
