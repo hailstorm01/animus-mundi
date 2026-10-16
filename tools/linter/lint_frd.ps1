@@ -18,10 +18,11 @@ Write-Host "FRD Directory: $frdDir`n"
 $hasErrors = $false
 
 $expectedFiles = @(
-    "01_Game_Rules_and_Card_Modeling_FRD.md",
+    "01_Game_Rules_FRD.md",
     "02_Card_Data_Pipeline_FRD.md",
     "03_Card_Compiler_FRD.md",
-    "04_Client_Engine_Protocol_Networking_FRD.md"
+    "04_Client_Engine_Protocol_Networking_FRD.md",
+    "05_Headless_Game_Engine_FRD.md"
 )
 
 $existingFrds = Get-ChildItem -Path $frdDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName

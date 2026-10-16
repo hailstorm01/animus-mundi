@@ -37,7 +37,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 
 ### Step 1: Vision & Roadmap Intake
 1. Read `docs/PRODUCT_SUMMARY.md` to identify the vision, game pillars, target roadmap phase (e.g., Phase 3 Core Headless Engine, Phase 4 Server Networking, Phase 5 Godot Client, Phase 6 Metagame/Deckbuilder), and key deliverables.
-2. Read cross-referenced sections in existing master FRDs (`01_Game_Rules_and_Card_Modeling_FRD.md`, `02_Card_Data_Pipeline_FRD.md`, `03_Card_Compiler_FRD.md`, `04_Client_Engine_Protocol_Networking_FRD.md`) using line ranges to establish interoperability points.
+2. Read cross-referenced sections in existing master FRDs (`01_Game_Rules_FRD.md`, `02_Card_Data_Pipeline_FRD.md`, `03_Card_Compiler_FRD.md`, `04_Client_Engine_Protocol_Networking_FRD.md`, `05_Headless_Game_Engine_FRD.md`) using line ranges to establish interoperability points.
 
 ### Step 2: Scope & Domain Prefix Reservation
 1. Define the functional domain boundaries for the document.

@@ -5,18 +5,16 @@
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), rules text templating standards, and dataset validation for the Collectible Card Game (CCG). It serves as the authoritative bridge between balance spreadsheets, compiled engine blueprint definitions, and game client presentation, operating as the third foundational pillar alongside:
-1. **Master Game Rules & Card Modeling FRD (`01_Game_Rules_and_Card_Modeling_FRD.md` - Master FRD v3.0)**
-2. **Client-Engine Protocol & Networking FRD (`04_Client_Engine_Protocol_Networking_FRD.md` - FRD v1.2)**
+This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), trigger/replacement event hook taxonomy, atomic effect primitives catalog, rules text templating standards, and dataset validation for Card Town. It serves as the authoritative **modeling bridge** between the pure tabletop game rules ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)), the card compiler ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), the network protocol ([`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md)), and the headless execution engine ([`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md)).
 
-### Initial Specification Scope (v1.0):
+### Specification Scope (v1.1):
 1. **Zero-Aliasing Data Contract (`FR-DAT-006`)**: Codified strict enum target conformance across all authoring CSV balance sheets. Prohibited runtime shorthand aliasing; all raw card sheets must directly serialize canonical target enum identifiers (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`; `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`; `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`).
 2. **Deterministic Blueprint ID Derivation (`FR-DAT-002`)**: Formalized a deterministic, immutable blueprint slug derivation algorithm (`<faction>_<snake_case_title>`), decoupling human display titles from engine identity keys while guaranteeing 100% stable serialization.
-3. **Comprehensive Ability AST Specification (`FR-ABL-001` - `FR-ABL-007`)**: Fully formalized the declarative schemas previously left abstract in Master FRD v3.0 (`AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`, `OpDef`), establishing a unified JSON schema for all six ability archetypes (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`).
-4. **Mechanics Extensions & Resolution Semantics (`FR-ABL-008` - `FR-ABL-012`)**: Formalized engine support for per-turn execution gates (`maxPerTurn`), exhaust-as-cost activation mechanics (`costType: EXHAUST_SELF`), modal branch definitions (`CHOOSE_N`), and distributed pool damage allocations (`DISTRIBUTED_POOL`).
-5. **MTG-Aligned Rules Text Templating Grammar (`FR-TXT-001` - `FR-TXT-006`)**: Established formal English templating standards modeled on Magic: The Gathering (MTG) syntax, standardizing trigger preambles (`When`, `Whenever`, `At`), cost sequencing (`[Cost]: [Effect].`), passive auras (`have`), temporary modifiers (`gets +N power until end of turn`), and canonical keyword capitalization.
-6. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`)**: Expanded the automated testing suite (`tools/linter/lint_cardtown.ps1`) to audit requirement cross-references across all three FRDs, enforce zero dangling references, and guarantee 100% parsing integrity.
-7. **Comprehensive Card Review Register (Domain 7)**: Audited all 167 cards across the 10 balance sheets, logging all 127 standardized card texts and categorizing 52 explicit design review items for designer sign-off.
+3. **Production Blueprint JSON Schema & Ability AST (`FR-DAT-005`, `FR-ABL-001` - `FR-ABL-007`)**: Formalized the production `CardBlueprintCollection` JSON schema and polymorphic declarative schemas (`AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`) across all six ability archetypes (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`).
+4. **Event Hook Taxonomy, Atomic Primitives & Bound Payloads (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Consolidated the canonical engine event/watcher hook catalog, the 25 atomic effect primitives and parameter schemas, bound action payload bindings, and canonical benchmark card AST implementations into the data pipeline bridge (`SOC-002`).
+5. **Mechanics Extensions & Resolution Semantics (`FR-ABL-008` - `FR-ABL-012`)**: Formalized engine support for per-turn execution gates (`maxPerTurn`), exhaust-as-cost activation mechanics (`costType: EXHAUST_SELF`), modal branch definitions (`CHOOSE_N`), and distributed pool damage allocations (`DISTRIBUTED_POOL`).
+6. **MTG-Aligned Rules Text Templating Grammar (`FR-TXT-001` - `FR-TXT-006`)**: Established formal English templating standards modeled on Magic: The Gathering (MTG) syntax, standardizing trigger preambles (`When`, `Whenever`, `At`), cost sequencing (`[Cost]: [Effect].`), passive auras (`have`), temporary modifiers (`gets +N power until end of turn`), and canonical keyword capitalization.
+7. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`) & Card Review Register (Domain 7)**: Expanded the automated verification suite (`tools/linter/lint_cardtown.ps1`) and audited all 167 cards across the 10 balance sheets.
 
 ---
 
@@ -106,9 +104,8 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 
 ### Section 2.1: Target Enum Enforcement
 
-#### FR-DAT-005: Canonical Blueprint Schema Specification
-*(Subsumed by FR-CRD-101)*
-The canonical technical blueprint schema, property constraints, and entity taxonomy are authoritatively defined in **FR-CRD-101** of the Master Game Rules & Card Modeling FRD. The table below outlines the ingested schema fields validated during compilation:
+#### FR-DAT-005: Canonical Blueprint JSON Schema Specification
+In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)), every compiled `CardBlueprint` in `blueprints.json` validates against the following property table and production JSON Schema:
 
 | Field | Type | Constraint | Description |
 | :--- | :--- | :--- | :--- |
@@ -119,6 +116,7 @@ The canonical technical blueprint schema, property constraints, and entity taxon
 | `subtypes` | `Array<String>` | Array of Title Case tags | Normalized subtypes (`FR-DAT-007`). |
 | `requisitionCost` | `Integer` | `>= 0` | Base Requisition deployment/casting cost. |
 | `tacticsCost` | `Integer` | `>= 0` | Base Tactics deployment/casting cost. |
+| `additionalDeploymentCosts` | `Array<CostDef>` | Optional CostDef Array | Non-resource deployment/enactment costs (sacrifices, discards; `FR-TRN-003a`). |
 | `power` | `Integer` or `null` | `>= 0` (null for Maneuvers) | Base Combat Power (`FR-LAY-001`). |
 | `health` | `Integer` or `null` | `>= 1` (null for Maneuvers) | Base Maximum Health (`FR-LAY-002`). |
 | `requisitionYield` | `Integer` | `>= 0` (0 for Maneuvers) | Resources generated upon exhausting for Requisition. |
@@ -127,6 +125,48 @@ The canonical technical blueprint schema, property constraints, and entity taxon
 | `rarity` | `RarityEnum` | Valid Enum | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
 | `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CardBlueprintCollection",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "name", "cardType", "faction", "subtypes",
+          "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "cardType": { "type": "string", "enum": ["HEADQUARTERS", "UNIT", "STRUCTURE", "MANEUVER"] },
+          "faction": { "type": "string", "enum": ["CONCORDIA", "SOULLESS", "PATH", "ANIMUS", "NEUTRAL"] },
+          "subtypes": { "type": "array", "items": { "type": "string" } },
+          "requisitionCost": { "type": "integer", "minimum": 0 },
+          "tacticsCost": { "type": "integer", "minimum": 0 },
+          "additionalDeploymentCosts": { "type": "array", "items": { "type": "object" } },
+          "power": { "type": ["integer", "null"] },
+          "health": { "type": ["integer", "null"], "minimum": 1 },
+          "requisitionYield": { "type": "integer", "minimum": 0 },
+          "tacticsYield": { "type": "integer", "minimum": 0 },
+          "deploymentZones": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["RESERVES", "MAIN_THEATER", "HEADQUARTERS"] }
+          },
+          "rarity": { "type": "string", "enum": ["COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ"] },
+          "rulesText": { "type": "string" },
+          "abilities": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    }
+  }
+}
+```
 
 #### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
 To eliminate translation layers and ensure absolute schema fidelity, all authoring CSV files in `data/cards/` use column headers that directly mirror canonical Blueprint JSON property names (`name`, `cardType`, `faction`, `subtypes`, `requisitionCost`, `tacticsCost`, `deploymentZones`, `rulesText`, `power`, `health`, `requisitionYield`, `tacticsYield`, `rarity`, `currentProxy`, `needsRework`). Furthermore, enum cells must strictly serialize canonical target enum strings with zero aliases:
@@ -324,13 +364,65 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
 
 ---
 
+### Section 3.3: Event Hook Taxonomy, Atomic Effect Primitives & Bound Payloads
+
+#### FR-TRG-001: Trigger & Replacement Event Hook Taxonomy
+`TriggeredAbilityDef` (`FR-ABL-002`) and `ReplacementWatcherDef` (`FR-ABL-005`) bind strictly to the following canonical event and prospective replacement hook identifiers:
+- **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
+- **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
+- **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
+- **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
+- **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
+- **Phase & Turn Lifecycle**: `EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`, `EVENT_TURN_START`, `EVENT_TURN_END`
+- **Prospective Replacement Interception Hooks (`FR-REP-001`)**: `WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`
+
+#### FR-TRG-007: Event Causality Context Lineage
+- Every emitted event and prospective replacement hook carries causal lineage metadata (`parentEventId`, `rootActionId`, and `sourceEntitySnapshot` per `FR-SNP-101`) to enable deterministic replacement evaluation, `CAUSALITY_CONTEXT` `ValueToken` resolution (e.g., *"for each card discarded this way"*), and trigger scope validation.
+
+#### FR-PRM-001: Standard Atomic Effect Primitives Catalog
+Every `AbilityDef` effect node (`FR-ABL-001`) dispatches to one of the 25 canonical atomic effect primitives (or composite control-flow containers `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE` wrapping these primitives):
+
+| Primitive | Parameter Schema | Rules & Engine Traceability |
+| :--- | :--- | :--- |
+| `DEAL_DAMAGE` | `amount: ValueToken` | Deals damage routed through the 5-stage mitigation sequence (`FR-REP-004`). |
+| `HEAL` | `amount: ValueToken` | Removes accumulated damage counters up to `amount` (`FR-KWD-002d`). |
+| `ADD_ARMOR` | `amount: ValueToken` | Increments dynamic Armor pool (`FR-KWD-002k`). |
+| `MODIFY_STAT` | `attribute: Enum, amount: ValueToken, duration: Enum` | Modifies stat (`END_OF_TURN`, `END_OF_OPPONENT_TURN`, `persistent`; `FR-LAY-003`). |
+| `MOVE_ZONE` | `destinationZone: Enum` | Transitions unit between `RESERVES` and `MAIN_THEATER` (`FR-ZON-002`). |
+| `RETURN_TO_HAND` | `none` | Returns asset to owner's hand and resets dynamic state (`FR-ZON-004`). |
+| `KILL` | `none` | Destroys target asset immediately and routes to owner's `DISCARD` (`FR-ZON-002`). |
+| `DRAW_CARD` | `count: ValueToken` | Draws cards from owner's deck (triggers `FR-WIN-001` on empty deck). |
+| `DISCARD_CARD` | `count: ValueToken, targetPlayer: Enum` | Causes target player to discard cards from hand. |
+| `REVEAL_HAND` | `targetPlayer: Enum, selector: Enum` | Reveals player's hand for inspection and targeted discard (`FR-MOD-001`). |
+| `SCRATCH` | `count: ValueToken` | Sequentially executes `Deploy Scratch Company` (`FR-INH-004`, `FR-KWD-002m`). |
+| `REGROUP` | `count: ValueToken` | Transitions up to `count` chosen exhausted allied assets to `READIED` (`FR-KWD-002n`). |
+| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef` | Deploys matching card suppressing resource costs (`FR-TRN-003a`). |
+| `SEARCH_DECK` | `filter: FilterDef, destination: Enum` | Searches deck and executes mandatory shuffle (`FR-DEK-001`, `FR-DEK-002`). |
+| `LOOK_TOP_CARDS` | `count: Integer, operations: Array<OpDef>` | Inspects top `count` cards and partitions across destinations (`FR-MOD-001`). |
+| `TUCK_UNDER` | `hostTarget: TargetRef, faceDown: Boolean` | Transitions target card/asset into `ATTACHED` sub-zone under host asset (`FR-ENT-102`). |
+| `GAIN_CONTROL` | `targetPlayer: Enum` | Transfers controller for an opposing `MAIN_THEATER` unit (`FR-ZON-002`). |
+| `MORPH_SCRATCH` | `none` | Transforms unit face-down into a `1/1/1/1` Scratch Company (`FR-ENT-103`). |
+| `GENERATE_RESOURCE` | `resourceType: Enum, amount: ValueToken` | Adds resources to active player's temporary pool (`FR-RES-001`). |
+| `RECYCLE_DISCARD_TO_DECK` | `targetPlayer: Enum` | Transfers `DISCARD` pile into `DECK` with mandatory shuffle (`FR-DEK-002`). |
+| `REDIRECT_DAMAGE_TARGET` | `newTarget: TargetRef` | Intercepts incoming damage in Stage 1 and re-routes to `newTarget` (`FR-REP-004`). |
+| `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], targetCard: TargetRef` | Places target card at specified deck position (`FR-DEK-001`). |
+| `EXHAUST` | `targetAsset: TargetRef` | Transitions target asset readiness to `EXHAUSTED` (emitting `EVENT_EXHAUST`). |
+| `GRANT_SUBTYPE` | `subtype: String, duration: Enum` | Temporarily grants subtype to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
+| `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum` | Temporarily grants keyword to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
+
+#### FR-TGT-101: Bound Action Payload & Upfront Target Locking Model
+- Action declarations and trigger target selections bind against the AST via structured payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices` (`FR-ABL-010`), `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SECONDARY_BERSERK_TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`, and optional `allocatedValue` per `FR-ABL-011`), and `deckSelectionIndices`.
+- **Upfront Target Locking (`bindingPolicy: "UPFRONT_LOCK"`)**: For composite abilities or attacks where a secondary effect depends on an outcome determined during resolution (*Samsara, Living Tempest*, or **Berserk** secondary Main Theater targets in `FR-KWD-002o`), external targets are bound upfront when the action or trigger is placed onto the Resolution Stack (`FR-TGT-001`), completing execution atomically without a mid-resolution target prompt.
+
+---
+
 ## DOMAIN 4: EXTENDED GAME MECHANICS & EXECUTION SEMANTICS
 
 ### Section 4.1: Extended Mechanics Formalization
 
 #### FR-ABL-008: Per-Turn Trigger & Execution Frequency Limits
 - To model cards with explicit frequency caps (*Animoceps Rager*: *"This ability triggers only once each turn"*), `TriggeredAbilityDef` and `ActivatedAbilityDef` support an optional `maxPerTurn: Integer` property.
-- **Engine Execution**: The engine tracks an instance execution counter (`turnActivationCount`) on each `AssetInstance`. When the counter reaches `maxPerTurn`, the ability gate fails and suppresses trigger enqueuing or activated command validation. All per-turn counters reset to zero during Ready Phase Sub-Phase 1.
+- **Engine Execution**: The engine tracks an instance execution counter (`turnActivationCount`) on each `AssetInstance`. When the counter reaches `maxPerTurn`, the ability gate fails and suppresses trigger enqueuing or activated command validation. All per-turn counters reset to zero during the Ready Phase (`FR-TRN-001`).
 
 #### FR-ABL-009: Exhaust-Self as Ability Cost Model
 - In standard card game semantics (and MTG tap costs `{T}`), an asset may require exhausting itself as an explicit activation cost.
@@ -347,11 +439,11 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
 
 #### FR-ABL-011: Distributed Pool Value Allocations
 - In compliance with **FR-TGT-002** and **FR-MSG-003**:
-  - Cards distributing a pool of values across multiple targets (*Macrocannon Barrage*: *"Distribute 5 damage among up to 5 chosen units"*, *Hammerhand Bivouac*: *"Distribute 1 armor among allied units in the same zone"*) specify `selector: "DISTRIBUTED_POOL"`.
+  - Cards distributing a pool of values across multiple targets (*Macrocannon Barrage*: *"Distribute 5 damage among up to 5 chosen units"*, *Hammerhand Bivouac*: *"Distribute 2 armor among allied units in the same zone"*) specify `selector: "DISTRIBUTED_POOL"`.
   - The client provides `TargetBinding` entries where `allocated_value` sums exactly to `poolValue`.
 
 #### FR-ABL-012: Canonical Keyword AST Parameterization
-All 15 engine keywords defined in Master FRD v3.0 Appendix A map directly to standardized AST structures:
+All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) Appendix A map directly to standardized AST structures:
 
 | Keyword | AST Schema Archetype | Parameterization / Payload |
 | :--- | :--- | :--- |
@@ -372,6 +464,177 @@ All 15 engine keywords defined in Master FRD v3.0 Appendix A map directly to sta
 | **Berserk** | `STATIC_RESTRICTION` | Enables attack declaration targeting up to 2 assets (`FR-KWD-002o`). |
 
 - **Dynamic & Continuous Grants**: Keywords and subtypes may also be granted dynamically via atomic primitives `GRANT_KEYWORD` and `GRANT_SUBTYPE` (`FR-PRM-001`) or continuously via `ContinuousAuraDef` modifiers (`KEYWORD_GRANT`, `SUBTYPE_GRANT`) and compound `abilityGrants` (Layer 6; `FR-ABL-004`).
+
+---
+
+### Section 4.2: Canonical Benchmark Blueprint Implementations
+
+#### 1. `NO-AH-5` (Soulless Mythic Unit - Tucking & Composable Query Scaling)
+```json
+{
+  "id": "soulless_no_ah_5",
+  "name": "NO-AH-5",
+  "cardType": "UNIT",
+  "faction": "SOULLESS",
+  "subtypes": ["Officer", "Cybernetic"],
+  "requisitionCost": 3,
+  "tacticsCost": 0,
+  "power": 2,
+  "health": 5,
+  "requisitionYield": 1,
+  "tacticsYield": 2,
+  "deploymentZones": ["RESERVES"],
+  "rarity": "MYTHIC",
+  "rulesText": "Ward\nR2: Kill chosen allied non-Headquarters asset and tuck it face down under this unit. This unit has +2 power for each card tucked under it.",
+  "abilities": [
+    { "abilityType": "KEYWORD_GRANT", "keyword": "WARD" },
+    {
+      "abilityType": "ACTIVATED",
+      "costs": [
+        { "costType": "RESOURCE", "resource": "REQUISITION", "amount": 2 },
+        { "costType": "KILL_ASSET", "filter": { "allegiance": "ALLIED", "entityType": "ASSET", "excludeHQ": true } }
+      ],
+      "effect": { "primitive": "TUCK_UNDER", "hostTarget": { "selector": "SELF" }, "faceDown": true }
+    },
+    {
+      "abilityType": "CONTINUOUS_AURA",
+      "scope": "SELF",
+      "modifiers": [
+        {
+          "attribute": "COMBAT_POWER",
+          "operation": "ADD",
+          "value": {
+            "type": "QUERY",
+            "source": "SELF",
+            "query": { "zone": "ATTACHED", "aggregate": "COUNT" },
+            "multiplier": 2
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 2. `Piston Fist Prototype` (Soulless Mythic Unit - 6-Drop Pneumatic Recoil)
+```json
+{
+  "id": "soulless_piston_fist_prototype",
+  "name": "Piston Fist Prototype",
+  "cardType": "UNIT",
+  "faction": "SOULLESS",
+  "subtypes": ["Mechanized"],
+  "requisitionCost": 3,
+  "tacticsCost": 3,
+  "power": 1,
+  "health": 9,
+  "requisitionYield": 1,
+  "tacticsYield": 2,
+  "deploymentZones": ["RESERVES"],
+  "rarity": "MYTHIC",
+  "rulesText": "Aggressive 9\nAfter this unit attacks, move this unit to your Reserves.",
+  "abilities": [
+    { "abilityType": "KEYWORD_GRANT", "keyword": "AGGRESSIVE", "parameter": 9 },
+    {
+      "abilityType": "TRIGGERED",
+      "triggerHook": "EVENT_ATTACK_RESOLVED",
+      "condition": { "source": "SELF" },
+      "effect": {
+        "primitive": "MOVE_ZONE",
+        "destinationZone": "RESERVES"
+      }
+    }
+  ]
+}
+```
+
+#### 3. `Animoceps Spore Cloud` (Animus Rare Structure - Replacement Redirection)
+```json
+{
+  "id": "animus_animoceps_spore_cloud",
+  "name": "Animoceps Spore Cloud",
+  "cardType": "STRUCTURE",
+  "faction": "ANIMUS",
+  "subtypes": ["Fungus"],
+  "requisitionCost": 4,
+  "tacticsCost": 0,
+  "power": 0,
+  "health": 9,
+  "requisitionYield": 2,
+  "tacticsYield": 2,
+  "deploymentZones": ["MAIN_THEATER"],
+  "rarity": "RARE",
+  "rulesText": "Redirect all damage that would be dealt to allied units in the same zone to this structure.",
+  "abilities": [
+    {
+      "abilityType": "REPLACEMENT_WATCHER",
+      "interceptHook": "WOULD_TAKE_DAMAGE",
+      "condition": { "allegiance": "ALLIED", "entityType": "UNIT", "zone": "SAME_ZONE" },
+      "replacementAction": { "primitive": "REDIRECT_DAMAGE_TARGET", "newTarget": { "selector": "SELF" } }
+    }
+  ]
+}
+```
+
+#### 4. `Samsara, Living Tempest` (Concordia Mythic Unit - Upfront Bound Trigger & Composite Partition)
+```json
+{
+  "id": "concordia_samsara_living_tempest",
+  "name": "Samsara, Living Tempest",
+  "cardType": "UNIT",
+  "faction": "CONCORDIA",
+  "subtypes": ["Elemental", "Tempest"],
+  "requisitionCost": 6,
+  "tacticsCost": 0,
+  "power": 6,
+  "health": 7,
+  "requisitionYield": 0,
+  "tacticsYield": 2,
+  "deploymentZones": ["MAIN_THEATER"],
+  "rarity": "MYTHIC",
+  "rulesText": "Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset.",
+  "abilities": [
+    {
+      "abilityType": "TRIGGERED",
+      "triggerHook": "EVENT_ATTACK_DECLARE",
+      "condition": { "source": "SELF" },
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "entityType": "ASSET" },
+        "count": 1,
+        "bindingPolicy": "UPFRONT_LOCK"
+      },
+      "effect": {
+        "primitive": "COMPOSITE_SEQUENCE",
+        "steps": [
+          {
+            "primitive": "LOOK_TOP_CARDS",
+            "count": 2,
+            "partition": {
+              "destinations": [
+                { "zone": "HAND", "count": 1 },
+                { "zone": "DISCARD", "count": 1, "trackAs": "discardedCard" }
+              ]
+            }
+          },
+          {
+            "primitive": "CONDITIONAL_CLAUSE",
+            "condition": {
+              "targetRef": "discardedCard",
+              "cardType": "MANEUVER"
+            },
+            "effect": {
+              "primitive": "DEAL_DAMAGE",
+              "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+              "amount": { "type": "STATIC", "value": 2 }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
 
 ---
 
@@ -588,6 +851,10 @@ The following register details all cards where rules text was modified or requir
 | **FR-ABL-010** | Modal Selection AST Primitives | `FR-MOD-001`, `FR-MSG-003`, `FR-MSG-005` |
 | **FR-ABL-011** | Distributed Pool Value Allocations | `FR-TGT-002`, `FR-MSG-003`, `FR-MSG-005` |
 | **FR-ABL-012** | Canonical Keyword AST Parameterization | `FR-KWD-002a` through `FR-KWD-002o` |
+| **FR-TRG-001** | Trigger & Replacement Event Hook Taxonomy | `FR-ABL-002`, `FR-ABL-005`, `FR-TRG-003`, `FR-REP-001` |
+| **FR-TRG-007** | Event Causality Context Lineage | `FR-TRG-001`, `FR-SNP-101`, `FR-ABL-007` |
+| **FR-PRM-001** | Standard Atomic Effect Primitives Catalog (25 Opcodes) | `FR-ABL-001`, `FR-ENG-021` |
+| **FR-TGT-101** | Bound Action Payload & Upfront Target Locking Model | `FR-TGT-001`, `FR-ABL-007`, `FR-MSG-003` |
 | **FR-TXT-001** | MTG-Aligned Sentence Grammar & Punctuation | `FR-CRD-101`, Appendix A |
 | **FR-TXT-002** | Trigger Preambles (`When`, `Whenever`, `At`) | `FR-TRG-001`, `FR-TRN-001`, `FR-CBT-002` |
 | **FR-TXT-003** | Cost Notation Syntax (`[Cost]: [Effect].`) | `FR-ACT-001`, `FR-TRN-003a`, `FR-ABL-009` |
@@ -599,4 +866,4 @@ The following register details all cards where rules text was modified or requir
 | **FR-VAL-003** | Placeholder Row Handling & Incomplete Blueprint Policy | `FR-SET-001`, `FR-DAT-005`, `FR-DAT-006` |
 
 ---
-*End of Functional Requirements Document (Card Data Pipeline FRD v1.0)*
+*End of Functional Requirements Document (Card Data Pipeline FRD v1.1)*

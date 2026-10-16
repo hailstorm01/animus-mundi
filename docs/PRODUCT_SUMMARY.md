@@ -26,11 +26,11 @@ animus-mundi/
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
 │   ├── audit/                             # Socratic audit registry, guidelines & pending reviews
 │   └── frd/
-│       ├── 01_Game_Rules_and_Card_Modeling_FRD.md       # Master FRD v3.0 (Rules & Modeling)
-│       ├── 02_Card_Data_Pipeline_FRD.md                 # FRD v1.0 (Ingestion, AST & Text Rules)
+│       ├── 01_Game_Rules_FRD.md                         # Master FRD v3.1 (Pure Game Rules & Keywords)
+│       ├── 02_Card_Data_Pipeline_FRD.md                 # FRD v1.1 (Ingestion, AST, Primitives & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FRD v1.0 (Compiler CLI, Grammar & Parity)
 │       ├── 04_Client_Engine_Protocol_Networking_FRD.md  # FRD v1.2 (Networking & Wire Protocol)
-│       └── 05_Headless_Game_Engine_FRD.md               # Master FRD v1.0 (Headless Kernel, Determinism & Stack)
+│       └── 05_Headless_Game_Engine_FRD.md               # Master FRD v1.1 (Headless Kernel, Determinism & Stack)
 ├── data/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
@@ -54,13 +54,13 @@ animus-mundi/
 
 ### 2.1 The Five Master FRDs (Core Architectural Pillars)
 
-1. **[Master Game Rules & Card Modeling FRD](frd/01_Game_Rules_and_Card_Modeling_FRD.md) (Master FRD v3.0)**
-   - **Three-Tier Entity Taxonomy**: Formal separation between immutable blueprint definitions (`CardBlueprint`), session-level instances (`CardInstance`), and battlefield objects (`AssetInstance`).
-   - **Six-Layer Attribute Calculation Pipeline (`FR-LAY-001` - `FR-LAY-003`)**: Continuous evaluation order: Layer 1 (Base Stats) $\rightarrow$ Layer 2 (Blueprint Modifiers) $\rightarrow$ Layer 3 (Instance Modifiers) $\rightarrow$ Layer 4 (Continuous Auras) $\rightarrow$ Layer 5 (Temporary Effects) $\rightarrow$ Layer 6 (Counters / Effective Stats).
-   - **Match State Machine**: Complete turn sequencing spanning Ready Phase, Draw Phase, Main Phase, and End Phase, coupled with a clean-stack execution model (`FR-QUE-001`).
-   - **Deterministic Combat Sequence (`FR-CBT-002`)**: Three distinct combat steps: (1) Declaration & Exhaustion, (2) Reaction & Trigger Window, and (3) Simultaneous Damage Resolution & Retaliation.
+1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.1)**
+   - **Pure Game Rules & Card Taxonomy (`FR-CRD-101`, `FR-ZON-003`)**: Authoritative tabletop and digital game rules defining Cards vs. Battlefield Assets, ownership vs. control, and readiness states without implementation-level JSON schemas or opcode tables.
+   - **Six-Layer Attribute Calculation Rules (`FR-LAY-001` - `FR-LAY-003`)**: Continuous evaluation order across Layers 1–6 with exclusive Combat Power clamping at zero.
+   - **Turn Sequence & Clean-Stack Model (`FR-TRN-001`, `FR-QUE-001`)**: Complete turn sequencing spanning Ready Phase (including start-of-turn triggers), Draw Phase, Main Phase, and End Phase (4a–4d).
+   - **Deterministic Combat Sequence (`FR-CBT-002`)**: Three distinct combat steps: (1) Declaration & Upfront Exhaustion, (2) Reaction & Trigger Window, and (3) Simultaneous Damage Resolution & Symmetric Retaliation.
    - **Canonical Keywords Catalog**: Formal definitions for all 15 core game keywords (Stalwart, Resistant N, Aggressive N, Unbowed, Ward, Ethereal, Cornered, Versatile, Guardian, Armor N, Deploys Exhausted, Scratch N, Regroup N, Berserk).
-   - **Spatial Zone Model**: Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard Pile, and the Resolution Stack.
+   - **Spatial Zone Model**: Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard Pile, Attached Sub-Zone, and the Resolution Stack.
 
 2. **[Card Data Pipeline & Ability Authoring FRD](frd/02_Card_Data_Pipeline_FRD.md) (FRD v1.0)**
    - **Data Authority Lifecycle**: Tier 1 (Cloud Google Sheets) $\rightarrow$ Tier 2 (Repository CSVs) $\rightarrow$ Tier 3 (Compiled Production `blueprints.json`).

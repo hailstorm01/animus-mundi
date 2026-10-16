@@ -3,11 +3,11 @@
 This directory houses the authoritative master specifications and card balance data for Card Town.
 
 ## Master Documentation Architecture
-- **Master Game Rules & Modeling Spec:** `frd/01_Game_Rules_and_Card_Modeling_FRD.md` (match state machine, 3-tier entity taxonomy, 6-layer attribute pipeline, declarative ability schemas).
-- **Master Card Data Pipeline Spec:** `frd/02_Card_Data_Pipeline_FRD.md` (ingestion lifecycle, declarative ability AST, MTG-aligned text standards, review register).
+- **Master Game Rules Spec:** `frd/01_Game_Rules_FRD.md` (pure game rules, card & asset taxonomy, zone topology, turn phases, 6-layer rules, 5-stage damage mitigation, combat, keyword dictionary).
+- **Master Card Data Pipeline Spec:** `frd/02_Card_Data_Pipeline_FRD.md` (ingestion lifecycle, blueprint JSON schema, declarative ability AST, event hooks, 25 atomic primitives, MTG-aligned text standards, review register).
 - **Master Card Compiler Spec:** `frd/03_Card_Compiler_FRD.md` (CLI compiler, parsing grammar, AST synthesis, parity verification, fingerprinting).
 - **Master Networking & Protocol Spec:** `frd/04_Client_Engine_Protocol_Networking_FRD.md` (wire contract, Protobuf schemas, WebSockets, Fog of War, choice prompts).
-- **Master Headless Game Engine Spec:** `frd/05_Headless_Game_Engine_FRD.md` (Go headless kernel, seeded PRNG, transactional state, stack runner, AST evaluator, 6-layer pipeline, test harness).
+- **Master Headless Game Engine Spec:** `frd/05_Headless_Game_Engine_FRD.md` (Go headless kernel, 3-tier runtime memory structs, seeded PRNG, transactional state, stack runner, AST evaluator, stateless 6-layer evaluation, test harness).
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 
 > [!TIP]
