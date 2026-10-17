@@ -66,9 +66,10 @@ Invoke `pm-lead` (`@pm-lead`) when:
 1. **Stakeholder Vision Adaptation:**
    - The user/stakeholder wants to pivot, expand, or contract the product scope (e.g., adding a campaign mode, shifting from WebSockets to WebTransport, pruning complex phases, targeting mobile platforms).
    - Strategic re-prioritization of roadmap phases (e.g., prioritizing the Card Authoring Studio before the Headless Engine).
-2. **Portfolio Synchronization & Spec Maturation:**
-   - A master FRD has been newly drafted, restructured, or audited, and `PRODUCT_SUMMARY.md` needs to be brought into sync with the latest specification reality.
-   - Significant technical milestones are achieved (e.g., Phase 2 Compiler completed), transitioning deliverables from *In Progress* to *Codified* or *Complete*.
+2. **Portfolio Synchronization & Spec Maturation (Human-Prompted Only):**
+   - The user/stakeholder explicitly prompts `@pm-lead` to sync `PRODUCT_SUMMARY.md` with an updated FRD (or confirms a handoff prompt from `pm-frd-drafter`).
+   - Significant technical milestones are achieved, and the stakeholder requests a portfolio reconciliation.
+   - *Guard Rail:* Never triggers autonomously on background FRD commits or edits.
 3. **Executive Portfolio Health Check:**
    - The stakeholder asks for an overall project summary, milestone status, dependency map, or risk analysis across all active and upcoming phases.
 
@@ -142,7 +143,7 @@ Synthesize the agreed changes into a formal **Vision Change Directive** (§5.2) 
 
 ### Runbook B: Portfolio Synchronization via `pm-frd-drafter` Analysis
 
-Execute this procedure when determining the state of `docs/PRODUCT_SUMMARY.md` relative to the most recent version of a given FRD, when master FRDs are completed, or when milestones mature:
+Execute this procedure **only upon explicit human prompt** (e.g., `@pm-lead sync with FRD 05`, or confirming a drafter completion prompt). It never runs autonomously on raw file edits:
 
 ```text
 Portfolio Sync Trigger (New FRD / Audit / Milestone / Check)
@@ -285,8 +286,9 @@ When the stakeholder requests an executive status update or portfolio health che
 
 ## 7. Guard Rails & Integrity Principles
 
+- **Human-Prompted Reconciliation Only:** Extensive reconciliation and synchronization of `docs/PRODUCT_SUMMARY.md` never runs automatically when an FRD is edited or committed. Synchronization executes strictly when a human stakeholder explicitly prompts `@pm-lead`.
 - **No Unilateral Vision Drifts:** Never rewrite core product vision or resequence roadmap phases without explicit stakeholder discussion and confirmation.
 - **Specification-Grounded Updates:** Base updates to `docs/PRODUCT_SUMMARY.md` on verified analysis reports from `pm-frd-drafter` rather than speculative assumptions.
-- **No Specification Stagnation:** Never allow `docs/PRODUCT_SUMMARY.md` to fall out of sync with committed FRDs. As soon as a spec is codified or restructured, synchronize the summary.
+- **No Specification Stagnation:** Never allow `docs/PRODUCT_SUMMARY.md` to fall permanently out of sync with committed FRDs; remind the stakeholder when staleness is detected.
 - **No Scope Explosion:** Actively resist stakeholder ideas that jeopardize active milestones without an explicit agreement to de-scope or defer equivalent work.
 - **No Git Pushes:** Commit locally; leave pushing to the human user.

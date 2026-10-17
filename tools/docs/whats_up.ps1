@@ -132,6 +132,36 @@ function Show-State {
     } else {
         Write-Host "  (tools/audit/audit_status.ps1 not found)"
     }
+
+    # Portfolio sync staleness check (PRODUCT_SUMMARY.md vs FRDs)
+    $sumFile = Join-Path $RepoRoot "docs\PRODUCT_SUMMARY.md"
+    if (Test-Path $sumFile) {
+        $sumTimeRaw = (Get-Git log -1 --format=%ct -- "docs/PRODUCT_SUMMARY.md" | Select-Object -First 1)
+        if ($sumTimeRaw -and ($sumTimeRaw -match '^\d+$')) {
+            $sumTime = [int64]$sumTimeRaw
+            $frdDir = Join-Path $RepoRoot "docs\frd"
+            $staleFrds = @()
+            if (Test-Path $frdDir) {
+                $frdFiles = Get-ChildItem -Path $frdDir -Filter "*.md" -ErrorAction SilentlyContinue
+                foreach ($f in $frdFiles) {
+                    $relFrd = "docs/frd/" + $f.Name
+                    $frdTimeRaw = (Get-Git log -1 --format=%ct -- $relFrd | Select-Object -First 1)
+                    if ($frdTimeRaw -and ($frdTimeRaw -match '^\d+$')) {
+                        if ([int64]$frdTimeRaw -gt $sumTime) {
+                            $staleFrds += $f.Name
+                        }
+                    }
+                }
+            }
+            if ($staleFrds.Count -gt 0) {
+                Write-Host "Portfolio roadmap (docs/PRODUCT_SUMMARY.md): OUT OF SYNC" -ForegroundColor Yellow
+                Write-Host "  Newer commits detected in: $($staleFrds -join ', ')"
+                Write-Host "  (To synchronize, prompt @pm-lead to reconcile with the updated FRD)" -ForegroundColor Gray
+            } else {
+                Write-Host "Portfolio roadmap (docs/PRODUCT_SUMMARY.md): in sync with FRDs"
+            }
+        }
+    }
     Write-Host ""
 }
 

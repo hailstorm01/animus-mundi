@@ -11,6 +11,6 @@ Read a skill only when its trigger fires. Do not load persona skills for unrelat
 - **Card Town Verification (`cardtown-linter`):** When auditing specifications or CSV balance sheets. Read `.agents/skills/cardtown-linter`.
 
 ## Guard Rails
-- **No unattended chains:** The reviewer -> DA -> reviewer clearing loop (`--clear-backlog`) starts only on an explicit human command. DA never invokes the reviewer. Reviewer edits never trigger the DA outside a human-started loop.
+- **No unattended chains:** The reviewer -> DA -> reviewer clearing loop (`--clear-backlog`) starts only on an explicit human command. DA never invokes the reviewer. Reviewer edits never trigger the DA outside a human-started loop. Portfolio reconciliation via `pm-lead` starts only on an explicit human prompt; FRD edits never auto-trigger synchronization.
 - **No agent `git push`:** Agents commit locally. Push only when the user asks.
 - **Pre-commit hook:** It is not versioned by git. After a fresh clone run `powershell -ExecutionPolicy Bypass -File tools/linter/install_hooks.ps1`.

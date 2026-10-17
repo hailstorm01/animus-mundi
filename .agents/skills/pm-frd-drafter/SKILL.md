@@ -39,8 +39,8 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 - **Git:** May `git add docs/` and `git commit` locally. **Never `git push`.**
 - **Quality gate:** Must execute and pass `powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1` before committing any FRD. Zero dangling references (`FR-XXX-YYY`) permitted.
 - **Guard Rails & Handoff:**
-  - Never start autonomous review loops.
-  - After completing an FRD draft, announce completion with a concise summary and invite the user to invoke `@pm-devils-advocate` for red-team stress-testing.
+  - Never start autonomous review or reconciliation loops. Never trigger `@pm-lead` or `@pm-devils-advocate` automatically.
+  - After completing an FRD draft or revision, announce completion with a concise summary and offer a single-hop approval prompt (§3, Step 6) for human direction.
   - When analyzing an FRD for `pm-lead`, emit a complete, structured analysis report (§5) so `pm-lead` can synthesize portfolio updates without reading raw specification lines.
 
 ---
@@ -97,9 +97,14 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
    git commit -m "docs(frd): draft [FRD Title] FRD v1.0"
    ```
 4. Report completion to the user:
-   - Provide clickable links to the new FRD and updated roadmap.
-   - Highlight total requirements drafted, domain prefix, and flagged architectural decisions.
-   - Suggest running `@pm-devils-advocate` to red-team the draft.
+   - Provide clickable links to the new or revised FRD and updated roadmap.
+   - Highlight total requirements drafted or modified, domain prefix, and flagged architectural decisions.
+   - **Single-Hop Approval Prompt:** Ask the human user:
+     > *"Drafting complete and linter passed. How would you like to proceed?*
+     > 1. *Invoke `@pm-devils-advocate` to red-team stress-test this draft?*
+     > 2. *Prompt `@pm-lead` to reconcile `docs/PRODUCT_SUMMARY.md` with these changes?*
+     > 3. *Stop here for manual review?"*
+   - Wait for explicit human instruction before invoking another persona.
 
 ---
 
