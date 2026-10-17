@@ -11,7 +11,7 @@ This document establishes the authoritative technical specification for the card
 1. **Zero-Aliasing Data Contract (`FR-DAT-006`)**: Codified strict enum target conformance across all authoring CSV balance sheets. Prohibited runtime shorthand aliasing; all raw card sheets must directly serialize canonical target enum identifiers (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`; `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`; `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`).
 2. **Deterministic Blueprint ID Derivation (`FR-DAT-002`)**: Formalized a deterministic, immutable blueprint slug derivation algorithm (`<faction>_<snake_case_title>`), decoupling human display titles from engine identity keys while guaranteeing 100% stable serialization.
 3. **Production Blueprint JSON Schema & Ability AST (`FR-DAT-005`, `FR-ABL-001` - `FR-ABL-007`)**: Formalized the production `CardBlueprintCollection` JSON schema and polymorphic declarative schemas (`AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`) across all six ability archetypes (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`).
-4. **Event Hook Taxonomy, Atomic Primitives & Bound Payloads (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Consolidated the canonical engine event/watcher hook catalog, the 25 atomic effect primitives and parameter schemas, bound action payload bindings, and canonical benchmark card AST implementations into the data pipeline bridge (`SOC-002`).
+4. **Event Hook Taxonomy, Atomic Primitives & Bound Payloads (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Consolidated the canonical engine event/watcher hook catalog, the 26 atomic effect primitives and parameter schemas, bound action payload bindings, and canonical benchmark card AST implementations into the data pipeline bridge (`SOC-002`).
 5. **Mechanics Extensions & Resolution Semantics (`FR-ABL-008` - `FR-ABL-012`)**: Formalized engine support for per-turn execution gates (`maxPerTurn`), exhaust-as-cost activation mechanics (`costType: EXHAUST_SELF`), modal branch definitions (`CHOOSE_N`), and distributed pool damage allocations (`DISTRIBUTED_POOL`).
 6. **MTG-Aligned Rules Text Templating Grammar (`FR-TXT-001` - `FR-TXT-006`)**: Established formal English templating standards modeled on Magic: The Gathering (MTG) syntax, standardizing trigger preambles (`When`, `Whenever`, `At`), cost sequencing (`[Cost]: [Effect].`), passive auras (`have`), temporary modifiers (`gets +N power until end of turn`), and canonical keyword capitalization.
 7. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`) & Card Review Register (Domain 7)**: Expanded the automated verification suite (`tools/linter/lint_cardtown.ps1`) and audited all 167 cards across the 10 balance sheets.
@@ -124,6 +124,8 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
 | `deploymentZones` | `Array<DeploymentZoneEnum>` | Valid Enum Array | `["RESERVES"]`, `["MAIN_THEATER"]`, `["HEADQUARTERS"]`, or both. |
 | `rarity` | `RarityEnum` | Valid Enum | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
+| `currentProxy` | `Boolean` | Optional (`true` / `false`) | Development metadata flag indicating placeholder proxy art/design (`FR-VAL-003`). |
+| `needsRework` | `Boolean` | Optional (`true` / `false`) | Development metadata flag indicating pending design rework (`FR-VAL-003`). |
 | `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
 
 ```json
@@ -160,6 +162,8 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
           },
           "rarity": { "type": "string", "enum": ["COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ"] },
           "rulesText": { "type": "string" },
+          "currentProxy": { "type": "boolean" },
+          "needsRework": { "type": "boolean" },
           "abilities": { "type": "array", "items": { "type": "object" } }
         }
       }
@@ -169,16 +173,24 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
 ```
 
 #### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
-To eliminate translation layers and ensure absolute schema fidelity, all authoring CSV files in `data/cards/` use column headers that directly mirror canonical Blueprint JSON property names (`name`, `cardType`, `faction`, `subtypes`, `requisitionCost`, `tacticsCost`, `deploymentZones`, `rulesText`, `power`, `health`, `requisitionYield`, `tacticsYield`, `rarity`, `currentProxy`, `needsRework`). Furthermore, enum cells must strictly serialize canonical target enum strings with zero aliases:
+To eliminate translation layers and ensure absolute 1-to-1 schema fidelity with zero header aliasing, all authoring CSV files in `data/cards/` use camelCase column headers that directly mirror canonical `CardBlueprint` JSON property names (`FR-DAT-005`):
+- **Unit, Structure & Headquarters Sheets (`units-and-structures-*.csv` — 15 columns)**:
+  `"name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","currentProxy","needsRework"`
+- **Maneuver Sheets (`maneuvers-*.csv` — 9 columns)**:
+  `"name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","currentProxy","needsRework"`
+  *(Maneuver sheets omit the 6 battlefield-asset columns, which deterministically compile into `subtypes: []`, `deploymentZones: []`, `power: null`, `health: null`, `requisitionYield: 0`, and `tacticsYield: 0`.)*
+
+Furthermore, enum and boolean cells must strictly serialize canonical target strings with zero aliases:
 1. **`cardType`**: Must equal strictly `UNIT`, `STRUCTURE`, `MANEUVER`, or `HEADQUARTERS`. Values such as `"Unit"`, `"Structure"`, `"Maneuver"`, and `"HQ"` are illegal.
 2. **`faction`**: Must equal strictly `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`. Title-cased values (e.g. `"Animus"`, `"Concordia"`) are illegal.
 3. **`rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
 4. **`deploymentZones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"MAIN_THEATER, RESERVES"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
+5. **`currentProxy` & `needsRework`**: Must equal strictly lowercase `"true"` or `"false"`. Informal boolean strings such as `"Yes"`, `"No"`, `"TRUE"`, or `"FALSE"` are illegal.
 
 #### FR-DAT-007: Subtype & Vanilla Ability Sentinel Normalization
-- **Subtype Taxonomy**: Card subtypes in the `subtypes` (or `Types`) CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
+- **Subtype Taxonomy**: Card subtypes in the `subtypes` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
 - **Null Subtypes Sentinel**: Where a card possesses no subtypes (e.g. Headquarters), the field typically contains the literal sentinel string `"--"`. The ingestion pipeline treats empty strings (`""`), whitespace-only cells, `"N/A"`, and `"--"` identically, normalizing them into an empty array `[]`.
-- **Vanilla Ability Sentinel**: In rules text columns (`rulesText` or `Text`), the sentinel string `"--"` is explicitly recognized as representing a vanilla card with no printed abilities (e.g., *Forest Heavies*, *Old Growth Elders*), compiling into an empty `abilities: []` array.
+- **Vanilla Ability Sentinel**: In the `rulesText` column, the sentinel string `"--"` is explicitly recognized as representing a vanilla card with no printed abilities (e.g., *Forest Heavies*, *Old Growth Elders*, *Spoil Forest Irregulars*), compiling into an empty `abilities: []` array.
 - **Normalization Engine & Casing Semantics**: The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique Title Case strings for serialization and card frame rendering. During engine execution, all subtype filter comparisons (`FilterDef.subtypes`, `FR-TGT-001`) evaluate criteria using case-insensitive string matching to prevent casing mismatches from causing targeting failures.
 
 > [!NOTE]
@@ -252,12 +264,14 @@ In compliance with **FR-TRG-001** through **FR-TRG-007**:
 - Evaluates automatically whenever the engine emits a matching event hook.
 - Enqueues an execution frame onto the Resolution Stack (`FR-QUE-001`) during Sub-Phase 4a or immediately in context.
 - Schema properties:
-  - `triggerHook`: String enum matching `FR-TRG-001` (e.g., `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ATTACK_DECLARE`, `EVENT_ATTACK_RESOLVED`, `EVENT_TAKE_DAMAGE`, `EVENT_ZONE_CHANGE`, `EVENT_EXHAUST`).
-  - `condition`: Declarative condition object (`ConditionDef`) evaluating source, turn context, zone, or Cornered gate (`FR-KWD-002e`).
-  - `targeting`: Optional targeting declaration (`TargetingDef`) if the trigger requires player target selection.
-  - `effect`: Execution payload specifying atomic primitive (`FR-PRM-001`) and parameter bindings.
+  - `triggerHook`: String enum matching `FR-TRG-001` (e.g., `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ATTACK_DECLARE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`, `EVENT_TAKE_DAMAGE`, `EVENT_ZONE_CHANGE`, `EVENT_EXHAUST`, `EVENT_TURN_START`, `EVENT_TURN_END`).
+  - `condition`: Declarative condition object (`ConditionDef`, `FR-ABL-007`) evaluating source, turn context, zone transition, or Cornered gate (`FR-KWD-002e`).
+  - `optional`: Optional boolean (`default: false`) indicating `"you may"` trigger resolution (*Craterfall Ancient*, *Blind Defile*, *Eerie Remnant*).
+  - `optionalCosts`: Optional `Array<CostDef>` for triggers requiring an optional non-resource cost to execute their effect (`"you may [Cost]. If you do, [Effect]"`, e.g., *Infested Apostle*, *Arkha, Sun's Fury*, *Redlined Brawler*, *Blind Defile*).
+  - `targeting`: Optional targeting declaration (`TargetRef`) if the trigger requires player target selection.
+  - `effect`: Execution payload (`EffectDef`, `FR-ABL-007`) specifying an atomic primitive (`FR-PRM-001`) or composite control-flow container (`COMPOSITE_SEQUENCE`, `CONDITIONAL_CLAUSE`).
   - `maxPerTurn`: Optional integer (`>= 1`) restricting maximum trigger frequency per turn (`FR-ABL-008`).
-- **Upfront Target Binding for Conditional Resolution**: For composite triggers where an effect's magnitude or occurrence depends on an action resolved during execution (*Samsara, Living Tempest*), all external targets (e.g. `chosen asset`) are designated and locked upfront when the trigger is enqueued onto the stack (`FR-TGT-101`). During resolution, if the condition is not met (e.g. no maneuver discarded), the conditional damage clause simply does not execute against the pre-locked target, avoiding secondary interactive prompts.
+- **Upfront Target Binding for Conditional Resolution**: For composite triggers where an effect's magnitude or occurrence depends on an action resolved during execution (*Samsara, Living Tempest*, *Infested Apostle*), all external targets (e.g. `chosen asset`, `chosen opposing unit`) are designated and locked upfront when the trigger is enqueued onto the stack (`FR-TGT-101`). During resolution, if the condition or optional cost is not met, the conditional clause simply does not execute against the pre-locked target, avoiding secondary interactive prompts.
 
 #### FR-ABL-003: ActivatedAbilityDef Schema & Cost Models
 In compliance with **FR-ACT-001**, **FR-ACT-002**, and **FR-QUE-001**:
@@ -265,16 +279,19 @@ In compliance with **FR-ACT-001**, **FR-ACT-002**, and **FR-QUE-001**:
 - Schema properties:
   - `costs`: Array of `CostDef` structures requiring simultaneous payment upon declaration (`FR-ABL-007`, `FR-ABL-009`).
   - `targeting`: Universal targeting filter and quantifier (`FR-TGT-001`, `FR-TGT-002`).
-  - `effect`: Execution payload specifying atomic primitives.
+  - `effect`: Execution payload (`EffectDef`) specifying atomic primitives.
   - `repeatable`: Boolean indicating whether the ability may be activated multiple times per turn (default `true` unless constrained by costs or `maxPerTurn`).
 
 #### FR-ABL-004: ContinuousAuraDef Schema & 6-Layer Interfacing
-In compliance with **Section 6.2 of Master FRD v3.0 (`FR-LAY-001` - `FR-LAY-003`)**:
-- Evaluates continuously across board assets, registering static modifiers into Layer 4 (Auras) of the 6-layer attribute pipeline.
+In compliance with **Section 6.2 of Master FRD v3.0 (`FR-LAY-001` - `FR-LAY-003`)**, **FR-CST-001**, and **FR-TRN-003a**:
+- Evaluates continuously across board assets (or in `HAND` / `DISCARD` when `activeZone` is explicitly declared), registering static modifiers into Layer 4 (Auras) of the 6-layer attribute pipeline or granting static zone deployment permissions.
 - Schema properties:
+  - `activeZone`: Optional string enum (`"BATTLEFIELD"` default, `"HAND"`, or `"DISCARD"`). Specifies the zone in which the host card's continuous effect is active (e.g., `"HAND"` for self cost-reduction modifiers on *Swirling Dustdevil* and *Boneyard Amalgam*; `"DISCARD"` for alternate-zone deployment permission on *Veil Render*).
   - `scope`: `SELF`, `ALLIED_IN_ZONE`, `OPPOSING_IN_ZONE`, or `ALL_IN_ZONE`.
-  - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `KEYWORD_GRANT`, `SUBTYPE_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`). (Note: Armor cannot be granted continuously by an aura; it exists strictly as a dynamic entity pool modified via one-shot events).
+  - `filter`: Optional `FilterDef` narrowing which entities within `scope` receive the modifier (e.g., `{ "excludeSelf": true }` on *Animoceps Stalk*, or `{ "subtypes": ["Horror"] }` on *Hulking Incongruity*).
+  - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `REQUISITION_COST`, `TACTICS_COST`, `KEYWORD_GRANT`, `SUBTYPE_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`). Dynamic cost reductions (`REQUISITION_COST`, `TACTICS_COST`) obey a minimum floor of `0` (`FR-CST-001`). (Note: Armor cannot be granted continuously by an aura; it exists strictly as a dynamic entity pool modified via one-shot events).
   - `abilityGrants`: Optional `Array<AbilityDef>` allowing continuous auras to project compound abilities (e.g. conditional keywords such as `Cornered: Resistant 1` on *Ancestral Monument*) onto scoped assets.
+  - `staticPermission`: Optional object `{ "permissionType": "ALLOW_DEPLOY_FROM_ZONE", "sourceZone": "DISCARD", "additionalCosts": Array<CostDef> }` granting permission to deploy the host card from a non-hand zone by paying additional costs (`FR-TRN-003a`, *Veil Render*).
 
 > [!NOTE]
 > **Design Rationale (DA-DAT-004)**: Armor is an ephemeral consumable damage buffer (absorbed 1-for-1 before health deduction in Stage 4 of `FR-REP-004`). It exists strictly as a stateful pool modified via one-shot discrete events (e.g. *"When this unit deploys"*, *"Chosen unit gains 2 armor"*, *"Distribute 2 armor"*). A continuous aura granting "+1 Armor" is semantically equivalent to granting `Resistant 1` (`FR-KWD-002b`); granting dynamic Armor continuously would create undefined state loops (either continually regenerating depleted armor after each combat hit, creating an unintended infinite damage barrier, or requiring complex stateful damage tracking in a stateless aura layer). Defensive continuous auras must instead grant stat modifiers or damage reduction keywords (`Resistant N`, `Stalwart`).
@@ -284,13 +301,13 @@ In compliance with **FR-REP-001** through **FR-REP-004**:
 - Intercepts prospective state events inline (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) without utilizing the Resolution Stack.
 - Schema properties:
   - `interceptHook`: Event hook to intercept.
-  - `condition`: Conjunction condition filter.
-  - `replacementAction`: Atomic mutation substituting the prospective event payload (e.g., `REDIRECT_DAMAGE_TARGET`, `SET_INITIAL_READINESS`, `CANCEL_AND_BOUNCE`).
+  - `condition`: Conjunction condition filter (`ConditionDef`).
+  - `replacementAction`: Atomic mutation (`EffectDef`) substituting the prospective event payload (e.g., `REDIRECT_DAMAGE_TARGET`, `SET_INITIAL_READINESS`, `CANCEL_AND_BOUNCE`).
 
 #### FR-ABL-006: ManeuverEffectDef Schema & Stack Resolution
 In compliance with **FR-MNV-001** and **FR-TRN-003**:
 - Represents the core spell payload executed when a Maneuver card resolves from the top of the Resolution Stack.
-- Supports composite, sequential, and modal payloads (`FR-ABL-010`).
+- Supports `targeting` (`TargetRef` or `Array<TargetRef>`), `effect` (`EffectDef`), and modal payloads (`modalCount`, `options`; `FR-ABL-010`).
 
 ### Section 3.2: Declarative AST Sub-Schemas
 
@@ -304,13 +321,24 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
       "properties": {
         "allegiance": { "type": "string", "enum": ["ALLIED", "OPPOSING", "ANY"] },
         "entityType": { "type": "string", "enum": ["UNIT", "STRUCTURE", "HEADQUARTERS", "ASSET", "CARD"] },
+        "cardType": { "type": "string", "enum": ["UNIT", "STRUCTURE", "MANEUVER", "HEADQUARTERS"] },
         "subtypes": { "type": "array", "items": { "type": "string" } },
         "negateSubtypes": { "type": "boolean" },
+        "excludeSelf": { "type": "boolean" },
         "excludeScratch": { "type": "boolean" },
         "excludeHQ": { "type": "boolean" },
         "excludeUnits": { "type": "boolean" },
         "readiness": { "type": "string", "enum": ["READIED", "EXHAUSTED", "ANY"] },
-        "zone": { "type": "string", "enum": ["SAME_ZONE", "RESERVES", "MAIN_THEATER", "HEADQUARTERS", "DISCARD", "HAND", "DECK"] }
+        "zone": { "type": "string", "enum": ["SAME_ZONE", "RESERVES", "MAIN_THEATER", "HEADQUARTERS", "DISCARD", "HAND", "DECK"] },
+        "statComparison": {
+          "type": "object",
+          "required": ["property", "operator", "value"],
+          "properties": {
+            "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "REQUISITION_COST", "TACTICS_COST"] },
+            "operator": { "type": "string", "enum": ["EQ", "NEQ", "LT", "LTE", "GT", "GTE"] },
+            "value": { "$ref": "#/definitions/ValueToken" }
+          }
+        }
       }
     },
     "ValueToken": {
@@ -320,7 +348,7 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
         "type": { "type": "string", "enum": ["STATIC", "DYNAMIC", "QUERY", "VARIABLE_X"] },
         "value": { "type": "integer" },
         "source": { "type": "string", "enum": ["SELF", "TARGET", "GAME_STATE", "CAUSALITY_CONTEXT"] },
-        "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "BASE_REQUISITION_COST", "BASE_TACTICS_COST"] },
+        "property": { "type": "string", "enum": ["COMBAT_POWER", "CURRENT_HEALTH", "MAX_HEALTH", "BASE_REQUISITION_COST", "BASE_TACTICS_COST", "KILLED_COUNT", "DISCARDED_COUNT"] },
         "query": {
           "type": "object",
           "properties": {
@@ -331,27 +359,66 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
           }
         },
         "filter": { "$ref": "#/definitions/FilterDef" },
-        "multiplier": { "type": "integer" }
+        "multiplier": { "type": "integer" },
+        "divisor": { "type": "integer", "minimum": 1 }
       }
     },
     "CostDef": {
       "type": "object",
       "required": ["costType"],
       "properties": {
-        "costType": { "type": "string", "enum": ["RESOURCE", "EXHAUST_SELF", "KILL_ASSET", "DISCARD_CARD", "SACRIFICE_ALLY"] },
+        "costType": { "type": "string", "enum": ["RESOURCE", "EXHAUST_SELF", "EXHAUST_ASSET", "KILL_ASSET", "DISCARD_CARD", "SACRIFICE_ALLY", "MOVE_CARD_ZONE"] },
         "resource": { "type": "string", "enum": ["REQUISITION", "TACTICS"] },
         "amount": { "type": "integer", "minimum": 1 },
-        "filter": { "$ref": "#/definitions/FilterDef" }
+        "filter": { "$ref": "#/definitions/FilterDef" },
+        "destinationPosition": { "type": "string", "enum": ["TOP", "BOTTOM", "SHUFFLED_IN"] }
       }
     },
     "TargetRef": {
       "type": "object",
       "required": ["selector"],
       "properties": {
-        "selector": { "type": "string", "enum": ["SELF", "CHOSEN", "ALL", "DISTRIBUTED_POOL", "RANDOM"] },
+        "selector": { "type": "string", "enum": ["SELF", "CHOSEN", "ALL", "DISTRIBUTED_POOL", "RANDOM", "BOUND_TARGET", "TRIGGER_EVENT_ENTITY"] },
         "filter": { "$ref": "#/definitions/FilterDef" },
         "count": { "type": "integer", "minimum": 1 },
-        "poolValue": { "type": "integer", "minimum": 1 }
+        "minCount": { "type": "integer", "minimum": 0 },
+        "maxCount": { "type": "integer", "minimum": 1 },
+        "allowedCounts": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+        "poolValue": { "type": "integer", "minimum": 1 },
+        "targetIndex": { "type": "integer", "minimum": 0 },
+        "bindingPolicy": { "type": "string", "enum": ["UPFRONT_LOCK", "ON_RESOLUTION"] }
+      }
+    },
+    "ConditionDef": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string", "enum": ["SELF", "ALLIED", "OPPOSING", "ANY"] },
+        "turnOwner": { "type": "string", "enum": ["SELF", "OPPONENT", "ANY"] },
+        "cornered": { "type": "boolean" },
+        "allegiance": { "type": "string", "enum": ["ALLIED", "OPPOSING", "ANY"] },
+        "entityType": { "type": "string", "enum": ["UNIT", "STRUCTURE", "HEADQUARTERS", "ASSET", "CARD"] },
+        "zone": { "type": "string", "enum": ["SAME_ZONE", "RESERVES", "MAIN_THEATER", "HEADQUARTERS", "DISCARD", "HAND", "DECK"] },
+        "deployedZone": { "type": "string", "enum": ["RESERVES", "MAIN_THEATER"] },
+        "fromZone": { "type": "string", "enum": ["HAND", "DECK", "BATTLEFIELD", "DISCARD", "RESERVES", "MAIN_THEATER"] },
+        "toZone": { "type": "string", "enum": ["HAND", "DECK", "BATTLEFIELD", "DISCARD", "RESERVES", "MAIN_THEATER"] },
+        "targetRef": { "type": "string" },
+        "cardType": { "type": "string", "enum": ["UNIT", "STRUCTURE", "MANEUVER", "HEADQUARTERS"] },
+        "handEmpty": { "type": "boolean" },
+        "filter": { "$ref": "#/definitions/FilterDef" }
+      }
+    },
+    "EffectDef": {
+      "type": "object",
+      "required": ["primitive"],
+      "properties": {
+        "primitive": { "type": "string" },
+        "target": { "$ref": "#/definitions/TargetRef" },
+        "steps": { "type": "array", "items": { "$ref": "#/definitions/EffectDef" } },
+        "condition": { "$ref": "#/definitions/ConditionDef" },
+        "optionalCost": { "$ref": "#/definitions/CostDef" },
+        "effect": { "$ref": "#/definitions/EffectDef" },
+        "ifTrue": { "$ref": "#/definitions/EffectDef" },
+        "ifFalse": { "$ref": "#/definitions/EffectDef" }
       }
     }
   }
@@ -370,21 +437,23 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
 `TriggeredAbilityDef` (`FR-ABL-002`) and `ReplacementWatcherDef` (`FR-ABL-005`) bind strictly to the following canonical event and prospective replacement hook identifiers:
 - **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
 - **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
+  - **Attacker-Only Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: `EVENT_COMBAT_KILL` is emitted strictly when an attacking unit or Headquarters deals lethal combat damage that destroys a defending unit or structure (`"Whenever this [unit/Headquarters] attacks and kills..."`, e.g., *Eternal Watchman*, *Dread Manifestation*). Mutual combat destruction where a defender kills an attacker does not emit `EVENT_COMBAT_KILL` for the defender.
 - **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
 - **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
 - **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
 - **Phase & Turn Lifecycle**: `EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`, `EVENT_TURN_START`, `EVENT_TURN_END`
+  - **Canonical Turn-Boundary Trigger Binding**: Card abilities templated with *"At the start of your turn, ..."* (*Hammerhand Bivouac*) bind strictly to `EVENT_TURN_START` (emitted once in Sub-Phase 1b of the Ready Phase after asset readying), and abilities templated with *"At the end of your turn, ..."* (*Redline Infusion*) bind strictly to `EVENT_TURN_END` (emitted once in Sub-Phase 4a of the End Phase). The phase-entry hooks (`EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`) are reserved for internal engine sub-phase transitions and are never bound simultaneously with `EVENT_TURN_START` / `EVENT_TURN_END` on card triggers.
 - **Prospective Replacement Interception Hooks (`FR-REP-001`)**: `WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`
 
 #### FR-TRG-007: Event Causality Context Lineage
-- Every emitted event and prospective replacement hook carries causal lineage metadata (`parentEventId`, `rootActionId`, and `sourceEntitySnapshot` per `FR-SNP-101`) to enable deterministic replacement evaluation, `CAUSALITY_CONTEXT` `ValueToken` resolution (e.g., *"for each card discarded this way"*), and trigger scope validation.
+- Every emitted event and prospective replacement hook carries causal lineage metadata (`parentEventId`, `rootActionId`, and `sourceEntitySnapshot` per `FR-SNP-101`) to enable deterministic replacement evaluation, `CAUSALITY_CONTEXT` `ValueToken` resolution (e.g., *"for each card discarded this way"*, *"for every 2 units killed this way"*), and trigger scope validation.
 
 #### FR-PRM-001: Standard Atomic Effect Primitives Catalog
-Every `AbilityDef` effect node (`FR-ABL-001`) dispatches to one of the 25 canonical atomic effect primitives (or composite control-flow containers `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE` wrapping these primitives):
+Every `AbilityDef` effect node (`FR-ABL-001`, `EffectDef` in `FR-ABL-007`) dispatches to one of the 26 canonical atomic effect primitives (or composite control-flow containers `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE` wrapping these primitives):
 
 | Primitive | Parameter Schema | Rules & Engine Traceability |
 | :--- | :--- | :--- |
-| `DEAL_DAMAGE` | `amount: ValueToken` | Deals damage routed through the 5-stage mitigation sequence (`FR-REP-004`). |
+| `DEAL_DAMAGE` | `amount: ValueToken, damageSource: TargetRef (optional, defaults to SELF), target: TargetRef (optional)` | Deals damage from `damageSource` routed through the 5-stage mitigation sequence (`FR-REP-004`). |
 | `HEAL` | `amount: ValueToken` | Removes accumulated damage counters up to `amount` (`FR-KWD-002d`). |
 | `ADD_ARMOR` | `amount: ValueToken` | Increments dynamic Armor pool (`FR-KWD-002k`). |
 | `MODIFY_STAT` | `attribute: Enum, amount: ValueToken, duration: Enum` | Modifies stat (`END_OF_TURN`, `END_OF_OPPONENT_TURN`, `persistent`; `FR-LAY-003`). |
@@ -396,7 +465,7 @@ Every `AbilityDef` effect node (`FR-ABL-001`) dispatches to one of the 25 canoni
 | `REVEAL_HAND` | `targetPlayer: Enum, selector: Enum` | Reveals player's hand for inspection and targeted discard (`FR-MOD-001`). |
 | `SCRATCH` | `count: ValueToken` | Sequentially executes `Deploy Scratch Company` (`FR-INH-004`, `FR-KWD-002m`). |
 | `REGROUP` | `count: ValueToken` | Transitions up to `count` chosen exhausted allied assets to `READIED` (`FR-KWD-002n`). |
-| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef` | Deploys matching card suppressing resource costs (`FR-TRN-003a`). |
+| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef, destinationZone: Enum (optional), count: ValueToken (optional)` | Deploys matching card suppressing resource costs, optionally forcing deployment into `destinationZone` (`FR-TRN-003a`). |
 | `SEARCH_DECK` | `filter: FilterDef, destination: Enum` | Searches deck and executes mandatory shuffle (`FR-DEK-001`, `FR-DEK-002`). |
 | `LOOK_TOP_CARDS` | `count: Integer, operations: Array<OpDef>` | Inspects top `count` cards and partitions across destinations (`FR-MOD-001`). |
 | `TUCK_UNDER` | `hostTarget: TargetRef, faceDown: Boolean` | Transitions target card/asset into `ATTACHED` sub-zone under host asset (`FR-ENT-102`). |
@@ -409,6 +478,7 @@ Every `AbilityDef` effect node (`FR-ABL-001`) dispatches to one of the 25 canoni
 | `EXHAUST` | `targetAsset: TargetRef` | Transitions target asset readiness to `EXHAUSTED` (emitting `EVENT_EXHAUST`). |
 | `GRANT_SUBTYPE` | `subtype: String, duration: Enum` | Temporarily grants subtype to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
 | `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum` | Temporarily grants keyword to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
+| `REGISTER_DELAYED_TRIGGER` | `triggerHook: Enum, duration: Enum [END_OF_TURN, NEXT_OCCURRENCE], condition: ConditionDef, effect: EffectDef` | Registers a turn-scoped delayed triggered ability on a bound target or turn boundary (*Rage's Wake*, *Redline Infusion*). |
 
 #### FR-TGT-101: Bound Action Payload & Upfront Target Locking Model
 - Action declarations and trigger target selections bind against the AST via structured payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices` (`FR-ABL-010`), `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SECONDARY_BERSERK_TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`, and optional `allocatedValue` per `FR-ABL-011`), and `deckSelectionIndices`.
@@ -439,29 +509,29 @@ Every `AbilityDef` effect node (`FR-ABL-001`) dispatches to one of the 25 canoni
 
 #### FR-ABL-011: Distributed Pool Value Allocations
 - In compliance with **FR-TGT-002** and **FR-MSG-003**:
-  - Cards distributing a pool of values across multiple targets (*Macrocannon Barrage*: *"Distribute 5 damage among up to 5 chosen units"*, *Hammerhand Bivouac*: *"Distribute 2 armor among allied units in the same zone"*) specify `selector: "DISTRIBUTED_POOL"`.
+  - Cards distributing a pool of values across multiple targets (*Macrocannon Barrage*: *"Distribute 5 damage among up to 5 chosen units"*, *Hammerhand Bivouac*: *"At the start of your turn, distribute 2 armor among allied units in the same zone."*) specify `selector: "DISTRIBUTED_POOL"`.
   - The client provides `TargetBinding` entries where `allocated_value` sums exactly to `poolValue`.
 
 #### FR-ABL-012: Canonical Keyword AST Parameterization
-All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) Appendix A map directly to standardized AST structures:
+All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) Appendix A map deterministically between their `CardBlueprint` JSON serialization (`FR-ABL-001`) and their runtime engine execution semantics:
 
-| Keyword | AST Schema Archetype | Parameterization / Payload |
+| Keyword | Blueprint Serialization Form (`FR-ABL-001`) | Runtime Engine Hook / Execution Semantics |
 | :--- | :--- | :--- |
-| **Unbowed** | `TRIGGERED` | `triggerHook: EVENT_TAKE_DAMAGE`, condition: `damageTaken > 0`. |
-| **Resistant N** | `REPLACEMENT_WATCHER` | `interceptHook: WOULD_TAKE_DAMAGE`, Stage 2 flat reduction `N`. |
-| **Stalwart** | `REPLACEMENT_WATCHER` | `interceptHook: WOULD_TAKE_DAMAGE`, Stage 3 combat cap `min(dmg, 1)`. |
-| **Heal N** | `ATOMIC_PRIMITIVE` | Primitive `HEAL`, amount `N`. |
-| **Cornered** | `CONDITIONAL_GATE` | Gate: `count(opposingAssets) > count(alliedAssets)`. |
-| **Aggressive N** | `TRIGGERED` | `triggerHook: EVENT_ATTACK_DECLARE`, effect `MODIFY_STAT(+N Power)`. |
-| **Ethereal** | `STATIC_RESTRICTION` | Ineligible target for attack declarations (`FR-CBT-001`). |
-| **Ward** | `STATIC_RESTRICTION` | Ineligible target for non-combat enemy selections (`FR-KWD-002h`). |
-| **Versatile** | `CAPABILITY_FLAG` | Unit inherent generator yields either Requisition or Tactics (`FR-CAP-001`). |
-| **Guardian** | `STATIC_RESTRICTION` | Mandatory combat attack target priority when able (`FR-CBT-001`). |
-| **Armor N** | `STATIC_ATTRIBUTE` | Dynamic Armor pool initialized to `N` upon deployment (`FR-REP-004`). |
-| **Deploys Exhausted**| `REPLACEMENT_WATCHER` | `interceptHook: WOULD_DEPLOY`, sets initial readiness to `EXHAUSTED`. |
-| **Scratch N** | `ATOMIC_PRIMITIVE` | Executes `Deploy Scratch Company` `N` times sequentially (`FR-INH-004`). |
-| **Regroup N** | `ATOMIC_PRIMITIVE` | Transitions up to `N` exhausted assets to Readied (`FR-KWD-002n`). |
-| **Berserk** | `STATIC_RESTRICTION` | Enables attack declaration targeting up to 2 assets (`FR-KWD-002o`). |
+| **Unbowed** | `TRIGGERED` (`triggerHook: EVENT_TAKE_DAMAGE`) | Evaluates on `EVENT_TAKE_DAMAGE` when `damageTaken > 0` (`FR-KWD-002a`). |
+| **Resistant N** | `KEYWORD_GRANT` (`keyword: "RESISTANT", parameter: N`) | Registers inline `WOULD_TAKE_DAMAGE` Stage 2 flat reduction `N` (`FR-KWD-002b`). |
+| **Stalwart** | `KEYWORD_GRANT` (`keyword: "STALWART"`) | Registers inline `WOULD_TAKE_DAMAGE` Stage 3 combat damage cap `min(dmg, 1)` (`FR-KWD-002c`). |
+| **Heal N** | `EffectDef` (`primitive: "HEAL", amount: N`) | Atomic effect primitive inside `TRIGGERED`, `ACTIVATED`, or `MANEUVER_EFFECT` (`FR-KWD-002d`). |
+| **Cornered** | `ConditionDef` (`cornered: true`) | Conditional gate (`count(opposingAssets) > count(alliedAssets)`) on `TRIGGERED` or `CONTINUOUS_AURA` (`FR-KWD-002e`). |
+| **Aggressive N** | `KEYWORD_GRANT` (`keyword: "AGGRESSIVE", parameter: N`) | Registers `EVENT_ATTACK_DECLARE` trigger applying `MODIFY_STAT(+N Power)` until end of turn (`FR-KWD-002f`). |
+| **Ethereal** | `KEYWORD_GRANT` (`keyword: "ETHEREAL"`) | Static targeting restriction: ineligible defender for attack declarations (`FR-KWD-002g`, `FR-CBT-001`). |
+| **Ward** | `KEYWORD_GRANT` (`keyword: "WARD"`) | Static targeting restriction: ineligible target for non-combat enemy selections (`FR-KWD-002h`). |
+| **Versatile** | `KEYWORD_GRANT` (`keyword: "VERSATILE"`) | Capability flag: unit inherent generator yields either Requisition or Tactics (`FR-KWD-002i`, `FR-CAP-001`). |
+| **Guardian** | `KEYWORD_GRANT` (`keyword: "GUARDIAN"`) | Static combat restriction: mandatory attack target priority when able (`FR-KWD-002j`, `FR-CBT-001`). |
+| **Armor N** | `KEYWORD_GRANT` (`keyword: "ARMOR", parameter: N`) | Initializes dynamic Armor pool to `N` upon deployment (`FR-KWD-002k`, `FR-REP-004`). |
+| **Deploys Exhausted**| `KEYWORD_GRANT` (`keyword: "DEPLOYS_EXHAUSTED"`) | Registers `WOULD_DEPLOY` replacement setting initial readiness to `EXHAUSTED` (`FR-KWD-002l`). |
+| **Scratch N** | `EffectDef` (`primitive: "SCRATCH", count: N`) | Atomic effect primitive executing `Deploy Scratch Company` `N` times sequentially (`FR-KWD-002m`, `FR-INH-004`). |
+| **Regroup N** | `EffectDef` (`primitive: "REGROUP", count: N`) | Atomic effect primitive transitioning up to `N` exhausted allied assets to `READIED` (`FR-KWD-002n`). |
+| **Berserk** | `KEYWORD_GRANT` (`keyword: "BERSERK"`) | Static combat capability enabling attack declarations targeting up to 2 Main Theater assets (`FR-KWD-002o`). |
 
 - **Dynamic & Continuous Grants**: Keywords and subtypes may also be granted dynamically via atomic primitives `GRANT_KEYWORD` and `GRANT_SUBTYPE` (`FR-PRM-001`) or continuously via `ContinuousAuraDef` modifiers (`KEYWORD_GRANT`, `SUBTYPE_GRANT`) and compound `abilityGrants` (Layer 6; `FR-ABL-004`).
 
@@ -636,6 +706,462 @@ All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)
 }
 ```
 
+#### 5. `Swirling Dustdevil` (Concordia Common Unit - Hand-Active Self Cost Reduction)
+```json
+{
+  "id": "concordia_swirling_dustdevil",
+  "name": "Swirling Dustdevil",
+  "cardType": "UNIT",
+  "faction": "CONCORDIA",
+  "subtypes": ["Elemental"],
+  "requisitionCost": 8,
+  "tacticsCost": 0,
+  "power": 6,
+  "health": 5,
+  "requisitionYield": 2,
+  "tacticsYield": 2,
+  "deploymentZones": ["RESERVES"],
+  "rarity": "COMMON",
+  "rulesText": "This unit costs R1 less to deploy for each maneuver card in your discard pile.",
+  "abilities": [
+    {
+      "abilityType": "CONTINUOUS_AURA",
+      "activeZone": "HAND",
+      "scope": "SELF",
+      "modifiers": [
+        {
+          "attribute": "REQUISITION_COST",
+          "operation": "SUBTRACT",
+          "value": {
+            "type": "QUERY",
+            "source": "GAME_STATE",
+            "query": {
+              "zone": "DISCARD",
+              "filter": { "allegiance": "ALLIED", "entityType": "CARD", "cardType": "MANEUVER" },
+              "aggregate": "COUNT"
+            },
+            "multiplier": 1
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 6. `Veil Render` (Animus Mythic Unit - Discard-Pile Static Deployment Permission)
+```json
+{
+  "id": "animus_veil_render",
+  "name": "Veil Render",
+  "cardType": "UNIT",
+  "faction": "ANIMUS",
+  "subtypes": ["Spirit", "Horror"],
+  "requisitionCost": 3,
+  "tacticsCost": 3,
+  "power": 5,
+  "health": 4,
+  "requisitionYield": 1,
+  "tacticsYield": 2,
+  "deploymentZones": ["RESERVES"],
+  "rarity": "MYTHIC",
+  "rulesText": "You may deploy this card from your discard pile by killing an allied asset in addition to paying its deployment costs.",
+  "abilities": [
+    {
+      "abilityType": "CONTINUOUS_AURA",
+      "activeZone": "DISCARD",
+      "scope": "SELF",
+      "staticPermission": {
+        "permissionType": "ALLOW_DEPLOY_FROM_ZONE",
+        "sourceZone": "DISCARD",
+        "additionalCosts": [
+          { "costType": "KILL_ASSET", "filter": { "allegiance": "ALLIED", "entityType": "ASSET" } }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### 7. `Rage's Wake` (Concordia Common Maneuver - Delayed Trigger & Forced Free-Deploy Zone)
+```json
+{
+  "id": "concordia_rages_wake",
+  "name": "Rage's Wake",
+  "cardType": "MANEUVER",
+  "faction": "CONCORDIA",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 3,
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "COMMON",
+  "rulesText": "Chosen unit gets +2 power until end of turn. When that unit is killed this turn, deploy it from your discard pile to your Reserves for free.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "entityType": "UNIT" },
+        "count": 1
+      },
+      "effect": {
+        "primitive": "COMPOSITE_SEQUENCE",
+        "steps": [
+          {
+            "primitive": "MODIFY_STAT",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+            "attribute": "COMBAT_POWER",
+            "amount": { "type": "STATIC", "value": 2 },
+            "duration": "END_OF_TURN"
+          },
+          {
+            "primitive": "REGISTER_DELAYED_TRIGGER",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+            "triggerHook": "EVENT_DESTROY",
+            "duration": "END_OF_TURN",
+            "condition": { "source": "SELF" },
+            "effect": {
+              "primitive": "DEPLOY_FREE",
+              "sourceZone": "DISCARD",
+              "destinationZone": "RESERVES",
+              "target": { "selector": "SELF" }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### 8. `Funeral Fungus` (Animus Uncommon Maneuver - Additional Enactment Exhaust Cost)
+```json
+{
+  "id": "animus_funeral_fungus",
+  "name": "Funeral Fungus",
+  "cardType": "MANEUVER",
+  "faction": "ANIMUS",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 1,
+  "additionalDeploymentCosts": [
+    {
+      "costType": "EXHAUST_ASSET",
+      "filter": { "allegiance": "ALLIED", "entityType": "UNIT", "readiness": "READIED" }
+    }
+  ],
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "UNCOMMON",
+  "rulesText": "As an additional cost to enact this maneuver, exhaust a readied allied unit.\nReturn chosen unit card from your discard pile to your hand.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "allegiance": "ALLIED", "entityType": "CARD", "cardType": "UNIT", "zone": "DISCARD" },
+        "count": 1
+      },
+      "effect": {
+        "primitive": "RETURN_TO_HAND",
+        "target": { "selector": "BOUND_TARGET", "targetIndex": 0 }
+      }
+    }
+  ]
+}
+```
+
+#### 9. `Infested Apostle` (Animus Common Unit - Optional Non-Resource Trigger Cost)
+```json
+{
+  "id": "animus_infested_apostle",
+  "name": "Infested Apostle",
+  "cardType": "UNIT",
+  "faction": "ANIMUS",
+  "subtypes": ["Fungus", "Mage"],
+  "requisitionCost": 4,
+  "tacticsCost": 0,
+  "power": 4,
+  "health": 5,
+  "requisitionYield": 1,
+  "tacticsYield": 2,
+  "deploymentZones": ["RESERVES"],
+  "rarity": "COMMON",
+  "rulesText": "When this unit deploys, you may kill an allied unit. If you do, deal 2 damage to chosen opposing unit.",
+  "abilities": [
+    {
+      "abilityType": "TRIGGERED",
+      "triggerHook": "EVENT_DEPLOY",
+      "condition": { "source": "SELF" },
+      "optional": true,
+      "optionalCosts": [
+        { "costType": "KILL_ASSET", "filter": { "allegiance": "ALLIED", "entityType": "UNIT" } }
+      ],
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "allegiance": "OPPOSING", "entityType": "UNIT" },
+        "count": 1,
+        "bindingPolicy": "UPFRONT_LOCK"
+      },
+      "effect": {
+        "primitive": "DEAL_DAMAGE",
+        "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+        "amount": { "type": "STATIC", "value": 2 }
+      }
+    }
+  ]
+}
+```
+
+#### 10. `Soul Whip` (Concordia Uncommon Maneuver - Delegated Damage Source)
+```json
+{
+  "id": "concordia_soul_whip",
+  "name": "Soul Whip",
+  "cardType": "MANEUVER",
+  "faction": "CONCORDIA",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 2,
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "UNCOMMON",
+  "rulesText": "Chosen allied unit deals damage equal to its power to chosen opposing unit.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": [
+        { "selector": "CHOSEN", "filter": { "allegiance": "ALLIED", "entityType": "UNIT" }, "count": 1 },
+        { "selector": "CHOSEN", "filter": { "allegiance": "OPPOSING", "entityType": "UNIT" }, "count": 1 }
+      ],
+      "effect": {
+        "primitive": "DEAL_DAMAGE",
+        "damageSource": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+        "target": { "selector": "BOUND_TARGET", "targetIndex": 1 },
+        "amount": {
+          "type": "DYNAMIC",
+          "source": "TARGET",
+          "property": "COMBAT_POWER"
+        }
+      }
+    }
+  ]
+}
+```
+
+#### 11. `Allshan's Battle Trance` (Path Mythic Maneuver - Forced Free-Deploy Destination Zone)
+```json
+{
+  "id": "path_allshans_battle_trance",
+  "name": "Allshan's Battle Trance",
+  "cardType": "MANEUVER",
+  "faction": "PATH",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 4,
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "MYTHIC",
+  "rulesText": "Deploy chosen unit card from your discard pile to the Main Theater. It gains Stalwart and gets +2 power until end of turn.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": { "allegiance": "ALLIED", "entityType": "CARD", "cardType": "UNIT", "zone": "DISCARD" },
+        "count": 1
+      },
+      "effect": {
+        "primitive": "COMPOSITE_SEQUENCE",
+        "steps": [
+          {
+            "primitive": "DEPLOY_FREE",
+            "sourceZone": "DISCARD",
+            "destinationZone": "MAIN_THEATER",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 }
+          },
+          {
+            "primitive": "GRANT_KEYWORD",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+            "keyword": "STALWART",
+            "duration": "END_OF_TURN"
+          },
+          {
+            "primitive": "MODIFY_STAT",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+            "attribute": "COMBAT_POWER",
+            "amount": { "type": "STATIC", "value": 2 },
+            "duration": "END_OF_TURN"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### 12. `Consuming Earth` (Concordia Rare Maneuver - Dynamic Query Stat Comparison Filter)
+```json
+{
+  "id": "concordia_consuming_earth",
+  "name": "Consuming Earth",
+  "cardType": "MANEUVER",
+  "faction": "CONCORDIA",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 3,
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "RARE",
+  "rulesText": "Kill chosen opposing unit with power less than or equal to the total Requisition yield of all structures you control.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": {
+          "allegiance": "OPPOSING",
+          "entityType": "UNIT",
+          "statComparison": {
+            "property": "COMBAT_POWER",
+            "operator": "LTE",
+            "value": {
+              "type": "QUERY",
+              "source": "GAME_STATE",
+              "query": {
+                "zone": "BATTLEFIELD",
+                "filter": { "allegiance": "ALLIED", "entityType": "STRUCTURE" },
+                "aggregate": "SUM_ATTRIBUTE",
+                "targetAttribute": "REQUISITION_YIELD"
+              }
+            }
+          }
+        },
+        "count": 1
+      },
+      "effect": {
+        "primitive": "KILL",
+        "target": { "selector": "BOUND_TARGET", "targetIndex": 0 }
+      }
+    }
+  ]
+}
+```
+
+#### 13. `Tempest Runner` (Concordia Uncommon Unit - `excludeSelf` Targeting Filter)
+```json
+{
+  "id": "concordia_tempest_runner",
+  "name": "Tempest Runner",
+  "cardType": "UNIT",
+  "faction": "CONCORDIA",
+  "subtypes": ["Cavalry", "Tempest"],
+  "requisitionCost": 3,
+  "tacticsCost": 0,
+  "power": 3,
+  "health": 2,
+  "requisitionYield": 1,
+  "tacticsYield": 2,
+  "deploymentZones": ["MAIN_THEATER", "RESERVES"],
+  "rarity": "UNCOMMON",
+  "rulesText": "Exhaust: Regroup another chosen allied unit in the same zone.",
+  "abilities": [
+    {
+      "abilityType": "ACTIVATED",
+      "costs": [
+        { "costType": "EXHAUST_SELF" }
+      ],
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": {
+          "allegiance": "ALLIED",
+          "entityType": "UNIT",
+          "zone": "SAME_ZONE",
+          "readiness": "EXHAUSTED",
+          "excludeSelf": true
+        },
+        "count": 1
+      },
+      "effect": {
+        "primitive": "REGROUP",
+        "target": { "selector": "BOUND_TARGET", "targetIndex": 0 },
+        "count": { "type": "STATIC", "value": 1 }
+      }
+    }
+  ]
+}
+```
+
+#### 14. `Mutation Swell` (Animus Rare Maneuver - Discrete Quantifier `allowedCounts` & Causality Divisor)
+```json
+{
+  "id": "animus_mutation_swell",
+  "name": "Mutation Swell",
+  "cardType": "MANEUVER",
+  "faction": "ANIMUS",
+  "subtypes": [],
+  "requisitionCost": 0,
+  "tacticsCost": 3,
+  "power": null,
+  "health": null,
+  "requisitionYield": 0,
+  "tacticsYield": 0,
+  "deploymentZones": [],
+  "rarity": "RARE",
+  "rulesText": "Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free.",
+  "abilities": [
+    {
+      "abilityType": "MANEUVER_EFFECT",
+      "targeting": {
+        "selector": "CHOSEN",
+        "filter": {
+          "allegiance": "ALLIED",
+          "entityType": "UNIT",
+          "subtypes": ["Scratch Company"]
+        },
+        "allowedCounts": [2, 4]
+      },
+      "effect": {
+        "primitive": "COMPOSITE_SEQUENCE",
+        "steps": [
+          {
+            "primitive": "KILL",
+            "target": { "selector": "BOUND_TARGET", "targetIndex": 0 }
+          },
+          {
+            "primitive": "DEPLOY_FREE",
+            "sourceZone": "DISCARD",
+            "filter": { "allegiance": "ALLIED", "entityType": "CARD", "cardType": "UNIT", "zone": "DISCARD" },
+            "count": {
+              "type": "DYNAMIC",
+              "source": "CAUSALITY_CONTEXT",
+              "property": "KILLED_COUNT",
+              "divisor": 2
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
 ---
 
 ## DOMAIN 5: MTG-ALIGNED RULES TEXT TEMPLATING STANDARD & GRAMMAR
@@ -710,11 +1236,11 @@ The automated linter (`tools/linter/lint_cardtown.ps1`) and compiler pre-flight 
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
 - The compilation pipeline executes automated parity checks ensuring that card abilities defined in text correspond 1-to-1 with compiled AST structures.
-- A card declaring `Stalwart` in rules text must contain a `REPLACEMENT_WATCHER` AST entry with `min(damage, 1)` logic; a card declaring an attack trigger must bind to `EVENT_ATTACK_DECLARE` or `EVENT_ATTACK_RESOLVED`.
+- A card declaring `Stalwart` in rules text must contain a `KEYWORD_GRANT` (`keyword: "STALWART"`) AST entry; a card declaring an attack trigger must bind to `EVENT_ATTACK_DECLARE`, `EVENT_ATTACK_RESOLVED`, or `EVENT_COMBAT_KILL`.
 
 #### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All") & Review Card Compilability
-- **Development & Prototyping Flexibility**: To support rapid game balance exploration and branch prototyping, placeholder or exploratory cards explicitly marked with `currentProxy == TRUE` or `needsRework == TRUE` compile normally into blueprints with `"proxy": true` / `"needsRework": true` metadata flags intact (`FR-CMP-005`). This enables designers to test rough mechanics in development sandboxes without failing local toolchains.
-- **Universal Production Gating**: Release builds and CI production pipelines operating under strict mode (`-Strict`) enforce a zero-tolerance validation gate. Any card possessing incomplete ability logic, unreviewed placeholder text, or marked with `currentProxy == TRUE` / `needsRework == TRUE` triggers compilation error `ERR_STRICT_PROTOTYPE_REJECTED`, guaranteeing zero prototype leakage into release bundles.
+- **Development & Prototyping Flexibility**: To support rapid game balance exploration and branch prototyping, placeholder or exploratory cards explicitly marked with `currentProxy == "true"` or `needsRework == "true"` in `data/cards/*.csv` compile normally into blueprints with `"currentProxy": true` / `"needsRework": true` metadata flags intact (`FR-CMP-005`). This enables designers to test rough mechanics in development sandboxes without failing local toolchains.
+- **Universal Production Gating**: Release builds and CI production pipelines operating under strict mode (`-Strict`) enforce a zero-tolerance validation gate. Any card possessing incomplete ability logic, unreviewed placeholder text, or marked with `currentProxy == "true"` / `needsRework == "true"` triggers compilation error `ERR_STRICT_PROTOTYPE_REJECTED`, guaranteeing zero prototype leakage into release bundles.
 - **Review Card Compilability Contract**: Cards undergoing active game balance or rules text review must maintain complete, functional ability bindings in development builds. Production releases require formal designer sign-off clearing all pending review flags from Domain 7.
 
 > [!NOTE]
@@ -793,6 +1319,7 @@ The following register details all cards where rules text was modified or requir
 | **Stormbolt Ray** | `units-and-structures-concordia.csv` | `when this structure deploys, it deals 3 damage to chosen asset. T2, exhaust: return this structure to its owner's hand.` | `When this structure deploys, deal 3 damage to chosen asset. T2, exhaust: Return this structure to its owner's hand.` | Separated deployment trigger from activated ability onto two lines. |
 | **Furnace Golem** | `units-and-structures-concordia.csv` | `aggressive 2 (gets +2 power until end of turn when it attacks)` | `Aggressive 2` | Reminder text stripped. |
 | **Samsara, Living Tempest** | `units-and-structures-concordia.csv` | `when this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard. If the discarded card was a maneuver, deal 2 damage to chosen asset.` | `Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset.` | Clarified causality of discarded maneuver condition. |
+| **Dread Manifestation** | `units-and-structures-concordia.csv` | `Whenever this unit kills another unit in combat, you may move chosen unit in the Main Theater to its controller's Reserves. Opposing units in the same zone have -2 power.` | `Whenever this unit attacks and kills another unit, you may move chosen unit in the Main Theater to its controller's Reserves. Opposing units in the same zone have -2 power.` | Restricted trigger to attacker-only combat kills (`"attacks and kills"`) matching `EVENT_COMBAT_KILL` (`FR-TRG-001`). |
 | **World Soul Messenger** | `units-and-structures-concordia.csv` | `when this unit deploys, you may search your deck for an Elemental and deploy it for free. If you do, shuffle your deck.` | `When this unit deploys, you may search your deck for an Elemental card and deploy it for free, then shuffle your deck.` | Added explicit shuffle clause required by `FR-DEK-001`. |
 | **Hammerhand Brigands** | `units-and-structures-path.csv` | `unbowed: scratch once` | `Unbowed: Scratch 1.` | Standardized to "Unbowed: Scratch 1.". |
 | **Eerie Remnant** | `units-and-structures-path.csv` | `This unit deploys exhausted. When this unit is put into your discard from your hand, you may deploy it for free instead.` | `Deploys Exhausted When this card is put into your discard pile from your hand, you may deploy it from your discard pile for free.` | Simplified deploy trigger removing "instead" ambiguity; deploys directly from discard pile. |
@@ -805,7 +1332,7 @@ The following register details all cards where rules text was modified or requir
 | **Boneyard Scavenger** | `units-and-structures-path.csv` | `1T, exhaust: kill this unit and return a maneuver from your discard pile to your hand.` | `T1, exhaust, kill this unit: Return chosen maneuver card from your discard pile to your hand.` | Standardized cost ordering and "1T" -> "T1". |
 | **Ancestral Monument** | `units-and-structures-path.csv` | `other allied assets in the same zone as this structure have cornered: resistant 1` | `Other allied assets in the same zone have Cornered: Resistant 1.` | Templated ability grant syntax. |
 | **Devilhorn Guerrillas** | `units-and-structures-path.csv` | `when this unit deploys, if it was deployed to the main theater, deal 2 damage to chosen opposing unit.` | `When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit.` | Title spelling corrected ("Devilhorn Guerrillas"). |
-| **Hammerhand Bivouac** | `units-and-structures-path.csv` | `distribute 1 armor among allied units in the same zone` | `Distribute 2 armor among allied units in the same zone.` | Rebalanced armor pool distribution from 1 to 2 (`FR-ABL-011`). |
+| **Hammerhand Bivouac** | `units-and-structures-path.csv` | `At the start of your turn, distribute 1 armor among allied units in the same zone.` | `At the start of your turn, distribute 2 armor among allied units in the same zone.` | Rebalanced armor pool distribution from 1 to 2 (`FR-ABL-011`). |
 | **Ruin Partisans** | `units-and-structures-path.csv` | `T2, exhaust: kill this unit and return a unit card from your discard pile to your hand.` | `T2, exhaust, kill this unit: Return chosen unit card from your discard pile to your hand.` | Standardized cost ordering. |
 | **Allshan, Chainbreaker Revenant** | `units-and-structures-path.csv` | `unbowed: this unit gains 2 armor cornered: when this unit attacks, it gets +3 power until end of turn.` | `Unbowed: This unit gains 2 armor. Cornered: Whenever this unit attacks, it gets +3 power until end of turn.` | Standardized ability words. |
 | **Solarheart Monk** | `units-and-structures-path.csv` | `when this unit is put into your discard, chosen asset heals 2.` | `When this card is put into your discard pile, chosen asset heals 2.` | Clarified trigger on "this card" rather than "this unit" while entering discard (`FR-ZON-003`). |
@@ -853,7 +1380,7 @@ The following register details all cards where rules text was modified or requir
 | **FR-ABL-012** | Canonical Keyword AST Parameterization | `FR-KWD-002a` through `FR-KWD-002o` |
 | **FR-TRG-001** | Trigger & Replacement Event Hook Taxonomy | `FR-ABL-002`, `FR-ABL-005`, `FR-TRG-003`, `FR-REP-001` |
 | **FR-TRG-007** | Event Causality Context Lineage | `FR-TRG-001`, `FR-SNP-101`, `FR-ABL-007` |
-| **FR-PRM-001** | Standard Atomic Effect Primitives Catalog (25 Opcodes) | `FR-ABL-001`, `FR-ENG-021` |
+| **FR-PRM-001** | Standard Atomic Effect Primitives Catalog (26 Opcodes) | `FR-ABL-001`, `FR-ENG-021` |
 | **FR-TGT-101** | Bound Action Payload & Upfront Target Locking Model | `FR-TGT-001`, `FR-ABL-007`, `FR-MSG-003` |
 | **FR-TXT-001** | MTG-Aligned Sentence Grammar & Punctuation | `FR-CRD-101`, Appendix A |
 | **FR-TXT-002** | Trigger Preambles (`When`, `Whenever`, `At`) | `FR-TRG-001`, `FR-TRN-001`, `FR-CBT-002` |
