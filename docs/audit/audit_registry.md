@@ -1,4 +1,4 @@
-﻿# Audit Registry
+# Audit Registry
 
 This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
@@ -6,6 +6,11 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 
 | Date Generated | Commit Hash | Source Audit File | Target Document | Status | Resolution Date | Resolution Commit | Source of Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-10-17 | `a8723f8` | [`2026-10-17-01_Game_Rules_FRD.md`](pending/2026-10-17-01_Game_Rules_FRD.md) | `docs/frd/01_Game_Rules_FRD.md` | PENDING | - | - | - |
+| 2026-10-17 | `a8723f8` | [`2026-10-17-02_Card_Data_Pipeline_FRD.md`](pending/2026-10-17-02_Card_Data_Pipeline_FRD.md) | `docs/frd/02_Card_Data_Pipeline_FRD.md` | PENDING | - | - | - |
+| 2026-10-17 | `a8723f8` | [`2026-10-17-03_Card_Compiler_FRD.md`](pending/2026-10-17-03_Card_Compiler_FRD.md) | `docs/frd/03_Card_Compiler_FRD.md` | PENDING | - | - | - |
+| 2026-10-17 | `a8723f8` | [`2026-10-17-04_Client_Engine_Protocol_Networking_FRD.md`](pending/2026-10-17-04_Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/04_Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
+| 2026-10-17 | `a8723f8` | [`2026-10-17-05_Headless_Game_Engine_FRD.md`](pending/2026-10-17-05_Headless_Game_Engine_FRD.md) | `docs/frd/05_Headless_Game_Engine_FRD.md` | PENDING | - | - | - |
 | 2026-10-16 | `0c201f4` | `2026-10-16-05_Headless_Game_Engine_FRD.md` | `docs/frd/05_Headless_Game_Engine_FRD.md` | RESOLVED | 2026-10-16 15:02:55 | `a46120b` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-16 | `59cc773` | `Manual (designer review)` | `docs/frd/05_Headless_Game_Engine_FRD.md` | RESOLVED | 2026-10-16 09:51:19 | `cb0cd44` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-15 | `c753018` | `2026-10-15-05_Headless_Game_Engine_FRD.md` | `docs/frd/05_Headless_Game_Engine_FRD.md` | RESOLVED | 2026-10-15 14:05:34 | `568ab87` | Agentic (pm-audit-reviewer) |
