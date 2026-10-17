@@ -345,7 +345,7 @@ function Publish-Workbook([string]$spreadsheetId, [bool]$isNew, $tabs) {
             sheetId = $sheetId; dimension = "COLUMNS"; startIndex = 0; endIndex = $t.Cols } } }
 
         if ($t.Rows.Count -gt 0) {
-            $textCol = [Array]::FindIndex([object[]]$t.Rows[0], [Predicate[object]] { param($h) "$h" -eq "Text" })
+            $textCol = [Array]::FindIndex([object[]]$t.Rows[0], [Predicate[object]] { param($h) "$h" -eq "rulesText" -or "$h" -eq "Text" })
             if ($textCol -ge 0) {
                 $requests += @{ updateDimensionProperties = @{
                     range = @{ sheetId = $sheetId; dimension = "COLUMNS"; startIndex = $textCol; endIndex = $textCol + 1 }

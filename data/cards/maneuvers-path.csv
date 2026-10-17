@@ -1,19 +1,19 @@
-﻿"Name","Card Type","Faction","Requisition Cost","Tactics Cost","Text","Rarity","Current Proxy?","Needs Rework?"
-"Chainbreaker's Tenacity","MANEUVER","PATH","0","1","Chosen allied unit gets +1 power until end of turn and gains 2 armor.","COMMON","Yes","No"
-"Fortify","MANEUVER","PATH","0","1","Chosen allied unit gains 3 armor.","COMMON","Yes","No"
-"Tactical Withdrawal","MANEUVER","PATH","0","1","Return up to one chosen allied unit to its owner's hand. Draw a card.","COMMON","Yes","No"
-"Blindside","MANEUVER","PATH","0","2","Chosen opposing unit gets -3 power until the end of your opponent's turn.","COMMON","Yes","No"
-"Devilhorn Scouting Party","MANEUVER","PATH","0","2","Look at the top 3 cards of your deck. You may deploy a unit card with Requisition cost 3 or less from among them for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.","UNCOMMON","Yes","No"
-"Improvised Orders","MANEUVER","PATH","0","2","Draw 3 cards, then discard a card.","UNCOMMON","Yes","No"
-"Devilhorn Sanction","MANEUVER","PATH","0","3","Kill chosen opposing unit.","UNCOMMON","Yes","No"
-"Pincer Tactics","MANEUVER","PATH","0","3","Deal 1 damage to each of up to 2 chosen allied units. Deal 2 damage to chosen non-Scratch asset.","COMMON","Yes","No"
-"Poisoned Rations","MANEUVER","PATH","0","3","Chosen unit gets -3 max health until end of turn.","RARE","Yes","No"
-"Reaver's Rush","MANEUVER","PATH","0","3","Deploy chosen unit card with power 3 or less from your discard pile for free.","COMMON","Yes","No"
-"Allshan's Battle Trance","MANEUVER","PATH","0","4","Deploy chosen unit card from your discard pile to the Main Theater. It gains Stalwart and gets +2 power until end of turn.","MYTHIC","Yes","No"
+"name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","currentProxy","needsRework"
+"Chainbreaker's Tenacity","MANEUVER","PATH","0","1","Chosen allied unit gets +1 power until end of turn and gains 2 armor.","COMMON","true","false"
+"Fortify","MANEUVER","PATH","0","1","Chosen allied unit gains 3 armor.","COMMON","true","false"
+"Tactical Withdrawal","MANEUVER","PATH","0","1","Return up to one chosen allied unit to its owner's hand. Draw a card.","COMMON","true","false"
+"Blindside","MANEUVER","PATH","0","2","Chosen opposing unit gets -3 power until the end of your opponent's turn.","COMMON","true","false"
+"Devilhorn Scouting Party","MANEUVER","PATH","0","2","Look at the top 3 cards of your deck. You may deploy a unit card with Requisition cost 3 or less from among them for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1.","UNCOMMON","true","false"
+"Improvised Orders","MANEUVER","PATH","0","2","Draw 3 cards, then discard a card.","UNCOMMON","true","false"
+"Devilhorn Sanction","MANEUVER","PATH","0","3","Kill chosen opposing unit.","UNCOMMON","true","false"
+"Pincer Tactics","MANEUVER","PATH","0","3","Deal 1 damage to each of up to 2 chosen allied units. Deal 2 damage to chosen non-Scratch asset.","COMMON","true","false"
+"Poisoned Rations","MANEUVER","PATH","0","3","Chosen unit gets -3 max health until end of turn.","RARE","true","false"
+"Reaver's Rush","MANEUVER","PATH","0","3","Deploy chosen unit card with power 3 or less from your discard pile for free.","COMMON","true","false"
+"Allshan's Battle Trance","MANEUVER","PATH","0","4","Deploy chosen unit card from your discard pile to the Main Theater. It gains Stalwart and gets +2 power until end of turn.","MYTHIC","true","false"
 "Ambush Tactics","MANEUVER","PATH","0","4","Choose two:
 - Kill chosen unit.
 - Return chosen unit to its owner's hand.
-- Chosen unit deals damage equal to its power to chosen unit.
-- Put chosen unit on top of its owner's deck.","RARE","Yes","No"
+- Chosen unit deals damage equal to its power to another chosen unit.
+- Put chosen unit on top of its owner's deck.","RARE","true","false"
 "Steel Rain","MANEUVER","PATH","0","4","Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset.
-Then, if you have no cards in hand, draw 2 cards.","RARE","Yes","No"
+Then, if you have no cards in hand, draw 2 cards.","RARE","true","false"

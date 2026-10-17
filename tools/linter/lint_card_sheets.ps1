@@ -46,11 +46,14 @@ if (-not $csvFiles -or $csvFiles.Count -eq 0) {
 
 Write-Host "  Found $($csvFiles.Count) CSV sheet(s) to audit." -ForegroundColor Gray
 
-# Canonical legal enums (FR-DAT-006, FR-VAL-003)
-$legalCardTypes = @("UNIT", "STRUCTURE", "HEADQUARTERS", "MANEUVER")
-$legalFactions  = @("CONCORDIA", "SOULLESS", "PATH", "ANIMUS", "NEUTRAL")
-$legalRarities  = @("COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ")
-$legalZones     = @("RESERVES", "MAIN_THEATER", "HEADQUARTERS", "MAIN_THEATER, RESERVES")
+# Canonical legal enums and headers (FR-DAT-006, FR-VAL-003)
+$legalCardTypes   = @("UNIT", "STRUCTURE", "HEADQUARTERS", "MANEUVER")
+$legalFactions    = @("CONCORDIA", "SOULLESS", "PATH", "ANIMUS", "NEUTRAL")
+$legalRarities    = @("COMMON", "UNCOMMON", "RARE", "MYTHIC", "HQ")
+$legalZones       = @("RESERVES", "MAIN_THEATER", "HEADQUARTERS", "MAIN_THEATER, RESERVES")
+$legalBooleans    = @("true", "false")
+$expectedAssetHeaders    = @("name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","currentProxy","needsRework")
+$expectedManeuverHeaders = @("name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","currentProxy","needsRework")
 
 foreach ($csv in $csvFiles) {
     try {
@@ -62,8 +65,8 @@ foreach ($csv in $csvFiles) {
         }
 
         # Check for duplicated headers on raw line 1
-        $headerParts = $rawLines[0].Split(',') | ForEach-Object { $_.Trim().Trim('"') }
-        $headerCounts = $headerParts | Group-Object | Where-Object { $_.Count -gt 1 }
+        $headerParts = @($rawLines[0].Split(',') | ForEach-Object { $_.Trim().Trim('"') })
+        $headerCounts = @($headerParts | Group-Object | Where-Object { $_.Count -gt 1 })
         if ($headerCounts.Count -gt 0) {
             Write-Host "  [FAIL] $($csv.Name): Duplicate column headers found: $(($headerCounts.Name) -join ', ')" -ForegroundColor Red
             $hasErrors = $true
@@ -77,8 +80,18 @@ foreach ($csv in $csvFiles) {
             continue
         }
 
+        # Enforce exact camelCase header schema (15-column asset sheets or 9-column maneuver sheets)
+        $expectedHeaders = if ($csv.Name -like "maneuvers-*.csv") { $expectedManeuverHeaders } else { $expectedAssetHeaders }
+        if (($headerParts -join ',') -cne ($expectedHeaders -join ',')) {
+            Write-Host "  [HEADER ERROR] $($csv.Name): Headers do not match canonical camelCase schema." -ForegroundColor Red
+            Write-Host "    Expected: $($expectedHeaders -join ', ')" -ForegroundColor Yellow
+            Write-Host "    Found:    $($headerParts -join ', ')" -ForegroundColor Yellow
+            $hasErrors = $true
+            continue
+        }
+
         # Test Import-Csv
-        $imported = Import-Csv -Path $csv.FullName -ErrorAction Stop
+        $imported = @(Import-Csv -Path $csv.FullName -ErrorAction Stop)
 
         $csvErrors = 0
         for ($i = 0; $i -lt $imported.Count; $i++) {
@@ -107,6 +120,14 @@ foreach ($csv in $csvFiles) {
                     Write-Host "  [ENUM ERROR] $($csv.Name):$rowNum -> Invalid deploymentZones '$($r.deploymentZones)'" -ForegroundColor Red
                     $csvErrors++
                 }
+            }
+            if ($legalBooleans -cnotcontains $r.currentProxy) {
+                Write-Host "  [BOOL ERROR] $($csv.Name):$rowNum -> Invalid currentProxy '$($r.currentProxy)' (must be 'true' or 'false')" -ForegroundColor Red
+                $csvErrors++
+            }
+            if ($legalBooleans -cnotcontains $r.needsRework) {
+                Write-Host "  [BOOL ERROR] $($csv.Name):$rowNum -> Invalid needsRework '$($r.needsRework)' (must be 'true' or 'false')" -ForegroundColor Red
+                $csvErrors++
             }
         }
 
