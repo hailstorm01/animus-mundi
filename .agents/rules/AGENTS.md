@@ -3,8 +3,8 @@
 ## Progressive Skill Routers
 Read a skill only when its trigger fires. Do not load persona skills for unrelated work.
 - **Docs Front Door (`docs-concierge`):** On `@docs-concierge`, or when the user asks what tools/personas exist, what to do next, or how to launch something in the docs workflow. Read `.agents/skills/docs-concierge`.
-- **Product Vision & Portfolio Lead (`pm-lead`):** On `@pm-lead`, or when asked to review or update the product vision, roadmap, or portfolio view in `docs/PRODUCT_SUMMARY.md`, or when the stakeholder wants to adapt the product vision (expand, contract, pivot). Read `.agents/skills/pm-lead`.
-- **FRD Authoring (`pm-frd-drafter`):** On `@pm-frd-drafter`, or when asked to draft, structure, or author a new Functional Requirements Document (FRD) from product vision and roadmap documentation. Read `.agents/skills/pm-frd-drafter`.
+- **Product Vision & Portfolio Lead (`pm-lead`):** On `@pm-lead`, or when asked to review or update the product vision, roadmap, or portfolio view in `docs/PRODUCT_SUMMARY.md`, or when the stakeholder wants to adapt the product vision (expand, contract, pivot). Dispatches FRD state analysis requests to `pm-frd-drafter`. Read `.agents/skills/pm-lead`.
+- **FRD Authoring & Spec Analysis (`pm-frd-drafter`):** On `@pm-frd-drafter`, when asked to draft/structure an FRD from product vision and roadmap documentation, or when requested to analyze and report the current state/drift of an FRD (e.g., for `pm-lead`). Read `.agents/skills/pm-frd-drafter`.
 - **FRD Red-Teaming (`pm-devils-advocate`):** After an agent drafts a new FRD or makes major structural revisions in `docs/frd/` (edits made by `pm-audit-reviewer` do NOT count), or on `@pm-devils-advocate`. Read `.agents/skills/pm-devils-advocate`.
 - **Audit Triage & Resolution (`pm-audit-reviewer`):** Only on `@pm-audit-reviewer` or an explicit user request to review, triage, or resolve audits. Files sitting in `docs/audit/pending/` are NOT a trigger. Read `.agents/skills/pm-audit-reviewer`.
 - **Game Design Escalation (`game-designer`):** On reviewer option `[E]` or `@game-designer`. Read `.agents/skills/game-designer`.
