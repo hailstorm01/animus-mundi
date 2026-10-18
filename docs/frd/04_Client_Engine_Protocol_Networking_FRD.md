@@ -1,4 +1,4 @@
-# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.3)
+# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.4)
 **Master Network Topology, Message Taxonomy, Fog-of-War & Wire Protocol Specification**
 
 ---
@@ -6,6 +6,13 @@
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
 This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Game Rules FRD (`01_Game_Rules_FRD.md`)**, **Card Data Pipeline FRD (`02_Card_Data_Pipeline_FRD.md`)**, **Card Compiler FRD (`03_Card_Compiler_FRD.md`)**, and **Headless Game Engine FRD (`05_Headless_Game_Engine_FRD.md`)**.
+
+### Revision Summary (v1.3 -> v1.4):
+1. **EngineEvent Schema Completeness & Hash Synchronization**: Expanded `EngineEvent.detail` in `FR-MSG-004` to cover all 26 primitives from `FR-PRM-001` and attributes hashed in `FR-PAC-004`, adding `AssetReadinessChangedEvent`, `AssetStatModifiedEvent`, `CardZoneMovedEvent`, `AssetTuckedEvent`, and `DelayedTriggerRegisteredEvent`; added `source_zone` and `source_card_instance_id` to `AssetDeployedEvent` for non-hand free deployments; and consolidated duplicate `AssetToDiscardEvent` from `FR-SEC-002` into canonical `AssetDestroyedEvent` (`DA-NET-001`).
+2. **Missing Wire Message Definitions**: Added complete Protobuf message schemas for `StateSyncSnapshot` (standardizing nomenclature across `FR-SES-005`, `FR-MSG-001`, and `FR-PAC-004`), `PublicStateHash`, `HeartbeatMessage`, and pre-game setup server messages (`FirstPlayerChoicePrompt`, `FirstPlayerDetermined`, `MulliganPrompt`, `MulliganResultNotification`) in `FR-MSG-001` and `FR-MSG-004` (`DA-NET-002`).
+3. **Off-Stack Economic Operation Stack Comments**: Corrected comments in `FR-MSG-002` and `FR-MSG-003` to reflect that `GenerateResourceCommand` and `ConvertResourceCommand` are stack-exempt and do not require an empty resolution stack (`FR-RES-001`, `FR-RES-003`, `FR-CAP-001`, `DA-NET-003`).
+4. **Interactive Choice Serialization & Free Deployments**: Added `allocated_values` and `destination_zone` to `ChoiceResponse` (`FR-MSG-005`), expanded `PartitionedSelection.category_or_zone` to support `"DEPLOY_RESERVES"` and `"DEPLOY_MAIN_THEATER"`, and added `"DISTRIBUTED_POOL_ALLOCATE"` and `"DEPLOY_ZONE_SELECT"` prompt types to `PlayerChoicePrompt` (`DA-NET-004`).
+5. **Attack Command Canonical TargetBinding & Forfeit Reasons**: Unified `AttackCommand` (`FR-MSG-003`) with canonical `repeated TargetBinding target_bindings` architecture, supporting primary targets (`TARGET_ROLE_TARGET`) and secondary Berserk defenders (`TARGET_ROLE_SECONDARY_BERSERK_TARGET`); and added `"FORFEIT_TIMEOUT"` and `"FORFEIT_PROTOCOL_ABUSE"` to `MatchConcludedEvent.conclusion_reason` (`FR-MSG-004`, `DA-NET-005`).
 
 ### Revision Summary (v1.2 -> v1.3):
 1. **Protobuf Tag Collision Fix**: Renumbered `ClientCommand.action` match orchestration and session recovery tags starting at `3` (`match_join = 3` through `request_state_snapshot = 7`) to eliminate duplicate field tags `1` and `2` in `FR-MSG-002` (`DA-NET-001`).
@@ -131,7 +138,7 @@ This document defines the network architecture, communication transport, client-
   - **State Rehydration & Snapshot Rate-Limiting (DA-NET-002)**:
     - If the disconnected player reconnects:
       1. The client sends `ReconnectRequest` with the active `matchAuthToken`.
-      2. The server responds with a complete `FullStateSnapshot` containing:
+      2. The server responds with a complete `StateSyncSnapshot` (`FR-MSG-001`) containing:
          - Match stage enum (`STAGE_FIRST_PLAYER_CHOICE`, `STAGE_MULLIGAN`, `STAGE_MAIN_MATCH`).
          - Setup stage context if reconnecting during pre-game (initial 6-card hand instances, pending `MulliganPrompt` or `FirstPlayerChoicePrompt` with active deadlines).
          - Public board state (all assets across HQ, Reserves, Main Theater).
@@ -141,7 +148,7 @@ This document defines the network architecture, communication transport, client-
          - Active stack items and pending prompts (with remaining deadline).
          - Last processed `sequenceId`.
       3. The client renders the state instantaneously, clears its animation queue, and synchronizes its local timer displays with the server deadlines.
-    - **Snapshot Throttling**: The server authoritatively enforces a rate limit of at most 1 `FullStateSnapshot` per 3,000 ms per client. If a client triggers 3 consecutive desync mismatches within 15 seconds, automated requests are suppressed and the client is placed in a throttled recovery state with a user-facing re-synchronization prompt, mitigating snapshot request storm denial-of-service risks (`DA-NET-002`, `FR-PAC-004`).
+    - **Snapshot Throttling**: The server authoritatively enforces a rate limit of at most 1 `StateSyncSnapshot` per 3,000 ms per client. If a client triggers 3 consecutive desync mismatches within 15 seconds, automated requests are suppressed and the client is placed in a throttled recovery state with a user-facing re-synchronization prompt, mitigating snapshot request storm denial-of-service risks (`DA-NET-002`, `FR-PAC-004`).
 
 > [!NOTE]
 > **Design Rationale (DA-NET-001 & DA-NET-002)**:
@@ -181,47 +188,25 @@ In accordance with **FR-ZON-005**, when a Scratch Company leaves a battlefield z
 
 1. **Departure to Public Zone (`DISCARD`)**:
    - The entity transitions face-up.
-   - The server broadcasts an unmasked `AssetDestroyedEvent` or `ZoneTransitionEvent` to **both** players:
-     ```protobuf
-     message AssetToDiscardEvent {
-       string proxy_asset_id = 1;
-       string destination_zone = 2; // "DISCARD"
-       string revealed_blueprint_id = 3; // e.g. "animus_veil_render"
-       string owner_player_id = 4;
-     }
-     ```
+   - The server broadcasts an unmasked `AssetDestroyedEvent` (`FR-MSG-004`) to **both** players:
+     - `proxy_asset_id`: The battlefield proxy asset ID being destroyed.
+     - `owner_player_id`: The asset owner's player ID.
+     - `destination_zone`: `"DISCARD"`.
+     - `revealed_blueprint_id`: The unmasked canonical blueprint ID (e.g. `"animus_veil_render"`).
    - Both clients play the flip/reveal animation and place the revealed card into the owner's public Discard pile.
 
 2. **Departure to Private Zone (`HAND`, `DECK`)**:
    - When returned/bounced to a private zone (e.g., via *Ambush Tactics*):
-     - **To the Owner's Client**: The server transmits an unmasked transition revealing the card identity and provisioning a new client-visible `cardInstanceId`:
-       ```protobuf
-       message ScratchReturnToOwnerHandEvent {
-         string proxy_asset_id = 1;
-         string new_card_instance_id = 2;
-         string revealed_blueprint_id = 3; // e.g. "animus_veil_render"
-       }
-       ```
-     - **To the Opponent's Client**: The server transmits an opaque transition with zero card identity:
-       ```protobuf
-       message ScratchReturnToOpponentHandEvent {
-         string proxy_asset_id = 1;
-         string destination_zone = 2; // "HAND"
-         int32 opponent_hand_count = 3; // Incremented total
-       }
-       ```
+     - The server broadcasts a `CardZoneMovedEvent` (`FR-MSG-004`):
+       - **To the Owner's Client**: Transmits unmasked transition details revealing the card identity and provisioning a new client-visible `card_instance_id` with `revealed_blueprint_id` populated.
+       - **To the Opponent's Client**: Transmits an opaque transition with zero card identity (`revealed_blueprint_id` scrubbed) and updating opponent hand/deck counts.
 
 3. **Transition to Attached Zone (`ATTACHED` / `NO-AH-5`)**:
    - When tucked under a host entity, the asset has not departed the battlefield context.
-   - The server broadcasts an opaque attachment event to **both** clients:
-     ```protobuf
-     message AssetTuckedEvent {
-       string host_asset_id = 1;
-       string proxy_asset_id = 2;
-       bool is_face_down = 3; // true
-       // revealed_blueprint_id is STRICTLY OMITTED
-     }
-     ```
+   - The server broadcasts an opaque `AssetTuckedEvent` (`FR-MSG-004`) to **both** clients:
+     - `host_asset_id`: The asset receiving the tucked card.
+     - `proxy_asset_id`: The tucked asset proxy ID.
+     - `is_face_down`: `true`.
    - Both clients render a face-down generic card tucked beneath the host. The underlying card identity remains completely concealed from both players.
 
 ---
@@ -274,6 +259,10 @@ message GameEnvelope {
     HeartbeatMessage heartbeat = 24;
     HandshakeAck handshake_ack = 25;
     HandshakeReject handshake_reject = 26;
+    FirstPlayerChoicePrompt first_player_prompt = 27;
+    FirstPlayerDetermined first_player_determined = 28;
+    MulliganPrompt mulligan_prompt = 29;
+    MulliganResultNotification mulligan_result = 30;
   }
 }
 
@@ -298,6 +287,104 @@ message HandshakeReject {
   uint32 expected_protocol_version = 4;
   string expected_catalog_checksum = 5;
 }
+
+message HeartbeatMessage {
+  uint64 ping_epoch_ms = 1;
+  uint64 last_received_ack_seq = 2;
+}
+
+// ============================================================================
+// Pre-Game Setup Server Messages (FR-SES-003, FR-SES-004)
+// ============================================================================
+
+message FirstPlayerChoicePrompt {
+  string prompt_id = 1;
+  uint64 deadline_epoch_ms = 2; // 15-second decision timer (FR-SES-003)
+}
+
+message FirstPlayerDetermined {
+  string first_player_id = 1;
+  bool is_play_first = 2; // true = PLAY_FIRST, false = DRAW_FIRST
+}
+
+message MulliganPrompt {
+  string prompt_id = 1;
+  uint64 deadline_epoch_ms = 2; // 25-second countdown timer (FR-SES-004)
+  repeated string card_instance_ids = 3;
+  repeated string blueprint_ids = 4; // Populated strictly for card owner (FR-SEC-003)
+}
+
+message MulliganResultNotification {
+  string player_id = 1;
+  int32 cards_swapped_count = 2;
+  repeated string finalized_hand_card_instance_ids = 3; // Populated strictly for recipient
+  repeated string finalized_hand_blueprint_ids = 4;     // Scrubbed for opponent (FR-SEC-003)
+}
+
+// ============================================================================
+// State Synchronization & Recovery Schemas (FR-SES-005, FR-PAC-004)
+// ============================================================================
+
+enum MatchStage {
+  MATCH_STAGE_UNSPECIFIED = 0;
+  MATCH_STAGE_FIRST_PLAYER_CHOICE = 1;
+  MATCH_STAGE_MULLIGAN = 2;
+  MATCH_STAGE_MAIN_MATCH = 3;
+  MATCH_STAGE_CONCLUDED = 4;
+}
+
+message PublicStateHash {
+  uint64 hash_value = 1; // 64-bit FNV-1a checksum of Layer 6 public board state (FR-PAC-004)
+  uint64 sequence_id = 2;
+}
+
+message AssetSnapshot {
+  string asset_instance_id = 1;
+  string blueprint_id = 2; // Generic proxy if face-down
+  string controller_player_id = 3;
+  string zone = 4; // "HQ", "RESERVES", "MAIN_THEATER"
+  bool is_readied = 5;
+  int32 current_health = 6;
+  int32 max_health = 7;
+  int32 dynamic_armor = 8;
+  int32 combat_power = 9;
+  repeated string active_keywords = 10;
+  repeated string active_subtypes = 11;
+  bool is_face_down = 12;
+  int32 tucked_card_count = 13;
+}
+
+message CardSnapshot {
+  string card_instance_id = 1;
+  string blueprint_id = 2;
+  int32 current_requisition_cost = 3;
+  int32 current_tactics_cost = 4;
+}
+
+message PlayerStateSnapshot {
+  string player_id = 1;
+  int32 requisition = 2;
+  int32 tactics = 3;
+  uint64 remaining_time_bank_ms = 4; // 60s Reserve Time Bank (FR-SES-005)
+  int32 deck_count = 5;
+  repeated CardSnapshot hand_cards = 6; // Filtered to recipient; empty for opponent
+  int32 hand_count = 7; // Total count visible to opponent
+  repeated string discard_blueprint_ids = 8;
+}
+
+message StateSyncSnapshot {
+  MatchStage match_stage = 1;
+  uint64 last_sequence_id = 2;
+  string active_player_id = 3;
+  string current_phase = 4;
+  uint64 phase_deadline_epoch_ms = 5;
+  repeated PlayerStateSnapshot players = 6;
+  repeated AssetSnapshot battlefield_assets = 7;
+  repeated StackPushedEvent active_stack_items = 8;
+  PlayerChoicePrompt pending_prompt = 9;
+  FirstPlayerChoicePrompt pending_first_player_prompt = 10;
+  MulliganPrompt pending_mulligan_prompt = 11;
+}
 ```
 
 ---
@@ -321,7 +408,7 @@ message ClientCommand {
     ReconnectRequest reconnect_request = 6;
     RequestStateSnapshot request_state_snapshot = 7;
 
-    // Off-Stack Economic Operations (FR-CAP-001, FR-INH-001 - Require Empty Stack, Resolve Immediately Off-Stack)
+    // Off-Stack Economic Operations (FR-RES-001, FR-RES-003, FR-CAP-001 - Stack-Exempt; Do NOT Require Empty Stack, Resolve Immediately Off-Stack)
     GenerateResourceCommand generate_resource = 12;
     ConvertResourceCommand convert_resource = 14;
 
@@ -385,7 +472,7 @@ message RequestStateSnapshot {
 }
 
 // ============================================================================
-// Off-Stack Economic Operations (FR-CAP-001, FR-INH-001 - Require Empty Stack, Resolve Immediately Off-Stack)
+// Off-Stack Economic Operations (FR-RES-001, FR-RES-003, FR-CAP-001 - Stack-Exempt; Do NOT Require Empty Stack, Resolve Immediately Off-Stack)
 // ============================================================================
 
 enum ResourceType {
@@ -419,9 +506,12 @@ message MarchCommand {
 
 message AttackCommand {
   string attacker_asset_id = 1;
-  // Standard attack targets strictly 1 asset or HQ; Berserk units (FR-KWD-002o) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002).
-  // Clamped to max 1 (or max 2 for Berserk); excess targets rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
-  repeated string target_asset_ids = 2; 
+  // Standard attack targets strictly 1 asset or HQ; Berserk units (FR-KWD-002o, FR-ENG-031) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002).
+  // Binds attack targets via canonical TargetBinding architecture:
+  // - Primary target: target_role = TARGET_ROLE_TARGET (Asset or HQ)
+  // - Optional secondary target for Berserk units: target_role = TARGET_ROLE_SECONDARY_BERSERK_TARGET
+  // Clamped to max 1 binding for standard attacks, max 2 for Berserk attacks; excess bindings rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
+  repeated TargetBinding target_bindings = 2;
 }
 
 message DeployScratchCommand {
@@ -507,6 +597,11 @@ message EngineEvent {
     AssetMorphedEvent asset_morphed = 23;
     ControlChangedEvent control_changed = 24;
     TuckedCardsPurgedEvent tucked_cards_purged = 25;
+    AssetReadinessChangedEvent asset_readiness_changed = 26;
+    AssetStatModifiedEvent asset_stat_modified = 27;
+    CardZoneMovedEvent card_zone_moved = 28;
+    AssetTuckedEvent asset_tucked = 29;
+    DelayedTriggerRegisteredEvent delayed_trigger_registered = 30;
   }
 }
 
@@ -568,7 +663,7 @@ message PhaseTransitionEvent {
 message MatchConcludedEvent {
   string winner_player_id = 1;
   bool is_match_draw = 2; // True if simultaneous HQ defeat (FR-CBT-003)
-  string conclusion_reason = 3; // "HQ_DESTROYED", "EMPTY_DECK_DRAW", "CONCEDE"
+  string conclusion_reason = 3; // "HQ_DESTROYED", "EMPTY_DECK_DRAW", "CONCEDE", "FORFEIT_TIMEOUT", "FORFEIT_PROTOCOL_ABUSE"
 }
 
 message CardDrawnEvent {
@@ -591,6 +686,8 @@ message AssetDeployedEvent {
   string controller_player_id = 3;
   string destination_zone = 4; // "RESERVES", "MAIN_THEATER"
   bool is_face_down = 5;
+  string source_zone = 6; // "HAND" (default), "DISCARD", or "DECK" (DEPLOY_FREE; FR-TRN-003a)
+  string source_card_instance_id = 7;
 }
 
 message AssetMorphedEvent {
@@ -612,6 +709,47 @@ message TuckedCardsPurgedEvent {
   repeated string revealed_blueprint_ids = 3;
   string destination_zone = 4; // "DISCARD"
 }
+
+message AssetReadinessChangedEvent {
+  string asset_instance_id = 1;
+  bool is_readied = 2; // true = READIED, false = EXHAUSTED
+  string transition_reason = 3; // "READY_PHASE", "ACTION_EXHAUST", "REGROUP", "ABILITY_EXHAUST"
+}
+
+message AssetStatModifiedEvent {
+  string asset_instance_id = 1;
+  int32 health_delta = 2; // Positive for HEAL, negative for direct health deduction
+  int32 armor_delta = 3;  // Dynamic armor addition (ADD_ARMOR) or expiration
+  int32 combat_power_delta = 4; // MODIFY_STAT Combat Power modification
+  int32 max_health_delta = 5;   // MODIFY_STAT Maximum Health modification
+  repeated string keywords_granted = 6; // Dynamic keywords granted (GRANT_KEYWORD)
+  repeated string subtypes_granted = 7; // Subtypes granted (GRANT_SUBTYPE)
+  string reason = 8; // e.g. "HEAL", "ADD_ARMOR", "MODIFY_STAT", "STAT_EXPIRATION"
+}
+
+message CardZoneMovedEvent {
+  string card_instance_id = 1; // Masked for opponent when moving to/from private zones
+  string source_zone = 2;      // "BATTLEFIELD", "HAND", "DECK", "DISCARD", "ATTACHED"
+  string destination_zone = 3; // "HAND", "DECK", "DISCARD", "ATTACHED"
+  string owner_player_id = 4;
+  string revealed_blueprint_id = 5; // Populated strictly when destination or transition is public (FR-SEC-002)
+  int32 destination_index = 6; // e.g. 0 for top of deck, -1 for bottom of deck
+  bool is_scratch_company = 7; // Indicates Scratch Company bounce/tuck transition
+}
+
+message AssetTuckedEvent {
+  string host_asset_id = 1;
+  string proxy_asset_id = 2;
+  bool is_face_down = 3; // true
+  // revealed_blueprint_id is STRICTLY OMITTED (FR-SEC-002, NO-AH-5)
+}
+
+message DelayedTriggerRegisteredEvent {
+  string trigger_instance_id = 1;
+  string source_asset_or_card_id = 2;
+  string event_hook = 3; // e.g. "EVENT_TURN_START", "EVENT_END_PHASE"
+  string expiration_phase_or_event = 4;
+}
 ```
 
 ---
@@ -625,12 +763,14 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
   message PlayerChoicePrompt {
     string prompt_id = 1;
     // "LOOK_TOP_CARDS", "SEARCH_DECK", "REVEAL_HAND", "MODAL_SELECT",
-    // "TARGET_SELECT", "TRIGGER_ORDER_SELECT", "REPLACEMENT_CONFLICT_SELECT", "OPTIONAL_TRIGGER_CONFIRM"
+    // "TARGET_SELECT", "TRIGGER_ORDER_SELECT", "REPLACEMENT_CONFLICT_SELECT",
+    // "OPTIONAL_TRIGGER_CONFIRM", "DISTRIBUTED_POOL_ALLOCATE", "DEPLOY_ZONE_SELECT"
     string prompt_type = 2;
     uint64 deadline_epoch_ms = 3; // Exact UTC millisecond deadline (FR-MOD-001, FR-PAC-001)
     int32 min_selections = 4;
     int32 max_selections = 5;
     repeated ChoiceOption options = 6;
+    int32 allocatable_pool_value = 7; // Total pool points available for DISTRIBUTED_POOL prompts (FR-ABL-011)
   }
 
   message ChoiceOption {
@@ -641,7 +781,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
   }
 
   message PartitionedSelection {
-    string category_or_zone = 1; // e.g. "HAND", "DISCARD", "TOP_OF_DECK", "BOTTOM_OF_DECK"
+    string category_or_zone = 1; // "HAND", "DISCARD", "TOP_OF_DECK", "BOTTOM_OF_DECK", "DEPLOY_RESERVES", "DEPLOY_MAIN_THEATER"
     repeated int32 option_indices = 2;
   }
 
@@ -652,6 +792,8 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
     repeated PartitionedSelection partitioned_selections = 4; // Multi-destination partitioned choices
     bool pass_or_decline = 5; // True to decline optional prompt
     repeated int32 ordered_trigger_indices = 6; // Stack placement order for simultaneous allied triggers (FR-MSG-005, FR-TRG-002)
+    repeated int32 allocated_values = 7; // Point allocations parallel to selected_option_indices (DISTRIBUTED_POOL; e.g. Hammerhand Bivouac)
+    string destination_zone = 8; // In-resolution deployment zone choice for DEPLOY_FREE (FR-TRN-003a; "RESERVES" or "MAIN_THEATER")
   }
   ```
 - **Deadline Enforcement & Deterministic Fallbacks**: The client UI displays an active countdown based on `deadline_epoch_ms - currentServerTimeMs()`.
@@ -755,7 +897,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 - **Effective Layer 6 Attribute Rule**: To eliminate desync vulnerabilities with masked entities, the state hasher calculates asset Health and Combat Power strictly using post-mask effective values from Layer 6 of the Attribute Pipeline (`FR-LAY-001`, `FR-ENT-101`), guaranteeing 100% hash parity with client-visible proxy states.
 - **Per-Batch Emission**: The hash is transmitted via `ServerEventStream.state_hash` (`FR-MSG-004`).
 - **Immediate Single-Frame Recovery & Rate-Limiting**: The Godot client computes the identical hash across its mirrored public state cache upon draining each event stream batch:
-  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and transmits `RequestStateSnapshot` (`FR-MSG-003`) to receive a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
+  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and transmits `RequestStateSnapshot` (`FR-MSG-003`) to receive a `StateSyncSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
   - **Snapshot Flood Protection**: In accordance with `FR-SES-005` (DA-NET-002), snapshot requests are authoritatively throttled to at most 1 per 3,000 ms, with automated backoff after 3 consecutive failures to eliminate denial-of-service packet storms.
 
 ---
@@ -848,4 +990,4 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 | **FR-CBT-003** | Simultaneous Defeat & Match Draw| Section 4.3 (`MatchConcludedEvent` with `RESULT_MATCH_DRAW`) |
 | **FR-ENT-101** | Scratch Face-Down Wrapper | Section 3.1 (`FR-SEC-001` Opaque proxy ID masking) |
 | **FR-ENT-102** | Tucked Sub-Entities (`NO-AH-5`)| Section 3.1 (`FR-SEC-002` Double-blind attached zone preservation) |
-| **FR-KWD-002o**| Berserk Keyword | Section 4.2 (`AttackCommand.target_asset_ids` multi-target support) |
+| **FR-KWD-002o**| Berserk Keyword | Section 4.2 (`AttackCommand.target_bindings` multi-target support via `TARGET_ROLE_SECONDARY_BERSERK_TARGET`) |
