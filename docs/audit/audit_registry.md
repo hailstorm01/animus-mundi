@@ -8,7 +8,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 2026-10-17 | `a8723f8` | `2026-10-17-01_Game_Rules_FRD.md` | `docs/frd/01_Game_Rules_FRD.md` | RESOLVED | 2026-10-17 13:29:00 | `7fb4c58` | Agentic (pm-audit-reviewer) |
 | 2026-10-17 | `a8723f8` | `2026-10-17-02_Card_Data_Pipeline_FRD.md` | `docs/frd/02_Card_Data_Pipeline_FRD.md` | RESOLVED | 2026-10-17 13:57:02 | `072f5c8` | Agentic (pm-audit-reviewer) |
-| 2026-10-17 | `a8723f8` | [`2026-10-17-03_Card_Compiler_FRD.md`](pending/2026-10-17-03_Card_Compiler_FRD.md) | `docs/frd/03_Card_Compiler_FRD.md` | PENDING | - | - | - |
+| 2026-10-17 | `a8723f8` | `2026-10-17-03_Card_Compiler_FRD.md` | `docs/frd/03_Card_Compiler_FRD.md` | RESOLVED | 2026-10-17 20:57:33 | `52bafec` | Agentic (pm-audit-reviewer + game-designer) |
 | 2026-10-17 | `a8723f8` | [`2026-10-17-04_Client_Engine_Protocol_Networking_FRD.md`](pending/2026-10-17-04_Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/04_Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
 | 2026-10-17 | `a8723f8` | [`2026-10-17-05_Headless_Game_Engine_FRD.md`](pending/2026-10-17-05_Headless_Game_Engine_FRD.md) | `docs/frd/05_Headless_Game_Engine_FRD.md` | PENDING | - | - | - |
 | 2026-10-16 | `0c201f4` | `2026-10-16-05_Headless_Game_Engine_FRD.md` | `docs/frd/05_Headless_Game_Engine_FRD.md` | RESOLVED | 2026-10-16 15:02:55 | `a46120b` | Agentic (pm-audit-reviewer + game-designer) |
