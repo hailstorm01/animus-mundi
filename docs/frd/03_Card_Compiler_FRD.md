@@ -165,9 +165,9 @@ All CSV field coercions, maneuver default values, subtype/sentinel normalization
 
 #### FR-CMP-013: Vanilla Sentinel & Standalone Keyword Lookup
 For cards not present in `ast_overrides.json` (`FR-CMP-017`), the compiler resolves `rulesText` strictly for vanilla sentinels and standalone canonical keywords:
-1. **Vanilla Cards ([`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md))**: If `rulesText` is empty (`""`) or equals the vanilla sentinel `"--"`, the compiler emits `abilities: []` andnormalizes `rulesText` per `FR-DAT-007`.
-2. **Standalone Keyword Lines ([`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md))**: If every line in `rulesText` matches a standalone canonical keyword from `FR-ABL-012` (`Stalwart`, `Resistant N`, `Ward`, `Unbowed`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Berserk`), the compiler emits the corresponding `AbilityDef` entries directly from the `FR-ABL-012` lookup table.
-3. Any card containing non-keyword rules text sentences MUST have a corresponding entry in `data/schemas/ast_overrides.json` (`FR-CMP-017`) or compilation fails with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-019`).
+1. **Vanilla Cards ([`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md))**: If `rulesText` is empty (`""`) or equals the vanilla sentinel `"--"`, the compiler emits `abilities: []` and normalizes the emitted `CardBlueprint.rulesText` string to `""` in `blueprints.json`.
+2. **Standalone Keyword Lines ([`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md))**: If every line in `rulesText` matches a standalone canonical keyword from `FR-ABL-012` (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Berserk`), the compiler emits the corresponding `AbilityDef` entries directly from the `FR-ABL-012` lookup table.
+3. **Mandatory Override Linking**: Any card containing bespoke rules text sentences, triggered preamble abilities (`"Unbowed: [Effect]."` per `FR-KWD-002a`), or Maneuver spell payloads (`FR-ABL-006`) MUST have a corresponding entry in `data/schemas/ast_overrides.json` (`FR-CMP-017`) or compilation fails with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-019`).
 
 #### FR-CMP-014: Triggered & Activated Ability AST Synthesizer
 *(Subsumed by [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-003`](02_Card_Data_Pipeline_FRD.md), [`FR-TGT-101`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
@@ -197,7 +197,7 @@ The compiler joins ingested CSV card rows with their declarative AST definitions
      }
    }
    ```
-2. **Linking by Derived `id`**: When a card's derived `id` (`FR-CMP-006`) exists in `overrides`, the compiler binds `abilities` (and optional `additionalDeploymentCosts`) from the registry entry onto the compiled `CardBlueprint`.
+2. **Linking by Derived `id`**: When a card's derived `id` (`FR-CMP-006`) exists in `overrides`, the compiler binds `abilities` (and optional `additionalDeploymentCosts`) from the registry entry onto the compiled `CardBlueprint`. For hybrid cards containing both a standalone keyword line and non-keyword rules text (e.g., *NO-AH-5*, *Piston Fist Prototype*, *Drifting Concept*), `overrides[id].abilities` must contain the complete AST array, including `KEYWORD_GRANT` nodes for any printed standalone keywords.
 3. **Orphan Override Detection**: Every `<blueprint_id>` key in `ast_overrides.json` must match an ingested CSV row; any unmatched key halts compilation with `ERR_ORPHAN_OVERRIDE`.
 4. **CSV-to-AST `rulesText` Synchronization Check**: The compiler performs a whitespace-normalized string comparison between `overrides[id].rulesText` and the CSV row's `rulesText`. Any divergence halts compilation immediately with `ERR_OVERRIDE_TEXT_MISMATCH`.
 
@@ -213,7 +213,7 @@ The compiler joins ingested CSV card rows with their declarative AST definitions
 #### FR-CMP-019: Forward Parity Verification (Text-to-AST)
 In fulfillment of [`FR-VAL-002`](02_Card_Data_Pipeline_FRD.md), the compiler verifies that every card's printed `rulesText` is accounted for in its compiled blueprint:
 1. **Unmapped Non-Keyword Text**: Any card with non-vanilla, non-standalone-keyword `rulesText` that lacks an entry in `ast_overrides.json` fails compilation with `ERR_PARITY_UNMAPPED_TEXT`.
-2. **Standalone Keyword Coverage**: If a card's `rulesText` includes a standalone keyword line (per `FR-ABL-012`), its compiled `abilities` array must include the corresponding keyword AST node.
+2. **Standalone Keyword Coverage**: If a card's `rulesText` includes a standalone keyword line (per `FR-ABL-012`), its compiled `abilities` array must include the corresponding keyword AST node. For cards in `ast_overrides.json`, omitting a printed standalone keyword line's `KEYWORD_GRANT` node from `overrides[id].abilities` halts compilation with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-027`).
 3. **Canonical Targeting Verb Check**: Under `-Strict`, `rulesText` using non-canonical targeting terminology (e.g., `"target"` instead of `"chosen"` per [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md)) fails with `ERR_PARITY_VERB`.
 
 #### FR-CMP-020: Reverse Parity & Override Sign-Off Verification
@@ -222,7 +222,8 @@ To prevent unprinted abilities or unreviewed AST edits ([`FR-VAL-002`](02_Card_D
 2. **Registry-Linked Cards (`ast_overrides.json`)**: Every entry in `ast_overrides.json` must declare `"parityVerified": true`, a non-empty `verifiedBy`, and an ISO-8601 `verifiedAt` timestamp, in addition to passing the `ERR_OVERRIDE_TEXT_MISMATCH` check (`FR-CMP-017`) and `AbilityDef.schema.json` validation (`FR-CMP-022`). Missing or `false` `"parityVerified"` metadata halts compilation with `ERR_OVERRIDE_UNVERIFIED`.
 
 #### FR-CMP-021: Strict Mode Review Gate
-When invoked with `-Strict`, the compiler checks whether any card carries an unresolved review flag in Domain 7 of [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md) and halts with `ERR_STRICT_UNRESOLVED_REVIEW` if any remain open. In standard mode, open review flags emit non-fatal warnings to stderr.
+*(Subsumed by `FR-CMP-005` and `FR-CMP-020`)*
+- Under `-Strict`, unresolved card review flags and unverified AST definitions are enforced via `currentProxy` / `needsRework` in CSV (`FR-CMP-005`, halting with `ERR_STRICT_PROTOTYPE_REJECTED`) and `parityVerified` in `ast_overrides.json` (`FR-CMP-020`, halting with `ERR_OVERRIDE_UNVERIFIED`).
 
 #### FR-CMP-022: Formal JSON Schema Validation & `-EmitSchemas`
 In fulfillment of [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md) and [`FR-VAL-001`](02_Card_Data_Pipeline_FRD.md), the compiler validates all inputs and outputs against JSON Schema Draft 2020-12 definitions in `data/schemas/`:
@@ -255,15 +256,17 @@ The compiled catalog is emitted to `data/schemas/blueprints.json` matching the r
 2. **Minified Artifact**: When `-Minify` is specified, an unformatted `blueprints.min.json` is also emitted.
 
 #### FR-CMP-024: Canonical JSON Normalization (RFC 8785 JCS)
-Before computing `catalogChecksum`, the compiler serializes the `blueprints` payload in accordance with **RFC 8785 (JSON Canonicalization Scheme)**:
-1. Object keys are sorted lexicographically by UTF-16 code units.
-2. All insignificant whitespace is omitted, and strings are encoded as UTF-8 without BOM.
-3. **Session Caching**: To avoid repeated `csc.exe` startup overhead in PowerShell 5.1/7+, the canonical serializer uses session-cached types or native .NET `System.Text.Json` / `System.Security.Cryptography.SHA256` APIs so pre-commit hook runs stay well within the 5,000 ms budget (`FR-CMP-002`).
+Before computing `catalogChecksum`, the compiler canonicalizes the `blueprints` array in accordance with **RFC 8785 (JSON Canonicalization Scheme)**:
+1. **Target Input Scope**: `catalogChecksum` is computed strictly over the RFC 8785 canonical bytes of the `blueprints` **array** (`[ ... ]`), whose items are sorted lexicographically by `id`. The outer envelope metadata fields (`cardDataVersion`, `generatedAt`, `totalCardCount`) are excluded from this hash.
+2. **Metadata Stripping**: Prior to canonical byte generation, development metadata properties `currentProxy` and `needsRework` are stripped from each `CardBlueprint` object (`FR-DAT-005`), guaranteeing that toggling prototype flags during development never breaks catalog checksum parity.
+3. Object keys within each blueprint object are sorted lexicographically by UTF-16 code units.
+4. All insignificant whitespace is omitted, and strings are encoded as UTF-8 without BOM.
+5. **Session Caching**: To avoid repeated `csc.exe` startup overhead in PowerShell 5.1/7+, the canonical serializer uses session-cached types or native .NET `System.Text.Json` / `System.Security.Cryptography.SHA256` APIs so pre-commit hook runs stay well within the 5,000 ms budget (`FR-CMP-002`).
 
 #### FR-CMP-025: 256-Bit Cryptographic Checksum Computation (`catalogChecksum`)
 In fulfillment of [`FR-DAT-004`](02_Card_Data_Pipeline_FRD.md), [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md), and [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md):
-1. Computes the SHA-256 digest over the RFC 8785 canonical bytes (`FR-CMP-024`).
-2. Formats `catalogChecksum` as a `0x`-prefixed 64-character lowercase hexadecimal string.
+1. Computes the SHA-256 digest over the RFC 8785 canonical bytes of the stripped `blueprints` array (`FR-CMP-024`).
+2. Formats `catalogChecksum` as a `0x`-prefixed 64-character lowercase hexadecimal string stored on the root envelope.
 
 #### FR-CMP-026: Semantic Dataset Versioning Contract (`cardDataVersion`)
 `cardDataVersion` follows Semantic Versioning 2.0 (`MAJOR.MINOR.PATCH`): **MAJOR** for breaking schema changes, **MINOR** for card balance/text/catalog changes, and **PATCH** for non-mechanical tooling or typo fixes. Session handshakes (`FR-SES-001`) verify exact `catalogChecksum` equality.
@@ -297,7 +300,7 @@ On failure, the compiler prints a structured error block to stderr identifying t
 | | `ERR_PARITY_ORPHAN_AST` | Keyword-only/vanilla card contains extraneous AST nodes (`FR-CMP-020`). |
 | | `ERR_PARITY_VERB` | Non-canonical targeting verb under `-Strict` (`FR-CMP-019`). |
 | | `ERR_STRICT_PROTOTYPE_REJECTED`| Card has `currentProxy` or `needsRework` set to `"true"` under `-Strict` (`FR-CMP-005`). |
-| | `ERR_STRICT_UNRESOLVED_REVIEW` | Card has an open review item under `-Strict` (`FR-CMP-021`). |
+| | `ERR_STRICT_UNRESOLVED_REVIEW` | *(Subsumed by `ERR_STRICT_PROTOTYPE_REJECTED` and `ERR_OVERRIDE_UNVERIFIED`; `FR-CMP-021`)*. |
 
 #### FR-CMP-028: Non-Zero Exit Code Contract & CI/CD Integration
 *(Subsumed by `FR-CMP-001` & `FR-CMP-027`)*
@@ -324,7 +327,7 @@ On failure, the compiler prints a structured error block to stderr identifying t
 | **FR-CMP-018** | *(Subsumed by `FR-CMP-017` & FRD 02 Section 4.2)* | `FR-ABL-001` – `FR-ABL-012` |
 | **FR-CMP-019** | Forward Parity Verification (Text-to-AST) | `FR-VAL-002`, `FR-TXT-004` |
 | **FR-CMP-020** | Reverse Parity & Override Sign-Off Verification | `FR-VAL-002`, `FR-CMP-017` |
-| **FR-CMP-021** | Strict Mode Review Gate | `FR-VAL-003` |
+| **FR-CMP-021** | *(Subsumed by `FR-CMP-005` and `FR-CMP-020`)* | `FR-VAL-003`, `FR-CMP-005`, `FR-CMP-020` |
 | **FR-CMP-022** | Formal JSON Schema Validation & `-EmitSchemas` | `FR-DAT-005`, `FR-ABL-001`, `FR-VAL-001` |
 | **FR-CMP-023** | Production Catalog Envelope Emission | `FR-DAT-003`, `FR-DAT-005`, `FR-ENG-001` |
 | **FR-CMP-024** | Canonical JSON Normalization (RFC 8785 JCS) | `FR-DAT-004`, `FR-PAC-004` |
