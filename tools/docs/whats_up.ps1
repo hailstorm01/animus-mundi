@@ -162,6 +162,36 @@ function Show-State {
             }
         }
     }
+
+    # Technical Design Documents (docs/tdd/) status & freshness
+    $tddDir = Join-Path $RepoRoot "docs\tdd"
+    $tddFiles = @()
+    if (Test-Path $tddDir) {
+        $tddFiles = @(Get-ChildItem -Path $tddDir -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "README.md" } | Sort-Object Name)
+    }
+    if ($tddFiles.Count -eq 0) {
+        Write-Host "Technical Design Documents (docs/tdd/): none authored yet (prompt @lead-architect to draft from an FRD)"
+    } else {
+        Write-Host "Technical Design Documents (docs/tdd/): $($tddFiles.Count) authored"
+        foreach ($tf in $tddFiles) {
+            $tLines = [System.IO.File]::ReadAllLines($tf.FullName, [System.Text.Encoding]::UTF8)
+            $srcFrd = "?"
+            $tHash = "?"
+            foreach ($tl in ($tLines | Select-Object -First 30)) {
+                if ($tl -match '^\s*-\s+\*\*Source FRD:\*\*\s*(.+)$') {
+                    if ($Matches[1] -match '(\d{2}_[A-Za-z0-9_]+_FRD\.md)') { $srcFrd = $Matches[1] }
+                }
+                if ($tl -match '^\s*-\s+\*\*FRD Commit Hash:\*\*\s*`?([^`\s]+)`?') { $tHash = $Matches[1].Trim() }
+            }
+            $sliceCnt = @($tLines | Where-Object { $_ -match '^###\s+\[SLICE-\d{2}-\d{2}\]' }).Count
+            $tStale = "CURRENT"
+            if ($srcFrd -ne "?" -and $tHash -match '^[0-9a-f]{7,40}$') {
+                $newer = @(Get-Git log --format="%h" "$tHash..HEAD" -- "docs/frd/$srcFrd")
+                if ($newer.Count -gt 0) { $tStale = "STALE ($($newer.Count) newer FRD commit(s))" }
+            }
+            Write-Host "  - $($tf.Name): Source=$srcFrd | Audited=$tHash | Freshness=$tStale | Slices=$sliceCnt"
+        }
+    }
     Write-Host ""
 }
 

@@ -3,6 +3,7 @@
 # Selectively invokes linters based on staged files.
 
 STAGED_FRD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^docs/frd/.*\.md$')
+STAGED_TDD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^docs/tdd/.*\.md$' | grep -v '^docs/tdd/README\.md$')
 STAGED_CSV=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^data/cards/.*\.csv$')
 
 FAILED=0
@@ -19,7 +20,19 @@ if [ -n "$STAGED_FRD" ]; then
     fi
 fi
 
-# 2. Sheet Integrity & Syntax / Terminology Linters (runs when CSV modified or created)
+# 2. TDD Linter (runs when changes are made to a TDD)
+if [ -n "$STAGED_TDD" ]; then
+    echo "=========================================================="
+    echo "  [Pre-Commit] Staged TDD changes detected. Auditing TDDs..."
+    echo "=========================================================="
+    TDD_LIST=$(echo "$STAGED_TDD" | tr '\n' ',' | sed 's/,$//')
+    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_tdd.ps1 -Files "$TDD_LIST"
+    if [ $? -ne 0 ]; then
+        FAILED=1
+    fi
+fi
+
+# 3. Sheet Integrity & Syntax / Terminology Linters (runs when CSV modified or created)
 if [ -n "$STAGED_CSV" ]; then
     echo "=========================================================="
     echo "  [Pre-Commit] Staged CSV changes detected. Auditing Sheets & Syntax..."

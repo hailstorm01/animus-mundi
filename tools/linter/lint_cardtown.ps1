@@ -1,12 +1,14 @@
 # Card Town Unified Linter & Orchestrator
 # Dispatches to modular linters:
 #   - lint_frd.ps1         (FRD requirement IDs & cross-references)
+#   - lint_tdd.ps1         (TDD requirement coverage, cross-references & slice DAG)
 #   - lint_card_sheets.ps1 (CSV parsing, headers & schema)
 #   - lint_card_syntax.ps1 (Card rules text terminology & syntax)
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1              # Smart-runs only on changed files (Git status)
 #   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1 -FRD         # Audit FRD references only
+#   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1 -TDD         # Audit TDD coverage & slice DAG only
 #   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1 -Cards       # Audit CSV sheet integrity & syntax only
 #   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1 -Sheets      # Audit CSV sheet integrity only
 #   powershell -ExecutionPolicy Bypass -File lint_cardtown.ps1 -Syntax      # Audit card syntax only
@@ -15,6 +17,7 @@
 param(
     [string]$RepoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path,
     [switch]$FRD,
+    [switch]$TDD,
     [switch]$Sheets,
     [switch]$Syntax,
     [switch]$Cards,
@@ -30,18 +33,22 @@ Write-Host "==========================================================" -Foregro
 Write-Host "Repo Root: $RepoRoot`n"
 
 $runFrd = $false
+$runTdd = $false
 $runSheets = $false
 $runSyntax = $false
 $changedFrds = @()
+$changedTdds = @()
 $changedCsvs = @()
 
 # Explicit flags
 if ($All) {
     $runFrd = $true
+    $runTdd = $true
     $runSheets = $true
     $runSyntax = $true
-} elseif ($FRD -or $Sheets -or $Syntax -or $Cards) {
+} elseif ($FRD -or $TDD -or $Sheets -or $Syntax -or $Cards) {
     if ($FRD) { $runFrd = $true }
+    if ($TDD) { $runTdd = $true }
     if ($Sheets -or $Cards) { $runSheets = $true }
     if ($Syntax -or $Cards) { $runSyntax = $true }
 } else {
@@ -59,6 +66,8 @@ if ($All) {
 
                 if ($relPath -match '^docs[/\\]frd[/\\].+\.md$') {
                     $changedFrds += $relPath
+                } elseif ($relPath -match '^docs[/\\]tdd[/\\](?!README\.md$).+\.md$') {
+                    $changedTdds += $relPath
                 } elseif ($relPath -match '^data[/\\]cards[/\\].+\.csv$') {
                     $changedCsvs += $relPath
                 }
@@ -68,14 +77,18 @@ if ($All) {
                 Write-Host "  Detected $($changedFrds.Count) modified/added FRD document(s)." -ForegroundColor Gray
                 $runFrd = $true
             }
+            if ($changedTdds.Count -gt 0) {
+                Write-Host "  Detected $($changedTdds.Count) modified/added TDD document(s)." -ForegroundColor Gray
+                $runTdd = $true
+            }
             if ($changedCsvs.Count -gt 0) {
                 Write-Host "  Detected $($changedCsvs.Count) modified/added Card CSV sheet(s)." -ForegroundColor Gray
                 $runSheets = $true
                 $runSyntax = $true
             }
 
-            if (-not $runFrd -and -not $runSheets) {
-                Write-Host "  No changes detected in docs/frd/ or data/cards/." -ForegroundColor Green
+            if (-not $runFrd -and -not $runTdd -and -not $runSheets) {
+                Write-Host "  No changes detected in docs/frd/, docs/tdd/, or data/cards/." -ForegroundColor Green
                 Write-Host "  Nothing to lint! (Use -All to force a full audit across all files)`n" -ForegroundColor Gray
                 Write-Host "==========================================================" -ForegroundColor Cyan
                 exit 0
@@ -88,6 +101,7 @@ if ($All) {
     } catch {
         Write-Host "  Git change detection unavailable. Running all linters..." -ForegroundColor Yellow
         $runFrd = $true
+        $runTdd = $true
         $runSheets = $true
         $runSyntax = $true
     }
@@ -103,7 +117,19 @@ if ($runFrd) {
     if ($LASTEXITCODE -ne 0) { $anyFailed = $true }
 }
 
-# 2. Card Sheet CSV Integrity Linter
+# 2. TDD Linter
+if ($runTdd) {
+    Write-Host "`n>>> Running TDD Coverage & Slice Manifest Linter..." -ForegroundColor Magenta
+    $tddScript = Join-Path $scriptDir "lint_tdd.ps1"
+    if ($changedTdds.Count -gt 0 -and -not $All) {
+        & powershell -ExecutionPolicy Bypass -File $tddScript -RepoRoot $RepoRoot -Files $changedTdds
+    } else {
+        & powershell -ExecutionPolicy Bypass -File $tddScript -RepoRoot $RepoRoot
+    }
+    if ($LASTEXITCODE -ne 0) { $anyFailed = $true }
+}
+
+# 3. Card Sheet CSV Integrity Linter
 if ($runSheets) {
     Write-Host "`n>>> Running Card Sheet CSV Integrity Linter..." -ForegroundColor Magenta
     $sheetsScript = Join-Path $scriptDir "lint_card_sheets.ps1"
@@ -115,7 +141,7 @@ if ($runSheets) {
     if ($LASTEXITCODE -ne 0) { $anyFailed = $true }
 }
 
-# 3. Card Rules Syntax & Terminology Linter
+# 4. Card Rules Syntax & Terminology Linter
 if ($runSyntax) {
     Write-Host "`n>>> Running Card Rules Syntax & Terminology Linter..." -ForegroundColor Magenta
     $syntaxScript = Join-Path $scriptDir "lint_card_syntax.ps1"
