@@ -105,7 +105,7 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 ### Section 2.1: Target Enum Enforcement
 
 #### FR-DAT-005: Canonical Blueprint JSON Schema Specification
-In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)) and `FR-CMP-023` ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), `data/schemas/blueprints.json` uses the root `CardBlueprintCollection` envelope (`required: ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"]`), where `catalogChecksum` matches `^0x[0-9a-f]{64}$` (`FR-CMP-025`) and every item in `blueprints` conforms to the following `CardBlueprint` schema (`required: ["id", "name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities"]`):
+In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)) and `FR-CMP-023` ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), `data/schemas/blueprints.json` uses the root `CardBlueprintCollection` envelope (`required: ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"]`), where `catalogChecksum` matches `^0x[0-9a-f]{64}$` (`FR-CMP-025`) and every item in `blueprints` conforms to the following `CardBlueprint` schema (`required: ["id", "name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities", "currentProxy", "needsRework"]`):
 
 | Field | Type | Constraint | Description |
 | :--- | :--- | :--- | :--- |
@@ -124,8 +124,8 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
 | `deploymentZones` | `Array<DeploymentZoneEnum>` | Valid Enum Array | `["RESERVES"]`, `["MAIN_THEATER"]`, `["HEADQUARTERS"]`, or both. |
 | `rarity` | `RarityEnum` | Valid Enum | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
-| `currentProxy` | `Boolean` | Optional (`true` / `false`) | Development metadata flag indicating placeholder proxy art/design (`FR-VAL-003`). |
-| `needsRework` | `Boolean` | Optional (`true` / `false`) | Development metadata flag indicating pending design rework (`FR-VAL-003`). |
+| `currentProxy` | `Boolean` | `true` / `false` | Required development metadata flag indicating placeholder proxy art/design (`FR-VAL-003`). Formally excluded from the RFC 8785 canonical hash used for `catalogChecksum` (`FR-CMP-025`). |
+| `needsRework` | `Boolean` | `true` / `false` | Required development metadata flag indicating pending design rework (`FR-VAL-003`). Formally excluded from the RFC 8785 canonical hash used for `catalogChecksum` (`FR-CMP-025`). |
 | `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
 
 #### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
@@ -174,14 +174,14 @@ Every entry in a blueprint's `abilities` array is a polymorphic `AbilityDef` JSO
 In compliance with **FR-TRG-001** through **FR-TRG-007**:
 - Evaluates automatically whenever the engine emits a matching event hook and enqueues an execution frame onto the Resolution Stack (`FR-QUE-001`) during Sub-Phase 4a or immediately in context.
 - **Schema Properties**:
-  - `triggerHook`: String enum matching `FR-TRG-001`.
-  - `condition`: Declarative condition object (`ConditionDef`, `FR-ABL-007`) evaluating source, turn context, zone transition, or Cornered gate (`FR-KWD-002e`).
+  - `triggerHook`: String enum or `Array<String>` matching `FR-TRG-001` (allowing compound preambles such as *"Whenever this unit deploys or attacks"* or *"When this unit deploys or is killed"* to map without redundant nodes).
+  - `condition`: Declarative condition object (`ConditionDef`, `FR-ABL-007`) evaluating source, turn context, zone transition, value comparison, or Cornered gate (`FR-KWD-002e`).
   - `optional`: Optional boolean (`default: false`) indicating `"you may"` trigger resolution (*Craterfall Ancient*, *Blind Defile*, *Eerie Remnant*).
   - `optionalCosts`: Optional `Array<CostDef>` for triggers requiring an optional non-resource cost (`"you may [Cost]. If you do, [Effect]"`, e.g., *Infested Apostle*, *Arkha, Sun's Fury*, *Redlined Brawler*, *Blind Defile*).
   - `targeting`: Optional targeting declaration (`TargetRef`) if the trigger requires player target selection.
   - `effect`: Execution payload (`EffectDef`, `FR-ABL-007`) specifying an atomic primitive (`FR-PRM-001`) or composite control-flow container (`COMPOSITE_SEQUENCE`, `CONDITIONAL_CLAUSE`).
   - `maxPerTurn`: Optional integer (`>= 1`) restricting maximum trigger frequency per turn (`FR-ABL-008`).
-- **Upfront Target Binding for Conditional Resolution**: For composite triggers where an effect's magnitude or occurrence depends on an action resolved during execution (*Samsara, Living Tempest*, *Infested Apostle*), all external targets are designated and locked upfront when the trigger is enqueued onto the stack (`FR-TGT-101`). If the condition or optional cost is not met during resolution, the conditional clause simply does not execute against the pre-locked target.
+- **Upfront Target Binding**: Governed canonically by `FR-TGT-101` and `FR-TGT-001` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)). Targets for conditional triggers are locked upfront upon enqueueing; if the condition is not met at resolution, the conditional clause simply does not execute.
 
 #### FR-ABL-003: ActivatedAbilityDef Schema & Cost Models
 In compliance with **FR-ACT-001**, **FR-ACT-002**, and **FR-QUE-001**:
@@ -205,7 +205,7 @@ In compliance with **Section 6.2 of [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.m
 #### FR-ABL-005: ReplacementWatcherDef Schema & Event Interception
 In compliance with **FR-REP-001** through **FR-REP-004**:
 - Intercepts prospective state events inline (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) without utilizing the Resolution Stack.
-- **Schema Properties**: `interceptHook` (event hook to intercept), `condition` (`ConditionDef`), and `replacementAction` (`EffectDef` substituting the prospective event payload, e.g., `REDIRECT_DAMAGE_TARGET`, `SET_INITIAL_READINESS`, `CANCEL_AND_BOUNCE`).
+- **Schema Properties**: `interceptHook` (event hook to intercept), `condition` (`ConditionDef`), and `replacementAction` (`EffectDef` substituting the prospective event payload, e.g., `REDIRECT_DAMAGE_TARGET`, `EXHAUST`, `RETURN_TO_HAND`).
 
 #### FR-ABL-006: ManeuverEffectDef Schema & Stack Resolution
 In compliance with **FR-MNV-001** and **FR-TRN-003**:
@@ -215,16 +215,17 @@ In compliance with **FR-MNV-001** and **FR-TRN-003**:
 ### Section 3.2: Declarative AST Sub-Schemas
 
 #### FR-ABL-007: Common Declarative AST Types
-All `AbilityDef` nodes compose the following six canonical sub-schemas (validated by `AbilityDef.schema.json` per `FR-CMP-022`):
+All `AbilityDef` nodes compose the following canonical sub-schemas (validated by `AbilityDef.schema.json` per `FR-CMP-022`):
 
 | Sub-Schema | Required | Properties & Enum Constraints |
 | :--- | :--- | :--- |
 | **`FilterDef`** | *none* | `allegiance` (`ALLIED`, `OPPOSING`, `ANY`), `entityType` (`UNIT`, `STRUCTURE`, `HEADQUARTERS`, `ASSET`, `CARD`), `cardType` (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`), `subtypes` (`Array<String>`), `negateSubtypes` (`Boolean`), `excludeSelf` / `excludeScratch` / `excludeHQ` / `excludeUnits` (`Boolean`), `readiness` (`READIED`, `EXHAUSTED`, `ANY`), `zone` (`SAME_ZONE`, `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, `DISCARD`, `HAND`, `DECK`), `statComparison` (`{ property: [COMBAT_POWER, CURRENT_HEALTH, MAX_HEALTH, REQUISITION_COST, TACTICS_COST], operator: [EQ, NEQ, LT, LTE, GT, GTE], value: ValueToken }`). |
-| **`ValueToken`** | `type` | `type` (`STATIC`, `DYNAMIC`, `QUERY`, `VARIABLE_X`), `value` (`Integer`), `source` (`SELF`, `TARGET`, `GAME_STATE`, `CAUSALITY_CONTEXT`), `property` (`COMBAT_POWER`, `CURRENT_HEALTH`, `MAX_HEALTH`, `BASE_REQUISITION_COST`, `BASE_TACTICS_COST`, `KILLED_COUNT`, `DISCARDED_COUNT`), `query` (`{ zone: [ATTACHED, DISCARD, BATTLEFIELD, HAND, RESERVES, MAIN_THEATER], filter: FilterDef, aggregate: [COUNT, SUM_ATTRIBUTE], targetAttribute: [REQUISITION_YIELD, TACTICS_YIELD, COMBAT_POWER, HEALTH] }`), `filter` (`FilterDef`), `multiplier` (`Integer`), `divisor` (`Integer >= 1`). |
-| **`CostDef`** | `costType` | `costType` (`RESOURCE`, `EXHAUST_SELF`, `EXHAUST_ASSET`, `KILL_ASSET`, `DISCARD_CARD`, `SACRIFICE_ALLY`, `MOVE_CARD_ZONE`), `resource` (`REQUISITION`, `TACTICS`), `amount` (`Integer >= 1`), `filter` (`FilterDef`), `destinationPosition` (`TOP`, `BOTTOM`, `SHUFFLED_IN`). |
+| **`ValueToken`** | `type` | `type` (`STATIC`, `DYNAMIC`, `QUERY`, `VARIABLE_X`), `value` (`Integer`), `source` (`SELF`, `TARGET`, `GAME_STATE`, `CAUSALITY_CONTEXT`), `property` (`COMBAT_POWER`, `CURRENT_HEALTH`, `MAX_HEALTH`, `BASE_REQUISITION_COST`, `BASE_TACTICS_COST`, `KILLED_COUNT`, `RETURNED_COUNT`, `DISCARDED_COUNT`), `query` (`{ zone: [ATTACHED, DISCARD, BATTLEFIELD, HAND, RESERVES, MAIN_THEATER], filter: FilterDef, aggregate: [COUNT, SUM_ATTRIBUTE], targetAttribute: [REQUISITION_YIELD, TACTICS_YIELD, COMBAT_POWER, HEALTH] }`), `filter` (`FilterDef`), `multiplier` (`Integer`), `divisor` (`Integer >= 1`). |
+| **`CostDef`** | `costType` | `costType` (`RESOURCE`, `EXHAUST`, `KILL`, `DISCARD_CARD`, `MOVE_CARD_ZONE`), `resource` (`REQUISITION`, `TACTICS`), `amount` (`Integer >= 1`), `target` (`TargetRef` for `EXHAUST`, `KILL`, `MOVE_CARD_ZONE`; `selector: "SELF"` applies to host asset without client prompt, while `selector: "CHOSEN"` validates `filter` and binds via `TARGET_ROLE_EXHAUST_COST` or `TARGET_ROLE_SACRIFICE_COST`), `count` (`Integer >= 1` for `DISCARD_CARD`), `destinationPosition` (`TOP`, `BOTTOM`, `SHUFFLED_IN`). |
 | **`TargetRef`** | `selector` | `selector` (`SELF`, `CHOSEN`, `ALL`, `DISTRIBUTED_POOL`, `RANDOM`, `BOUND_TARGET`, `TRIGGER_EVENT_ENTITY`), `filter` (`FilterDef`), `count` (`Integer >= 1`), `minCount` (`Integer >= 0`), `maxCount` (`Integer >= 1`), `allowedCounts` (`Array<Integer >= 1>`), `poolValue` (`Integer >= 1`), `targetIndex` (`Integer >= 0`), `bindingPolicy` (`UPFRONT_LOCK`, `ON_RESOLUTION`). |
-| **`ConditionDef`** | *none* | `source` (`SELF`, `ALLIED`, `OPPOSING`, `ANY`), `turnOwner` (`SELF`, `OPPONENT`, `ANY`), `cornered` (`Boolean`), `deployedZone` (`RESERVES`, `MAIN_THEATER`), `fromZone` / `toZone` (`HAND`, `DECK`, `BATTLEFIELD`, `DISCARD`, `RESERVES`, `MAIN_THEATER`), `targetRef` (`String`), `handEmpty` (`Boolean`), plus any `FilterDef` predicate (`allegiance`, `entityType`, `cardType`, `zone`, `filter`). |
-| **`EffectDef`** | `primitive` | `primitive` (`String` matching `FR-PRM-001` or `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE`), `target` (`TargetRef`), `steps` (`Array<EffectDef>`), `condition` (`ConditionDef`), `optionalCost` (`CostDef`), `effect` / `ifTrue` / `ifFalse` (`EffectDef`), plus primitive-specific parameters (`FR-PRM-001`). |
+| **`ConditionDef`** | *none* | `source` (`SELF`, `ALLIED`, `OPPOSING`, `ANY`), `turnOwner` (`SELF`, `OPPONENT`, `ANY`), `cornered` (`Boolean`), `deployedZone` (`RESERVES`, `MAIN_THEATER`), `fromZone` / `toZone` (`HAND`, `DECK`, `BATTLEFIELD`, `DISCARD`, `RESERVES`, `MAIN_THEATER`), `targetRef` (`String`), `handEmpty` (`Boolean`), `valueComparison` (`{ property: [KILLED_COUNT, RETURNED_COUNT, DISCARDED_COUNT], operator: [EQ, NEQ, GT, GTE, LT, LTE], value: Integer }`), plus any `FilterDef` predicate (`allegiance`, `entityType`, `cardType`, `zone`, `filter`). |
+| **`EffectDef`** | `primitive` | `primitive` (`String` matching `FR-PRM-001` or `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE`), `target` (`TargetRef`), `repeatCount` (`ValueToken` optional, for looping targeted steps scaled by causality counts), `steps` (`Array<EffectDef>`), `condition` (`ConditionDef`), `optionalCost` (`CostDef`), `effect` / `ifTrue` / `ifFalse` (`EffectDef`), plus primitive-specific parameters (`FR-PRM-001`). |
+| **`PartitionDestDef`** | `action` | `action` (`MOVE_TO_ZONE` default, `DEPLOY_FREE`), `zone` (`HAND`, `DISCARD`, `TOP_OF_DECK`, `BOTTOM_OF_DECK`; required if `MOVE_TO_ZONE`), `destinationZone` (`RESERVES`, `MAIN_THEATER`; optional if `DEPLOY_FREE`), `count` (`Integer` or `"REMAINDER"`), `upTo` (`Boolean`), `filter` (`FilterDef`), `order` (`ANY_ORDER`, `MAINTAIN_ORDER`), `trackAs` (`String`). |
 
 > [!NOTE] Design Rationale (DA-DAT-002)
 > Replaces ad-hoc, card-specific property enums (`COUNT_TUCKED_CARDS`, `COUNT_DISCARD_CARDS`, `COUNT_STRUCTURES_REQUISITION_YIELD`) with a generic, composable `query` object within `ValueToken`. This fulfills the declarative AST mandate (`DA-XP-001`), allowing designers to express entity counts and attribute aggregates without engine recompilation or schema enum expansions.
@@ -237,7 +238,7 @@ All `AbilityDef` nodes compose the following six canonical sub-schemas (validate
 `TriggeredAbilityDef` (`FR-ABL-002`) and `ReplacementWatcherDef` (`FR-ABL-005`) bind strictly to the following canonical event and prospective replacement hook identifiers:
 - **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
 - **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
-  - **Attacker-Only Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: `EVENT_COMBAT_KILL` is emitted strictly when an attacking unit or Headquarters deals lethal combat damage that destroys a defending unit or structure (`"Whenever this [unit/Headquarters] attacks and kills..."`, e.g., *Eternal Watchman*, *Dread Manifestation*). Mutual combat destruction where a defender kills an attacker does not emit `EVENT_COMBAT_KILL` for the defender.
+  - **Attacker-Only Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: Emitted strictly for lethal combat damage dealt by an attacker destroying a defender (`FR-CBT-002`); mutual retaliation destruction of an attacker by a defender does not emit `EVENT_COMBAT_KILL`.
 - **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
 - **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
 - **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
@@ -256,28 +257,28 @@ Every `AbilityDef` effect node (`FR-ABL-001`, `EffectDef` in `FR-ABL-007`) dispa
 | `DEAL_DAMAGE` | `amount: ValueToken, damageSource: TargetRef (optional, defaults to SELF), target: TargetRef (optional)` | Deals damage from `damageSource` routed through the 5-stage mitigation sequence (`FR-REP-004`). |
 | `HEAL` | `amount: ValueToken` | Removes accumulated damage counters up to `amount` (`FR-KWD-002d`). |
 | `ADD_ARMOR` | `amount: ValueToken` | Increments dynamic Armor pool (`FR-KWD-002k`). |
-| `MODIFY_STAT` | `attribute: Enum, amount: ValueToken, duration: Enum` | Modifies stat (`END_OF_TURN`, `END_OF_OPPONENT_TURN`, `persistent`; `FR-LAY-003`). |
-| `MOVE_ZONE` | `destinationZone: Enum` | Transitions unit between `RESERVES` and `MAIN_THEATER` (`FR-ZON-002`). |
+| `MODIFY_STAT` | `attribute: Enum [COMBAT_POWER, MAX_HEALTH], amount: ValueToken, duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN, PERSISTENT]` | Modifies stat through 6-layer pipeline (`FR-LAY-001`, `FR-LAY-003`). |
+| `MOVE_ZONE` | `destinationZone: Enum [RESERVES, MAIN_THEATER, CHOSEN_ZONE]` | Transitions unit between `RESERVES` and `MAIN_THEATER` (`FR-ZON-002`; `CHOSEN_ZONE` bound via `TARGET_ROLE_DESTINATION_ZONE`). |
 | `RETURN_TO_HAND` | `none` | Returns asset to owner's hand and resets dynamic state (`FR-ZON-004`). |
 | `KILL` | `none` | Destroys target asset immediately and routes to owner's `DISCARD` (`FR-ZON-002`). |
-| `DRAW_CARD` | `count: ValueToken` | Draws cards from owner's deck (triggers `FR-WIN-001` on empty deck). |
-| `DISCARD_CARD` | `count: ValueToken, targetPlayer: Enum` | Causes target player to discard cards from hand. |
+| `DRAW_CARD` | `count: ValueToken, targetPlayer: Enum [SELF, OPPONENT, ALL_OPPONENTS] (optional, default: SELF)` | Draws cards from target player's deck (triggers `FR-WIN-001` on empty deck). |
+| `DISCARD_CARD` | `count: ValueToken, targetPlayer: Enum, upTo: Boolean (optional, default: false)` | Causes target player to discard cards from hand. |
 | `REVEAL_HAND` | `targetPlayer: Enum, selector: Enum` | Reveals player's hand for inspection and targeted discard (`FR-MOD-001`). |
 | `SCRATCH` | `count: ValueToken` | Sequentially executes `Deploy Scratch Company` (`FR-INH-004`, `FR-KWD-002m`). |
 | `REGROUP` | `count: ValueToken` | Transitions up to `count` chosen exhausted allied assets to `READIED` (`FR-KWD-002n`). |
-| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef, destinationZone: Enum (optional), count: ValueToken (optional)` | Deploys matching card suppressing resource costs, optionally forcing deployment into `destinationZone` (`FR-TRN-003a`). |
+| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef, destinationZone: Enum (optional), count: ValueToken (optional)` | Deploys matching card suppressing resource and additional costs (`FR-CST-001`), optionally forcing deployment into `destinationZone` (`FR-TRN-003a`). |
 | `SEARCH_DECK` | `filter: FilterDef, destination: Enum` | Searches deck and executes mandatory shuffle (`FR-DEK-001`, `FR-DEK-002`). |
-| `LOOK_TOP_CARDS` | `count: Integer, operations: Array<OpDef>` | Inspects top `count` cards and partitions across destinations (`FR-MOD-001`). |
+| `LOOK_TOP_CARDS` | `count: Integer, partition: { destinations: Array<PartitionDestDef> }` | Inspects top `count` cards and partitions across destinations (`FR-MOD-001`, `FR-ABL-007`). |
 | `TUCK_UNDER` | `hostTarget: TargetRef, faceDown: Boolean` | Transitions target card/asset into `ATTACHED` sub-zone under host asset (`FR-ENT-102`). |
 | `GAIN_CONTROL` | `targetPlayer: Enum` | Transfers controller for an opposing `MAIN_THEATER` unit (`FR-ZON-002`). |
 | `MORPH_SCRATCH` | `none` | Transforms unit face-down into a `1/1/1/1` Scratch Company (`FR-ENT-103`). |
 | `GENERATE_RESOURCE` | `resourceType: Enum, amount: ValueToken` | Adds resources to active player's temporary pool (`FR-RES-001`). |
 | `RECYCLE_DISCARD_TO_DECK` | `targetPlayer: Enum` | Transfers `DISCARD` pile into `DECK` with mandatory shuffle (`FR-DEK-002`). |
 | `REDIRECT_DAMAGE_TARGET` | `newTarget: TargetRef` | Intercepts incoming damage in Stage 1 and re-routes to `newTarget` (`FR-REP-004`). |
-| `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], targetCard: TargetRef` | Places target card at specified deck position (`FR-DEK-001`). |
-| `EXHAUST` | `targetAsset: TargetRef` | Transitions target asset readiness to `EXHAUSTED` (emitting `EVENT_EXHAUST`). |
-| `GRANT_SUBTYPE` | `subtype: String, duration: Enum` | Temporarily grants subtype to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
-| `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum` | Temporarily grants keyword to target asset (`END_OF_TURN`, `END_OF_OPPONENT_TURN`). |
+| `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], target: TargetRef (optional)` | Places target card at specified deck position (`FR-DEK-001`). |
+| `EXHAUST` | `target: TargetRef (optional)` | Transitions target asset readiness to `EXHAUSTED` (emitting `EVENT_EXHAUST`). |
+| `GRANT_SUBTYPE` | `subtype: String, duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN]` | Temporarily grants subtype to target asset (`FR-LAY-001`). |
+| `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN]` | Temporarily grants keyword to target asset (`FR-LAY-001`). |
 | `REGISTER_DELAYED_TRIGGER` | `triggerHook: Enum, duration: Enum [END_OF_TURN, NEXT_OCCURRENCE], condition: ConditionDef, effect: EffectDef` | Registers a turn-scoped delayed triggered ability on a bound target or turn boundary (*Rage's Wake*, *Redline Infusion*). |
 
 #### FR-TGT-101: Bound Action Payload & Upfront Target Locking Model
@@ -294,7 +295,7 @@ Every `AbilityDef` effect node (`FR-ABL-001`, `EffectDef` in `FR-ABL-007`) dispa
 - `TriggeredAbilityDef` (`FR-ABL-002`) and `ActivatedAbilityDef` (`FR-ABL-003`) support `maxPerTurn: Integer` (e.g., *Animoceps Rager*: *"This ability triggers only once each turn"*). The engine increments `turnActivationCount` per `AssetInstance`, suppresses execution once `maxPerTurn` is reached, and resets counters during the Ready Phase (`FR-TRN-001`).
 
 #### FR-ABL-009: Exhaust-Self as Ability Cost Model
-- `CostDef` with `costType: "EXHAUST_SELF"` (`FR-ABL-007`) requires host `readiness == READIED`, transitions readiness to `EXHAUSTED` upon declaration (`EVENT_EXHAUST`), and may combine with resource payments (e.g., `[R1, EXHAUST_SELF]` on *Dolus Macrocannon*).
+- `CostDef` with `costType: "EXHAUST"` and `target: { selector: "SELF" }` (`FR-ABL-007`) requires host `readiness == READIED`, transitions readiness to `EXHAUSTED` upon declaration (`EVENT_EXHAUST`), and may combine with resource payments (e.g., *Dolus Macrocannon*).
 
 #### FR-ABL-010: Modal Selection AST Primitives
 - Modal cards (*Rogue Fleshshaper*, *Ambush Tactics*) specify `modalCount: Integer` and `options: Array<EffectDef>` on `MANEUVER_EFFECT` or `TRIGGERED` nodes, validated against `selected_modal_indices` (`FR-MSG-003`).
@@ -386,7 +387,7 @@ Card Town's targeting engine (`FR-TGT-001`) utilizes declarative conjunctions. R
 - *"chosen opposing non-Scratch unit"*
 - *"chosen asset in the Main Theater"*
 - Multi-target distributions: *"each of up to 2 chosen opposing assets"*, *"distribute 5 damage among up to 5 chosen units"*.
-- **Two-Stage Dynamic Filter Invalidation**: In compliance with `FR-TGT-103`, abilities with dynamic target filters (such as *Consuming Earth*: *"Kill chosen opposing unit with power less than or equal to the total Requisition yield of all structures you control."*) validate target legality both when placed on the stack and immediately prior to effect resolution. If the target no longer satisfies the dynamic filter criteria at resolution (e.g., allied structures were destroyed or the target's power increased), the effect fizzles against that target without executing.
+- **Two-Stage Dynamic Filter Invalidation**: Governed canonically by `FR-TGT-003` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)); dynamic target legality is verified upon declaration and re-verified immediately prior to effect resolution.
 
 #### FR-TXT-005: Stat & Defense Modification Phrasing
 1. **Temporary Modifiers (Layer 5)**: Use the verb **"gets"** for singular subjects and **"get"** for plural subjects:
