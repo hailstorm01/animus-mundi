@@ -133,9 +133,13 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "CardBlueprintCollection",
   "type": "object",
+  "required": ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"],
   "properties": {
-    "version": { "type": "string" },
-    "cards": {
+    "catalogChecksum": { "type": "string", "pattern": "^0x[0-9a-f]{64}$" },
+    "cardDataVersion": { "type": "string" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "totalCardCount": { "type": "integer", "minimum": 0 },
+    "blueprints": {
       "type": "array",
       "items": {
         "type": "object",
