@@ -1,4 +1,4 @@
-# Card Data Pipeline & Ability Authoring - Functional Requirements Document (FRD v1.0)
+# Card Data Pipeline & Ability Authoring - Functional Requirements Document (FRD v1.2)
 **Master Card Ingestion Pipeline, Declarative Ability AST, MTG-Aligned Text Standard & Schema Specification**
 
 ---
@@ -7,7 +7,11 @@
 
 This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), trigger/replacement event hook taxonomy, atomic effect primitives catalog, rules text templating standards, and dataset validation for Card Town. It serves as the authoritative **modeling bridge** between the pure tabletop game rules ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)), the card compiler ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), the network protocol ([`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md)), and the headless execution engine ([`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md)).
 
-### Specification Scope (v1.1):
+### Revision Summary (v1.1 -> v1.2):
+- **Compilation & Versioning Subsumption (`FR-DAT-003`, `FR-DAT-004`, DA-DAT-004)**: Formally marked `FR-DAT-003` (atomic multi-sheet compilation & bundling) and `FR-DAT-004` (canonical RFC 8785 checksum & SemVer versioning) as subsumed by `03_Card_Compiler_FRD.md` (`FR-CMP-002`, `FR-CMP-003`, `FR-CMP-024`–`FR-CMP-026`), `04_Client_Engine_Protocol_Networking_FRD.md` (`FR-SES-001`, `FR-SPC-002`), and `05_Headless_Game_Engine_FRD.md` (`FR-ENT-001`), eliminating duplicate copycat requirements.
+- **Targeting Phrasing Scope Alignment (`FR-TXT-004`, DA-DAT-005)**: Retitled `FR-TXT-004` to *Conjunction Targeting Phrasing (`chosen`)* and aligned dynamic two-stage verification as an explicit cross-reference to its canonical owner in `01_Game_Rules_FRD.md` (`FR-TGT-003`).
+
+### Specification Scope (v1.0 -> v1.1):
 1. **Zero-Aliasing Data Contract (`FR-DAT-006`)**: Codified strict enum target conformance across all authoring CSV balance sheets. Prohibited runtime shorthand aliasing; all raw card sheets must directly serialize canonical target enum identifiers (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`; `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`; `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`).
 2. **Deterministic Blueprint ID Derivation (`FR-DAT-002`)**: Formalized a deterministic, immutable blueprint slug derivation algorithm (`<faction>_<snake_case_title>`), decoupling human display titles from engine identity keys while guaranteeing 100% stable serialization.
 3. **Production Blueprint JSON Schema & Ability AST (`FR-DAT-005`, `FR-ABL-001` - `FR-ABL-007`)**: Formalized the production `CardBlueprintCollection` JSON schema and polymorphic declarative schemas (`AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`) across all six ability archetypes (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`).
@@ -88,15 +92,12 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 6. **Invariance Rule**: Blueprint IDs are permanently immutable. Renaming a card's display title in design balance sheets does not alter its canonical `id` unless an explicit database migration is executed.
 
 #### FR-DAT-003: Blueprint Compilation & Asset Bundling
-- The compilation pipeline evaluates all 10 CSV sheets atomically.
-- If any card fails schema validation (`FR-VAL-001`), contains unparsable text syntax, or lacks a required declarative ability AST, compilation aborts immediately with a non-zero exit code. Partial compilation is strictly prohibited.
-- Production engine builds bundle the compiled blueprint catalog as a read-only resource singleton instantiated into memory during engine startup (`FR-ENT-001`).
+*(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md), [`FR-CMP-003`](03_Card_Compiler_FRD.md), [`FR-CMP-027`](03_Card_Compiler_FRD.md) & [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
+- Multi-sheet atomic CSV ingestion, validation abort gates, staging rollback, and non-zero exit codes are canonically owned and enforced by the compiler pipeline in [`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md) (`FR-CMP-002`, `FR-CMP-003`, `FR-CMP-027`, `FR-CMP-028`). Runtime singleton memory bundling is specified in [`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md) (`FR-ENT-001`).
 
 #### FR-DAT-004: Engine Version Binding & Replay Compatibility
-- In fulfillment of **FR-SES-001** and **FR-SPC-002**:
-  - The compiled blueprint dataset includes a 256-bit cryptographic content checksum (`catalogChecksum`) and a semantic dataset version (`cardDataVersion`, e.g., `"1.0.0"`).
-  - During connection negotiation (`FR-SES-001`), the server validates that the client's `clientEngineVersion` and `catalogChecksum` match the server's authoritative version.
-  - Historical replay recordings (`.rec` files; `FR-SPC-002`) archive the active `catalogChecksum` within `ReplayHeader` to ensure deterministic playback across balance patches.
+*(Subsumed by [`FR-CMP-024`](03_Card_Compiler_FRD.md)–[`FR-CMP-026`](03_Card_Compiler_FRD.md), [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md) & [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md))*
+- Canonical RFC 8785 JSON hashing (`catalogChecksum`) and Semantic Dataset Versioning (`cardDataVersion`) are canonically owned and calculated by the compiler in [`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md) (`FR-CMP-024`–`FR-CMP-026`). Connection handshake verification is governed by [`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md) (`FR-SES-001`), and replay header telemetry is governed by `FR-SPC-002` and [`FR-ENG-038`](05_Headless_Game_Engine_FRD.md).
 
 ---
 
@@ -381,13 +382,13 @@ To ensure total clarity regarding trigger frequency:
 2. **Additional Enactment Costs**: Formatted as a leading preamble sentence on its own line:
    - *"As an additional cost to enact this maneuver, kill an allied unit."*
 
-#### FR-TXT-004: Conjunction Targeting Phrasing & Two-Stage Verification
-Card Town's targeting engine (`FR-TGT-001`) utilizes declarative conjunctions. Rules text must use the canonical targeting verb **"chosen"** rather than MTG's "target":
+#### FR-TXT-004: Conjunction Targeting Phrasing (`chosen`)
+Card Town's targeting engine ([`FR-TGT-001`](01_Game_Rules_FRD.md)) utilizes declarative conjunctions. Rules text must use the canonical targeting verb **"chosen"** rather than MTG's "target":
 - *"chosen allied unit"*
 - *"chosen opposing non-Scratch unit"*
 - *"chosen asset in the Main Theater"*
 - Multi-target distributions: *"each of up to 2 chosen opposing assets"*, *"distribute 5 damage among up to 5 chosen units"*.
-- **Two-Stage Dynamic Filter Invalidation**: Governed canonically by `FR-TGT-003` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)); dynamic target legality is verified upon declaration and re-verified immediately prior to effect resolution.
+- Conforming to [`FR-TGT-001`](01_Game_Rules_FRD.md) and [`FR-TGT-003`](01_Game_Rules_FRD.md), card text defines target eligibility filters; dynamic two-stage verification and fizzle handling are governed canonically by `FR-TGT-003`.
 
 #### FR-TXT-005: Stat & Defense Modification Phrasing
 1. **Temporary Modifiers (Layer 5)**: Use the verb **"gets"** for singular subjects and **"get"** for plural subjects:
@@ -454,8 +455,8 @@ All 167 cards across the 10 CSV balance sheets were audited and standardized to 
 | :--- | :--- | :--- |
 | **FR-DAT-001** | Data Ingestion Lifecycle & Authority Model | `FR-SET-001`, `FR-CRD-101`, `FR-NET-001` |
 | **FR-DAT-002** | Deterministic Blueprint ID & Slug Derivation | `FR-ENT-001`, `FR-SET-001`, `FR-CRD-101` |
-| **FR-DAT-003** | Blueprint Compilation & Asset Bundling | `FR-ENT-001`, `FR-CRD-101`, Section 8.1 |
-| **FR-DAT-004** | Engine Version Binding & Replay Hash Parity | `FR-SES-001`, `FR-SPC-002`, `FR-PAC-004` |
+| **FR-DAT-003** | *(Subsumed by FRD 03 & FRD 05)* | `FR-CMP-002`, `FR-CMP-003`, `FR-CMP-027`, `FR-ENT-001` |
+| **FR-DAT-004** | *(Subsumed by FRD 03 & FRD 04)* | `FR-CMP-024`–`FR-CMP-026`, `FR-SES-001`, `FR-SPC-002` |
 | **FR-DAT-005** | Production Blueprint Schema Specification | `FR-CRD-101`, `FR-ENT-001`, Section 8.1 |
 | **FR-DAT-006** | Zero-Aliasing Target Enum Enforcement in CSVs| `FR-SET-001`, `FR-CRD-101`, `FR-SES-002` |
 | **FR-DAT-007** | Subtype Taxonomy & Normalization | `FR-CRD-101`, `FR-ZON-003`, `FR-LAY-001` |
@@ -479,7 +480,7 @@ All 167 cards across the 10 CSV balance sheets were audited and standardized to 
 | **FR-TXT-001** | MTG-Aligned Sentence Grammar & Punctuation | `FR-CRD-101`, Appendix A |
 | **FR-TXT-002** | Trigger Preambles (`When`, `Whenever`, `At`) | `FR-TRG-001`, `FR-TRN-001`, `FR-CBT-002` |
 | **FR-TXT-003** | Cost Notation Syntax (`[Cost]: [Effect].`) | `FR-ACT-001`, `FR-TRN-003a`, `FR-ABL-009` |
-| **FR-TXT-004** | Conjunction Targeting Phrasing (`chosen`) | `FR-TGT-001`, `FR-TGT-102`, `FR-MSG-003` |
+| **FR-TXT-004** | Conjunction Targeting Phrasing (`chosen`) | `FR-TGT-001`, `FR-TGT-003`, `FR-MSG-003` |
 | **FR-TXT-005** | Stat & Defense Modification Phrasing | `FR-LAY-001`, `FR-LAY-003`, `FR-REP-004` |
 | **FR-TXT-006** | Zone Naming & Cardinality Conventions | `FR-ZON-001`, `FR-ZON-003`, `FR-DEK-001` |
 | **FR-VAL-001** | Ingestion Pipeline Linter Specification | `FR-SET-001`, `FR-CRD-101`, `FR-DAT-006` |
