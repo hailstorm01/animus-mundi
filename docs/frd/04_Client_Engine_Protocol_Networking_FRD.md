@@ -1,17 +1,24 @@
-# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.2)
+# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.3)
 **Master Network Topology, Message Taxonomy, Fog-of-War & Wire Protocol Specification**
 
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Game Rules FRD (v3.1 - `01_Game_Rules_FRD.md`)**.
+This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Game Rules FRD (`01_Game_Rules_FRD.md`)**, **Card Data Pipeline FRD (`02_Card_Data_Pipeline_FRD.md`)**, **Card Compiler FRD (`03_Card_Compiler_FRD.md`)**, and **Headless Game Engine FRD (`05_Headless_Game_Engine_FRD.md`)**.
+
+### Revision Summary (v1.2 -> v1.3):
+1. **Protobuf Tag Collision Fix**: Renumbered `ClientCommand.action` match orchestration and session recovery tags starting at `3` (`match_join = 3` through `request_state_snapshot = 7`) to eliminate duplicate field tags `1` and `2` in `FR-MSG-002` (`DA-NET-001`).
+2. **Stack-Pushed Tactical Inherent Actions Alignment**: Separated Off-Stack Economic Operations (`GenerateResourceCommand`, `ConvertResourceCommand`) from Stack-Pushed Tactical Inherent Actions (`MarchCommand`, `AttackCommand`, `DeployScratchCommand`) across `FR-MSG-002`, `FR-MSG-003`, and `FR-PAC-004`, and expanded `StackPushedEvent.ability_type` in `FR-MSG-004` to include `"ATTACK"`, `"MARCH"`, and `"DEPLOY_SCRATCH"` (`FR-CAP-001`, `FR-INH-001`, `DA-NET-002`).
+3. **Handshake Catalog Checksum & Session Wire Schemas**: Added 256-bit `catalogChecksum` verification (`FR-DAT-004`, `FR-CMP-025`, `FR-CMP-026`) to `FR-SES-001`, and defined explicit Protobuf schemas and envelope/command tags for `ClientHandshake`, `HandshakeAck`, `HandshakeReject`, `ReconnectRequest`, and `RequestStateSnapshot` in `FR-MSG-001`, `FR-MSG-002`, and `FR-MSG-003` (`DA-NET-003`).
+4. **Berserk Secondary Target Role & Active/Non-Active Prompt Clocks**: Added `TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7` to `enum TargetRole` in `FR-MSG-003` (`FR-TGT-101`, `FR-KWD-002o`) and aligned `FR-PAC-001` `PlayerChoicePrompt` deadlines with `FR-MOD-001` (15,000 ms for the active player, 10,000 ms for the non-active player, plus the 3,000 ms animation buffer; `DA-NET-004`).
+5. **Choice Option Blueprint Identity & Full Prompt Taxonomy**: Added `string blueprint_id = 4` to `ChoiceOption` in `FR-MSG-005` for hidden-zone reveals (`FR-SEC-004`) and expanded `PlayerChoicePrompt.prompt_type` to include `"SEARCH_DECK"`, `"REVEAL_HAND"`, `"REPLACEMENT_CONFLICT_SELECT"` (`FR-REP-001`), and `"OPTIONAL_TRIGGER_CONFIRM"` (`FR-MOD-001`, `DA-NET-005`).
 
 ### Revision Summary (v1.1 -> v1.2):
 1. **Opponent-Turn Forfeiture Protection**: Eliminated erroneous 60s forfeiture timers during opponent turns; disconnection counters draw down strictly when the offline player holds active priority or an unanswered prompt (`FR-SES-005`, `DA-NET-001`).
 2. **State Snapshot Flood Protection**: Imposed authoritative rate-limiting of 1 `FullStateSnapshot` per 3,000 ms with backoff after 3 consecutive failures to neutralize DOS packet storms (`FR-SES-005`, `FR-PAC-004`, `DA-NET-002`).
 3. **Wire Command Boundary Clamping**: Mandated range validation for `tactics_requested` [1..50] and clamped `AttackCommand.target_asset_ids` to 1 (or 2 for Berserk), rejecting violations with `ERR_INVALID_COMMAND_ARGUMENTS` (`FR-MSG-003`, `FR-ERR-001`, `DA-NET-003`).
-4. **Choice Prompt Animation Buffering**: Added an automatic 3,000 ms grace window on interactive `PlayerChoicePrompt` issuances before the 10s decision clock initiates, preventing cascading animation truncation (`FR-PAC-001`, `DA-NET-004`).
+4. **Choice Prompt Animation Buffering**: Added an automatic 3,000 ms grace window on interactive `PlayerChoicePrompt` issuances before the 15s (active player) / 10s (non-active player) decision clock initiates, preventing cascading animation truncation (`FR-PAC-001`, `DA-NET-004`).
 5. **Guardian Priority Wire Error Code**: Introduced explicit `ERR_GUARDIAN_PRIORITY_VIOLATION` to `FR-ERR-001`, enabling client UI to flash the mandatory Guardian target asset (`DA-NET-005`).
 6. **Replay Anti-Scouting Quarantine**: Quarantined unmasked `.rec` replay telemetry on the server until match-set (e.g. Best-of-3) conclusion, preventing opponent deck scouting during tournament sets (`FR-SPC-002`, `DA-NET-006`).
 7. **Redundancy Cleanup**: Folded `FR-MSG-002` into unified `FR-MSG-003` schema specification.
@@ -51,9 +58,9 @@ This document defines the network architecture, communication transport, client-
 │ Godot Client │                               │  GCP Server  │
 └──────┬───────┘                               └──────┬───────┘
        │                                              │
-       │ 1. Connect (WSS Handshake)                   │
+       │ 1. Connect (WSS Handshake + Catalog Hash)    │
        ├─────────────────────────────────────────────►│
-       │ 2. HandshakeAck (Protocol & Engine Version)  │
+       │ 2. HandshakeAck (Protocol, Engine & Catalog) │
        │◄─────────────────────────────────────────────┤
        │ 3. MatchJoinRequest (MatchToken + Token)     │
        ├─────────────────────────────────────────────►│
@@ -72,11 +79,12 @@ This document defines the network architecture, communication transport, client-
 ### Section 2.1: Handshake & Match Entry
 
 #### FR-SES-001: Connection Handshake & Version Verification
-- Upon WebSocket connection establishment, the client transmits a `ClientHandshake`:
+- Upon WebSocket connection establishment, the client transmits a `ClientHandshake` (`FR-MSG-001`):
   - `clientEngineVersion`: String (e.g., `"3.0.0"`). Must **strictly match** the server's engine version.
-  - `protocolVersion`: Integer (e.g., `1`).
+  - `protocolVersion`: Integer (e.g., `1`). Must **strictly match** the server's wire protocol version.
+  - `catalogChecksum`: String (64-character lowercase hexadecimal SHA-256 digest of the canonical `blueprints.json` card catalog; `FR-DAT-004`, `FR-CMP-025`, `FR-CMP-026`). Must **strictly match** the server's authoritative card catalog checksum.
   - `matchAuthToken`: Cryptographically signed JWT issued by the matchmaking API.
-- If the protocol version or engine version does not strictly match, the server immediately returns a `HandshakeReject` packet with an error code and closes the connection.
+- If the `protocolVersion`, `clientEngineVersion`, or `catalogChecksum` does not strictly match, the server immediately returns a `HandshakeReject` packet (`FR-MSG-001`) specifying the rejection error code (`ERR_VERSION_MISMATCH` or `ERR_CATALOG_CHECKSUM_MISMATCH`) and closes the connection.
 
 #### FR-SES-002: Secure Match Entry & Server-Side Deck Validation
 - In compliance with **FR-SET-001**:
@@ -113,7 +121,7 @@ This document defines the network architecture, communication transport, client-
   - **No Opponent-Turn Disconnection Forfeiture (DA-NET-001)**:
     - A disconnected player **never** forfeits while their opponent has priority and they face no pending interactive prompts. The server does not run an offline forfeiture countdown during opponent turns.
     - If a player is offline when their own turn begins, their 75-second Main Phase Turn Clock runs normally. Upon expiration, their remaining Reserve Time Bank (`timeBankMs`) drains millisecond-for-millisecond. Match forfeiture (`FORFEIT_TIMEOUT`) occurs strictly if their own turn clock AND full reserve time bank are completely exhausted to 0 without reconnection.
-    - If an offline player is presented with a `PlayerChoicePrompt` during an opponent's turn, the prompt action clock (including the 3,000 ms animation buffer; `FR-PAC-001`) runs first, followed by Reserve Time Bank depletion. If `timeBankMs` hits 0 before a response is received, the server commits the deterministic fallback immediately (`FR-MOD-001`), and the match continues without declaring forfeiture.
+    - If an offline player is presented with a `PlayerChoicePrompt` during an opponent's turn, the prompt action clock (10 seconds for the non-active player, plus the 3,000 ms animation buffer; `FR-MOD-001`, `FR-PAC-001`) runs first, followed by Reserve Time Bank depletion. If `timeBankMs` hits 0 before a response is received, the server commits the deterministic fallback immediately (`FR-MOD-001`), and the match continues without declaring forfeiture.
   - **Reserve Bank Depletion & Deterministic Fallbacks**:
     - When any active turn clock or choice prompt expires (whether the player is connected or offline):
       - If the player's `timeBankMs > 0`, the match timer transitions into Reserve Time, drawing down `timeBankMs` millisecond-for-millisecond while displaying an active rope/fuse burning effect to both clients.
@@ -226,7 +234,7 @@ In accordance with **FR-ZON-005**, when a Scratch Company leaves a battlefield z
 
 #### FR-SEC-004: Deck Search & Inspection Sanitization
 - In compliance with **FR-DEK-001**:
-  - When `SEARCH_DECK` or `LOOK_TOP_CARDS` executes, the server sends the card blueprint array **exclusively** to the searching player's client via `DeckInspectionPrompt`.
+  - When `SEARCH_DECK` or `LOOK_TOP_CARDS` executes, the server sends the card blueprint array **exclusively** to the searching player's client via `PlayerChoicePrompt` (`prompt_type = "SEARCH_DECK"` or `"LOOK_TOP_CARDS"`, populating `ChoiceOption.blueprint_id` per `FR-MSG-005`).
   - The opponent's client receives an opaque notification indicating that a deck search is underway, without card list data.
   - Cards currently drafted as Scratch Companies on the battlefield do not reside in the deck; deduction by inspection of remaining cards is fully permitted.
 
@@ -256,6 +264,7 @@ message GameEnvelope {
   oneof payload {
     // Client-to-Server
     ClientCommand command = 10;
+    ClientHandshake client_handshake = 11;
     
     // Server-to-Client
     ServerEventStream event_stream = 20;
@@ -263,7 +272,31 @@ message GameEnvelope {
     StateSyncSnapshot state_snapshot = 22;
     CommandRejection rejection = 23;
     HeartbeatMessage heartbeat = 24;
+    HandshakeAck handshake_ack = 25;
+    HandshakeReject handshake_reject = 26;
   }
+}
+
+message ClientHandshake {
+  string client_engine_version = 1; // e.g. "3.0.0" (FR-SES-001)
+  uint32 protocol_version = 2;      // e.g. 1 (FR-SES-001)
+  string catalog_checksum = 3;      // 64-char hex SHA-256 of canonical blueprints.json (FR-DAT-004, FR-CMP-025)
+  string match_auth_token = 4;      // Matchmaking JWT (FR-SES-001)
+}
+
+message HandshakeAck {
+  string server_engine_version = 1;
+  uint32 protocol_version = 2;
+  string catalog_checksum = 3;
+  uint64 server_epoch_ms = 4;
+}
+
+message HandshakeReject {
+  uint32 error_code = 1;     // ERR_VERSION_MISMATCH or ERR_CATALOG_CHECKSUM_MISMATCH
+  string reason_message = 2;
+  string expected_engine_version = 3;
+  uint32 expected_protocol_version = 4;
+  string expected_catalog_checksum = 5;
 }
 ```
 
@@ -281,19 +314,23 @@ message ClientCommand {
   uint64 ack_sequence_id = 2; // Last sequence_id observed by client
   
   oneof action {
-    // Match Orchestration & Entry (FR-SES-001 - FR-SES-004)
-    MatchJoinCommand match_join = 1;
-    FirstPlayerChoiceCommand first_player_choice = 2;
-    MulliganCommitCommand mulligan_commit = 3;
+    // Match Orchestration & Session Recovery (FR-SES-001 - FR-SES-005, FR-PAC-004)
+    MatchJoinCommand match_join = 3;
+    FirstPlayerChoiceCommand first_player_choice = 4;
+    MulliganCommitCommand mulligan_commit = 5;
+    ReconnectRequest reconnect_request = 6;
+    RequestStateSnapshot request_state_snapshot = 7;
 
-    // Inherent Actions (FR-INH-001 - Bypasses Stack)
+    // Off-Stack Economic Operations (FR-CAP-001, FR-INH-001 - Require Empty Stack, Resolve Immediately Off-Stack)
+    GenerateResourceCommand generate_resource = 12;
+    ConvertResourceCommand convert_resource = 14;
+
+    // Stack-Pushed Tactical Inherent Actions (FR-CAP-001, FR-INH-001 - Require Empty Stack, Push Frame onto Resolution Stack)
     MarchCommand march = 10;
     AttackCommand attack = 11;
-    GenerateResourceCommand generate_resource = 12;
     DeployScratchCommand deploy_scratch = 13;
-    ConvertResourceCommand convert_resource = 14;
     
-    // Stack Actions (FR-QUE-001, FR-TGT-101)
+    // Stack Card & Ability Actions (FR-QUE-001, FR-TGT-101)
     DeployCardCommand deploy_card = 20;
     EnactManeuverCommand enact_maneuver = 21;
     ActivateAbilityCommand activate_ability = 22;
@@ -311,11 +348,11 @@ message ClientCommand {
 ```
 
 #### FR-MSG-003: Inherent & Bound Action Payload Serialization
-In fulfillment of **FR-INH-001** through **FR-INH-004** and **FR-TGT-101**:
+In fulfillment of **FR-CAP-001**, **FR-INH-001** through **FR-INH-004**, and **FR-TGT-101**:
 
 ```protobuf
 // ============================================================================
-// Match Orchestration Commands (FR-SES-001 - FR-SES-004)
+// Match Orchestration & Session Recovery Commands (FR-SES-001 - FR-SES-005, FR-PAC-004)
 // ============================================================================
 
 message MatchJoinCommand {
@@ -337,8 +374,18 @@ message MulliganCommitCommand {
   repeated string set_aside_card_instance_ids = 1;
 }
 
+message ReconnectRequest {
+  string match_auth_token = 1;          // Active matchmaking JWT (FR-SES-005)
+  uint64 last_received_sequence_id = 2; // Last sequence_id processed prior to disconnect
+}
+
+message RequestStateSnapshot {
+  uint64 desync_detected_at_seq_id = 1; // Sequence ID where state_hash mismatch occurred (FR-PAC-004)
+  uint64 client_computed_state_hash = 2;// Client's local Layer-6 FNV-1a public board state hash
+}
+
 // ============================================================================
-// Inherent Action Commands (FR-INH-001 - FR-INH-004, Bypasses Resolution Stack)
+// Off-Stack Economic Operations (FR-CAP-001, FR-INH-001 - Require Empty Stack, Resolve Immediately Off-Stack)
 // ============================================================================
 
 enum ResourceType {
@@ -355,8 +402,19 @@ message GenerateResourceCommand {
   ResourceType chosen_resource = 2;
 }
 
+message ConvertResourceCommand {
+  // Number of Tactics desired; strictly validated to range 1 <= tactics_requested <= 50.
+  // Non-positive integers (<= 0) or values > 50 reject with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
+  // Server deterministically deducts (tactics_requested * 2) Requisition (FR-RES-003).
+  int32 tactics_requested = 1; 
+}
+
+// ============================================================================
+// Stack-Pushed Tactical Inherent Actions (FR-CAP-001, FR-INH-001 - Require Empty Stack, Push onto Resolution Stack)
+// ============================================================================
+
 message MarchCommand {
-  string asset_instance_id = 1;
+  string asset_instance_id = 1; // Exhausts asset and pushes MARCH frame onto Resolution Stack
 }
 
 message AttackCommand {
@@ -367,28 +425,22 @@ message AttackCommand {
 }
 
 message DeployScratchCommand {
-  string hq_asset_id = 1; // Exhausts HQ to execute Scratch 1 (FR-INH-004)
-}
-
-message ConvertResourceCommand {
-  // Number of Tactics desired; strictly validated to range 1 <= tactics_requested <= 50.
-  // Non-positive integers (<= 0) or values > 50 reject with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
-  // Server deterministically deducts (tactics_requested * 2) Requisition (FR-RES-003).
-  int32 tactics_requested = 1; 
+  string hq_asset_id = 1; // Exhausts HQ and pushes DEPLOY_SCRATCH frame onto Resolution Stack (FR-INH-004)
 }
 
 // ============================================================================
-// Stack Action Payloads (FR-TGT-101, FR-QUE-001)
+// Stack Card & Ability Action Payloads (FR-TGT-101, FR-QUE-001)
 // ============================================================================
 
 enum TargetRole {
   TARGET_ROLE_UNSPECIFIED = 0;
   TARGET_ROLE_SOURCE = 1;
   TARGET_ROLE_TARGET = 2;
-  TARGET_ROLE_SACRIFICE_COST = 3;   // For additional deployment/activation sacrifice costs
-  TARGET_ROLE_DISCARD_COST = 4;     // For activated ability hand discard costs
-  TARGET_ROLE_EXHAUST_COST = 5;     // For additional enactment exhaust costs (Funeral Fungus)
-  TARGET_ROLE_DESTINATION_ZONE = 6; // For target destination zone selections (Sandstorm Lightbringer)
+  TARGET_ROLE_SACRIFICE_COST = 3;           // For additional deployment/activation sacrifice costs
+  TARGET_ROLE_DISCARD_COST = 4;             // For activated ability hand discard costs
+  TARGET_ROLE_EXHAUST_COST = 5;             // For additional enactment exhaust costs (Funeral Fungus)
+  TARGET_ROLE_DESTINATION_ZONE = 6;         // For target destination zone selections (Sandstorm Lightbringer)
+  TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7; // Upfront secondary defender binding for Berserk attacks (FR-KWD-002o, FR-TGT-101)
 }
 
 message DeployCardCommand {
@@ -416,7 +468,7 @@ message TargetBinding {
   string target_id = 1;      // AssetInstance ID, CardInstance ID (for discard costs), Player ID, or Zone
   int32 allocated_value = 2; // For DISTRIBUTED_POOL (e.g. Macrocannon Barrage)
   int32 modal_index = 3;     // Associated mode index for modal spells (e.g. Ambush Tactics)
-  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST)
+  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST, SECONDARY_BERSERK_TARGET)
 }
 ```
 
@@ -488,7 +540,7 @@ message ResourcePoolChangedEvent {
 message StackPushedEvent {
   string stack_item_id = 1;
   string source_id = 2;
-  string ability_type = 3; // "MANEUVER_EFFECT", "ACTIVATED", "TRIGGERED", "DEPLOYMENT"
+  string ability_type = 3; // "MANEUVER_EFFECT", "ACTIVATED", "TRIGGERED", "DEPLOYMENT", "ATTACK", "MARCH", "DEPLOY_SCRATCH"
   string controller_player_id = 4;
   int32 current_stack_depth = 5;
 }
@@ -567,13 +619,15 @@ message TuckedCardsPurgedEvent {
 ### Section 4.4: Synchronous Choice Prompt Protocol
 
 #### FR-MSG-005: Choice Prompts & Server Authority
-In compliance with **FR-TRG-002** and **FR-MOD-001**:
+In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 - When stack execution requires an interactive decision, the server issues a `PlayerChoicePrompt`:
   ```protobuf
   message PlayerChoicePrompt {
     string prompt_id = 1;
-    string prompt_type = 2; // "LOOK_TOP_CARDS", "MODAL_SELECT", "TARGET_SELECT", "TRIGGER_ORDER_SELECT"
-    uint64 deadline_epoch_ms = 3; // Exact UTC millisecond deadline
+    // "LOOK_TOP_CARDS", "SEARCH_DECK", "REVEAL_HAND", "MODAL_SELECT",
+    // "TARGET_SELECT", "TRIGGER_ORDER_SELECT", "REPLACEMENT_CONFLICT_SELECT", "OPTIONAL_TRIGGER_CONFIRM"
+    string prompt_type = 2;
+    uint64 deadline_epoch_ms = 3; // Exact UTC millisecond deadline (FR-MOD-001, FR-PAC-001)
     int32 min_selections = 4;
     int32 max_selections = 5;
     repeated ChoiceOption options = 6;
@@ -583,6 +637,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
     int32 option_index = 1;
     string entity_or_card_id = 2;
     string description = 3;
+    string blueprint_id = 4; // Populated when revealing/inspecting cards to choosing player (SEARCH_DECK, LOOK_TOP_CARDS, REVEAL_HAND; FR-SEC-004)
   }
 
   message PartitionedSelection {
@@ -635,12 +690,14 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
   - If the active player submits any valid command during this 5,000 ms window, the grace period ends immediately and standard turn execution begins without delay.
   - This bounded server-side buffer ensures incoming players are never deprived of playable turn time by complex prior-turn animation cascades ("turn theft"), while preventing malicious clients from withholding completion ACKs.
 - **Interactive Choice Prompt Animation Buffer (DA-NET-004)**:
-  - When issuing any `PlayerChoicePrompt` (`FR-MSG-005`), the server grants an automatic **3,000 ms Animation Buffer** before the 10-second action clock begins ticking down (`deadlineEpochMs = currentServerTimeMs() + 3000 + 10000`).
+  - In compliance with **FR-MOD-001**, when issuing any `PlayerChoicePrompt` (`FR-MSG-005`), the server grants an automatic **3,000 ms Animation Buffer** before the player's action clock begins ticking down:
+    - **Active Player Prompt Clock (15,000 ms)**: `deadlineEpochMs = currentServerTimeMs() + 3000 + 15000`.
+    - **Non-Active Player Prompt Clock (10,000 ms)**: `deadlineEpochMs = currentServerTimeMs() + 3000 + 10000`.
   - If the client submits a valid `ChoiceResponse` during this buffer, it is processed immediately.
-  - This bounded buffer prevents cascading animations from prior actions (such as combat resolutions or complex maneuver board wipes) from truncating the inactive player's decision window.
+  - This bounded buffer prevents cascading animations from prior actions (such as combat resolutions or complex maneuver board wipes) from truncating either player's decision window.
 
 > [!NOTE]
-> **Design Rationale (DA-NET-004)**: The 3,000 ms prompt animation buffer guarantees that players always receive the full intended 10 seconds of decision time, even after extensive visual death and combat animations.
+> **Design Rationale (DA-NET-004)**: The 3,000 ms prompt animation buffer guarantees that players always receive their full intended decision time (15 seconds for the active player, 10 seconds for the non-active player per `FR-MOD-001`), even after extensive visual death and combat animations.
 
 #### FR-PAC-002: Animation Fast-Forwarding on Inbound Prompts & Phase Transitions
 - If an interactive `PlayerChoicePrompt` arrives, or if a `PhaseTransitionEvent` entering the player's Main Phase is received while the client's `AnimationEventQueue` has pending background visual items:
@@ -688,7 +745,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 ### Section 5.3: Desync Verification via Public State Hashing
 
 #### FR-PAC-004: Public State Checksum Calculation & Per-Batch Verification
-- At the conclusion of every event stream batch transmitted to clients—including inherent actions (March, Attack, Resource Generation, Conversion, Scratch Deploy), phase transitions, and stack unwinding sequences—the server computes a 64-bit CRC/FNV-1a hash of the **Public Board State**:
+- At the conclusion of every event stream batch transmitted to clients—including off-stack economic operations (Resource Generation, Conversion), stack-pushed tactical inherent actions (March, Attack, Scratch Deploy), phase transitions, and stack unwinding sequences (`FR-CAP-001`, `FR-INH-001`)—the server computes a 64-bit CRC/FNV-1a hash of the **Public Board State**:
   - Combined Health, dynamic Armor pools, and Combat Power of all assets in HQ, Reserves, and Main Theater.
   - Readiness states (`READIED` / `EXHAUSTED`) of all assets.
   - Total card counts in Hand, Deck, and Attached zones for each player.
@@ -698,7 +755,7 @@ In compliance with **FR-TRG-002** and **FR-MOD-001**:
 - **Effective Layer 6 Attribute Rule**: To eliminate desync vulnerabilities with masked entities, the state hasher calculates asset Health and Combat Power strictly using post-mask effective values from Layer 6 of the Attribute Pipeline (`FR-LAY-001`, `FR-ENT-101`), guaranteeing 100% hash parity with client-visible proxy states.
 - **Per-Batch Emission**: The hash is transmitted via `ServerEventStream.state_hash` (`FR-MSG-004`).
 - **Immediate Single-Frame Recovery & Rate-Limiting**: The Godot client computes the identical hash across its mirrored public state cache upon draining each event stream batch:
-  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and requests a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
+  - If a hash mismatch is detected after any batch, the client flags a desync immediately on that frame and transmits `RequestStateSnapshot` (`FR-MSG-003`) to receive a `FullStateSnapshot` (`FR-SES-005`), seamlessly recovering the board cache before any subsequent player commands can fail validation.
   - **Snapshot Flood Protection**: In accordance with `FR-SES-005` (DA-NET-002), snapshot requests are authoritatively throttled to at most 1 per 3,000 ms, with automated backoff after 3 consecutive failures to eliminate denial-of-service packet storms.
 
 ---
