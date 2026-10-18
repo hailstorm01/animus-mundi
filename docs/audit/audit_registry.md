@@ -1,4 +1,4 @@
-# Audit Registry
+﻿# Audit Registry
 
 This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
@@ -6,7 +6,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 
 | Date Generated | Commit Hash | Source Audit File | Target Document | Status | Resolution Date | Resolution Commit | Source of Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-18 | `66de028` | [`2026-10-18-01_Game_Rules_FRD.md`](pending/2026-10-18-01_Game_Rules_FRD.md) | `docs/frd/01_Game_Rules_FRD.md` | PENDING | - | - | - |
+| 2026-10-18 | `66de028` | `2026-10-18-01_Game_Rules_FRD.md` | `docs/frd/01_Game_Rules_FRD.md` | RESOLVED | 2026-10-18 16:07:34 | `eee521a` | Agentic (pm-audit-reviewer) |
 | 2026-10-18 | `66de028` | [`2026-10-18-02_Card_Data_Pipeline_FRD.md`](pending/2026-10-18-02_Card_Data_Pipeline_FRD.md) | `docs/frd/02_Card_Data_Pipeline_FRD.md` | PENDING | - | - | - |
 | 2026-10-18 | `66de028` | [`2026-10-18-03_Card_Compiler_FRD.md`](pending/2026-10-18-03_Card_Compiler_FRD.md) | `docs/frd/03_Card_Compiler_FRD.md` | PENDING | - | - | - |
 | 2026-10-18 | `66de028` | [`2026-10-18-04_Client_Engine_Protocol_Networking_FRD.md`](pending/2026-10-18-04_Client_Engine_Protocol_Networking_FRD.md) | `docs/frd/04_Client_Engine_Protocol_Networking_FRD.md` | PENDING | - | - | - |
