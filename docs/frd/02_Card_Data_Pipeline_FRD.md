@@ -238,7 +238,7 @@ All `AbilityDef` nodes compose the following canonical sub-schemas (validated by
 `TriggeredAbilityDef` (`FR-ABL-002`) and `ReplacementWatcherDef` (`FR-ABL-005`) bind strictly to the following canonical event and prospective replacement hook identifiers:
 - **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
 - **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
-  - **Attacker-Only Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: Emitted strictly for lethal combat damage dealt by an attacker destroying a defender (`FR-CBT-002`); mutual retaliation destruction of an attacker by a defender does not emit `EVENT_COMBAT_KILL`.
+  - **Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: Emitted when lethal combat damage destroys an asset (`FR-CBT-002`). Carries `killer_asset_id` (the asset that dealt the lethal combat damage), `victim_asset_id` (the asset destroyed), and `is_attacker` (true if killer was the declared attacker, false if defender retaliation), allowing triggers like *Dread Manifestation* to evaluate killer identity and restrict execution strictly to attacker-originated kills.
 - **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
 - **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
 - **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
