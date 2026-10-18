@@ -1,4 +1,4 @@
-# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.4)
+# Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.5)
 **Master Network Topology, Message Taxonomy, Fog-of-War & Wire Protocol Specification**
 
 ---
@@ -6,6 +6,9 @@
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
 This document defines the network architecture, communication transport, client-server message protocol, state synchronization model, and fog-of-war security boundary for the digital Collectible Card Game (CCG). It serves as the companion networking specification to the **Game Rules FRD (`01_Game_Rules_FRD.md`)**, **Card Data Pipeline FRD (`02_Card_Data_Pipeline_FRD.md`)**, **Card Compiler FRD (`03_Card_Compiler_FRD.md`)**, and **Headless Game Engine FRD (`05_Headless_Game_Engine_FRD.md`)**.
+
+### Revision Summary (v1.4 -> v1.5):
+1. **Match Initialization & RNG Rule De-duplication (`DA-NET-003`, `DA-NET-004`)**: Marked `FR-SES-003` (First-Player Determination) as subsumed by `FR-SET-003` (Game Rules) and Section 4.1 Protobuf wire schemas (`FR-MSG-001`, `FR-MSG-004`). Marked `FR-SEC-005` (Authoritative Server-Side RNG) as subsumed by `FR-ENG-002` (Headless Engine seeded PRNG architecture) and `FR-DEK-002` (Game Rules deck shuffling), resolving the architectural CSPRNG contradiction with deterministic replay reproduction.
 
 ### Revision Summary (v1.3 -> v1.4):
 1. **EngineEvent Schema Completeness & Hash Synchronization**: Expanded `EngineEvent.detail` in `FR-MSG-004` to cover all 26 primitives from `FR-PRM-001` and attributes hashed in `FR-PAC-004`, adding `AssetReadinessChangedEvent`, `AssetStatModifiedEvent`, `CardZoneMovedEvent`, `AssetTuckedEvent`, and `DelayedTriggerRegisteredEvent`; added `source_zone` and `source_card_instance_id` to `AssetDeployedEvent` for non-hand free deployments; and consolidated duplicate `AssetToDiscardEvent` from `FR-SEC-002` into canonical `AssetDestroyedEvent` (`DA-NET-001`).
@@ -102,12 +105,8 @@ This document defines the network architecture, communication transport, client-
   - If validation fails, match initialization aborts with `DECK_LEGALITY_VIOLATION`.
 
 #### FR-SES-003: First-Player Determination Protocol
-- In compliance with **FR-SET-003**:
-  - The server executes a secure random roll (0 or 1) to determine the initial decision-maker.
-  - The server transmits a `FirstPlayerChoicePrompt` to the winning player with a 15-second timer (`deadlineEpochMs`).
-  - The player selects `PLAY_FIRST` or `DRAW_FIRST`.
-  - If the timer expires, the server defaults to `PLAY_FIRST`.
-  - The server broadcasts `FirstPlayerDetermined` to both clients.
+*(Subsumed by [`FR-SET-003`](01_Game_Rules_FRD.md), [`FR-MSG-001`](04_Client_Engine_Protocol_Networking_FRD.md) & [`FR-MSG-004`](04_Client_Engine_Protocol_Networking_FRD.md))*
+- First-player random selection (0 or 1), 15-second decision timer, choices (`PLAY_FIRST` / `DRAW_FIRST`), and default commit behavior are canonically owned and specified in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) (`FR-SET-003`). Protocol Buffers wire schemas (`FirstPlayerChoicePrompt`, `FirstPlayerDetermined`) and event framing are canonically codified in Section 4.1 (`FR-MSG-001`, `FR-MSG-004`).
 
 #### FR-SES-004: Mulligan Negotiation Protocol
 - In compliance with **FR-SET-002**:
@@ -224,9 +223,8 @@ In accordance with **FR-ZON-005**, when a Scratch Company leaves a battlefield z
   - Cards currently drafted as Scratch Companies on the battlefield do not reside in the deck; deduction by inspection of remaining cards is fully permitted.
 
 #### FR-SEC-005: Authoritative Server-Side RNG
-- In compliance with **FR-DEK-002**:
-  - All random permutations (deck shuffling, digital coin tosses, random target selections during fallbacks) are executed exclusively on the server using cryptographically secure pseudorandom number generators (CSPRNG).
-  - The client is prohibited from submitting random seeds or RNG outcomes.
+*(Subsumed by [`FR-ENG-002`](05_Headless_Game_Engine_FRD.md) & [`FR-DEK-002`](01_Game_Rules_FRD.md))*
+- Card shuffling mechanics and deck randomization rules are canonically owned by [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) (`FR-DEK-002`). Multi-stream deterministic PRNG architecture (PCG32/SplitMix64) for replay verification, match isolation, and seed derivation is canonically owned by [`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md) (`FR-ENG-002`, `FR-ENG-038`). Client exclusion from seed injection is enforced by wire command validation in Section 4.2 (`FR-MSG-002`).
 
 ---
 
@@ -965,10 +963,10 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 | :--- | :--- | :--- |
 | **FR-SET-001** | Deck Legality & Rarity Limits | Section 2.1 (`FR-SES-002` Server-side deck registration & validation) |
 | **FR-SET-002** | Match Init & Partial Mulligan | Section 2.1 (`FR-SES-004` Mulligan negotiation protocol) |
-| **FR-SET-003** | First Player Determination | Section 2.1 (`FR-SES-003` First-player prompt protocol) |
+| **FR-SET-003** | First Player Determination | Section 2.1 (`FR-SES-003` First-player prompt protocol subsumed into `FR-SET-003`/`FR-MSG-001`) |
 | **FR-SET-004** | First-Turn Rules | Section 4.2 (`ClientCommand`), Section 4.3 (`PhaseTransitionEvent`) |
 | **FR-DEK-001** | Deck Search Engine Primitive | Section 3.2 (`FR-SEC-004` Private deck inspection stream) |
-| **FR-DEK-002** | Deck Shuffling Primitive | Section 3.2 (`FR-SEC-005` Authoritative server CSPRNG) |
+| **FR-DEK-002** | Deck Shuffling Primitive | Section 3.2 (`FR-SEC-005` Server RNG subsumed into `FR-ENG-002`/`FR-DEK-002`) |
 | **FR-ZON-001** | Zone Definitions | Section 4.2 (`FR-MSG-003`), Section 5.3 (`FR-PAC-004`) |
 | **FR-ZON-002** | Movement & Destruction | Section 4.3 (`AssetMovedEvent`, `AssetDestroyedEvent`) |
 | **FR-ZON-004** | Non-Battlefield State Reset | Section 3.1 (`FR-SEC-002` Zone transition wire serialization) |
