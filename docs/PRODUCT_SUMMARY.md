@@ -145,11 +145,12 @@ The physical prototype has shown the core loop is fun, so the open risk is not w
 
 ### 3.2 M2 Deliverables
 1. **Rulings for reachable open matrix items. ✅ Done 2026-10-19 (FRD 01 v3.3–v3.4).** Eleven items were ruled, covering Berserk targeting and fizzles, Berserk 2 on *Tempest Surge* and *Redline Infusion*, Scratch Companies entering Exhausted, committed combat targets, zero-yield generation, and HQ defeat and empty-deck loss both settling at the death sweep. The two remaining open items (`KIM-C01`, `KIM-B07`) are unreachable with current cards. New cards or new keywords reopen this.
-2. **Kernel coverage of the rest of FRD 01:** triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
-3. **A two-faction starter set, fully executable.** Abilities are modeled directly as Go values in the kernel, with no compiler. Which two factions is a design call.
-4. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
+2. **Animus vs Path starter set, fully executable.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities. Abilities are modeled directly as Go values in the kernel, with no compiler. At M2 start, 5 of 42 Animus cards and 4 of 42 Path cards are executable, and no Maneuvers are.
+3. **Kernel coverage pulled by starter cards.** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card. Rules of FRD 01 that no starter card reaches move to M3. The candidates are triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
+4. **`cardtown play`: a text-mode match.** One human plays a starter deck against the random policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client.
+5. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
 
-**Done when:** `cardtown lint rules` reports 62/62, no reachable matrix item is open, and `cardtown sim` runs clean on starter-set decks.
+**Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card is executable, no reachable matrix item is open, `cardtown sim -p0 ANIMUS -p1 PATH` runs clean, and a human can finish a `cardtown play` match.
 
 > [!NOTE]
 > **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it. [TDD 03](tdd/03_Card_Compiler_TDD.md) is parked until then.
@@ -174,8 +175,8 @@ flowchart LR
 
 ### M3: Card Data Pipeline & Full Catalog
 - **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up, then revise or replace TDD 03.
-- **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test.
-- **Done when:** every card without a `currentProxy`/`needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
+- **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test. Soulless and Concordia cards pull in the FRD 01 rules that the M2 starter set did not reach.
+- **Done when:** `cardtown lint rules` reports every active FRD 01 requirement pinned, every card without a `currentProxy`/`needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
 
 ### M4: Local Playable Client
 - **Specs at start:** draft FRD 07 (Godot client) around what the player sees and does: board and zones, stack visualization, choice prompts, animation pacing.
@@ -197,8 +198,8 @@ flowchart LR
 
 | Document | Status | Serves | Next action |
 | :--- | :--- | :--- | :--- |
-| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.4 — 70 IDs, 62 active) | M1–M2, and every milestone | Rulings for open matrix items; keep in lockstep with `pkg/engine` tests |
-| [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Close reachable open items |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.4 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
+| [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Parked | M3 | Revise after FRD 03 rewrite |
