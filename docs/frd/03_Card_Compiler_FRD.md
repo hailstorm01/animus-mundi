@@ -146,28 +146,22 @@ All CSV field coercions, maneuver default values, subtype/sentinel normalization
 
 ### Section 3.1: Retired Regex NLP Requirements (Subsumed by FRD 02 & FR-CMP-017)
 
-#### FR-CMP-008: Rules Text Lexer & Clause Segmentation
-*(Subsumed by [`FR-TXT-001`](02_Card_Data_Pipeline_FRD.md), `FR-CMP-013` & `FR-CMP-017`)*
+> [!NOTE] Architectural Evolution: Declarative AST Migration
+> The legacy sentence-level regex natural language parsing engine (`FR-CMP-008` through `FR-CMP-012`) has been retired and fully subsumed. Card abilities are modeled directly as declarative AST nodes per [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md) and linked via the sidecar registry `ast_overrides.json` (`FR-CMP-017`). The requirement identifiers below are preserved for historical audit traceability:
 
-#### FR-CMP-009: Trigger Preamble Parser & Temporal Hook Mapping
-*(Subsumed by [`FR-TXT-002`](02_Card_Data_Pipeline_FRD.md), [`FR-TRG-001`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-
-#### FR-CMP-010: Ability Cost Expression Parser
-*(Subsumed by [`FR-TXT-003`](02_Card_Data_Pipeline_FRD.md), [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-009`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-
-#### FR-CMP-011: Declarative Target Filter & Selector Synthesizer
-*(Subsumed by [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md) & [`FR-TGT-001`](01_Game_Rules_FRD.md))*
-
-#### FR-CMP-012: Numerical & Value Token Synthesizer
-*(Subsumed by [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
+- **FR-CMP-008**: Rules Text Lexer & Clause Segmentation *(Subsumed by [`FR-TXT-001`](02_Card_Data_Pipeline_FRD.md), `FR-CMP-013` & `FR-CMP-017`)*
+- **FR-CMP-009**: Trigger Preamble Parser & Temporal Hook Mapping *(Subsumed by [`FR-TXT-002`](02_Card_Data_Pipeline_FRD.md), [`FR-TRG-001`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
+- **FR-CMP-010**: Ability Cost Expression Parser *(Subsumed by [`FR-TXT-003`](02_Card_Data_Pipeline_FRD.md), [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-009`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
+- **FR-CMP-011**: Declarative Target Filter & Selector Synthesizer *(Subsumed by [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md) & [`FR-TGT-001`](01_Game_Rules_FRD.md))*
+- **FR-CMP-012**: Numerical & Value Token Synthesizer *(Subsumed by [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
 
 ### Section 3.2: Keyword Lookup & Declarative AST Linking
 
 #### FR-CMP-013: Vanilla Sentinel & Standalone Keyword Lookup
 For cards not present in `ast_overrides.json` (`FR-CMP-017`), the compiler resolves `rulesText` strictly for vanilla sentinels and standalone canonical keywords:
-1. **Vanilla Cards ([`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md))**: If `rulesText` is empty (`""`) or equals the vanilla sentinel `"--"`, the compiler emits `abilities: []` and normalizes the emitted `CardBlueprint.rulesText` string to `""` in `blueprints.json`.
-2. **Standalone Keyword Lines ([`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md))**: If every line in `rulesText` matches a standalone canonical keyword from `FR-ABL-012` (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Berserk`), the compiler emits the corresponding `AbilityDef` entries directly from the `FR-ABL-012` lookup table.
-3. **Mandatory Override Linking**: Any card containing bespoke rules text sentences, triggered preamble abilities (`"Unbowed: [Effect]."` per `FR-KWD-002a`), or Maneuver spell payloads (`FR-ABL-006`) MUST have a corresponding entry in `data/schemas/ast_overrides.json` (`FR-CMP-017`) or compilation fails with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-019`).
+1. **Vanilla Cards ([`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md), [`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md))**: If `rulesText` is empty (`""`) or equals the vanilla sentinel `"--"`, the compiler emits `abilities: []` and normalizes the emitted `CardBlueprint.rulesText` string to `""` in `blueprints.json`. `CardBlueprint.schema.json` enforces `minLength: 0` for `rulesText`, permitting an empty string specifically when `abilities` is an empty array (`[]`).
+2. **Standalone Keyword Lines ([`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md))**: The canonical taxonomy of keywords and their AST parameterization is governed authoritatively by `FR-ABL-012`. If every line in `rulesText` matches a standalone keyword classified as a `KEYWORD_GRANT` in `FR-ABL-012` (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Berserk N`), the compiler emits the corresponding `AbilityDef` entries directly from the `FR-ABL-012` lookup table without requiring an override entry.
+3. **Non-Standalone & Bespoke Override Mandate**: The remaining 5 canonical keywords from `FR-ABL-012` (`Unbowed`, `Cornered`, `Heal N`, `Scratch N`, `Regroup N`) cannot be resolved standalone: `Unbowed` and `Cornered` are conditional preambles wrapping bespoke effects, while `Heal N`, `Scratch N`, and `Regroup N` are atomic effect primitives inside ability/maneuver payloads. Any card containing these keywords, bespoke rules text, or Maneuver spell payloads (`FR-ABL-006`) MUST have a corresponding entry in `data/schemas/ast_overrides.json` (`FR-CMP-017`) or compilation fails with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-019`).
 
 #### FR-CMP-014: Triggered & Activated Ability AST Synthesizer
 *(Subsumed by [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-003`](02_Card_Data_Pipeline_FRD.md), [`FR-TGT-101`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
@@ -230,7 +224,7 @@ In fulfillment of [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md) and [`FR-VAL-001`
 1. **`CardBlueprint.schema.json`**: Validates the root `blueprints.json` envelope (`catalogChecksum`, `cardDataVersion`, `generatedAt`, `totalCardCount`, `blueprints`) and each `CardBlueprint` object per [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md).
 2. **`AbilityDef.schema.json`**: Validates all polymorphic `AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`, `ConditionDef`, and `EffectDef` nodes per [`FR-ABL-001`](02_Card_Data_Pipeline_FRD.md) – [`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md).
 3. **`ast_overrides.schema.json`**: Validates `data/schemas/ast_overrides.json` (`FR-CMP-017`); failures halt compilation with `ERR_OVERRIDE_SCHEMA_INVALID`.
-4. **`-EmitSchemas` Flag**: Regenerates all three `.schema.json` files from the canonical definitions when passed on the CLI.
+4. **`-EmitSchemas` Generation Contract**: When `-EmitSchemas` is passed on the CLI, the compiler exports the Draft 2020-12 JSON schemas (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, and `ast_overrides.schema.json`) into `data/schemas/`. The single canonical generation source of truth is the compiler's embedded AST models and type definitions. It serializes with 2-space indentation and `LF` newlines, ensuring schemas remain 100% in sync with code definitions and version control diffs.
 
 ---
 
