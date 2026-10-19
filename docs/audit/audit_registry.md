@@ -1,4 +1,4 @@
-﻿# Audit Registry
+# Audit Registry
 
 This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
@@ -42,7 +42,7 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 
 ## Column Descriptions
 - **Date Generated:** ISO date (`YYYY-MM-DD`) when the audit was performed.
-- **Commit Hash:** Git HEAD that was audited (recorded before the audit commit). An audit is stale if the target FRD has commits after this hash (`tools/audit/audit_status.ps1`).
+- **Commit Hash:** Git HEAD that was audited (recorded before the audit commit). An audit is stale if the target FRD has commits after this hash (`cardtown audit status`).
 - **Source Audit File:** Path to the markdown audit artifact in `docs/audit/pending/`. Once resolved and deleted from `pending/`, this link is converted to inline code (e.g. `` `2026-10-13-Card_Compiler_FRD.md` ``) to prevent broken links while preserving historical reference.
 - **Target Document:** Specification file that was evaluated.
 - **Status:** Current lifecycle state (`PENDING`, `RESOLVED`, `STALE`).

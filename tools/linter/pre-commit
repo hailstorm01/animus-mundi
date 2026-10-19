@@ -1,54 +1,26 @@
 #!/bin/sh
-# Card Town Git Pre-Commit Hook
-# Selectively invokes linters based on staged files.
+# Card Town Git Pre-Commit Hook (Native Go)
+# Fast-paths linting through compiled cardtown binary or fallback to go run.
 
-STAGED_FRD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^docs/frd/.*\.md$')
-STAGED_TDD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^docs/tdd/.*\.md$' | grep -v '^docs/tdd/README\.md$')
-STAGED_CSV=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^data/cards/.*\.csv$')
-
-FAILED=0
-
-# 1. FRD Linter (runs when changes are made to an FRD)
-if [ -n "$STAGED_FRD" ]; then
-    echo "=========================================================="
-    echo "  [Pre-Commit] Staged FRD changes detected. Auditing FRDs..."
-    echo "=========================================================="
-    FRD_LIST=$(echo "$STAGED_FRD" | tr '\n' ',' | sed 's/,$//')
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1 -Files "$FRD_LIST"
-    if [ $? -ne 0 ]; then
-        FAILED=1
-    fi
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$REPO_ROOT" ]; then
+    REPO_ROOT="."
 fi
 
-# 2. TDD Linter (runs when changes are made to a TDD)
-if [ -n "$STAGED_TDD" ]; then
-    echo "=========================================================="
-    echo "  [Pre-Commit] Staged TDD changes detected. Auditing TDDs..."
-    echo "=========================================================="
-    TDD_LIST=$(echo "$STAGED_TDD" | tr '\n' ',' | sed 's/,$//')
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_tdd.ps1 -Files "$TDD_LIST"
-    if [ $? -ne 0 ]; then
-        FAILED=1
-    fi
+CARDTOWN_BIN="$REPO_ROOT/bin/cardtown.exe"
+if [ ! -f "$CARDTOWN_BIN" ]; then
+    CARDTOWN_BIN="$REPO_ROOT/bin/cardtown"
 fi
 
-# 3. Sheet Integrity & Syntax / Terminology Linters (runs when CSV modified or created)
-if [ -n "$STAGED_CSV" ]; then
-    echo "=========================================================="
-    echo "  [Pre-Commit] Staged CSV changes detected. Auditing Sheets & Syntax..."
-    echo "=========================================================="
-    CSV_LIST=$(echo "$STAGED_CSV" | tr '\n' ',' | sed 's/,$//')
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1 -Files "$CSV_LIST"
-    if [ $? -ne 0 ]; then
-        FAILED=1
-    fi
-    powershell.exe -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1 -Files "$CSV_LIST"
-    if [ $? -ne 0 ]; then
-        FAILED=1
-    fi
+if [ -f "$CARDTOWN_BIN" ]; then
+    "$CARDTOWN_BIN" lint --staged --repo-root "$REPO_ROOT"
+    EXIT_CODE=$?
+else
+    go run "$REPO_ROOT/cmd/cardtown" lint --staged --repo-root "$REPO_ROOT"
+    EXIT_CODE=$?
 fi
 
-if [ $FAILED -ne 0 ]; then
+if [ $EXIT_CODE -ne 0 ]; then
     echo ""
     echo "Pre-commit linting failed! Please resolve errors before committing."
     exit 1

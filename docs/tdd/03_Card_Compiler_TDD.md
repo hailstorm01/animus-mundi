@@ -1471,7 +1471,7 @@ All 33 requirements from `docs/frd/02_Card_Data_Pipeline_FRD.md` (30 Active, 3 S
 
 ## 6. DELIVERABLE & IMPLEMENTATION SLICE MANIFEST
 
-This section defines the topologically ordered Directed Acyclic Graph (DAG) of engineering deliverables consumed by `tools/tdd/publish_tdd_issues.ps1`.
+This section defines the topologically ordered Directed Acyclic Graph (DAG) of engineering deliverables consumed by `cardtown tdd slice`.
 
 ```mermaid
 flowchart LR

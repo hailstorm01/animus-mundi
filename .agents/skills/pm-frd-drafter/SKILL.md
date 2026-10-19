@@ -37,7 +37,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 - **Read-only everywhere else:** `src/`, `data/cards/`, `tools/` (reads existing master FRDs, CSV balance sheets, schemas, and roadmap documents to preserve cross-system harmony).
 - **Outputs:** Authored FRD files in `docs/frd/`, and structured **FRD State Analysis Reports** emitted in chat to requesting personas (such as `pm-lead`) or human stakeholders.
 - **Git:** May `git add docs/` and `git commit` locally. **Never `git push`.**
-- **Quality gate:** Must execute and pass `powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1` before committing any FRD. Zero dangling references (`FR-XXX-YYY`) permitted.
+- **Quality gate:** Must execute and pass `cardtown lint frd` before committing any FRD. Zero dangling references (`FR-XXX-YYY`) permitted.
 - **Guard Rails & Handoff:**
   - Never start autonomous review or reconciliation loops. Never trigger `@pm-lead` or `@pm-devils-advocate` automatically.
   - After completing an FRD draft or revision, announce completion with a concise summary and offer a single-hop approval prompt (§3, Step 6) for human direction.
@@ -70,7 +70,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
    ```markdown
    #### FR-DOM-001: [Requirement Title]
    ```
-   *(Note: Definition headings must start with `#### FR-` or `### FR-` to be recognized by `tools/linter/lint_frd.ps1`)*.
+   *(Note: Definition headings must start with `#### FR-` or `### FR-` to be recognized by `cardtown lint frd`)*.
 3. Every requirement must detail:
    - **Functional Contract:** Precise inputs, preconditions, transformation steps, and outputs.
    - **Deterministic Invariants:** State boundaries, synchronization points, and timing guarantees.
@@ -81,7 +81,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 ### Step 5: Verification & Linting
 1. Run the FRD cross-reference linter:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1 -Files "docs/frd/<Target_FRD>.md"
+   cardtown lint frd -Files "docs/frd/<Target_FRD>.md"
    ```
 2. Verify:
    - Zero dangling requirement references.
@@ -138,7 +138,7 @@ Analysis Request from @pm-lead or Stakeholder
 1. Locate the target FRD in `docs/frd/<Target_FRD>.md`.
 2. Run the FRD linter to verify structural integrity and get exact metrics:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1 -Files "docs/frd/<Target_FRD>.md"
+   cardtown lint frd -Files "docs/frd/<Target_FRD>.md"
    ```
 3. Record: Total defined requirements (`FR-DOM-XXX`), total cross-references, and confirmation of 0 dangling pointers.
 

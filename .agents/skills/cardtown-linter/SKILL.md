@@ -10,57 +10,59 @@ description: >-
 
 # Card Town FRD, TDD & Card Sheet Linter
 
-This skill provides automated verification across all Card Town game specifications, technical design documents, and card spreadsheets.
+This skill provides automated verification across all Card Town game specifications, technical design documents, and card spreadsheets via the high-performance native Go CLI (`cardtown lint`).
 
-## Modular Linter Scripts
-The linter is divided into 4 targeted scripts in `tools/linter/`:
+## Native Go CLI Commands (`cardtown lint`)
 
-1. **FRD Requirement Cross-Reference Linter (`tools/linter/lint_frd.ps1`):**
+The linter is compiled to `bin/cardtown.exe` (or run directly via `go run ./cmd/cardtown lint`):
+
+1. **FRD Requirement Cross-Reference Linter:**
    - **When to run:** When changes are made to an FRD in `docs/frd/`.
    - **Check:** Scans all `FR-XXX-YYY` identifiers, ensuring every referenced requirement is formally defined (zero dangling references).
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_frd.ps1
+   cardtown lint frd
    ```
 
-2. **TDD Requirement Coverage & Slice DAG Linter (`tools/linter/lint_tdd.ps1`):**
+2. **TDD Requirement Coverage & Slice DAG Linter:**
    - **When to run:** When changes are made to a TDD in `docs/tdd/`.
    - **Check:** Validates header metadata, zero dangling `FR-XXX-YYY` references, 100% coverage of Active and Subsumed requirements from the source FRD, and acyclic `SLICE-XX-YY` Deliverable Slice blocks.
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_tdd.ps1
+   cardtown lint tdd
    # Or for a specific TDD file:
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_tdd.ps1 -Files "docs/tdd/03_Card_Compiler_TDD.md"
+   cardtown lint tdd docs/tdd/03_Card_Compiler_TDD.md
    ```
 
-3. **CSV Sheet Integrity & Schema Linter (`tools/linter/lint_card_sheets.ps1`):**
+3. **CSV Sheet Integrity & Schema Linter:**
    - **When to run:** When changes are made to a CSV in `data/cards/`, or when a new CSV is created.
-   - **Check:** Verifies all CSV sheets parse with `Import-Csv`, checks for duplicate column headers, ensures no corrupted column headers (`xz`), and validates core enums (`cardType`, `faction`, `rarity`, `deploymentZones`).
+   - **Check:** Verifies all CSV sheets parse with standard RFC-4180 rules, checks for duplicate column headers, ensures no corrupted column headers (`xz`), and validates core enums (`cardType`, `faction`, `rarity`, `deploymentZones`).
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1
+   cardtown lint sheets
    # Or for specific files:
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_card_sheets.ps1 -Files "data/cards/maneuvers-animus.csv"
+   cardtown lint sheets data/cards/maneuvers-animus.csv
    ```
 
-4. **Card Rules Syntax & Terminology Linter (`tools/linter/lint_card_syntax.ps1`):**
+4. **Card Rules Syntax & Terminology Linter:**
    - **When to run:** When changes are made to a CSV in `data/cards/`, or when a new CSV is created.
    - **Check:** Audits card rules text for canonical terminology (e.g., `allied` instead of `friendly`, `power` instead of `attack`, and disallows raw `~` MTG shorthand).
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1
+   cardtown lint syntax
    # Or for specific files:
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_card_syntax.ps1 -Files "data/cards/maneuvers-animus.csv"
+   cardtown lint syntax data/cards/maneuvers-animus.csv
    ```
 
-## Master Dispatcher (`tools/linter/lint_cardtown.ps1`)
+## Master Dispatcher (`cardtown lint`)
+
 You can also run the master dispatcher:
 ```powershell
 # Automatically detects changed files via Git and runs only the relevant linters:
-powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1
+cardtown lint
 
 # Force run all 4 linters across all files:
-powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1 -All
+cardtown lint --all
 
 # Run only TDD coverage and slice DAG linter:
-powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1 -TDD
+cardtown lint --tdd
 
 # Run only card sheet and syntax linters:
-powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1 -Cards
+cardtown lint --cards
 ```

@@ -36,16 +36,15 @@ animus-mundi/
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
 │   │   └── units-and-structures-{animus, concordia, path, soulless, HQ, common}.csv
 │   └── schemas/                           # Target directory for JSON schemas & blueprints.json
+├── cmd/
+│   └── cardtown/                          # Native Go developer CLI & toolchain
+├── pkg/
+│   └── toolchain/                         # High-performance validation, audit & slicing engine
 └── tools/
-    ├── audit/                             # Audit status and resolution lifecycle tools
-    ├── docs/                              # Live capability and state discovery (whats_up.ps1)
+    ├── audit/                             # Audit records & registry
     ├── linter/
-    │   ├── lint_cardtown.ps1              # Unified orchestrator & full-suite linter
-    │   ├── lint_frd.ps1                   # FRD requirement cross-reference validator
-    │   ├── lint_card_sheets.ps1           # CSV schema integrity linter
-    │   ├── lint_card_syntax.ps1           # Rules text syntax & terminology linter
     │   ├── card_standardization_audit.json# 167-card audit & review log
-    │   └── standardize_all_cards.ps1      # Automated normalization pipeline
+    │   └── pre-commit                     # Pre-commit hook template
     └── sheets/
         ├── publish_card_sheets.ps1        # Freshness-checked export from local CSVs to Google Sheets
         ├── import_card_sheets.ps1         # Interactive diff ingestion from Google Sheets to local CSVs
@@ -103,13 +102,16 @@ animus-mundi/
   - **52 Cards Flagged for Design Review (56 Documented Entries)**: Cataloged in Section 7.2 of the Card Data Pipeline FRD and in `tools/linter/card_standardization_audit.json` (including resolved `DA-DAT-003` mechanical triage items for *Rift*, *Steel Rain*, *Gemstone Titan*, and the *Daggerspine Rangers* $\rightarrow$ *Spoil Forest Irregulars* IP rename).
 
 ### 2.3 Verification & Quality Assurance Tooling
-- **Automated Linter Suite ([`tools/linter/lint_cardtown.ps1`](../tools/linter/lint_cardtown.ps1))**:
-  - Validates **201 defined requirement IDs** across all 5 FRDs and verifies **1,557 cross-references** with **0 dangling references** (`lint_frd.ps1`).
-  - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`lint_card_sheets.ps1`).
-  - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`lint_card_syntax.ps1`).
+- **Native Go Developer CLI & Automated Linter Suite (`cardtown lint`, `cmd/cardtown`)**:
+  - Blazing-fast sub-100ms native Go toolchain replacing legacy PowerShell scripts.
+  - Validates **202 defined requirement IDs** across all 5 FRDs and verifies **1,912 cross-references** with **0 dangling references** (`cardtown lint frd`).
+  - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`cardtown lint sheets`).
+  - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`cardtown lint syntax`).
+  - Audits TDD metadata, 100% FRD requirement coverage, and topological acyclic DAGs (`cardtown lint tdd`).
 - **Audit Lifecycle & Pre-commit Hooks**:
-  - Git pre-commit hook (`tools/linter/install_hooks.ps1`) enforcing zero lint violations prior to local commits.
-  - Socratic audit triage and resolution engine (`tools/audit/audit_status.ps1`, `tools/audit/resolve_audit.ps1`) tracking audits in `docs/audit/audit_registry.md`.
+  - Native Git pre-commit hook (`cardtown hook install`) enforcing zero lint violations in < 100ms prior to local commits.
+  - Socratic audit triage and resolution engine (`cardtown audit status`, `cardtown audit resolve`) tracking audits in `docs/audit/audit_registry.md`.
+  - Topological deliverable issue slicer (`cardtown tdd slice`) generating DAG-ordered GitHub Milestones and Issues with zero guesswork.
 - **Sheets Publisher & Importer ([`tools/sheets/publish_card_sheets.ps1`](../tools/sheets/publish_card_sheets.ps1), [`tools/sheets/import_card_sheets.ps1`](../tools/sheets/import_card_sheets.ps1))**:
   - Synchronizes local Tier 1 CSV balance data with Tier 2 Google Sheets workbooks using pre-publish timestamp freshness checks (`--Force` override) and interactive terminal diff ingestion (`FR-DAT-001`).
 
@@ -124,7 +126,7 @@ flowchart TD
     subgraph Tier1["Tier 1: Version-Controlled Source of Truth (data/cards/)"]
         CSV["10 RFC-4180 CSV Balance Sheets<br/><i>(Clean & Linter-Verified)</i>"]
         Overrides["Sidecar Ability Overrides<br/><i>(data/schemas/ast_overrides.json)</i>"]
-        LinterSuite["Card Town Linter Suite<br/><i>(tools/linter/lint_cardtown.ps1)</i>"]
+        LinterSuite["Card Town Linter Suite<br/><i>(cardtown lint)</i>"]
     end
 
     subgraph Tier2["Tier 2: Cloud Inspection Mirror & Authoring Studio"]

@@ -60,7 +60,7 @@ Leads deep, interactive gameplay and systems design discussions for punch-list i
 - **Card Balance / Data Impacts:** ...
 
 #### 4. Verification
-- [ ] `tools/linter/lint_frd.ps1` passes; no dangling pointers to deprecated requirements.
+- [ ] `cardtown lint frd` passes; no dangling pointers to deprecated requirements.
 
 #### 5. Instruction to PM Auditor
 > [Actionable command, e.g. "Adopt the wording in Section 2, update FR-XXX-005, collapse FR-XXX-006, mark the item RESOLVED."]

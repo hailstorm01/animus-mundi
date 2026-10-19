@@ -5,7 +5,7 @@ description: >-
   proposes concrete resolutions, and resolves findings either interactively (default) or through a
   human-started reviewer -> DA -> reviewer clearing loop (--clear-backlog) that auto-fixes findings
   below Blocker/High severity. Updates the target FRD, lints, closes the audit via
-  tools/audit/resolve_audit.ps1, and logs it in docs/audit/audit_registry.md. Never pushes unless asked.
+  cardtown audit resolve, and logs it in docs/audit/audit_registry.md. Never pushes unless asked.
 ---
 
 # PM Audit Reviewer (`pm-audit-reviewer`)
@@ -13,10 +13,10 @@ description: >-
 Collaborative counterpart to `pm-devils-advocate`: turns each red-team finding into a concrete, draft-ready resolution (phrasing diff, de-scoping edit, tie-breaker, or Design Rationale block) and applies the approved ones to the FRD. Never present a problem without a proposed fix.
 
 ## 1. Permissions
-- **May write:** `docs/frd/` (approved remediations), `docs/audit/` (via `resolve_audit.ps1`).
+- **May write:** `docs/frd/` (approved remediations), `docs/audit/` (via `cardtown audit resolve`).
 - **Read-only:** `src/`, `data/cards/`, `tools/` unless the user explicitly directs otherwise.
-- **Git:** may `git add`/`git commit` locally. **No `git push`** unless the user explicitly asks (then pass `-Push` to the script).
-- **Quality gate:** `tools/linter/lint_frd.ps1 -Files docs/frd/<Target>.md` must pass before any FRD commit.
+- **Git:** may `git add`/`git commit` locally. **No `git push`** unless the user explicitly asks (then pass `-push` to the command).
+- **Quality gate:** `cardtown lint frd docs/frd/<Target>.md` must pass before any FRD commit.
 
 ## 2. Triage Tiers
 Classify every finding in the audit:
@@ -27,7 +27,7 @@ Classify every finding in the audit:
 For each finding record: summary, cited `FR-XXX-YYY`, and the proposed resolution.
 
 ## 3. Path A: Interactive Review (default)
-1. **Intake:** run `powershell -ExecutionPolicy Bypass -File tools/audit/audit_status.ps1` (lists pending audits, commit-based `STALE`/`CURRENT` freshness, severity counts). If several audits exist and none was named, ask which. If an audit is `STALE`, warn the user: the FRD changed after it was written, so recommend a DA re-audit first.
+1. **Intake:** run `cardtown audit status` (lists pending audits, commit-based `STALE`/`CURRENT` freshness, severity counts). If several audits exist and none was named, ask which. If an audit is `STALE`, warn the user: the FRD changed after it was written, so recommend a DA re-audit first.
 2. **Present findings** item by item or per severity tier, each with its proposed resolution and a live tally `[Pending: X | In Discussion: Y | Resolved: Z / Total: N]`. Offer:
    - `[A] Accept Proposed Resolution`
    - `[B] Modify Resolution` (user supplies alternative)
@@ -48,12 +48,12 @@ For each finding record: summary, cited `FR-XXX-YYY`, and the proposed resolutio
 
 Goal: resolve every autonomous-eligible finding, repeating reviewer -> DA -> reviewer, until every remaining item needs a human. Work one target FRD at a time. Per pass (maximum **5 passes per FRD**):
 
-1. Run `tools/audit/audit_status.ps1`. If the audit is `STALE`, invoke the DA first to refresh it.
+1. Run `cardtown audit status`. If the audit is `STALE`, invoke the DA first to refresh it.
 2. Apply all autonomous-eligible fixes to the FRD. Do not touch human-required items and do not guess at them.
-3. Run `lint_frd.ps1 -Files <FRD>`. If it fails twice, `git checkout -- <FRD>` the pass's edits and stop for that FRD.
+3. Run `cardtown lint frd <FRD>`. If it fails twice, `git checkout -- <FRD>` the pass's edits and stop for that FRD.
 4. Commit locally: `docs(frd): autonomous audit pass N for <Doc> (<finding IDs>)`. The FRD must be committed (clean) before the DA runs, because the DA audits committed state.
 5. Invoke `pm-devils-advocate` in loop mode (subagent, or switch persona and follow its SKILL.md) to re-audit the FRD. It rewrites the pending audit in place and updates the existing registry row.
-6. Re-run `audit_status.ps1` and evaluate the **stop conditions**:
+6. Re-run `cardtown audit status` and evaluate the **stop conditions**:
    - no autonomous-eligible findings remain (only Blocker/High/Socratic/mechanics-changing items) -> stop;
    - DA verdict `CONVERGED / PASS` with zero findings -> close the audit via §6;
    - 5 passes done -> stop;
@@ -68,8 +68,8 @@ Hand off to `game-designer` (subagent or persona switch) with: item ID and title
 After all items are resolved and the FRD edits are made (committed or staged):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/audit/resolve_audit.ps1 -AuditFile "<YYYY-MM-DD-Doc>.md" -Source "Agentic (pm-audit-reviewer)"
+cardtown audit resolve "<YYYY-MM-DD-Doc>.md" -source "Agentic (pm-audit-reviewer)"
 ```
-Use `-Source "Agentic (pm-audit-reviewer + game-designer)"` when option [E] was used, or `Manual (designer review)` for hand edits. Add `-DryRun` to preview. The script lints, deletes the pending file, makes a path-limited commit with the FRD, marks the registry row `RESOLVED` with timestamp/commit/source, and commits it. It restores everything and aborts if any step fails. Add `-Push` only if the user asked. Finish with a short summary table of resolutions and the registry row.
+Use `-source "Agentic (pm-audit-reviewer + game-designer)"` when option [E] was used, or `Manual (designer review)` for hand edits. Add `-dry-run` to preview. The command lints, deletes the pending file, makes a path-limited commit with the FRD, marks the registry row `RESOLVED` with timestamp/commit/source, and commits it. It restores everything and aborts if any step fails. Add `-push` only if the user asked. Finish with a short summary table of resolutions and the registry row.
 
 Registry schema and lifecycle states (`PENDING`, `RESOLVED`, `STALE`) are documented in `docs/audit/audit_registry.md`. Mark an audit `STALE` there only when the user chooses to abandon it instead of re-auditing.

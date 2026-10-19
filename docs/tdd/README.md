@@ -7,14 +7,14 @@ Authoritative, zero-guesswork Technical Design Documents (`docs/tdd/<XX>_<Name>_
 ```text
 Authoritative FRD in docs/frd/<XX>_<Name>_FRD.md
         │
-        ▼  (Pre-TDD Audit Gate: tools/audit/audit_status.ps1 checks for Blocker/High items)
+        ▼  (Pre-TDD Audit Gate: cardtown audit status checks for Blocker/High items)
 lead-architect (Runbook A) ──► docs/tdd/<XX>_<Name>_TDD.md
         │
         ▼
-tools/linter/lint_tdd.ps1 ──► verifies 0 dangling FR-XXX-YYY refs, 100% FRD coverage, valid SLICE DAG
+cardtown lint tdd ──► verifies 0 dangling FR-XXX-YYY refs, 100% FRD coverage, valid SLICE DAG
         │
         ▼  (Human reviews TDD & confirms GitHub issue slicing)
-lead-architect (Runbook B) ──► tools/tdd/publish_tdd_issues.ps1 -DryRun (preview) ──► -Publish (live)
+lead-architect (Runbook B) ──► cardtown tdd slice -DryRun (preview) ──► -Publish (live)
         │
         ▼
 GitHub Milestone + Topological Issues ([SLICE-XX-01], [SLICE-XX-02], ...) with 'Depends on #N'
@@ -33,5 +33,5 @@ Every TDD in `docs/tdd/` must provide:
 6. **Deliverable & Implementation Slice Manifest (`### [SLICE-XX-YY]`):** Self-contained, topologically ordered work packages with explicit `Depends On` links, target files, signatures, acceptance checkboxes, and CLI verification commands.
 
 ## Tooling
-- `tools/linter/lint_tdd.ps1 [-Files <path>]`: validates header metadata, 0 dangling `FR-XXX-YYY` references, 100% source FRD coverage, and acyclic `SLICE-XX-YY` dependency graphs.
-- `tools/tdd/publish_tdd_issues.ps1 -TddFile <path> [-DryRun] [-Publish] [-UpdateExisting]`: slices a lint-clean TDD into a GitHub Milestone, Labels, and topologically ordered Issues via `gh`, resolving upstream slice dependencies to real GitHub Issue numbers (`Depends on #N`).
+- `cardtown lint tdd [-Files <path>]`: validates header metadata, 0 dangling `FR-XXX-YYY` references, 100% source FRD coverage, and acyclic `SLICE-XX-YY` dependency graphs.
+- `cardtown tdd slice -TddFile <path> [-DryRun] [-Publish] [-UpdateExisting]`: slices a lint-clean TDD into a GitHub Milestone, Labels, and topologically ordered Issues via `gh`, resolving upstream slice dependencies to real GitHub Issue numbers (`Depends on #N`).

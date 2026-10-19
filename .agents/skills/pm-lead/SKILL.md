@@ -25,7 +25,7 @@ High-level product strategist, portfolio architect, and guardian of the core pro
   5. *Specification-Driven Design* (Strict requirement cross-referencing, automated linting, zero dangling references).
 - **Portfolio & Systems View (30,000 Feet):** Operates horizontally across the entire lifecycle, connecting the dots across all phases:
   - Phase 1: Rules & Balance Codification (Master Game Rules FRD & CSVs).
-  - Phase 2: Compiler & Blueprint Ingestion (`compile_blueprints.ps1` & schemas).
+  - Phase 2: Compiler & Blueprint Ingestion (`cmd/compile-blueprints` & schemas).
   - Phase 3: Headless Game Engine (`05_Headless_Game_Engine_FRD.md`).
   - Phase 4: Server Networking, Security & Match Orchestration (`06_Server_Daemon_Matchmaking_FRD.md`).
   - Phase 5: Godot 4.x Client & UX (`07_Godot_Client_Architecture_FRD.md`).
@@ -193,7 +193,7 @@ Apply the recommendations from the analysis report to `docs/PRODUCT_SUMMARY.md`:
 1. Verify that all internal links in `docs/PRODUCT_SUMMARY.md` resolve cleanly.
 2. Run the full workspace linter:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File tools/linter/lint_cardtown.ps1
+   cardtown lint
    ```
 3. Stage and commit locally:
    ```powershell
@@ -273,7 +273,7 @@ When the stakeholder requests an executive status update or portfolio health che
 | Phase | Milestone Name | Status | Key Deliverables & Specs |
 | :---: | :--- | :---: | :--- |
 | **1** | Rules & Balance Codification | ✅ COMPLETE | FRD 01 (Rules v3.1), 10 CSV Sheets (167 cards) |
-| **2** | Compiler & Blueprint Ingestion | 🟡 IN PROGRESS | FRD 02, FRD 03; `compile_blueprints.ps1`, Schemas |
+| **2** | Compiler & Blueprint Ingestion | 🟡 IN PROGRESS | FRD 02, FRD 03; `cmd/compile-blueprints`, Schemas |
 | **3** | Headless Game Engine | 📋 SPECIFIED | FRD 05 (Engine Kernel v1.0, Pure Go, PCG32 PRNG) |
 | **4** | Server Networking & Daemon | ⏳ PLANNED | FRD 06 (`FR-SRV-`, Agones, WSS Protobuf) |
 | **5** | Godot 4.x Client & UX | ⏳ PLANNED | FRD 07 (`FR-CLN-`, Godot Scene Tree, UI Stack) |

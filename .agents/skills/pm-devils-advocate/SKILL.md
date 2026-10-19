@@ -34,7 +34,7 @@ Production, engine, and Godot implementation constraints are out of scope.
 
 ## 3. Storage & Registry
 - Audit file: `docs/audit/pending/[YYYY-MM-DD]-[Target_FRD_Base_Name].md`.
-- Registry: `docs/audit/audit_registry.md` (schema documented there). **Commit Hash = the git HEAD you audited**, recorded *before* you commit the audit, so staleness can be computed as "FRD commits after this hash" (`tools/audit/audit_status.ps1`).
+- Registry: `docs/audit/audit_registry.md` (schema documented there). **Commit Hash = the git HEAD you audited**, recorded *before* you commit the audit, so staleness can be computed as "FRD commits after this hash" (`cardtown audit status`).
 - Audit only committed FRD state. If the target FRD has uncommitted changes, stop and tell the user (or, in loop mode, the reviewer) to commit first.
 
 ## 4. Invocation
@@ -91,4 +91,4 @@ Production, engine, and Godot implementation constraints are out of scope.
 1. *Uncomfortable, mandatory question for the designer.*
 ```
 
-`tools/audit/audit_status.ps1` parses this template: keep the `###` severity headings (containing Blocker/High/Medium/Low), the `- **[DA-...]` item format, and the numbered Socratic list exactly.
+`cardtown audit status` parses this template: keep the `###` severity headings (containing Blocker/High/Medium/Low), the `- **[DA-...]` item format, and the numbered Socratic list exactly.
