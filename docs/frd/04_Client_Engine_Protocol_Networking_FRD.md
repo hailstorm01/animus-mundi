@@ -202,11 +202,13 @@ In accordance with **FR-ZON-005**, when a Scratch Company leaves a battlefield z
 
 3. **Transition to Attached Zone (`ATTACHED` / `NO-AH-5`)**:
    - When tucked under a host entity, the asset has not departed the battlefield context.
-   - The server broadcasts an opaque `AssetTuckedEvent` (`FR-MSG-004`) to **both** clients:
+   - The server broadcasts an `AssetTuckedEvent` (`FR-MSG-004`) to **both** clients:
      - `host_asset_id`: The asset receiving the tucked card.
-     - `proxy_asset_id`: The tucked asset proxy ID.
-     - `is_face_down`: `true`.
-   - Both clients render a face-down generic card tucked beneath the host. The underlying card identity remains completely concealed from both players.
+     - `proxy_asset_id`: The tucked asset proxy ID (when tucked from battlefield).
+     - `card_instance_id`: The card instance ID (when tucked from Hand, Deck, or Discard).
+     - `is_face_down`: `true` if tucked face-down (`NO-AH-5`); `false` if tucked face-up (`FR-ENT-102`, `FR-PRM-001`).
+     - `revealed_blueprint_id`: Populated strictly when `is_face_down == false`. When `is_face_down == true`, card identity remains completely concealed from both players.
+   - If face-down, both clients render a face-down generic card tucked beneath the host; if face-up, both clients render the revealed card frame.
 
 ---
 
@@ -615,12 +617,17 @@ message AssetMovedEvent {
   string destination_zone = 3;
 }
 
+message CombatDefenderOutcome {
+  string defender_asset_id = 1;
+  int32 damage_committed = 2;   // Primary combat damage or flat Berserk cleave damage committed to this defender
+  int32 retaliation_damage = 3; // Retaliation damage dealt back to attacker (0 for secondary Berserk cleave target)
+  bool is_secondary_cleave = 4; // true if target received cleave damage via Berserk N without retaliating
+}
+
 message CombatResolvedEvent {
   string attacker_asset_id = 1;
-  repeated string defender_asset_ids = 2;
-  int32 attacker_damage_dealt = 3;
-  repeated int32 defender_retaliation_damage = 4;
-  bool is_simultaneous_hq_defeat = 5;
+  repeated CombatDefenderOutcome defenders = 2; // Multi-defender outcomes (primary combat defender and optional secondary Berserk cleave defender)
+  bool is_simultaneous_hq_defeat = 3;
 }
 
 message ResourcePoolChangedEvent {
@@ -719,12 +726,12 @@ message AssetReadinessChangedEvent {
 message AssetStatModifiedEvent {
   string asset_instance_id = 1;
   int32 health_delta = 2; // Positive for HEAL, negative for direct health deduction
-  int32 armor_delta = 3;  // Dynamic armor addition (ADD_ARMOR) or expiration
+  int32 armor_delta = 3;  // Dynamic armor addition (ADD_ARMOR) or damage absorption (Armor never expires)
   int32 combat_power_delta = 4; // MODIFY_STAT Combat Power modification
   int32 max_health_delta = 5;   // MODIFY_STAT Maximum Health modification
   repeated string keywords_granted = 6; // Dynamic keywords granted (GRANT_KEYWORD)
   repeated string subtypes_granted = 7; // Subtypes granted (GRANT_SUBTYPE)
-  string reason = 8; // e.g. "HEAL", "ADD_ARMOR", "MODIFY_STAT", "STAT_EXPIRATION"
+  string reason = 8; // e.g. "HEAL", "ADD_ARMOR", "MODIFY_STAT", "STAT_EXPIRATION" (applies to temporary combat power/max health stats, never armor)
 }
 
 message CardZoneMovedEvent {
@@ -739,9 +746,10 @@ message CardZoneMovedEvent {
 
 message AssetTuckedEvent {
   string host_asset_id = 1;
-  string proxy_asset_id = 2;
-  bool is_face_down = 3; // true
-  // revealed_blueprint_id is STRICTLY OMITTED (FR-SEC-002, NO-AH-5)
+  string proxy_asset_id = 2;        // Populated when a battlefield asset is tucked
+  bool is_face_down = 3;             // true if tucked face-down (revealed_blueprint_id scrubbed per NO-AH-5); false if face-up
+  string revealed_blueprint_id = 4;  // Populated strictly when is_face_down == false (FR-ENT-102, FR-PRM-001)
+  string card_instance_id = 5;       // Populated when a card is tucked from Hand, Deck, or Discard
 }
 
 message DelayedTriggerRegisteredEvent {
@@ -884,6 +892,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
       // Stage 5: Health Damage Committed
       int32 health_damage_committed = 10;
       int32 final_current_health = 11;
+      bool is_combat_damage = 12; // true if damage originated from combat strike/retaliation; false for non-combat effect/spell damage
     }
     ```
   - The Godot client sequences this single packet into a fluid visual cascade (Shield Deflect &rarr; Stalwart Flash &rarr; Armor Cracking &rarr; Health Bar Drop) without requiring server roundtrips.
@@ -951,7 +960,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
   message ReplayEventRecord {
     uint64 sequence_id = 1;
     int64 timestamp_epoch_ms = 2;
-    GameEnvelope envelope = 3;
+    GameEnvelope envelope = 3; // Chronologically ordered interleaved log containing all committed client commands (ClientCommand) and authoritative server events (ServerEventStream) for deterministic re-simulation and viewer playback (FR-ENG-038).
     map<string, string> unmasked_card_identities = 4; // card_instance_id -> blueprint_id for face-down entities
   }
   ```
