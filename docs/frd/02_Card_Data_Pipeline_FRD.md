@@ -1,4 +1,4 @@
-# Card Data Pipeline & Ability Authoring - Functional Requirements Document (FRD v1.2)
+# Card Data Pipeline & Ability Authoring - Functional Requirements Document (FRD v1.3)
 **Master Card Ingestion Pipeline, Declarative Ability AST, MTG-Aligned Text Standard & Schema Specification**
 
 ---
@@ -6,6 +6,9 @@
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
 This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), trigger/replacement event hook taxonomy, atomic effect primitives catalog, rules text templating standards, and dataset validation for Card Town. It serves as the authoritative **modeling bridge** between the pure tabletop game rules ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)), the card compiler ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), the network protocol ([`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md)), and the headless execution engine ([`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md)).
+
+### Revision Summary (v1.2 -> v1.3):
+- **Go Toolchain & Binary Pipeline Pivot**: Updated all compiler and pipeline ingestion tooling references from legacy PowerShell (`.ps1`) scripts to pure Go (Golang 1.22+) CLI executables (`cmd/compile-blueprints`, Go-native sheets synchronizer, and workspace linters), eliminating script wrappers across the toolchain.
 
 ### Revision Summary (v1.1 -> v1.2):
 - **Compilation & Versioning Subsumption (`FR-DAT-003`, `FR-DAT-004`, DA-DAT-004)**: Formally marked `FR-DAT-003` (atomic multi-sheet compilation & bundling) and `FR-DAT-004` (canonical RFC 8785 checksum & SemVer versioning) as subsumed by `03_Card_Compiler_FRD.md` (`FR-CMP-002`, `FR-CMP-003`, `FR-CMP-024`–`FR-CMP-026`), `04_Client_Engine_Protocol_Networking_FRD.md` (`FR-SES-001`, `FR-SPC-002`), and `05_Headless_Game_Engine_FRD.md` (`FR-ENT-001`), eliminating duplicate copycat requirements.
@@ -18,7 +21,7 @@ This document establishes the authoritative technical specification for the card
 4. **Event Hook Taxonomy, Atomic Primitives & Bound Payloads (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Consolidated the canonical engine event/watcher hook catalog, the 26 atomic effect primitives and parameter schemas, bound action payload bindings, and canonical benchmark card AST implementations into the data pipeline bridge (`SOC-002`).
 5. **Mechanics Extensions & Resolution Semantics (`FR-ABL-008` - `FR-ABL-012`)**: Formalized engine support for per-turn execution gates (`maxPerTurn`), exhaust-as-cost activation mechanics (`costType: EXHAUST_SELF`), modal branch definitions (`CHOOSE_N`), and distributed pool damage allocations (`DISTRIBUTED_POOL`).
 6. **MTG-Aligned Rules Text Templating Grammar (`FR-TXT-001` - `FR-TXT-006`)**: Established formal English templating standards modeled on Magic: The Gathering (MTG) syntax, standardizing trigger preambles (`When`, `Whenever`, `At`), cost sequencing (`[Cost]: [Effect].`), passive auras (`have`), temporary modifiers (`gets +N power until end of turn`), and canonical keyword capitalization.
-7. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`) & Card Review Register (Domain 7)**: Expanded the automated verification suite (`tools/linter/lint_cardtown.ps1`) and audited all 167 cards across the 10 balance sheets.
+7. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`) & Card Review Register (Domain 7)**: Expanded the automated verification suite (`tools/linter/lint_cardtown`) and audited all 167 cards across the 10 balance sheets.
 
 ---
 
@@ -31,7 +34,7 @@ This document establishes the authoritative technical specification for the card
 │  - units-and-structures (animus, concordia, etc.)      │
 └───────────────────────────▲────────────────────────────┘
                             │
-               tools/sheets/publish_card_sheets.ps1
+               tools/sheets/publish_card_sheets
                (Downstream export from repository)
                             │
 ┌───────────────────────────┴────────────────────────────┐
@@ -41,7 +44,7 @@ This document establishes the authoritative technical specification for the card
 │  - MTG-Aligned Standardized Rules Text (FR-TXT-001)    │
 └───────────────────────────┬────────────────────────────┘
                             │
-              tools/importer/compile_blueprints.ps1
+                 cmd/compile-blueprints
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
@@ -69,13 +72,13 @@ This document establishes the authoritative technical specification for the card
 - **Tier 3 (Compiled Production Catalog)**: The compiled `blueprints.json` artifact (generated into `data/schemas/` or embedded in the game engine runtime) represents the authoritative machine-readable catalog consumed by the server engine process and Godot client builds.
 - **Automated Pipeline Flow**:
   1. Local `data/cards/*.csv` files are directly edited, reviewed, and committed into Git.
-  2. `tools/sheets/publish_card_sheets.ps1` publishes local repository CSV content to Google Sheets. To prevent accidental loss of remote designer work, `publish_card_sheets.ps1` executes a pre-publish freshness check comparing remote Google Drive revision timestamps against local Git commit timestamps. If un-synced remote edits exist, publication halts immediately with a collision warning unless the `--Force` switch is explicitly supplied.
-  3. **Bidirectional Ingestion Tooling**: The pipeline provides a companion ingestion script (`tools/sheets/import_card_sheets.ps1`) to safely pull remote Google Sheets modifications into local `data/cards/*.csv` files, rendering an interactive terminal visual diff for designer confirmation before staging.
-  4. `tools/linter/lint_cardtown.ps1` audits schema integrity, requirement links, and text terminology.
-  5. The compilation pipeline (`tools/importer/compile_blueprints.ps1`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+  2. `tools/sheets/publish_card_sheets` publishes local repository CSV content to Google Sheets. To prevent accidental loss of remote designer work, `publish_card_sheets` executes a pre-publish freshness check comparing remote Google Drive revision timestamps against local Git commit timestamps. If un-synced remote edits exist, publication halts immediately with a collision warning unless the `--Force` switch is explicitly supplied.
+  3. **Bidirectional Ingestion Tooling**: The pipeline provides a companion ingestion tool (`tools/sheets/import_card_sheets`) to safely pull remote Google Sheets modifications into local `data/cards/*.csv` files, rendering an interactive terminal visual diff for designer confirmation before staging.
+  4. `tools/linter/lint_cardtown` audits schema integrity, requirement links, and text terminology.
+  5. The Go compilation pipeline (`cmd/compile-blueprints`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
 
 > [!NOTE] Design Rationale (DA-DAT-001)
-> Mandating pre-publish freshness checks and introducing `import_card_sheets.ps1` prevents unconditional overwrites of remote designer balance work in Google Drive, establishing a safe bidirectional workflow.
+> Mandating pre-publish freshness checks and introducing `import_card_sheets` prevents unconditional overwrites of remote designer balance work in Google Drive, establishing a safe bidirectional workflow.
 
 > [!NOTE] Product Vision: Standalone Interactive Card & Set Designer Tool
 > Long-term tooling roadmap includes a dedicated, standalone **Interactive Card & Set Designer Tool**. This application will use a structured database model (outside of the client/server runtime engines) to manage card balance schemas, keyword catalogs, set dependencies, and migration tracking, replacing manual spreadsheet authoring while serializing directly into canonical version-controlled formats.
@@ -419,7 +422,7 @@ Card Town's targeting engine ([`FR-TGT-001`](01_Game_Rules_FRD.md)) utilizes dec
 ### Section 6.1: Verification Suite Extensions
 
 #### FR-VAL-001: Ingestion Pipeline Linter Specification
-*(Subsumed by [`FR-CMP-001`](03_Card_Compiler_FRD.md) & [`FR-CMP-022`](03_Card_Compiler_FRD.md))* — `tools/linter/lint_cardtown.ps1` and compiler pre-flight stages enforce `FR-XXX-YYY` cross-reference integrity, RFC-4180 CSV syntax, and JSON Schema conformance.
+*(Subsumed by [`FR-CMP-001`](03_Card_Compiler_FRD.md) & [`FR-CMP-022`](03_Card_Compiler_FRD.md))* — `tools/linter/lint_cardtown` and compiler pre-flight stages enforce `FR-XXX-YYY` cross-reference integrity, RFC-4180 CSV syntax, and JSON Schema conformance.
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
 - In compliance with [`FR-CMP-019`](03_Card_Compiler_FRD.md) and [`FR-CMP-020`](03_Card_Compiler_FRD.md), the compilation pipeline verifies 1-to-1 parity between printed `rulesText` and compiled `AbilityDef` AST entries (matching standalone keywords per `FR-ABL-012` and `ast_overrides.json` entries per `FR-CMP-017`).

@@ -63,22 +63,22 @@ animus-mundi/
    - **Deterministic 3-Step Combat Sequence (`FR-CBT-001` - `FR-CBT-003`)**: Step 1 (Declaration & Upfront Exhaustion), Step 2 (Pre-Combat Trigger & Reaction Window), and Step 3 (Simultaneous Combat Damage & 100% Symmetric Retaliation across Units, Structures, and Headquarters).
    - **Canonical Keywords Catalog (`FR-KWD-002a` - `FR-KWD-002o`)**: Formal definitions for all 15 core game keywords (Unbowed, Resistant N, Stalwart, Heal N, Cornered, Aggressive N, Ethereal, Ward, Versatile, Guardian, Armor N, Deploys Exhausted, Scratch N, Regroup N, Berserk).
 
-2. **[Card Data Pipeline & Ability Authoring FRD](frd/02_Card_Data_Pipeline_FRD.md) (FRD v1.1 — 33 Requirements)**
-   - **Three-Tier Data Authority Lifecycle (`FR-DAT-001` - `FR-DAT-004`)**: Tier 1 (Authoritative Repository CSVs in `data/cards/*.csv`) $\leftrightarrow$ Tier 2 (Cloud Google Sheets Inspection Mirror synced via freshness-checked `publish_card_sheets.ps1` and diff-verified `import_card_sheets.ps1`) $\rightarrow$ Tier 3 (Compiled Production `blueprints.json` bound with 256-bit `catalogChecksum` and `cardDataVersion`).
+2. **[Card Data Pipeline & Ability Authoring FRD](frd/02_Card_Data_Pipeline_FRD.md) (FRD v1.3 — 33 Requirements)**
+   - **Three-Tier Data Authority Lifecycle (`FR-DAT-001` - `FR-DAT-004`)**: Tier 1 (Authoritative Repository CSVs in `data/cards/*.csv`) $\leftrightarrow$ Tier 2 (Cloud Google Sheets Inspection Mirror synced via freshness-checked `tools/sheets/publish_card_sheets` and diff-verified `tools/sheets/import_card_sheets`) $\rightarrow$ Tier 3 (Compiled Production `blueprints.json` bound with 256-bit `catalogChecksum` and `cardDataVersion`).
    - **Zero-Aliasing Target Enums & Normalization (`FR-DAT-005` - `FR-DAT-008`)**: Direct `CardBlueprint` schema header parity on all 10 CSVs with zero runtime aliases (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`), deterministic immutable slug IDs (`<faction>_<snake_case_title>`, `FR-DAT-002`), Title Case subtype normalization with case-insensitive runtime filtering, and `"--"` sentinel handling.
    - **Declarative Ability AST & Extended Mechanics (`FR-ABL-001` - `FR-ABL-012`)**: Polymorphic schemas for `TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA` (Layer 4 modifiers & `abilityGrants`), `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, and `KEYWORD_GRANT`, supported by `FilterDef`, composable `ValueToken.query` aggregates, `CostDef` (`EXHAUST_SELF`), `TargetRef` (`DISTRIBUTED_POOL`), `maxPerTurn` gates, modal choices, and all 15 keyword AST mappings.
    - **Event Hook Taxonomy, 25 Atomic Primitives & Upfront Target Locking (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Canonical catalog of 24 `EVENT_*` hooks and 3 `WOULD_*` replacement hooks with causality lineage, **25 standard atomic effect primitives** (plus `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE`), upfront target locking (`bindingPolicy: "UPFRONT_LOCK"`), and 4 benchmark card AST implementations.
    - **MTG-Aligned Rules Text Standards (`FR-TXT-001` - `FR-TXT-006`)**: Standardized capitalization, trigger preambles (*When*, *Whenever*, *At*), cost notation (`[Cost]: [Effect].`), passive aura phrasing (*has*/*have*), temporary stat modification phrasing (*gets*/*get*), keyword grants (*gains*/*gain*), and conjunction targeting syntax (*chosen*) with two-stage dynamic filter verification (`FR-TGT-103`).
-   - **Validation, Parity & Prototype Gating (`FR-VAL-001` - `FR-VAL-003`, Domain 7)**: Automated 1-to-1 rules-text-to-AST parity verification, two-tier prototype compilation (`currentProxy` / `needsRework` allowed in dev builds, blocked by `ERR_STRICT_PROTOTYPE_REJECTED` under `-Strict`), and the 167-card Master Review Register.
+   - **Validation, Parity & Prototype Gating (`FR-VAL-001` - `FR-VAL-003`, Domain 7)**: Automated 1-to-1 rules-text-to-AST parity verification, two-tier prototype compilation (`currentProxy` / `needsRework` allowed in dev builds, blocked by `ERR_STRICT_PROTOTYPE_REJECTED` under `--strict`), and the 167-card Master Review Register.
 
-3. **[Card Compiler & Blueprint Ingestion FRD](frd/03_Card_Compiler_FRD.md) (FRD v1.0 — 28 Requirements)**
-   - **Ten-Stage Compilation Pipeline & CLI Contract (`FR-CMP-001` - `FR-CMP-003`)**: Parameterized PowerShell 5.1/7+ CLI (`compile_blueprints.ps1`) with `< 5,000 ms` warm execution SLA, standardized CI/CD exit codes (`0`–`5`), and atomic `.tmp.$PID` file staging with zero-corrupt rollback guarantees.
-   - **Atomic Multi-Sheet Ingestion & Prototype Policy (`FR-CMP-004` - `FR-CMP-007`)**: Strict UTF-8 RFC-4180 parsing across all 10 CSV sheets, global `<faction>_<slug>` collision prevention (`ERR_SLUG_COLLISION`), strict attribute type coercion, and harmonized prototype handling (`"proxy": true` / `"needsRework": true` in dev builds vs. `ERR_STRICT_PROTOTYPE_REJECTED` under `-Strict`).
+3. **[Card Compiler & Blueprint Ingestion FRD](frd/03_Card_Compiler_FRD.md) (FRD v1.2 — 28 Requirements)**
+   - **Ten-Stage Compilation Pipeline & CLI Contract (`FR-CMP-001` - `FR-CMP-003`)**: Standalone pure Go CLI binary (`cmd/compile-blueprints`) with `< 500 ms` warm execution SLA, standardized CI/CD exit codes (`0`–`5`), POSIX flags (`--source-dir`, `--output-dir`, `--strict`, etc.), and atomic `.tmp.<pid>` file staging with zero-corrupt rollback guarantees.
+   - **Atomic Multi-Sheet Ingestion & Prototype Policy (`FR-CMP-004` - `FR-CMP-007`)**: Strict UTF-8 RFC-4180 parsing across all 10 CSV sheets, global `<faction>_<slug>` collision prevention (`ERR_SLUG_COLLISION`), strict attribute type coercion, and harmonized prototype handling (`"proxy": true` / `"needsRework": true` in dev builds vs. `ERR_STRICT_PROTOTYPE_REJECTED` under `--strict`).
    - **Scoped Rules Text Lexer & AST Synthesizer (`FR-CMP-008` - `FR-CMP-016`)**: Decoupled Declarative Catalog Model (`Direction B`) scoping automated regex synthesis to predictable patterns—standalone canonical keywords (`FR-CMP-013`), standard cost headers (`FR-CMP-010`), and single-clause triggers/auras/replacements—into polymorphic `AbilityDef` AST structures.
    - **Two-Tier Sidecar Overrides Registry (`FR-CMP-017` - `FR-CMP-018`)**: Authoritative sidecar registry (`data/schemas/ast_overrides.json`) for bespoke multi-clause cards (*NO-AH-5*, *Samsara*, *Ambush Tactics*, *Blind Defile*, *Forced Mutation*), enforcing orphan detection, schema conformance, designer verification metadata, and sanitized CSV `rulesText` string-match checks (`ERR_OVERRIDE_TEXT_MISMATCH`).
-   - **Bidirectional Text-to-AST Parity Engine (`FR-CMP-019` - `FR-CMP-021`)**: Enforces forward and reverse clause-to-AST parity on synthesized cards, while verifying sidecar overrides via explicit designer sign-off (`parityVerified: true`), standalone keyword presence, and CSV `rulesText` equality, plus dynamic Master Review Register gating under `-Strict`.
-   - **JSON Schema Validation & Production Packaging (`FR-CMP-022` - `FR-CMP-023`)**: Validates blueprints and overrides against JSON Schema Draft 2020-12 (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, `ast_overrides.schema.json` via `-EmitSchemas`) and emits 2-space indented `blueprints.json` (plus optional `blueprints.min.json` via `-Minify`).
-   - **RFC 8785 Canonical Fingerprinting & Diagnostics (`FR-CMP-024` - `FR-CMP-028`)**: Session-cached RFC 8785 JCS canonicalization, 256-bit SHA-256 `catalogChecksum`, SemVer 2.0 `cardDataVersion`, and 22 structured diagnostic error codes (`ERR_*`).
+   - **Bidirectional Text-to-AST Parity Engine (`FR-CMP-019` - `FR-CMP-021`)**: Enforces forward and reverse clause-to-AST parity on synthesized cards, while verifying sidecar overrides via explicit designer sign-off (`parityVerified: true`), standalone keyword presence, and CSV `rulesText` equality, plus dynamic Master Review Register gating under `--strict`.
+   - **JSON Schema Validation & Production Packaging (`FR-CMP-022` - `FR-CMP-023`)**: Validates blueprints and overrides against JSON Schema Draft 2020-12 (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, `ast_overrides.schema.json` via `--emit-schemas`) and emits 2-space indented `blueprints.json` (plus optional `blueprints.min.json` via `--minify`).
+   - **RFC 8785 Canonical Fingerprinting & Diagnostics (`FR-CMP-024` - `FR-CMP-028`)**: Native Go RFC 8785 byte canonicalization, 256-bit SHA-256 `catalogChecksum`, SemVer 2.0 `cardDataVersion`, and 22 structured diagnostic error codes (`ERR_*`).
 
 4. **[Client-Engine Protocol & Networking FRD](frd/04_Client_Engine_Protocol_Networking_FRD.md) (FRD v1.2 — 25 Requirements)**
    - **Transport & DoS-Hardened Liveness (`FR-NET-001` - `FR-NET-004`)**: Isolated stateful GCP match containers (GKE/Agones or Cloud Run) communicating over TLS WebSockets (`wss://` port 443) via Godot 4.x's native `WebSocketPeer`, using binary Protocol Buffers v3 (`ccg.network`) with JSON debug fallback, 1,000 ms `Ping`/`Pong` heartbeats (rate-limited to max 5/s), and 3,000 ms disconnect detection.
@@ -117,7 +117,7 @@ animus-mundi/
 
 ## 3. Current Phase: Card Compiler Implementation & Blueprint Ingestion (Phase 2)
 
-With the game rules, data pipeline, compiler, wire protocol, and headless engine architectures codified across all five Master FRDs and the authoring balance CSVs normalized, the active implementation milestone is the **Card Compiler Pipeline (`compile_blueprints.ps1`)** that translates raw CSV rows and sidecar overrides into machine-executable JSON blueprint assets (`data/schemas/blueprints.json`).
+With the game rules, data pipeline, compiler, wire protocol, and headless engine architectures codified across all five Master FRDs and the authoring balance CSVs normalized, the active implementation milestone is the **Card Compiler Pipeline (`cmd/compile-blueprints`)** that translates raw CSV rows and sidecar overrides into machine-executable JSON blueprint assets (`data/schemas/blueprints.json`).
 
 ```mermaid
 flowchart TD
@@ -134,14 +134,14 @@ flowchart TD
 
     subgraph Specs["Authoritative Specifications (docs/frd/)"]
         FRD_Rules["01 Game Rules & Keywords<br/><i>(Master FRD v3.1, 69 Reqs)</i>"]
-        FRD_Pipe["02 Card Data Pipeline<br/><i>(FRD v1.1, 33 Reqs)</i>"]
-        FRD_Comp["03 Card Compiler & Ingestion<br/><i>(FRD v1.0, FR-CMP-001 - 028)</i>"]
+        FRD_Pipe["02 Card Data Pipeline<br/><i>(FRD v1.3, 33 Reqs)</i>"]
+        FRD_Comp["03 Card Compiler & Ingestion<br/><i>(FRD v1.2, FR-CMP-001 - 028)</i>"]
         FRD_Net["04 Client-Engine Protocol<br/><i>(FRD v1.2, 25 Reqs)</i>"]
         FRD_Eng["05 Headless Game Engine<br/><i>(Master FRD v1.1, 46 Reqs)</i>"]
     end
 
-    subgraph Compiler["Phase 2: Compiler Pipeline (tools/importer/)"]
-        Pipeline["compile_blueprints.ps1<br/><i>(10-Stage Compilation Engine)</i>"]
+    subgraph Compiler["Phase 2: Compiler Pipeline (cmd/compile-blueprints)"]
+        Pipeline["cmd/compile-blueprints<br/><i>(10-Stage Go Compilation Engine)</i>"]
         Schemas["JSON Schemas Draft 2020-12<br/><i>(CardBlueprint, AbilityDef, ast_overrides)</i>"]
         Parity["Bidirectional Parity Check<br/><i>(FR-CMP-019 - 021 Parity & Sign-Off)</i>"]
     end
@@ -156,7 +156,7 @@ flowchart TD
         Client["Godot 4.x Client (src/)<br/><i>(WebSocketPeer, Protobuf v3, Predictive UI)</i>"]
     end
 
-    CSV <-->|"publish_card_sheets.ps1 / import_card_sheets.ps1"| GS
+    CSV <-->|"tools/sheets/{publish,import}_card_sheets"| GS
     Studio -->|"Direct Export / Sync"| CSV
     Studio -.->|"Generates Sidecars"| Overrides
     CSV -->|"Schema & Terminology Lint"| LinterSuite
@@ -183,15 +183,15 @@ flowchart TD
    - `CardBlueprint.schema.json`: Complete JSON Schema Draft 2020-12 validation for production blueprints (`FR-DAT-005`, `FR-CMP-022`).
    - `AbilityDef.schema.json`: Polymorphic schema validating ability archetypes, event hooks, 25 atomic primitives, composable `ValueToken.query` aggregates, condition gates, cost models, and targeting filters (`FR-ABL-001` - `FR-ABL-012`, `FR-TRG-001`, `FR-PRM-001`, `FR-TGT-101`, `FR-CMP-022`).
    - `ast_overrides.schema.json`: Formal schema validating the sidecar overrides registry (`FR-CMP-017`, `FR-CMP-022`).
-3. **Card Compiler Script (`tools/importer/compile_blueprints.ps1`)**:
+3. **Card Compiler Binary (`cmd/compile-blueprints`)**:
    - **CSV Ingestion**: Parse all 10 CSV sheets atomically, strictly validating types, ranges, and zero-aliasing enums (`FR-VAL-003`, `FR-CMP-004` - `FR-CMP-007`).
    - **Slug Derivation**: Compute canonical IDs (`<faction>_<slug>`) with global collision prevention per `FR-DAT-002`, `FR-CMP-006`.
    - **Scoped Ability AST Synthesizer & Sidecar Merger**: Translate predictable rules text and standalone keyword lines into declarative JSON AST payloads while merging authoritative `ast_overrides.json` entries for complex multi-clause cards (`FR-ABL-001` - `FR-ABL-012`, `FR-CMP-008` - `FR-CMP-018`).
    - **Bidirectional Text-to-AST Parity Checker**: Automate `FR-VAL-002`, `FR-CMP-019` - `FR-CMP-020` to verify forward/reverse clause parity on synthesized cards and enforce designer sign-off (`parityVerified: true`) + sanitized CSV `rulesText` equality on overridden cards.
-   - **RFC 8785 JCS Catalog Fingerprinting**: Compute the 256-bit SHA-256 `catalogChecksum` over canonical RFC 8785 bytes (via session-cached serializer) and stamp semantic `cardDataVersion` (`FR-DAT-004`, `FR-CMP-024` - `FR-CMP-026`).
-   - **Atomic Catalog Emission**: Generate 2-space indented `data/schemas/blueprints.json` (and optional `blueprints.min.json`) atomically via `.tmp.$PID` staging (`FR-CMP-003`, `FR-CMP-023`).
+   - **RFC 8785 JCS Catalog Fingerprinting**: Compute the 256-bit SHA-256 `catalogChecksum` over canonical RFC 8785 bytes (via native Go serializer) and stamp semantic `cardDataVersion` (`FR-DAT-004`, `FR-CMP-024` - `FR-CMP-026`).
+   - **Atomic Catalog Emission**: Generate 2-space indented `data/schemas/blueprints.json` (and optional `blueprints.min.json`) atomically via `.tmp.<pid>` staging (`FR-CMP-003`, `FR-CMP-023`).
 4. **Resolution of Domain 7 Designer Review Items**:
-   - Designer review and sign-off on flagged cards with unresolved items in the Master Review Register to finalize card behaviors prior to release consumption. In development builds, rework/proxy cards compile with `"proxy": true` / `"needsRework": true` metadata flags, but are dynamically gated under `-Strict` mode (`FR-CMP-005`, `FR-CMP-021`).
+   - Designer review and sign-off on flagged cards with unresolved items in the Master Review Register to finalize card behaviors prior to release consumption. In development builds, rework/proxy cards compile with `"proxy": true` / `"needsRework": true` metadata flags, but are dynamically gated under `--strict` mode (`FR-CMP-005`, `FR-CMP-021`).
 
 ---
 
@@ -202,7 +202,7 @@ Following completion of the Card Compiler and production blueprint catalog, deve
 ```mermaid
 flowchart LR
     Phase1["<b>Phase 1</b><br/>Rules & Balance Codification<br/><i>(COMPLETE — FRD 01 v3.1)</i>"]
-    Phase2["<b>Phase 2</b><br/>Compiler & Blueprint Ingestion<br/><i>(IN PROGRESS — FRD 02 v1.1, FRD 03 v1.0)</i>"]
+    Phase2["<b>Phase 2</b><br/>Compiler & Blueprint Ingestion<br/><i>(IN PROGRESS — FRD 02 v1.3, FRD 03 v1.2)</i>"]
     Phase3["<b>Phase 3</b><br/>Headless Engine Core<br/><i>(SPECIFIED — FRD 05 v1.1)</i>"]
     Phase4["<b>Phase 4</b><br/>Server Networking & Daemon<br/><i>(PROTOCOL SPECIFIED — FRD 04 v1.2)</i>"]
     Phase5["<b>Phase 5</b><br/>Godot 4.x Client & UX<br/><i>(PLANNED — FRD 07)</i>"]
@@ -268,7 +268,7 @@ flowchart LR
   - **Set & Portfolio Management**: Multi-set cataloging, expansion tagging, card versioning, rarity curves, and deterministic slug derivation (`FR-DAT-002`, `FR-CMP-006`).
   - **Version-Controlled Serialization**: Direct round-trip export into Git-versioned Tier 1 CSV balance sheets (`data/cards/*.csv`) and sidecar override definitions (`data/schemas/ast_overrides.json`, `FR-CMP-017`), preserving version control as the single source of truth.
 - **Automated Balance Pipeline Integration**:
-  - Live round-trip synchronization: Designer edits Google Sheets or Card Studio $\rightarrow$ `import_card_sheets.ps1` / `publish_card_sheets.ps1` $\rightarrow$ `data/cards/*.csv` $\rightarrow$ `compile_blueprints.ps1` $\rightarrow$ `cmd/engine-sim` automated engine regression tests.
+  - Live round-trip synchronization: Designer edits Google Sheets or Card Studio $\rightarrow$ `tools/sheets/import_card_sheets` / `tools/sheets/publish_card_sheets` $\rightarrow$ `data/cards/*.csv` $\rightarrow$ `cmd/compile-blueprints` $\rightarrow$ `cmd/engine-sim` automated engine regression tests.
 - **Telemetry & Match Analytics**:
   - Win-rate tracking per faction, card play frequency, and turn-duration metrics to guide future balance patches.
 
@@ -281,8 +281,8 @@ In alignment with the requirement prefix taxonomy defined across `.agents/skills
 | Roadmap Phase | Target Specification Document | Domain Prefixes | Primary Scope | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **Phase 1** | `01_Game_Rules_FRD.md` | `FR-SET-`, `FR-DEK-`, `FR-WIN-`, `FR-CRD-`, `FR-ZON-`, `FR-ENT-`, `FR-RES-`, `FR-TRN-`, `FR-CST-`, `FR-CAP-`, `FR-INH-`, `FR-ACT-`, `FR-MNV-`, `FR-TGT-`, `FR-MOD-`, `FR-QUE-`, `FR-TRG-`, `FR-LAY-`, `FR-REP-`, `FR-CBT-`, `FR-KWD-` | Pure game rules, card & asset taxonomy, spatial zone topology, turn structure, 6-layer evaluation, 5-stage damage mitigation, 3-step combat, and 15-keyword catalog | Codified (Master v3.1 — 69 Reqs) |
-| **Phase 2** | `02_Card_Data_Pipeline_FRD.md` | `FR-DAT-`, `FR-ABL-`, `FR-TRG-`, `FR-PRM-`, `FR-TGT-`, `FR-TXT-`, `FR-VAL-` | 3-tier data authority lifecycle, `CardBlueprint` & `AbilityDef` JSON schemas, 24 event hooks, 25 atomic primitives, upfront target locking, MTG text rules, and 167-card review register | Codified (v1.1 — 33 Reqs) |
-| **Phase 2** | `03_Card_Compiler_FRD.md` | `FR-CMP-` | 10-stage CSV-to-JSON compiler CLI (`compile_blueprints.ps1`), scoped AST synthesizer, sidecar override registry, bidirectional parity checker, and RFC 8785 SHA-256 fingerprinting | Codified (v1.0 — 28 Reqs) |
+| **Phase 2** | `02_Card_Data_Pipeline_FRD.md` | `FR-DAT-`, `FR-ABL-`, `FR-TRG-`, `FR-PRM-`, `FR-TGT-`, `FR-TXT-`, `FR-VAL-` | 3-tier data authority lifecycle, `CardBlueprint` & `AbilityDef` JSON schemas, 24 event hooks, 25 atomic primitives, upfront target locking, MTG text rules, and 167-card review register | Codified (v1.3 — 33 Reqs) |
+| **Phase 2** | `03_Card_Compiler_FRD.md` | `FR-CMP-` | 10-stage CSV-to-JSON compiler CLI (`cmd/compile-blueprints`), scoped AST synthesizer, sidecar override registry, bidirectional parity checker, and RFC 8785 SHA-256 fingerprinting | Codified (v1.2 — 28 Reqs) |
 | **Phase 3** | `05_Headless_Game_Engine_FRD.md` | `FR-ENG-`, `FR-ENT-`, `FR-SNP-` | Pure Go headless kernel, 3-tier runtime entity memory model, 3-stream PCG32 PRNG, transactional LIFO stack runner, 25-primitive AST interpreter, stateless 6-layer pipeline, 5-stage mitigation, and `engine-sim` test harness | Codified (Master v1.1 — 46 Reqs) |
 | **Phase 4** | `04_Client_Engine_Protocol_Networking_FRD.md` | `FR-NET-`, `FR-SES-`, `FR-SEC-`, `FR-MSG-`, `FR-PAC-`, `FR-SPC-`, `FR-ERR-` | TLS WebSockets (`wss://`), Protobuf v3 wire schemas, zero-trust handshake, double-blind Fog-of-War, 14 client commands, 15 engine events, choice prompts, grace buffers, state hashing, and quarantined `.rec` replays | Codified (v1.2 — 25 Reqs) |
 | **Phase 4** | `06_Server_Daemon_Matchmaking_FRD.md` | `FR-SRV-` | Dedicated server daemon, GCP Agones container lifecycle, matchmaker queue orchestration, session persistence, and JWT authentication | Planned |

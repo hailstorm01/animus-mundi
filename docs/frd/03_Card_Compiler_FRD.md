@@ -1,11 +1,11 @@
-# Card Compiler & Blueprint Bundler - Functional Requirements Document (FRD v1.1)
-**CLI Contract, CSV-to-AST Catalog Linker, Schema Validation Gate & RFC 8785 Cryptographic Fingerprinting Specification**
+# Card Compiler & Blueprint Bundler - Functional Requirements Document (FRD v1.2)
+**Go CLI Contract, CSV-to-AST Catalog Linker, Schema Validation Gate & RFC 8785 Cryptographic Fingerprinting Specification**
 
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This Functional Requirements Document (FRD) establishes the authoritative technical and operational specification for the **Card Compiler & Blueprint Bundler (`tools/importer/compile_blueprints.ps1`)**. Whereas **[Card Data Pipeline & Ability Authoring FRD](02_Card_Data_Pipeline_FRD.md)** (`FR-DAT-001` – `FR-DAT-008`, `FR-ABL-001` – `FR-ABL-012`, `FR-TXT-001` – `FR-TXT-006`) defines all card CSV schemas, target enums, slug derivation rules, and declarative Ability AST models, this document specifies the build-time compiler toolchain that links those authored artifacts into the immutable production catalog (`data/schemas/blueprints.json`) consumed by **[Client-Engine Protocol & Networking FRD](04_Client_Engine_Protocol_Networking_FRD.md)** and **[Headless Game Engine FRD](05_Headless_Game_Engine_FRD.md)**.
+This Functional Requirements Document (FRD) establishes the authoritative technical and operational specification for the **Card Compiler & Blueprint Bundler (`cmd/compile-blueprints`)**, implemented in pure Go (Golang 1.22+). Whereas **[Card Data Pipeline & Ability Authoring FRD](02_Card_Data_Pipeline_FRD.md)** (`FR-DAT-001` – `FR-DAT-008`, `FR-ABL-001` – `FR-ABL-012`, `FR-TXT-001` – `FR-TXT-006`) defines all card CSV schemas, target enums, slug derivation rules, and declarative Ability AST models, this document specifies the build-time compiler toolchain that links those authored artifacts into the immutable production catalog (`data/schemas/blueprints.json`) consumed by **[Client-Engine Protocol & Networking FRD](04_Client_Engine_Protocol_Networking_FRD.md)** and **[Headless Game Engine FRD](05_Headless_Game_Engine_FRD.md)**.
 
 ```text
 ┌──────────────────────────────────┐   ┌──────────────────────────────────┐
@@ -17,7 +17,8 @@ This Functional Requirements Document (FRD) establishes the authoritative techni
                   │                                      │
                   └──────────────────┬───────────────────┘
                                      │
-                       compile_blueprints.ps1 (FR-CMP-001)
+                        cmd/compile-blueprints (FR-CMP-001)
+                        (Pure Go Standalone CLI Tool)
                                      │
                                      ├─── [1] CLI Init & Atomic Temp Staging (FR-CMP-001 - 003)
                                      ├─── [2] CSV Reader & Collision Gate (FR-CMP-004 - 007)
@@ -34,6 +35,13 @@ This Functional Requirements Document (FRD) establishes the authoritative techni
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Revision Summary (v1.1 -> v1.2):
+1. **Pure Go Toolchain Architecture Pivot**: Replaced the legacy PowerShell script implementation with a standalone, cross-platform **Go (Golang 1.22+) CLI compiler (`cmd/compile-blueprints`)**, eliminating script-wrapper indirection across the toolchain.
+2. **POSIX/GNU CLI Parameter Contract (`FR-CMP-001`)**: Standardized command-line parameters to native flags (`--source-dir`, `--output-dir`, `--schema-dir`, `--overrides-file`, `--validate-only`, `--emit-schemas`, `--strict`, `--minify`, `--version`, `--verbose`).
+3. **Execution Performance SLA Order-of-Magnitude Boost (`FR-CMP-002`)**: Tightened warm execution latency from `< 5,000 ms` to **`< 500 ms`** across all 10 CSV sheets (~169–200 cards).
+4. **Native RFC 8785 Canonical JSON & Checksumming (`FR-CMP-024`)**: Removed PowerShell/.NET `csc.exe` session-caching workarounds in favor of native Go standard library cryptography (`crypto/sha256`) and deterministic RFC 8785 JCS canonicalization.
+5. **Shared Go Domain Models**: Unified `CardBlueprint` and `AbilityDef` AST structs between the compiler toolchain and the Phase 3 Headless Game Engine (`05_Headless_Game_Engine_FRD.md`), eliminating type drift across the stack.
+
 ### Specification Scope (v1.1):
 1. **CLI Contract, Execution Lifecycle & Atomic Staging (`FR-CMP-001` – `FR-CMP-003`)**: Command-line parameters, deterministic pipeline stages, process exit codes (`0`–`5`), and atomic temp-file staging (`blueprints.json.tmp.$PID`) with rollback guarantee.
 2. **CSV Reader Mechanics & Ingestion Edge Cases (`FR-CMP-004` – `FR-CMP-007`)**: Low-level file reader edge cases (BOM/line-ending tolerance, blank row skipping, duplicate slug collision detection, and diagnostic error mapping) delegating all column schemas and type rules to `02_Card_Data_Pipeline_FRD.md` (`FR-DAT-001` – `FR-DAT-008`).
@@ -46,10 +54,10 @@ This Functional Requirements Document (FRD) establishes the authoritative techni
 ## ARCHITECTURAL DECISIONS
 
 > [!IMPORTANT]
-> **DECISION 1: Pure Catalog Linker Architecture — Delegating CSV & AST Modeling to FRD 02 (`FR-CMP-017`)**
+> **DECISION 1: Pure Go Catalog Linker Architecture — Delegating CSV & AST Modeling to FRD 02 (`FR-CMP-017`)**
 > - **Context**: All card data schemas (`FR-DAT-001` – `FR-DAT-008`), rules text grammar (`FR-TXT-001` – `FR-TXT-006`), and declarative Ability AST structures (`FR-ABL-001` – `FR-ABL-012`, `FR-TRG-001`, `FR-PRM-001`) are canonically specified in [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md).
-> - **Decision**: `compile_blueprints.ps1` operates strictly as a deterministic **Catalog Linker, Validator, and Checksum Bundler** rather than a natural-language regex parser:
->   1. **Single Source of Schema Truth**: CSV column layouts (15-column asset sheets and 9-column maneuver sheets), enum sets, boolean literals (`"true"` / `"false"`), and slug derivation rules are referenced directly from `FR-DAT-001` – `FR-DAT-008`.
+> - **Decision**: The compiler is implemented in pure Go (Golang 1.22+) as `cmd/compile-blueprints` and operates strictly as a deterministic **Catalog Linker, Validator, and Checksum Bundler** rather than a natural-language regex parser:
+>   1. **Single Source of Schema Truth**: CSV column layouts (15-column asset sheets and 9-column maneuver sheets), enum sets, boolean literals (`"true"` / `"false"`), and slug derivation rules are referenced directly from `FR-DAT-001` – `FR-DAT-008` and shared via Go domain model structs with the Headless Engine (`05_Headless_Game_Engine_FRD.md`).
 >   2. **Keyword Lookup + Declarative AST Registry**: Vanilla cards (`rulesText` equal to `"--"` or `""`) emit `abilities: []` (`FR-DAT-007`), and standalone keyword lines map via the 15-keyword lookup table in `FR-ABL-012` (`FR-CMP-013`). All non-keyword card abilities and additional deployment/enactment costs (`additionalDeploymentCosts`, `FR-DAT-005`) are modeled declaratively per `02_Card_Data_Pipeline_FRD.md` and linked from `data/schemas/ast_overrides.json` (`FR-CMP-017`). Sentence-level regex NLP synthesis (`FR-CMP-008` – `FR-CMP-012`, `FR-CMP-014` – `FR-CMP-016`) is retired and subsumed.
 
 > [!IMPORTANT]
@@ -63,33 +71,34 @@ This Functional Requirements Document (FRD) establishes the authoritative techni
 ### Section 1.1: CLI Invocation & Staging Invariants
 
 #### FR-CMP-001: Compiler CLI Command Interface & Parameter Contract
-The Card Compiler CLI script resides at `tools/importer/compile_blueprints.ps1` and supports PowerShell 5.1 and PowerShell 7+ across Windows, Linux, and macOS:
+The Card Compiler CLI resides at `cmd/compile-blueprints` (compiling to `cardtown-compiler` / `compile-blueprints`) as a standalone, statically linked Go executable with zero external runtime dependencies, providing cross-platform execution across Linux (x86_64/ARM64), macOS, and Windows:
 
-```powershell
-param(
-    [string]$SourceDir = "$PSScriptRoot\..\..\data\cards",
-    [string]$OutputDir = "$PSScriptRoot\..\..\data\schemas",
-    [string]$SchemaDir = "$PSScriptRoot\..\..\data\schemas",
-    [string]$OverridesFile = "$PSScriptRoot\..\..\data\schemas\ast_overrides.json",
-    [switch]$ValidateOnly,
-    [switch]$EmitSchemas,
-    [switch]$Strict,
-    [switch]$Minify,
-    [string]$Version = "1.0.0",
-    [switch]$VerboseOutput
-)
+```text
+Usage: compile-blueprints [flags]
+
+Flags:
+  --source-dir string      Directory containing the 10 authoritative CSV sheets (default "data/cards")
+  --output-dir string      Target directory for blueprints.json (default "data/schemas")
+  --schema-dir string      Directory containing JSON schemas (default "data/schemas")
+  --overrides-file string  Path to the declarative AST registry (default "data/schemas/ast_overrides.json")
+  --validate-only          Dry-run mode executing full ingestion, linking, and schema validation without writing output files
+  --emit-schemas           Export standalone Draft 2020-12 JSON schemas directly from Go AST struct definitions
+  --strict                 Reject prototype/rework cards (currentProxy/needsRework) or unverified overrides
+  --minify                 Emit unformatted blueprints.min.json alongside 2-space indented blueprints.json
+  --version string         Set cardDataVersion SemVer 2.0 string (default "1.0.0")
+  --verbose                Emit per-card linking, validation, and checksum telemetry to stdout
 ```
 
-1. **`-SourceDir`**: Directory containing the 10 authoritative CSV sheets defined in [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md).
-2. **`-OutputDir`**: Target directory for `blueprints.json` (and `blueprints.min.json` when `-Minify` is set).
-3. **`-SchemaDir`**: Directory containing `CardBlueprint.schema.json`, `AbilityDef.schema.json`, and `ast_overrides.schema.json`.
-4. **`-OverridesFile`**: Path to the declarative AST registry (`data/schemas/ast_overrides.json`; `FR-CMP-017`).
-5. **`-ValidateOnly`**: Dry-run mode executing full ingestion, linking, parity verification, and schema validation without writing output files.
-6. **`-EmitSchemas`**: Regenerates the standalone JSON Schema files in `-SchemaDir` (`FR-CMP-022`).
-7. **`-Strict`**: Treats prototype/rework flags (`currentProxy`, `needsRework`; [`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md)) and unresolved review items (`FR-CMP-021`) as fatal errors.
-8. **`-Minify`**: Emits `blueprints.min.json` alongside the 2-space indented `blueprints.json`.
-9. **`-Version`**: Sets `cardDataVersion` (SemVer 2.0, e.g., `"1.0.0"`; `FR-CMP-026`).
-10. **`-VerboseOutput`**: Emits per-card linking and validation telemetry to stdout.
+1. **`--source-dir`**: Directory containing the 10 authoritative CSV sheets defined in [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md).
+2. **`--output-dir`**: Target directory for `blueprints.json` (and `blueprints.min.json` when `--minify` is set).
+3. **`--schema-dir`**: Directory containing `CardBlueprint.schema.json`, `AbilityDef.schema.json`, and `ast_overrides.schema.json`.
+4. **`--overrides-file`**: Path to the declarative AST registry (`data/schemas/ast_overrides.json`; `FR-CMP-017`).
+5. **`--validate-only`**: Dry-run mode executing full ingestion, linking, parity verification, and schema validation without writing output files.
+6. **`--emit-schemas`**: Regenerates the standalone JSON Schema files in `--schema-dir` (`FR-CMP-022`) from canonical Go struct definitions.
+7. **`--strict`**: Treats prototype/rework flags (`currentProxy`, `needsRework`; [`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md)) and unresolved review items (`FR-CMP-021`) as fatal errors.
+8. **`--minify`**: Emits `blueprints.min.json` alongside the 2-space indented `blueprints.json`.
+9. **`--version`**: Sets `cardDataVersion` (SemVer 2.0, e.g., `"1.0.0"`; `FR-CMP-026`).
+10. **`--verbose`**: Emits per-card linking and validation telemetry to stdout.
 
 ##### Process Exit Code Contract (Subsumes FR-CMP-028)
 | Exit Code | Classification | Trigger Scenarios & Error Taxonomy (`FR-CMP-027`) |
@@ -99,22 +108,22 @@ param(
 | **`2`** | **CSV Syntax / Parsing** | Malformed RFC-4180 CSV row, header mismatch, or empty card name (`ERR_CSV_*`, `ERR_NAME_EMPTY`). |
 | **`3`** | **Type / Enum / Slug** | Type coercion failure, illegal enum value, or duplicate slug ID (`ERR_ENUM_*`, `ERR_NUM_*`, `ERR_SLUG_COLLISION`). |
 | **`4`** | **AST Registry / Schema** | Override schema failure, orphan override, text mismatch, or blueprint schema failure (`ERR_OVERRIDE_*`, `ERR_ORPHAN_OVERRIDE`). |
-| **`5`** | **Parity / Strict Gate** | Unmapped rules text, unverified override, or proxy/review card rejected under `-Strict` (`ERR_PARITY_*`, `ERR_STRICT_*`). |
+| **`5`** | **Parity / Strict Gate** | Unmapped rules text, unverified override, or proxy/review card rejected under `--strict` (`ERR_PARITY_*`, `ERR_STRICT_*`). |
 
 #### FR-CMP-002: Multi-Stage Compilation Pipeline & Lifecycle Invariants
 The compiler executes deterministically across five sequential stages, halting immediately on any fatal error:
 1. **Stage 1 (Environment & Schema Initialization)**: Resolves paths and loads JSON schemas plus `ast_overrides.json`.
 2. **Stage 2 (Atomic CSV Ingestion & Slug Derivation)**: Parses all 10 CSV sheets (`FR-CMP-004` – `FR-CMP-007`) in accordance with [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md) – [`FR-DAT-008`](02_Card_Data_Pipeline_FRD.md) and checks for duplicate derived IDs.
 3. **Stage 3 (Catalog Linking & Keyword Lookup)**: Binds standalone keyword ASTs (`FR-CMP-013`) and declarative AST overrides (`FR-CMP-017`).
-4. **Stage 4 (Build-Time Parity, Strict & Schema Validation)**: Verifies text-to-AST synchronization (`FR-CMP-019` – `FR-CMP-020`), `-Strict` gates (`FR-CMP-021`), and JSON Schema conformance (`FR-CMP-022`).
-5. **Stage 5 (RFC 8785 Fingerprinting & Atomic Emission)**: Computes `catalogChecksum` (`FR-CMP-024` – `FR-CMP-025`) and atomically writes `blueprints.json` (`FR-CMP-003`, `FR-CMP-023`). Warm execution for ~200 cards must complete within 5,000 ms on PowerShell 7+ (< 10,000 ms on Windows PowerShell 5.1).
+4. **Stage 4 (Build-Time Parity, Strict & Schema Validation)**: Verifies text-to-AST synchronization (`FR-CMP-019` – `FR-CMP-020`), `--strict` gates (`FR-CMP-021`), and JSON Schema conformance (`FR-CMP-022`).
+5. **Stage 5 (RFC 8785 Fingerprinting & Atomic Emission)**: Computes `catalogChecksum` (`FR-CMP-024` – `FR-CMP-025`) and atomically writes `blueprints.json` (`FR-CMP-003`, `FR-CMP-023`). Warm execution for ~200 cards must complete within **`< 500 ms`** across all supported platforms.
 
 #### FR-CMP-003: Atomic Emission, File Staging & Rollback Guarantee
 In fulfillment of [`FR-DAT-003`](02_Card_Data_Pipeline_FRD.md):
 1. The compiler never writes directly to `<OutputDir>/blueprints.json`.
-2. Output is written first to a process-unique staging file `<OutputDir>/blueprints.json.tmp.$PID`.
+2. Output is written first to a process-unique staging file `<OutputDir>/blueprints.json.tmp.<pid>`.
 3. Only after all validation and hashing stages succeed is the staging file atomically renamed/replaced over `blueprints.json`.
-4. On any error, `<OutputDir>/blueprints.json.tmp.$PID` is deleted immediately, leaving any pre-existing `blueprints.json` untouched.
+4. On any error, `<OutputDir>/blueprints.json.tmp.<pid>` is deleted immediately, leaving any pre-existing `blueprints.json` untouched.
 
 ---
 
@@ -255,7 +264,7 @@ Before computing `catalogChecksum`, the compiler canonicalizes the `blueprints` 
 2. **Metadata Stripping**: Prior to canonical byte generation, development metadata properties `currentProxy` and `needsRework` are stripped from each `CardBlueprint` object (`FR-DAT-005`), guaranteeing that toggling prototype flags during development never breaks catalog checksum parity.
 3. Object keys within each blueprint object are sorted lexicographically by UTF-16 code units.
 4. All insignificant whitespace is omitted, and strings are encoded as UTF-8 without BOM.
-5. **Session Caching**: To avoid repeated `csc.exe` startup overhead in PowerShell 5.1/7+, the canonical serializer uses session-cached types or native .NET `System.Text.Json` / `System.Security.Cryptography.SHA256` APIs so pre-commit hook runs stay well within the 5,000 ms budget (`FR-CMP-002`).
+5. **High-Performance Canonical Serialization**: Implemented in pure Go using standard library `crypto/sha256` and deterministic RFC 8785 byte canonicalization, eliminating external compilation overhead and completing in `< 50 ms` (`FR-CMP-002`).
 
 #### FR-CMP-025: 256-Bit Cryptographic Checksum Computation (`catalogChecksum`)
 In fulfillment of [`FR-DAT-004`](02_Card_Data_Pipeline_FRD.md), [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md), and [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md):
