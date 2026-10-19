@@ -29,7 +29,7 @@ animus-mundi/
 │   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
-│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.4 (Pure Game Rules & Keywords)
+│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.5 (Pure Game Rules & Keywords)
 │       ├── keyword_interaction_matrix.md                # ACTIVE — Bounded keyword edge-case register
 │       ├── 02_Card_Data_Pipeline_FRD.md                 # FROZEN — FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FROZEN — FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
@@ -63,7 +63,7 @@ animus-mundi/
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
-1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.4 — 70 Requirement IDs, 62 active; 8 subsumed)**
+1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.5 — 70 Requirement IDs, 62 active; 8 subsumed)**
    - **Deck Construction, Match Setup & First-Turn Rules (`FR-SET-001` - `FR-SET-004`, `FR-DEK-001` - `FR-DEK-002`, `FR-WIN-001`)**: 50-card minimum main deck, 1 faction Headquarters, rarity copy limits (4/3/2/1), pre-mulligan First-Player Determination (15s clock), 6-card opening hand with single partial mulligan (25s clock), Turn 1 draw skip, absence of summoning sickness, mandatory post-search shuffle, empty-deck draw loss, and a simultaneous empty-deck **Match Draw** (`RESULT_MATCH_DRAW`).
    - **Pure Game Rules, Card Taxonomy & Spatial Zone Model (`FR-CRD-101`, `FR-ZON-001` - `FR-ZON-005`, `FR-ENT-102` - `FR-ENT-103`)**: 14 printed card characteristics, Battlefield Assets vs. non-battlefield Cards, ownership vs. control, uncapped zone capacities (Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard, Attached Sub-Zone, and Resolution Stack), double-blind `1/1/1/1` Scratch Company lifecycle, tucked cards, and face-down transformation. Runtime memory structs (`FR-ENT-001` - `FR-ENT-003`, `FR-SNP-101`) are owned by FRD 05 (`SOC-002`).
    - **Dual-Resource Economy, Turn Sequence & Clean-Stack Model (`FR-RES-001` - `FR-RES-003`, `FR-TRN-001` - `FR-TRN-003a`, `FR-CAP-001`, `FR-MNV-001`, `FR-QUE-001`)**: Explicit off-stack Requisition and Tactics generation, one-way `2R -> 1T` conversion, unified Inherent Capabilities Matrix (`FR-CAP-001`, subsuming `FR-INH-001` - `FR-INH-004`), discard-pile and in-resolution free deployments with destination-zone selection (`FR-TRN-003a`), Ready Phase (unexhaust + start-of-turn triggers), Draw Phase (draw + draw triggers), Main Phase (75s turn clock + 60s Reserve Time Bank, clean-stack priority), and End Phase (Sub-Phases 4a–4d).
@@ -145,12 +145,12 @@ The physical prototype has shown the core loop is fun, so the open risk is not w
 
 ### 3.2 M2 Deliverables
 1. **Rulings for reachable open matrix items. ✅ Done 2026-10-19 (FRD 01 v3.3–v3.4).** Eleven items were ruled, covering Berserk targeting and fizzles, Berserk 2 on *Tempest Surge* and *Redline Infusion*, Scratch Companies entering Exhausted, committed combat targets, zero-yield generation, and HQ defeat and empty-deck loss both settling at the death sweep. The two remaining open items (`KIM-C01`, `KIM-B07`) are unreachable with current cards. New cards or new keywords reopen this.
-2. **Animus vs Path starter set, fully executable.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities. Abilities are modeled directly as Go values in the kernel, with no compiler. At M2 start, 5 of 42 Animus cards and 4 of 42 Path cards are executable, and no Maneuvers are.
+2. **Animus vs Path starter set, fully executable.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work. Abilities are modeled directly as Go values in the kernel, with no compiler. At M2 start, 5 of 42 Animus cards and 4 of 42 Path cards are executable, and no Maneuvers are.
 3. **Kernel coverage pulled by starter cards.** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card. Rules of FRD 01 that no starter card reaches move to M3. The candidates are triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
 4. **`cardtown play`: a text-mode match.** One human plays a starter deck against the random policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client.
 5. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
 
-**Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card is executable, no reachable matrix item is open, `cardtown sim -p0 ANIMUS -p1 PATH` runs clean, and a human can finish a `cardtown play` match.
+**Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
 
 > [!NOTE]
 > **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it. [TDD 03](tdd/03_Card_Compiler_TDD.md) is parked until then.
@@ -198,7 +198,7 @@ flowchart LR
 
 | Document | Status | Serves | Next action |
 | :--- | :--- | :--- | :--- |
-| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.4 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.5 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |

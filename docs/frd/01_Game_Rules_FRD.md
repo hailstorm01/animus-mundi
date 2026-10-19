@@ -1,4 +1,4 @@
-# Game Rules - Functional Requirements Document (Master FRD v3.4)
+# Game Rules - Functional Requirements Document (Master FRD v3.5)
 **Authoritative Game Rules, Card Taxonomy, Zone Topology, Turn Structure & Keyword Dictionary**
 
 ---
@@ -13,6 +13,13 @@ To maintain strict separation of concerns across the specification suite:
 3. **Card Compiler (`03_Card_Compiler_FRD.md`)**: Translates authoring CSVs and rules text into compiled `blueprints.json` AST payloads.
 4. **Client-Engine Protocol & Networking (`04_Client_Engine_Protocol_Networking_FRD.md`)**: Defines the WebSocket/Protobuf wire protocol, session handshakes, fog-of-war serialization, and `.rec` replay format.
 5. **Headless Game Engine (`05_Headless_Game_Engine_FRD.md`)**: Specifies *how* the deterministic Go match kernel models entities in memory (`FR-ENT-001`–`FR-ENT-003`, `FR-SNP-101`) and executes the rules of `01` using the AST components of `02`.
+
+### Revision Summary (v3.4 -> v3.5): Starter Set Survey Rulings (2026-10-19)
+Rulings on the questions raised by the [M2 starter set ability survey](../design/m2_starter_set_ability_survey.md):
+1. **Deploying Is Not Moving (`SVY-R1`, `FR-ZON-002`)**: only the March action and effects that say to move something to a zone count as moving it.
+2. **Targets and Costs Are Committed Together (`SVY-R2`, `FR-TGT-001`, `FR-ACT-001`)**: an asset sacrificed as a cost is not yet in the Discard pile when targets are chosen, so it cannot target itself there.
+3. **Resolution-Time Targets for Dependent Clauses (`SVY-R3`, `SVY-R4`, `FR-TGT-001`)**: a targeted clause whose possible targets, or number of targets, depend on an earlier clause of the same effect is targeted as it resolves. Per-card repeats are chosen separately.
+4. **Distinct Modes (`SVY-R6`, `FR-MOD-001`)**: "Choose N" requires N different modes unless the card explicitly allows repeats.
 
 ### Revision Summary (v3.3 -> v3.4): Remaining Reachable Matrix Rulings (2026-10-19)
 1. **Berserk Secondary Is Mandatory (`KIM-B05`, `FR-KWD-002o`, `FR-CBT-002`)**: required whenever a legal secondary target exists.
@@ -140,6 +147,7 @@ Every card in Card Town possesses the following canonical printed characteristic
 #### FR-ZON-002: Asset Movement, Immutability & Control Transfer
 - **Headquarters & Structure Movement Immunity**: Headquarters and Structures cannot March and are permanently immune to and ineligible targets for any effect that moves an asset between battlefield zones. They remain bound to their initial battlefield zones unless destroyed (moving to Discard) or returned to Hand/Deck by a card effect.
 - **Unit Battlefield Movement**: Units move between their controller's **Reserves** and the **Main Theater** via the inherent **March** action (`FR-CAP-001`) or card effects (*Ensnaring Mist*, *Piston Fist Prototype*).
+- **What Counts as Moving (`SVY-R1`)**: A unit moves to a zone only through the **March** action or an effect that explicitly says to move it to a zone. Deploying a card, including a free deployment into a specified zone (`FR-TRN-003a`), means it enters the battlefield and is not a move. Abilities that trigger when a unit *"moves to a new zone"* or *"moves to the Main Theater"* (*Broken Horn Armorer*, *Chainbreaker Phalanx*) therefore do not trigger on deployment.
 - **Control Transfer Scope & Spatial Invariance**: Effects that transfer control of an opposing asset (*Rhapsody's Hollow*) apply strictly to eligible opposing units in the **Main Theater**, preventing opposing assets from occupying a player's private Reserves backline. Changing control does **not** change the asset's zone or readiness state (**Readied** remains **Readied**; **Exhausted** remains **Exhausted**). Because there is no summoning sickness (`FR-SET-004`), a Readied unit whose control is gained may immediately attack, march, or activate abilities under its new controller. If its new controller subsequently marches that unit out of the Main Theater, it moves into its **current controller's** Reserves (arriving Exhausted). If destroyed or returned to a non-battlefield zone, an asset always goes to its **owner's** Discard, Hand, or Deck.
 - **Destruction**: When an Asset's Current Health drops to 0 or below (or its Maximum Health drops to 0 or below; `FR-LAY-002`), or when it is killed by an effect or cost, it is destroyed and placed face-up in its **owner's** Discard pile.
 
@@ -248,7 +256,7 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
 - **Subsumption under `FR-CAP-001`**: All inherent asset capabilities and execution rules (`FR-INH-001` Upfront Exhaustion & Timing Split, `FR-INH-002` Unit March, Attack & Generate, `FR-INH-003` Structure Generate, and `FR-INH-004` Headquarters Attack, Deploy Scratch Company & Generate) are canonically and authoritatively defined in `FR-CAP-001` (Section 3.3). Section 4.1 defers completely to `FR-CAP-001`; `FR-INH-001` through `FR-INH-004` are preserved as backward-compatible requirement identifiers fully subsumed by `FR-CAP-001`.
 
 #### FR-ACT-001 & FR-ACT-002: Custom Activated Abilities
-- **Stack Execution & Clean-Stack Requirement (`FR-ACT-001`)**: Activating a custom ability printed on a battlefield Asset (`[Cost]: [Effect].`) requires the Resolution Stack to be empty. All resource costs, exhaust costs, and sacrifice/discard costs are paid upfront upon declaration, placing the ability onto the Resolution Stack.
+- **Stack Execution & Clean-Stack Requirement (`FR-ACT-001`)**: Activating a custom ability printed on a battlefield Asset (`[Cost]: [Effect].`) requires the Resolution Stack to be empty. All resource costs, exhaust costs, and sacrifice/discard costs are paid upfront upon declaration, placing the ability onto the Resolution Stack. Targets are chosen at the same time the costs are paid (`FR-TGT-001`), so an asset sacrificed by its own ability's cost cannot be chosen as that ability's target in the Discard pile (*Sinuous Growth*, *Ruin Partisans*).
 - **Repeatability & Exhaust Independence (`FR-ACT-002`)**: Unless an activated ability explicitly includes exhausting the asset in its cost (`exhaust:`) or specifies a per-turn frequency limit, it does **not** require the asset to be Readied and may be activated repeatedly during the Main Phase as long as the player can pay its costs (e.g., *Dominator Warsuit*'s `R1: This unit gains 1 armor.`).
 
 #### FR-TRN-003, FR-TRN-003a & FR-MNV-001: Card Deployments & Maneuver Enactment
@@ -271,6 +279,11 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
   - **Zone**: Restricted to a specified zone (e.g., *"in the Main Theater"*, *"in the same zone"*, *"from your discard pile"*) or any battlefield zone if no zone is specified.
   - **Readiness, Subtypes & Dynamic Stats**: Any required readiness state (*Readied* or *Exhausted*), subtype (*Infantry*, *Fungus*, *non-Spirit*), or stat comparison (evaluated against current effective stats in Layer 6, distinguishing between **Current Health** [`Maximum Health - Accumulated Damage`] and **Maximum Health** as specified by the card text, e.g., *Gemstone Titan* vs. *Cathedral of Self*).
 - **Upfront Target Selection for Conditional Triggers**: When a triggered ability includes a targeted clause whose execution depends on an outcome determined during resolution (such as *Samsara, Living Tempest*: *"Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset."*), the target (*chosen asset*) is selected upfront when the triggered ability is placed onto the Resolution Stack. When the ability resolves, if the condition is met, the effect applies to that pre-selected target; if the condition is not met, the conditional clause simply does nothing.
+- **Targets and Costs Are Committed Together (`SVY-R2`)**: Choosing targets and paying costs happen at the same moment of declaration, and target eligibility is judged against the game state at that moment. A card that moves to a new zone by paying a cost (for example, an asset sacrificed into the Discard pile) is not yet in that zone when targets are chosen, so it cannot be chosen there as a target of the card or ability it paid for.
+- **Resolution-Time Targets for Dependent Clauses (`SVY-R3`, `SVY-R4`)**: When an effect's targeted clause follows an earlier clause of the same effect, and that earlier clause determines which entities can be targeted or how many target choices are made, the clause's targets are chosen as it resolves, after the earlier clause has finished. The whole effect still resolves atomically, and no other item resolves in between. A clause repeated *"for each"* outcome of an earlier clause makes a separate target choice for each repetition. Examples:
+  - *Animoceps Spores* (*"Scratch 2, then return chosen allied Scratch Company unit to its owner's hand"*): the Scratch Company is chosen after both new units are deployed, and may be one of them.
+  - *Steel Rain* (*"Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset."*): one asset is chosen for each card discarded, after the discard.
+  - These targets are chosen and used at the same moment, so the second verification of `FR-TGT-003` passes automatically. If no legal target exists when the clause resolves, only that clause does nothing. Targets that do not depend on an earlier clause, such as the *Samsara, Living Tempest* example above, are still chosen upfront.
 
 #### FR-TGT-002: Target Quantifiers & Distributed Value Allocations
 - **Quantifiers**: Targeting clauses may require a single mandatory target (*"chosen unit"*), an optional or bounded number of targets (*"up to 2 chosen units"*), a discrete set of targets (*"2 or 4 allied Scratch Company units"*), or apply globally without targeting (*"all assets"*).
@@ -292,7 +305,8 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
 2. **Action Clocks**: Interactive choices during stack resolution enforce a **15-second** action clock for the active player and a **10-second** action clock for the non-active player (`FR-TRG-002`), backed by the player's remaining 60-second Reserve Time Bank.
 3. **Revealed Hand Inspection Window**: When an effect reveals an opponent's hand (*Drifting Concept*, *Mage Seeker's Inquisition*), the choosing player is always granted an active inspection window to view the revealed hand before the chosen card is discarded.
 4. **Partitioned Deck Inspections**: When an effect inspects the top $N$ cards of a deck and partitions them across multiple destinations (*Light of the World Soul*, *Devilhorn Scouting Party*), the player assigns which inspected cards are deployed for free, placed into hand, or placed on the bottom of the deck in their chosen order within a single choice prompt.
-5. **Deterministic Fallbacks on Timeout**: If both the action clock and the player's Reserve Time Bank expire on a pending choice:
+5. **Distinct Modes (`SVY-R6`)**: A modal card or ability that says *"Choose N"* (*Ambush Tactics*) requires choosing N **different** modes. The same mode may be chosen more than once only if the card's text explicitly allows it.
+6. **Deterministic Fallbacks on Timeout**: If both the action clock and the player's Reserve Time Bank expire on a pending choice:
    - *Top-of-Deck Inspections*: Automatically selects the first eligible card(s) in order and places the remainder on the bottom of the deck.
    - *Modal Choices*: Automatically selects the first listed legal mode(s).
    - *Optional Triggers ("you may")*: Automatically declines the optional effect.
