@@ -1,0 +1,163 @@
+# M2 Starter Set Ability Survey (Animus vs Path)
+
+- **Date:** 2026-10-19
+- **Source:** `data/cards/*.csv` at `8cb8bc2`; [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) Domains 3–4 (frozen design intent); [FRD 01](../frd/01_Game_Rules_FRD.md) v3.4.
+- **Purpose:** map every Animus and Path card onto FRD 02's ability model, find what FRD 02 cannot express, and order the M2 kernel work by how many cards each step unlocks. This is the first draft of M2 deliverable 5 (the ability write-up).
+
+FRD 01 is the rules source. This document names requirement IDs and never restates the rules.
+
+---
+
+## 1. Summary
+
+- **84 cards:** 40 Animus, 40 Path, and 4 Headquarters (Animoceps Rager, Rift, Encampment, Eternal Watchman). **9 already execute** (standalone keywords only), leaving **75 to model**.
+- **By FRD 02 ability type:** 33 triggered, 25 Maneuver effects, 7 activated, 8 continuous-only, 2 replacement watchers.
+- **FRD 02 fit:** all 75 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems are about *when* targets are chosen, where FRD 01 and FRD 02 disagree (§4, R3–R4).
+- **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
+- **FRD 01 reach:** the starter set reaches **26 of the 30** unpinned FRD 01 requirements. It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers). `FR-SET-001` (deck construction) is reached only if starter decks must be construction-legal (Q1, §5).
+
+---
+
+## 2. Build Order (Shape Waves)
+
+Each wave adds the shapes its cards need. A card is ready once every earlier wave it depends on has landed. Waves C–G only depend on A and B, so they can be reordered.
+
+| Wave | Shapes added | FRD 01 rules reached | Cards | Count |
+| :---: | :--- | :--- | :--- | :---: |
+| **A1** | Triggered-ability framework: self hooks for deploy, death and attack, APNAP placement and cascading. Untargeted primitives: `SCRATCH`, `DRAW_CARD`, `RETURN_TO_HAND` (self, discard → hand), `PUT_CARD_ON_DECK`. `turnOwner` condition. Last-known state for death triggers. | `FR-TRG-003`, `FR-TRG-004`, `FR-ZON-004` | Despoiler Larva, Spoil Forest Creeper, Fungal Evangelist, Titanic Spore Carrier, Portent Scrivener, Despoiler Worm, Stormfront of Ideals, Unceasing Tide | 8 |
+| **A2** | Targeting with filters and `up to N`, optional ("you may") triggers. Primitives `DEAL_DAMAGE` (static or from own power), `HEAL`, `ADD_ARMOR`. `toZone` deploy condition. | `FR-TGT-001`, `FR-TGT-002`, `FR-MOD-001`, `FR-KWD-002d` | Chainbreaker Sappers, Saboteur, Devilhorn Guerrillas, Ironclad Colossus, Spoil Forest Colossus, Necropolis Hunt, Craterfall Ancient | 7 |
+| **B** | Damage-taken hook (Unbowed and HQ "is dealt damage", `maxPerTurn`). Cornered gate on triggers. Exhaust, turn-start, combat-kill and opposing-attack hooks. Optional non-resource trigger costs. Distributed pools. Modal choice. `REVEAL_HAND`, `DISCARD_CARD`. | `FR-KWD-002a`, `FR-KWD-002e`, `FR-TRG-002`, `FR-TRG-005`, `FR-LAY-003` | Hammerhand Brigands, Devilhorn Captain, Chainbreaker Irregulars, Allshan Chainbreaker Revenant, Animoceps Rager, Animoceps Shambler, Hammerhand Bivouac, Eternal Watchman, Blind Defile, Infested Apostle ★, Arkha Sun's Fury, Drifting Concept, Rogue Fleshshaper | 13 |
+| **C** | Maneuvers and additional enactment costs. `KILL`, `MOVE_ZONE`, `MODIFY_STAT` (power and max health, until end of turn or end of opponent's turn), "all X" selectors, delegated damage source. | `FR-MNV-001`, `FR-TRN-003a`, `FR-LAY-003` | Disorienting Pulse, Feed the Despoiler, Funeral Fungus ★, Conversion Spike, Deafening Aria, Ensnaring Mist, Rhapsody's Embrace, Despoiler's Emergence, Rapturous Sermon, Chainbreaker's Tenacity, Fortify, Tactical Withdrawal, Blindside, Improvised Orders, Devilhorn Sanction, Pincer Tactics, Poisoned Rations, Ambush Tactics (R6), Animoceps Spores (**blocked: R3**), Steel Rain (**blocked: R4**) | 20 |
+| **D** | Activated abilities with resource, exhaust, self-kill and discard costs. `GAIN_CONTROL`, `SEARCH_DECK`. | `FR-ACT-001`, `FR-ACT-002`, `FR-DEK-001`, `FR-DEK-002`, `FR-ZON-003` | Rhapsody's Hollow, Sinuous Growth (R2), Cliff of Portents, Rift, Boneyard Scavenger, Ruin Partisans (R2), Encampment | 7 |
+| **E** | Continuous auras in Layer 4: power, keyword grants and granted Cornered abilities. Hand-active cost reduction. | `FR-LAY-001`, `FR-LAY-003`, `FR-CST-001` | Animoceps Stalk, Animoceps Node, Melodic Pummeler, Hulking Incongruity, Brigand Highlander, Macabre Dancers, Ancestral Monument, Boneyard Amalgam | 8 |
+| **F** | Free deploys and zone crossing: deploy permission from discard, `DEPLOY_FREE`, `LOOK_TOP_CARDS` partition, `GRANT_KEYWORD`, `MORPH_SCRATCH`, zone-move hook, off-battlefield triggers (§3 G1). | `FR-TRN-003a`, `FR-CST-001`, `FR-ENT-103` | Veil Render ★, Mutation Swell ★, Reaver's Rush, Allshan's Battle Trance ★, Devilhorn Scouting Party, Forced Mutation, Eerie Remnant, Solarheart Monk, Chainbreaker Phalanx (R1), Broken Horn Armorer (R1) | 10 |
+| **G** | Replacement watchers: destruction replacement and damage redirection. | `FR-REP-001`–`FR-REP-003` | Animoceps Spore Cloud ★, Shifting Impossibility (R5) | 2 |
+
+★ = has an FRD 02 benchmark blueprint. Baseline requirements every match exercises (`FR-CRD-101`, `FR-SET-003`, `FR-ZON-001`) need only a named test, so they can be added in any wave.
+
+**Already executable (9):** Spoil Forest Haunt, Flickering Memory, Sigiled Stoneform, Despoiler Spawn, Spoil Forest Amalgam, Chainbreaker Sneak, Trailblazer, Improvised Bastion, Hammerhand Brigade.
+
+---
+
+## 3. FRD 02 Gaps (kernel decides; no ruling needed)
+
+| ID | Gap | Cards | Proposed kernel behavior |
+| :--- | :--- | :--- | :--- |
+| **G1** | FRD 02 gives an `activeZone` only to continuous auras. A **triggered** ability that works from hand or discard has no representation, although FRD 01 `FR-ZON-004` defines enter-discard triggers. | Eerie Remnant, Solarheart Monk | Give triggered abilities an active zone (battlefield by default). Feed this into the FRD 02 rewrite. |
+| **G2** | Aura-granted keywords sit in **Layer 4** in FRD 02 `FR-ABL-004`, but FRD 01 `FR-LAY-001` puts keyword grants in **Layer 3**. FRD 01 wins. No starter card can currently tell the difference. | Hulking Incongruity, Macabre Dancers, Ancestral Monument | Follow FRD 01 (Layer 3). Record the difference for the rewrite. |
+| **G3** | Self-sacrifice costs ("kill this unit") have no dedicated cost type, unlike `EXHAUST_SELF`. They are expressible as `KILL_ASSET` with selector `SELF`. | Rhapsody's Hollow, Sinuous Growth, Boneyard Scavenger, Ruin Partisans | Model as a kill cost on self. Rename only if the code reads badly. |
+
+---
+
+## 4. Ruling Questions (reachable; need the designer)
+
+The recommendations follow the MTG-like intuitions used in earlier rulings. Until each one is ruled, the kernel marks its chosen default with an `OPEN(…)` marker.
+
+| ID | Question | Cards | Recommendation |
+| :--- | :--- | :--- | :--- |
+| **R1** | Does "moves to a new zone" or "moves to the Main Theater" include **entering** the battlefield (deploying, or free-deploying to the Main Theater)? | Broken Horn Armorer, Chainbreaker Phalanx (with Allshan's Battle Trance and Devilhorn Guerrillas) | **No.** Only movement between Reserves and the Main Theater, by March or by an effect. Entering is not moving. |
+| **R2** | Can an activated ability target the card it sacrificed as its cost (returning itself from discard to hand)? | Sinuous Growth, Ruin Partisans | **No.** Targets are chosen while the card is still on the battlefield, before costs are paid. |
+| **R3** | In "Scratch 2, then return chosen allied Scratch Company unit", is the target chosen on declaration (it must already exist) or on resolution (it can be one just created)? FRD 01 `FR-TGT-001` says declaration. FRD 02 allows `ON_RESOLUTION`. | Animoceps Spores | **Design call.** The text reads as resolution. Declaration keeps a single targeting rule. |
+| **R4** | "For each card discarded this way, deal 2 damage to chosen asset": is that one target taking 2 per card, or a separate choice per card? When is it chosen, given the discard count is only known on resolution? | Steel Rain | **Design call.** A separate choice per card, made on resolution, matches FRD 02's `repeatCount` and the card's feel. It needs a resolution-time targeting exception to `FR-TGT-001`. |
+| **R5** | Shifting Impossibility's replacement deals 1 damage to itself **during** a death sweep. If that is lethal, does it die in the same sweep (the sweep repeats until nothing changes) or only after the next stack item? | Shifting Impossibility | **The sweep repeats until stable.** |
+| **R6** | Can "Choose two" pick the same mode twice? | Ambush Tactics | **No.** Modes must be different. |
+
+**Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
+
+---
+
+## 5. Scope Questions
+
+- **Q1:** Must starter decks be construction-legal (rarity copy limits under `FR-SET-001`)? Today `cardtown sim` just cycles each faction's executable cards. Legal decks make the sim closer to what playtesters played, and adding the rule is cheap.
+- **Q2:** The relaxed M2 Done-when only moves 3 requirements to M3 (`FR-ENT-102`, `FR-KWD-002n`, `FR-TRG-006`). That is still the honest boundary, but it means M2 is nearly the whole of FRD 01.
+
+---
+
+## 6. Card-by-Card Map
+
+Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 requirements beyond the wave's baseline.
+
+### Animus
+
+| Card | Wave | FRD 02 form | Hook → primitives | Rules | Notes |
+| :--- | :---: | :--- | :--- | :--- | :--- |
+| Despoiler Larva | A1 | Triggered | attack → `SCRATCH 1` | `FR-KWD-002m` | |
+| Portent Scrivener | A1 | Triggered | death (on your turn) → `DRAW_CARD 1` | `FR-ZON-004` | `turnOwner: SELF` |
+| Spoil Forest Creeper | A1 | Triggered | deploy → `SCRATCH 1` | | Simplest first card |
+| Stormfront of Ideals | A1 | Triggered | death → `PUT_CARD_ON_DECK` bottom (self) | `FR-ZON-004` | Self-tracking fizzle |
+| Unceasing Tide | A1 | Triggered | death → `RETURN_TO_HAND` (self from discard) | `FR-ZON-004` | Self-tracking fizzle |
+| Fungal Evangelist | A1 | Triggered | deploy or death → `SCRATCH 2` | | Compound hook |
+| Despoiler Worm | A1 | Triggered + Resistant 2 | death → `DRAW_CARD 2` (all opponents) | `FR-WIN-001` | Can deck the opponent |
+| Titanic Spore Carrier | A1 | Triggered | death → `SCRATCH 1`, `DRAW_CARD 1` | | Composite sequence |
+| Spoil Forest Colossus | A2 | Triggered | deploy or attack → `HEAL 2` chosen asset | `FR-KWD-002d` | |
+| Craterfall Ancient | A2 | Triggered ×2 | attack (may) → `DEAL_DAMAGE` = own power to up to 2 other chosen assets; death → `DEAL_DAMAGE 4` all assets | `FR-TGT-002`, `FR-CBT-003` | Death trigger can destroy both HQs (Match Draw) |
+| Animoceps Shambler | B | Triggered | exhaust → `HEAL 1` chosen allied asset in Main Theater | `FR-CAP-001` | Triggers from off-stack generation (KIM-S03 rationale) |
+| Drifting Concept | B | Triggered + Ethereal | deploy → `REVEAL_HAND` opponent, `DISCARD_CARD` chosen | `FR-MOD-001` §3 | |
+| Infested Apostle ★ | B | Triggered | deploy (may, kill allied unit) → `DEAL_DAMAGE 2` chosen opposing unit | `FR-TRG-005`, `FR-TGT-001` | Benchmark #9 |
+| Animoceps Rager (HQ) | B | Triggered | HQ dealt damage → `SCRATCH 1`, once per turn | `FR-KWD-002a` (by analogy) | `maxPerTurn: 1` |
+| Disorienting Pulse | C | Maneuver | `RETURN_TO_HAND` chosen opposing unit in Main Theater | `FR-MNV-001`, `FR-ZON-005` | |
+| Feed the Despoiler | C | Maneuver + additional cost | kill allied unit; `DRAW_CARD 2` | `FR-TRN-003a` | |
+| Funeral Fungus ★ | C | Maneuver + additional cost | exhaust readied allied unit; `RETURN_TO_HAND` chosen unit card from discard | `FR-TRN-003a` | Benchmark #8 |
+| Conversion Spike | C | Maneuver | `DEAL_DAMAGE 1` chosen opposing unit; `HEAL 1` chosen allied unit or structure | `FR-TGT-003` | Two independent targets |
+| Deafening Aria | C | Maneuver | `DEAL_DAMAGE 1` all opposing units in Main Theater | | |
+| Ensnaring Mist | C | Maneuver | `MOVE_ZONE` chosen unit → its Reserves; `MODIFY_STAT` −1 power until end of turn to a second chosen unit | `FR-ZON-002`, `FR-LAY-001` | |
+| Rhapsody's Embrace | C | Maneuver + additional cost | kill allied unit; `KILL` chosen opposing unit | `FR-TRN-003a` | |
+| Despoiler's Emergence | C | Maneuver | `DEAL_DAMAGE 4` all opposing assets in Main Theater; `DEAL_DAMAGE 2` all opposing non-Scratch assets in Reserves | | |
+| Rapturous Sermon | C | Maneuver | `MOVE_ZONE` all allied Scratch Company → Main Theater; `MODIFY_STAT` +2 until end of turn | `FR-LAY-001` snapshot locking | Named in FRD 01 |
+| Animoceps Spores | C | Maneuver | `SCRATCH 2`, then `RETURN_TO_HAND` chosen allied Scratch Company | `FR-TGT-001` | **Blocked: R3** |
+| Rhapsody's Hollow | D | Activated | T3 + exhaust + kill self → `GAIN_CONTROL` chosen opposing unit in Main Theater | `FR-ACT-001`, `FR-ZON-002`, `FR-ZON-003` | |
+| Sinuous Growth | D | Activated | T1 + kill self → `RETURN_TO_HAND` chosen Fungus or Plant card from discard | `FR-ACT-001` | R2 |
+| Cliff of Portents | D | Activated | R1 + T1 + exhaust → `SEARCH_DECK` any → hand, shuffle | `FR-DEK-001`, `FR-DEK-002` | |
+| Rift (HQ) | D | Activated | discard a card + exhaust → `SCRATCH 2`, `DEAL_DAMAGE 5` to self HQ | `FR-ACT-001`, `FR-CBT-003` | |
+| Animoceps Stalk | E | Continuous | other allied assets in same zone +1 power | `FR-LAY-001` | `excludeSelf` |
+| Animoceps Node | E | Continuous | allied units in same zone +1 power | `FR-LAY-001` | Structure; does not buff itself |
+| Melodic Pummeler | E | Continuous | allied Horror units in same zone +1 power | `FR-LAY-001` | Includes itself |
+| Hulking Incongruity | E | Continuous | allied Horror units in same zone gain Resistant 1 | `FR-LAY-001` | G2; includes itself |
+| Veil Render ★ | F | Continuous (discard-active permission) | deploy from discard + kill allied asset | `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001` | Benchmark #6 |
+| Mutation Swell ★ | F | Maneuver | `KILL` 2 or 4 allied Scratch Company; `DEPLOY_FREE` per 2 killed | `FR-TGT-002`, `FR-TRN-003a` | Benchmark #14 |
+| Forced Mutation | F | Maneuver | `MORPH_SCRATCH` chosen opposing unit | `FR-ENT-103` | |
+| Animoceps Spore Cloud ★ | G | Replacement | `WOULD_TAKE_DAMAGE` on allied units in same zone → `REDIRECT_DAMAGE_TARGET` self | `FR-REP-001`–`FR-REP-004` | Benchmark #3 |
+| Shifting Impossibility | G | Replacement | `WOULD_BE_DESTROYED` on allied Scratch Company → `RETURN_TO_HAND` + `DEAL_DAMAGE 1` self | `FR-REP-001`–`FR-REP-003`, `FR-LAY-002` | R5 |
+
+### Path
+
+| Card | Wave | FRD 02 form | Hook → primitives | Rules | Notes |
+| :--- | :---: | :--- | :--- | :--- | :--- |
+| Chainbreaker Sappers | A2 | Triggered | deploy → `DEAL_DAMAGE 1` chosen structure or HQ | `FR-TGT-001` | |
+| Saboteur | A2 | Triggered | deploy → `DEAL_DAMAGE 2` chosen opposing non-Scratch unit; `DEAL_DAMAGE 1` chosen allied unit | `FR-TGT-003` | Named in FRD 01 |
+| Devilhorn Guerrillas | A2 | Triggered | deploy into Main Theater → `DEAL_DAMAGE 2` chosen opposing unit | `FR-TRN-003` | `toZone` condition; two deploy zones |
+| Ironclad Colossus | A2 | Triggered | deploy or attack → `ADD_ARMOR 2` chosen unit | `FR-LAY-002` | |
+| Necropolis Hunt | A2 | Triggered | death → `DEAL_DAMAGE` = last-known power to chosen non-HQ asset | `FR-ZON-004` | |
+| Hammerhand Brigands | B | Unbowed | → `SCRATCH 1` | `FR-KWD-002a` | Named in FRD 01 |
+| Devilhorn Captain | B | Unbowed | → `DEAL_DAMAGE 1` chosen asset in Main Theater | `FR-KWD-002a` | Named in FRD 01 |
+| Chainbreaker Irregulars | B | Unbowed | → `DRAW_CARD 1`, `DISCARD_CARD 1` | `FR-KWD-002a` | Discard can trigger Eerie Remnant |
+| Allshan, Chainbreaker Revenant | B | Unbowed + Cornered trigger | Unbowed → `ADD_ARMOR 2` self; Cornered attack → `MODIFY_STAT` +3 power until end of turn | `FR-KWD-002a`, `FR-KWD-002e`, `FR-LAY-003` | |
+| Hammerhand Bivouac | B | Triggered | turn start → distribute 2 armor among allied units in same zone | `FR-TGT-002`, `FR-TRN-001` | `DISTRIBUTED_POOL` |
+| Blind Defile | B | Triggered (opposing) | opposing unit attacks (may, kill self) → `KILL` attacking unit | `FR-TRG-002`, `FR-TRG-005`, `FR-CBT-002` | Non-active player's trigger |
+| Arkha, Sun's Fury | B | Triggered | attack (may, put a unit card from discard on bottom of deck) → `DEAL_DAMAGE 3` chosen opposing HQ | `FR-TRG-005` | Optional `MOVE_CARD_ZONE` cost |
+| Rogue Fleshshaper | B | Triggered, modal | deploy → choose one: `HEAL 1` chosen asset, or `DEAL_DAMAGE 1` chosen non-Scratch asset | `FR-MOD-001` | `FR-ABL-010` |
+| Eternal Watchman (HQ) | B | Triggered | `EVENT_COMBAT_KILL` as attacker (unit or structure) → `RETURN_TO_HAND` chosen unit card from discard | `FR-CBT-002` | |
+| Chainbreaker's Tenacity | C | Maneuver | chosen allied unit: `MODIFY_STAT` +1 until end of turn, `ADD_ARMOR 2` | | |
+| Fortify | C | Maneuver | `ADD_ARMOR 3` chosen allied unit | | |
+| Tactical Withdrawal | C | Maneuver | `RETURN_TO_HAND` up to one chosen allied unit; `DRAW_CARD 1` | `FR-TGT-002` | `minCount: 0` |
+| Blindside | C | Maneuver | `MODIFY_STAT` −3 until end of opponent's turn | `FR-LAY-003` | Full-round duration |
+| Improvised Orders | C | Maneuver | `DRAW_CARD 3`, `DISCARD_CARD 1` | | |
+| Devilhorn Sanction | C | Maneuver | `KILL` chosen opposing unit | | |
+| Pincer Tactics | C | Maneuver | `DEAL_DAMAGE 1` up to 2 chosen allied units; `DEAL_DAMAGE 2` chosen non-Scratch asset | `FR-TGT-002` | Enables Unbowed |
+| Poisoned Rations | C | Maneuver | `MODIFY_STAT` −3 max health until end of turn | `FR-LAY-002` | |
+| Ambush Tactics | C | Maneuver, modal | choose two of: `KILL`, `RETURN_TO_HAND`, delegated `DEAL_DAMAGE` = power, `PUT_CARD_ON_DECK` top | `FR-MOD-001`, `FR-TGT-003` | R6; delegated source as on Soul Whip |
+| Steel Rain | C | Maneuver | `DISCARD_CARD` up to 3; `DEAL_DAMAGE 2` per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TGT-001` | **Blocked: R4** |
+| Boneyard Scavenger | D | Activated | T1 + exhaust + kill self → `RETURN_TO_HAND` chosen Maneuver card from discard | `FR-ACT-001` | |
+| Ruin Partisans | D | Activated | T2 + exhaust + kill self → `RETURN_TO_HAND` chosen unit card from discard | `FR-ACT-001` | R2 |
+| Encampment (HQ) | D | Activated | discard a card + exhaust → `DEAL_DAMAGE 1` to each of up to 2 chosen non-Scratch units | `FR-ACT-001`, `FR-TGT-002` | |
+| Brigand Highlander | E | Continuous (Cornered) | self +2 power while Cornered | `FR-KWD-002e`, `FR-LAY-003` | |
+| Macabre Dancers | E | Unbowed + continuous (Cornered) | Unbowed → `HEAL 2` self; Cornered → Resistant 1 | `FR-KWD-002a`, `FR-KWD-002e` | Heal fizzles if lethal (FRD 01) |
+| Ancestral Monument | E | Continuous | other allied assets in same zone gain "Cornered: Resistant 1" | `FR-LAY-001`, `FR-LAY-003` | `abilityGrants`; G2 |
+| Boneyard Amalgam | E | Continuous (hand-active) | costs R1 less per unit card in your discard | `FR-CST-001` | `QUERY` count |
+| Eerie Remnant | F | Triggered (discard-active) + Deploys Exhausted | hand → discard (may) → `DEPLOY_FREE` self | `FR-ZON-004`, `FR-TRN-003a` | G1 |
+| Solarheart Monk | F | Triggered (discard-active) | enters discard → `HEAL 2` chosen asset | `FR-ZON-004` | G1; any route into discard |
+| Broken Horn Armorer | F | Triggered | self moves zone → `ADD_ARMOR 1` chosen asset in same zone | `FR-ZON-002` | R1 |
+| Chainbreaker Phalanx | F | Triggered | self moves to Main Theater (may) → `MOVE_ZONE` chosen allied unit from Reserves, `ADD_ARMOR 2` to it | `FR-ZON-002` | R1; can chain into another Phalanx |
+| Devilhorn Scouting Party | F | Maneuver | `LOOK_TOP_CARDS 3` → `DEPLOY_FREE` up to 1 unit with cost ≤ R3, rest to bottom in any order; `SCRATCH 1` | `FR-MOD-001` §4, `FR-TRN-003a` | |
+| Reaver's Rush | F | Maneuver | `DEPLOY_FREE` chosen unit card with power ≤ 3 from discard | `FR-TRN-003a` | |
+| Allshan's Battle Trance ★ | F | Maneuver | `DEPLOY_FREE` from discard to Main Theater; `GRANT_KEYWORD` Stalwart; `MODIFY_STAT` +2 | `FR-TRN-003a` | Benchmark #11 |
