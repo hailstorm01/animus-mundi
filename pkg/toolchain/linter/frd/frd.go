@@ -174,6 +174,22 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		}
 	}
 
+	// Step 4: Single source of truth for rules
+	contents := make(map[string][]string)
+	for _, filePath := range existingFrds {
+		if lines, err := readLines(filePath); err == nil {
+			contents[filepath.Base(filePath)] = lines
+		}
+	}
+	problems, frozenRestatements := CheckOwnership(contents)
+	for _, p := range problems {
+		hasErrors = true
+		fmt.Printf("  [OWNERSHIP] %s\n", p)
+	}
+	if frozenRestatements > 0 {
+		fmt.Printf("  [INFO] %d keyword restatement(s) in frozen FRDs ignored; FRD 01 wins any conflict.\n", frozenRestatements)
+	}
+
 	fmt.Println()
 	if len(dangling) == 0 && !hasErrors {
 		fmt.Println("  [PASS] Zero dangling references! All requirement cross-references resolve cleanly.")
@@ -181,7 +197,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		return true, nil
 	}
 
-	fmt.Printf("  [FAIL] Found %d dangling references or missing core FRD files.\n", len(dangling))
+	fmt.Printf("  [FAIL] Found %d dangling references, missing core FRD files, or ownership violations.\n", len(dangling))
 	fmt.Println("==========================================================")
 	return false, nil
 }
