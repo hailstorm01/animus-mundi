@@ -269,11 +269,15 @@ func (g *Game) CanCleave(att, def, sec *Asset) bool {
 	if def.Zone != ZoneMainTheater || sec.ID == def.ID {
 		return false // Berserk only cleaves when attacking a Main Theater asset
 	}
-	// OPEN(KIM-B01, KIM-B02, KIM-B03): FRD 01 says only "another legal
-	// opposing Main Theater asset". Whether Ward, Ethereal or the Guardian
-	// restriction limit the secondary target is undefined; none apply here.
 	// OPEN(KIM-B05): the secondary is optional (Action.Secondary may be 0).
-	return sec.Zone == ZoneMainTheater && sec.Controller != att.Controller
+	return g.legalSecondary(att, sec)
+}
+
+// legalSecondary applies normal targeting rules to a Berserk secondary target:
+// an opposing Main Theater asset the attacker's controller may choose. Ward
+// blocks it; Ethereal and Guardian restrict only attacks (FR-KWD-002o).
+func (g *Game) legalSecondary(att, sec *Asset) bool {
+	return sec.Zone == ZoneMainTheater && sec.Controller != att.Controller && !g.Keywords(sec).Ward
 }
 
 // LegalActions enumerates every legal action for the active player.

@@ -83,7 +83,8 @@ func TestLoadCardsFromRepositoryData(t *testing.T) {
 	}
 	sort.Strings(supported)
 	t.Logf("%d of %d cards are executable by the M1 kernel: %v", len(supported), len(cards), supported)
-	if berserk, ok := cards["Tempest Surge"]; ok && berserk.Keywords.Berserk == 0 && berserk.Supported() {
-		t.Error("Tempest Surge should parse its Berserk keyword")
+	// KIM-B04 ruling: Tempest Surge prints Berserk 2.
+	if c := cards["Tempest Surge"]; c == nil || c.Keywords.Berserk != 2 {
+		t.Errorf("Tempest Surge should parse Berserk 2, got %+v", c)
 	}
 }

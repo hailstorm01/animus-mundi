@@ -51,10 +51,8 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 }
 
 // deathSweep destroys every lethal asset simultaneously, then checks HQ
-// defeat (FR-LAY-002, FR-CBT-003). It runs only between stack items.
-// OPEN(KIM-S02): FR-CBT-003 says an HQ loses "the moment" it reaches 0;
-// the kernel checks at the sweep, which is equivalent while HQs only take
-// combat damage.
+// defeat (FR-LAY-002, FR-CBT-003). It runs only between stack items, so an
+// HQ damaged mid-resolution loses only if it is still lethal here.
 func (g *Game) deathSweep() {
 	var dying []*Asset
 	for _, a := range g.Assets() {

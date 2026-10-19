@@ -28,17 +28,17 @@ Abbreviations: Unb = Unbowed (`FR-KWD-002a`), Res = Resistant N (`FR-KWD-002b`),
 | **Heal** |   |   |   | · | · | · | · | · | · | · | D | · | · | · | · |
 | **Cor**  |   |   |   |   | · | D | D | · | · | · | · | · | D | · | D |
 | **Agg**  |   |   |   |   |   | · | · | · | · | · | · | · | · | D | D |
-| **Eth**  |   |   |   |   |   |   | · | · | · | D | · | · | · | · | ? B02 |
-| **Ward** |   |   |   |   |   |   |   | · | · | D | · | · | · | · | ? B01 |
+| **Eth**  |   |   |   |   |   |   | · | · | · | D | · | · | · | · | D |
+| **Ward** |   |   |   |   |   |   |   | · | · | D | · | · | · | · | D |
 | **Ver**  |   |   |   |   |   |   |   |   | · | · | · | · | · | · | · |
-| **Grd**  |   |   |   |   |   |   |   |   |   | · | · | D | · | · | ? B03 |
+| **Grd**  |   |   |   |   |   |   |   |   |   | · | · | D | · | · | D |
 | **Arm**  |   |   |   |   |   |   |   |   |   |   | D | · | · | · | D |
 | **DEx**  |   |   |   |   |   |   |   |   |   |   |   | · | · | D | · |
 | **Scr**  |   |   |   |   |   |   |   |   |   |   |   |   | · | D | · |
 | **Rgp**  |   |   |   |   |   |   |   |   |   |   |   |   |   | · | · |
 | **Bsk**  |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ? B07 |
 
-**Tally (120 cells):** 29 defined, 4 undefined, 87 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. The keyword-vs-core-rules items add 3 more undefined cases (KIM-B04, KIM-B05, KIM-J01) and 4 more inferred ones (KIM-B06, KIM-S01, KIM-S02, KIM-S03).
+**Tally (120 cells):** 32 defined, 1 undefined, 87 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. The keyword-vs-core-rules items add 2 more undefined cases (KIM-B05, KIM-J01) and 3 more inferred ones (KIM-B06, KIM-S03, KIM-S04). Closed items are listed under Rulings.
 
 ## Open Items (need a ruling)
 
@@ -46,18 +46,26 @@ Ordered by reachability, then by how much the outcome changes.
 
 | ID | Status | Reach | Question | Kernel today |
 | :-- | :-: | :-: | :-- | :-- |
-| KIM-B04 | ? | R | **Printed "Berserk" has no N.** *Tempest Surge* prints `Berserk` and *Redline Infusion* grants `Berserk`, but `FR-KWD-002o` only defines **Berserk N**. What is N for these cards, or was the physical-prototype Berserk a different mechanic (for example trample)? | Bare `Berserk` is not executable; *Tempest Surge* loads as unsupported. |
-| KIM-B05 | ? | R | **Is the secondary target optional?** `FR-CBT-002` Step 1 says "an optional secondary opposing Main Theater target"; `FR-KWD-002o` says it is "selected upfront upon attack declaration if another legal opposing Main Theater asset exists", which reads as mandatory. Matters when every other opposing asset is one you would rather not damage (for example one with a damage-taken trigger such as **Unbowed**). | Optional. |
-| KIM-B01 | ? | R | **Can a Ward asset be the Berserk secondary?** **Ward** forbids opponents choosing it "except to attack". The secondary is chosen by the opponent as part of an attack declaration, but it is not the attack target and takes non-combat damage. (*Tempest Surge* vs Soulless Ward units, or anything under *Comms Relay*.) | Allowed. |
-| KIM-B02 | ? | R | **Can an Ethereal asset be the Berserk secondary?** **Ethereal** says it "cannot be attacked"; the secondary is not attacked, but the damage only exists because of an attack. (*Tempest Surge* vs *Flickering Memory* / *Drifting Concept*.) | Allowed. |
-| KIM-B03 | ? | R | **Does Guardian restrict the secondary?** With a Guardian in the Main Theater the primary must be a Guardian. May the secondary be a non-Guardian asset? (*Tempest Surge* vs *Improvised Bastion*.) | Yes, any other opposing Main Theater asset. |
+| KIM-B05 | ? | R | **Is the secondary target optional?** `FR-CBT-002` Step 1 says "an optional secondary opposing Main Theater target"; `FR-KWD-002o` says it is "selected upfront upon attack declaration if another legal opposing Main Theater asset exists", which reads as mandatory. Under the KIM-B01–B03 ruling the secondary follows normal targeting rules, and `FR-TGT-002` treats a bare *"chosen"* target as a single mandatory target, which would make it mandatory whenever a legal target exists. Matters when every legal secondary is one you would rather not damage (for example one with a damage-taken trigger such as **Unbowed**). | Optional. |
 | KIM-J01 | ? | R | **Combat eligibility changing between declaration and Step 3.** `FR-CBT-002` Step 3 fizzles the attack only if a combatant was destroyed, removed, or moved out of a legal combat zone. `FR-TGT-003` re-verifies targets against "dynamic stat/filter criteria" before resolution. If a Guardian enters the Main Theater, or the defender gains Ethereal, during the Step 2 trigger window, does the attack fizzle? | Does not fizzle (Step 3 survival/zone check only). |
 | KIM-B06 | I | R | **Berserk when the attack fizzles.** If the primary defender is removed in Step 2, the attack fizzles with "zero combat or retaliation damage". Berserk cleave is non-combat damage. Is it also cancelled? | Cancelled with the attack. |
-| KIM-S01 | I | R | **Readiness of a new Scratch Company.** `FR-ZON-005` does not say whether it enters Readied or Exhausted. `FR-SET-004`'s "Readied by default" suggests Readied, which lets a Headquarters scratch and then the new unit immediately generate 1 resource. | Readied. |
-| KIM-S02 | I | R | **HQ defeat timing.** `FR-CBT-003` says a player loses "the moment" their HQ reaches ≤ 0 Current Health, while `FR-LAY-002` runs destruction in the state-based sweep after the resolving item finishes. With *Rift* ("Scratch 2. Deal 5 damage to this Headquarters."), or any mid-resolution HQ damage followed by more clauses, which applies? | Checked at the death sweep. Equivalent in M1, where HQs only take combat damage. |
 | KIM-S03 | I | R | **Generating 0.** May an asset exhaust to generate a resource it yields 0 of (e.g. a 0-Tactics-yield unit in the Main Theater)? Matters for exhaust-watching triggers. | Allowed. |
 | KIM-C01 | I | U | **Cornered-gated triggers inside a simultaneous step.** Cornered triggers are gated "at the moment the trigger event occurs"; during a simultaneous step Cornered is locked at the start of the step (`FR-LAY-003`). A damage-taken trigger behind a Cornered gate fires mid-step: is it gated by the locked value? No current card has a Cornered-gated damage trigger. | n/a |
 | KIM-B07 | ? | U | **Berserk stacking.** Printed Berserk plus granted Berserk: one secondary with summed N, or two secondaries? Only *Tempest Surge* (Concordia) and *Redline Infusion* (Soulless) carry Berserk, so no legal deck has both. | n/a |
+| KIM-S04 | I | U | **Empty-deck loss vs. delayed HQ defeat.** Since the KIM-S02 ruling, HQ defeat waits for the next death sweep, but `FR-WIN-001` empty-deck loss is still immediate. A single resolving item that deals lethal damage to the opposing HQ and then makes its controller draw from an empty deck would make that controller lose before the sweep sees the opposing HQ. No current card damages an HQ and draws in the same effect. | n/a (no M1 effect draws mid-resolution). |
+
+## Rulings
+
+Closed items, with the designer ruling, where it lives in FRD 01, and the scenario test that pins it.
+
+| ID | Ruling (2026-10-19) | FRD 01 | Pinned by |
+| :-- | :-- | :-- | :-- |
+| KIM-B01 | A **Ward** asset cannot be the Berserk secondary: the secondary follows normal targeting rules. | `FR-KWD-002o` | `TestFR_KWD_002o_SecondaryCannotBeWarded`, `TestFR_KWD_002o_SecondaryThatGainsWardBeforeStep3Dissipates` |
+| KIM-B02 | An **Ethereal** asset may be the secondary; Ethereal restricts only attacks. | `FR-KWD-002o` | `TestFR_KWD_002o_SecondaryMayBeEthereal` |
+| KIM-B03 | **Guardian** forces the primary target only; the secondary may be any other legal target. The primary is excluded from secondary eligibility. | `FR-KWD-002o`, `FR-CBT-002` | `TestFR_KWD_002o_GuardianDoesNotRestrictSecondary`, `TestFR_KWD_002o_SecondaryExcludesPrimary` |
+| KIM-B04 | Printed Berserk always has N. *Tempest Surge* and *Redline Infusion* read **Berserk 2** for now. | Card data | `TestLoadCardsFromRepositoryData` |
+| KIM-S01 | A new face-down Scratch Company enters **Exhausted**. | `FR-ZON-005`, `FR-SET-004`, `FR-KWD-002m` | `TestFR_ZON_005_ScratchCompanyEntersExhausted` |
+| KIM-S02 | HQ defeat is checked at the next state-based death sweep (the next time no item is resolving). Both HQs at ≤ 0 at the same sweep is a Match Draw. | `FR-CBT-003` | `TestFR_CBT_003_HeadquartersDefeatIsCheckedAtTheDeathSweep`, `TestFR_CBT_003_BothHeadquartersLethalAtOneSweepIsMatchDraw` |
 
 ## Defined Interactions
 
@@ -87,7 +95,10 @@ Each `D` cell above, with where FRD 01 settles it. A test marker means a `pkg/en
 - **Agg × Rgp:** each attack triggers Aggressive again and the modifiers last until end of turn, so a regrouped attacker grows with each attack (`FR-KWD-002f`, `FR-KWD-002n`). Reachable: *Furnace Golem* plus *Enclave*. **Balance note, not a rules hole.**
 - **Agg × Bsk:** Aggressive raises Combat Power; Berserk deals flat N regardless of power (`FR-KWD-002o`).
 - **Eth × Grd:** an Ethereal Guardian cannot be attacked and does not restrict attackers (`FR-CBT-001`, `FR-KWD-002g`). Test: `TestFR_KWD_002g_EtherealCannotBeAttackedAndOverridesGuardian`.
+- **Eth × Bsk:** an Ethereal asset may be the Berserk secondary target; Ethereal restricts only attacks (`FR-KWD-002o`, ruling KIM-B02). Test: `TestFR_KWD_002o_SecondaryMayBeEthereal`.
 - **Ward × Grd:** a Ward Guardian can still be attacked, so it still restricts attackers (`FR-KWD-002h`, `FR-KWD-002j`).
+- **Ward × Bsk:** a Ward asset cannot be chosen as the Berserk secondary, and a secondary that gains Ward before Step 3 makes the cleave dissipate (`FR-KWD-002o`, `FR-TGT-003`, ruling KIM-B01). Tests: `TestFR_KWD_002o_SecondaryCannotBeWarded`, `TestFR_KWD_002o_SecondaryThatGainsWardBeforeStep3Dissipates`.
+- **Grd × Bsk:** Guardian forces the primary target only; the secondary may be any other legal target (`FR-KWD-002o`, ruling KIM-B03). Test: `TestFR_KWD_002o_GuardianDoesNotRestrictSecondary`.
 - **Grd × DEx:** Guardian has no readiness condition; an Exhausted Guardian still forces attacks onto it (`FR-CBT-001`). Worth confirming against prototype habit.
 - **Arm × Arm:** Armor stacks additively and never expires (`FR-LAY-002`).
 - **Arm × Bsk:** Armor absorbs Berserk cleave (`FR-REP-004` Stage 4).

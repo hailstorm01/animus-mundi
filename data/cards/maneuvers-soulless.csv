@@ -6,7 +6,7 @@
 "Dolus Infusion","MANEUVER","SOULLESS","0","2","Draw 2 cards, and your Headquarters heals 2.","UNCOMMON","true","false"
 "Inspired Salvage","MANEUVER","SOULLESS","2","2","Return up to 2 chosen Mechanized cards from your discard pile to your hand.","RARE","true","false"
 "Railway Reinforcements","MANEUVER","SOULLESS","0","2","Move up to 3 chosen allied units from your Reserves to the Main Theater.","COMMON","true","false"
-"Redline Infusion","MANEUVER","SOULLESS","0","2","Chosen allied unit gets +2 power and gains Berserk until end of turn. At the end of your turn, kill that unit.","COMMON","true","false"
+"Redline Infusion","MANEUVER","SOULLESS","0","2","Chosen allied unit gets +2 power and gains Berserk 2 until end of turn. At the end of your turn, kill that unit.","COMMON","true","false"
 "All-Out War","MANEUVER","SOULLESS","3","3","Discard your hand. Then:
 - Chosen allied asset gets power equal to the number of cards discarded this way until end of turn.
 - Scratch X, where X is the number of cards discarded this way.

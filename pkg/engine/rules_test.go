@@ -93,6 +93,23 @@ func TestFR_CAP_001_HeadquartersDeploysFaceDownScratchCompany(t *testing.T) {
 	}
 }
 
+// Ruling KIM-S01 (2026-10-19).
+func TestFR_ZON_005_ScratchCompanyEntersExhausted(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	s.do(Action{Kind: ActScratch, Player: 0, Asset: p.HQ.ID})
+	sc := p.Reserves[0]
+	if !sc.Exhausted {
+		t.Fatal("new Scratch Company entered Readied")
+	}
+	s.reject(Action{Kind: ActGenerate, Player: 0, Asset: sc.ID, Resource: Requisition})
+	s.endTurn()
+	s.endTurn()
+	if sc.Exhausted {
+		t.Fatal("Scratch Company should ready in its controller's next Ready Phase")
+	}
+}
+
 func TestFR_ZON_004_MarchPreservesDamageAndArmor(t *testing.T) {
 	s := newScene(t)
 	u := s.put(0, ZoneReserves, unit("Walker", 2, 5, Keywords{Armor: 2}))
@@ -350,6 +367,32 @@ func TestFR_CBT_003_HeadquartersDefeat(t *testing.T) {
 	s.reject(Action{Kind: ActEndTurn, Player: 0})
 }
 
+// Ruling KIM-S02 (2026-10-19): defeat waits for the next death sweep.
+// Covers: FR-LAY-002
+func TestFR_CBT_003_HeadquartersDefeatIsCheckedAtTheDeathSweep(t *testing.T) {
+	s := newScene(t)
+	u := s.put(0, ZoneReserves, unit("Walker", 1, 1, Keywords{}))
+	s.g.Players[1].HQ.Damage = 25 // lethal, but nothing has swept yet
+	if s.g.Outcome.Over {
+		t.Fatal("match ended before any death sweep")
+	}
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: u.ID})
+	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 0 {
+		t.Fatalf("outcome after the sweep = %+v, want player 0 wins", o)
+	}
+}
+
+func TestFR_CBT_003_BothHeadquartersLethalAtOneSweepIsMatchDraw(t *testing.T) {
+	s := newScene(t)
+	u := s.put(0, ZoneReserves, unit("Walker", 1, 1, Keywords{}))
+	s.g.Players[0].HQ.Damage = 20
+	s.g.Players[1].HQ.Damage = 22
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: u.ID})
+	if o := s.g.Outcome; !o.Over || !o.Draw {
+		t.Fatalf("outcome = %+v, want Match Draw", o)
+	}
+}
+
 func TestFR_CBT_003_SimultaneousHeadquartersDefeatIsMatchDraw(t *testing.T) {
 	s := newScene(t)
 	s.g.Players[0].HQ.Damage = 18
@@ -404,6 +447,62 @@ func TestFR_KWD_002o_BerserkCleaveIsNonCombatDamage(t *testing.T) {
 	s.do(s.cleave(att, def, sec))
 	s.wantDamage(sec, 2) // Resistant applies, Stalwart does not
 	s.wantDamage(att, 0) // the secondary does not retaliate
+}
+
+// Rulings KIM-B01..B03 (2026-10-19): the secondary follows normal targeting
+// rules with the primary excluded.
+
+// Covers: FR-KWD-002h
+func TestFR_KWD_002o_SecondaryCannotBeWarded(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	warded := s.put(1, ZoneMainTheater, unit("Warded", 0, 9, Keywords{Ward: true}))
+	s.reject(s.cleave(att, def, warded))
+}
+
+func TestFR_KWD_002o_SecondaryMayBeEthereal(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	ghost := s.put(1, ZoneMainTheater, unit("Ghost", 0, 9, Keywords{Ethereal: true}))
+	s.do(s.cleave(att, def, ghost))
+	s.wantDamage(ghost, 2)
+}
+
+// Covers: FR-KWD-002j
+func TestFR_KWD_002o_GuardianDoesNotRestrictSecondary(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	guard := s.put(1, ZoneMainTheater, unit("Bodyguard", 0, 9, Keywords{Guardian: true}))
+	other := s.put(1, ZoneMainTheater, unit("Other", 0, 9, Keywords{}))
+	s.reject(s.cleave(att, other, guard)) // the primary must still be the Guardian
+	s.do(s.cleave(att, guard, other))
+	s.wantDamage(other, 2)
+}
+
+func TestFR_KWD_002o_SecondaryExcludesPrimary(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	s.reject(s.cleave(att, def, def))
+}
+
+// Covers: FR-TGT-003
+func TestFR_KWD_002o_SecondaryThatGainsWardBeforeStep3Dissipates(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	sec := s.put(1, ZoneMainTheater, unit("Late Ward", 0, 9, Keywords{}))
+	a := s.cleave(att, def, sec)
+	if err := s.g.check(a); err != nil {
+		t.Fatal(err)
+	}
+	s.g.declareAttack(a)
+	sec.Inst.Card.Keywords.Ward = true // as if a Step 2 trigger granted Ward
+	s.g.resolveStack()
+	s.wantDamage(sec, 0)
+	s.wantDamage(def, 2)
 }
 
 func TestFR_KWD_002o_NoCleaveWhenAttackingHeadquarters(t *testing.T) {

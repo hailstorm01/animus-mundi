@@ -95,9 +95,8 @@ func (g *Game) scratch(pid PlayerID, n int) {
 		}
 		inst := p.Deck[0]
 		p.Deck = p.Deck[1:]
-		// OPEN(KIM-S01): FR-ZON-005 does not state the readiness of a new
-		// Scratch Company; FR-SET-004's "Readied by default" is applied.
-		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true}
+		// A new Scratch Company always enters Exhausted (FR-ZON-005).
+		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true, Exhausted: true}
 		g.placeOnBattlefield(a, ZoneReserves)
 		g.logf("scratch", "player %d deploys %s", pid, a)
 	}
@@ -131,9 +130,9 @@ func (g *Game) resolveAttack(it *StackItem) {
 	if att.Printed().Type == TypeUnit && def.Zone == ZoneMainTheater && it.Secondary != 0 {
 		berserk = g.Keywords(att).Berserk
 		sec = g.Asset(it.Secondary)
-		// Two-stage verification (FR-TGT-003): the secondary must still be an
-		// opposing asset in the Main Theater, otherwise the cleave dissipates.
-		if sec != nil && (sec.Zone != ZoneMainTheater || sec.Controller == att.Controller) {
+		// Two-stage verification (FR-TGT-003): the secondary must still be a
+		// legal target, otherwise the cleave dissipates.
+		if sec != nil && !g.legalSecondary(att, sec) {
 			sec = nil
 		}
 	}

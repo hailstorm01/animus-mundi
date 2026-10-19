@@ -275,15 +275,20 @@ func ShowState(repoRoot string) {
 }
 
 // openMatrixItems counts rows of the keyword matrix's Open Items table
-// ("| KIM-B04 | ? | R | ..."), and how many are reachable ("R").
+// ("| KIM-B05 | ? | R | ..."), and how many are reachable ("R").
 func openMatrixItems(repoRoot string) (open, reachable int, ok bool) {
 	content, err := os.ReadFile(filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md"))
 	if err != nil {
 		return 0, 0, false
 	}
+	inOpen := false
 	for _, line := range strings.Split(string(content), "\n") {
+		if strings.HasPrefix(line, "## ") {
+			inOpen = strings.HasPrefix(line, "## Open Items")
+			continue
+		}
 		cells := strings.Split(line, "|")
-		if len(cells) < 4 || !strings.HasPrefix(strings.TrimSpace(cells[1]), "KIM-") {
+		if !inOpen || len(cells) < 4 || !strings.HasPrefix(strings.TrimSpace(cells[1]), "KIM-") {
 			continue
 		}
 		open++

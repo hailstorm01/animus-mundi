@@ -29,7 +29,7 @@ animus-mundi/
 │   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
-│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.2 (Pure Game Rules & Keywords)
+│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.3 (Pure Game Rules & Keywords)
 │       ├── keyword_interaction_matrix.md                # ACTIVE — Bounded keyword edge-case register
 │       ├── 02_Card_Data_Pipeline_FRD.md                 # FROZEN — FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FROZEN — FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
@@ -63,7 +63,7 @@ animus-mundi/
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
-1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.2 — 70 Requirement IDs, 62 active; 8 subsumed)**
+1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.3 — 70 Requirement IDs, 62 active; 8 subsumed)**
    - **Deck Construction, Match Setup & First-Turn Rules (`FR-SET-001` - `FR-SET-004`, `FR-DEK-001` - `FR-DEK-002`, `FR-WIN-001`)**: 50-card minimum main deck, 1 faction Headquarters, rarity copy limits (4/3/2/1), pre-mulligan First-Player Determination (15s clock), 6-card opening hand with single partial mulligan (25s clock), Turn 1 draw skip, absence of summoning sickness, mandatory post-search shuffle, empty-deck draw loss, and a simultaneous empty-deck **Match Draw** (`RESULT_MATCH_DRAW`).
    - **Pure Game Rules, Card Taxonomy & Spatial Zone Model (`FR-CRD-101`, `FR-ZON-001` - `FR-ZON-005`, `FR-ENT-102` - `FR-ENT-103`)**: 14 printed card characteristics, Battlefield Assets vs. non-battlefield Cards, ownership vs. control, uncapped zone capacities (Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard, Attached Sub-Zone, and Resolution Stack), double-blind `1/1/1/1` Scratch Company lifecycle, tucked cards, and face-down transformation. Runtime memory structs (`FR-ENT-001` - `FR-ENT-003`, `FR-SNP-101`) are owned by FRD 05 (`SOC-002`).
    - **Dual-Resource Economy, Turn Sequence & Clean-Stack Model (`FR-RES-001` - `FR-RES-003`, `FR-TRN-001` - `FR-TRN-003a`, `FR-CAP-001`, `FR-MNV-001`, `FR-QUE-001`)**: Explicit off-stack Requisition and Tactics generation, one-way `2R -> 1T` conversion, unified Inherent Capabilities Matrix (`FR-CAP-001`, subsuming `FR-INH-001` - `FR-INH-004`), discard-pile and in-resolution free deployments with destination-zone selection (`FR-TRN-003a`), Ready Phase (unexhaust + start-of-turn triggers), Draw Phase (draw + draw triggers), Main Phase (75s turn clock + 60s Reserve Time Bank, clean-stack priority), and End Phase (Sub-Phases 4a–4d).
@@ -144,7 +144,7 @@ The physical prototype has shown the core loop is fun, so the open risk is not w
 - **[Keyword Interaction Matrix](frd/keyword_interaction_matrix.md)**: all 105 keyword pairs and 15 self-stacking cases classified. 29 are defined and 87 have no interaction. Open items await rulings: 4 undefined pairs, plus 3 undefined and 4 inferred keyword-vs-core-rule cases, ranked by whether current cards can reach them.
 
 ### 3.2 M2 Deliverables
-1. **Rulings for reachable open matrix items.** First is `KIM-B04`: cards print a bare *Berserk* while FRD 01 only defines *Berserk N*. Next is the Berserk targeting cluster (`KIM-B01`–`KIM-B03`, `KIM-B05`). Physical-prototype rulings count; each one lands as FRD 01 text plus a scenario test.
+1. **Rulings for reachable open matrix items.** Six were ruled on 2026-10-19 (FRD 01 v3.3): Berserk secondary targeting (`KIM-B01`–`KIM-B03`), Berserk 2 on *Tempest Surge* and *Redline Infusion* (`KIM-B04`), Scratch Companies entering Exhausted (`KIM-S01`), and HQ defeat at the death sweep (`KIM-S02`). Still open and reachable: `KIM-B05` (is the Berserk secondary optional?), `KIM-J01`, `KIM-B06`, `KIM-S03`. Physical-prototype rulings count; each one lands as FRD 01 text plus a scenario test.
 2. **Kernel coverage of the rest of FRD 01:** triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
 3. **A two-faction starter set, fully executable.** Abilities are modeled directly as Go values in the kernel, with no compiler. Which two factions is a design call.
 4. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
@@ -197,7 +197,7 @@ flowchart LR
 
 | Document | Status | Serves | Next action |
 | :--- | :--- | :--- | :--- |
-| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.2 — 70 IDs, 62 active) | M1–M2, and every milestone | Rulings for open matrix items; keep in lockstep with `pkg/engine` tests |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.3 — 70 IDs, 62 active) | M1–M2, and every milestone | Rulings for open matrix items; keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Close reachable open items |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
