@@ -66,7 +66,7 @@ Invoke `lead-architect` (`@lead-architect`) when:
    - An FRD has been codified/audited and needs a concrete engineering blueprint before implementation begins.
 2. **Runbook B — TDD-to-GitHub Issue Slicing (`TDD -> GitHub Issues`):**
    - The user approves a TDD (or selects option 1 at the end of Runbook A) and asks to preview or publish its deliverable slices into the GitHub Issue tracker.
-   - The user wants to synchronize updated TDD slices with existing GitHub Milestone tickets (`-UpdateExisting`).
+   - The user wants to synchronize updated TDD slices with existing GitHub Milestone tickets (`-update-existing`).
 3. **Architecture & Deliverable Readiness Check:**
    - The user asks whether an FRD/TDD is ready for engineering handoff, or wants to inspect TDD-to-FRD staleness and coverage metrics.
 
@@ -151,7 +151,7 @@ Draft the TDD in `docs/tdd/<XX>_<Name>_TDD.md` (matching the numeric prefix `<XX
 #### Step 4: Verification & Coverage Gate (`cardtown lint tdd`)
 1. Run the TDD linter against the newly authored TDD:
    ```powershell
-   cardtown lint tdd -Files "docs/tdd/<Target_TDD>.md"
+   cardtown lint tdd "docs/tdd/<Target_TDD>.md"
    ```
 2. Verify all checks pass with **zero errors**:
    - All `FR-XXX-YYY` cross-references resolve against `docs/frd/*.md` (0 dangling references).
@@ -175,7 +175,7 @@ Draft the TDD in `docs/tdd/<XX>_<Name>_TDD.md` (matching the numeric prefix `<XX
    - Total active requirements covered, total subsumed requirements accounted for, and a summary table of the Deliverable Slices (`SLICE-XX-01` .. `SLICE-XX-NN`).
    - **Single-Hop Approval Prompt:** Ask the human user:
      > *"TDD drafting complete and `cardtown lint tdd` passed with 100% FRD requirement coverage. How would you like to proceed?*
-     > 1. *Run a dry-run preview of the GitHub Milestone & Deliverable Issues (`cardtown tdd slice -DryRun`)?*
+     > 1. *Run a dry-run preview of the GitHub Milestone & Deliverable Issues (`cardtown tdd slice -dry-run`)?*
      > 2. *Refine specific module designs or slice boundaries in the TDD?*
      > 3. *Stop here for manual review?"*
    - Wait for explicit human instruction before proceeding to Runbook B.
@@ -185,42 +185,42 @@ Draft the TDD in `docs/tdd/<XX>_<Name>_TDD.md` (matching the numeric prefix `<XX
 ### Runbook B: Slice Approved TDD into GitHub Milestone & Issues (`docs/tdd/` $\rightarrow$ GitHub Tracker)
 
 > [!IMPORTANT] Human-Confirmed Gate
-> Runbook B interacts with the repository's GitHub Issue tracker via `cardtown tdd slice`. Always execute Step 1 (`-DryRun`) first and receive explicit human approval before executing Step 2 (`-Publish`).
+> Runbook B interacts with the repository's GitHub Issue tracker via `cardtown tdd slice`. Always execute Step 1 (`-dry-run`) first and receive explicit human approval before executing Step 2 (`-publish`).
 
 ```text
 Human Request to Slice/Publish TDD Issues
         │
         ▼
-[Step 1: Lint Verification & Dry-Run Preview (-DryRun)]
+[Step 1: Lint Verification & Dry-Run Preview (-dry-run)]
         │
         ▼
 [Step 2: Human Confirmation Gate ("Publish to GitHub?")]
         │
         ▼
-[Step 3: Idempotent Live GitHub Publication (-Publish)]
+[Step 3: Idempotent Live GitHub Publication (-publish)]
         │
         ▼
 [Step 4: Emit Issue Tracker & Execution Order Report]
 ```
 
 #### Step 1: Lint Verification & Dry-Run Preview
-1. Run `cardtown lint tdd -Files "docs/tdd/<Target_TDD>.md"` to confirm the TDD is 100% lint-clean.
+1. Run `cardtown lint tdd "docs/tdd/<Target_TDD>.md"` to confirm the TDD is 100% lint-clean.
 2. Execute the issue publisher in dry-run preview mode:
    ```powershell
-   cardtown tdd slice -TddFile "docs/tdd/<Target_TDD>.md" -DryRun
+   cardtown tdd slice -dry-run "docs/tdd/<Target_TDD>.md"
    ```
 3. Present the dry-run summary to the user:
    - Target GitHub Repository and Milestone Title.
    - Labels to be ensured/applied.
    - Topological table of Deliverable Issues (`Slice ID | Issue Title | Depends On | Target Files | Requirements Covered`).
-   - Ask the user: *"Dry-run preview verified. Shall I publish this Milestone and these N Deliverable Issues live to GitHub (`-Publish`)?"*
+   - Ask the user: *"Dry-run preview verified. Shall I publish this Milestone and these N Deliverable Issues live to GitHub (`-publish`)?"*
 
 #### Step 2: Live GitHub Publication (After Explicit Confirmation)
 1. Once the human user says yes, run:
    ```powershell
-   cardtown tdd slice -TddFile "docs/tdd/<Target_TDD>.md" -Publish
+   cardtown tdd slice -publish "docs/tdd/<Target_TDD>.md"
    ```
-   *(If updating existing GitHub issues after a TDD revision, pass `-Publish -UpdateExisting`)*.
+   *(If updating existing GitHub issues after a TDD revision, pass `-publish -update-existing`)*.
 2. The script automatically:
    - Creates or reuses the GitHub Milestone for the TDD.
    - Ensures all required labels (`type:deliverable`, `phase:X`, `component:Y`, `tdd:XX`) exist on GitHub.

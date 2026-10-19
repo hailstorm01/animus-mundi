@@ -81,7 +81,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 ### Step 5: Verification & Linting
 1. Run the FRD cross-reference linter:
    ```powershell
-   cardtown lint frd -Files "docs/frd/<Target_FRD>.md"
+   cardtown lint frd "docs/frd/<Target_FRD>.md"
    ```
 2. Verify:
    - Zero dangling requirement references.
@@ -138,7 +138,7 @@ Analysis Request from @pm-lead or Stakeholder
 1. Locate the target FRD in `docs/frd/<Target_FRD>.md`.
 2. Run the FRD linter to verify structural integrity and get exact metrics:
    ```powershell
-   cardtown lint frd -Files "docs/frd/<Target_FRD>.md"
+   cardtown lint frd "docs/frd/<Target_FRD>.md"
    ```
 3. Record: Total defined requirements (`FR-DOM-XXX`), total cross-references, and confirmation of 0 dangling pointers.
 
