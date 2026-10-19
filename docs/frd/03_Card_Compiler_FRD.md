@@ -1,6 +1,9 @@
 # Card Compiler & Blueprint Bundler - Functional Requirements Document (FRD v1.2)
 **Go CLI Contract, CSV-to-AST Catalog Linker, Schema Validation Gate & RFC 8785 Cryptographic Fingerprinting Specification**
 
+> [!IMPORTANT]
+> **Status: FROZEN as design intent (2026-10-19).** This document records direction and prior thinking. It is not an active specification: it is not audited by `pm-devils-advocate` and is not kept in sync with [FRD 01](01_Game_Rules_FRD.md). Where it restates a game rule, **FRD 01 and its `pkg/engine` scenario tests win**. Technical choices here are proposals; they get decided when the code that needs them is built and recorded in [`docs/architecture/decisions/`](../architecture/decisions/README.md). **Revisit:** rewrite at the start of M3 together with FRD 02. [TDD 03](../tdd/03_Card_Compiler_TDD.md) was built on this version and is parked with it. See [`docs/frd/README.md`](README.md).
+
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY

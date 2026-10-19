@@ -1,22 +1,23 @@
 # Card Town Engineering & Design Guidelines
 
-This directory houses the authoritative master specifications and card balance data for Card Town.
+This directory houses the specifications, decision records and card balance data for Card Town. Status and precedence are in [`frd/README.md`](frd/README.md); read it before editing anything under `frd/`.
 
-## Master Documentation Architecture
-- **Master Game Rules Spec:** `frd/01_Game_Rules_FRD.md` (pure game rules, card & asset taxonomy, zone topology, turn phases, 6-layer rules, 5-stage damage mitigation, combat, keyword dictionary).
-- **Master Card Data Pipeline Spec:** `frd/02_Card_Data_Pipeline_FRD.md` (ingestion lifecycle, blueprint JSON schema, declarative ability AST, event hooks, 25 atomic primitives, MTG-aligned text standards, review register).
-- **Master Card Compiler Spec:** `frd/03_Card_Compiler_FRD.md` (CLI compiler, parsing grammar, AST synthesis, parity verification, fingerprinting).
-- **Master Networking & Protocol Spec:** `frd/04_Client_Engine_Protocol_Networking_FRD.md` (wire contract, Protobuf schemas, WebSockets, Fog of War, choice prompts).
-- **Master Headless Game Engine Spec:** `frd/05_Headless_Game_Engine_FRD.md` (Go headless kernel, 3-tier runtime memory structs, seeded PRNG, transactional state, stack runner, AST evaluator, stateless 6-layer evaluation, test harness).
-- **Technical Design Documents (TDDs):** `tdd/*.md` (concrete module layouts, data structures, function signatures, test matrices, and `SLICE-XX-YY` GitHub issue manifests authored from FRDs by `lead-architect`; see `tdd/README.md`):
-  - **Card Compiler TDD:** `tdd/03_Card_Compiler_TDD.md` (CLI compiler, Draft 2020-12 schemas, AST linker, parity engine, RFC 8785 fingerprinting).
+## Documentation Map
+- **Game Rules (active, source of truth):** `frd/01_Game_Rules_FRD.md` (pure game rules, card & asset taxonomy, zone topology, turn phases, 6-layer rules, 5-stage damage mitigation, combat, keyword dictionary). Its executable form is `../pkg/engine`, with scenario tests named `TestFR_<DOM>_<NNN>_*`.
+- **Keyword Interaction Matrix (active):** `frd/keyword_interaction_matrix.md`, the bounded register of keyword-pair and keyword-vs-core-rule edge cases, with open items awaiting rulings.
+- **Frozen design intent (not audited, not synced; FRD 01 wins any conflict):**
+  - `frd/02_Card_Data_Pipeline_FRD.md` and `frd/03_Card_Compiler_FRD.md`: rewritten at the start of M3.
+  - `frd/04_Client_Engine_Protocol_Networking_FRD.md`: rewritten at the start of M5.
+  - `frd/05_Headless_Game_Engine_FRD.md`: design reference while extending `pkg/engine`.
+- **Technical Design Documents:** `tdd/*.md`. `tdd/03_Card_Compiler_TDD.md` is parked with FRD 03; do not slice it into issues before M3.
+- **Architecture Decision Records:** `architecture/decisions/*.md`, one page per technical decision, written when the code that needs it is built.
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 
 > [!TIP]
 > The FRDs and TDDs are large (40-90 KB each). Read the section you need by line range rather than whole files.
 
-## Linting
-Run `cardtown lint` (auto-detects changed files; `-All` forces everything). Details live in the `cardtown-linter` skill. The pre-commit hook lints staged FRDs, TDDs, and CSVs automatically.
+## Linting & Verification
+Run `cardtown lint` (auto-detects changed files; `-all` forces everything). `cardtown lint rules` traces engine scenario tests to FRD 01. `go test ./pkg/engine` runs the scenario tests and fuzz playouts, and `cardtown sim` runs playouts on real card data. Details live in the `cardtown-linter` skill. The pre-commit hook lints staged FRDs, TDDs, CSVs and engine files automatically.
 
-## Product Management, FRD/TDD Authoring & Audits
-Product vision, portfolio roadmap, and `PRODUCT_SUMMARY.md` maintenance are owned by `pm-lead`, who dispatches specification analysis requests to `pm-frd-drafter` to assess FRD state and spec-to-roadmap drift. FRD authoring and state analysis are driven by `pm-frd-drafter`. Concrete Technical Design Documents (`docs/tdd/`) and GitHub Deliverable Issue slicing (`cardtown tdd slice`) are owned by `lead-architect`. Audit workflow, severity taxonomy, and registry: see `audit/README.md`. Persona behavior lives only in `.agents/skills/` (`pm-lead`, `pm-frd-drafter`, `pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`, `lead-architect`).
+## Product Management, Rules & Audits
+Product vision, milestones and `PRODUCT_SUMMARY.md` are owned by `pm-lead`. FRD authoring is driven by `pm-frd-drafter`, for FRD 01 now and for other FRDs when their milestone starts. `pm-devils-advocate` red-teams FRD 01 and the keyword matrix only. Technical design, decision records and issue slicing are owned by `lead-architect`. Audit workflow, severity taxonomy, and registry: see `audit/README.md`. Persona behavior lives only in `.agents/skills/` (`pm-lead`, `pm-frd-drafter`, `pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`, `lead-architect`).

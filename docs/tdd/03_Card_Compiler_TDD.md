@@ -1,6 +1,9 @@
 # Card Compiler, Blueprint Ingestion & Schema Pipeline — Technical Design Document (TDD v1.0)
 **Deterministic CSV-to-AST Catalog Linker, JSON Schema Draft 2020-12 Validator & RFC 8785 Cryptographic Bundler (`cmd/compile-blueprints`)**
 
+> [!IMPORTANT]
+> **Status: PARKED (2026-10-19).** Built on [FRD 03](../frd/03_Card_Compiler_FRD.md) v1.2 and [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) v1.3, both now frozen as design intent. Do not slice or publish issues from it (`cardtown tdd slice`) until M3 starts and the FRDs are rewritten from what the `pkg/engine` kernel needed in M2. See [`docs/frd/README.md`](../frd/README.md).
+
 - **Source FRD:** [docs/frd/03_Card_Compiler_FRD.md](../frd/03_Card_Compiler_FRD.md) (FRD v1.2, with companion schemas from [docs/frd/02_Card_Data_Pipeline_FRD.md](../frd/02_Card_Data_Pipeline_FRD.md) v1.3)
 - **FRD Commit Hash:** `17b1444`
 - **TDD Version:** `v1.0`

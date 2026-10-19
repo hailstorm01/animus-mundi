@@ -1,6 +1,9 @@
 # Client-Engine Protocol & Networking - Functional Requirements Document (FRD v1.5)
 **Master Network Topology, Message Taxonomy, Fog-of-War & Wire Protocol Specification**
 
+> [!IMPORTANT]
+> **Status: FROZEN as design intent (2026-10-19).** This document records direction and prior thinking. It is not an active specification: it is not audited by `pm-devils-advocate` and is not kept in sync with [FRD 01](01_Game_Rules_FRD.md). Where it restates a game rule, **FRD 01 and its `pkg/engine` scenario tests win**. Technical choices here are proposals; they get decided when the code that needs them is built and recorded in [`docs/architecture/decisions/`](../architecture/decisions/README.md). **Revisit:** rewrite at the start of M5 (networked play), once a local client (M4) shows what the wire actually carries. See [`docs/frd/README.md`](README.md).
+
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
