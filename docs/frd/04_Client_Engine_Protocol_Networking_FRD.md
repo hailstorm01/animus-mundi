@@ -529,6 +529,7 @@ enum TargetRole {
   TARGET_ROLE_EXHAUST_COST = 5;             // For additional enactment exhaust costs (Funeral Fungus)
   TARGET_ROLE_DESTINATION_ZONE = 6;         // For target destination zone selections (Sandstorm Lightbringer)
   TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7; // Upfront secondary defender binding for Berserk N attacks (FR-KWD-002o, FR-TGT-101)
+  TARGET_ROLE_MOVE_COST = 8;                // For zone relocation costs (e.g. Arkha, Sun's Fury discard-to-deck cost)
 }
 
 message DeployCardCommand {
@@ -556,7 +557,7 @@ message TargetBinding {
   string target_id = 1;      // AssetInstance ID, CardInstance ID (for discard costs), Player ID, or Zone
   int32 allocated_value = 2; // For DISTRIBUTED_POOL (e.g. Macrocannon Barrage)
   int32 modal_index = 3;     // Associated mode index for modal spells (e.g. Ambush Tactics)
-  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST, SECONDARY_BERSERK_TARGET)
+  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST, EXHAUST_COST, DESTINATION_ZONE, SECONDARY_BERSERK_TARGET, MOVE_COST)
 }
 ```
 
