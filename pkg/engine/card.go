@@ -88,6 +88,8 @@ var scratchFace = &Card{
 	DeployZones: []Zone{ZoneReserves},
 }
 
+// OPEN(KIM-B04): cards print a bare "Berserk" with no N, which FRD 01 does
+// not define, so it is left unsupported rather than guessed.
 var keywordLine = regexp.MustCompile(`^(Resistant|Aggressive|Armor|Berserk) (-?\d+)$`)
 
 // ParseKeywordLine parses one standalone keyword line from rules text.

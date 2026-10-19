@@ -115,8 +115,10 @@ func combatLegalZone(a *Asset) bool {
 func (g *Game) resolveAttack(it *StackItem) {
 	att := g.Asset(it.Source)
 	def := g.Asset(it.Target)
+	// OPEN(KIM-J01): only survival and zone are re-checked here, so a Guardian
+	// arriving or the defender gaining Ethereal during Step 2 does not fizzle it.
 	if att == nil || def == nil || !combatLegalZone(att) || !combatLegalZone(def) || def.Controller == att.Controller {
-		// OPEN(KIM-B03): whether Berserk cleave still happens when the attack
+		// OPEN(KIM-B06): whether Berserk cleave still happens when the attack
 		// fizzles is undefined; the kernel treats the whole attack as fizzled.
 		g.logf("fizzle", "attack fizzles")
 		return

@@ -212,6 +212,7 @@ func (g *Game) readyAsset(a Action) (*Asset, error) {
 }
 
 // canYield implements the Generate Resources rows of FR-CAP-001.
+// OPEN(KIM-S03): generating a resource the asset yields 0 of is allowed.
 func (g *Game) canYield(a *Asset, r Resource) bool {
 	if a.Printed().Type != TypeUnit || g.Keywords(a).Versatile {
 		return true
@@ -268,9 +269,10 @@ func (g *Game) CanCleave(att, def, sec *Asset) bool {
 	if def.Zone != ZoneMainTheater || sec.ID == def.ID {
 		return false // Berserk only cleaves when attacking a Main Theater asset
 	}
-	// OPEN(KIM-B01): FRD 01 says only "another legal opposing Main Theater
-	// asset". Whether Ward, Ethereal or the Guardian restriction limit the
-	// secondary target is undefined; the kernel applies none of them.
+	// OPEN(KIM-B01, KIM-B02, KIM-B03): FRD 01 says only "another legal
+	// opposing Main Theater asset". Whether Ward, Ethereal or the Guardian
+	// restriction limit the secondary target is undefined; none apply here.
+	// OPEN(KIM-B05): the secondary is optional (Action.Secondary may be 0).
 	return sec.Zone == ZoneMainTheater && sec.Controller != att.Controller
 }
 
