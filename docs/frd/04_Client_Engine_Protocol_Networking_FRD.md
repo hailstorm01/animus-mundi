@@ -340,7 +340,7 @@ message AssetSnapshot {
   string asset_instance_id = 1;
   string blueprint_id = 2; // Generic proxy if face-down
   string controller_player_id = 3;
-  string zone = 4; // "HQ", "RESERVES", "MAIN_THEATER"
+  string zone = 4; // "HEADQUARTERS", "RESERVES", "MAIN_THEATER"
   bool is_readied = 5;
   int32 current_health = 6;
   int32 max_health = 7;
@@ -504,11 +504,11 @@ message MarchCommand {
 
 message AttackCommand {
   string attacker_asset_id = 1;
-  // Standard attack targets strictly 1 asset or HQ; Berserk units (FR-KWD-002o, FR-ENG-031) may target up to 2 assets in designated sequential retaliation order (FR-CBT-002).
+  // Standard attack targets strictly 1 asset or HQ; Berserk N units (FR-KWD-002o, FR-ENG-031) may bind an optional secondary Main Theater asset to receive flat N cleave damage without retaliation (FR-CBT-002).
   // Binds attack targets via canonical TargetBinding architecture:
   // - Primary target: target_role = TARGET_ROLE_TARGET (Asset or HQ)
-  // - Optional secondary target for Berserk units: target_role = TARGET_ROLE_SECONDARY_BERSERK_TARGET
-  // Clamped to max 1 binding for standard attacks, max 2 for Berserk attacks; excess bindings rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
+  // - Optional secondary target for Berserk N units: target_role = TARGET_ROLE_SECONDARY_BERSERK_TARGET
+  // Clamped to max 1 binding for standard attacks, max 2 for Berserk N attacks; excess bindings rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
   repeated TargetBinding target_bindings = 2;
 }
 
@@ -528,7 +528,7 @@ enum TargetRole {
   TARGET_ROLE_DISCARD_COST = 4;             // For activated ability hand discard costs
   TARGET_ROLE_EXHAUST_COST = 5;             // For additional enactment exhaust costs (Funeral Fungus)
   TARGET_ROLE_DESTINATION_ZONE = 6;         // For target destination zone selections (Sandstorm Lightbringer)
-  TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7; // Upfront secondary defender binding for Berserk attacks (FR-KWD-002o, FR-TGT-101)
+  TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7; // Upfront secondary defender binding for Berserk N attacks (FR-KWD-002o, FR-TGT-101)
 }
 
 message DeployCardCommand {
@@ -600,6 +600,7 @@ message EngineEvent {
     CardZoneMovedEvent card_zone_moved = 28;
     AssetTuckedEvent asset_tucked = 29;
     DelayedTriggerRegisteredEvent delayed_trigger_registered = 30;
+    CombatKillEvent combat_kill = 31;
   }
 }
 
@@ -745,8 +746,14 @@ message AssetTuckedEvent {
 message DelayedTriggerRegisteredEvent {
   string trigger_instance_id = 1;
   string source_asset_or_card_id = 2;
-  string event_hook = 3; // e.g. "EVENT_TURN_START", "EVENT_END_PHASE"
+  string event_hook = 3; // e.g. "EVENT_TURN_START", "EVENT_TURN_END"
   string expiration_phase_or_event = 4;
+}
+
+message CombatKillEvent {
+  string killer_asset_id = 1; // Asset that dealt the lethal combat damage
+  string victim_asset_id = 2; // Asset destroyed by combat damage
+  bool is_attacker = 3;       // True if killer was declared attacker, false if defender retaliation
 }
 ```
 
@@ -909,10 +916,44 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 - **Zero Information Hiding in Replays**:
   - The replay file contains the **100% unmasked historical truth**.
   - Includes initial shuffled deck order arrays, exact card IDs of all drawn cards, and the real underlying card identities of all Scratch Companies.
-- **File Structure**:
-  - `ReplayHeader`: Match GUID, Engine Version, Date, Player Metadata, Deck Lists.
-  - `InitialState`: Shuffled deck states, HQ designations.
-  - `EventLog`: Monotonic array of all `GameEnvelope` packets exchanged, enriched with unmasked underlying entity IDs.
+- **File Structure & Protobuf Schema**:
+  ```protobuf
+  message ReplayFile {
+    ReplayHeader header = 1;
+    ReplayInitialState initial_state = 2;
+    repeated ReplayEventRecord event_log = 3;
+  }
+
+  message ReplayHeader {
+    string match_id = 1;
+    string engine_version = 2;
+    string card_data_version = 3;
+    string catalog_checksum = 4;
+    int64 match_start_epoch_ms = 5;
+    int64 match_end_epoch_ms = 6;
+    string player1_id = 7;
+    string player2_id = 8;
+    repeated string player1_deck_blueprints = 9;
+    repeated string player2_deck_blueprints = 10;
+    string player1_hq_blueprint = 11;
+    string player2_hq_blueprint = 12;
+    string match_outcome = 13; // "WINNER_PLAYER_1", "WINNER_PLAYER_2", "MATCH_DRAW"
+  }
+
+  message ReplayInitialState {
+    repeated string player1_deck_card_instance_ids = 1; // Shuffled deck order
+    repeated string player2_deck_card_instance_ids = 2;
+    string player1_hq_asset_id = 3;
+    string player2_hq_asset_id = 4;
+  }
+
+  message ReplayEventRecord {
+    uint64 sequence_id = 1;
+    int64 timestamp_epoch_ms = 2;
+    GameEnvelope envelope = 3;
+    map<string, string> unmasked_card_identities = 4; // card_instance_id -> blueprint_id for face-down entities
+  }
+  ```
 - **Client Playback**: The Godot client's Replay Viewer reads the `.rec` file, offering analytical toggles:
   - *Fog-of-War Mode*: Simulates what Player 1 or Player 2 saw in real time.
   - *Omniscient Mode*: Unmasks all face-down Scratch Companies, tucked sub-cards, and hand contents for tournament broadcasting, coaching, and balance analysis.
@@ -934,20 +975,46 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
   ```protobuf
   message CommandRejection {
     string command_id = 1;
-    uint32 error_code = 2;
+    ErrorCode error_code = 2;
     string reason_message = 3;
     uint64 current_valid_sequence_id = 4;
+  }
+
+  enum ErrorCode {
+    ERROR_CODE_UNSPECIFIED = 0;
+    ERR_STACK_NOT_EMPTY = 1;
+    ERR_INSUFFICIENT_RESOURCES = 2;
+    ERR_INVALID_TARGET_SELECTION = 3;     // Upfront target selection illegal/protected (DA-NET-008)
+    ERR_GUARDIAN_PRIORITY_VIOLATION = 4;
+    ERR_INVALID_COMMAND_ARGUMENTS = 5;
+    ERR_ASSET_EXHAUSTED = 6;
+    ERR_INVALID_RESOURCE_CHOICE = 7;
+    ERR_ACTION_CLOCK_EXPIRED = 8;
+    ERR_NOT_ACTIVE_PLAYER = 9;
+    ERR_CARD_NOT_IN_HAND = 10;
+    ERR_ILLEGAL_ZONE_TARGET = 11;
+    ERR_MAX_PER_TURN_EXCEEDED = 12;
+    ERR_DESYNC_DETECTED = 21;             // Desync detected during FNV-1a verification
+    ERR_INFINITE_LOOP = 22;               // Infinite loop / cycle limit exceeded
+    ERR_VERSION_MISMATCH = 23;            // Client / engine protocol version mismatch
+    ERR_CATALOG_CHECKSUM_MISMATCH = 24;   // Client / server card blueprint checksum mismatch
+    WARN_TARGET_INVALIDATED_FIZZLE = 30;  // Non-fatal warning: target invalidated on stack pop (DA-NET-008)
   }
   ```
 - **Error Codes**:
   - `ERR_STACK_NOT_EMPTY`: Manual action declared while resolution stack is active (`FR-QUE-001`).
   - `ERR_INSUFFICIENT_RESOURCES`: Requisition/Tactics pool unable to pay cost (`FR-RES-001`).
-  - `ERR_INVALID_TARGET`: Target failed conjunction filter or is protected by Ward/Ethereal (`FR-TGT-001`, `FR-KWD-002g`, `FR-KWD-002h`).
+  - `ERR_INVALID_TARGET_SELECTION`: Target failed conjunction filter or is protected by Ward/Ethereal upon declaration (`FR-TGT-001`, `FR-KWD-002g`, `FR-KWD-002h`, `DA-NET-008`).
+  - `WARN_TARGET_INVALIDATED_FIZZLE`: Non-fatal warning emitted during stack pop when target asset has died, left the battlefield, or become invalid prior to resolution, triggering a stack fizzle (`did_fizzle = true`; `FR-TGT-003`, `DA-NET-008`).
   - `ERR_GUARDIAN_PRIORITY_VIOLATION`: Attack declaration illegally bypassed an eligible enemy Guardian asset in Main Theater (`FR-CBT-001`, `FR-KWD-002j`, `DA-NET-005`). Allows the Godot client UI to flash the mandatory Guardian target and guide the player.
   - `ERR_INVALID_COMMAND_ARGUMENTS`: Command parameters out of bounds or malformed (e.g. non-positive tactics conversion value, invalid target count; `FR-MSG-003`, `DA-NET-003`).
   - `ERR_ASSET_EXHAUSTED`: Attempted action requiring Readied state (`FR-INH-001`).
   - `ERR_INVALID_RESOURCE_CHOICE`: Attempted resource generation invalid for current zone/keywords (e.g. non-Versatile unit generating Tactics in Reserves, or selecting an unsupported resource type; `FR-INH-002`, `FR-KWD-002i`).
   - `ERR_ACTION_CLOCK_EXPIRED`: Choice response received past deadline (`FR-TRG-002`).
+  - `ERR_DESYNC_DETECTED`: Board state checksum mismatch detected during FNV-1a verification (`FR-PAC-004`).
+  - `ERR_INFINITE_LOOP`: Trigger cascade recursion limit (100) or replacement stack limit (10) exceeded (`FR-ENG-041`).
+  - `ERR_VERSION_MISMATCH`: Client and server protocol versions are incompatible (`FR-SES-001`).
+  - `ERR_CATALOG_CHECKSUM_MISMATCH`: Client and server card catalog checksums do not match (`FR-SES-001`, `FR-CMP-025`).
 - Upon receiving a rejection, the Godot client rolls back any local optimistic drag-and-drop animation and plays an invalid-action audio cue.
 
 > [!NOTE]
@@ -988,4 +1055,4 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 | **FR-CBT-003** | Simultaneous Defeat & Match Draw| Section 4.3 (`MatchConcludedEvent` with `RESULT_MATCH_DRAW`) |
 | **FR-ENT-101** | Scratch Face-Down Wrapper | Section 3.1 (`FR-SEC-001` Opaque proxy ID masking) |
 | **FR-ENT-102** | Tucked Sub-Entities (`NO-AH-5`)| Section 3.1 (`FR-SEC-002` Double-blind attached zone preservation) |
-| **FR-KWD-002o**| Berserk Keyword | Section 4.2 (`AttackCommand.target_bindings` multi-target support via `TARGET_ROLE_SECONDARY_BERSERK_TARGET`) |
+| **FR-KWD-002o**| Berserk N Keyword | Section 4.2 (`AttackCommand.target_bindings` multi-target support via `TARGET_ROLE_SECONDARY_BERSERK_TARGET` for flat N secondary cleave damage) |
