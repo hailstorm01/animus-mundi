@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"animus-mundi/pkg/toolchain/audit"
+	"animus-mundi/pkg/toolchain/linter/rules"
 )
 
 var (
@@ -166,6 +167,19 @@ func ShowState(repoRoot string) {
 		fmt.Println("Pre-commit hook: installed and current")
 	}
 
+	if cov, err := rules.Analyze(repoRoot); err == nil {
+		pinned := 0
+		for _, id := range cov.Active {
+			if len(cov.Tests[id]) > 0 {
+				pinned++
+			}
+		}
+		fmt.Printf("Executable rules: %d of %d active FRD 01 requirements pinned by scenario tests ('cardtown lint rules' lists the rest)\n", pinned, len(cov.Active))
+	}
+	if open, reachable, ok := openMatrixItems(repoRoot); ok {
+		fmt.Printf("Keyword interaction matrix: %d open item(s), %d reachable with current cards\n", open, reachable)
+	}
+
 	fmt.Println()
 	fmt.Println("Pending audits:")
 	_ = audit.Status(repoRoot)
@@ -258,6 +272,26 @@ func ShowState(repoRoot string) {
 		}
 	}
 	fmt.Println()
+}
+
+// openMatrixItems counts rows of the keyword matrix's Open Items table
+// ("| KIM-B04 | ? | R | ..."), and how many are reachable ("R").
+func openMatrixItems(repoRoot string) (open, reachable int, ok bool) {
+	content, err := os.ReadFile(filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md"))
+	if err != nil {
+		return 0, 0, false
+	}
+	for _, line := range strings.Split(string(content), "\n") {
+		cells := strings.Split(line, "|")
+		if len(cells) < 4 || !strings.HasPrefix(strings.TrimSpace(cells[1]), "KIM-") {
+			continue
+		}
+		open++
+		if strings.TrimSpace(cells[3]) == "R" {
+			reachable++
+		}
+	}
+	return open, reachable, true
 }
 
 // WhatsUp coordinates the snapshot report.
