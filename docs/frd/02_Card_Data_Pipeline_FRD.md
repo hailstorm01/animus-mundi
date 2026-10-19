@@ -112,7 +112,7 @@ Every `CardBlueprint` requires a globally unique, immutable string identifier (`
 ### Section 2.1: Target Enum Enforcement
 
 #### FR-DAT-005: Canonical Blueprint JSON Schema Specification
-In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)) and `FR-CMP-023` ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), `data/schemas/blueprints.json` uses the root `CardBlueprintCollection` envelope (`required: ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"]`), where `catalogChecksum` matches `^0x[0-9a-f]{64}$` (`FR-CMP-025`) and every item in `blueprints` conforms to the following `CardBlueprint` schema (`required: ["id", "name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities", "currentProxy", "needsRework"]`):
+In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)) and `FR-CMP-023` ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), `data/schemas/blueprints.json` uses the root `CardBlueprintCollection` envelope (`required: ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"]`), where `catalogChecksum` matches `^0x[0-9a-f]{64}$` (`FR-CMP-025`) and every item in `blueprints` conforms to the following `CardBlueprint` schema (`required: ["id", "name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities", "needsRework"]`):
 
 | Field | Type | Constraint | Description |
 | :--- | :--- | :--- | :--- |
@@ -131,16 +131,15 @@ In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md))
 | `deploymentZones` | `Array<DeploymentZoneEnum>` | Valid Enum Array | `["RESERVES"]`, `["MAIN_THEATER"]`, `["HEADQUARTERS"]`, or both. |
 | `rarity` | `RarityEnum` | Valid Enum | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
 | `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
-| `currentProxy` | `Boolean` | `true` / `false` | Required development metadata flag indicating placeholder proxy art/design (`FR-VAL-003`). Formally excluded from the RFC 8785 canonical hash used for `catalogChecksum` (`FR-CMP-025`). |
 | `needsRework` | `Boolean` | `true` / `false` | Required development metadata flag indicating pending design rework (`FR-VAL-003`). Formally excluded from the RFC 8785 canonical hash used for `catalogChecksum` (`FR-CMP-025`). |
 | `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
 
 #### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
 To eliminate translation layers and ensure absolute 1-to-1 schema fidelity with zero header aliasing, all authoring CSV files in `data/cards/` use camelCase column headers that directly mirror canonical `CardBlueprint` JSON property names (`FR-DAT-005`):
 - **Unit, Structure & Headquarters Sheets (`units-and-structures-*.csv` — 15 columns)**:
-  `"name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","currentProxy","needsRework"`
+  `"name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","needsRework"`
 - **Maneuver Sheets (`maneuvers-*.csv` — 9 columns)**:
-  `"name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","currentProxy","needsRework"`
+  `"name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","needsRework"`
   *(Maneuver sheets omit the 6 battlefield-asset columns, which deterministically compile into `subtypes: []`, `deploymentZones: []`, `power: null`, `health: null`, `requisitionYield: 0`, and `tacticsYield: 0`.)*
 
 Furthermore, enum and boolean cells must strictly serialize canonical target strings with zero aliases:
@@ -148,7 +147,7 @@ Furthermore, enum and boolean cells must strictly serialize canonical target str
 2. **`faction`**: Must equal strictly `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`. Title-cased values (e.g. `"Animus"`, `"Concordia"`) are illegal.
 3. **`rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
 4. **`deploymentZones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"MAIN_THEATER, RESERVES"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
-5. **`currentProxy` & `needsRework`**: Must equal strictly lowercase `"true"` or `"false"`. Informal boolean strings such as `"Yes"`, `"No"`, `"TRUE"`, or `"FALSE"` are illegal.
+5. **`needsRework`**: Must equal strictly lowercase `"true"` or `"false"`. Informal boolean strings such as `"Yes"`, `"No"`, `"TRUE"`, or `"FALSE"` are illegal.
 
 #### FR-DAT-007: Subtype & Vanilla Ability Sentinel Normalization
 - **Subtype Taxonomy**: Card subtypes in the `subtypes` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
@@ -437,7 +436,7 @@ Card Town's targeting engine ([`FR-TGT-001`](01_Game_Rules_FRD.md)) utilizes dec
 *(Subsumed by [`FR-CMP-019`](03_Card_Compiler_FRD.md) & [`FR-CMP-020`](03_Card_Compiler_FRD.md))* — In compliance with [`FR-CMP-019`](03_Card_Compiler_FRD.md) and [`FR-CMP-020`](03_Card_Compiler_FRD.md), the compilation pipeline verifies 1-to-1 parity between printed `rulesText` and compiled `AbilityDef` AST entries (matching standalone keywords per `FR-ABL-012` and `ast_overrides.json` entries per `FR-CMP-017`).
 
 #### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All") & Review Card Compilability
-- **Development vs. Production Gating ([`FR-CMP-005`](03_Card_Compiler_FRD.md), [`FR-CMP-021`](03_Card_Compiler_FRD.md))**: Cards flagged with `currentProxy == "true"` or `needsRework == "true"` in `data/cards/*.csv` compile with their boolean metadata flags intact during local development, while `-Strict` production builds reject any card carrying `currentProxy == "true"`, `needsRework == "true"`, or an unverified AST override (`ERR_STRICT_PROTOTYPE_REJECTED`, `ERR_OVERRIDE_UNVERIFIED`).
+- **Development vs. Production Gating ([`FR-CMP-005`](03_Card_Compiler_FRD.md), [`FR-CMP-021`](03_Card_Compiler_FRD.md))**: Cards flagged with `needsRework == "true"` in `data/cards/*.csv` compile with the flag intact during local development, while `-Strict` production builds reject any card carrying `needsRework == "true"` or an unverified AST override (`ERR_STRICT_PROTOTYPE_REJECTED`, `ERR_OVERRIDE_UNVERIFIED`).
 
 > [!NOTE] Design Rationale (DA-DAT-005)
 > Harmonizes `FR-VAL-003` with `FR-CMP-005`: permitting prototype cards to compile with explicit metadata flags locally while blocking them under `-Strict` lets designers iterate on experimental mechanics without risking prototype leakage into release builds.

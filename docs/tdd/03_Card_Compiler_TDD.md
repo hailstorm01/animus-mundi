@@ -52,7 +52,7 @@ In alignment with `DECISION 1` of `03_Card_Compiler_FRD.md`, the compiler operat
 |    |-- Validate all blueprints & AST nodes against Draft 2020-12 schemas (FR-CMP-022)             |
 |    v                                                                                              |
 |  [STAGE 5: RFC 8785 Hashing & Atomic Emission] (pkg/compiler/canonical)                          |
-|    |-- Sort blueprints by ID, strip currentProxy/needsRework, serialize RFC 8785 JCS (FR-CMP-024) |
+|    |-- Sort blueprints by ID, strip needsRework, serialize RFC 8785 JCS (FR-CMP-024)              |
 |    |-- Compute SHA-256 catalogChecksum (0x<64-hex>, FR-CMP-025)                                   |
 |    |-- Write blueprints.json.tmp.<pid> -> atomic rename to blueprints.json (FR-CMP-003, 023)      |
 +-------------------------------------------------|-------------------------------------------------+
@@ -173,12 +173,12 @@ var ExpectedSheetFiles = []string{
 var ExpectedAssetHeaders = []string{
 	"name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost",
 	"deploymentZones", "rulesText", "power", "health", "requisitionYield",
-	"tacticsYield", "rarity", "currentProxy", "needsRework",
+	"tacticsYield", "rarity", "needsRework",
 }
 
 var ExpectedManeuverHeaders = []string{
 	"name", "cardType", "faction", "requisitionCost", "tacticsCost",
-	"rulesText", "rarity", "currentProxy", "needsRework",
+	"rulesText", "rarity", "needsRework",
 }
 
 // StandaloneKeywordDef maps standalone rules text keywords to AST representations (FR-CMP-013, FR-ABL-012).
@@ -217,7 +217,6 @@ type CardBlueprint struct {
 	DeploymentZones           []string      `json:"deploymentZones"`
 	Rarity                    string        `json:"rarity"`
 	RulesText                 string        `json:"rulesText"`
-	CurrentProxy              bool          `json:"currentProxy"`
 	NeedsRework               bool          `json:"needsRework"`
 	Abilities                 []AbilityDef  `json:"abilities"`
 }
@@ -403,7 +402,6 @@ type OverrideEntry struct {
         "deploymentZones",
         "rarity",
         "rulesText",
-        "currentProxy",
         "needsRework",
         "abilities"
       ],
@@ -477,9 +475,6 @@ type OverrideEntry struct {
         "rulesText": {
           "type": "string",
           "minLength": 0
-        },
-        "currentProxy": {
-          "type": "boolean"
         },
         "needsRework": {
           "type": "boolean"
@@ -1166,7 +1161,7 @@ func IngestAllCardSheets(sourceDir string, strict bool) ([]*model.CardBlueprint,
    - `cardType`: Must case-sensitively match one of `UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; else `ERR_ENUM_INVALID_CARD_TYPE` (Exit Code `3`). Maneuver sheets must only contain `MANEUVER` rows, and asset sheets must only contain `UNIT`, `STRUCTURE`, or `HEADQUARTERS` rows.
    - `faction`: Must case-sensitively match `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`; else `ERR_ENUM_INVALID_FACTION` (Exit Code `3`).
    - `rarity`: Must case-sensitively match `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ` (with `HEADQUARTERS` cards requiring `HQ` and non-HQ cards forbidden from `HQ`); else `ERR_ENUM_INVALID_RARITY` (Exit Code `3`).
-   - `currentProxy` & `needsRework`: Must case-sensitively equal `"true"` or `"false"`; else dispatches `ERR_CSV_MALFORMED`. When `--strict` is passed, if either equals `"true"`, dispatches `ERR_STRICT_PROTOTYPE_REJECTED` (Exit Code `5`, `FR-CMP-005`, `FR-VAL-003`).
+   - `needsRework`: Must case-sensitively equal `"true"` or `"false"`; else dispatches `ERR_CSV_MALFORMED`. When `--strict` is passed, if it equals `"true"`, dispatches `ERR_STRICT_PROTOTYPE_REJECTED` (Exit Code `5`, `FR-CMP-005`, `FR-VAL-003`).
 4. **Deterministic Slug Derivation & Global Collision Check (`DeriveSlug`, `FR-DAT-002`, `FR-CMP-006`)**:
    - Strips non-alphanumeric characters: `cleanName = regexp.MustCompile("[^A-Za-z0-9 ]").ReplaceAllString(cardName, "")`
    - Replaces whitespace runs with `_`: `slug = regexp.MustCompile("\\s+").ReplaceAllString(strings.TrimSpace(strings.ToLower(cleanName)), "_")`
@@ -1302,7 +1297,7 @@ func WriteAtomicBlueprintCatalog(envelope *model.BlueprintCollection, outputDir 
 #### 3.5.2 Deterministic Execution Algorithm
 1. **Native Go RFC 8785 Canonicalization (`CanonicalizeRFC8785`, `FR-CMP-024`)**:
    - Blueprints are first sorted lexicographically by `id` using standard byte/string comparison (`strings.Compare`).
-   - For each `CardBlueprint` in the sorted array, creates a stripped copy removing `"currentProxy"` and `"needsRework"` (`FR-CMP-024` item 2) so toggling prototype flags during development never alters `catalogChecksum`.
+   - For each `CardBlueprint` in the sorted array, creates a stripped copy removing `"needsRework"` (`FR-CMP-024` item 2) so toggling the rework flag during development never alters `catalogChecksum`.
    - Serializes the stripped array using RFC 8785 JSON Canonicalization Scheme (JCS): sorting all object keys lexicographically by UTF-16 code units, serializing numbers in shortest IEEE 754 format without leading zeros or `.0` suffixes, escaping strings per RFC 8785, and omitting insignificant whitespace.
 2. **256-Bit SHA-256 Checksum (`ComputeCatalogChecksum`, `FR-CMP-025`)**:
    - Computes the 32-byte digest via `sha256.Sum256(canonicalBytes)`.
@@ -1370,7 +1365,7 @@ func WriteAtomicBlueprintCatalog(envelope *model.BlueprintCollection, outputDir 
 | `TST-03-003` | `ingest.IngestAllCardSheets` | `FR-CMP-004` | Missing CSV sheet or unreadable directory | Aborts with `ERR_CSV_IO` and Exit Code `1` |
 | `TST-03-004` | `ingest.ParseRFC4180CSV` | `FR-CMP-004`, `FR-DAT-006` | CSV with wrong header casing (`Name` instead of `name`) or unclosed quote | Aborts with `ERR_CSV_MALFORMED` and Exit Code `2` |
 | `TST-03-005` | `ingest.IngestAllCardSheets` | `FR-CMP-005` | CSV with trailing blank row + row having empty `name` cell | Blank row skipped; empty-name row aborts with `ERR_NAME_EMPTY` (Exit Code `2`) |
-| `TST-03-006` | `ingest.IngestAllCardSheets` | `FR-CMP-005`, `FR-VAL-003` | Card with `currentProxy="true"` or `needsRework="true"` under `--strict` | Compiles in dev mode; aborts with `ERR_STRICT_PROTOTYPE_REJECTED` (Exit Code `5`) under `--strict` |
+| `TST-03-006` | `ingest.IngestAllCardSheets` | `FR-CMP-005`, `FR-VAL-003` | Card with `needsRework="true"` under `--strict` | Compiles in dev mode; aborts with `ERR_STRICT_PROTOTYPE_REJECTED` (Exit Code `5`) under `--strict` |
 | `TST-03-007` | `ingest.IngestAllCardSheets` | `FR-CMP-006` | Two rows deriving `"animus_spore_crawler"` across sheets | Aborts with `ERR_SLUG_COLLISION` and Exit Code `3` |
 | `TST-03-008` | `ingest.IngestSheet` | `FR-CMP-007`, `FR-DAT-006` | Row with `cardType="Unit"` (aliased casing) | Aborts with `ERR_ENUM_INVALID_CARD_TYPE` and Exit Code `3` |
 | `TST-03-009` | `ingest.IngestSheet` | `FR-CMP-007`, `FR-DAT-006` | Row with `faction="Animus"` | Aborts with `ERR_ENUM_INVALID_FACTION` and Exit Code `3` |
@@ -1387,7 +1382,7 @@ func WriteAtomicBlueprintCatalog(envelope *model.BlueprintCollection, outputDir 
 | `TST-03-020` | `linker.JoinCardCatalogWithAst` | `FR-CMP-020`, `FR-VAL-002` | Vanilla or keyword-only card injected with extra `TRIGGERED` AST node | Aborts with `ERR_PARITY_ORPHAN_AST` (Exit Code `5`) |
 | `TST-03-021` | `linker.JoinCardCatalogWithAst` | `FR-CMP-019`, `FR-TXT-004` | Card `rulesText` using `"Deal 2 damage to target unit."` under `--strict` | Aborts with `ERR_PARITY_VERB` (Exit Code `5`) |
 | `TST-03-022` | `schemas.ValidateAbilityDefAstNode` | `FR-CMP-022`, `FR-ABL-001`–`011`, `FR-PRM-001`, `FR-TRG-001`, `FR-TGT-101` | Valid 14 benchmark card ASTs vs malformed primitive `"INVALID_OP"` | 14 benchmark ASTs pass; malformed primitive aborts with `ERR_OVERRIDE_SCHEMA_INVALID` (Exit Code `4`) |
-| `TST-03-023` | `canonical.CanonicalizeRFC8785` | `FR-CMP-024`, `FR-CMP-025` | Blueprints with toggled `currentProxy`/`needsRework` and shuffled key insertion order | Produces identical RFC 8785 canonical bytes and identical `0x<64-hex>` `catalogChecksum` |
+| `TST-03-023` | `canonical.CanonicalizeRFC8785` | `FR-CMP-024`, `FR-CMP-025` | Blueprints with toggled `needsRework` and shuffled key insertion order | Produces identical RFC 8785 canonical bytes and identical `0x<64-hex>` `catalogChecksum` |
 | `TST-03-024` | `canonical.WriteAtomicBlueprintCatalog` | `FR-CMP-003`, `FR-CMP-023` | Simulated failure mid-pipeline vs successful emission with `--minify` | Preserves pre-existing `blueprints.json` and deletes `.tmp.<pid>` on error; writes `blueprints.json` + `blueprints.min.json` on success |
 | `TST-03-025` | `cmd/compile-blueprints` | `FR-CMP-001`, `FR-CMP-002`, `FR-CMP-026` | Full production run across all 10 CSV sheets (`169` cards) | Completes in `< 500 ms` with Exit Code `0`, emitting valid `data/schemas/blueprints.json` |
 
@@ -1631,7 +1626,7 @@ go test -v ./pkg/compiler/linker/...
 - Implement unit tests `TST-03-023` and `TST-03-024` in `pkg/compiler/canonical/canonical_test.go` per **TDD Section 4.2**.
 
 #### Acceptance Criteria
-- [ ] `CanonicalizeRFC8785` sorts blueprints by `id`, strips `currentProxy` and `needsRework`, and sorts object keys by UTF-16 code units with zero insignificant whitespace (`FR-CMP-024`).
+- [ ] `CanonicalizeRFC8785` sorts blueprints by `id`, strips `needsRework` and sorts object keys by UTF-16 code units with zero insignificant whitespace (`FR-CMP-024`).
 - [ ] `ComputeCatalogChecksum` produces a deterministic `0x`-prefixed 64-character lowercase hex SHA-256 digest invariant to prototype flag toggles (`FR-CMP-025`).
 - [ ] `WriteAtomicBlueprintCatalog` stages to `blueprints.json.tmp.<pid>`, atomically renames on success, and cleans up `.tmp.<pid>` on error without corrupting existing `blueprints.json` (`FR-CMP-003`, `FR-CMP-023`).
 - [ ] Unit tests `TST-03-023`–`TST-03-024` in `canonical_test.go` pass with 0 failures.

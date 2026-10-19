@@ -45,11 +45,11 @@ var (
 	expectedAssetHeaders = []string{
 		"name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost",
 		"deploymentZones", "rulesText", "power", "health", "requisitionYield",
-		"tacticsYield", "rarity", "currentProxy", "needsRework",
+		"tacticsYield", "rarity", "needsRework",
 	}
 	expectedManeuverHeaders = []string{
 		"name", "cardType", "faction", "requisitionCost", "tacticsCost",
-		"rulesText", "rarity", "currentProxy", "needsRework",
+		"rulesText", "rarity", "needsRework",
 	}
 )
 
@@ -233,12 +233,6 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 					fmt.Printf("  [ENUM ERROR] %s:%d -> Invalid deploymentZones '%s'\n", fileName, rowNum, zones)
 					csvErrors++
 				}
-			}
-
-			proxy := getVal("currentProxy")
-			if !legalBooleans[proxy] {
-				fmt.Printf("  [BOOL ERROR] %s:%d -> Invalid currentProxy '%s' (must be 'true' or 'false')\n", fileName, rowNum, proxy)
-				csvErrors++
 			}
 
 			rework := getVal("needsRework")

@@ -86,7 +86,7 @@ Flags:
   --overrides-file string  Path to the declarative AST registry (default "data/schemas/ast_overrides.json")
   --validate-only          Dry-run mode executing full ingestion, linking, and schema validation without writing output files
   --emit-schemas           Export standalone Draft 2020-12 JSON schemas directly from Go AST struct definitions
-  --strict                 Reject prototype/rework cards (currentProxy/needsRework) or unverified overrides
+  --strict                 Reject rework cards (needsRework) or unverified overrides
   --minify                 Emit unformatted blueprints.min.json alongside 2-space indented blueprints.json
   --version string         Set cardDataVersion SemVer 2.0 string (default "1.0.0")
   --verbose                Emit per-card linking, validation, and checksum telemetry to stdout
@@ -98,7 +98,7 @@ Flags:
 4. **`--overrides-file`**: Path to the declarative AST registry (`data/schemas/ast_overrides.json`; `FR-CMP-017`).
 5. **`--validate-only`**: Dry-run mode executing full ingestion, linking, parity verification, and schema validation without writing output files.
 6. **`--emit-schemas`**: Regenerates the standalone JSON Schema files in `--schema-dir` (`FR-CMP-022`) from canonical Go struct definitions.
-7. **`--strict`**: Treats prototype/rework flags (`currentProxy`, `needsRework`; [`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md)) and unresolved review items (`FR-CMP-021`) as fatal errors.
+7. **`--strict`**: Treats the rework flag (`needsRework`; [`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md)) and unresolved review items (`FR-CMP-021`) as fatal errors.
 8. **`--minify`**: Emits `blueprints.min.json` alongside the 2-space indented `blueprints.json`.
 9. **`--version`**: Sets `cardDataVersion` (SemVer 2.0, e.g., `"1.0.0"`; `FR-CMP-026`).
 10. **`--verbose`**: Emits per-card linking and validation telemetry to stdout.
@@ -111,7 +111,7 @@ Flags:
 | **`2`** | **CSV Syntax / Parsing** | Malformed RFC-4180 CSV row, header mismatch, or empty card name (`ERR_CSV_*`, `ERR_NAME_EMPTY`). |
 | **`3`** | **Type / Enum / Slug** | Type coercion failure, illegal enum value, or duplicate slug ID (`ERR_ENUM_*`, `ERR_NUM_*`, `ERR_SLUG_COLLISION`). |
 | **`4`** | **AST Registry / Schema** | Override schema failure, orphan override, text mismatch, or blueprint schema failure (`ERR_OVERRIDE_*`, `ERR_ORPHAN_OVERRIDE`, `ERR_BLUEPRINT_SCHEMA_INVALID`). |
-| **`5`** | **Parity / Strict Gate** | Unmapped rules text, unverified override, or proxy/review card rejected under `--strict` (`ERR_PARITY_*`, `ERR_STRICT_*`). |
+| **`5`** | **Parity / Strict Gate** | Unmapped rules text, unverified override, or rework card rejected under `--strict` (`ERR_PARITY_*`, `ERR_STRICT_*`). |
 
 #### FR-CMP-002: Multi-Stage Compilation Pipeline & Lifecycle Invariants
 The compiler executes deterministically across five sequential stages, halting immediately on any fatal error:
@@ -144,7 +144,7 @@ The compiler ingests the 10 CSV sheets and column layouts defined in [`FR-DAT-00
 #### FR-CMP-005: Blank Row Skipping & Prototype Strict Gate
 1. **Blank Row Sanitation**: Trailing or intermediate CSV rows where all cells are empty or whitespace-only are silently skipped.
 2. **Mandatory Card Name**: Any non-blank row with an empty or whitespace-only `name` cell halts compilation with `ERR_NAME_EMPTY`.
-3. **Prototype & Rework Flag Enforcement ([`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md))**: Boolean columns `currentProxy` and `needsRework` (`"true"` / `"false"` per [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md)) serialize directly to `"currentProxy"` and `"needsRework"` on the `CardBlueprint` (`FR-DAT-005`). When `--strict` is active, any row with `currentProxy == "true"` or `needsRework == "true"` halts compilation with `ERR_STRICT_PROTOTYPE_REJECTED`.
+3. **Rework Flag Enforcement ([`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md))**: Boolean column `needsRework` (`"true"` / `"false"` per [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md)) serializes directly to `"needsRework"` on the `CardBlueprint` (`FR-DAT-005`). When `--strict` is active, any row with `needsRework == "true"` halts compilation with `ERR_STRICT_PROTOTYPE_REJECTED`.
 
 #### FR-CMP-006: Slug Collision Detection Invariant
 The compiler derives each card's `id` using the deterministic `<faction>_<slug>` algorithm defined in [`FR-DAT-002`](02_Card_Data_Pipeline_FRD.md) and maintains a global ID lookup table across all 10 sheets. If two rows produce an identical `id`, compilation halts with `ERR_SLUG_COLLISION`, reporting both card names and source files.
@@ -229,7 +229,7 @@ To prevent unprinted abilities or unreviewed AST edits ([`FR-VAL-002`](02_Card_D
 
 #### FR-CMP-021: Strict Mode Review Gate
 *(Subsumed by `FR-CMP-005` and `FR-CMP-020`)*
-- Under `--strict`, unresolved card review flags and unverified AST definitions are enforced via `currentProxy` / `needsRework` in CSV (`FR-CMP-005`, halting with `ERR_STRICT_PROTOTYPE_REJECTED`) and `parityVerified` in `ast_overrides.json` (`FR-CMP-020`, halting with `ERR_OVERRIDE_UNVERIFIED`).
+- Under `--strict`, unresolved card review flags and unverified AST definitions are enforced via `needsRework` in CSV (`FR-CMP-005`, halting with `ERR_STRICT_PROTOTYPE_REJECTED`) and `parityVerified` in `ast_overrides.json` (`FR-CMP-020`, halting with `ERR_OVERRIDE_UNVERIFIED`).
 
 #### FR-CMP-022: Formal JSON Schema Validation & `--emit-schemas`
 In fulfillment of [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md) and [`FR-VAL-001`](02_Card_Data_Pipeline_FRD.md), the compiler validates all inputs and outputs against JSON Schema Draft 2020-12 definitions in `data/schemas/`:
@@ -264,7 +264,7 @@ The compiled catalog is emitted to `data/schemas/blueprints.json` matching the r
 #### FR-CMP-024: Canonical JSON Normalization (RFC 8785 JCS)
 Before computing `catalogChecksum`, the compiler canonicalizes the `blueprints` array in accordance with **RFC 8785 (JSON Canonicalization Scheme)**:
 1. **Target Input Scope**: `catalogChecksum` is computed strictly over the RFC 8785 canonical bytes of the `blueprints` **array** (`[ ... ]`), whose items are sorted lexicographically by `id`. The outer envelope metadata fields (`cardDataVersion`, `generatedAt`, `totalCardCount`) are excluded from this hash.
-2. **Metadata Stripping**: Prior to canonical byte generation, development metadata properties `currentProxy` and `needsRework` are stripped from each `CardBlueprint` object (`FR-DAT-005`), guaranteeing that toggling prototype flags during development never breaks catalog checksum parity.
+2. **Metadata Stripping**: Prior to canonical byte generation, the development metadata property `needsRework` is stripped from each `CardBlueprint` object (`FR-DAT-005`), guaranteeing that toggling the rework flag during development never breaks catalog checksum parity.
 3. Object keys within each blueprint object are sorted lexicographically by UTF-16 code units.
 4. All insignificant whitespace is omitted, and strings are encoded as UTF-8 without BOM.
 5. **High-Performance Canonical Serialization**: Implemented in pure Go using standard library `crypto/sha256` and deterministic RFC 8785 byte canonicalization, eliminating external compilation overhead and completing in `< 50 ms` (`FR-CMP-002`).
@@ -306,7 +306,7 @@ On failure, the compiler prints a structured error block to stderr identifying t
 | **Parity & Strict Gate**| `ERR_PARITY_UNMAPPED_TEXT` | Non-keyword `rulesText` has no `ast_overrides.json` entry (`FR-CMP-019`). |
 | | `ERR_PARITY_ORPHAN_AST` | Keyword-only/vanilla card contains extraneous AST nodes (`FR-CMP-020`). |
 | | `ERR_PARITY_VERB` | Non-canonical targeting verb under `--strict` (`FR-CMP-019`). |
-| | `ERR_STRICT_PROTOTYPE_REJECTED`| Card has `currentProxy` or `needsRework` set to `"true"` under `--strict` (`FR-CMP-005`). |
+| | `ERR_STRICT_PROTOTYPE_REJECTED`| Card has `needsRework` set to `"true"` under `--strict` (`FR-CMP-005`). |
 | | `ERR_STRICT_UNRESOLVED_REVIEW` | *(Subsumed by `ERR_STRICT_PROTOTYPE_REJECTED` and `ERR_OVERRIDE_UNVERIFIED`; `FR-CMP-021`)*. |
 
 #### FR-CMP-028: Non-Zero Exit Code Contract & CI/CD Integration
