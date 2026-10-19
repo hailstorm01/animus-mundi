@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"animus-mundi/pkg/engine"
 	"animus-mundi/pkg/toolchain/audit"
 	"animus-mundi/pkg/toolchain/docs"
 	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/hook"
 	"animus-mundi/pkg/toolchain/linter/cards"
 	"animus-mundi/pkg/toolchain/linter/frd"
+	"animus-mundi/pkg/toolchain/linter/rules"
 	"animus-mundi/pkg/toolchain/linter/syntax"
 	"animus-mundi/pkg/toolchain/linter/tdd"
 	"animus-mundi/pkg/toolchain/tddslice"
@@ -53,6 +55,8 @@ func main() {
 		runAudit(os.Args[2:])
 	case "tdd":
 		runTdd(os.Args[2:])
+	case "sim":
+		runSim(os.Args[2:])
 	case "whats-up", "whatsup", "docs":
 		runWhatsUp(os.Args[2:])
 	case "help", "-h", "--help":
@@ -71,10 +75,11 @@ func printUsage() {
 	fmt.Println("  cardtown <command> [subcommand] [flags] [arguments]")
 	fmt.Println()
 	fmt.Println("Available Commands:")
-	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, CSV sheets, rules syntax)")
+	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax)")
 	fmt.Println("  hook      Manage Git lifecycle hooks (install pre-commit)")
 	fmt.Println("  audit     Manage PM Devil's Advocate audit lifecycle (status, resolve)")
 	fmt.Println("  tdd       Technical Design Document tools (slicing & GitHub issue publishing)")
+	fmt.Println("  sim       Random-policy playouts on the rules kernel (termination, invariants, win rates)")
 	fmt.Println("  whats-up  Live capability and state snapshot for the docs workflow")
 	fmt.Println()
 	fmt.Println("Run 'cardtown <command> -h' for command-specific flags and options.")
@@ -179,6 +184,50 @@ func runTdd(args []string) {
 	}
 }
 
+func runSim(args []string) {
+	fs := flag.NewFlagSet("sim", flag.ExitOnError)
+	games := fs.Int("games", 200, "Number of matches to play")
+	seed := fs.Uint64("seed", 1, "First seed; match i uses seed+i")
+	p0 := fs.String("p0", "SOULLESS", "Faction for player 0")
+	p1 := fs.String("p1", "CONCORDIA", "Faction for player 1")
+	maxTurns := fs.Int("max-turns", 400, "Fail if a match runs longer than this")
+	fs.Parse(normalizeArgs(args))
+
+	repoRoot := findRepoRoot()
+	cards, err := engine.LoadCards(filepath.Join(repoRoot, "data", "cards"))
+	if err != nil {
+		fmt.Printf("[ERROR] loading cards: %v\n", err)
+		os.Exit(1)
+	}
+	var decks [2]engine.DeckList
+	for i, faction := range []string{*p0, *p1} {
+		if decks[i], err = engine.FactionDeck(cards, faction); err != nil {
+			fmt.Printf("[ERROR] %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	st, err := engine.Simulate(decks, *games, *seed, *maxTurns)
+	if err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
+		os.Exit(1)
+	}
+	pct := func(n int) float64 { return 100 * float64(n) / float64(st.Games) }
+	fmt.Println("==========================================================")
+	fmt.Println("  CARD TOWN RULES KERNEL: RANDOM-POLICY PLAYOUTS           ")
+	fmt.Println("==========================================================")
+	fmt.Printf("  %s (%s) vs %s (%s), %d games, seeds %d..%d\n", *p0, decks[0].HQ.Name, *p1, decks[1].HQ.Name, st.Games, *seed, *seed+uint64(st.Games)-1)
+	fmt.Println("  Decks cycle each faction's kernel-executable cards; HQ abilities are ignored.")
+	fmt.Printf("  P0 wins %.1f%%  P1 wins %.1f%%  draws %.1f%%  first player wins %.1f%%\n", pct(st.Wins[0]), pct(st.Wins[1]), pct(st.Draws), pct(st.FirstPlayerWin))
+	fmt.Printf("  Average match length: %.1f turns\n", float64(st.TotalTurns)/float64(st.Games))
+	fmt.Println("  End reasons:")
+	for reason, n := range st.Reasons {
+		fmt.Printf("    %-45s %d\n", reason, n)
+	}
+	fmt.Println("  [PASS] Every match terminated with all invariants holding.")
+	fmt.Println("==========================================================")
+}
+
 func runWhatsUp(args []string) {
 	fs := flag.NewFlagSet("whats-up", flag.ExitOnError)
 	section := fs.String("section", "all", "Section to show: all, skills, tools, or state")
@@ -203,6 +252,12 @@ func runLint(args []string) {
 			os.Exit(0)
 		case "tdd":
 			ok, err := tdd.Lint(repoRoot, remaining)
+			if err != nil || !ok {
+				os.Exit(1)
+			}
+			os.Exit(0)
+		case "rules":
+			ok, err := rules.Lint(repoRoot, remaining)
 			if err != nil || !ok {
 				os.Exit(1)
 			}
@@ -234,6 +289,7 @@ func runLint(args []string) {
 	allFlag := fs.Bool("all", false, "Force full audit across all files")
 	frdFlag := fs.Bool("frd", false, "Run FRD linter")
 	tddFlag := fs.Bool("tdd", false, "Run TDD linter")
+	rulesFlag := fs.Bool("rules", false, "Run executable rules traceability linter")
 	cardsFlag := fs.Bool("cards", false, "Run sheet integrity & syntax linters")
 	sheetsFlag := fs.Bool("sheets", false, "Run sheet integrity linter only")
 	syntaxFlag := fs.Bool("syntax", false, "Run rules syntax linter only")
@@ -267,6 +323,7 @@ func runLint(args []string) {
 
 	runFrd := false
 	runTdd := false
+	runRules := false
 	runSheets := false
 	runSyntax := false
 
@@ -277,14 +334,18 @@ func runLint(args []string) {
 	if *allFlag {
 		runFrd = true
 		runTdd = true
+		runRules = true
 		runSheets = true
 		runSyntax = true
-	} else if *frdFlag || *tddFlag || *cardsFlag || *sheetsFlag || *syntaxFlag {
+	} else if *frdFlag || *tddFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag {
 		if *frdFlag {
 			runFrd = true
 		}
 		if *tddFlag {
 			runTdd = true
+		}
+		if *rulesFlag {
+			runRules = true
 		}
 		if *cardsFlag || *sheetsFlag {
 			runSheets = true
@@ -301,11 +362,15 @@ func runLint(args []string) {
 				fmt.Printf("Git staged diff unavailable: %v. Running all linters...\n", err)
 				runFrd = true
 				runTdd = true
+				runRules = true
 				runSheets = true
 				runSyntax = true
 			} else {
 				for _, path := range staged {
 					pLower := strings.ToLower(filepath.ToSlash(path))
+					if isRulesPath(pLower) {
+						runRules = true
+					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, path)
 					} else if strings.HasPrefix(pLower, "docs/tdd/") && strings.HasSuffix(pLower, ".md") && filepath.Base(pLower) != "readme.md" {
@@ -322,11 +387,15 @@ func runLint(args []string) {
 				fmt.Println("  Git change detection unavailable. Running all linters...")
 				runFrd = true
 				runTdd = true
+				runRules = true
 				runSheets = true
 				runSyntax = true
 			} else {
 				for _, sf := range statusFiles {
 					pLower := strings.ToLower(filepath.ToSlash(sf.Path))
+					if isRulesPath(pLower) {
+						runRules = true
+					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, sf.Path)
 					} else if strings.HasPrefix(pLower, "docs/tdd/") && strings.HasSuffix(pLower, ".md") && filepath.Base(pLower) != "readme.md" {
@@ -352,8 +421,8 @@ func runLint(args []string) {
 			runSyntax = true
 		}
 
-		if !runFrd && !runTdd && !runSheets && !runSyntax {
-			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, or data/cards/.")
+		if !runFrd && !runTdd && !runRules && !runSheets && !runSyntax {
+			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, pkg/engine/, or data/cards/.")
 			fmt.Println("  Nothing to lint! (Use --all to force full audit across all files)")
 			fmt.Println()
 			fmt.Println("==========================================================")
@@ -384,6 +453,15 @@ func runLint(args []string) {
 			files = changedTdds
 		}
 		ok, err := tdd.Lint(repoRoot, files)
+		if err != nil || !ok {
+			anyFailed = true
+		}
+	}
+
+	// 2b. Executable Rules Traceability Linter
+	if runRules {
+		fmt.Println("\n>>> Running Executable Rules Traceability Linter...")
+		ok, err := rules.Lint(repoRoot, nil)
 		if err != nil || !ok {
 			anyFailed = true
 		}
@@ -471,6 +549,18 @@ func normalizeArgs(args []string) []string {
 				lower = "push"
 			case "section":
 				lower = "section"
+			case "rules":
+				lower = "rules"
+			case "games":
+				lower = "games"
+			case "seed":
+				lower = "seed"
+			case "p0":
+				lower = "p0"
+			case "p1":
+				lower = "p1"
+			case "maxturns", "max-turns":
+				lower = "max-turns"
 			}
 			newFlag := "--" + lower
 			if len(parts) == 2 {
@@ -485,3 +575,7 @@ func normalizeArgs(args []string) []string {
 	return normalized
 }
 
+// isRulesPath reports whether a change can affect executable rules traceability.
+func isRulesPath(pLower string) bool {
+	return pLower == "docs/frd/01_game_rules_frd.md" || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
+}

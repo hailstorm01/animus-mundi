@@ -107,7 +107,11 @@ func ShowSkills(repoRoot string) {
 func ShowTools(repoRoot string) {
 	fmt.Println("== TOOLS ==")
 	fmt.Println("- cardtown lint [flags] [files...] : Unified developer linter suite (FRD, TDD, CSV sheets & syntax)")
-	fmt.Println("    cardtown lint [--all|--frd|--tdd|--cards|--sheets|--syntax|--staged] [--files <list>]")
+	fmt.Println("    cardtown lint [--all|--frd|--tdd|--rules|--cards|--sheets|--syntax|--staged] [--files <list>]")
+	fmt.Println("- cardtown lint rules : Traces TestFR_* scenario tests in pkg/engine to active FRD 01 requirements and reports untested ones")
+	fmt.Println("    cardtown lint rules")
+	fmt.Println("- cardtown sim [flags] : Random-policy playouts on the rules kernel; fails on non-termination or broken invariants")
+	fmt.Println("    cardtown sim [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
 	fmt.Println("- cardtown hook install : Installs native Git pre-commit hook into .git/hooks/pre-commit")
 	fmt.Println("    cardtown hook install")
 	fmt.Println("- cardtown audit status : Read-only status report for pending Card Town audits")
