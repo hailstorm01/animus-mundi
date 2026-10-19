@@ -185,6 +185,8 @@ func (g *Game) check(a Action) error {
 			if sec == nil || !g.CanCleave(att, def, sec) {
 				return illegal("illegal Berserk secondary target (FR-KWD-002o)")
 			}
+		} else if g.hasCleaveTarget(att, def) {
+			return illegal("a Berserk secondary target is mandatory when a legal one exists (FR-KWD-002o)")
 		}
 	case ActScratch:
 		if p.HQ == nil || a.Asset != p.HQ.ID {
@@ -211,8 +213,8 @@ func (g *Game) readyAsset(a Action) (*Asset, error) {
 	return as, nil
 }
 
-// canYield implements the Generate Resources rows of FR-CAP-001.
-// OPEN(KIM-S03): generating a resource the asset yields 0 of is allowed.
+// canYield implements the Generate Resources rows of FR-CAP-001. A zero yield
+// is still a legal choice (Design Rationale KIM-S03).
 func (g *Game) canYield(a *Asset, r Resource) bool {
 	if a.Printed().Type != TypeUnit || g.Keywords(a).Versatile {
 		return true
@@ -269,8 +271,18 @@ func (g *Game) CanCleave(att, def, sec *Asset) bool {
 	if def.Zone != ZoneMainTheater || sec.ID == def.ID {
 		return false // Berserk only cleaves when attacking a Main Theater asset
 	}
-	// OPEN(KIM-B05): the secondary is optional (Action.Secondary may be 0).
 	return g.legalSecondary(att, sec)
+}
+
+// hasCleaveTarget reports whether any legal Berserk secondary exists for this
+// attack, which makes choosing one mandatory (FR-KWD-002o).
+func (g *Game) hasCleaveTarget(att, def *Asset) bool {
+	for _, sec := range g.Theater {
+		if g.CanCleave(att, def, sec) {
+			return true
+		}
+	}
+	return false
 }
 
 // legalSecondary applies normal targeting rules to a Berserk secondary target:

@@ -511,3 +511,112 @@ func TestFR_KWD_002o_NoCleaveWhenAttackingHeadquarters(t *testing.T) {
 	sec := s.put(1, ZoneMainTheater, unit("Bystander", 0, 2, Keywords{}))
 	s.reject(s.cleave(att, s.g.Players[1].HQ, sec))
 }
+
+// ---- Rulings KIM-B05, J01, B06, S03, S04 (2026-10-19) ----
+
+func TestFR_KWD_002o_SecondaryIsMandatoryWhenALegalOneExists(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	other := s.put(1, ZoneMainTheater, unit("Other", 0, 9, Keywords{}))
+	s.reject(s.attack(att, def))
+	s.do(s.cleave(att, def, other))
+}
+
+func TestFR_KWD_002o_NoSecondaryRequiredWithoutALegalTarget(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Warded", 0, 9, Keywords{Ward: true}))
+	s.do(s.attack(att, def))
+	s.wantDamage(def, 2)
+}
+
+// declareThen declares a, runs between (standing in for Step 2 triggers), then
+// resolves the stack.
+func (s *scene) declareThen(a Action, between func()) {
+	s.t.Helper()
+	if err := s.g.check(a); err != nil {
+		s.t.Fatal(err)
+	}
+	s.g.declareAttack(a)
+	between()
+	s.g.resolveStack()
+}
+
+func TestFR_CBT_002_CommittedAttackIgnoresLaterGuardianAndEthereal(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Target", 0, 9, Keywords{}))
+	s.declareThen(s.attack(att, def), func() {
+		s.put(1, ZoneMainTheater, unit("Late Bodyguard", 0, 9, Keywords{Guardian: true}))
+		def.Inst.Card.Keywords.Ethereal = true
+	})
+	s.wantDamage(def, 3)
+}
+
+// Covers: FR-CBT-002, FR-ZON-004
+func TestFR_KWD_002o_CleaveSurvivesAnAttackerSideFizzle(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 3, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 5, 9, Keywords{}))
+	sec := s.put(1, ZoneMainTheater, unit("Bystander", 0, 9, Keywords{}))
+	s.declareThen(s.cleave(att, def, sec), func() {
+		att.Damage = 3 // killed by a Step 2 trigger
+		s.g.deathSweep()
+	})
+	s.wantDamage(def, 0) // no combat damage
+	s.wantDamage(sec, 2) // cleave from the attacker's last-known Berserk 2
+}
+
+func TestFR_KWD_002o_NoCleaveWhenTheDefenderIsGone(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 3, Keywords{Berserk: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 2, Keywords{}))
+	sec := s.put(1, ZoneMainTheater, unit("Bystander", 0, 9, Keywords{}))
+	s.declareThen(s.cleave(att, def, sec), func() {
+		def.Damage = 2
+		att.Damage = 3 // even if the attacker also dies
+		s.g.deathSweep()
+	})
+	s.wantDamage(sec, 0)
+}
+
+// Covers: FR-RES-001
+func TestFR_CAP_001_ZeroYieldGenerationIsLegal(t *testing.T) {
+	s := newScene(t)
+	c := unit("Tender", 0, 1, Keywords{})
+	c.TacYield = 0
+	u := s.put(0, ZoneMainTheater, c)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: u.ID, Resource: Tactics})
+	if !u.Exhausted || s.g.Players[0].Tac != 0 {
+		t.Fatalf("exhausted=%v tactics=%d, want exhausted for 0", u.Exhausted, s.g.Players[0].Tac)
+	}
+}
+
+// Covers: FR-LAY-002
+func TestFR_WIN_001_EmptyDeckLossWaitsForTheDeathSweep(t *testing.T) {
+	s := newScene(t)
+	u := s.put(0, ZoneReserves, unit("Walker", 1, 1, Keywords{}))
+	s.g.Players[1].Deck = nil
+	s.g.draw(1, 1) // as if an effect made the opponent draw mid-resolution
+	if s.g.Outcome.Over {
+		t.Fatal("empty-deck draw ended the match before a death sweep")
+	}
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: u.ID})
+	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 0 {
+		t.Fatalf("outcome = %+v, want player 0 wins", o)
+	}
+}
+
+func TestFR_CBT_003_HeadquartersDefeatAndEmptyDeckAtOneSweepIsMatchDraw(t *testing.T) {
+	s := newScene(t)
+	u := s.put(0, ZoneReserves, unit("Walker", 1, 1, Keywords{}))
+	s.g.Players[0].HQ.Damage = 20
+	s.g.Players[1].Deck = nil
+	s.g.draw(1, 1)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: u.ID})
+	if o := s.g.Outcome; !o.Over || !o.Draw {
+		t.Fatalf("outcome = %+v, want Match Draw", o)
+	}
+}

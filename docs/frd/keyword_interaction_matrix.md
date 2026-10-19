@@ -38,7 +38,7 @@ Abbreviations: Unb = Unbowed (`FR-KWD-002a`), Res = Resistant N (`FR-KWD-002b`),
 | **Rgp**  |   |   |   |   |   |   |   |   |   |   |   |   |   | · | · |
 | **Bsk**  |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ? B07 |
 
-**Tally (120 cells):** 32 defined, 1 undefined, 87 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. The keyword-vs-core-rules items add 2 more undefined cases (KIM-B05, KIM-J01) and 3 more inferred ones (KIM-B06, KIM-S03, KIM-S04). Closed items are listed under Rulings.
+**Tally (120 cells):** 32 defined, 1 undefined, 87 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. All keyword-vs-core-rules items are ruled. The two remaining open items are unreachable with current cards. Closed items are listed under Rulings.
 
 ## Open Items (need a ruling)
 
@@ -46,13 +46,8 @@ Ordered by reachability, then by how much the outcome changes.
 
 | ID | Status | Reach | Question | Kernel today |
 | :-- | :-: | :-: | :-- | :-- |
-| KIM-B05 | ? | R | **Is the secondary target optional?** `FR-CBT-002` Step 1 says "an optional secondary opposing Main Theater target"; `FR-KWD-002o` says it is "selected upfront upon attack declaration if another legal opposing Main Theater asset exists", which reads as mandatory. Under the KIM-B01–B03 ruling the secondary follows normal targeting rules, and `FR-TGT-002` treats a bare *"chosen"* target as a single mandatory target, which would make it mandatory whenever a legal target exists. Matters when every legal secondary is one you would rather not damage (for example one with a damage-taken trigger such as **Unbowed**). | Optional. |
-| KIM-J01 | ? | R | **Combat eligibility changing between declaration and Step 3.** `FR-CBT-002` Step 3 fizzles the attack only if a combatant was destroyed, removed, or moved out of a legal combat zone. `FR-TGT-003` re-verifies targets against "dynamic stat/filter criteria" before resolution. If a Guardian enters the Main Theater, or the defender gains Ethereal, during the Step 2 trigger window, does the attack fizzle? | Does not fizzle (Step 3 survival/zone check only). |
-| KIM-B06 | I | R | **Berserk when the attack fizzles.** If the primary defender is removed in Step 2, the attack fizzles with "zero combat or retaliation damage". Berserk cleave is non-combat damage. Is it also cancelled? | Cancelled with the attack. |
-| KIM-S03 | I | R | **Generating 0.** May an asset exhaust to generate a resource it yields 0 of (e.g. a 0-Tactics-yield unit in the Main Theater)? Matters for exhaust-watching triggers. | Allowed. |
 | KIM-C01 | I | U | **Cornered-gated triggers inside a simultaneous step.** Cornered triggers are gated "at the moment the trigger event occurs"; during a simultaneous step Cornered is locked at the start of the step (`FR-LAY-003`). A damage-taken trigger behind a Cornered gate fires mid-step: is it gated by the locked value? No current card has a Cornered-gated damage trigger. | n/a |
 | KIM-B07 | ? | U | **Berserk stacking.** Printed Berserk plus granted Berserk: one secondary with summed N, or two secondaries? Only *Tempest Surge* (Concordia) and *Redline Infusion* (Soulless) carry Berserk, so no legal deck has both. | n/a |
-| KIM-S04 | I | U | **Empty-deck loss vs. delayed HQ defeat.** Since the KIM-S02 ruling, HQ defeat waits for the next death sweep, but `FR-WIN-001` empty-deck loss is still immediate. A single resolving item that deals lethal damage to the opposing HQ and then makes its controller draw from an empty deck would make that controller lose before the sweep sees the opposing HQ. No current card damages an HQ and draws in the same effect. | n/a (no M1 effect draws mid-resolution). |
 
 ## Rulings
 
@@ -66,6 +61,11 @@ Closed items, with the designer ruling, where it lives in FRD 01, and the scenar
 | KIM-B04 | Printed Berserk always has N. *Tempest Surge* and *Redline Infusion* read **Berserk 2** for now. | Card data | `TestLoadCardsFromRepositoryData` |
 | KIM-S01 | A new face-down Scratch Company enters **Exhausted**. | `FR-ZON-005`, `FR-SET-004`, `FR-KWD-002m` | `TestFR_ZON_005_ScratchCompanyEntersExhausted` |
 | KIM-S02 | HQ defeat is checked at the next state-based death sweep (the next time no item is resolving). Both HQs at ≤ 0 at the same sweep is a Match Draw. | `FR-CBT-003` | `TestFR_CBT_003_HeadquartersDefeatIsCheckedAtTheDeathSweep`, `TestFR_CBT_003_BothHeadquartersLethalAtOneSweepIsMatchDraw` |
+| KIM-B05 | The Berserk secondary is **mandatory** whenever a legal secondary target exists. | `FR-KWD-002o`, `FR-CBT-002` | `TestFR_KWD_002o_SecondaryIsMandatoryWhenALegalOneExists`, `TestFR_KWD_002o_NoSecondaryRequiredWithoutALegalTarget` |
+| KIM-J01 | Once an attack is on the stack with its target, later eligibility changes (a Guardian arriving, the defender gaining Ethereal) neither redirect nor fizzle it, much as granting "unblockable" after blockers are declared doesn't unblock a creature in MTG. | `FR-CBT-002` | `TestFR_CBT_002_CommittedAttackIgnoresLaterGuardianAndEthereal` |
+| KIM-B06 | If the attack fizzles because of the attacker (killed, removed, or moved out of a legal combat zone), Berserk cleave still happens from its last-known characteristics. If the defender is gone, there is no cleave, whatever happened to the attacker. | `FR-CBT-002`, `FR-KWD-002o` | `TestFR_KWD_002o_CleaveSurvivesAnAttackerSideFizzle`, `TestFR_KWD_002o_NoCleaveWhenTheDefenderIsGone` |
+| KIM-S03 | Exhausting for a zero yield is legal; it leaves room for generation-replacement and exhaust-watching designs. | `FR-CAP-001` (Design Rationale KIM-S03) | `TestFR_CAP_001_ZeroYieldGenerationIsLegal` |
+| KIM-S04 | Empty-deck loss uses the same timing as HQ defeat: the next death sweep. Any two losses at one sweep, by HQ or by deck, are a Match Draw. | `FR-WIN-001`, `FR-CBT-003`, `FR-LAY-002` | `TestFR_WIN_001_EmptyDeckLossWaitsForTheDeathSweep`, `TestFR_CBT_003_HeadquartersDefeatAndEmptyDeckAtOneSweepIsMatchDraw` |
 
 ## Defined Interactions
 

@@ -109,6 +109,7 @@ func (g *Game) beginTurn() {
 	g.Phase = PhaseDraw
 	if !(g.Turn == 1 && g.Active == g.FirstPlayer) { // Turn 1 draw skip (FR-SET-004)
 		g.draw(g.Active, 1)
+		g.deathSweep() // nothing is resolving, so an empty-deck draw is settled now
 		if g.Outcome.Over {
 			return
 		}
@@ -116,12 +117,14 @@ func (g *Game) beginTurn() {
 	g.Phase = PhaseMain
 }
 
-// draw draws n cards. Drawing from an empty deck loses the match (FR-WIN-001).
+// draw draws n cards. A draw from an empty deck does nothing and marks the
+// player to lose at the next death sweep (FR-WIN-001).
 func (g *Game) draw(pid PlayerID, n int) {
 	p := g.Players[pid]
 	for range n {
 		if len(p.Deck) == 0 {
-			g.end(Outcome{Over: true, Winner: pid.Opponent(), Reason: "drew from an empty deck"})
+			p.DrewFromEmpty = true
+			g.logf("draw", "player %d must draw from an empty deck", pid)
 			return
 		}
 		g.moveTopToHand(p)

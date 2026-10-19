@@ -97,6 +97,10 @@ type Player struct {
 	Reserves []*Asset
 	Req      int
 	Tac      int
+
+	// DrewFromEmpty records a required draw from an empty deck since the last
+	// death sweep; the sweep turns it into a loss (FR-WIN-001).
+	DrewFromEmpty bool
 }
 
 // Outcome is the match result once the game is over.
@@ -129,6 +133,25 @@ type Game struct {
 
 	rng    *rand.Rand
 	nextID int
+
+	// lastKnown holds each asset's characteristics as it left the battlefield,
+	// for effects that still need them afterwards (FR-ZON-004).
+	lastKnown map[int]*Asset
+}
+
+// LastKnown returns the asset as it was when it last left the battlefield,
+// or nil if it never has.
+func (g *Game) LastKnown(id int) *Asset { return g.lastKnown[id] }
+
+// leaveBattlefield removes a from the battlefield to a non-battlefield zone,
+// keeping a last-known snapshot.
+func (g *Game) leaveBattlefield(a *Asset) {
+	if g.lastKnown == nil {
+		g.lastKnown = make(map[int]*Asset)
+	}
+	snap := *a
+	g.lastKnown[a.ID] = &snap
+	g.removeFromBattlefield(a)
 }
 
 func (g *Game) newID() int {

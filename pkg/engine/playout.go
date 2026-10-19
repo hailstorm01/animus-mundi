@@ -65,6 +65,9 @@ func (g *Game) CheckInvariants() error {
 		if p.Req < 0 || p.Tac < 0 {
 			return fmt.Errorf("player %d has a negative resource pool (R%d T%d)", p.ID, p.Req, p.Tac)
 		}
+		if p.DrewFromEmpty && !g.Outcome.Over {
+			return fmt.Errorf("player %d drew from an empty deck but no death sweep settled it", p.ID)
+		}
 		for _, zone := range []struct {
 			name  string
 			cards []*Instance

@@ -110,39 +110,49 @@ func combatLegalZone(a *Asset) bool {
 	return a.Zone == ZoneMainTheater
 }
 
-// resolveAttack is Step 3 of combat (FR-CBT-002).
+// resolveAttack is Step 3 of combat (FR-CBT-002). The target was committed at
+// declaration: Guardian or Ethereal changes since then do not matter, only
+// whether both combatants are still where they can fight.
 func (g *Game) resolveAttack(it *StackItem) {
-	att := g.Asset(it.Source)
 	def := g.Asset(it.Target)
-	// OPEN(KIM-J01): only survival and zone are re-checked here, so a Guardian
-	// arriving or the defender gaining Ethereal during Step 2 does not fizzle it.
-	if att == nil || def == nil || !combatLegalZone(att) || !combatLegalZone(def) || def.Controller == att.Controller {
-		// OPEN(KIM-B06): whether Berserk cleave still happens when the attack
-		// fizzles is undefined; the kernel treats the whole attack as fizzled.
-		g.logf("fizzle", "attack fizzles")
+	if def == nil || !combatLegalZone(def) || def.Controller == it.Controller {
+		g.logf("fizzle", "attack fizzles: the defender is gone, so there is no Berserk cleave")
+		return
+	}
+
+	att := g.Asset(it.Source)
+	if att == nil || !combatLegalZone(att) {
+		// Attacker-side fizzle: no combat damage, but Berserk cleave still
+		// happens from the attacker's last-known characteristics (FR-CBT-002).
+		src := att
+		if src == nil {
+			src = g.LastKnown(it.Source)
+		}
+		g.logf("fizzle", "attack fizzles: the attacker is gone")
+		g.cleave(it, src, def)
 		return
 	}
 
 	// Lock effective values at the start of the simultaneous step (FR-LAY-003).
 	attPower, defPower := g.Power(att), g.Power(def)
-	berserk := 0
-	var sec *Asset
-	if att.Printed().Type == TypeUnit && def.Zone == ZoneMainTheater && it.Secondary != 0 {
-		berserk = g.Keywords(att).Berserk
-		sec = g.Asset(it.Secondary)
-		// Two-stage verification (FR-TGT-003): the secondary must still be a
-		// legal target, otherwise the cleave dissipates.
-		if sec != nil && !g.legalSecondary(att, sec) {
-			sec = nil
-		}
-	}
-
 	g.logf("combat", "%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
 	g.dealDamage(att, def, attPower, true)
 	g.dealDamage(def, att, defPower, true)
-	if berserk > 0 && sec != nil {
-		// Berserk cleave is non-combat damage committed within Step 3, before
-		// the death sweep, whether or not either combatant dies (FR-KWD-002o).
-		g.dealDamage(att, sec, berserk, false)
+	// Berserk cleave is committed within Step 3, before the death sweep,
+	// whether or not either combatant dies (FR-KWD-002o).
+	g.cleave(it, att, def)
+}
+
+// cleave deals Berserk N non-combat damage to the attack's secondary target if
+// it is still legal (two-stage verification, FR-TGT-003).
+func (g *Game) cleave(it *StackItem, att, def *Asset) {
+	if att == nil || it.Secondary == 0 || att.Printed().Type != TypeUnit || def.Zone != ZoneMainTheater {
+		return
 	}
+	n := g.Keywords(att).Berserk
+	sec := g.Asset(it.Secondary)
+	if n <= 0 || sec == nil || !g.legalSecondary(att, sec) {
+		return
+	}
+	g.dealDamage(att, sec, n, false)
 }

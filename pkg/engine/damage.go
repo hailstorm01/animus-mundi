@@ -50,9 +50,11 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	return r
 }
 
-// deathSweep destroys every lethal asset simultaneously, then checks HQ
-// defeat (FR-LAY-002, FR-CBT-003). It runs only between stack items, so an
-// HQ damaged mid-resolution loses only if it is still lethal here.
+// deathSweep destroys every lethal asset simultaneously, then applies the
+// match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003,
+// FR-WIN-001). It runs only when nothing is resolving, so an HQ damaged
+// mid-resolution loses only if it is still lethal here, and every loss found
+// by one sweep is simultaneous.
 func (g *Game) deathSweep() {
 	var dying []*Asset
 	for _, a := range g.Assets() {
@@ -60,30 +62,40 @@ func (g *Game) deathSweep() {
 			dying = append(dying, a)
 		}
 	}
-	if len(dying) == 0 {
-		return
-	}
 
-	hqDown := [2]bool{}
+	var loses [2]bool
+	var reasons [2]string
 	for _, a := range dying {
 		if a.Printed().Type == TypeHeadquarters {
-			hqDown[a.Controller] = true
+			loses[a.Controller], reasons[a.Controller] = true, "Headquarters destroyed"
 		}
 	}
 	for _, a := range dying {
-		g.removeFromBattlefield(a)
+		g.leaveBattlefield(a)
 		owner := g.Players[a.Inst.Owner]
 		owner.Discard = append(owner.Discard, a.Inst)
 		g.logf("destroy", "%s is destroyed", a)
 	}
+	for _, p := range g.Players {
+		if p.DrewFromEmpty {
+			p.DrewFromEmpty = false
+			if !loses[p.ID] {
+				loses[p.ID], reasons[p.ID] = true, "drew from an empty deck"
+			}
+		}
+	}
 
 	switch {
-	case hqDown[0] && hqDown[1]:
-		g.end(Outcome{Over: true, Draw: true, Reason: "both Headquarters destroyed simultaneously"})
-	case hqDown[0]:
-		g.end(Outcome{Over: true, Winner: 1, Reason: "Headquarters destroyed"})
-	case hqDown[1]:
-		g.end(Outcome{Over: true, Winner: 0, Reason: "Headquarters destroyed"})
+	case loses[0] && loses[1]:
+		reason := "both players lost at the same death sweep"
+		if reasons[0] == reasons[1] {
+			reason = "both players lost simultaneously: " + reasons[0]
+		}
+		g.end(Outcome{Over: true, Draw: true, Reason: reason})
+	case loses[0]:
+		g.end(Outcome{Over: true, Winner: 1, Reason: reasons[0]})
+	case loses[1]:
+		g.end(Outcome{Over: true, Winner: 0, Reason: reasons[1]})
 	}
 }
 
