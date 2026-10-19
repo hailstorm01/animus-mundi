@@ -9,6 +9,9 @@ Read a skill only when its trigger fires. Do not load persona skills for unrelat
 - **Audit Triage & Resolution (`pm-audit-reviewer`):** Only on `@pm-audit-reviewer` or an explicit user request to review, triage, or resolve audits. Files sitting in `docs/audit/pending/` are NOT a trigger. Read `.agents/skills/pm-audit-reviewer`.
 - **Game Design Escalation (`game-designer`):** On reviewer option `[E]`, `@game-designer`, or when the user wants to rule on an open keyword-matrix item. Read `.agents/skills/game-designer`.
 - **Technical Architecture (`lead-architect`):** On `@lead-architect`, when a milestone starts and needs a design note, when a technical decision needs a decision record, or when the user explicitly asks for a full TDD or for slicing a TDD into GitHub issues (`cardtown tdd slice`). Read `.agents/skills/lead-architect`.
+- **Build Loop Lead (`lead-architect` Runbook D):** When asked to plan, start, continue or review build tasks in `.agents/tasks/`. Always Opus, in the main Claude Code session. Read `.agents/skills/lead-architect`.
+- **Rules Test Author (`rules-test-author`):** On `@rules-test-author T-NNNN`, or when a task file is at `status: tests`. Sonnet. Read `.agents/skills/rules-test-author`.
+- **Kernel Engineer (`kernel-engineer`):** On `@kernel-engineer T-NNNN`, or when a task file is at `status: ready` or `changes`. Gemini Flash for `tier: flash`, Sonnet for `tier: sonnet`. Read `.agents/skills/kernel-engineer`.
 - **Card Town Verification (`cardtown-linter`):** When auditing specifications, engine scenario tests, TDDs, or CSV balance sheets. Read `.agents/skills/cardtown-linter`.
 
 ## Source of Truth
