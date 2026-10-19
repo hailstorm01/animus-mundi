@@ -8,7 +8,8 @@ This directory houses the authoritative master specifications and card balance d
 - **Master Card Compiler Spec:** `frd/03_Card_Compiler_FRD.md` (CLI compiler, parsing grammar, AST synthesis, parity verification, fingerprinting).
 - **Master Networking & Protocol Spec:** `frd/04_Client_Engine_Protocol_Networking_FRD.md` (wire contract, Protobuf schemas, WebSockets, Fog of War, choice prompts).
 - **Master Headless Game Engine Spec:** `frd/05_Headless_Game_Engine_FRD.md` (Go headless kernel, 3-tier runtime memory structs, seeded PRNG, transactional state, stack runner, AST evaluator, stateless 6-layer evaluation, test harness).
-- **Technical Design Documents (TDDs):** `tdd/*.md` (concrete module layouts, data structures, function signatures, test matrices, and `SLICE-XX-YY` GitHub issue manifests authored from FRDs by `lead-architect`; see `tdd/README.md`).
+- **Technical Design Documents (TDDs):** `tdd/*.md` (concrete module layouts, data structures, function signatures, test matrices, and `SLICE-XX-YY` GitHub issue manifests authored from FRDs by `lead-architect`; see `tdd/README.md`):
+  - **Card Compiler TDD:** `tdd/03_Card_Compiler_TDD.md` (CLI compiler, Draft 2020-12 schemas, AST linker, parity engine, RFC 8785 fingerprinting).
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 
 > [!TIP]
