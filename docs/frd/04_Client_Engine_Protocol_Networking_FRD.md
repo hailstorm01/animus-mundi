@@ -102,7 +102,7 @@ This document defines the network architecture, communication transport, client-
   - The client submits `MatchJoinCommand` containing strictly the `match_token` (JWT issued by matchmaking) and an optional signed `deck_registration_token`.
   - The authoritative match container retrieves the player's registered deck directly from secure backend session storage via internal match coordinator APIs.
   - The server validates the retrieved deck strictly against canonical deck construction legality in **FR-SET-001** (HQ faction designation, main deck faction purity, minimum 50 cards, rarity copy limits, and prohibition of `neutral_scratch_company`).
-  - If validation fails, match initialization aborts with `DECK_LEGALITY_VIOLATION`.
+  - If validation fails, match initialization aborts with `ERR_DECK_LEGALITY_VIOLATION` ([`FR-ERR-001`](#fr-err-001-rejection-packet--clean-stack-invariants)).
 
 #### FR-SES-003: First-Player Determination Protocol
 *(Subsumed by [`FR-SET-003`](01_Game_Rules_FRD.md), [`FR-MSG-001`](04_Client_Engine_Protocol_Networking_FRD.md) & [`FR-MSG-004`](04_Client_Engine_Protocol_Networking_FRD.md))*
@@ -998,6 +998,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
     ERR_INFINITE_LOOP = 22;               // Infinite loop / cycle limit exceeded
     ERR_VERSION_MISMATCH = 23;            // Client / engine protocol version mismatch
     ERR_CATALOG_CHECKSUM_MISMATCH = 24;   // Client / server card blueprint checksum mismatch
+    ERR_DECK_LEGALITY_VIOLATION = 25;     // Registered deck violates construction legality (FR-SET-001, FR-SES-002)
     WARN_TARGET_INVALIDATED_FIZZLE = 30;  // Non-fatal warning: target invalidated on stack pop (DA-NET-008)
   }
   ```
@@ -1015,6 +1016,7 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
   - `ERR_INFINITE_LOOP`: Trigger cascade recursion limit (100) or replacement stack limit (10) exceeded (`FR-ENG-041`).
   - `ERR_VERSION_MISMATCH`: Client and server protocol versions are incompatible (`FR-SES-001`).
   - `ERR_CATALOG_CHECKSUM_MISMATCH`: Client and server card catalog checksums do not match (`FR-SES-001`, `FR-CMP-025`).
+  - `ERR_DECK_LEGALITY_VIOLATION`: Registered deck payload fails canonical deck construction rules ([`FR-SET-001`](01_Game_Rules_FRD.md#L28), [`FR-SES-002`](#fr-ses-002-secure-match-entry--server-side-deck-validation)).
 - Upon receiving a rejection, the Godot client rolls back any local optimistic drag-and-drop animation and plays an invalid-action audio cue.
 
 > [!NOTE]
