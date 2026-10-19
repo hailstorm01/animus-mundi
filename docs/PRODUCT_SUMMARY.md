@@ -45,10 +45,10 @@ animus-mundi/
     ├── linter/
     │   ├── card_standardization_audit.json# 167-card audit & review log
     │   └── pre-commit                     # Pre-commit hook template
-    └── sheets/
-        ├── publish_card_sheets.ps1        # Freshness-checked export from local CSVs to Google Sheets
-        ├── import_card_sheets.ps1         # Interactive diff ingestion from Google Sheets to local CSVs
-        └── publish_audit.ps1              # Card standardization audit Google Drive publisher
+    └── sheets/                            # Google Sheets synchronization tools
+        ├── publish_card_sheets            # Freshness-checked export from local CSVs to Google Sheets
+        ├── import_card_sheets             # Interactive diff ingestion from Google Sheets to local CSVs
+        └── publish_audit                  # Card standardization audit Google Drive publisher
 ```
 
 ### 2.1 The Five Master FRDs (Core Architectural Pillars)
@@ -112,7 +112,7 @@ animus-mundi/
   - Native Git pre-commit hook (`cardtown hook install`) enforcing zero lint violations in < 100ms prior to local commits.
   - Socratic audit triage and resolution engine (`cardtown audit status`, `cardtown audit resolve`) tracking audits in `docs/audit/audit_registry.md`.
   - Topological deliverable issue slicer (`cardtown tdd slice`) generating DAG-ordered GitHub Milestones and Issues with zero guesswork.
-- **Sheets Publisher & Importer ([`tools/sheets/publish_card_sheets.ps1`](../tools/sheets/publish_card_sheets.ps1), [`tools/sheets/import_card_sheets.ps1`](../tools/sheets/import_card_sheets.ps1))**:
+- **Sheets Publisher & Importer ([`tools/sheets/publish_card_sheets`](../tools/sheets/README.md), [`tools/sheets/import_card_sheets`](../tools/sheets/README.md))**:
   - Synchronizes local Tier 1 CSV balance data with Tier 2 Google Sheets workbooks using pre-publish timestamp freshness checks (`--Force` override) and interactive terminal diff ingestion (`FR-DAT-001`).
 
 ---
