@@ -11,7 +11,7 @@
 - **Dual Resource Economy**: Assets generate **Requisition** and **Tactics** by exhausting, creating dynamic turn-by-turn decisions between economy ramp and battlefield pressure.
 - **Authoritative Determinism**: 100% of game logic, state transitions, fog-of-war security, and ability triggers execute on an authoritative server. The client is a thin, predictive visual presenter.
 - **Declarative Architecture**: Card mechanics are defined not through ad-hoc script code, but through a structured, declarative Abstract Syntax Tree (AST) that the engine executes deterministically.
-- **Rigorous Specification-Driven Design**: The game rules, wire protocols, and card data pipelines are fully specified through version-controlled Functional Requirements Documents (FRDs) verified by automated linters.
+- **Executable Rules**: The game rules are specified in one version-controlled document ([FRD 01](frd/01_Game_Rules_FRD.md)) and executed by a headless Go kernel (`pkg/engine`) whose scenario tests pin each rule by requirement ID. Other specifications are written when their milestone starts, and technical choices are recorded as decision records when the code needs them.
 
 ---
 
@@ -25,12 +25,16 @@ animus-mundi/
 │   ├── AGENTS.md                          # Engineering & agent guidelines
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
 │   ├── audit/                             # Socratic audit registry, guidelines & pending reviews
+│   ├── architecture/decisions/            # One-page decision records (ADRs)
+│   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
-│       ├── 01_Game_Rules_FRD.md                         # Master FRD v3.2 (Pure Game Rules & Keywords)
-│       ├── 02_Card_Data_Pipeline_FRD.md                 # FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
-│       ├── 03_Card_Compiler_FRD.md                      # FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
-│       ├── 04_Client_Engine_Protocol_Networking_FRD.md  # FRD v1.5 (Networking, Fog-of-War & Wire Protocol)
-│       └── 05_Headless_Game_Engine_FRD.md               # Master FRD v1.4 (Headless Go Kernel, 3-Tier Entities & Stack)
+│       ├── README.md                                    # Status, precedence & question-to-ruling workflow
+│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.2 (Pure Game Rules & Keywords)
+│       ├── keyword_interaction_matrix.md                # ACTIVE — Bounded keyword edge-case register
+│       ├── 02_Card_Data_Pipeline_FRD.md                 # FROZEN — FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
+│       ├── 03_Card_Compiler_FRD.md                      # FROZEN — FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
+│       ├── 04_Client_Engine_Protocol_Networking_FRD.md  # FROZEN — FRD v1.5 (Networking, Fog-of-War & Wire Protocol)
+│       └── 05_Headless_Game_Engine_FRD.md               # FROZEN — Master FRD v1.4 (design reference for pkg/engine)
 ├── data/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
@@ -39,6 +43,7 @@ animus-mundi/
 ├── cmd/
 │   └── cardtown/                          # Native Go developer CLI & toolchain
 ├── pkg/
+│   ├── engine/                            # Executable FRD 01: rules kernel, scenario tests & fuzz playouts
 │   └── toolchain/                         # High-performance validation, audit & slicing engine
 └── tools/
     ├── audit/                             # Audit records & registry
@@ -52,6 +57,9 @@ animus-mundi/
 ```
 
 ### 2.1 The Five Master FRDs (Core Architectural Pillars)
+
+> [!IMPORTANT]
+> Since 2026-10-19 only **FRD 01** is an active specification. FRDs 02–05 are frozen as design intent: summarized below for context, not audited or synced, and each is rewritten when its milestone starts (Section 4). See [`frd/README.md`](frd/README.md).
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
@@ -78,7 +86,7 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
    - **CSV Reader Mechanics & Prototype Policy (`FR-CMP-004` - `FR-CMP-007`)**: BOM/CRLF-tolerant RFC-4180 reader across all 10 sheets, blank-row skipping, global `<faction>_<slug>` collision prevention (`ERR_SLUG_COLLISION`), deterministic coercion-error mapping (column schemas delegated to `FR-DAT-001` - `FR-DAT-008`), and `currentProxy` / `needsRework` flags rejected under `--strict`.
    - **Catalog Linking & Declarative AST Registry (`FR-CMP-013`, `FR-CMP-017`)**: **Architecture pivot (Decision 1):** the compiler is a deterministic Catalog Linker, Validator & Checksum Bundler, not a natural-language parser. Vanilla cards emit `abilities: []`, and cards whose rules text is entirely standalone keyword lines (10 of the 15 keywords) resolve from the `FR-ABL-012` lookup table. Every other ability, including the 5 non-standalone keywords (Unbowed, Cornered, Heal N, Scratch N, Regroup N) and all Maneuver payloads, must be hand-modeled in `data/schemas/ast_overrides.json`. The sentence-level regex NLP synthesizer (`FR-CMP-008` - `FR-CMP-012`, `FR-CMP-014` - `FR-CMP-016`, `FR-CMP-018`) is retired and subsumed by FRD 02 and `FR-CMP-017`.
    - **Build-Time Parity, Sign-Off & Schema Gates (`FR-CMP-019` - `FR-CMP-022`)**: Forward parity (`ERR_PARITY_UNMAPPED_TEXT`, `ERR_PARITY_VERB`), reverse parity (`ERR_PARITY_ORPHAN_AST`), mandatory designer sign-off per registry entry (`parityVerified`, `verifiedBy`, `verifiedAt` → `ERR_OVERRIDE_UNVERIFIED`), `rulesText` sync and orphan checks, and JSON Schema Draft 2020-12 validation (`CardBlueprint`, `AbilityDef`, `ast_overrides` schemas, generated from Go structs via standalone `--emit-schemas`). `FR-CMP-021` (strict review gate) is subsumed into `FR-CMP-005` / `FR-CMP-020`.
-   - **RFC 8785 Fingerprinting, Envelope Emission & Diagnostics (`FR-CMP-023` - `FR-CMP-027`)**: 2-space indented, `id`-sorted `blueprints.json` envelope (plus optional `blueprints.min.json`), SHA-256 `catalogChecksum` over the RFC 8785 canonical `blueprints` array with dev-only `currentProxy` / `needsRework` stripped, SemVer 2.0 `cardDataVersion`, and 25 active structured `ERR_*` diagnostic codes. Go domain structs are shared with the Phase 3 engine to eliminate type drift.
+   - **RFC 8785 Fingerprinting, Envelope Emission & Diagnostics (`FR-CMP-023` - `FR-CMP-027`)**: 2-space indented, `id`-sorted `blueprints.json` envelope (plus optional `blueprints.min.json`), SHA-256 `catalogChecksum` over the RFC 8785 canonical `blueprints` array with dev-only `currentProxy` / `needsRework` stripped, SemVer 2.0 `cardDataVersion`, and 25 active structured `ERR_*` diagnostic codes. Go domain structs are shared with the engine to eliminate type drift.
 
 4. **[Client-Engine Protocol & Networking FRD](frd/04_Client_Engine_Protocol_Networking_FRD.md) (FRD v1.5 — 25 Requirement IDs, 22 active; 3 subsumed)**
    - **Transport & DoS-Hardened Liveness (`FR-NET-001` - `FR-NET-004`)**: Isolated stateful GCP match containers (GKE/Agones or Cloud Run) communicating over TLS WebSockets (`wss://` port 443) via Godot 4.x's native `WebSocketPeer`, using binary Protocol Buffers v3 (`ccg.network`) with JSON debug fallback, 1,000 ms `Ping`/`Pong` heartbeats (rate-limited to max 5/s), and 3,000 ms disconnect detection.
@@ -104,6 +112,11 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
   - **Live Review Status**: Ongoing per-card review and parity status are tracked through the CSV `currentProxy` / `needsRework` columns (`FR-VAL-003`) and per-entry designer sign-off in `data/schemas/ast_overrides.json` (`FR-CMP-020`). The FRD-embedded Master Review Register has been retired.
 
 ### 2.3 Verification & Quality Assurance Tooling
+- **Executable Rules Verification (`pkg/engine`)**:
+  - `go test ./pkg/engine` runs the FR-named scenario tests plus 300 seeded fuzz playouts that check termination and state invariants after every action.
+  - `cardtown lint rules` traces every `TestFR_*` test to an active FRD 01 requirement and lists requirements with no executable test yet.
+  - `cardtown sim` runs random-policy playouts between faction decks built from real card data.
+  - `cardtown lint frd` enforces a single owner per requirement ID and rejects keyword definitions restated outside FRD 01.
 - **Native Go Developer CLI & Automated Linter Suite (`cardtown lint`, `cmd/cardtown`)**:
   - Blazing-fast sub-100ms native Go toolchain replacing legacy PowerShell scripts.
   - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) across all 5 FRDs and verifies **1,944 cross-references** with **0 dangling references** (`cardtown lint frd`).
@@ -119,182 +132,78 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
 
 ---
 
-## 3. Current Phase: Card Compiler Implementation & Blueprint Ingestion (Phase 2)
+## 3. Current Milestone: M2 — Complete Executable Game Rules
 
-With the game rules, data pipeline, compiler, wire protocol, and headless engine architectures codified across all five Master FRDs and the authoring balance CSVs normalized, the active implementation milestone is the **Card Compiler Pipeline (`cmd/compile-blueprints`)**. It links raw CSV rows with standalone keyword lookups and the declarative AST registry (`ast_overrides.json`) into machine-executable JSON blueprint assets (`data/schemas/blueprints.json`).
+The physical prototype has shown the core loop is fun, so the open risk is not whether the game is good. It is whether the digital rules are complete and consistent enough to referee every card. The roadmap is therefore ordered around making [FRD 01](frd/01_Game_Rules_FRD.md) executable first, and building everything else on top of a kernel that already plays the game (see [ADR-0001](architecture/decisions/0001-executable-rules-and-frozen-frds.md)).
 
-> [!IMPORTANT]
-> **Critical path shift (FRD 03 v1.2, Decision 1):** Retiring regex rules-text synthesis moves ability modeling from compiler code to authored data. By a heuristic scan of the current CSVs, roughly **140 of 169 cards** carry rules text beyond vanilla or standalone keywords. Each needs a hand-modeled, designer-signed `ast_overrides.json` entry before a `--strict` build can pass. `data/schemas/` is currently empty, and 146 rows are still flagged `currentProxy`. AST registry authoring, not compiler code, is now the long pole of Phase 2.
+### 3.1 Delivered in M1: Executable Rules Kernel (2026-10-19)
+- **`pkg/engine`**: a pure Go rules kernel built directly from FRD 01. It covers match setup, first-player choice and partial mulligan, turn phases, the dual-resource economy, deploy/march/attack/Scratch Company actions, the LIFO stack with clean-stack actions, 3-step combat with symmetric retaliation, 5-stage damage mitigation, state-based death sweeps, HQ defeat, empty-deck loss and Match Draws. It also covers the ten standalone keywords (Resistant N, Stalwart, Aggressive N, Ethereal, Ward, Versatile, Guardian, Armor N, Deploys Exhausted, Berserk N).
+- **Scenario tests named after FR IDs** (`TestFR_<DOM>_<NNN>_*`): 30 of 62 active FRD 01 requirements are pinned, including a regression for the FRD 01/05 Berserk contradiction.
+- **Random-policy fuzz playouts**: 300 seeded matches per test run, checking termination and state invariants after every action. `cardtown sim` runs the same playouts on real card data.
+- **29 of 169 cards** are executable (vanilla or standalone-keyword rules text). The rest load with their unsupported lines listed.
+- **[Keyword Interaction Matrix](frd/keyword_interaction_matrix.md)**: all 105 keyword pairs and 15 self-stacking cases classified. 29 are defined and 87 have no interaction. Open items await rulings: 4 undefined pairs, plus 3 undefined and 4 inferred keyword-vs-core-rule cases, ranked by whether current cards can reach them.
 
-```mermaid
-flowchart TD
-    subgraph Tier1["Tier 1: Version-Controlled Source of Truth (data/cards/)"]
-        CSV["10 RFC-4180 CSV Balance Sheets<br/><i>(Clean & Linter-Verified)</i>"]
-        Overrides["Sidecar Ability Overrides<br/><i>(data/schemas/ast_overrides.json)</i>"]
-        LinterSuite["Card Town Linter Suite<br/><i>(cardtown lint)</i>"]
-    end
+### 3.2 M2 Deliverables
+1. **Rulings for reachable open matrix items.** First is `KIM-B04`: cards print a bare *Berserk* while FRD 01 only defines *Berserk N*. Next is the Berserk targeting cluster (`KIM-B01`–`KIM-B03`, `KIM-B05`). Physical-prototype rulings count; each one lands as FRD 01 text plus a scenario test.
+2. **Kernel coverage of the rest of FRD 01:** triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
+3. **A two-faction starter set, fully executable.** Abilities are modeled directly as Go values in the kernel, with no compiler. Which two factions is a design call.
+4. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
 
-    subgraph Tier2["Tier 2: Cloud Inspection Mirror & Authoring Studio"]
-        GS["Google Sheets Workbooks<br/><i>(Cloud Inspection & Mobile Review Mirror)</i>"]
-        Studio["Card Portfolio Designer Studio<br/><i>(Interactive Card & Set Authoring Tool)</i>"]
-    end
+**Done when:** `cardtown lint rules` reports 62/62, no reachable matrix item is open, and `cardtown sim` runs clean on starter-set decks.
 
-    subgraph Specs["Authoritative Specifications (docs/frd/)"]
-        FRD_Rules["01 Game Rules & Keywords<br/><i>(Master FRD v3.2, 70 IDs)</i>"]
-        FRD_Pipe["02 Card Data Pipeline<br/><i>(FRD v1.3, 33 IDs)</i>"]
-        FRD_Comp["03 Card Compiler & Bundler<br/><i>(FRD v1.2, 28 IDs)</i>"]
-        FRD_Net["04 Client-Engine Protocol<br/><i>(FRD v1.5, 25 IDs)</i>"]
-        FRD_Eng["05 Headless Game Engine<br/><i>(Master FRD v1.4, 46 IDs)</i>"]
-    end
-
-    subgraph Compiler["Phase 2: Compiler Pipeline (cmd/compile-blueprints)"]
-        Pipeline["cmd/compile-blueprints<br/><i>(5-Stage Go Catalog Linker)</i>"]
-        Schemas["JSON Schemas Draft 2020-12<br/><i>(CardBlueprint, AbilityDef, ast_overrides)</i>"]
-        Parity["Bidirectional Parity Check<br/><i>(FR-CMP-019 - 020 Parity & Sign-Off)</i>"]
-    end
-
-    subgraph Tier3["Tier 3: Compiled Master Catalog (data/schemas/)"]
-        MasterJSON["blueprints.json<br/><i>(Singleton Immutable Production Catalog)</i>"]
-        Fingerprint["RFC 8785 Checksum &<br/>Version Tag (FR-CMP-024 - 026)"]
-    end
-
-    subgraph Runtime["Runtime Consumers (Phases 3-5)"]
-        Server["Headless Go Game Engine<br/><i>(Match State Machine, Stateless 6-Layer, Fog-of-War)</i>"]
-        Client["Godot 4.x Client (src/)<br/><i>(WebSocketPeer, Protobuf v3, Predictive UI)</i>"]
-    end
-
-    CSV <-->|"tools/sheets/{publish,import}_card_sheets"| GS
-    Studio -->|"Direct Export / Sync"| CSV
-    Studio -.->|"Generates AST Registry Entries"| Overrides
-    CSV -->|"Schema & Terminology Lint"| LinterSuite
-    CSV -->|"Stage 2 Multi-Sheet Ingestion"| Pipeline
-    Overrides -->|"Stage 3 Catalog Linking"| Pipeline
-    FRD_Pipe -.->|"Governs Schemas & 26 Primitives"| Schemas
-    FRD_Comp -.->|"Governs Pipeline Architecture"| Pipeline
-    FRD_Eng -.->|"Governs Runtime Kernel"| Server
-    FRD_Net -.->|"Governs WSS/Protobuf Protocol"| Server
-    Schemas -->|"Stage 4 JSON Schema Validation"| Pipeline
-    Pipeline -->|"Stage 4 Parity Assertion"| Parity
-    Pipeline -->|"Stage 5 Atomic Staged Emission"| MasterJSON
-    MasterJSON --- Fingerprint
-    MasterJSON -->|"Boot Ingestion"| Server
-    MasterJSON -->|"Boot Ingestion"| Client
-    Server <===>|"TLS WebSockets (wss://) / Protobuf v3"| Client
-```
-
-### 3.1 Deliverables in Phase 2
-
-1. **[Card Compiler Functional Requirements Document](frd/03_Card_Compiler_FRD.md) (`03_Card_Compiler_FRD.md`) [CODIFIED & COMPLETE]**:
-   - Technical specification (`FR-CMP-001` - `FR-CMP-028`; 17 active) detailing the compiler CLI interface and exit-code contract (`FR-CMP-001`), 5-stage catalog linker pipeline (`FR-CMP-002`), vanilla/standalone keyword lookup (`FR-CMP-013`), declarative AST registry linking (`FR-CMP-017`), forward/reverse parity validation & override sign-off (`FR-CMP-019` - `FR-CMP-020`), schema validation and `--emit-schemas` (`FR-CMP-022`), RFC 8785 JCS fingerprinting (`FR-CMP-024` - `FR-CMP-026`), and 25 active diagnostic error codes (`FR-CMP-027`).
-2. **Formal JSON Schemas (`data/schemas/`)**, generated from shared Go domain structs via `--emit-schemas`:
-   - `CardBlueprint.schema.json`: Complete JSON Schema Draft 2020-12 validation for production blueprints and the root envelope (`FR-DAT-005`, `FR-CMP-022`).
-   - `AbilityDef.schema.json`: Polymorphic schema validating ability archetypes, event hooks, 26 atomic primitives, composable `ValueToken.query` aggregates, condition gates, cost models, and targeting filters (`FR-ABL-001` - `FR-ABL-012`, `FR-TRG-001`, `FR-PRM-001`, `FR-TGT-101`, `FR-CMP-022`).
-   - `ast_overrides.schema.json`: Formal schema validating the declarative AST registry (`FR-CMP-017`, `FR-CMP-022`).
-3. **Card Compiler Binary (`cmd/compile-blueprints`)**:
-   - **CSV Ingestion**: Parse all 10 CSV sheets atomically, strictly validating types, ranges, and zero-aliasing enums (`FR-VAL-003`, `FR-CMP-004` - `FR-CMP-007`).
-   - **Slug Derivation**: Compute canonical IDs (`<faction>_<slug>`) with global collision prevention per `FR-DAT-002`, `FR-CMP-006`.
-   - **Keyword Lookup & Declarative AST Catalog Linker**: Emit `abilities: []` for vanilla cards, resolve standalone keyword lines from the `FR-ABL-012` lookup table, and bind every other ability (plus `additionalDeploymentCosts`) from `ast_overrides.json` by derived `id`, with orphan and `rulesText` sync checks (`FR-CMP-013`, `FR-CMP-017`).
-   - **Bidirectional Text-to-AST Parity Checker**: Automate `FR-CMP-019` - `FR-CMP-020` to reject unmapped rules text, orphan AST nodes, and non-canonical targeting verbs, and enforce designer sign-off (`parityVerified`, `verifiedBy`, `verifiedAt`) on every registry entry.
-   - **RFC 8785 JCS Catalog Fingerprinting**: Compute the 256-bit SHA-256 `catalogChecksum` over the canonical RFC 8785 `blueprints` array (dev-only flags stripped) via native Go, and stamp semantic `cardDataVersion` (`FR-CMP-024` - `FR-CMP-026`).
-   - **Atomic Catalog Emission**: Generate 2-space indented, `id`-sorted `data/schemas/blueprints.json` (and optional `blueprints.min.json`) atomically via `.tmp.<pid>` staging (`FR-CMP-003`, `FR-CMP-023`).
-4. **Declarative AST Registry Authoring (`data/schemas/ast_overrides.json`) [NOT STARTED, CRITICAL PATH]**:
-   - Hand-model `AbilityDef` ASTs per FRD 02 for every card whose rules text is not vanilla or purely standalone keywords (~140 of 169 cards), including all Maneuver payloads and cards using Unbowed, Cornered, Heal N, Scratch N, or Regroup N (`FR-CMP-013`, `FR-CMP-017`).
-   - Each entry requires designer parity sign-off (`parityVerified: true`, `verifiedBy`, `verifiedAt`) to pass `FR-CMP-020`. The Phase 6 Card Studio's Visual AST Builder would cut this cost but is sequenced after Phase 2.
-5. **Resolution of Designer Review & Prototype Flags**:
-   - Designer review and sign-off to clear `currentProxy` / `needsRework` flags (146 rows currently flagged `currentProxy`) before release consumption. In development builds, flagged cards compile with metadata intact, while `--strict` rejects them (`ERR_STRICT_PROTOTYPE_REJECTED`; `FR-CMP-005`) along with unverified registry entries (`ERR_OVERRIDE_UNVERIFIED`; `FR-CMP-020`).
+> [!NOTE]
+> **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it. [TDD 03](tdd/03_Card_Compiler_TDD.md) is parked until then.
 
 ---
 
-## 4. What's Left Beyond That (The Long-Term Roadmap)
+## 4. Roadmap (Milestones M1–M6)
 
-Following completion of the Card Compiler and production blueprint catalog, development proceeds across four subsequent phases:
+Each milestone ends with something that runs. The FRD for a milestone is written or rewritten **when that milestone starts**, from what the earlier milestones taught us. Technical choices are recorded as [decision records](architecture/decisions/README.md) when the code needs them.
 
 ```mermaid
 flowchart LR
-    Phase1["<b>Phase 1</b><br/>Rules & Balance Codification<br/><i>(COMPLETE — FRD 01 v3.2)</i>"]
-    Phase2["<b>Phase 2</b><br/>Compiler & Blueprint Ingestion<br/><i>(IN PROGRESS — FRD 02 v1.3, FRD 03 v1.2)</i>"]
-    Phase3["<b>Phase 3</b><br/>Headless Engine Core<br/><i>(SPECIFIED — FRD 05 v1.4)</i>"]
-    Phase4["<b>Phase 4</b><br/>Server Networking & Daemon<br/><i>(PROTOCOL SPECIFIED — FRD 04 v1.5)</i>"]
-    Phase5["<b>Phase 5</b><br/>Godot 4.x Client & UX<br/><i>(PLANNED — FRD 07)</i>"]
-    Phase6["<b>Phase 6</b><br/>Metagame, Deckbuilder & Card Studio<br/><i>(PLANNED — FRD 08)</i>"]
+    M1["<b>M1</b><br/>Executable Rules Kernel<br/><i>(DONE — pkg/engine)</i>"]
+    M2["<b>M2</b><br/>Complete Executable Rules<br/><i>(IN PROGRESS — FRD 01)</i>"]
+    M3["<b>M3</b><br/>Card Data Pipeline & Full Catalog<br/><i>(PLANNED — FRD 02/03 rewrite)</i>"]
+    M4["<b>M4</b><br/>Local Playable Client<br/><i>(PLANNED — FRD 07)</i>"]
+    M5["<b>M5</b><br/>Networked Play<br/><i>(PLANNED — FRD 04 rewrite, FRD 06)</i>"]
+    M6["<b>M6</b><br/>Metagame, Deckbuilder & Card Studio<br/><i>(PLANNED — FRD 08)</i>"]
 
-    Phase1 --> Phase2 --> Phase3 --> Phase4 --> Phase5 --> Phase6
+    M1 --> M2 --> M3 --> M4 --> M5 --> M6
 ```
 
-### Phase 3: Core Headless Game Engine Implementation (`05_Headless_Game_Engine_FRD.md`)
-- **Authoritative Match State Machine & 3-Tier Entity Kernel (`FR-ENG-001` - `FR-ENG-011`, `FR-ENT-001` - `FR-ENT-003`, `FR-SNP-101`)**:
-  - Implement pure Go (`CGO_ENABLED=0`) transactional state engine (`cardtown/engine`) with isolated 3-stream PCG32/SplitMix64 PRNG, delta-memento rollback, two-phase choice-prompt transaction boundaries, and 3-tier runtime entity structs (`CardBlueprint` $\rightarrow$ `CardInstance` $\rightarrow$ `AssetInstance` + `AssetSnapshot`), sharing Go domain structs with the Phase 2 compiler.
-  - Implement 4-step pre-game setup/mulligan handshake, turn sub-phases (Ready 1a–1b, Draw 2a–2b, Main, End 4a–4d), off-stack resource operations vs. clean-stack manual actions, a dedicated `StackZone`, the turn-scoped `DelayedTriggers` registry, and the 5-archetype LIFO Resolution Stack (`FR-QUE-001`, `FR-ENG-012` - `FR-ENG-017`).
-- **Stateless 6-Layer Attribute Pipeline (`FR-LAY-001` - `FR-LAY-003`, `FR-ENG-025`, `FR-ENG-029`)**:
-  - Implement stateless continuous on-demand attribute recalculation across Layers 1–6 (Base Printed/Face-Down $\rightarrow$ Type/Subtype Grants $\rightarrow$ Keyword Grants/Suppressions $\rightarrow$ Continuous Auras $\rightarrow$ Temporary Turn Modifiers $\rightarrow$ Exclusive Layer 6 Combat Power Clamping at `0`).
-- **Combat Resolution & 5-Stage Damage Mitigation Engine (`FR-CBT-001` - `FR-CBT-003`, `FR-REP-004`, `FR-ENG-031` - `FR-ENG-035`, `FR-ENG-042`)**:
-  - Step 1 (Declaration, `Guardian` priority check, upfront `SECONDARY_BERSERK_TARGET` binding & Exhaustion), Step 2 (APNAP Pre-Combat Trigger/Reaction Window & survival check), Step 3 (Simultaneous Combat Damage & 100% Symmetric Retaliation; `FR-CBT-002`).
-  - Canonical 5-stage damage mitigation sequence: Stage 1 Target Redirection $\rightarrow$ Stage 2 Flat `Resistant N` modification $\rightarrow$ Stage 3 `Stalwart` combat damage cap $\rightarrow$ Stage 4 Dynamic `Armor` absorption $\rightarrow$ Stage 5 Health commit with `EVENT_DEAL_DAMAGE` / `EVENT_TAKE_DAMAGE` emission. This is followed by inter-resolution state-based death sweeps (buffered APNAP triggers), flat `Berserk N` secondary cleave damage, and Match Draw resolution for simultaneous HQ defeat or simultaneous empty-deck draws.
-- **Declarative Ability AST Interpreter (`FR-ENG-018`, `FR-ENG-021` - `FR-ENG-023`)**:
-  - Go type-switch AST visitor evaluating `AbilityDef` structures, dynamic `FilterDef` predicates, and composable `ValueToken.query` expressions against match state, including upfront target locking (`FR-TGT-101`) and event causality lineage (`FR-TRG-007`).
-  - Implement all **26 canonical atomic effect primitives** (`FR-PRM-001`: `DEAL_DAMAGE`, `HEAL`, `ADD_ARMOR`, `MODIFY_STAT`, `MOVE_ZONE`, `DRAW_CARD`, `DISCARD_CARD`, `SCRATCH`, `REGROUP`, `TUCK_UNDER`, `MORPH_SCRATCH`, `LOOK_TOP_CARDS`, `REGISTER_DELAYED_TRIGGER`, etc.).
-- **Headless Test Harness & Simulation Suite (`FR-ENG-036` - `FR-ENG-041`)**:
-  - Implement standalone `cmd/engine-sim` CLI runner, JSON/YAML scenario assertion DSL, deterministic `.rec` replay validator (`FR-SPC-002`), combinatorial monkey/fuzz runner, and Go throughput benchmarks ($\ge 10,000$ turns/sec/core).
+### M3: Card Data Pipeline & Full Catalog
+- **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up, then revise or replace TDD 03.
+- **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test.
+- **Done when:** every card without a `currentProxy`/`needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
 
-### Phase 4: Server Networking, Security & Match Orchestration (`04_Client_Engine_Protocol_Networking_FRD.md`, `06_Server_Daemon_Matchmaking_FRD.md`)
-- **Dedicated Game Server Daemon (`FR-NET-001` - `FR-NET-004`, `FR-SRV-`)**:
-  - High-concurrency stateful single-match container process hosted on GCP (GKE/Agones or Cloud Run).
-  - TLS WebSockets (`wss://` port 443) and Protocol Buffers v3 (`ccg.network`) wire protocol integration wrapping the pure Go headless engine daemon (`FR-ENG-001`).
-- **Session Lifecycle & Match Orchestration (`FR-SES-001` - `FR-SES-005`)**:
-  - Version/JWT handshake protocol with `catalogChecksum` verification (`FR-SES-001`) and zero-trust backend-fetched deck legality validation (`FR-SET-001`, `FR-SES-002`).
-  - 15-second first-player choice wire prompts (`FR-SET-003`, `FR-MSG-004`) and 25-second continuous partial mulligan negotiation (`FR-SES-004`), driven by the engine's seeded PRNG (`FR-ENG-002`).
-- **Fog of War & Double-Blind Anti-Cheat Boundary (`FR-SEC-001` - `FR-SEC-004`, `FR-ZON-005`)**:
-  - Dynamic payload sanitization, opaque `proxy_scratch_<id>` masking, split owner/opponent zone-departure reveal packets, and boundary clamping (`DA-NET-003`).
-- **State Checksum Synchronization & Snapshot Throttling (`FR-PAC-004`, `DA-NET-002`)**:
-  - Per-batch 64-bit CRC/FNV-1a `PublicStateHash` verification over Layer 6 effective attributes, with `FullStateSnapshot` recovery throttled to max 1 per 3,000 ms (and automated backoff after 3 failures in 15s).
-- **Disconnect Handling, Grace Buffers & Quarantined Replay Recording (`FR-NET-004`, `FR-SES-005`, `FR-PAC-001`, `FR-SPC-002`)**:
-  - 1,000 ms heartbeat (5/s DoS rate limit), 3,000 ms disconnect detection, 60-second Unified Reserve Time Bank with opponent-turn forfeiture protection (`DA-NET-001`), 5,000 ms turn-handover and 3,000 ms prompt animation grace buffers (`DA-NET-004`), and unmasked `.rec` deterministic match recording quarantined until tournament series completion (`DA-NET-006`).
+### M4: Local Playable Client
+- **Specs at start:** draft FRD 07 (Godot client) around what the player sees and does: board and zones, stack visualization, choice prompts, animation pacing.
+- **Build:** a Godot 4.x client driving the local Go kernel for hot-seat and bot play.
+- **Done when:** a full match between any two factions is playable locally.
 
-### Phase 5: Godot Client Development & User Experience (`src/`, `07_Godot_Client_Architecture_FRD.md`)
-- **Godot 4.x Client Scaffolding (`FR-CLN-`)**:
-  - Project setup in `src/` (`res://`), assets layout, theme definitions, resolution scaling, and local headless Go engine sidecar spawning for offline/bot play (`FR-ENG-036`).
-- **Card Catalog Resource Loader**:
-  - Ingest `blueprints.json` at client boot, verifying `catalogChecksum` (`FR-CMP-025`) and instantiating card visual resources, artwork links, and localized text templates.
-- **Battlefield & Spatial Zone Visualizer**:
-  - Interactive board representation: Reserves, Main Theater, Headquarters zones, Hand carousel, Discard pile, Attached sub-zones, and Deck (with card compaction for uncapped zones; `FR-ZON-001`).
-  - Interactive LIFO Resolution Stack visualizer displaying pending deployments, maneuvers, attacks, and triggered abilities (`FR-QUE-001`).
-- **Network Client Integration (`FR-NET-002` - `FR-NET-004`, `FR-MSG-001` - `FR-MSG-004`, `FR-ERR-001`)**:
-  - `WebSocketPeer` wrapper with binary Protobuf serialization, automatic reconnect, ping/latency tracking, optimistic action rollback on `CommandRejection`, and mandatory Guardian target flashing on `ERR_GUARDIAN_PRIORITY_VIOLATION` (`DA-NET-005`).
-- **Interactive Choice Prompt Modals (`FR-MSG-005`, `FR-MOD-001`)**:
-  - Synchronous `PlayerChoicePrompt` modals (15s active / 10s non-active decision clock + 3,000 ms animation grace buffer) supporting `PartitionedSelection`.
-  - Scry / `LOOK_TOP_CARDS` modal UI with keep/bottom reordering, `SEARCH_DECK` modal with category filtering, `MODAL_SELECT` dialogs (*Ambush Tactics*, *Rogue Fleshshaper*), `TRIGGER_ORDER_SELECT` simultaneous allied trigger ordering, `REPLACEMENT_CONFLICT_SELECT` / `OPTIONAL_TRIGGER_CONFIRM` prompts, `DEPLOY_ZONE_SELECT` free-deployment zone choice, and `DISTRIBUTED_POOL_ALLOCATE` allocation sliders.
-- **Audio, VFX & Paced Animation Queue (`FR-PAC-001` - `FR-PAC-003`)**:
-  - Decoupled FIFO `AnimationEventQueue` with 2,000 ms backlog / 3.0x fast-forwarding, 5-stage `DamagePipelineStageEvent` visual cascades, attack animation paths, card exhaust/ready rotation tweens, and phase banner announcements.
+### M5: Networked Play
+- **Specs at start:** rewrite FRD 04 (protocol, fog of war, reconnect) from what the local client actually exchanges with the kernel, and draft FRD 06 (server and matchmaking). Transport, serialization, hosting and PRNG-stream isolation get decision records (see [ADR-0002](architecture/decisions/0002-single-prng-stream-in-m1.md)).
+- **Build:** server daemon, session lifecycle, hidden-information boundary, state sync and replays.
+- **Done when:** two remote players complete a match without either client ever receiving the other's hidden information.
 
-### Phase 6: Metagame, Deckbuilder, Authoring Studio & Balance Lifecycle (`08_Deckbuilder_and_Card_Studio_FRD.md`)
-- **In-Game Deckbuilder (`FR-DCK-`, `FR-SET-001`)**:
-  - Visual deck construction enforcing HQ selection, faction color identity, 50-card minimum, and rarity copy caps (Common 4, Uncommon 3, Rare 2, Mythic 1; Scratch Company exclusion).
-  - Deck export/import codes and server-side deck registration tokens (`FR-SES-002`).
-- **Card Portfolio & Set Designer Studio (Interactive Card Authoring Tool)**:
-  - Standalone interactive workstation (web/desktop application) replacing manual spreadsheet maintenance with structured card and set portfolio design (`FR-DAT-001`).
-  - **Form-Based Card Inspector**: Real-time attribute validation, faction/type gating, Title Case subtype taggers, and deployment zone assignment enforcing `CardBlueprint.schema.json` (`FR-DAT-005` - `FR-DAT-008`).
-  - **Visual Ability AST Builder**: Declarative block editor for assembling polymorphic ability trees (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`), 26 atomic primitives (`FR-PRM-001`), composable `ValueToken.query` aggregates, condition gates, cost tokens, and target filters without hand-writing raw JSON (`FR-ABL-001` - `FR-ABL-012`).
-  - **Live Syntax & Parity Engine**: Real-time bidirectional translation between MTG-aligned rules text (`FR-TXT-001` - `FR-TXT-006`) and declarative AST nodes, with instant parity verification (`FR-CMP-019` - `FR-CMP-020`), designer registry sign-off, and canonical keyword autocomplete.
-  - **Set & Portfolio Management**: Multi-set cataloging, expansion tagging, card versioning, rarity curves, and deterministic slug derivation (`FR-DAT-002`, `FR-CMP-006`).
-  - **Version-Controlled Serialization**: Direct round-trip export into Git-versioned Tier 1 CSV balance sheets (`data/cards/*.csv`) and sidecar override definitions (`data/schemas/ast_overrides.json`, `FR-CMP-017`), preserving version control as the single source of truth.
-- **Automated Balance Pipeline Integration**:
-  - Live round-trip synchronization: Designer edits Google Sheets or Card Studio $\rightarrow$ `tools/sheets/import_card_sheets` / `tools/sheets/publish_card_sheets` $\rightarrow$ `data/cards/*.csv` $\rightarrow$ `cmd/compile-blueprints` $\rightarrow$ `cmd/engine-sim` automated engine regression tests.
-- **Telemetry & Match Analytics**:
-  - Win-rate tracking per faction, card play frequency, and turn-duration metrics to guide future balance patches.
+### M6: Metagame, Deckbuilder, Card Studio & Telemetry
+- **Specs at start:** draft FRD 08.
+- **Build:** in-game deckbuilder enforcing `FR-SET-001`, deck codes, the card authoring studio, and win-rate and play-frequency telemetry for balance patches.
 
 ---
 
-### 4.1 Master Specification Roadmap (Phases 1–6)
+### 4.1 Specification Status
 
-In alignment with the requirement prefix taxonomy defined across `.agents/skills/pm-frd-drafter/SKILL.md` and `docs/frd/`, the following Functional Requirements Documents govern the complete six-phase product lifecycle:
-
-| Roadmap Phase | Target Specification Document | Domain Prefixes | Primary Scope | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | `01_Game_Rules_FRD.md` | `FR-SET-`, `FR-DEK-`, `FR-WIN-`, `FR-CRD-`, `FR-ZON-`, `FR-ENT-`, `FR-RES-`, `FR-TRN-`, `FR-CST-`, `FR-CAP-`, `FR-INH-`, `FR-ACT-`, `FR-MNV-`, `FR-TGT-`, `FR-MOD-`, `FR-QUE-`, `FR-TRG-`, `FR-LAY-`, `FR-REP-`, `FR-CBT-`, `FR-KWD-` | Pure game rules, card & asset taxonomy, spatial zone topology, turn structure, delayed triggers, 6-layer evaluation, 5-stage damage mitigation, 3-step combat, Match Draw rules, and 15-keyword catalog | Codified (Master v3.2 — 70 IDs, 62 active) |
-| **Phase 2** | `02_Card_Data_Pipeline_FRD.md` | `FR-DAT-`, `FR-ABL-`, `FR-TRG-`, `FR-PRM-`, `FR-TGT-`, `FR-TXT-`, `FR-VAL-` | 3-tier data authority lifecycle, `CardBlueprint` & `AbilityDef` JSON schemas, 28 event + 3 replacement hooks, 26 atomic primitives, upfront target locking, MTG text rules, and prototype gating | Codified (v1.3 — 33 IDs, 29 active) |
-| **Phase 2** | `03_Card_Compiler_FRD.md` | `FR-CMP-` | 5-stage pure Go catalog linker (`cmd/compile-blueprints`), standalone keyword lookup, declarative AST registry (`ast_overrides.json`), bidirectional parity & sign-off gates, and RFC 8785 SHA-256 fingerprinting | Codified (v1.2 — 28 IDs, 17 active); implementation in progress |
-| **Phase 3** | `05_Headless_Game_Engine_FRD.md` | `FR-ENG-`, `FR-ENT-`, `FR-SNP-` | Pure Go headless kernel, 3-tier runtime entity memory model, 3-stream PCG32 PRNG, transactional LIFO stack runner, delayed-trigger registry, 26-primitive AST interpreter, stateless 6-layer pipeline, 5-stage mitigation, and `engine-sim` test harness | Codified (Master v1.4 — 46 IDs, 35 active) |
-| **Phase 4** | `04_Client_Engine_Protocol_Networking_FRD.md` | `FR-NET-`, `FR-SES-`, `FR-SEC-`, `FR-MSG-`, `FR-PAC-`, `FR-SPC-`, `FR-ERR-` | TLS WebSockets (`wss://`), Protobuf v3 wire schemas, zero-trust handshake, double-blind Fog-of-War, 16 client commands, 21 engine event schemas, 18 rejection codes, choice prompts, grace buffers, state hashing, and quarantined `.rec` replays | Codified (v1.5 — 25 IDs, 22 active) |
-| **Phase 4** | `06_Server_Daemon_Matchmaking_FRD.md` | `FR-SRV-` | Dedicated server daemon, GCP Agones container lifecycle, matchmaker queue orchestration, session persistence, and JWT authentication | Planned |
-| **Phase 5** | `07_Godot_Client_Architecture_FRD.md` | `FR-CLN-` | Godot 4.x scene graph, presentation layer, optimistic UI state caches, input dispatchers, modal widgets, and paced audio/VFX animation queues | Planned |
-| **Phase 6** | `08_Deckbuilder_and_Card_Studio_FRD.md` | `FR-DCK-` | In-game visual deckbuilder, export/import codes, and standalone Card Portfolio Designer Studio | Planned |
+| Document | Status | Serves | Next action |
+| :--- | :--- | :--- | :--- |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.2 — 70 IDs, 62 active) | M1–M2, and every milestone | Rulings for open matrix items; keep in lockstep with `pkg/engine` tests |
+| [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Close reachable open items |
+| [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
+| [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
+| [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Parked | M3 | Revise after FRD 03 rewrite |
+| [`04_Client_Engine_Protocol_Networking_FRD.md`](frd/04_Client_Engine_Protocol_Networking_FRD.md) | Frozen as design intent (v1.5) | M5 | Rewrite at M5 start |
+| [`05_Headless_Game_Engine_FRD.md`](frd/05_Headless_Game_Engine_FRD.md) | Frozen as design reference (v1.4) | M2 | Consult while extending `pkg/engine` |
+| `06_Server_Daemon_Matchmaking_FRD.md` | Not started | M5 | Draft at M5 start |
+| `07_Godot_Client_Architecture_FRD.md` | Not started | M4 | Draft at M4 start |
+| `08_Deckbuilder_and_Card_Studio_FRD.md` | Not started | M6 | Draft at M6 start |
