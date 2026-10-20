@@ -4,7 +4,7 @@ title: Make Spoil Forest Creeper executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: first card task)
-status: tests-review
+status: ready
 branch: m2/T-0011-spoil-forest-creeper
 depends_on: [T-0010]
 claims: [card:Spoil Forest Creeper, file:pkg/engine/cards/animus.go]
@@ -56,3 +56,4 @@ requirements: []
 ## Log
 - 2026-10-20 lead-architect: Wrote the first A1 card task. It has one card so the card pipeline is proven before any batching. Set `status: tests` for `rules-test-author`. After the tests are reviewed, the task goes to `ready` for `@kernel-engineer T-0011` (tier flash, Antigravity). Note for the engineer: the definition is plain `ability` data, with no new types, fields or logic. If something seems to need one, set `blocked`.
 - 2026-10-20 rules-test-author: Wrote 6 TestCard_SpoilForestCreeper_* tests in pkg/engine/cards_animus_test.go (see Tests). No helpers requested (`deployCreeper` is local to the new test file). Nothing left out. Status set to `tests-review`.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests are written from the CSV text and use the real card through `s.card` and `ActDeploy`. They match the CSV row (3R, 3/2, Reserves), FR-KWD-002m (Scratch 1, and safe on an empty deck) and FR-ZON-005 (enters face-down and Exhausted; a face-down copy has no abilities). The first five fail today because deploying is rejected while the line is unsupported. The face-down test is a guard, and it passes today. Next: **the user runs `@kernel-engineer T-0011` in the Antigravity agent (Gemini Flash)**. The lead reviews when the task reaches `review` or `blocked`.
