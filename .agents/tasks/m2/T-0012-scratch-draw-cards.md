@@ -4,7 +4,7 @@ title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executa
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 2 of 4)
-status: review
+status: done
 branch: m2/T-0012-scratch-draw-cards
 depends_on: [T-0011]
 claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
@@ -62,3 +62,7 @@ All in `pkg/engine/cards_animus_test.go`, loaded with `s.card`. Controls (marked
   - The six controls pass today, and they guard against definitions that fire on face-down copies, on defense or on an empty deck.
   - Next: **the user runs `@kernel-engineer T-0012` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-20 kernel-engineer: Implemented. animus.go: added definitions to animusDefs for "Despoiler Larva" (HookAttacks, OpScratch 1), "Fungal Evangelist" (HookDeploy and HookKilled, each OpScratch 2), and "Titanic Spore Carrier" (HookKilled, OpScratch 1 then OpDraw 1). cards.go: removed all three cards from NotYetExecutable allowlist while preserving sort order. Reused HookAttacks, HookDeploy, HookKilled, OpScratch, OpDraw, Value{N}, SubjectController (zero value); no new shapes or engine logic added. Gates: go test ./pkg/engine -run 'TestCard_(DespoilerLarva|FungalEvangelist|TitanicSporeCarrier)' passed (16/16), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go test ./... ok, go vet ./... clean, gofmt -l pkg cmd clean, cardtown lint --all passed. Starter deck sim reported P0 (Animus starter) main executable cards rose from 5/50 to 9/50 (4 copies of Despoiler Larva). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged as default sim runs Soulless vs Concordia). Reviewer: check that Fungal Evangelist correctly models the compound "deploys or is killed" trigger as two triggers with identical text and effect, and Titanic Spore Carrier executes its two steps in sequence.
+- 2026-10-20 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only `animus.go` (three `animusDefs` entries) and `cards.go` (three allowlist lines) changed. The test file is unchanged since `84a2d5e`.
+  - Fences: plain `ability` data, no new shape. *Fungal Evangelist* is two triggers (`HookDeploy`, `HookKilled`) under one `Text` line, and *Titanic Spore Carrier* runs Scratch then Draw in printed order.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, all `TestCard_*` plus `TestDefs_MatchRulesText` and `TestStarterSet_Executable` (24 pass, 0 fail), `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with Animus 9/50 executable (was 5/50); P0 wins went from 12.5% to 34.0%. Sorted plain `sim` output is identical (the default matchup is Soulless vs Concordia).
