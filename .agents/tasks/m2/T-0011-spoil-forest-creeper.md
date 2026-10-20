@@ -4,7 +4,7 @@ title: Make Spoil Forest Creeper executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: first card task)
-status: tests
+status: tests-review
 branch: m2/T-0011-spoil-forest-creeper
 depends_on: [T-0010]
 claims: [card:Spoil Forest Creeper, file:pkg/engine/cards/animus.go]
@@ -29,10 +29,17 @@ requirements: []
 - `animus.go` adds its entries to `Defs` (an `init` func, or a map literal that `cards.go` merges). Choose the form later Animus card tasks can append to. No logic, only `ability` values.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+- `pkg/engine/cards_animus_test.go` (new; later Animus card tasks append here). All load the real card via `s.card` and deploy it through `ActDeploy`:
+  - `TestCard_SpoilForestCreeper_DeployScratchesOne` (FR-KWD-002m, FR-ZON-005, FR-TRG-004): the top card becomes one face-down Scratch Company; the deck loses exactly one card.
+  - `TestCard_SpoilForestCreeper_ScratchCompanyEntersExhausted` (FR-ZON-005): face-down, Exhausted, in Reserves.
+  - `TestCard_SpoilForestCreeper_ItselfIsFaceUpThreeTwoInReserves`: the Creeper is a face-up 3/2 in Reserves and out of hand.
+  - `TestCard_SpoilForestCreeper_DeployPaysThreeRequisition`: 3 Requisition spent.
+  - `TestCard_SpoilForestCreeper_ScratchOnEmptyDeckDoesNothing` (FR-KWD-002m): no Company, no loss.
+  - `TestCard_SpoilForestCreeper_FaceDownCopyDoesNotTrigger` (FR-ZON-005, FR-TRG-003): a Creeper scratched face-down fires nothing. It passes already, and guards against the definition firing on face-down copies.
+  - The first five fail now because deploy is rejected (unsupported rules line).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected. `s.card(name)` loads the real card; `s.give`, `s.do`, `s.onTop`, `s.script` and `s.asked` exist.
+- None requested. `s.card(name)` loads the real card; `s.give`, `s.do`, `s.onTop`, `s.script` and `s.asked` exist.
 
 ## Allowed Files
 - `pkg/engine/cards/animus.go` (new: the *Spoil Forest Creeper* definition)
@@ -48,3 +55,4 @@ requirements: []
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the first A1 card task. It has one card so the card pipeline is proven before any batching. Set `status: tests` for `rules-test-author`. After the tests are reviewed, the task goes to `ready` for `@kernel-engineer T-0011` (tier flash, Antigravity). Note for the engineer: the definition is plain `ability` data, with no new types, fields or logic. If something seems to need one, set `blocked`.
+- 2026-10-20 rules-test-author: Wrote 6 TestCard_SpoilForestCreeper_* tests in pkg/engine/cards_animus_test.go (see Tests). No helpers requested (`deployCreeper` is local to the new test file). Nothing left out. Status set to `tests-review`.

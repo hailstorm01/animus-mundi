@@ -52,7 +52,6 @@ func TestCard_SpoilForestCreeper_ScratchCompanyEntersExhausted(t *testing.T) {
 	t.Errorf("the scratched card is a Scratch Company in Reserves (FR-ZON-005)")
 }
 
-// Covers: FR-TRG-004
 func TestCard_SpoilForestCreeper_ItselfIsFaceUpThreeTwoInReserves(t *testing.T) {
 	s := newScene(t)
 	p := s.g.Players[0]
@@ -74,7 +73,6 @@ func TestCard_SpoilForestCreeper_ItselfIsFaceUpThreeTwoInReserves(t *testing.T) 
 	t.Errorf("the Creeper is on the battlefield in Reserves after deploying (FR-TRG-004)")
 }
 
-// Covers: FR-ZON-005
 func TestCard_SpoilForestCreeper_DeployPaysThreeRequisition(t *testing.T) {
 	s := newScene(t)
 	p := s.g.Players[0]
@@ -84,7 +82,7 @@ func TestCard_SpoilForestCreeper_DeployPaysThreeRequisition(t *testing.T) {
 	}
 }
 
-// Covers: FR-ZON-005
+// Covers: FR-KWD-002m
 func TestCard_SpoilForestCreeper_ScratchOnEmptyDeckDoesNothing(t *testing.T) {
 	s := newScene(t)
 	p := s.g.Players[0]
