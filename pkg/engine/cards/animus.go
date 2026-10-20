@@ -103,6 +103,23 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Stormfront of Ideals": {
+		Text: []string{"When this unit is killed, put it on the bottom of its owner's deck."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookKilled,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpPutOnDeck,
+							Subject: ability.SubjectSelf,
+							Bottom:  true,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Titanic Spore Carrier": {
 		Text: []string{"When this unit is killed, Scratch 1 and draw a card."},
 		Triggers: []ability.Trigger{
@@ -117,6 +134,22 @@ var animusDefs = map[string]*ability.Def{
 						{
 							Op:     ability.OpDraw,
 							Amount: ability.Value{N: 1},
+						},
+					},
+				},
+			},
+		},
+	},
+	"Unceasing Tide": {
+		Text: []string{"When this unit is killed, return it to its owner's hand."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookKilled,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectSelf,
 						},
 					},
 				},
