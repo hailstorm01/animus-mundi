@@ -4,7 +4,7 @@ title: Fire death triggers from the death sweep, placed in APNAP order
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2b)
-status: tests
+status: tests-review
 branch: m2/T-0008-death-triggers
 depends_on: [T-0007]
 claims: [hook:killed, func:fire-killed, invariant:pending-buffer-empty, invariant:no-invalid-answer]
@@ -54,7 +54,18 @@ const (
 - **Playout failure:** a playout whose chooser answers an ordering question invalidly returns an error. Build it from synthetic decks whose cards print two deploy triggers, and a policy that deploys.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/death_trigger_test.go` (needs only `ability.HookKilled`; `go vet` fails on nothing else).
+- `TestFR_TRG_003_NonActivePlayersDeathTriggerResolvesFirst`, `TestFR_TRG_003_NonActiveIsRelativeToTheTurn`: mutual kill, empty decks, Draw 1 each; the non-active player loses, from either seat.
+- `TestFR_TRG_002_NonActivePlayerOrdersTheirOwnDeathTriggers`: Berserk kills two of player 1's assets; player 1 gets one `DecideOrder` (Player 1, 2 options), player 0 none.
+- `TestFR_TRG_003_NonActivePlayersOrderAnswerIsApplied`: answers [1 0] and [0 1] change which trigger resolves first.
+- `TestFR_TRG_002_BothPlayersWithTwoTriggersAreEachAskedOnceAboutTheirOwn`: each seat asked once about its own two; no order of questions pinned.
+- `TestFR_TRG_003_DeathTriggersOfOneAssetFallBackToPrintedOrder`, `TestFR_TRG_003_SimultaneousDeathsFallBackToBattlefieldOrder`: directive #10 with no chooser.
+- `TestFR_TRG_004_DeathTriggersAreOrderedAfterTheSweepAndResolveWithoutTheirSource`: at ordering time the source is gone and nothing has resolved; both resolve after.
+- `TestFR_TRG_004_SingleDeathTriggerResolvesWithoutQuestion`
+- `TestFR_TRG_004_MatchEndedBySweepResolvesNoDeathTrigger`: attacker and nearly dead HQ die together; no trigger resolves.
+- `TestFR_ZON_004_FaceDownScratchCompanyFiresNoDeathTrigger`: face-down unit fires nothing and is not asked; face-up control fires.
+- `TestPlayout_InvalidOrderAnswerIsAnError`, `TestPlayout_ValidAndTimedOutOrderAnswersAreNotErrors`: synthetic two-deploy-trigger decks, deploy policy.
+- Left out: the pending-buffer-empty invariant (not observable from outside). The face-down test sets `FaceDown` on a Main Theater asset via `put`, since Reserves assets cannot be attacked.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected. `s.onTop`, `s.script`, `s.asked`, `s.put`, `s.attack` and `s.cleave` exist.
@@ -74,3 +85,4 @@ const (
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 2b). Applies directive #10 to deaths in one sweep, settling the open point in T-0007's review: fire in `deathSweep`'s battlefield-order loop, with no sort in the flush. Set `status: tests` for `rules-test-author`. Don't pin which player is *asked* first when both have two or more triggers. FRD 01 fixes placement order, not the order of the questions.
+- 2026-10-20 rules-test-author: Wrote the T-0008 tests in `pkg/engine/death_trigger_test.go` (listed under Tests). No helpers requested. Left out: the pending-buffer invariant (unobservable externally). Not pinned: which player is asked first when both have 2+ triggers. Option indexing in the Berserk ordering test assumes collection order (battlefield order, then printed), per directive #10.
