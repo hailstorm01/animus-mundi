@@ -4,7 +4,7 @@ title: Run self-deploy triggers through a pending buffer, with player-ordered pl
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2a)
-status: ready
+status: in-progress
 branch: m2/T-0007-trigger-pipeline
 depends_on: [T-0006]
 claims: [type:ability.Trigger, type:ability.Hook, hook:deploy, type:ability.Effect, type:ability.Step, type:ability.Op, type:ability.Value, op:Scratch, op:Draw, kind:StackAbility, func:pending-trigger-buffer, decision:DecideOrder]
