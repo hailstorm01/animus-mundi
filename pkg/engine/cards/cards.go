@@ -36,7 +36,6 @@ var NotYetExecutable = []string{
 	"Conversion Spike",
 	"Craterfall Ancient",
 	"Deafening Aria",
-	"Despoiler Larva",
 	"Despoiler Worm",
 	"Despoiler's Emergence",
 	"Devilhorn Captain",
@@ -52,7 +51,6 @@ var NotYetExecutable = []string{
 	"Forced Mutation",
 	"Fortify",
 	"Funeral Fungus",
-	"Fungal Evangelist",
 	"Hammerhand Bivouac",
 	"Hammerhand Brigands",
 	"Hulking Incongruity",
@@ -80,7 +78,6 @@ var NotYetExecutable = []string{
 	"Steel Rain",
 	"Stormfront of Ideals",
 	"Tactical Withdrawal",
-	"Titanic Spore Carrier",
 	"Unceasing Tide",
 	"Veil Render",
 }
