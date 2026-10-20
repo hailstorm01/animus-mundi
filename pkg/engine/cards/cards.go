@@ -74,8 +74,6 @@ var NotYetExecutable = []string{
 	"Solarheart Monk",
 	"Spoil Forest Colossus",
 	"Steel Rain",
-	"Stormfront of Ideals",
 	"Tactical Withdrawal",
-	"Unceasing Tide",
 	"Veil Render",
 }
