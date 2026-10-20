@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -12,12 +14,60 @@ import (
 // TestStarterSet_Executable and TestDefs_MatchRulesText. Later tasks change
 // only cards.NotYetExecutable and cards.Defs, never this file.
 
+// inStarterScope reports whether c belongs to the M2 starter set: Animus and
+// Path cards, except the Headquarters Rift and Encampment (moved to M3).
+func inStarterScope(c *Card) bool {
+	return (c.Faction == "ANIMUS" || c.Faction == "PATH") && c.Name != "Rift" && c.Name != "Encampment"
+}
+
 func checkStarterSet(all map[string]*Card, allow []string) []string {
-	return []string{"not implemented"}
+	var problems []string
+	listed := make(map[string]bool)
+	for i, name := range allow {
+		if listed[name] {
+			problems = append(problems, fmt.Sprintf("NotYetExecutable lists %q more than once", name))
+		} else if i > 0 && name < allow[i-1] {
+			problems = append(problems, fmt.Sprintf("NotYetExecutable is not sorted at %q", name))
+		}
+		listed[name] = true
+		c, ok := all[name]
+		switch {
+		case !ok:
+			problems = append(problems, fmt.Sprintf("NotYetExecutable names %q, which matches no card", name))
+		case !inStarterScope(c):
+			problems = append(problems, fmt.Sprintf("NotYetExecutable names %q, which is outside the starter set", name))
+		case c.Supported():
+			problems = append(problems, fmt.Sprintf("%q is executable now: remove it from NotYetExecutable", name))
+		}
+	}
+	names := make([]string, 0, len(all))
+	for name := range all {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if c := all[name]; inStarterScope(c) && !c.Supported() && !listed[name] {
+			problems = append(problems, fmt.Sprintf("%q is a starter-set card that cannot run: it must become executable or go back on NotYetExecutable", name))
+		}
+	}
+	return problems
 }
 
 func checkDefs(all map[string]*Card, defs map[string]*ability.Def) []string {
-	return []string{"not implemented"}
+	var problems []string
+	names := make([]string, 0, len(defs))
+	for name := range defs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if _, ok := all[name]; !ok {
+			problems = append(problems, fmt.Sprintf("def %q matches no loaded card", name))
+		} else if len(defs[name].Text) == 0 {
+			problems = append(problems, fmt.Sprintf("def %q has empty Text", name))
+		}
+	}
+	return problems
 }
 
 func synthCard(name, faction string, typ CardType, unsupported ...string) *Card {

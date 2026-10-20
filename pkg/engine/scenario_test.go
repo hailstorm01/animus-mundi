@@ -3,6 +3,8 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sync"
 	"testing"
 )
 
@@ -103,8 +105,25 @@ func (s *scene) wantDamage(a *Asset, want int) {
 
 // realCard returns a shallow copy of the named card from data/cards, loaded
 // once per test binary.
+var (
+	realCardsOnce sync.Once
+	realCards     map[string]*Card
+	realCardsErr  error
+)
+
 func realCard(name string) (*Card, error) {
-	return nil, errors.New("realCard: not implemented")
+	realCardsOnce.Do(func() {
+		realCards, realCardsErr = LoadCards(filepath.Join("..", "..", "data", "cards"))
+	})
+	if realCardsErr != nil {
+		return nil, realCardsErr
+	}
+	c, ok := realCards[name]
+	if !ok {
+		return nil, fmt.Errorf("realCard: no card named %q in data/cards", name)
+	}
+	cp := *c
+	return &cp, nil
 }
 
 // card returns the real repository card, or fails the test.
