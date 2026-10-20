@@ -37,6 +37,8 @@ func filler(n int) []*Card {
 type scene struct {
 	t *testing.T
 	g *Game
+
+	asks map[PlayerID][]Decision // decisions put to each seat's scripted chooser
 }
 
 // newScene starts a match where player 0 takes Turn 1, both HQs are 3/20 and
@@ -135,3 +137,26 @@ func (s *scene) card(name string) *Card {
 	}
 	return c
 }
+
+// script installs a chooser for seat p that returns answers in order and
+// records every Decision it is asked. Asked past the end of the script, it
+// reports an error naming the prompt and returns a timeout.
+func (s *scene) script(p PlayerID, answers ...Answer) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[p] = nil
+	next := 0
+	s.g.choosers[p] = func(_ *Game, d Decision) Answer {
+		s.asks[p] = append(s.asks[p], d)
+		if next >= len(answers) {
+			s.t.Errorf("player %d chooser asked past the end of its script: %q", p, d.Prompt)
+			return Answer{Timeout: true}
+		}
+		next++
+		return answers[next-1]
+	}
+}
+
+// asked returns the decisions seat p's scripted chooser was asked, in order.
+func (s *scene) asked(p PlayerID) []Decision { return s.asks[p] }

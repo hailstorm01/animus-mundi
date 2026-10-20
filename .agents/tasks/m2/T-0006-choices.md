@@ -4,7 +4,7 @@ title: Ask players through a per-seat Chooser, with the FR-MOD-001 fast path and
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 1 of 4)
-status: tests
+status: done
 branch: m2/T-0006-choices
 depends_on: [T-0005]
 claims: [type:Decision, type:DecisionKind, type:Option, type:Answer, type:Chooser, config:Choosers, func:Game.choose, func:RandomChooser]
@@ -80,7 +80,12 @@ func (g *Game) choose(d Decision) []int
 No card asks a question yet, so rule tests call `s.g.choose(d)` directly on a scene, with a scripted chooser installed through the helper below. This seam is allowed for this task only. Later tasks test choices through play.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/choice_test.go`, calling `s.g.choose(d)` directly.
+- FR-MOD-001 §1 fast path: `TestFR_MOD_001_FastPathSoleTargetNotAsked`, `_FastPathTakeEverythingNotAsked`, `_FastPathRepeatsSingleOptionNotAsked`, `_MultipleOptionsAskedAndAnswerUsed`, `_FastPathNotTakenWhenHidden`, `_OptionalAlwaysAsked`, `_OptionalDeclineAnswerHonoured`, `_NoLegalAnswerReturnsNothingAndAsksNoOne`
+- FR-MOD-001 §5 distinct modes: `_DistinctModesRepeatedPickIsInvalid`, `_RepeatedModeAllowedWhenCardSaysSo`
+- FR-MOD-001 §6 fallbacks: `_ModeFallbackOnTimeoutPicksFirstListed`, `_ModeFallbackWithNoChooserPicksFirstListed`, `_OptionalFallbackOnTimeoutDeclines`, `_OptionalFallbackWithNoChooserDeclines`, `_TargetFallbackOnTimeoutPicksLegalDistinctTargets`, `_TargetFallbackWithNoChooserPicksLegalTarget`, `_TargetFallbackDeterministicForSameSeed`, `_TargetFallbackIsRandomNotFixed`, `_InvalidAnswerFallsBackAndIsLogged` (5 subcases), `_InvalidOptionalAnswerDeclines`
+- FR-TRG-002: `TestFR_TRG_002_InactivePlayerIsAskedOwnChooser`, `_InactivePlayerFastPathsSoleOption`, `_InactivePlayerHiddenInspectionStillAsked`
+- `TestRandomChooser_AnswersAreAlwaysValid`, `_SameSeedSameAnswers`, `_NotConstant`, `_DifferentSeedsDiffer`
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - `func (s *scene) script(p PlayerID, answers ...Answer)`: installs a chooser for seat p that returns `answers` in order and records every `Decision` it is asked. Asked past the end of the script, it calls `s.t.Errorf` naming the decision's prompt and returns a timeout.
@@ -93,11 +98,19 @@ No card asks a question yet, so rule tests call `s.g.choose(d)` directly on a sc
 - `pkg/engine/sim.go` (`Simulate` sets both seats to `RandomChooser`, seeded from the game seed as the policies are)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MOD_001|TestFR_TRG_002|TestRandomChooser'`
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `cardtown lint rules` shows `FR-MOD-001` pinned
-- [ ] `go run ./cmd/cardtown lint --all` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch (nothing asks yet)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MOD_001|TestFR_TRG_002|TestRandomChooser'`
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `cardtown lint rules` shows `FR-MOD-001` pinned
+- [x] `go run ./cmd/cardtown lint --all` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch (nothing asks yet)
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task (board directive #4, task 1 of 4: choices first). Set `status: tests` for `rules-test-author`. Besides the rule tests, I'd like `TestRandomChooser_*` tests for: every answer valid across many decisions of each kind, including `Repeats`; the same seed gives the same answers; and it covers more than one answer (it isn't constant).
+- 2026-10-19 rules-test-author: Wrote the tests above on m2/T-0006-choices and set `status: tests-review`. Helpers requested: `s.script`, `s.asked` (as already listed). Tests do not compile until the engineer adds the API. Left out: trigger ordering, top-of-deck inspections, and the random-target fallback when Min < Max (out of scope per the task). FRD 01 does not say which index the random fallback picks, so tests assert validity, distinctness, determinism per game seed and non-constancy only. The invalid-answer log test checks that the detail contains the prompt and the player's digit, since the format is not specified. Engineer note: the RandomChooser mix covers Min=0 target/mode decisions and Repeats with Max above the option count.
+- 2026-10-19 lead-architect: Test review: **approved**, status `ready`. The tests match FR-MOD-001 §1, §5 and §6 (target, mode and optional), FR-TRG-002 and the task's lead decisions. The random fallback is pinned by validity, determinism and spread, not by index, which is right because FRD 01 only says "a random legal target". Non-blocking: the `invalid-answer` player check matches only the digit, and the invalid-answer fallback isn't exercised on a target decision. The engineer implements the fallback per kind anyway. Next: `kernel-engineer` (tier sonnet) adds the API and the two helpers.
+- 2026-10-19 kernel-engineer: Implemented. Diff: new `pkg/engine/choice.go` (types, `Game.choose`, `RandomChooser`, helpers `valid`/`satisfiable`/`soleAnswer`/`fallbackPicks`/`randomPicks`); `Config.Choosers` copied to unexported `Game.choosers` in `NewGame` (turn.go, state.go); `Simulate` seeds both seats with `RandomChooser(s*2+1)` and `s*2+2` (sim.go); `s.script`/`s.asked` plus an `asks` field added to `scene` in scenario_test.go. Reuse: searched pkg/engine; reused `g.rng`, `g.logf`, and the PCG seeding idiom of `RandomPolicy`; no existing choice shape. Beyond the task text: `Decision.satisfiable` returns no picks for `Min > Max` or negative `Min`; a `DecideMode` fallback with `Repeats` wraps indexes modulo the option count. Results: `go test ./...` ok, `go vet ./...` clean, `gofmt -l pkg cmd` empty, 27 listed tests PASS, `lint rules` no longer lists FR-MOD-001/FR-TRG-002 as not executable, `lint --all` passes, `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 and its output is identical to the pre-change build. Look closely at: the fast path for `Min==Max==0` (returns empty without asking).
+- 2026-10-19 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only the four allowed files plus the two requested helpers in `scenario_test.go` changed. `choice_test.go` is unchanged since `dba259e`, and engine code contains no card names.
+  - Fidelity: `valid`, `satisfiable`, `soleAnswer` and `fallbackPicks` implement the lead decisions in general, not just the tested cases. `RandomChooser` draws from its own PCG stream (`^seed^0xC401CE`), so it doesn't repeat the policy's stream under the same seed.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `lint rules` shows 35 of 62, with FR-MOD-001 and FR-TRG-002 pinned. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is byte-identical to the integration branch.
+  - Non-blocking: with `Min == Max == 0` and at least one option, the only valid answer is "no picks", but `choose` asks the chooser instead of fast-pathing. No caller builds such a decision. If one ever does, `soleAnswer` should cover it.

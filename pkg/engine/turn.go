@@ -23,11 +23,16 @@ type Config struct {
 	// Mulligan returns the IDs of hand cards to set aside (FR-SET-002).
 	// Nil means keep all 6, the timeout default.
 	Mulligan func(p PlayerID, hand []*Instance) []int
+
+	// Choosers answer each seat's Decisions, indexed by PlayerID. A nil
+	// entry means that seat always times out (FR-MOD-001 §6).
+	Choosers [2]Chooser
 }
 
 // NewGame runs match setup and returns the game at the start of Turn 1's Main Phase.
 func NewGame(cfg Config) (*Game, error) {
 	g := &Game{rng: rand.New(rand.NewPCG(cfg.Seed, cfg.Seed^0x9E3779B97F4A7C15))}
+	g.choosers = cfg.Choosers
 	for i := range g.Players {
 		pid := PlayerID(i)
 		deck := cfg.Decks[i]
