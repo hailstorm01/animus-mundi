@@ -135,7 +135,6 @@ func TestFR_ZON_004_PutOnBottomResolvingFirstFizzlesTheReturn(t *testing.T) {
 	}
 }
 
-// Covers: FR-TRG-006
 func TestFR_ZON_004_AnotherCopyInDiscardIsNeverMoved(t *testing.T) {
 	// FR-TRG-006: tracking is by card instance, not by name. Covers both the
 	// moving trigger and the fizzled one.
@@ -157,7 +156,6 @@ func TestFR_ZON_004_AnotherCopyInDiscardIsNeverMoved(t *testing.T) {
 	}
 }
 
-// Covers: FR-TRG-006
 func TestFR_ZON_004_SingleTriggerMovesOnlyTheDeadInstanceNotASameNamedCopy(t *testing.T) {
 	// The copy was in the discard pile first; the trigger must not pick it.
 	s := newScene(t)
