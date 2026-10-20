@@ -4,7 +4,7 @@ title: Make Saboteur and Chainbreaker Sappers executable
 kind: card
 tier: flash
 wave: A2 (task 2, card task 1)
-status: in-progress
+status: review
 branch: m2/T-0018-saboteur-sappers
 depends_on: [T-0017]
 claims: [card:Saboteur, card:Chainbreaker Sappers, file:pkg/engine/cards/path.go]
@@ -48,11 +48,11 @@ All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `
 - `pkg/engine/cards/cards.go` (remove the two names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)|TestFR_TGT_003_Saboteur'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with every invariant holding, and the Path executable count rises by 3 (3 Saboteur), from 6/50 to 9/50
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)|TestFR_TGT_003_Saboteur'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with every invariant holding, and the Path executable count rises by 3 (3 Saboteur), from 6/50 to 9/50
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 card task 1), with status `tests` for `rules-test-author`.
@@ -64,3 +64,4 @@ All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `
   - Accepted omissions: the allied clause can't lack a target, because the Saboteur is always one. Loss at resolution and mitigation are pinned generically in `targeting_test.go`.
   - Lead fix: the Done When regex now also matches `TestFR_TGT_003_Saboteur…`.
   - Next: **the user runs `@kernel-engineer T-0018` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-20 kernel-engineer: Implemented. Created pkg/engine/cards/path.go with pathDefs registering "Chainbreaker Sappers" (HookDeploy, Target: Kinds Structure|Headquarters, Step: OpDealDamage 1 to SubjectTarget 0) and "Saboteur" (HookDeploy, Target 0: AllegianceOpposing, KindUnit, NonScratch; Target 1: AllegianceAllied, KindUnit; Steps: OpDealDamage 2 to SubjectTarget 0, OpDealDamage 1 to SubjectTarget 1). pkg/engine/cards/cards.go: removed "Chainbreaker Sappers" and "Saboteur" from NotYetExecutable while maintaining sort order. Reused HookDeploy, Effect.Targets, Filter, AllegianceOpposing/Allied, KindUnit/Structure/Headquarters, OpDealDamage, SubjectTarget, and Step.Target; added no new shapes, types, fields, or logic. Gates: go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)|TestFR_TGT_003_Saboteur' passed (23/23 tests, 4 subtests), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (gofmt, vet, all tests, cardtown lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding; P1 (Path starter) main cards executable rose by 3 from 6/50 to 9/50 (3 Saboteur). Default sim (SOULLESS vs CONCORDIA) exited 0 with all invariants holding; before: "P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns", after: "P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged). Reviewer: check target definitions in path.go for slot order and conjunction filter flags.
