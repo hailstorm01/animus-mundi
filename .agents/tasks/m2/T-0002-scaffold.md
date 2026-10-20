@@ -96,3 +96,4 @@ The two new packages from the design note exist and are wired in: `pkg/engine/ab
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task, applying board directives #1 and #3. Harness kind on tier sonnet, so it skips `tests` and goes straight to `ready`. Grounding: 82 in-scope cards, 9 executable (listed above), so the allowlist starts at 73. `isFencesPath` in `cmd/cardtown/main.go` already matches any `pkg/engine/` `.go` path, so smart detection needs no change. `gofmt -l pkg cmd` is already clean, so T-0001 follow-up (3) is closed. Per directive #5, the user reviews this task before `kernel-engineer` is dispatched.
+- 2026-10-19 lead-architect: The user reviewed the task and approved dispatch (directive #5 applied). Dispatched `kernel-engineer` (Sonnet subagent).
