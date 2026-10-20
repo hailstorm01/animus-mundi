@@ -35,4 +35,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0004 | Load starter decklists and run them in cardtown sim | done |
 | T-0005 | Make the pre-commit hook rebuild a stale CLI | done |
 | T-0006 | Ask players through a per-seat Chooser (FR-MOD-001) | done |
-| T-0007 | Run self-deploy triggers through a pending buffer (FR-TRG-003, FR-TRG-004) | tests |
+| T-0007 | Run self-deploy triggers through a pending buffer (FR-TRG-003, FR-TRG-004) | done |
