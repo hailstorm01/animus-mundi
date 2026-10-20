@@ -321,7 +321,7 @@ Review `git diff <integration-branch>...<task-branch>`:
 2. **Fences:** no engine code branches on, or contains, a card name. No new shape in a card task. No `OPEN(…)` marker without a matching matrix or survey item.
 3. **Reuse:** nothing duplicates an existing shape or helper. Name the existing one in the note if it does.
 4. **Rules fidelity:** the code implements the cited requirements generally, not just the tested cases, and does not special-case test inputs.
-5. **Gates:** the commands under `Done When` pass when re-run by the reviewer, not only as reported in the Log. Once starter decks exist, also run `cardtown sim -p0 ANIMUS -p1 PATH`.
+5. **Gates:** the commands under `Done When` pass when re-run by the reviewer, not only as reported in the Log. Also run `cardtown sim -deck starter -p0 ANIMUS -p1 PATH`. Without `-deck`, sim plays the stress decks, not the starter decklists.
 
 **Verdict:**
 - **Approve:** merge with `git merge --no-ff`, set `status: done`, and update `BOARD.md`.

@@ -10,7 +10,7 @@ Every Animus and Path card executes in `pkg/engine` as a Go value built from a s
 
 - every Animus and Path card, plus the starter Headquarters *Animoceps Rager* and *Eternal Watchman*, loads with `Unsupported` empty and has at least one `TestCard_*` test;
 - `cardtown lint rules` shows every requirement the survey says the starter set reaches as pinned (27 of the 30 that are unpinned today, see survey §1);
-- `cardtown sim -p0 ANIMUS -p1 PATH` runs clean on construction-legal decks, and a human can finish a `cardtown play` match.
+- `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` runs clean on the construction-legal starter decks, and a human can finish a `cardtown play` match.
 
 ## Boundaries
 
@@ -63,7 +63,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 - **Definition coverage:** `TestDefs_MatchRulesText` checks that every `Def.Text` line exists verbatim on its card. `TestStarterSet_Executable` compares every Animus, Path and starter-HQ card still unsupported against the allowlist `cards.NotYetExecutable` in `pkg/engine/cards/cards.go`. Both tests are protected. The allowlist lives outside the test file, so card tasks shrink it without touching a protected test, and every card task lists `cards.go` under `Allowed Files`. M2 is done when the allowlist is empty.
 - **Choices:** a scripted `Chooser` for scenario tests (answers in order, fails the test if asked something unexpected). A random `Chooser` for playouts.
 - **Fuzz:** playouts use random policy and random choosers. New invariants: the stack and pending-trigger buffer are empty between actions, no modifier outlives its duration, and a `Chooser` answer is never rejected.
-- **Sim:** `cardtown sim -p0 ANIMUS -p1 PATH` on starter decklists, run in every review once decks exist (Runbook D5).
+- **Sim:** `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` on the starter decklists, run in every review (Runbook D5).
 
 ## Deliverables (in order)
 
