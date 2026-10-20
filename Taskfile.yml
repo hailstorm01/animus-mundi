@@ -1,0 +1,72 @@
+# Developer commands for Card Town. Task is pinned as a tool in go.mod, so a
+# fresh clone needs only Go:
+#   go tool task <name>     (or `task <name>` if Task is installed)
+#   go tool task            lists every task
+# Pass extra flags after `--`, e.g. `go tool task sim -- -games 50`.
+version: '3'
+
+vars:
+  BIN: bin/cardtown{{exeExt}}
+
+tasks:
+  default:
+    desc: List the available tasks
+    cmds:
+      - '"{{.TASK_EXE}}" --list'
+    silent: true
+
+  build:
+    desc: Build the cardtown CLI into bin/
+    cmds:
+      - go build -o {{.BIN}} ./cmd/cardtown
+
+  test:
+    desc: Run every Go test
+    cmds:
+      - go test ./... {{.CLI_ARGS}}
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format Go source in place
+    cmds:
+      - gofmt -w pkg cmd
+
+  fmt-check:
+    desc: Fail if any Go source needs gofmt
+    cmds:
+      - |
+        if [ -n "$(gofmt -l pkg cmd)" ]; then
+          gofmt -l pkg cmd
+          echo "gofmt: the files above need formatting (run: go tool task fmt)"
+          exit 1
+        fi
+
+  lint:
+    desc: Run every cardtown linter (cardtown lint --all)
+    deps: [build]
+    cmds:
+      - '{{.BIN}} lint --all'
+
+  sim:
+    desc: Play the Animus vs Path starter decks (cardtown sim)
+    deps: [build]
+    cmds:
+      - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH {{.CLI_ARGS}}'
+
+  check:
+    desc: Every build-task Done-When gate (gofmt, vet, test, lint)
+    cmds:
+      - task: fmt-check
+      - task: vet
+      - task: test
+      - task: lint
+
+  hook:
+    desc: Install the pre-commit hook
+    deps: [build]
+    cmds:
+      - '{{.BIN}} hook install'
