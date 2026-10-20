@@ -4,7 +4,7 @@ title: Make Stormfront of Ideals and Unceasing Tide executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 4 of 4)
-status: tests-review
+status: ready
 branch: m2/T-0014-stormfront-tide
 depends_on: [T-0013]
 claims: [card:Stormfront of Ideals, card:Unceasing Tide]
@@ -56,3 +56,12 @@ All in `pkg/engine/cards_animus_test.go`, loading the real cards; each covers FR
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 4 of 4). It stays `queued` until T-0013 is `done`, because they share `animus.go` and `cards.go`.
 - 2026-10-20 lead-architect: T-0013 is `done`, so status `tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote 8 card tests on m2/T-0014-stormfront-tide. Run: 6 fail (the cards have no trigger yet), 2 pass (the face-down guards). No helpers requested. Left out: the fizzle case (card already left discard when the trigger resolves). The trigger resolves at the death sweep, and state setup cannot move the card out of discard before then without guessing a resolution-ordering ruling that FRD 01 does not give. The fizzle rule itself is stated in FR-ZON-004 and needs a card or effect that moves the card first. Owner-vs-controller is tested because the bullet says "its owner's" deck and hand.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. `test(T-0014)` 19bf43e appends 8 tests to `cards_animus_test.go` without changing any line of an existing test. They use the real cards and follow FR-ZON-004's Self-Relocating Trigger Tracking bullet, which names both cards.
+  - Each test checks that exact instance's destination (bottom of the owner's deck, the owner's hand) and that it left discard. The Stormfront test also checks that the deck grew by exactly one card.
+  - Both turn cases are covered, because neither card has a turn condition.
+  - The owner/controller split follows "its owner's" literally. `stolenKilled` mirrors `s.put` and changes only `Controller`.
+  - The two face-down guards pass today (FR-ZON-004, line 163).
+  - Leaving out the fizzle is accepted. The shape tests already pin it (`TestFR_ZON_004_ReturnResolvingFirstFizzlesThePutOnBottom` and `..._PutOnBottomResolvingFirstFizzlesTheReturn` in `self_tracking_test.go`, T-0009). These cards' one-step triggers add no new case.
+  - Minor, no change requested: `inDiscardPile` duplicates `inZone(p.Discard, inst)` from `self_tracking_test.go`. Later card tasks should reuse `inZone`.
+  - Re-run: 6 fail (no trigger yet), 2 guards pass, and no other test fails.
+  - Next: **the user runs `@kernel-engineer T-0014` in the Antigravity agent (Gemini Flash)**.
