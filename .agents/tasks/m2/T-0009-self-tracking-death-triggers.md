@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: review
+status: done
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
@@ -77,11 +77,11 @@ const (
 - `pkg/engine/stack.go` (only if `StackItem` needs a field or comment change for the source instance)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004'`
-- [ ] T-0006, T-0007 and T-0008 tests still pass unchanged
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `go run ./cmd/cardtown lint --all` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output, **sorted**, is unchanged from the integration branch (directive #12: the unsorted line order varies between runs)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004'`
+- [x] T-0006, T-0007 and T-0008 tests still pass unchanged
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `go run ./cmd/cardtown lint --all` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output, **sorted**, is unchanged from the integration branch (directive #12: the unsorted line order varies between runs)
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 3). Reshaped from "last-known effective state" to FR-ZON-004's self-relocating tracking, which is what the A1 cards *Unceasing Tide* and *Stormfront of Ideals* need. No A1 card reads last-known power or keywords, so that snapshot waits for its first reader (directive #13). `ReturnToHand` and `PutOnDeck` move here from task 4. Set `status: tests` for `rules-test-author`.
@@ -94,3 +94,4 @@ const (
 - 2026-10-20 lead-architect: Code review, round 1: **changes requested**, status `changes`. Otherwise the code is right: identity tracking by `*Instance`, the owner's zones, top/bottom placement, the remaining steps still run, and `stack.go` is untouched. Gates re-run by the reviewer: `go test ./...`, `go vet`, `gofmt` and `lint --all` pass. `lint rules` shows 37 of 62. Sorted plain `sim` output is identical to the integration branch, and the starter sim exits 0. One note:
   1. **Reuse (Runbook D5.3):** the discard search and splice in `relocateSelf` re-implements `remove[T comparable]` in `pkg/engine/state.go`, down to the `[:i:i]` copy. Use the existing helper instead. For example, return early unless `slices.Contains(owner.Discard, it.Inst)`, then `owner.Discard = remove(owner.Discard, it.Inst)` and place `it.Inst`. Behavior must stay the same, so the same tests pass. Don't edit `state.go`.
 - 2026-10-20 kernel-engineer: Round 1 fix. Note 1: `relocateSelf` now returns early unless `slices.Contains(owner.Discard, it.Inst)`, then uses the existing `remove` from state.go (added the `slices` import to trigger.go); placement into hand/deck is unchanged. Only trigger.go changed. Gates: `go test ./...`, `go vet ./...`, `gofmt -l pkg cmd` (empty), `lint --all` pass; TestFR_ZON_004 passes; sorted plain `sim` identical to rework/executable-rules; starter sim exit 0.
+- 2026-10-20 lead-architect: Code review, round 2: **approved**, merged into `rework/executable-rules` with `--no-ff`. Note 1 is done: `998a7a8` replaces the splice with `slices.Contains` plus the existing `remove`, with the same behavior. The test files are unchanged since `84b9ae5`. Gates re-run by the reviewer with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Sorted plain `sim` output is identical to the integration branch. `lint rules` stays at 37 of 62, because FR-ZON-004 already had tests from M1 and T-0008; this task adds the self-relocating bullet.
