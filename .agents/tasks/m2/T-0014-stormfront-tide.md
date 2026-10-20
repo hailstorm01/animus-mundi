@@ -4,7 +4,7 @@ title: Make Stormfront of Ideals and Unceasing Tide executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 4 of 4)
-status: ready
+status: in-progress
 branch: m2/T-0014-stormfront-tide
 depends_on: [T-0013]
 claims: [card:Stormfront of Ideals, card:Unceasing Tide]
