@@ -95,3 +95,13 @@ func ValidateDeck(d DeckList) error {
 
 	return errors.Join(errs...)
 }
+
+// LoadDeck reads a decklist file and resolves its names against cards.
+func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
+	return DeckList{}, errors.New("not implemented")
+}
+
+// SimDecks loads and validates decklists for the given factions and deck name.
+func SimDecks(cards map[string]*Card, decksDir, name string, factions [2]string) ([2]DeckList, error) {
+	return [2]DeckList{}, errors.New("not implemented")
+}
