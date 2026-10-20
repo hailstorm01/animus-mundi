@@ -25,4 +25,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | id | title | status |
 | :--- | :--- | :--- |
 | T-0001 | Add a fences check to cardtown lint | done |
-| T-0002 | Scaffold the ability and cards packages | ready |
+| T-0002 | Scaffold the ability and cards packages | done |
