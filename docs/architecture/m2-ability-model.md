@@ -68,7 +68,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 ## Deliverables (in order)
 
 1. **Scaffold (harness):** create the `ability` and `cards` packages, `Card.Ability`, text attachment in `LoadCards`, the two coverage tests and the scenario helper that loads a real card; widen the fence scope. Done when the existing tests pass, the 9 already-executable starter cards are unchanged, and `cardtown lint --all` passes.
-2. **Starter decks (harness):** a decklist format under `data/decks/`, `engine.LoadDeck` and `ValidateDeck` (`FR-SET-001`), and a `-deck` option on `cardtown sim`. Done when `TestFR_SET_001_*` pass. Real lists wait on open question 1, and synthetic lists cover the tests until then.
+2. **Starter decks (harness):** a decklist format under `data/decks/`, `engine.LoadDeck` and `ValidateDeck` (`FR-SET-001`), the two lists in [Starter Decks](#starter-decks) transcribed into it, and a `-deck` option on `cardtown sim`. Done when `TestFR_SET_001_*` pass and both lists validate.
 3. **Wave A1:** events, triggers on self hooks, APNAP placement and cascade, the `Chooser` with the scripted and random implementations, last-known effective state, and untargeted steps. Done when the 8 A1 cards pass and `FR-TRG-003`, `FR-TRG-004` and `FR-ZON-004` death-trigger tests pass.
 4. **Wave A2:** targets, filters, two-stage verification, optional triggers, `FR-MOD-001` fast-path and fallbacks, `DealDamage`, `Heal` and `AddArmor`. Done when the 7 A2 cards pass.
 5. **`cardtown play` (text mode):** a terminal `Chooser` and action menu against the random policy. Done when a human finishes a match with the cards executable so far. It goes early so physical-prototype comparison starts while waves land.
@@ -77,8 +77,47 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 
 ## Open Questions
 
-1. **Starter decklists (needs the user).** No decklist exists in the repo. Which 50+ card Animus and Path lists did the physical playtests use, and which Headquarters? Recommendation: transcribe the playtest lists. If they no longer exist, `ValidateDeck` plus maximum legal copies of each starter card is a stand-in for `sim`, not for `play`.
+1. **Starter decklists: answered 2026-10-19.** See [Starter Decks](#starter-decks). The other 38 Animus and Path cards stay in M2 under the current done-when.
 2. **Survey gaps G1–G3:** decided in the kernel as the survey proposes. G1 is `Trigger.ActiveZone`, G2 puts keyword grants in Layer 3 per `FR-LAY-001`, and G3 is a `KillSelf` cost. No ruling is needed.
 3. **Action clocks:** M2 has no clocks. A `Chooser` may answer "timeout", which applies the `FR-MOD-001` §6 fallback. Clocks and time banks wait for M4/M5.
 4. **Hidden information:** in M2 a `Chooser` can read the whole `Game`. The fog-of-war boundary is M5 work (FRD 04 rewrite). `cardtown play` shows the human only their own zones by convention.
 5. **Partitioned inspections** (`FR-MOD-001` §4, Devilhorn Scouting Party) are one `Decision` with a per-card destination and a bottom order. The Wave F task fixes the answer encoding.
+
+## Starter Decks
+
+Supplied by the user on 2026-10-19. Both are construction-legal under `FR-SET-001`: 50-card main decks, a faction Headquarters, and no card over its rarity limit. Names are as printed in `data/cards`. Two were corrected from the supplied text: *Despoiler's Emergence* and *Devilhorn Guerrillas*. Wave is the survey wave, and "exec" means the card already executes.
+
+**Animus**, Headquarters *Animoceps Rager* (B)
+
+| Card | Copies | Wave | Card | Copies | Wave |
+| :--- | :---: | :---: | :--- | :---: | :---: |
+| Despoiler Larva | 4 | A1 | Spoil Forest Amalgam | 1 | exec |
+| Portent Scrivener | 4 | A1 | Spoil Forest Colossus | 2 | A2 |
+| Shifting Impossibility | 2 | G | Despoiler Worm | 1 | A1 |
+| Animoceps Shambler | 3 | B | Craterfall Ancient | 2 | A2 |
+| Sinuous Growth | 4 | D | Despoiler's Emergence | 1 | C |
+| Cliff of Portents | 1 | D | Forced Mutation | 2 | F |
+| Spoil Forest Creeper | 4 | A1 | Rapturous Sermon | 2 | C |
+| Stormfront of Ideals | 2 | A1 | Animoceps Spores | 3 | C |
+| Unceasing Tide | 3 | A1 | Rhapsody's Embrace | 2 | C |
+| Veil Render | 1 | F | Funeral Fungus | 2 | C |
+| Infested Apostle | 4 | B | | | |
+
+**Path**, Headquarters *Eternal Watchman* (B)
+
+| Card | Copies | Wave | Card | Copies | Wave |
+| :--- | :---: | :---: | :--- | :---: | :---: |
+| Chainbreaker Sneak | 4 | exec | Devilhorn Guerrillas | 3 | A2 |
+| Eerie Remnant | 3 | F | Allshan, Chainbreaker Revenant | 1 | B |
+| Hammerhand Brigands | 3 | B | Hammerhand Brigade | 2 | exec |
+| Broken Horn Armorer | 2 | F | Arkha, Sun's Fury | 1 | B |
+| Macabre Dancers | 2 | E | Boneyard Amalgam | 2 | E |
+| Devilhorn Captain | 3 | B | Allshan's Battle Trance | 1 | F |
+| Chainbreaker Irregulars | 4 | B | Ambush Tactics | 2 | C |
+| Necropolis Hunt | 1 | A2 | Steel Rain | 2 | C |
+| Saboteur | 3 | A2 | Devilhorn Sanction | 2 | C |
+| Boneyard Scavenger | 2 | D | Improvised Orders | 1 | C |
+| Chainbreaker Phalanx | 2 | F | Reaver's Rush | 2 | F |
+| | | | Devilhorn Scouting Party | 2 | F |
+
+The decks use 46 distinct cards (3 already executable) and reach every wave from A1 to G. So a full `cardtown play` match with both decks needs all seven waves, and the survey order stands.
