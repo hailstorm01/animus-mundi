@@ -4,7 +4,7 @@ title: Pin four implemented but untested requirements with scenario tests
 kind: shape
 tier: sonnet
 wave: A1 (board directive #16)
-status: tests
+status: tests-review
 branch: m2/T-0015-pin-implemented-rules
 depends_on: []
 claims: [tests:FR-SET-003, tests:FR-ZON-001, tests:FR-ZON-003, tests:FR-CRD-101]
@@ -33,6 +33,12 @@ Put them in a new file, `pkg/engine/foundation_test.go`. Name them `TestFR_SET_0
 - **FR-ZON-001:** a hand far larger than 6 survives the end of turn with no discard, and Reserves and the Main Theater accept many assets.
 If a test fails, don't weaken it. Leave it failing, say so in the Log, and set `tests-review`.
 
+Written in `pkg/engine/foundation_test.go` (17 tests):
+- FR-SET-003: `TestFR_SET_003_DeciderIsRandomAcrossSeeds`, `_DeciderPlayFirstTakesTurn1`, `_DeciderDrawFirstGivesOpponentTurn1`, `_TimeoutDefaultsToPlayFirst`.
+- FR-CRD-101 (compared with the CSV row read at test time): `TestFR_CRD_101_UnitCarriesCSVCharacteristics` (Shifting Impossibility, Devilhorn Guerrillas), `_StructureCarriesCSVCharacteristics` (Cathedral of Self), `_ManeuverCarriesCSVCharacteristics` (Disorienting Pulse), `_HeadquartersCarriesCSVCharacteristics` (Command Barge).
+- FR-ZON-003: `TestFR_ZON_003_BattlefieldZonesHoldAssetsOthersHoldCards`, `_DeployerControlsAndDeckOwnerOwns`, `_OwnerUnchangedByMovingBetweenZones`, `_ReadiedAssetCanPayExhaustCostOnce`, `_ExhaustedAssetCannotPayExhaustCost`.
+- FR-ZON-001: `TestFR_ZON_001_HandOverSixSurvivesEndOfTurnWithoutDiscard`, `_ReservesAndMainTheaterAcceptManyAssets`, `_ReservesGenerateRequisitionTheaterGeneratesTactics`, `_ReservesAssetsAreProtectedFromAttacks`.
+
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected. Local helpers go in `foundation_test.go`.
 
@@ -47,3 +53,4 @@ If a test fails, don't weaken it. Leave it failing, say so in the Log, and set `
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #16 (audit finding 3), with status `tests` for `rules-test-author`. The kernel already has the behavior, so the tests are expected to pass when written. No engineer step happens unless one fails.
+- 2026-10-20 rules-test-author: Wrote 17 tests in `pkg/engine/foundation_test.go` (see Tests). 16 pass. 1 FAILS and is left failing: `TestFR_CRD_101_HeadquartersCarriesCSVCharacteristics`. Command Barge loads with rarity "HQ" (matching its CSV row), but FR-CRD-101 lists the legal rarity values as Common, Uncommon, Rare, Mythic or Headquarters. This is a mismatch between FRD 01 and the card data/loader vocabulary (`data/cards/units-and-structures-HQ.csv` says "HQ"), not clearly a kernel bug. Lead to decide: change the data/loader to Headquarters, or amend the FRD wording. All other HQ columns (name, type, faction, no subtypes, costs 0/0, power, health, yields, zone) match. Left out: FR-SET-003 "decider chosen before opening hands are drawn" (the callback receives only the decider, so the order is not observable through Config or the public API); FR-ZON-003 control differing from ownership (needs a control-changing effect or internal fields; T-0014 and the FR-ZON-002 tests cover the related behavior); the Attached zone (no public representation); uncapped Discard (nothing observable to drive it without a card effect). The timeout test cannot see the decider, so it asserts that both seats take Turn 1 across seeds. Helpers requested: none. `cardtown lint rules` passes and all four IDs trace.
