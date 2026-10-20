@@ -4,7 +4,7 @@ title: Make the pre-commit hook rebuild a stale CLI
 kind: harness
 tier: flash
 wave: none (board directive #9, before wave A1)
-status: ready
+status: in-progress
 branch: m2/T-0005-hook-rebuild
 depends_on: []
 claims: [file:pkg/toolchain/hook, hook:pre-commit-rebuild]
