@@ -41,4 +41,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0007 | Run self-deploy triggers through a pending buffer (FR-TRG-003, FR-TRG-004) | done |
 | T-0008 | Fire death triggers from the death sweep in APNAP order (FR-TRG-002, FR-TRG-003) | done |
 | T-0009 | Let death triggers move the card itself, tracked in discard (FR-ZON-004) | done |
-| T-0010 | Attack triggers with Aggressive at Step 2, "on your turn" gate, opponents subject (FR-CBT-002) | tests |
+| T-0010 | Attack triggers with Aggressive at Step 2, "on your turn" gate, opponents subject (FR-CBT-002) | done |
