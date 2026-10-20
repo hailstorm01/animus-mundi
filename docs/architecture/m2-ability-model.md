@@ -82,6 +82,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 3. **Action clocks:** M2 has no clocks. A `Chooser` may answer "timeout", which applies the `FR-MOD-001` §6 fallback. Clocks and time banks wait for M4/M5.
 4. **Hidden information:** in M2 a `Chooser` can read the whole `Game`. The fog-of-war boundary is M5 work (FRD 04 rewrite). `cardtown play` shows the human only their own zones by convention.
 5. **Partitioned inspections** (`FR-MOD-001` §4, Devilhorn Scouting Party) are one `Decision` with a per-card destination and a bottom order. The Wave F task fixes the answer encoding.
+6. **Trigger-order timeout: provisionally answered 2026-10-19.** `FR-MOD-001` §6 has no fallback for a player ordering their own simultaneous triggers (`FR-TRG-003`). The user accepted the lead's recommendation for now: they go on the stack in the order the kernel collected them (battlefield order, then each card's own trigger order). It is not yet in FRD 01. `pm-frd-drafter` adds it to `FR-MOD-001` §6, or the user overrides it.
 
 ## Starter Decks
 
