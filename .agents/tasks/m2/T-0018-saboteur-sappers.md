@@ -4,7 +4,7 @@ title: Make Saboteur and Chainbreaker Sappers executable
 kind: card
 tier: flash
 wave: A2 (task 2, card task 1)
-status: review
+status: done
 branch: m2/T-0018-saboteur-sappers
 depends_on: [T-0017]
 claims: [card:Saboteur, card:Chainbreaker Sappers, file:pkg/engine/cards/path.go]
@@ -65,3 +65,8 @@ All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `
   - Lead fix: the Done When regex now also matches `TestFR_TGT_003_Saboteur…`.
   - Next: **the user runs `@kernel-engineer T-0018` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-20 kernel-engineer: Implemented. Created pkg/engine/cards/path.go with pathDefs registering "Chainbreaker Sappers" (HookDeploy, Target: Kinds Structure|Headquarters, Step: OpDealDamage 1 to SubjectTarget 0) and "Saboteur" (HookDeploy, Target 0: AllegianceOpposing, KindUnit, NonScratch; Target 1: AllegianceAllied, KindUnit; Steps: OpDealDamage 2 to SubjectTarget 0, OpDealDamage 1 to SubjectTarget 1). pkg/engine/cards/cards.go: removed "Chainbreaker Sappers" and "Saboteur" from NotYetExecutable while maintaining sort order. Reused HookDeploy, Effect.Targets, Filter, AllegianceOpposing/Allied, KindUnit/Structure/Headquarters, OpDealDamage, SubjectTarget, and Step.Target; added no new shapes, types, fields, or logic. Gates: go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)|TestFR_TGT_003_Saboteur' passed (23/23 tests, 4 subtests), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (gofmt, vet, all tests, cardtown lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding; P1 (Path starter) main cards executable rose by 3 from 6/50 to 9/50 (3 Saboteur). Default sim (SOULLESS vs CONCORDIA) exited 0 with all invariants holding; before: "P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns", after: "P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged). Reviewer: check target definitions in path.go for slot order and conjunction filter flags.
+- 2026-10-20 lead-architect: Code review: **approved**, status `done`.
+  - Scope: e398f57 creates `cards/path.go` (`pathDefs`, registered like `animusDefs`) and removes the two names from `NotYetExecutable`. No test changed after `test(T-0018)` 9fa2050.
+  - Fences: plain data with no new shapes. Saboteur's slot 0 is `{Opposing, Unit, NonScratch}` with `DealDamage 2`, and slot 1 is `{Allied, Unit}` with `DealDamage 1`. Sappers' target is `{Structure|Headquarters}` with `DealDamage 1`. Each `Text` is the CSV line exactly.
+  - Gates re-run by the reviewer: 23 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, and `go tool task check` exits 0.
+  - Starter sim exits 0. Path executable count goes from 6/50 to 9/50 (+3). Result: P0 51.0%, P1 17.0%, draws 32.0%, all invariants hold, so Saboteur's targeting runs clean under the random chooser. The default sim also exits 0.
