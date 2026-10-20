@@ -19,7 +19,7 @@ Three packages. Imports go one way only: `engine` → `cards` → `ability`. Tha
 | Package | Holds | Card names? | Changed by |
 | :--- | :--- | :--- | :--- |
 | `pkg/engine/ability` | The shape vocabulary: plain data types and enums with no game logic. Its `go doc` output is the M2 write-up. | No (fenced) | `shape` tasks |
-| `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go`, `path.go` and `headquarters.go`. | Yes (only place) | `card` tasks |
+| `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go`, `path.go` and `headquarters.go`. `cards.go` holds the `Defs` map and the `NotYetExecutable` allowlist. | Yes (only place) | `card` tasks |
 | `pkg/engine` | The interpreter: events, trigger collection, stack, choices, layers, replacements. | No (fenced) | `shape` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
@@ -48,7 +48,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 - **Actions:** `ActEnact` (Maneuver), `ActActivate` (asset plus ability index), and a `From` zone on `ActDeploy` for discard permissions. Targets, costs and modes for these come through the `Chooser`, so `LegalActions` offers a declaration only if at least one complete, legal set of choices exists.
 - **Layers:** `Asset.TempPower` becomes a list of timestamped modifiers (Layers 2, 3 and 5, with a duration), and Layer 4 is computed on demand from battlefield `Statics`. The last-known snapshot stores effective values (power, keywords) at departure, not just the raw asset, because death triggers read them (`FR-ZON-004`).
 - **Replacements:** `dealDamage` Stage 1 asks redirection replacements. The death sweep becomes per-entity, with the controller ordering replaced deaths and a sweep between them (`SVY-R5`).
-- **Fences:** `cardtown lint fences` also scans `pkg/engine/ability` and keeps exempting `pkg/engine/cards` (harness deliverable 1).
+- **Fences:** `cardtown lint fences` scans all of `pkg/engine` at any depth except `pkg/engine/cards` (harness deliverable 1).
 
 ## Decisions
 
@@ -60,7 +60,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 
 - **Rules tests:** one `TestFR_<DOM>_<NNN>_<Behavior>` per behavior, using synthetic test cards built in test files from `ability` values. A synthetic card can exercise a shape before any real card uses it.
 - **Card tests:** `TestCard_<CardSlug>_<Behavior>`, at least one per card, played through the real definition via a scenario helper that loads the card from `data/cards` (for example `s.card(name)`). They are written from the CSV text, never from `cards/*.go`.
-- **Definition coverage:** `TestDefs_MatchRulesText` checks that every `Def.Text` line exists verbatim on its card. `TestStarterSet_Executable` lists every Animus, Path and starter-HQ card still unsupported, against an allowlist that each card task shrinks. M2 is done when the allowlist is empty.
+- **Definition coverage:** `TestDefs_MatchRulesText` checks that every `Def.Text` line exists verbatim on its card. `TestStarterSet_Executable` compares every Animus, Path and starter-HQ card still unsupported against the allowlist `cards.NotYetExecutable` in `pkg/engine/cards/cards.go`. Both tests are protected. The allowlist lives outside the test file, so card tasks shrink it without touching a protected test, and every card task lists `cards.go` under `Allowed Files`. M2 is done when the allowlist is empty.
 - **Choices:** a scripted `Chooser` for scenario tests (answers in order, fails the test if asked something unexpected). A random `Chooser` for playouts.
 - **Fuzz:** playouts use random policy and random choosers. New invariants: the stack and pending-trigger buffer are empty between actions, no modifier outlives its duration, and a `Chooser` answer is never rejected.
 - **Sim:** `cardtown sim -p0 ANIMUS -p1 PATH` on starter decklists, run in every review once decks exist (Runbook D5).
