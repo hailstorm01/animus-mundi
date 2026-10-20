@@ -4,7 +4,7 @@ title: Make Portent Scrivener and Despoiler Worm executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 3 of 4)
-status: queued
+status: tests
 branch: m2/T-0013-scrivener-worm
 depends_on: [T-0012]
 claims: [card:Portent Scrivener, card:Despoiler Worm]
@@ -49,3 +49,4 @@ Two Animus units with draw death triggers now run in the kernel. One is gated to
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 3 of 4). It stays `queued` until T-0012 is `done`, because they share `animus.go` and `cards.go`.
+- 2026-10-20 lead-architect: T-0012 is `done`, so status `tests` for `rules-test-author`.
