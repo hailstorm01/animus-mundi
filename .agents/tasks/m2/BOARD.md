@@ -48,4 +48,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0011 | Make Spoil Forest Creeper executable (A1 card, flash) | done |
 | T-0012 | Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executable (A1 cards, flash) | done |
 | T-0013 | Make Portent Scrivener and Despoiler Worm executable (A1 cards, flash) | done |
-| T-0014 | Make Stormfront of Ideals and Unceasing Tide executable (A1 cards, flash) | queued |
+| T-0014 | Make Stormfront of Ideals and Unceasing Tide executable (A1 cards, flash) | tests |

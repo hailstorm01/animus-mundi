@@ -4,7 +4,7 @@ title: Make Stormfront of Ideals and Unceasing Tide executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 4 of 4)
-status: queued
+status: tests
 branch: m2/T-0014-stormfront-tide
 depends_on: [T-0013]
 claims: [card:Stormfront of Ideals, card:Unceasing Tide]
@@ -49,3 +49,4 @@ Two Animus units whose death triggers move the card itself now run in the kernel
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 4 of 4). It stays `queued` until T-0013 is `done`, because they share `animus.go` and `cards.go`.
+- 2026-10-20 lead-architect: T-0013 is `done`, so status `tests` for `rules-test-author`.
