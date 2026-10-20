@@ -94,7 +94,8 @@ func (g *Game) flushTriggers() {
 				g.push(p.item)
 				continue
 			}
-			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig})
+			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig,
+				Chosen: g.chooseTargets(p)})
 		}
 	}
 }
@@ -102,12 +103,25 @@ func (g *Game) flushTriggers() {
 // resolveAbility runs a triggered ability's steps in order. It resolves even if
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
+	// Second verification stage (FR-TGT-003): a chosen entity that is gone or
+	// no longer legal is treated like an empty slot.
+	chosen := make([]*Asset, len(it.Chosen))
+	for i, id := range it.Chosen {
+		if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Trigger.Effect.Targets[i].Filter, a) {
+			chosen[i] = a
+		}
+	}
 	for _, st := range it.Trigger.Effect.Steps {
 		who := []PlayerID{it.Controller}
 		if st.Subject == ability.SubjectOpponents {
 			who = []PlayerID{it.Controller.Opponent()}
 		}
 		switch st.Op {
+		case ability.OpDealDamage:
+			if st.Subject != ability.SubjectTarget || st.Target < 0 || st.Target >= len(chosen) || chosen[st.Target] == nil {
+				continue
+			}
+			g.dealDamage(g.Asset(it.Source), chosen[st.Target], st.Amount.N, false) // nil source if it left
 		case ability.OpScratch:
 			for _, pid := range who {
 				g.scratch(pid, st.Amount.N)
@@ -143,4 +157,67 @@ func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
 	default:
 		owner.Deck = append([]*Instance{it.Inst}, owner.Deck...)
 	}
+}
+
+// chooseTargets asks p's controller to choose each of its Effect.Targets, in
+// slot order, when the trigger is placed on the stack (FR-TGT-001). Only legal
+// entities are offered, so a single one is not asked about and a timeout picks
+// a random legal one. A slot with no legal entity stays 0: deploying never
+// requires a target (FR-TGT-003).
+func (g *Game) chooseTargets(p pendingTrigger) []int {
+	targets := p.trig.Effect.Targets
+	if len(targets) == 0 {
+		return nil
+	}
+	chosen := make([]int, len(targets))
+	for i, t := range targets {
+		d := Decision{Player: p.controller, Kind: DecideTarget, Min: 1, Max: 1,
+			Prompt: fmt.Sprintf("%s: choose target %d", p.label, i+1)}
+		// Options are listed oldest asset first (by ID), not by zone.
+		assets := g.Assets()
+		slices.SortFunc(assets, func(x, y *Asset) int { return x.ID - y.ID })
+		for _, a := range assets {
+			if g.legalTarget(p.controller, t.Filter, a) {
+				d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
+			}
+		}
+		if picks := g.choose(d); len(picks) == 1 {
+			chosen[i] = d.Options[picks[0]].Ref
+		}
+	}
+	return chosen
+}
+
+// legalTarget reports whether battlefield asset a meets every criterion of f
+// for an ability controlled by ctl. An opponent's Ward asset is never legal
+// (FR-KWD-002h).
+func (g *Game) legalTarget(ctl PlayerID, f ability.Filter, a *Asset) bool {
+	switch f.Allegiance {
+	case ability.AllegianceAllied:
+		if a.Controller != ctl {
+			return false
+		}
+	case ability.AllegianceOpposing:
+		if a.Controller == ctl {
+			return false
+		}
+	}
+	if a.Controller != ctl && g.Keywords(a).Ward {
+		return false
+	}
+	if f.Kinds != 0 {
+		var k ability.Kinds
+		switch a.Printed().Type {
+		case TypeUnit:
+			k = ability.KindUnit
+		case TypeStructure:
+			k = ability.KindStructure
+		case TypeHeadquarters:
+			k = ability.KindHeadquarters
+		}
+		if f.Kinds&k == 0 {
+			return false
+		}
+	}
+	return !(f.NonScratch && a.Printed().HasSubtype("Scratch Company"))
 }

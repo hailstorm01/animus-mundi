@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: tests
+status: done
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
@@ -94,10 +94,24 @@ Names may be adjusted for clarity if needed. Record any rename in the Log.
 - **Deep cascade (board directive #11, `FR-TRG-004`), a required named case:** a trigger's damage kills a unit that has its own death trigger. That death trigger must resolve completely before the next item deeper in the stack. For example, the source has two deploy triggers, X above Y. X deals lethal damage to a chosen allied 1-health unit whose death trigger draws a card, and Y draws a card. The death trigger's draw takes the top card, and Y's draw takes the second. Name it `TestFR_TRG_004_*`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_TGT_001|TestFR_TGT_003|TestFR_KWD_002[bchk]_|TestFR_TRG_004_DeathTriggerFromTargetedDamage'`
+- `TestFR_TGT_001_OptionsAreExactlyTheEntitiesMeetingEveryCriterion` (15 subtests: allied, opposing, any, unit, structure, HQ, "structure or HQ", no kind, non-Scratch, conjunctions; single-option rows check that no question is asked and that the damage lands)
+- `TestFR_TGT_001_AllegianceIsRelativeToTheTriggersController`
+- `TestFR_TGT_001_SingleLegalTargetIsNotAskedAndTakesTheDamage`
+- `TestFR_TGT_001_TimeoutOnTwoOptionsDamagesExactlyOneOfThem`
+- `TestFR_TGT_001_LethalDamageKillsAtThatItemsSweep`
+- `TestFR_TGT_001_DamageToHeadquartersToZeroLosesTheMatchAtThatSweep`
+- `TestFR_TGT_001_TwoSlotsAskInSlotOrderAndEachStepHitsItsOwnSlot`
+- `TestFR_KWD_002h_OpposingWardUnitIsNotAnOption`, `..._AlliedWardUnitIsAnOption`, `..._OnlyWardedTargetMeansNoLegalTarget`
+- `TestFR_KWD_002b_ResistantReducesTargetedDamage`, `TestFR_KWD_002k_ArmorAbsorbsTargetedDamageOneForOne`, `TestFR_KWD_002c_StalwartDoesNotReduceNonCombatDamage`
+- `TestFR_TGT_003_NoLegalTargetAsksNothingDamagesNothingAndDeploys`
+- `TestFR_TGT_003_TargetGoneAtResolutionTakesNoDamageButOtherStepsRun`
+- `TestFR_TGT_003_PartialInvalidationResolvesForTheRemainingLegalTarget`
+- `TestFR_TRG_004_DeathTriggerFromTargetedDamageResolvesBeforeTheNextStackItem` (the named deep-cascade case)
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected. A synthetic-card builder for targeted triggers may go in the test file as setup.
+- `func (s *scene) putScratch(p PlayerID) *Asset`: places a face-down, Exhausted Scratch Company in `p`'s Reserves (a 1/1 Unit with subtypes Infantry and Scratch Company, no abilities, per `FR-ZON-005`) and returns it. It sets up state and asserts nothing.
+- The synthetic-card builders (`tgt`, `dmgTo`, `targetTrigger`, `scriptRefs`) live in the test file.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -106,9 +120,9 @@ Names may be adjusted for clarity if needed. Record any rename in the Log.
 - `pkg/engine/damage.go` (only if needed for a nil source)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes, because no card is defined.
+- [x] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes, because no card is defined.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (wave A2 task 1), with status `tests` for `rules-test-author`. Planned A2 order, with deck cards first per directive #14. Only this task is written, and the others stay unwritten until their dependencies are done:
@@ -118,3 +132,33 @@ Names may be adjusted for clarity if needed. Record any rename in the Log.
   4. Shape: "up to N", "other", optional "you may", `Value` from the source's power, and "all assets" (*Craterfall Ancient*, deck).
   5. Shape: the last-known effective power snapshot (*Necropolis Hunt*, deck; triggers directive #13).
   The card tasks follow each shape.
+- 2026-10-20 rules-test-author: Wrote the tests above and set status `tests-review`. Helper requested: `putScratch`. `go vet` fails only on the missing vocabulary (first error `ability.Allegiance`) and `putScratch`. `cardtown lint rules` passes. Left out or adapted:
+  - The deep-cascade example has Y "Scratch 1" instead of "Draw 1". Both draws go to the hand, so draws could not show which one took the top card. The ordering rule (`FR-TRG-004`) is the same.
+  - The re-verification case cannot show "no damage to the gone target", since a dead asset cannot be inspected. The test checks that nothing else takes damage and that the second `Draw 1` still happens.
+  - Damage through Resistant, Armor and Stalwart is named `TestFR_KWD_002b/002k/002c_*`, because those are the FRD lines that fix the numbers. Those IDs are not in this task's `requirements:`. The lead may want to add them.
+  - The HQ-loss test cites `FR-LAY-002`/`FR-CBT-003`, not a separate win-condition ID, so no test pins an FR-WIN-* line.
+  - The allied-unit option sets include the source itself, as the task's Lead decisions say. FRD 01 does not address it, and "other" is a later task.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests are in `targeting_test.go` (1d3b49f, with the task file in 76e60dc), and no existing test changed.
+  - The 15-row filter table checks each FR-TGT-001 criterion and their conjunctions through the recorded `DecideTarget` options. Single-option rows check the fast path instead.
+  - Ward is checked both ways, and an only-Warded board counts as no legal target.
+  - The Resistant, Armor and Stalwart checks fix non-combat mitigation. The HQ-to-0 loss stops the deeper trigger.
+  - FR-TGT-003 covers no target, a target gone at resolution, and partial invalidation, each with its untargeted Draw still running.
+  - The deep cascade (directive #11) shows order on named deck cards: the death-trigger Draw takes the top card, and the deeper trigger's Scratch takes the second. Swapping Y to Scratch is the right call.
+  - The tests reuse the existing helpers (`trigUnit`, `deployFromHand`, `mortal`, `killedTrigger`, `inZone`, `scratched`).
+  - **For the engineer:** build `putScratch` exactly as the kernel's Deploy Scratch Company does in `scratch` (`stack.go`). Use a real card `Instance` owned by `p` and an `Asset` with `FaceDown: true` and `Exhausted: true`, placed in Reserves. Don't make a synthetic card that merely carries a "Scratch Company" subtype. `NonScratch` must recognize real Scratch Companies.
+  - Next: dispatch `kernel-engineer` (tier sonnet).
+- 2026-10-20 kernel-engineer: Implemented; status `review`.
+  - Changed: `ability/ability.go` (vocabulary exactly as in the task, no renames); `stack.go` (`StackItem.Chosen []int`); `trigger.go` (`chooseTargets` called as each ability item is pushed in `flushTriggers`, after DecideOrder, one `DecideTarget` per slot via `g.choose`; `legalTarget` filter + Ward check; `resolveAbility` re-verifies each chosen asset, then `OpDealDamage` calls `dealDamage(source-or-nil, target, N, false)`); `scenario_test.go` (`putScratch`, built like `scratch` in stack.go: real Instance, FaceDown, Exhausted, in Reserves).
+  - Reused: `Decision`/`DecideTarget`/`g.choose` (fast path and fallback), `Printed().HasSubtype("Scratch Company")`, `g.Keywords(a).Ward`, `dealDamage`. `damage.go` unchanged: a nil source is safe because dealDamage only logs it with %s, and fmt prints a nil *Asset as <nil> (it recovers the String panic). Reviewer may prefer an explicit guard.
+  - Review points: option order is oldest asset first (by ID), because the tests pick index 0 and expect the source to survive. A slot with no legal target stores 0 and its steps skip. The Ward legality test is also applied at resolution.
+  - Gates: targeting tests pass; `go tool task check` green; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `cardtown sim` exit 0, "Every match terminated with all invariants holding". Default sim before and after: P0 66.0% / P1 30.0% / draws 4.0%, avg 30.2 turns (unchanged, no card defined).
+- 2026-10-20 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 552d4fe changes only `ability.go`, `trigger.go` and `stack.go` (`StackItem.Chosen`), plus the requested `putScratch` in `scenario_test.go`. `targeting_test.go` is unchanged since 1d3b49f.
+  - Rules fidelity:
+    - `legalTarget` checks the general conjunction: allegiance, Kinds from `Printed().Type`, and NonScratch from the face-down Scratch Company subtype. An opponent's Ward asset is never legal.
+    - Targets are chosen per slot at push time through `g.choose`, so the fast path and fallback come from T-0006.
+    - `resolveAbility` re-checks every slot before the steps run (FR-TGT-003), and `OpDealDamage` is non-combat `dealDamage`.
+    - Nothing special-cases a test input, and no card names appear (fences passes).
+  - Option order is by asset ID (oldest first). FRD 01 fixes no order for target options, so this deterministic choice is acceptable, and it is now the kernel convention. Note for later test authors: `TestFR_TGT_001_OptionsAreExactlyTheEntitiesMeetingEveryCriterion` picks option 0 in multi-option rows, so it depends on that order (in one row, option 0 must not be the 1-health source). New tests should pick by ref (`scriptRefs`), not by index.
+  - Minor, no change requested: a nil source is safe only because `fmt` prints a nil `*Asset` as `<nil>`. Add an explicit guard when `dealDamage` first reads its source.
+  - Gates re-run by the reviewer: 28 targeting results pass, and `go tool task check` exits 0. The sorted starter-sim and default-sim summaries are identical to `rework/executable-rules`, which is expected because no card defines targets yet, and every invariant holds.

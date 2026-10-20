@@ -63,6 +63,15 @@ func (s *scene) put(p PlayerID, zone Zone, c *Card) *Asset {
 	return a
 }
 
+// putScratch places a face-down, Exhausted Scratch Company in p's Reserves,
+// built as the kernel's Deploy Scratch Company does, and returns it.
+func (s *scene) putScratch(p PlayerID) *Asset {
+	a := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: unit("Filler", 1, 1, Keywords{}), Owner: p},
+		Controller: p, FaceDown: true, Exhausted: true}
+	s.g.placeOnBattlefield(a, ZoneReserves)
+	return a
+}
+
 // onTop puts new instances of cards on top of p's deck, cards[0] on top.
 func (s *scene) onTop(p PlayerID, cards ...*Card) []*Instance {
 	insts := make([]*Instance, len(cards))
