@@ -4,7 +4,7 @@ title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executa
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 2 of 4)
-status: tests
+status: done
 branch: m2/T-0012-scratch-draw-cards
 depends_on: [T-0011]
 claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
@@ -32,7 +32,10 @@ Three Animus units whose printed triggers make their controller Scratch or draw 
 - Each `Text` is the quoted line exactly. No new types, fields or logic. If a card seems to need one, set `blocked`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/cards_animus_test.go`, loaded with `s.card`. Controls (marked) pass before the definitions exist because nothing fires; the rest fail now.
+- Despoiler Larva: `AttackScratchesOne`, `ScratchResolvesBeforeCombatDamage` (lethal on a 19-damage HQ; the Scratch must still happen, FR-CBT-002 Step 2), `ScratchOnEmptyDeckDoesNothing` (control), `FaceDownCopyAttackingDoesNotScratch` (control, FR-ZON-005), `DefendingDoesNotScratch` (control).
+- Fungal Evangelist: `DeployScratchesTwo`, `DeployWithOneCardLeftScratchesItAndDoesNotLose`, `DeployOnEmptyDeckDoesNothing`, `DeathScratchesTwoOnItsControllersTurn`, `DeathOnOpponentsTurnScratchesForItsController`, `DeathOnEmptyDeckDoesNothing` (control), `FaceDownCopyDoesNotScratchWhenKilled` (control, FR-ZON-004).
+- Titanic Spore Carrier: `DeathScratchesFirstCardThenDrawsSecond`, `DrawFromEmptyDeckLosesAtThatSweep`, `ScratchTakesTheLastCardSoOnlyTheDrawLoses`, `FaceDownCopyDoesNothingWhenKilled` (control).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -42,12 +45,24 @@ Three Animus units whose printed triggers make their controller Scratch or draw 
 - `pkg/engine/cards/cards.go` (remove the three names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(DespoilerLarva|FungalEvangelist|TitanicSporeCarrier)'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `go run ./cmd/cardtown lint --all` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and the Animus executable count rises by the copies in the deck. Of these three only *Despoiler Larva* is in it (4 copies), so expect 5/50 → 9/50.
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(DespoilerLarva|FungalEvangelist|TitanicSporeCarrier)'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `go run ./cmd/cardtown lint --all` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and the Animus executable count rises by the copies in the deck. Of these three only *Despoiler Larva* is in it (4 copies), so expect 5/50 → 9/50.
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 2 of 4, grouped as controller Scratch/Draw triggers). Set `status: tests` for `rules-test-author`. After test review it goes to `ready` for `@kernel-engineer T-0012` (tier flash, Antigravity).
+- 2026-10-20 rules-test-author: Wrote 16 TestCard_* tests (listed under Tests) from the CSV text. 10 fail now; 6 are controls that pass until a definition fires wrongly. No helpers requested. Left out: a two-attack Larva test (the faceDownCount==1 check pins once per attack) and Evangelist trigger-ordering tests (its two triggers are never simultaneous).
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. 16 tests were appended to `cards_animus_test.go`, with no line of an existing test changed. They are written from the CSV text with the real cards.
+  - The Larva-versus-HQ case can only see the Scratch if Step 2 resolves before damage (FR-CBT-002).
+  - `killOnOpponentsTurn` arranges the deck before the turn passes, so the opponent's draw doesn't disturb it.
+  - The Carrier's Scratch-then-Draw order shows on named cards, and the one-card case separates a safe Scratch from a losing Draw (FR-KWD-002m, FR-WIN-001).
+  - The six controls pass today, and they guard against definitions that fire on face-down copies, on defense or on an empty deck.
+  - Next: **the user runs `@kernel-engineer T-0012` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-20 kernel-engineer: Implemented. animus.go: added definitions to animusDefs for "Despoiler Larva" (HookAttacks, OpScratch 1), "Fungal Evangelist" (HookDeploy and HookKilled, each OpScratch 2), and "Titanic Spore Carrier" (HookKilled, OpScratch 1 then OpDraw 1). cards.go: removed all three cards from NotYetExecutable allowlist while preserving sort order. Reused HookAttacks, HookDeploy, HookKilled, OpScratch, OpDraw, Value{N}, SubjectController (zero value); no new shapes or engine logic added. Gates: go test ./pkg/engine -run 'TestCard_(DespoilerLarva|FungalEvangelist|TitanicSporeCarrier)' passed (16/16), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go test ./... ok, go vet ./... clean, gofmt -l pkg cmd clean, cardtown lint --all passed. Starter deck sim reported P0 (Animus starter) main executable cards rose from 5/50 to 9/50 (4 copies of Despoiler Larva). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged as default sim runs Soulless vs Concordia). Reviewer: check that Fungal Evangelist correctly models the compound "deploys or is killed" trigger as two triggers with identical text and effect, and Titanic Spore Carrier executes its two steps in sequence.
+- 2026-10-20 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only `animus.go` (three `animusDefs` entries) and `cards.go` (three allowlist lines) changed. The test file is unchanged since `84a2d5e`.
+  - Fences: plain `ability` data, no new shape. *Fungal Evangelist* is two triggers (`HookDeploy`, `HookKilled`) under one `Text` line, and *Titanic Spore Carrier* runs Scratch then Draw in printed order.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, all `TestCard_*` plus `TestDefs_MatchRulesText` and `TestStarterSet_Executable` (24 pass, 0 fail), `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with Animus 9/50 executable (was 5/50); P0 wins went from 12.5% to 34.0%. Sorted plain `sim` output is identical (the default matchup is Soulless vs Concordia).
