@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: review
+status: done
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
@@ -120,9 +120,9 @@ All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_T
 - `pkg/engine/damage.go` (only if needed for a nil source)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes, because no card is defined.
+- [x] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes, because no card is defined.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (wave A2 task 1), with status `tests` for `rules-test-author`. Planned A2 order, with deck cards first per directive #14. Only this task is written, and the others stay unwritten until their dependencies are done:
@@ -152,3 +152,13 @@ All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_T
   - Reused: `Decision`/`DecideTarget`/`g.choose` (fast path and fallback), `Printed().HasSubtype("Scratch Company")`, `g.Keywords(a).Ward`, `dealDamage`. `damage.go` unchanged: a nil source is safe because dealDamage only logs it with %s, and fmt prints a nil *Asset as <nil> (it recovers the String panic). Reviewer may prefer an explicit guard.
   - Review points: option order is oldest asset first (by ID), because the tests pick index 0 and expect the source to survive. A slot with no legal target stores 0 and its steps skip. The Ward legality test is also applied at resolution.
   - Gates: targeting tests pass; `go tool task check` green; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `cardtown sim` exit 0, "Every match terminated with all invariants holding". Default sim before and after: P0 66.0% / P1 30.0% / draws 4.0%, avg 30.2 turns (unchanged, no card defined).
+- 2026-10-20 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 552d4fe changes only `ability.go`, `trigger.go` and `stack.go` (`StackItem.Chosen`), plus the requested `putScratch` in `scenario_test.go`. `targeting_test.go` is unchanged since 1d3b49f.
+  - Rules fidelity:
+    - `legalTarget` checks the general conjunction: allegiance, Kinds from `Printed().Type`, and NonScratch from the face-down Scratch Company subtype. An opponent's Ward asset is never legal.
+    - Targets are chosen per slot at push time through `g.choose`, so the fast path and fallback come from T-0006.
+    - `resolveAbility` re-checks every slot before the steps run (FR-TGT-003), and `OpDealDamage` is non-combat `dealDamage`.
+    - Nothing special-cases a test input, and no card names appear (fences passes).
+  - Option order is by asset ID (oldest first). FRD 01 fixes no order for target options, so this deterministic choice is acceptable, and it is now the kernel convention. Note for later test authors: `TestFR_TGT_001_OptionsAreExactlyTheEntitiesMeetingEveryCriterion` picks option 0 in multi-option rows, so it depends on that order (in one row, option 0 must not be the 1-health source). New tests should pick by ref (`scriptRefs`), not by index.
+  - Minor, no change requested: a nil source is safe only because `fmt` prints a nil `*Asset` as `<nil>`. Add an explicit guard when `dealDamage` first reads its source.
+  - Gates re-run by the reviewer: 28 targeting results pass, and `go tool task check` exits 0. The sorted starter-sim and default-sim summaries are identical to `rework/executable-rules`, which is expected because no card defines targets yet, and every invariant holds.
