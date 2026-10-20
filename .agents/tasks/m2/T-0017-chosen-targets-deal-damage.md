@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: tests-review
+status: ready
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
@@ -138,3 +138,12 @@ All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_T
   - Damage through Resistant, Armor and Stalwart is named `TestFR_KWD_002b/002k/002c_*`, because those are the FRD lines that fix the numbers. Those IDs are not in this task's `requirements:`. The lead may want to add them.
   - The HQ-loss test cites `FR-LAY-002`/`FR-CBT-003`, not a separate win-condition ID, so no test pins an FR-WIN-* line.
   - The allied-unit option sets include the source itself, as the task's Lead decisions say. FRD 01 does not address it, and "other" is a later task.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests are in `targeting_test.go` (1d3b49f, with the task file in 76e60dc), and no existing test changed.
+  - The 15-row filter table checks each FR-TGT-001 criterion and their conjunctions through the recorded `DecideTarget` options. Single-option rows check the fast path instead.
+  - Ward is checked both ways, and an only-Warded board counts as no legal target.
+  - The Resistant, Armor and Stalwart checks fix non-combat mitigation. The HQ-to-0 loss stops the deeper trigger.
+  - FR-TGT-003 covers no target, a target gone at resolution, and partial invalidation, each with its untargeted Draw still running.
+  - The deep cascade (directive #11) shows order on named deck cards: the death-trigger Draw takes the top card, and the deeper trigger's Scratch takes the second. Swapping Y to Scratch is the right call.
+  - The tests reuse the existing helpers (`trigUnit`, `deployFromHand`, `mortal`, `killedTrigger`, `inZone`, `scratched`).
+  - **For the engineer:** build `putScratch` exactly as the kernel's Deploy Scratch Company does in `scratch` (`stack.go`). Use a real card `Instance` owned by `p` and an `Asset` with `FaceDown: true` and `Exhausted: true`, placed in Reserves. Don't make a synthetic card that merely carries a "Scratch Company" subtype. `NonScratch` must recognize real Scratch Companies.
+  - Next: dispatch `kernel-engineer` (tier sonnet).
