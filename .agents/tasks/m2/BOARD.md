@@ -31,4 +31,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0002 | Scaffold the ability and cards packages | done |
 | T-0003 | Validate deck construction (FR-SET-001) | done |
 | T-0004 | Load starter decklists and run them in cardtown sim | done |
-| T-0005 | Make the pre-commit hook rebuild a stale CLI | ready |
+| T-0005 | Make the pre-commit hook rebuild a stale CLI | done |
