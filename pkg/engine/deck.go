@@ -3,8 +3,11 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -98,10 +101,91 @@ func ValidateDeck(d DeckList) error {
 
 // LoadDeck reads a decklist file and resolves its names against cards.
 func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
-	return DeckList{}, errors.New("not implemented")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return DeckList{}, fmt.Errorf("reading decklist %s: %w", path, err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var deck DeckList
+	hqSeen := false
+	seenCards := map[string]bool{}
+
+	for i, rawLine := range lines {
+		lineNum := i + 1
+		line := strings.TrimSpace(rawLine)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "HQ:") {
+			if hqSeen {
+				return DeckList{}, fmt.Errorf("line %d: multiple HQ lines", lineNum)
+			}
+			cardName := strings.TrimSpace(strings.TrimPrefix(line, "HQ:"))
+			if cardName == "" {
+				return DeckList{}, fmt.Errorf("line %d: missing HQ card name", lineNum)
+			}
+			c, ok := cards[cardName]
+			if !ok {
+				return DeckList{}, fmt.Errorf("line %d: unknown card name %q", lineNum, cardName)
+			}
+			deck.HQ = c
+			hqSeen = true
+			continue
+		}
+
+		idx := strings.IndexAny(line, " \t")
+		if idx == -1 {
+			return DeckList{}, fmt.Errorf("line %d: invalid entry format %q (expected <count> <card name>)", lineNum, line)
+		}
+		countStr := strings.TrimSpace(line[:idx])
+		cardName := strings.TrimSpace(line[idx+1:])
+		if cardName == "" {
+			return DeckList{}, fmt.Errorf("line %d: missing card name", lineNum)
+		}
+
+		count, err := strconv.Atoi(countStr)
+		if err != nil || count <= 0 {
+			return DeckList{}, fmt.Errorf("line %d: invalid copy count %q (must be a positive integer)", lineNum, countStr)
+		}
+
+		if seenCards[cardName] {
+			return DeckList{}, fmt.Errorf("line %d: duplicate card %q (lists must be canonical)", lineNum, cardName)
+		}
+		seenCards[cardName] = true
+
+		c, ok := cards[cardName]
+		if !ok {
+			return DeckList{}, fmt.Errorf("line %d: unknown card name %q", lineNum, cardName)
+		}
+
+		for range count {
+			deck.Main = append(deck.Main, c)
+		}
+	}
+
+	if !hqSeen {
+		return DeckList{}, fmt.Errorf("%s: missing HQ line", path)
+	}
+
+	return deck, nil
 }
 
 // SimDecks loads and validates decklists for the given factions and deck name.
 func SimDecks(cards map[string]*Card, decksDir, name string, factions [2]string) ([2]DeckList, error) {
-	return [2]DeckList{}, errors.New("not implemented")
+	var decks [2]DeckList
+	for i, f := range factions {
+		filename := fmt.Sprintf("%s-%s.txt", strings.ToLower(f), name)
+		path := filepath.Join(decksDir, filename)
+		d, err := LoadDeck(path, cards)
+		if err != nil {
+			return decks, err
+		}
+		if err := ValidateDeck(d); err != nil {
+			return decks, fmt.Errorf("%s: %w", filename, err)
+		}
+		decks[i] = d
+	}
+	return decks, nil
 }
