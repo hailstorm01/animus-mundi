@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: tests
+status: tests-review
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
@@ -60,7 +60,13 @@ const (
 - **Owner:** both players' units dying together each go back to their own owner's zone.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+- `pkg/engine/self_tracking_test.go` (all `TestFR_ZON_004_*`; the copy tests also cover FR-TRG-006):
+  - `DeathTriggerReturnsItselfToOwnersHand`, `DeathTriggerPutsItselfOnBottomOfOwnersDeck`, `DeathTriggerPutsItselfOnTopOfOwnersDeck`
+  - `OtherStepsOfTheSameEffectStillRun` (Draw plus return-self in one effect)
+  - `ReturnResolvingFirstFizzlesThePutOnBottom`, `PutOnBottomResolvingFirstFizzlesTheReturn` (two triggers on one unit, DecideOrder picks the order; each effect's Draw still runs)
+  - `AnotherCopyInDiscardIsNeverMoved` (both orders), `SingleTriggerMovesOnlyTheDeadInstanceNotASameNamedCopy`
+  - `EachPlayersCardGoesToItsOwnersZone` (both units die together)
+  - Not tested (out of scope per the task): SubjectSelf on non-death hooks; ReturnToHand/PutOnDeck with SubjectController.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -79,3 +85,4 @@ const (
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 3). Reshaped from "last-known effective state" to FR-ZON-004's self-relocating tracking, which is what the A1 cards *Unceasing Tide* and *Stormfront of Ideals* need. No A1 card reads last-known power or keywords, so that snapshot waits for its first reader (directive #13). `ReturnToHand` and `PutOnDeck` move here from task 4. Set `status: tests` for `rules-test-author`.
+- 2026-10-20 rules-test-author: Wrote 9 TestFR_ZON_004_* tests in self_tracking_test.go (listed under Tests). No helpers requested. `go vet` fails only on the missing ability vocabulary (OpReturnToHand, Subject, SubjectSelf, Bottom). Left out: the out-of-scope combinations. Fizzle tests assume the existing DecideOrder convention (first pick placed first, resolves last). Set `status: tests-review`.
