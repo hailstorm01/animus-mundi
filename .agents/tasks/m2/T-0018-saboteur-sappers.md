@@ -4,7 +4,7 @@ title: Make Saboteur and Chainbreaker Sappers executable
 kind: card
 tier: flash
 wave: A2 (task 2, card task 1)
-status: tests
+status: tests-review
 branch: m2/T-0018-saboteur-sappers
 depends_on: [T-0017]
 claims: [card:Saboteur, card:Chainbreaker Sappers, file:pkg/engine/cards/path.go]
@@ -35,10 +35,13 @@ Two Path units with targeted deploy damage now run in the kernel. Each is plain 
 - Each `Text` is the quoted line exactly. No new types, fields or logic. If a card seems to need one, set `blocked`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in, in a new file `pkg/engine/cards_path_test.go`, loading the real cards with `s.card`.)
+All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `ActDeploy`, targets chosen by asset (`scriptRefs`), options read from recorded Decisions. Test-file helpers: `deployPath`, `deploySaboteur`, `deploySappers`, `wantOptions`.
+- Saboteur: `EntersReservesAsThreeThree`, `BothClausesHitTheirOwnChosenTarget`, `AsksOpposingClauseFirstThenAlliedClause`, `ScratchCompanyIsNotAnOpposingOptionButIsAnAlliedOne`, `StructuresAndHeadquartersAreNotOptions`, `ItselfIsALegalAlliedTarget`, `TestFR_TGT_003_SaboteurWithNoOpposingNonScratchUnitStillDeploysAndAlliedClauseResolves`, `NoOpposingUnitStillResolvesAlliedClauseOnChosenUnit`, `OpposingWardUnitCannotBeChosen`, `OnlyOpposingUnitHasWardSoOpposingClauseDoesNothing`, `AlliedWardUnitIsAnAlliedOption`, `LethalDamageDestroysBothChosenUnits`, `SoleOpposingTargetIsNotAsked`, `TimeoutOnOpposingChoiceDamagesExactlyOneLegalUnit`.
+- Chainbreaker Sappers: `EntersReservesAsThreeTwo`, `OptionsAreStructuresAndHeadquartersOfEitherSideOnly`, `CanDamageEachKindOfLegalTarget` (4 subtests), `OpposingWardStructureCannotBeChosenButAlliedCan`, `LethalDamageDestroysAOneHealthStructure`, `DamagesHeadquartersWithoutEndingTheMatch`, `DamageToOpposingHeadquartersToZeroWinsTheMatch`, `TimeoutDamagesExactlyOneLegalTarget`, `SoleLegalTargetIsNotAsked` (gives the opposing HQ card Ward).
+- Left out: Saboteur's allied clause having no legal target (the Saboteur is always an allied unit, so it cannot occur at placement); a target lost before resolution (needs another effect; resolution-time verification is already pinned by `TestFR_TGT_003_*` in targeting_test.go); Armor/Resistant/Stalwart mitigation (pinned generically in targeting_test.go).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected.
+- None. The tests use only existing helpers.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go` (new)
@@ -53,3 +56,4 @@ Two Path units with targeted deploy damage now run in the kernel. Each is plain 
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 card task 1), with status `tests` for `rules-test-author`.
+- 2026-10-20 rules-test-author: Wrote 23 card tests in cards_path_test.go (see Tests for omissions). No helpers requested. All 23 fail today because the kernel rejects both deploys ("needs rules the kernel does not implement yet"), so no control test passes in isolation; every other engine test still passes. Status tests-review.
