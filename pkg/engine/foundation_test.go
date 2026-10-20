@@ -67,19 +67,17 @@ func TestFR_SET_003_DeciderDrawFirstGivesOpponentTurn1(t *testing.T) {
 }
 
 func TestFR_SET_003_TimeoutDefaultsToPlayFirst(t *testing.T) {
-	// A nil PlayFirst models the 15-second timeout. The decider is not
-	// observable then, so assert the consequence: the random decider takes
-	// Turn 1, which means both seats go first across seeds.
-	first := map[PlayerID]bool{}
+	// A nil PlayFirst models the 15-second timeout. The same seed picks the
+	// same decider, so record it from a run whose callback returns true and
+	// check that the nil run puts that decider on Turn 1.
 	for seed := uint64(1); seed <= 64; seed++ {
+		var decider PlayerID = -1
+		setupWith(t, seed, func(d PlayerID) bool { decider = d; return true })
 		g := setupWith(t, seed, nil)
-		if g.Active != g.FirstPlayer || g.Turn != 1 {
-			t.Fatalf("seed %d: active=%d first=%d turn=%d, want the first player active on Turn 1", seed, g.Active, g.FirstPlayer, g.Turn)
+		if g.FirstPlayer != decider || g.Active != decider || g.Turn != 1 {
+			t.Errorf("seed %d: decider %d timed out; first=%d active=%d turn=%d, want the decider to Play First by default",
+				seed, decider, g.FirstPlayer, g.Active, g.Turn)
 		}
-		first[g.FirstPlayer] = true
-	}
-	if !first[0] || !first[1] {
-		t.Errorf("Turn 1 players on timeout = %v, want the random decider (either seat) to Play First by default", first)
 	}
 }
 
@@ -283,8 +281,8 @@ func TestFR_CRD_101_HeadquartersCarriesCSVCharacteristics(t *testing.T) {
 	checkCommon(t, c, row, TypeHeadquarters)
 	checkSubtypes(t, c, row["subtypes"]) // "--" means zero subtypes
 	checkBody(t, c, row)
-	if !strings.EqualFold(c.Rarity, "Headquarters") {
-		t.Errorf("%s rarity = %q, want %q (FR-CRD-101 rarity legal values)", name, c.Rarity, "Headquarters")
+	if !strings.EqualFold(c.Rarity, row["rarity"]) {
+		t.Errorf("%s rarity = %q, want the CSV token %q (the schema spells Headquarters as HQ)", name, c.Rarity, row["rarity"])
 	}
 	if row["power"] == row["health"] || row["requisitionYield"] == row["tacticsYield"] {
 		t.Fatalf("test card %s no longer has distinct columns: %v", name, row)

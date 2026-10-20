@@ -4,7 +4,7 @@ title: Pin four implemented but untested requirements with scenario tests
 kind: shape
 tier: sonnet
 wave: A1 (board directive #16)
-status: tests
+status: tests-review
 branch: m2/T-0015-pin-implemented-rules
 depends_on: []
 claims: [tests:FR-SET-003, tests:FR-ZON-001, tests:FR-ZON-003, tests:FR-CRD-101]
@@ -59,3 +59,4 @@ Written in `pkg/engine/foundation_test.go` (17 tests):
   2. **`TestFR_SET_003_TimeoutDefaultsToPlayFirst` would also pass if the timeout default were Draw First.** Both seats go first across seeds either way. The decider is observable: the kernel is deterministic from a seed, and the decider is drawn before the callback is asked. So for each seed, run once with a callback that records the decider and returns true, and once with a nil callback. Then assert that the nil run's `FirstPlayer` equals the recorded decider.
   - Accepted as written: the omission of "before opening hands" (not observable), of control diverging from ownership (cited instead), and of the Attached zone and an uncapped Discard. The rest pins the FRD text through the public API.
   - Gate: these tests are meant to pass, so run `go tool task check`. It must be green before `tests-review`.
+- 2026-10-20 rules-test-author: Applied review notes. (1) `TestFR_CRD_101_HeadquartersCarriesCSVCharacteristics` now compares `c.Rarity` with the CSV token (HQ), like the other types, and no longer asserts the engine string is "Headquarters". (2) `TestFR_SET_003_TimeoutDefaultsToPlayFirst` now records the decider per seed from a callback that returns true, and asserts the nil-callback run has that decider as FirstPlayer and Active on Turn 1. All 17 tests pass; `go tool task check` is green.
