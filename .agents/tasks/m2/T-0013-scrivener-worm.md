@@ -4,7 +4,7 @@ title: Make Portent Scrivener and Despoiler Worm executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 3 of 4)
-status: tests-review
+status: ready
 branch: m2/T-0013-scrivener-worm
 depends_on: [T-0012]
 claims: [card:Portent Scrivener, card:Despoiler Worm]
@@ -63,3 +63,10 @@ All in `pkg/engine/cards_animus_test.go`, loading the real cards with `s.card(na
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 3 of 4). It stays `queued` until T-0012 is `done`, because they share `animus.go` and `cards.go`.
 - 2026-10-20 lead-architect: T-0012 is `done`, so status `tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote 11 tests (4 Scrivener, 7 Worm) in `cards_animus_test.go`; see Tests. No helpers requested (two local helpers added in the test file). Left out the APNAP case: the Worm's Resistant 2 stops a Scrivener from killing it, and the Scrivener triggers only on its controller's turn, so no clean state-observable setup exists. Status `tests-review`.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The 11 tests landed in `test(T-0013)` 4a78d82, which `rules-test-author` committed itself after a classifier outage blocked its Bash last session. They are appended to `cards_animus_test.go`, with no line of an existing test changed, and they use the real cards.
+  - The Scrivener's "on your turn" condition is checked both ways: it draws when killed attacking on its controller's turn, and draws nothing through `killOnOpponentsTurn`.
+  - `wormKilled` replaces the opponent's deck after that player's turn-start draw, so the two-card count is exact. The 20-power hitter still kills the 8/9 Worm through Resistant 2.
+  - The one-card and empty-deck cases separate a successful first draw from the losing second draw (FR-WIN-001). The face-down cases follow FR-ZON-004's last-known characteristics.
+  - Leaving out the APNAP case (FR-TRG-003) is accepted, for the reason given above.
+  - Re-run: 6 fail (cards undefined) and 5 controls pass.
+  - Next: **the user runs `@kernel-engineer T-0013` in the Antigravity agent (Gemini Flash)**.
