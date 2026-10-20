@@ -1,4 +1,4 @@
-# Game Rules - Functional Requirements Document (Master FRD v3.5)
+# Game Rules - Functional Requirements Document (Master FRD v3.6)
 **Authoritative Game Rules, Card Taxonomy, Zone Topology, Turn Structure & Keyword Dictionary**
 
 ---
@@ -13,6 +13,9 @@ To maintain strict separation of concerns across the specification suite:
 3. **Card Compiler (`03_Card_Compiler_FRD.md`)**: Translates authoring CSVs and rules text into compiled `blueprints.json` AST payloads.
 4. **Client-Engine Protocol & Networking (`04_Client_Engine_Protocol_Networking_FRD.md`)**: Defines the WebSocket/Protobuf wire protocol, session handshakes, fog-of-war serialization, and `.rec` replay format.
 5. **Headless Game Engine (`05_Headless_Game_Engine_FRD.md`)**: Specifies *how* the deterministic Go match kernel models entities in memory (`FR-ENT-001`–`FR-ENT-003`, `FR-SNP-101`) and executes the rules of `01` using the AST components of `02`.
+
+### Revision Summary (v3.5 -> v3.6): Trigger-Order Timeout Fallback (2026-10-20)
+1. **Default Order for Unanswered Trigger Ordering (`SVY-R7`, `FR-MOD-001`, `FR-TRG-003`)**: when a player does not order their own simultaneous triggers in time, they are placed in a fixed default order. This records the behavior the kernel already pins (`TestFR_TRG_003_FallbackIsCollectionOrder`), accepted by the user on 2026-10-19 and confirmed on 2026-10-20.
 
 ### Revision Summary (v3.4 -> v3.5): Starter Set Survey Rulings (2026-10-19)
 Rulings on the questions raised by the [M2 starter set ability survey](../design/m2_starter_set_ability_survey.md):
@@ -313,6 +316,7 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
    - *Modal Choices*: Automatically selects the first listed legal mode(s).
    - *Optional Triggers ("you may")*: Automatically declines the optional effect.
    - *Mandatory Multi-Option Targets*: Automatically selects a random legal target.
+   - *Ordering Own Simultaneous Triggers (`SVY-R7`, `FR-TRG-003`)*: Places that player's triggers in a fixed default order, not a random one. Triggers from different sources go by source position: the Headquarters first, then Reserves, then the Main Theater, each zone in the order its assets entered it. A single source's triggers go keyword triggers (such as **Aggressive N**) first, then its printed triggers in printed order. The first trigger in this order is placed first, so it resolves last.
 
 ---
 

@@ -15,7 +15,7 @@ FRD 01 is the rules source. This document names requirement IDs and never restat
 - **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems are about *when* targets are chosen, where FRD 01 and FRD 02 disagree (§4, R3–R4).
 - **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
 - **FRD 01 reach:** the starter set reaches **27 of the 30** unpinned FRD 01 requirements, including `FR-SET-001` because starter decks must be construction-legal (Q1). It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers).
-- **Rulings:** all survey questions (R1–R6, plus the R4a follow-up) were ruled on 2026-10-19 and are recorded in FRD 01 v3.5 as `SVY-R1`–`SVY-R6`. Nothing in the starter set is blocked.
+- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19 and R7 on 2026-10-20. They are recorded in FRD 01 as `SVY-R1`–`SVY-R7`. R8 is open but unreachable until a control-changing card is built. Nothing in the starter set is blocked.
 
 ---
 
@@ -63,6 +63,8 @@ Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are 
 | **R4a** | Follow-up to R4: may the same asset be chosen for more than one discarded card (for example 3 discards → 6 damage to one asset)? | Steel Rain | **Ruled: yes.** Each choice is independent, and each is its own damage instance (`SVY-R4`, `FR-TGT-001`). |
 | **R5** | Shifting Impossibility's replacement deals 1 damage to itself **during** a death sweep. If that is lethal, does it die in the same sweep (the sweep repeats until nothing changes) or only after the next stack item? | Shifting Impossibility | **Ruled.** Its controller orders the simultaneous deaths. Each is replaced in full, and the death sweep runs between them, so Impossibility dies as soon as a replacement leaves it lethal. Any remaining deaths then happen normally (`SVY-R5`, `FR-REP-001`). |
 | **R6** | Can "Choose two" pick the same mode twice? | Ambush Tactics | **Ruled: no**, unless the card explicitly allows it (`SVY-R6`, `FR-MOD-001`). |
+| **R7** | When a player times out (or has no chooser) while ordering their own simultaneous triggers, what order are they placed in? `FR-MOD-001` §6 had no fallback for this. | Any two simultaneous triggers of one player | **Ruled: a fixed default order**: by source position (Headquarters, Reserves, Main Theater, each in entry order), then keyword triggers before printed ones (`SVY-R7`, `FR-MOD-001`). Accepted 2026-10-19 as the lead's recommendation, confirmed 2026-10-20. |
+| **R8** | If the defender of a declared attack changes controller before the attack resolves (it is now the attacker's own asset), does the attack fizzle? `FR-CBT-002` does not say. The kernel currently fizzles it (`resolveAttack`). | Rhapsody's Hollow (deferred by board directive 14) | **Open.** Unreachable until a control-changing card is built. Recommendation: fizzle, matching "an attack may target only an opposing asset". |
 
 **Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
 
