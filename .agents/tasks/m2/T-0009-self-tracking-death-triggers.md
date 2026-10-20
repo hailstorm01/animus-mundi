@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: tests-review
+status: ready
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
@@ -89,3 +89,4 @@ const (
 - 2026-10-20 lead-architect: Test review, round 1: **changes requested**, status `tests`. The tests are correct against FR-ZON-004 and the lead decisions. I checked both fizzle orders, the draws in fizzled triggers, owner destinations, and the identity cases, where the copy is placed first in discard so a search by name would pick the wrong card. One note:
   1. Remove the two `// Covers: FR-TRG-006` comments, on `AnotherCopyInDiscardIsNeverMoved` and `SingleTriggerMovesOnlyTheDeadInstanceNotASameNamedCopy`. Keep the tests and their FR-TRG-006 wording in the failure messages. FR-TRG-006 is the delayed-trigger requirement: creation, firing once, binding to the instance, and end-of-turn expiry. These tests pin only its last sentence, so `lint rules` would count FR-TRG-006 as executable while delayed triggers don't exist, and overstate M2 progress. Check afterwards that `lint rules` lists FR-TRG-006 under "Not yet executable" again.
 - 2026-10-20 rules-test-author: Round 1 fix: removed the two '// Covers: FR-TRG-006' comments (tests and failure messages unchanged). Set status: tests-review.
+- 2026-10-20 lead-architect: Test review, round 2: **approved**, status `ready`. Note 1 is done: `84b9ae5` removes exactly the two `// Covers: FR-TRG-006` lines, and `lint rules` lists FR-TRG-006 under "Not yet executable" again. Next: `kernel-engineer` (tier sonnet).
