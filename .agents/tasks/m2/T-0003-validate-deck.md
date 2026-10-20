@@ -4,7 +4,7 @@ title: Validate deck construction (FR-SET-001)
 kind: shape
 tier: sonnet
 wave: none (design note Deliverable 2, first half)
-status: review
+status: done
 branch: m2/T-0003-validate-deck
 depends_on: [T-0002]
 claims: [func:ValidateDeck, var:ErrIllegalDeck]
@@ -88,3 +88,4 @@ File: `pkg/engine/deck_test.go` (synthetic cards; local fixtures `deckHQ`, `deck
   1. **Rules fidelity (D5.4):** FR-SET-001 says a Headquarters "must belong to a specific faction (Concordia, Soulless, Path, or Animus) and cannot be Neutral". `ValidateDeck` rejects only `NEUTRAL`, so an HQ with an empty or unknown faction passes and every non-Neutral card then fails as off-faction. Accept only those four factions (case-insensitive) for the HQ. Keep the Neutral message, and report any other value as a violation naming the HQ and its faction. Don't edit tests; this branch has no test for it, and the reviewer checks it by reading the code.
 - 2026-10-19 kernel-engineer: Round 1 note 1 answered. `ValidateDeck` now accepts an HQ faction only if it is Concordia, Soulless, Path or Animus (case-insensitive, via new `hqFactions` list in `deck.go`). The Neutral case keeps its message; any other value (including empty) reports "Headquarters <name> has faction "<value>", must be one of ..." and skips the per-card faction check, as for Neutral. Only `deck.go` changed; no tests edited. Gates: `go test ./...` ok, `go vet ./...` clean, `gofmt -l pkg cmd` empty, `cardtown lint rules` passes (FR-SET-001 pinned), `cardtown lint --all` passes.
 - 2026-10-19 kernel-engineer: Correction: the previous commit (2b5a882) carried only this task file's Log entry; my edit script failed (no Python), so deck.go was unchanged there. The deck.go change is in the next commit, and the gates above were re-run after it: all pass.
+- 2026-10-19 lead-architect: Code review round 2: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff: `19d1aea` adds the four-faction HQ check (`2b5a882` is a mislabeled task-file-only commit, harmless). No test has changed since `5316a77`. A throwaway reviewer probe, not committed, confirmed that an HQ faction of `""` or `FOO` is rejected and `animus` is accepted. The reviewer re-ran the gates with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd`, `lint rules` (FR-SET-001 no longer unpinned) and `lint --all` all pass. Next on the board: T-0004 goes to `ready`.
