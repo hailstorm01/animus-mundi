@@ -28,6 +28,7 @@ type StackItem struct {
 	Amount    int // StackAggressive: N
 
 	Trigger ability.Trigger // StackAbility: the ability resolving (Source is its source asset)
+	Chosen  []int           // StackAbility: asset ID chosen for each Trigger.Effect.Targets slot, 0 if none
 }
 
 func (g *Game) push(item *StackItem) {

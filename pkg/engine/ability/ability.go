@@ -38,8 +38,39 @@ type Trigger struct {
 
 // Effect is what a resolving ability does: its steps, in order.
 type Effect struct {
-	Steps []Step
+	Targets []Target // "chosen" clauses, chosen when the ability is placed on the stack (FR-TGT-001)
+	Steps   []Step
 }
+
+// Target is one "chosen" entity: exactly one, for now ("up to N" comes later).
+type Target struct {
+	Filter Filter
+}
+
+// Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
+type Filter struct {
+	Allegiance Allegiance // relative to the ability's controller
+	Kinds      Kinds      // zero means any asset
+	NonScratch bool       // excludes Scratch Company units
+}
+
+// Allegiance is whose side an entity is on, relative to the ability's controller.
+type Allegiance int
+
+const (
+	AllegianceAny      Allegiance = iota // the zero value
+	AllegianceAllied                     // controlled by the ability's controller
+	AllegianceOpposing                   // controlled by an opponent
+)
+
+// Kinds is a set of asset types; "structure or Headquarters" sets two bits.
+type Kinds int
+
+const (
+	KindUnit Kinds = 1 << iota
+	KindStructure
+	KindHeadquarters
+)
 
 // Op is one primitive step.
 type Op int
@@ -49,6 +80,7 @@ const (
 	OpDraw                       // its controller draws Amount cards (FR-WIN-001 applies to an empty deck)
 	OpReturnToHand               // put the Subject card into its owner's hand
 	OpPutOnDeck                  // put the Subject card into its owner's deck: on top, or on the bottom if Bottom
+	OpDealDamage                 // Amount non-combat damage to the Subject (FR-REP-004)
 )
 
 // Subject is what a step acts on.
@@ -58,6 +90,7 @@ const (
 	SubjectController Subject = iota // the ability's controller (the zero value; Scratch and Draw)
 	SubjectSelf                      // the ability's own source card, tracked by card instance (FR-ZON-004)
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
+	SubjectTarget                    // the entity chosen for Effect.Targets[Step.Target]
 )
 
 // Step applies one primitive.
@@ -66,6 +99,7 @@ type Step struct {
 	Amount  Value
 	Subject Subject
 	Bottom  bool // OpPutOnDeck: the bottom of the deck instead of the top
+	Target  int  // SubjectTarget: index into Effect.Targets
 }
 
 // Value is a number a step uses. Later shape tasks add other sources; the

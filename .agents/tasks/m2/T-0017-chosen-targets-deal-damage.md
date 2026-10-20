@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: in-progress
+status: review
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
@@ -147,3 +147,8 @@ All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_T
   - The tests reuse the existing helpers (`trigUnit`, `deployFromHand`, `mortal`, `killedTrigger`, `inZone`, `scratched`).
   - **For the engineer:** build `putScratch` exactly as the kernel's Deploy Scratch Company does in `scratch` (`stack.go`). Use a real card `Instance` owned by `p` and an `Asset` with `FaceDown: true` and `Exhausted: true`, placed in Reserves. Don't make a synthetic card that merely carries a "Scratch Company" subtype. `NonScratch` must recognize real Scratch Companies.
   - Next: dispatch `kernel-engineer` (tier sonnet).
+- 2026-10-20 kernel-engineer: Implemented; status `review`.
+  - Changed: `ability/ability.go` (vocabulary exactly as in the task, no renames); `stack.go` (`StackItem.Chosen []int`); `trigger.go` (`chooseTargets` called as each ability item is pushed in `flushTriggers`, after DecideOrder, one `DecideTarget` per slot via `g.choose`; `legalTarget` filter + Ward check; `resolveAbility` re-verifies each chosen asset, then `OpDealDamage` calls `dealDamage(source-or-nil, target, N, false)`); `scenario_test.go` (`putScratch`, built like `scratch` in stack.go: real Instance, FaceDown, Exhausted, in Reserves).
+  - Reused: `Decision`/`DecideTarget`/`g.choose` (fast path and fallback), `Printed().HasSubtype("Scratch Company")`, `g.Keywords(a).Ward`, `dealDamage`. `damage.go` unchanged: a nil source is safe because dealDamage only logs it with %s, and fmt prints a nil *Asset as <nil> (it recovers the String panic). Reviewer may prefer an explicit guard.
+  - Review points: option order is oldest asset first (by ID), because the tests pick index 0 and expect the source to survive. A slot with no legal target stores 0 and its steps skip. The Ward legality test is also applied at resolution.
+  - Gates: targeting tests pass; `go tool task check` green; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `cardtown sim` exit 0, "Every match terminated with all invariants holding". Default sim before and after: P0 66.0% / P1 30.0% / draws 4.0%, avg 30.2 turns (unchanged, no card defined).
