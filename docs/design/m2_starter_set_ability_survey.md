@@ -12,10 +12,10 @@ FRD 01 is the rules source. This document names requirement IDs and never restat
 
 - **82 cards in M2:** 40 Animus, 40 Path, and the 2 starter Headquarters (Animoceps Rager, Eternal Watchman). Rift and Encampment moved to M3 on 2026-10-19; their rows stay in §6 for reference. **9 already execute** (standalone keywords only), leaving **73 to model**.
 - **By FRD 02 ability type:** 33 triggered, 25 Maneuver effects, 5 activated, 8 continuous-only, 2 replacement watchers.
-- **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems are about *when* targets are chosen, where FRD 01 and FRD 02 disagree (§4, R3–R4).
+- **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems were about *when* targets are chosen (§4, R3–R4); since 2026-10-20 every target is locked on placement.
 - **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
 - **FRD 01 reach:** the starter set reaches **27 of the 30** unpinned FRD 01 requirements, including `FR-SET-001` because starter decks must be construction-legal (Q1). It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers).
-- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19 and R7 on 2026-10-20. They are recorded in FRD 01 as `SVY-R1`–`SVY-R7`. R8 is open but unreachable until a control-changing card is built. Nothing in the starter set is blocked.
+- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19 and R7 on 2026-10-20; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain). They are recorded in FRD 01 as `SVY-R1`–`SVY-R7`. R8 is open but unreachable until a control-changing card is built. Nothing in the starter set is blocked.
 
 ---
 
@@ -52,14 +52,14 @@ Each wave adds the shapes its cards need. A card is ready once every earlier wav
 
 ## 4. Ruling Questions
 
-Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are recorded in FRD 01 v3.5 under the `SVY-` IDs, and FRD 01 is the authority for them. Any future open item gets an `OPEN(SVY-…)` marker on the kernel's chosen default until it is ruled.
+Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are recorded in FRD 01 (v3.5 onward) under the `SVY-` IDs, and FRD 01 is the authority for them. Any future open item gets an `OPEN(SVY-…)` marker on the kernel's chosen default until it is ruled.
 
 | ID | Question | Cards | Status |
 | :--- | :--- | :--- | :--- |
 | **R1** | Does "moves to a new zone" or "moves to the Main Theater" include **entering** the battlefield? | Broken Horn Armorer, Chainbreaker Phalanx | **Ruled: no.** Only March and effects that say "move" (`SVY-R1`, `FR-ZON-002`). |
 | **R2** | Can an activated ability target the card it sacrificed as its cost? | Sinuous Growth, Ruin Partisans | **Ruled: no.** Targets and costs are committed together, before the card reaches the discard pile (`SVY-R2`, `FR-TGT-001`, `FR-ACT-001`). |
-| **R3** | Is "then return chosen allied Scratch Company unit" targeted before or after the Scratch? | Animoceps Spores | **Ruled: after.** The two-part effect resolves atomically (`SVY-R3`, `FR-TGT-001`). |
-| **R4** | One target taking 2 per discarded card, or a separate choice per card? | Steel Rain | **Ruled: a separate choice per card**, made after the discard (`SVY-R4`, `FR-TGT-001`). |
+| **R3** | Is "then return chosen allied Scratch Company unit" targeted before or after the Scratch? | Animoceps Spores, Steel Rain | **Ruled (revised 2026-10-20): neither; targets are locked on placement.** No target is chosen during resolution. Spores now reads "return an allied Scratch Company unit", an untargeted pick made after the Scratch from every allied Scratch Company unit. Steel Rain's discard is now an additional cost, so its targets are chosen with it (`SVY-R3`, `FR-TGT-001`). Originally ruled "after" on 2026-10-19. |
+| **R4** | One target taking 2 per discarded card, or a separate choice per card? | Steel Rain | **Ruled: a separate choice per card**, made on declaration together with the discard, which is now an additional cost (`SVY-R4`, revised with R3; `FR-TGT-001`). |
 | **R4a** | Follow-up to R4: may the same asset be chosen for more than one discarded card (for example 3 discards → 6 damage to one asset)? | Steel Rain | **Ruled: yes.** Each choice is independent, and each is its own damage instance (`SVY-R4`, `FR-TGT-001`). |
 | **R5** | Shifting Impossibility's replacement deals 1 damage to itself **during** a death sweep. If that is lethal, does it die in the same sweep (the sweep repeats until nothing changes) or only after the next stack item? | Shifting Impossibility | **Ruled.** Its controller orders the simultaneous deaths. Each is replaced in full, and the death sweep runs between them, so Impossibility dies as soon as a replacement leaves it lethal. Any remaining deaths then happen normally (`SVY-R5`, `FR-REP-001`). |
 | **R6** | Can "Choose two" pick the same mode twice? | Ambush Tactics | **Ruled: no**, unless the card explicitly allows it (`SVY-R6`, `FR-MOD-001`). |
@@ -108,7 +108,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Rhapsody's Embrace | C | Maneuver + additional cost | kill allied unit; `KILL` chosen opposing unit | `FR-TRN-003a` | |
 | Despoiler's Emergence | C | Maneuver | `DEAL_DAMAGE 4` all opposing assets in Main Theater; `DEAL_DAMAGE 2` all opposing non-Scratch assets in Reserves | | |
 | Rapturous Sermon | C | Maneuver | `MOVE_ZONE` all allied Scratch Company → Main Theater; `MODIFY_STAT` +2 until end of turn | `FR-LAY-001` snapshot locking | Named in FRD 01 |
-| Animoceps Spores | C | Maneuver | `SCRATCH 2`, then `RETURN_TO_HAND` chosen allied Scratch Company | `FR-TGT-001` (`SVY-R3`) | Target chosen after the Scratch |
+| Animoceps Spores | C | Maneuver | `SCRATCH 2`, then `RETURN_TO_HAND` an allied Scratch Company (untargeted) | `FR-TGT-001` (`SVY-R3`) | Untargeted pick after the Scratch; any allied Scratch Company |
 | Rhapsody's Hollow | D | Activated | T3 + exhaust + kill self → `GAIN_CONTROL` chosen opposing unit in Main Theater | `FR-ACT-001`, `FR-ZON-002`, `FR-ZON-003` | |
 | Sinuous Growth | D | Activated | T1 + kill self → `RETURN_TO_HAND` chosen Fungus or Plant card from discard | `FR-ACT-001` | R2 |
 | Cliff of Portents | D | Activated | R1 + T1 + exhaust → `SEARCH_DECK` any → hand, shuffle | `FR-DEK-001`, `FR-DEK-002` | |
@@ -150,7 +150,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Pincer Tactics | C | Maneuver | `DEAL_DAMAGE 1` up to 2 chosen allied units; `DEAL_DAMAGE 2` chosen non-Scratch asset | `FR-TGT-002` | Enables Unbowed |
 | Poisoned Rations | C | Maneuver | `MODIFY_STAT` −3 max health until end of turn | `FR-LAY-002` | |
 | Ambush Tactics | C | Maneuver, modal | choose two of: `KILL`, `RETURN_TO_HAND`, delegated `DEAL_DAMAGE` = power, `PUT_CARD_ON_DECK` top | `FR-MOD-001`, `FR-TGT-003` | R6; delegated source as on Soul Whip |
-| Steel Rain | C | Maneuver | `DISCARD_CARD` up to 3; `DEAL_DAMAGE 2` per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TGT-001` (`SVY-R4`) | One choice per discarded card; repeats allowed |
+| Steel Rain | C | Maneuver + additional cost | discard up to 3; `DEAL_DAMAGE 2` chosen asset per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TRN-003a`, `FR-TGT-001` (`SVY-R3`, `SVY-R4`) | Targets chosen with the discard; repeats allowed |
 | Boneyard Scavenger | D | Activated | T1 + exhaust + kill self → `RETURN_TO_HAND` chosen Maneuver card from discard | `FR-ACT-001` | |
 | Ruin Partisans | D | Activated | T2 + exhaust + kill self → `RETURN_TO_HAND` chosen unit card from discard | `FR-ACT-001` | R2 |
 | Encampment (HQ) | M3 | Activated | discard a card + exhaust → `DEAL_DAMAGE 1` to each of up to 2 chosen non-Scratch units | `FR-ACT-001`, `FR-TGT-002` | |

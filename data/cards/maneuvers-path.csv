@@ -15,5 +15,6 @@
 - Return chosen unit to its owner's hand.
 - Chosen unit deals damage equal to its power to another chosen unit.
 - Put chosen unit on top of its owner's deck.","RARE","false"
-"Steel Rain","MANEUVER","PATH","0","4","Discard up to 3 cards. For each card discarded this way, deal 2 damage to chosen asset.
+"Steel Rain","MANEUVER","PATH","0","4","As an additional cost to enact this maneuver, discard up to 3 cards.
+For each card discarded this way, deal 2 damage to chosen asset.
 Then, if you have no cards in hand, draw 2 cards.","RARE","false"

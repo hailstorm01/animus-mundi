@@ -30,7 +30,8 @@ Three packages. Imports go one way only: `engine` → `cards` → `ability`. Tha
 - `Activated`: `Costs` plus an `Effect` (`FR-ACT-001`, `FR-ACT-002`).
 - `Cost`: resources, exhaust self, kill self (survey G3), kill/exhaust a chosen allied asset, discard N, move a card between zones.
 - `Effect`: upfront `Targets`, then either `Steps` or `Modes` with `ChooseN` (`FR-MOD-001` §5, `SVY-R6`).
-- `Target`: a `Filter`, `Min`/`Max`, `Timing` (on placement, or on resolution for dependent clauses per `SVY-R3`/`SVY-R4`), `PerResult` (one choice per earlier outcome), and `Pool` for distributed values (`FR-TGT-002`).
+- `Target`: a `Filter`, `Min`/`Max`, always chosen on placement (`SVY-R3`), `PerResult` (one choice per cost outcome, such as each card discarded), and `Pool` for distributed values (`FR-TGT-002`).
+- Untargeted pick ("return an allied Scratch Company unit"): a `Filter` and count chosen as the step resolves, from everything that matches then; not a `Target`, so Ward and `FR-TGT-003` do not apply (`SVY-R3`).
 - `Filter`: a conjunction of criteria (`FR-TGT-001`): allegiance, card types, zone (including "same zone as source"), subtype in/out, non-Scratch, non-HQ, exclude self, readiness, stat comparisons.
 - `Step`: one primitive (`Op`: `Scratch`, `Draw`, `ReturnToHand`, `PutOnDeck`, `DealDamage`, `Heal`, `AddArmor`, `Kill`, `MoveZone`, `ModifyStat`, `GainControl`, `SearchDeck`, `RevealHand`, `Discard`, `DeployFree`, `LookTop`, `GrantKeyword`, `MorphScratch`, …) applied to a `Subject` (target slot, self, all matching a filter, or a player) with an `Amount Value` and an optional `Duration`.
 - `Value`: fixed N, source power, last-known power, a count of matching cards, or the count of results from an earlier step ("for each card discarded this way").

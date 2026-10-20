@@ -4,7 +4,7 @@
 Draw 2 cards.","COMMON","false"
 "Funeral Fungus","MANEUVER","ANIMUS","0","1","As an additional cost to enact this maneuver, exhaust a readied allied unit.
 Return chosen unit card from your discard pile to your hand.","UNCOMMON","false"
-"Animoceps Spores","MANEUVER","ANIMUS","0","2","Scratch 2, then return chosen allied Scratch Company unit to its owner's hand.","COMMON","false"
+"Animoceps Spores","MANEUVER","ANIMUS","0","2","Scratch 2, then return an allied Scratch Company unit to its owner's hand.","COMMON","false"
 "Conversion Spike","MANEUVER","ANIMUS","0","2","Deal 1 damage to chosen opposing unit, and chosen allied unit or structure heals 1.","UNCOMMON","false"
 "Deafening Aria","MANEUVER","ANIMUS","0","2","Deal 1 damage to all opposing units in the Main Theater.","COMMON","false"
 "Ensnaring Mist","MANEUVER","ANIMUS","0","2","Move chosen unit to its controller's Reserves.
