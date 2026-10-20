@@ -4,7 +4,7 @@ title: Scaffold the ability and cards packages
 kind: harness
 tier: sonnet
 wave: A1
-status: in-progress
+status: review
 branch: m2/T-0002-scaffold
 depends_on: [T-0001]
 claims: [package:ability, type:ability.Def, package:cards, var:cards.Defs, var:cards.NotYetExecutable, field:Card.Ability, loader:def-attach, test:TestDefs_MatchRulesText, test:TestStarterSet_Executable, helper:scene.card, linter:fences-scope]
@@ -97,3 +97,9 @@ The two new packages from the design note exist and are wired in: `pkg/engine/ab
 ## Log
 - 2026-10-19 lead-architect: Wrote the task, applying board directives #1 and #3. Harness kind on tier sonnet, so it skips `tests` and goes straight to `ready`. Grounding: 82 in-scope cards, 9 executable (listed above), so the allowlist starts at 73. `isFencesPath` in `cmd/cardtown/main.go` already matches any `pkg/engine/` `.go` path, so smart detection needs no change. `gofmt -l pkg cmd` is already clean, so T-0001 follow-up (3) is closed. Per directive #5, the user reviews this task before `kernel-engineer` is dispatched.
 - 2026-10-19 lead-architect: The user reviewed the task and approved dispatch (directive #5 applied). Dispatched `kernel-engineer` (Sonnet subagent).
+- 2026-10-19 kernel-engineer: Implemented on `m2/T-0002-scaffold` (commits: start, `test(T-0002)` stubs+tests, `feat(engine)`). Status: review.
+  - **Changed:** new `ability.Def{Text}` and `cards.Defs` / `cards.NotYetExecutable` (73 names, generated from the loader, sorted). `Card.Ability`; `LoadCards` now calls `loadCards(dir, cards.Defs)`, which reuses the old CSV reading (renamed `loadSheets`) and then attaches defs in sorted name order, removing one `Unsupported` occurrence per `Text` line (error naming card and line if no unclaimed match; nil map on error; unknown def names ignored). Fences: `filepath.WalkDir` over `pkg/engine` skipping the root `cards/` subtree, relative forward-slash paths, and hard errors when the matrix or survey is missing. Test helpers `realCard` and `s.card`.
+  - **Reused:** the existing CSV parser and `ParseKeywordLine` (unchanged), `Supported()` unchanged, fences `readLines`/sorting/reporting.
+  - **Tests:** loader cases 1-11 in `card_test.go` (`TestLoadCards_*`), helper cases 20-22 in `card_test.go` (`TestRealCard_*`, `TestScene_CardHelper`), coverage cases 12-19 in `defs_test.go`, fences cases 23-28 as `TestFences_Case21..25` plus the case-02 single-`[ERROR]` assertion.
+  - **Commands:** `go test ./...` ok; `go vet ./...` ok; `gofmt -l pkg cmd` empty; `TestLoadCardsFromRepositoryData -v` still 29 of 169; `go doc ./pkg/engine/ability` prints doc and `Def`; `lint fences` and `lint --all` exit 0; scratch `// Rift` file in `pkg/engine/ability/` made `lint` exit 1 (file deleted).
+  - **Reviewer notes:** (1) At the test commit, fence case 25-in-task (cards subtree and `_test.go` exempt, `TestFences_Case23`) already passes because current code skips subdirectories; it cannot fail without changing fences.go, so it is a third exception beyond case 12 and 27. Case 12 itself fails at the stub commit (stub checker returns a problem). (2) The checkers `checkStarterSet`/`checkDefs` and `inStarterScope` live in `defs_test.go`, since no non-test file is allowed for them. Scope is by name (excluding Rift and Encampment), because Animoceps Rager and Eternal Watchman are Headquarters-typed and must stay in scope. (3) In `fences.go` the two doc-parsing blocks are kept as bare `{ }` blocks after the new error returns to keep the diff small; tidy if preferred. (4) The `loadCards` stub at the test commit kept `LoadCards` working through a temporary `loadCardsOld`, removed in the feat commit.
