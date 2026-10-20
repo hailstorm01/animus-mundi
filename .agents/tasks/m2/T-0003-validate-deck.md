@@ -4,7 +4,7 @@ title: Validate deck construction (FR-SET-001)
 kind: shape
 tier: sonnet
 wave: none (design note Deliverable 2, first half)
-status: tests
+status: tests-review
 branch: m2/T-0003-validate-deck
 depends_on: [T-0002]
 claims: [func:ValidateDeck, var:ErrIllegalDeck]
@@ -81,3 +81,4 @@ File: `pkg/engine/deck_test.go` (synthetic cards; local fixtures `deckHQ`, `deck
 - 2026-10-19 lead-architect: Test review round 1: **returned for two notes.** The other 20 tests match FR-SET-001 and the lead decisions. Both notes are about isolation: each illegal-deck test must fail for exactly the rule it names, so that an implementation missing that rule fails the test.
   1. `TestFR_SET_001_HQInMainDeckIsIllegal`: the stray Headquarters keeps rarity `HQ`, so the unknown-rarity rule also rejects it (and that error names the card too). The test passes even with no Headquarters-in-main-deck check. Give the stray card a rarity of `COMMON`, so only the Headquarters prohibition can fire.
   2. `TestFR_SET_001_NeutralHQIsIllegal`: the main deck is 50 ANIMUS cards under a NEUTRAL Headquarters, so a faction-mismatch error fails the deck regardless, and its text may contain the HQ's name. Build the main deck from 50 NEUTRAL cards (legal under any HQ), so only the "Headquarters cannot be Neutral" rule can fire.
+- 2026-10-19 rules-test-author: Round 1 notes fixed. (1) `HQInMainDeckIsIllegal`: stray HQ now has rarity COMMON, so only the HQ-in-main-deck rule can fire. (2) `NeutralHQIsIllegal`: main deck is now 50 NEUTRAL cards, so only the Neutral-HQ rule can fire. No other changes. Next: lead-architect review.

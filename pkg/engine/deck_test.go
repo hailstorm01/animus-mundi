@@ -105,7 +105,7 @@ func TestFR_SET_001_HQMustBeHeadquartersCard(t *testing.T) {
 
 func TestFR_SET_001_NeutralHQIsIllegal(t *testing.T) {
 	d := legalDeck()
-	d.HQ = deckHQ("NEUTRAL")
+	d = DeckList{HQ: deckHQ("NEUTRAL"), Main: legalMain(50, "NEUTRAL")}
 	wantIllegal(t, d, "a Neutral Headquarters", d.HQ.Name)
 }
 
@@ -113,6 +113,7 @@ func TestFR_SET_001_HQInMainDeckIsIllegal(t *testing.T) {
 	d := legalDeck()
 	extra := deckHQ("ANIMUS")
 	extra.Name = "Deck Stray HQ"
+	extra.Rarity = "COMMON" // isolate: only the HQ-in-main-deck rule may fire
 	d.Main = append(d.Main, extra)
 	wantIllegal(t, d, "a Headquarters card in the main deck", "Deck Stray HQ")
 }
