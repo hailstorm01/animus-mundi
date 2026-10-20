@@ -4,7 +4,7 @@ title: Make Spoil Forest Creeper executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: first card task)
-status: ready
+status: in-progress
 branch: m2/T-0011-spoil-forest-creeper
 depends_on: [T-0010]
 claims: [card:Spoil Forest Creeper, file:pkg/engine/cards/animus.go]
