@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -20,6 +21,9 @@ var copyLimit = map[string]int{
 	"RARE":     2,
 	"MYTHIC":   1,
 }
+
+// hqFactions are the factions a Headquarters may belong to (FR-SET-001).
+var hqFactions = []string{"CONCORDIA", "SOULLESS", "PATH", "ANIMUS"}
 
 func illegalDeck(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrIllegalDeck, fmt.Sprintf(format, args...))
@@ -43,6 +47,8 @@ func ValidateDeck(d DeckList) error {
 		errs = append(errs, illegalDeck("%s is not a Headquarters card", d.HQ.Name))
 	case strings.EqualFold(d.HQ.Faction, "NEUTRAL"):
 		errs = append(errs, illegalDeck("Headquarters %s cannot be Neutral", d.HQ.Name))
+	case !slices.ContainsFunc(hqFactions, func(f string) bool { return strings.EqualFold(f, d.HQ.Faction) }):
+		errs = append(errs, illegalDeck("Headquarters %s has faction %q, must be one of Concordia, Soulless, Path or Animus", d.HQ.Name, d.HQ.Faction))
 	default:
 		hqFaction = d.HQ.Faction
 	}
