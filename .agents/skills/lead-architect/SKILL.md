@@ -294,7 +294,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 
 #### D2. Writing tasks (avoid duplicate work)
 0. **Directives first:** read the `Directives for the Lead` table in `BOARD.md`. Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit. A directive with status `waiting: <trigger>` is applied only when its trigger happens. Check the waiting ones whenever the mode or milestone changes. If a directive conflicts with the design note or FRD 01, stop and ask the user.
-1. Take work in the order the milestone's plan gives (M2: the survey's waves). Write a task only when everything it `depends_on` is `done`, or explicitly queued ahead of it.
+1. Take work in the order of the design note's `Deliverables` list (M2: `docs/architecture/m2-ability-model.md`). Use the survey's waves only to order the work inside a wave deliverable. Write a task only when everything it `depends_on` is `done`, or explicitly queued ahead of it.
 2. **Kinds and tiers:**
    - `shape` tasks add machinery: a hook, an effect primitive, a condition, a targeting mode, a layer or a replacement step. They use tier `sonnet`.
    - `card` tasks only combine shapes that are already `done`. They use tier `flash`.
