@@ -27,5 +27,5 @@ Instructions from the user or a readiness review that the lead applies before wr
 | :--- | :--- | :--- |
 | T-0001 | Add a fences check to cardtown lint | done |
 | T-0002 | Scaffold the ability and cards packages | done |
-| T-0003 | Validate deck construction (FR-SET-001) | tests |
-| T-0004 | Load starter decklists and run them in cardtown sim | queued |
+| T-0003 | Validate deck construction (FR-SET-001) | done |
+| T-0004 | Load starter decklists and run them in cardtown sim | ready |
