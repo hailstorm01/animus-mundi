@@ -4,7 +4,7 @@ title: Fire death triggers from the death sweep, placed in APNAP order
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2b)
-status: review
+status: done
 branch: m2/T-0008-death-triggers
 depends_on: [T-0007]
 claims: [hook:killed, func:fire-killed, invariant:pending-buffer-empty, invariant:no-invalid-answer]
@@ -77,14 +77,19 @@ All in `pkg/engine/death_trigger_test.go` (needs only `ability.HookKilled`; `go 
 - `pkg/engine/playout.go` (the two invariants)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_TRG_00[234]|TestFR_ZON_004|TestPlayout'`
-- [ ] T-0006 and T-0007 tests still pass unchanged
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `go run ./cmd/cardtown lint --all` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_TRG_00[234]|TestFR_ZON_004|TestPlayout'`
+- [x] T-0006 and T-0007 tests still pass unchanged
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `go run ./cmd/cardtown lint --all` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 2b). Applies directive #10 to deaths in one sweep, settling the open point in T-0007's review: fire in `deathSweep`'s battlefield-order loop, with no sort in the flush. Set `status: tests` for `rules-test-author`. Don't pin which player is *asked* first when both have two or more triggers. FRD 01 fixes placement order, not the order of the questions.
 - 2026-10-20 rules-test-author: Wrote the T-0008 tests in `pkg/engine/death_trigger_test.go` (listed under Tests). No helpers requested. Left out: the pending-buffer invariant (unobservable externally). Not pinned: which player is asked first when both have 2+ triggers. Option indexing in the Berserk ordering test assumes collection order (battlefield order, then printed), per directive #10.
 - 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests match FR-TRG-002, FR-TRG-003, FR-TRG-004 and the leaves-battlefield bullet of FR-ZON-004, plus directive #10. The empty-deck "who loses" construction is a clean observation of cross-player APNAP, and it is checked on both players' turns. The Berserk constructions rely on Theater `put` order (Berserker, Defender, Bystander), which is battlefield order. The face-down case has a face-up control. The playout controls end by decking, because every deploy draws and scratches. Setting `s.g.choosers[1]` directly is setup only. The pending-buffer invariant can't be seen from outside, so it is reviewed in code. Next: `kernel-engineer` (tier sonnet).
 - 2026-10-20 kernel-engineer: Implemented. Added `ability.HookKilled`. Reuse: generalized `fireDeploy` into `fireHook(a, hook)` in trigger.go; `fireDeploy` stays as a one-line wrapper (its caller is in stack.go, outside Allowed Files) and `fireKilled` is the new wrapper. `deathSweep` calls `fireKilled(a)` before `leaveBattlefield(a)` in the existing `dying` loop (battlefield order, face-down fires nothing). `flushTriggers` untouched. `CheckInvariants` now reports a non-empty `g.pending`; `Playout` scans the log entries added by each action and errors with turn, action kind and detail on any `invalid-answer`. Commands: `go test ./...` ok; `go vet ./...` clean; `gofmt -l pkg cmd` empty; `cardtown lint --all` pass; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exit 0. Plain `sim` output equals the integration branch's after sorting lines (a line pair's order varies run to run even on one build, so raw diff is noisy). Reviewer: check the HQ-destroyed-plus-death-trigger path (match over discards buffer).
+- 2026-10-20 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only the four allowed files changed, and no test file changed after `629cd13`. Engine code contains no card names.
+  - Fidelity: `fireHook` generalizes `fireDeploy`, so there is no duplicated logic. `deathSweep` fires each asset's death triggers before it leaves, in `dying` (battlefield) order, which matches directive #10 without a sort. `Playout` checks only the log entries the current action added. `CheckInvariants` reports a non-empty buffer.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, the task's test filter, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `lint rules` stays at 37 of 62, because FR-TRG-002, FR-TRG-003 and FR-ZON-004 already had tests; this task adds edge cases. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0.
+  - Sim comparison: the engineer was right. Plain `sim` output is not stable between runs, because `cmd/cardtown/main.go:258` ranges over the `Reasons` map; 1 of 5 runs on one build differed. This predates the task. My byte-identical checks for T-0006 and T-0007 were lucky. Sorted output is identical to the integration branch. Board directive #12 fixes it.
