@@ -38,8 +38,14 @@ func Playout(g *Game, policies [2]Policy, maxTurns int) (PlayoutResult, error) {
 		}
 		legal := g.LegalActions()
 		a := policies[g.Active](g, legal)
+		logged := len(g.Log)
 		if err := g.Apply(a); err != nil {
 			return res, fmt.Errorf("turn %d: policy chose an action LegalActions offered but Apply rejected: %w", g.Turn, err)
+		}
+		for _, e := range g.Log[logged:] {
+			if e.Kind == "invalid-answer" {
+				return res, fmt.Errorf("turn %d after %s: a chooser answer was rejected: %s", g.Turn, a.Kind, e.Detail)
+			}
 		}
 		res.Actions++
 		if err := g.CheckInvariants(); err != nil {
@@ -107,6 +113,9 @@ func (g *Game) CheckInvariants() error {
 	}
 	if !g.Outcome.Over && len(g.Stack) != 0 {
 		return fmt.Errorf("stack not empty between actions")
+	}
+	if len(g.pending) != 0 {
+		return fmt.Errorf("%d fired triggers left in the pending buffer between actions", len(g.pending))
 	}
 	return nil
 }

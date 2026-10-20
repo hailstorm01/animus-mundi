@@ -71,6 +71,7 @@ func (g *Game) deathSweep() {
 		}
 	}
 	for _, a := range dying {
+		g.fireKilled(a)
 		g.leaveBattlefield(a)
 		owner := g.Players[a.Inst.Owner]
 		owner.Discard = append(owner.Discard, a.Inst)

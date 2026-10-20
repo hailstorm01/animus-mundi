@@ -17,6 +17,7 @@ type Hook int
 
 const (
 	HookDeploy Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
+	HookKilled                 // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
 )
 
 // Trigger is one printed triggered ability.

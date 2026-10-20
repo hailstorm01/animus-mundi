@@ -16,7 +16,16 @@ type pendingTrigger struct {
 
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
 // is a's controller now. They wait for the flush after the item's sweep.
-func (g *Game) fireDeploy(a *Asset) {
+func (g *Game) fireDeploy(a *Asset) { g.fireHook(a, ability.HookDeploy) }
+
+// fireKilled buffers a's own death triggers. The deathSweep calls it before a
+// leaves the battlefield, so the controller is a's last-known controller. A
+// face-down asset fires nothing (FR-ZON-004).
+func (g *Game) fireKilled(a *Asset) { g.fireHook(a, ability.HookKilled) }
+
+// fireHook buffers a's own triggers for hook in printed order. A face-down
+// asset has no printed abilities.
+func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 	if a.FaceDown {
 		return
 	}
@@ -25,7 +34,7 @@ func (g *Game) fireDeploy(a *Asset) {
 		return
 	}
 	for i, t := range def.Triggers {
-		if t.Hook != ability.HookDeploy {
+		if t.Hook != hook {
 			continue
 		}
 		g.pending = append(g.pending, pendingTrigger{
