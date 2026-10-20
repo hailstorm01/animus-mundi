@@ -34,6 +34,7 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
 3. **Search for reuse:** for each thing you plan to add, search `pkg/engine` for an existing equivalent and note what you found in the Log.
 4. **Harness tasks only:** before any implementation, write one test per item under `Acceptance Cases`, run them to confirm they fail, and commit them as `test(T-NNNN): <summary>`. After that commit, those tests are protected exactly like a test author's tests.
 5. **Implement:** first add the requested helpers in `scenario_test.go`, then the smallest change in the allowed files that makes the tests pass. Follow the surrounding code's naming, comment density and idioms.
+   - **Edit with the editor's edit tool**, not `sed`, `perl` or other shell substitutions. A substitution whose pattern doesn't match changes nothing and reports no error. If you must use one, check right afterwards that the file changed.
 6. **Verify:** run every command under `Done When`. All must pass:
    ```powershell
    go test ./...
@@ -46,4 +47,4 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
    - a test seems to contradict FRD 01;
    - the change needs a file outside `Allowed Files`;
    - two honest attempts have failed to make the tests pass.
-8. **Hand off:** commit on the task branch as `feat(<area>): <summary> (T-NNNN)`, where `<area>` is `engine` or the tooling package. Set `status: review`, and append a Log entry: what you changed, what you reused, the commands you ran with their results, and anything the reviewer should look at closely. When fixing review notes (`changes`), answer each numbered note in the Log.
+8. **Hand off:** before committing, run `git diff` and confirm that every change you plan to report is actually there. This includes each acceptance case, each requested helper, and each review note being answered. Then commit on the task branch as `feat(<area>): <summary> (T-NNNN)`, where `<area>` is `engine` or the tooling package. Set `status: review`, and append a Log entry describing what the diff shows, not what you intended: what you changed, what you reused, the commands you ran with their results, and anything the reviewer should look at closely. When fixing review notes (`changes`), answer each numbered note in the Log.

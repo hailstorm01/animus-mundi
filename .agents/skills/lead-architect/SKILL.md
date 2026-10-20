@@ -299,6 +299,8 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
    - `harness` tasks change tooling or test helpers. Use tier `flash` unless the work is subtle. Instead of tests, the lead writes `Acceptance Cases` (input → expected result), one per behavior and failure mode. The engineer turns them into tests.
 3. **Claims:** every shape a task creates is listed in `claims:`. Never open a task whose claims overlap an open task's claims. Before writing a shape task, search `pkg/engine` and the `done` tasks for an existing equivalent.
 4. **Size:** a card task covers one card, or a few cards with identical shapes. A shape task covers one shape plus the cards that first exercise it. If the `Allowed Files` list exceeds four non-test files, split the task.
+   - **Test files hold only tests and setup.** Code that tests exercise (checkers, validators, parsers) goes in a non-test file, never in a `_test.go` file. That way "tests are protected after the test commit" stays a clean rule.
+   - **Editing an existing test** (one from an earlier task) is allowed only when the task names that test and the exact change under `Tests` or `Acceptance Cases`. The change lands in the `test(T-NNNN)` commit, like any new test.
 5. **Mode:** in `serial` mode, at most one task is in `tests`, `in-progress` or `changes`. Switch to `parallel` (one worktree per task) only after the user agrees, and only for tasks with disjoint claims and allowed files.
 
 #### D3. Dispatching
@@ -312,7 +314,8 @@ Check each test against the FRD 01 text and rulings it cites. Wrong expected out
 
 #### D5. Reviewing code (`review`)
 Review `git diff <integration-branch>...<task-branch>`:
-1. **Scope:** only `Allowed Files` changed, plus the requested helpers in `scenario_test.go`. No test written by `rules-test-author`, and no test in a harness task's `test(T-NNNN)` commit, is modified or deleted afterwards. For harness tasks, the tests cover every acceptance case, and each test failed before the implementation commit.
+1. **Scope:** only `Allowed Files` changed, plus the requested helpers in `scenario_test.go`. No test written by `rules-test-author`, and no test in a harness task's `test(T-NNNN)` commit, is modified or deleted afterwards. For harness tasks, the tests cover every acceptance case, and each test failed before the implementation commit. A task-authorized edit to an existing test is in the `test(T-NNNN)` commit, not a later one.
+   - **Verify against the diff, not the Log.** Check each acceptance case, requested change and review note against `git diff` and the test commit. An engineer's Log describes what it meant to do, and edits can fail silently (T-0002 round 1: a shell substitution matched nothing, and the Log reported it done).
 2. **Fences:** no engine code branches on, or contains, a card name. No new shape in a card task. No `OPEN(…)` marker without a matching matrix or survey item.
 3. **Reuse:** nothing duplicates an existing shape or helper. Name the existing one in the note if it does.
 4. **Rules fidelity:** the code implements the cited requirements generally, not just the tested cases, and does not special-case test inputs.

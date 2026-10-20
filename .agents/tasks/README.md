@@ -33,6 +33,8 @@ queued → tests → tests-review → ready → in-progress → review → done
 
 **Harness tasks** (tooling, linters, test helpers) skip `tests` and `tests-review`, because `rules-test-author` only tests game rules. The lead writes the task's `Acceptance Cases`. The engineer turns them into tests, commits those first as `test(T-NNNN): …`, then implements. The lead reviews tests and code together at `review`. A harness task goes `queued → ready → in-progress → review → done`.
 
+**Test files hold only tests and setup.** Code that the tests exercise goes in non-test files. An edit to a test from an earlier task happens only when the task names it, and it lands in the `test(T-NNNN)` commit.
+
 **One at a time (current mode):** at most one task is in `tests`, `in-progress` or `changes`. Parallel work, with one git worktree per task, starts only when the lead says so in the milestone's `BOARD.md`.
 
 ## Task File Template (`.agents/tasks/m2/T-NNNN-<slug>.md`)
