@@ -4,7 +4,7 @@ title: Scaffold the ability and cards packages
 kind: harness
 tier: sonnet
 wave: A1
-status: review
+status: done
 branch: m2/T-0002-scaffold
 depends_on: [T-0001]
 claims: [package:ability, type:ability.Def, package:cards, var:cards.Defs, var:cards.NotYetExecutable, field:Card.Ability, loader:def-attach, test:TestDefs_MatchRulesText, test:TestStarterSet_Executable, helper:scene.card, linter:fences-scope]
@@ -112,3 +112,4 @@ The two new packages from the design note exist and are wired in: `pkg/engine/ab
   2. `realCard`'s doc comment moved from the var block onto `func realCard`.
   3. Bare `{ }` blocks in `fences.go` removed and dedented; the two `lines` variables are now `matrixLines` and `surveyLines` to avoid a redeclaration. No behavior change.
   Gates: `go test ./...` ok, `go vet ./...` ok, `gofmt -l pkg cmd` empty, `TestLoadCardsFromRepositoryData` still 29 of 169, `lint fences` and `lint --all` exit 0, scratch `// Rift` in `pkg/engine/ability/` made `lint` exit 1 (file deleted).
+- 2026-10-19 lead-architect: Review round 2: **approved**, merged into `rework/executable-rules` with `--no-ff`. All three round-1 notes are fixed in `78d50f6`: case 27 asserts exactly one `[ERROR]` line, the `realCard` doc comment sits on the function, and the bare blocks are gone (`git diff -w` shows only the dedent and the `matrixLines`/`surveyLines` renames). The reviewer re-ran every Done When gate with `-count=1`, and all pass. Process note for later tasks: the round-1 hand-back claimed an edit that had silently failed, so reviews keep checking each acceptance case against the diff rather than against the Log.
