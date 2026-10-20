@@ -4,7 +4,7 @@ title: Load starter decklists and run them in cardtown sim
 kind: harness
 tier: flash
 wave: none (design note Deliverable 2, second half)
-status: review
+status: done
 branch: m2/T-0004-starter-decklists
 depends_on: [T-0003]
 claims: [format:decklist, func:LoadDeck, data:starter-decklists, cli:sim-deck]
@@ -101,3 +101,9 @@ Fixture decklists are written in `t.TempDir()`. Synthetic `cards` maps are fine 
     - `go run ./cmd/cardtown sim -games 20` -> PASS (exit 0, stress deck behavior unchanged)
     - `go run ./cmd/cardtown lint --all` -> PASS
   - Reviewer note: Check the two decklist files row-by-row against the design note tables in `docs/architecture/m2-ability-model.md`.
+- 2026-10-19 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only the Allowed Files changed, and no test changed after `344232d`.
+  - Decklists: both files were diffed mechanically against the design note's Starter Decks tables. All 44 rows match (copies and names), both decks are 50 cards, and the HQs are right.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 and reports 1/50 and 6/50 executable, which matches the 9 executable starter cards. `sim -deck starter -p0 SOULLESS` prints `[ERROR]` with the path and exits 1. Plain `sim` output is byte-identical to the integration branch.
+  - Accepted deviation: cases 4 and 8 passed at the stub commit, because the stub returned an error for every call and those cases only require an error. The tests can still fail against a wrong implementation. The weakness is in the lead's acceptance cases, which did not ask those errors to name anything. From now on, error acceptance cases say what the error must name (line, card or path), so an always-error stub cannot pass them.
+  - Non-blocking follow-up (board directive #8): `LoadDeck` parse errors name the line but not the file, so a bad line seen through `SimDecks` doesn't say which decklist it is in.
