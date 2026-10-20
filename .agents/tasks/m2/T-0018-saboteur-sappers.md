@@ -4,7 +4,7 @@ title: Make Saboteur and Chainbreaker Sappers executable
 kind: card
 tier: flash
 wave: A2 (task 2, card task 1)
-status: ready
+status: in-progress
 branch: m2/T-0018-saboteur-sappers
 depends_on: [T-0017]
 claims: [card:Saboteur, card:Chainbreaker Sappers, file:pkg/engine/cards/path.go]
