@@ -4,7 +4,7 @@ title: Make Portent Scrivener and Despoiler Worm executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 3 of 4)
-status: ready
+status: in-progress
 branch: m2/T-0013-scrivener-worm
 depends_on: [T-0012]
 claims: [card:Portent Scrivener, card:Despoiler Worm]
