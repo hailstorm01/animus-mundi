@@ -4,7 +4,7 @@ title: Fire death triggers from the death sweep, placed in APNAP order
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2b)
-status: tests-review
+status: ready
 branch: m2/T-0008-death-triggers
 depends_on: [T-0007]
 claims: [hook:killed, func:fire-killed, invariant:pending-buffer-empty, invariant:no-invalid-answer]
@@ -86,3 +86,4 @@ All in `pkg/engine/death_trigger_test.go` (needs only `ability.HookKilled`; `go 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 2b). Applies directive #10 to deaths in one sweep, settling the open point in T-0007's review: fire in `deathSweep`'s battlefield-order loop, with no sort in the flush. Set `status: tests` for `rules-test-author`. Don't pin which player is *asked* first when both have two or more triggers. FRD 01 fixes placement order, not the order of the questions.
 - 2026-10-20 rules-test-author: Wrote the T-0008 tests in `pkg/engine/death_trigger_test.go` (listed under Tests). No helpers requested. Left out: the pending-buffer invariant (unobservable externally). Not pinned: which player is asked first when both have 2+ triggers. Option indexing in the Berserk ordering test assumes collection order (battlefield order, then printed), per directive #10.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests match FR-TRG-002, FR-TRG-003, FR-TRG-004 and the leaves-battlefield bullet of FR-ZON-004, plus directive #10. The empty-deck "who loses" construction is a clean observation of cross-player APNAP, and it is checked on both players' turns. The Berserk constructions rely on Theater `put` order (Berserker, Defender, Bystander), which is battlefield order. The face-down case has a face-up control. The playout controls end by decking, because every deploy draws and scratches. Setting `s.g.choosers[1]` directly is setup only. The pending-buffer invariant can't be seen from outside, so it is reviewed in code. Next: `kernel-engineer` (tier sonnet).
