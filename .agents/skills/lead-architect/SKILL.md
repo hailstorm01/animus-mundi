@@ -324,7 +324,7 @@ Review `git diff <integration-branch>...<task-branch>`:
 5. **Gates:** the commands under `Done When` pass when re-run by the reviewer, not only as reported in the Log. Also run `cardtown sim -deck starter -p0 ANIMUS -p1 PATH`. Without `-deck`, sim plays the stress decks, not the starter decklists.
 
 **Verdict:**
-- **Approve:** merge with `git merge --no-ff`, set `status: done`, and update `BOARD.md`. If the merge touched `cmd/` or `pkg/`, rebuild the CLI (`go build -o bin/cardtown.exe ./cmd/cardtown`). The pre-commit hook runs that binary, and a stale one lints with old checks (found after T-0004). Directive 9 replaces this step once the hook rebuilds itself.
+- **Approve:** merge with `git merge --no-ff`, set `status: done`, and update `BOARD.md`.
 - **Request changes:** set `status: changes` and add numbered notes.
 - **Escalate:** after two `changes` rounds on a `flash` task, set `tier: sonnet` and re-dispatch. After two more rounds, split the task or mark it `blocked` for the user.
 
