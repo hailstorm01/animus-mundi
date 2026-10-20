@@ -291,7 +291,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 2. Create `.agents/tasks/<milestone>/BOARD.md` with four things: the integration branch, the mode (`serial` or `parallel`), a `Directives for the Lead` table (`# | Directive | Source | Status`) where the user and reviews leave instructions, and one line per task (`id | title | status`). Task files remain the source of truth; the board is an index.
 
 #### D2. Writing tasks (avoid duplicate work)
-0. **Directives first:** read the `Directives for the Lead` table in `BOARD.md`. Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit. If a directive conflicts with the design note or FRD 01, stop and ask the user.
+0. **Directives first:** read the `Directives for the Lead` table in `BOARD.md`. Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit. A directive with status `waiting: <trigger>` is applied only when its trigger happens. Check the waiting ones whenever the mode or milestone changes. If a directive conflicts with the design note or FRD 01, stop and ask the user.
 1. Take work in the order the milestone's plan gives (M2: the survey's waves). Write a task only when everything it `depends_on` is `done`, or explicitly queued ahead of it.
 2. **Kinds and tiers:**
    - `shape` tasks add machinery: a hook, an effect primitive, a condition, a targeting mode, a layer or a replacement step. They use tier `sonnet`.
