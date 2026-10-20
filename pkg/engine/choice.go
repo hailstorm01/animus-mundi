@@ -9,6 +9,7 @@ const (
 	DecideTarget   DecisionKind = iota // mandatory targets: fallback picks random legal options
 	DecideMode                         // "Choose N" modes: fallback picks the first listed options
 	DecideOptional                     // "you may": fallback declines (no picks)
+	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
 )
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -90,7 +91,8 @@ func (g *Game) choose(d Decision) []int {
 	if !d.satisfiable() {
 		return nil
 	}
-	if !d.Hidden {
+	// Order matters for DecideOrder, so with 2+ options there is no sole answer.
+	if !d.Hidden && !(d.Kind == DecideOrder && len(d.Options) >= 2) {
 		if picks, ok := d.soleAnswer(); ok {
 			return picks
 		}
@@ -116,6 +118,12 @@ func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
 	case DecideTarget:
 		return randomPicks(g.rng, d, d.Min)
+	case DecideOrder:
+		picks := make([]int, d.Min)
+		for i := range picks {
+			picks[i] = i
+		}
+		return picks
 	case DecideMode:
 		picks := make([]int, d.Min)
 		for i := range picks {

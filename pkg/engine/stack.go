@@ -1,5 +1,7 @@
 package engine
 
+import "animus-mundi/pkg/engine/ability"
+
 // StackKind identifies what a Resolution Stack item does when it resolves.
 type StackKind int
 
@@ -9,6 +11,7 @@ const (
 	StackAttack
 	StackScratch
 	StackAggressive
+	StackAbility // a triggered ability: runs Trigger's steps for Controller
 )
 
 // StackItem is one entry on the shared LIFO Resolution Stack (FR-QUE-001).
@@ -23,6 +26,8 @@ type StackItem struct {
 	Target    int // StackAttack: primary defender
 	Secondary int // StackAttack: Berserk secondary target, 0 if none
 	Amount    int // StackAggressive: N
+
+	Trigger ability.Trigger // StackAbility: the ability resolving (Source is its source asset)
 }
 
 func (g *Game) push(item *StackItem) {
@@ -37,6 +42,7 @@ func (g *Game) resolveStack() {
 		g.Stack = g.Stack[:len(g.Stack)-1]
 		g.resolve(top)
 		g.deathSweep()
+		g.flushTriggers()
 	}
 }
 
@@ -50,6 +56,8 @@ func (g *Game) resolve(it *StackItem) {
 		g.resolveAttack(it)
 	case StackScratch:
 		g.scratch(it.Controller, 1)
+	case StackAbility:
+		g.resolveAbility(it)
 	case StackAggressive:
 		// "it gets +N power until end of turn" (FR-KWD-002f). Fizzles if the
 		// attacker already left the battlefield.
@@ -69,6 +77,7 @@ func (g *Game) resolveDeploy(it *StackItem) {
 	a.Armor = c.Keywords.Armor
 	g.placeOnBattlefield(a, it.Zone)
 	g.logf("deploy", "player %d deploys %s to %s", it.Controller, a, it.Zone)
+	g.fireDeploy(a)
 }
 
 func (g *Game) resolveMarch(it *StackItem) {
