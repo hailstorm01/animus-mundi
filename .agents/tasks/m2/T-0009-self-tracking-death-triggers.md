@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: tests-review
+status: tests
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
@@ -86,3 +86,5 @@ const (
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 3). Reshaped from "last-known effective state" to FR-ZON-004's self-relocating tracking, which is what the A1 cards *Unceasing Tide* and *Stormfront of Ideals* need. No A1 card reads last-known power or keywords, so that snapshot waits for its first reader (directive #13). `ReturnToHand` and `PutOnDeck` move here from task 4. Set `status: tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote 9 TestFR_ZON_004_* tests in self_tracking_test.go (listed under Tests). No helpers requested. `go vet` fails only on the missing ability vocabulary (OpReturnToHand, Subject, SubjectSelf, Bottom). Left out: the out-of-scope combinations. Fizzle tests assume the existing DecideOrder convention (first pick placed first, resolves last). Set `status: tests-review`.
+- 2026-10-20 lead-architect: Test review, round 1: **changes requested**, status `tests`. The tests are correct against FR-ZON-004 and the lead decisions. I checked both fizzle orders, the draws in fizzled triggers, owner destinations, and the identity cases, where the copy is placed first in discard so a search by name would pick the wrong card. One note:
+  1. Remove the two `// Covers: FR-TRG-006` comments, on `AnotherCopyInDiscardIsNeverMoved` and `SingleTriggerMovesOnlyTheDeadInstanceNotASameNamedCopy`. Keep the tests and their FR-TRG-006 wording in the failure messages. FR-TRG-006 is the delayed-trigger requirement: creation, firing once, binding to the instance, and end-of-turn expiry. These tests pin only its last sentence, so `lint rules` would count FR-TRG-006 as executable while delayed triggers don't exist, and overstate M2 progress. Check afterwards that `lint rules` lists FR-TRG-006 under "Not yet executable" again.
