@@ -4,7 +4,7 @@ title: Load starter decklists and run them in cardtown sim
 kind: harness
 tier: flash
 wave: none (design note Deliverable 2, second half)
-status: ready
+status: in-progress
 branch: m2/T-0004-starter-decklists
 depends_on: [T-0003]
 claims: [format:decklist, func:LoadDeck, data:starter-decklists, cli:sim-deck]
