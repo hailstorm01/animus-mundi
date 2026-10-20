@@ -4,7 +4,7 @@ title: Add attack triggers (with Aggressive in the same window), an "on your tur
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 4, the last A1 shape task)
-status: tests-review
+status: ready
 branch: m2/T-0010-attack-turn-opponents
 depends_on: [T-0009]
 claims: [hook:attacks, type:ability.TurnOwner, gate:turn-owner, subject:opponents, func:attack-step-2-flush]
@@ -113,3 +113,12 @@ All in `pkg/engine/attack_trigger_test.go` (local helpers: attackTrigger, strike
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 4, the last A1 shape task). Aggressive moves into the Step 2 buffer because `FR-CBT-002` names it among the Step 2 triggers placed in APNAP order, so a unit with Aggressive and a printed attack trigger lets its controller order them. Set `status: tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote 19 tests in `attack_trigger_test.go` (listed under Tests). No helpers requested. TestShape_* prefix used for the turn gate and opponents-subject tests, since no FRD 01 requirement defines them (not traced by lint). `go vet` fails only on the not-yet-existing new vocabulary (`ability.TurnOwner` etc.); `cardtown lint rules` passes. Left out: relative order of Aggressive vs a printed trigger (both resolve before damage, so unobservable without a ruling); cross-player APNAP for attack triggers (needs opposing-attack hooks, out of scope); both-empty Match Draw via opponents draw (existing sweep tests cover it); opposing/exhaust hooks, attacks-and-kills, Cornered. Status: tests-review.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. Checked against FR-CBT-002 Step 2, FR-KWD-002f, FR-WIN-001 and the lead decisions:
+  - The Step 2 tests show that triggers resolve before damage: an empty-deck loss leaves the HQ undamaged.
+  - The expected resolution for answers `[0 1]` and `[1 0]` is right under placement order.
+  - The Aggressive arithmetic and its end-of-turn expiry are right.
+  - The turn gate is checked on both turns, with an ungated control.
+  - Against today's code, the opponents-draw and turn-gate tests fail, because the controller draws or the trigger fires anyway, so they can't pass without the implementation.
+  - `OnlyTheAttackerFiresItsAttackTrigger` and `AggressiveAloneIsNotAskedAbout` pin something not happening and pass today. They are accepted as guards.
+  - `TestShape_*` naming for the turn gate and the opponents subject is fine, because no FRD 01 requirement defines them.
+  - Next: `kernel-engineer` (tier sonnet).
