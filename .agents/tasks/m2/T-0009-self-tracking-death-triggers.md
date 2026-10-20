@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: in-progress
+status: review
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
@@ -90,3 +90,4 @@ const (
   1. Remove the two `// Covers: FR-TRG-006` comments, on `AnotherCopyInDiscardIsNeverMoved` and `SingleTriggerMovesOnlyTheDeadInstanceNotASameNamedCopy`. Keep the tests and their FR-TRG-006 wording in the failure messages. FR-TRG-006 is the delayed-trigger requirement: creation, firing once, binding to the instance, and end-of-turn expiry. These tests pin only its last sentence, so `lint rules` would count FR-TRG-006 as executable while delayed triggers don't exist, and overstate M2 progress. Check afterwards that `lint rules` lists FR-TRG-006 under "Not yet executable" again.
 - 2026-10-20 rules-test-author: Round 1 fix: removed the two '// Covers: FR-TRG-006' comments (tests and failure messages unchanged). Set status: tests-review.
 - 2026-10-20 lead-architect: Test review, round 2: **approved**, status `ready`. Note 1 is done: `84b9ae5` removes exactly the two `// Covers: FR-TRG-006` lines, and `lint rules` lists FR-TRG-006 under "Not yet executable" again. Next: `kernel-engineer` (tier sonnet).
+- 2026-10-20 kernel-engineer: Implemented. Diff: `ability.go` gains Subject (SubjectController = 0, SubjectSelf), OpReturnToHand and OpPutOnDeck after OpDraw, Step.Subject and Step.Bottom. `trigger.go`: pendingTrigger carries `inst` (the asset's `*Instance`), copied into the existing `StackItem.Inst` when flushed (stack.go unchanged); new `relocateSelf` called from `resolveAbility` finds that exact pointer in the owner's Discard and moves it to the owner's Hand, or Deck (top = Deck[0], Bottom appends); otherwise does nothing and the remaining steps run. Does nothing unless Subject is SubjectSelf and the hook is HookKilled. Reuse: searched trigger.go/stack.go, reused StackItem.Inst, no other helper existed. Commands: `go test ./pkg/engine -run TestFR_ZON_004` 11 PASS lines (9 tests plus subtests); `go test ./...` ok; `go vet ./...` clean; `gofmt -l pkg cmd` empty; `go run ./cmd/cardtown lint --all` passed; `sim -deck starter -p0 ANIMUS -p1 PATH` exit 0, sorted output identical to a worktree of rework/executable-rules. Reviewer: check the discard removal slice expression (`[:i:i]` forces a copy).
