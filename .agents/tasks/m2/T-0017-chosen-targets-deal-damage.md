@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: tests
+status: tests-review
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
@@ -94,10 +94,24 @@ Names may be adjusted for clarity if needed. Record any rename in the Log.
 - **Deep cascade (board directive #11, `FR-TRG-004`), a required named case:** a trigger's damage kills a unit that has its own death trigger. That death trigger must resolve completely before the next item deeper in the stack. For example, the source has two deploy triggers, X above Y. X deals lethal damage to a chosen allied 1-health unit whose death trigger draws a card, and Y draws a card. The death trigger's draw takes the top card, and Y's draw takes the second. Name it `TestFR_TRG_004_*`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/targeting_test.go`. Run: `go test ./pkg/engine -run 'TestFR_TGT_001|TestFR_TGT_003|TestFR_KWD_002[bchk]_|TestFR_TRG_004_DeathTriggerFromTargetedDamage'`
+- `TestFR_TGT_001_OptionsAreExactlyTheEntitiesMeetingEveryCriterion` (15 subtests: allied, opposing, any, unit, structure, HQ, "structure or HQ", no kind, non-Scratch, conjunctions; single-option rows check that no question is asked and that the damage lands)
+- `TestFR_TGT_001_AllegianceIsRelativeToTheTriggersController`
+- `TestFR_TGT_001_SingleLegalTargetIsNotAskedAndTakesTheDamage`
+- `TestFR_TGT_001_TimeoutOnTwoOptionsDamagesExactlyOneOfThem`
+- `TestFR_TGT_001_LethalDamageKillsAtThatItemsSweep`
+- `TestFR_TGT_001_DamageToHeadquartersToZeroLosesTheMatchAtThatSweep`
+- `TestFR_TGT_001_TwoSlotsAskInSlotOrderAndEachStepHitsItsOwnSlot`
+- `TestFR_KWD_002h_OpposingWardUnitIsNotAnOption`, `..._AlliedWardUnitIsAnOption`, `..._OnlyWardedTargetMeansNoLegalTarget`
+- `TestFR_KWD_002b_ResistantReducesTargetedDamage`, `TestFR_KWD_002k_ArmorAbsorbsTargetedDamageOneForOne`, `TestFR_KWD_002c_StalwartDoesNotReduceNonCombatDamage`
+- `TestFR_TGT_003_NoLegalTargetAsksNothingDamagesNothingAndDeploys`
+- `TestFR_TGT_003_TargetGoneAtResolutionTakesNoDamageButOtherStepsRun`
+- `TestFR_TGT_003_PartialInvalidationResolvesForTheRemainingLegalTarget`
+- `TestFR_TRG_004_DeathTriggerFromTargetedDamageResolvesBeforeTheNextStackItem` (the named deep-cascade case)
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected. A synthetic-card builder for targeted triggers may go in the test file as setup.
+- `func (s *scene) putScratch(p PlayerID) *Asset`: places a face-down, Exhausted Scratch Company in `p`'s Reserves (a 1/1 Unit with subtypes Infantry and Scratch Company, no abilities, per `FR-ZON-005`) and returns it. It sets up state and asserts nothing.
+- The synthetic-card builders (`tgt`, `dmgTo`, `targetTrigger`, `scriptRefs`) live in the test file.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -118,3 +132,9 @@ Names may be adjusted for clarity if needed. Record any rename in the Log.
   4. Shape: "up to N", "other", optional "you may", `Value` from the source's power, and "all assets" (*Craterfall Ancient*, deck).
   5. Shape: the last-known effective power snapshot (*Necropolis Hunt*, deck; triggers directive #13).
   The card tasks follow each shape.
+- 2026-10-20 rules-test-author: Wrote the tests above and set status `tests-review`. Helper requested: `putScratch`. `go vet` fails only on the missing vocabulary (first error `ability.Allegiance`) and `putScratch`. `cardtown lint rules` passes. Left out or adapted:
+  - The deep-cascade example has Y "Scratch 1" instead of "Draw 1". Both draws go to the hand, so draws could not show which one took the top card. The ordering rule (`FR-TRG-004`) is the same.
+  - The re-verification case cannot show "no damage to the gone target", since a dead asset cannot be inspected. The test checks that nothing else takes damage and that the second `Draw 1` still happens.
+  - Damage through Resistant, Armor and Stalwart is named `TestFR_KWD_002b/002k/002c_*`, because those are the FRD lines that fix the numbers. Those IDs are not in this task's `requirements:`. The lead may want to add them.
+  - The HQ-loss test cites `FR-LAY-002`/`FR-CBT-003`, not a separate win-condition ID, so no test pins an FR-WIN-* line.
+  - The allied-unit option sets include the source itself, as the task's Lead decisions say. FRD 01 does not address it, and "other" is a later task.
