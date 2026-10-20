@@ -4,7 +4,7 @@ title: Chosen targets with conjunction filters, two-stage verification, and Deal
 kind: shape
 tier: sonnet
 wave: A2 (task 1, the targeting core)
-status: ready
+status: in-progress
 branch: m2/T-0017-chosen-targets-deal-damage
 depends_on: [T-0010]
 claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
