@@ -26,6 +26,23 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Despoiler Worm": {
+		Text: []string{"When this unit is killed, all opponents draw 2 cards."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookKilled,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDraw,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectOpponents,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Fungal Evangelist": {
 		Text: []string{"When this unit deploys or is killed, Scratch 2."},
 		Triggers: []ability.Trigger{
@@ -47,6 +64,23 @@ var animusDefs = map[string]*ability.Def{
 						{
 							Op:     ability.OpScratch,
 							Amount: ability.Value{N: 2},
+						},
+					},
+				},
+			},
+		},
+	},
+	"Portent Scrivener": {
+		Text: []string{"When this unit is killed on your turn, draw a card."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookKilled,
+				Turn: ability.TurnYours,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:     ability.OpDraw,
+							Amount: ability.Value{N: 1},
 						},
 					},
 				},

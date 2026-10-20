@@ -4,7 +4,7 @@ title: Make Portent Scrivener and Despoiler Worm executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 3 of 4)
-status: in-progress
+status: review
 branch: m2/T-0013-scrivener-worm
 depends_on: [T-0012]
 claims: [card:Portent Scrivener, card:Despoiler Worm]
@@ -52,12 +52,12 @@ All in `pkg/engine/cards_animus_test.go`, loading the real cards with `s.card(na
 - `pkg/engine/cards/cards.go` (remove the two names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(PortentScrivener|DespoilerWorm)'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `go run ./cmd/cardtown lint --all` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and the Animus executable count rises by 5 (4 Scrivener, 1 Worm)
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(PortentScrivener|DespoilerWorm)'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `go run ./cmd/cardtown lint --all` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and the Animus executable count rises by 5 (4 Scrivener, 1 Worm)
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 3 of 4). It stays `queued` until T-0012 is `done`, because they share `animus.go` and `cards.go`.
@@ -70,3 +70,4 @@ All in `pkg/engine/cards_animus_test.go`, loading the real cards with `s.card(na
   - Leaving out the APNAP case (FR-TRG-003) is accepted, for the reason given above.
   - Re-run: 6 fail (cards undefined) and 5 controls pass.
   - Next: **the user runs `@kernel-engineer T-0013` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-20 kernel-engineer: Implemented. animus.go: added definitions to animusDefs for "Portent Scrivener" (HookKilled, Turn: TurnYours, OpDraw 1) and "Despoiler Worm" (HookKilled, OpDraw 2 with Subject: SubjectOpponents) in alphabetical order. cards.go: removed "Despoiler Worm" and "Portent Scrivener" from NotYetExecutable allowlist while preserving sort order. Reused HookKilled, TurnYours, OpDraw, SubjectOpponents, Value{N}; no new shapes or engine logic added. Gates: go test ./pkg/engine -run 'TestCard_(PortentScrivener|DespoilerWorm)' passed (11/11), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go test ./... ok, go vet ./... clean, gofmt -l pkg cmd clean, cardtown lint --all passed. Starter deck sim reported P0 (Animus starter) main executable cards rose from 9/50 to 14/50 (4 Scrivener, 1 Worm). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged as default sim runs Soulless vs Concordia). Reviewer: check that Despoiler Worm uses SubjectOpponents for OpDraw 2, and Portent Scrivener gates trigger execution with Turn: TurnYours.
