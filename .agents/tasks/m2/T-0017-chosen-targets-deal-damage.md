@@ -1,0 +1,120 @@
+---
+id: T-0017
+title: Chosen targets with conjunction filters, two-stage verification, and DealDamage
+kind: shape
+tier: sonnet
+wave: A2 (task 1, the targeting core)
+status: tests
+branch: m2/T-0017-chosen-targets-deal-damage
+depends_on: [T-0010]
+claims: [field:Effect.Targets, type:ability.Target, type:ability.Filter, type:ability.Allegiance, type:ability.Kinds, subject:target, field:Step.Target, op:DealDamage, func:choose-targets-at-placement, func:target-reverification]
+cards: []
+requirements: [FR-TGT-001, FR-TGT-003, FR-KWD-002h, FR-TRG-004]
+---
+
+## Goal
+A triggered ability can say "deal N damage to chosen <filter>". When the trigger is placed on the stack, its controller chooses each target. The choice goes through the existing `Chooser` (`DecideTarget`), so the single-option fast path and the random timeout fallback come from T-0006. Each target is checked again at resolution, and a target that became illegal is skipped. A clause with no legal target does nothing, while the rest of the effect still resolves. After this task, *Saboteur* and *Chainbreaker Sappers* can be written as card data.
+
+## Inputs
+- FRD 01 (`docs/frd/01_Game_Rules_FRD.md`):
+  - `FR-TGT-001` (lines 280–291): conjunction filtering. Only the allegiance, entity-type and "non-Scratch" criteria are in scope here.
+  - `FR-TGT-003` (lines 297–302): two-stage verification, partial invalidation, composite clauses, and deployment triggers without legal targets (it names *Saboteur*).
+  - `FR-KWD-002h` (line 495): Ward. Opponents can't choose it for triggered abilities.
+  - `FR-KWD-002b`, `FR-KWD-002c` and `FR-KWD-002k`: Resistant, Stalwart (combat only) and Armor, as they apply to non-combat damage (`FR-REP-004`).
+  - `FR-MOD-001` §1 and §6: the fast path and the random fallback. These already exist at the `Decision` level (T-0006).
+- Card text for context. The card task that follows uses these, and this task's tests use synthetic cards:
+  - *Saboteur*: "When this unit deploys, deal 2 damage to chosen opposing non-Scratch unit and 1 damage to chosen allied unit."
+  - *Chainbreaker Sappers*: "When this unit deploys, deal 1 damage to chosen structure or Headquarters."
+- Built on: `choice.go` (`Decision`, `DecideTarget`, `Game.choose`), `trigger.go` (`pendingTrigger`, `flushTriggers`, `resolveAbility`) and `damage.go` (`dealDamage(source, target, raw, combat)`).
+- Rulings that apply: none.
+
+### Vocabulary (`pkg/engine/ability/ability.go`)
+```go
+// Effect gains:
+	Targets []Target // "chosen" clauses, chosen when the ability is placed on the stack (FR-TGT-001)
+
+// Target is one "chosen" entity: exactly one, for now ("up to N" comes later).
+type Target struct {
+	Filter Filter
+}
+
+// Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
+type Filter struct {
+	Allegiance Allegiance // relative to the ability's controller
+	Kinds      Kinds      // zero means any asset
+	NonScratch bool       // excludes Scratch Company units
+}
+
+type Allegiance int
+
+const (
+	AllegianceAny      Allegiance = iota // the zero value
+	AllegianceAllied                     // controlled by the ability's controller
+	AllegianceOpposing                   // controlled by an opponent
+)
+
+// Kinds is a set of asset types; "structure or Headquarters" sets two bits.
+type Kinds int
+
+const (
+	KindUnit Kinds = 1 << iota
+	KindStructure
+	KindHeadquarters
+)
+
+const ( // Subject gains:
+	SubjectTarget // the entity chosen for Effect.Targets[Step.Target]
+)
+
+const ( // Op gains:
+	OpDealDamage // Amount non-combat damage to the Subject (FR-REP-004)
+)
+
+// Step gains:
+	Target int // SubjectTarget: index into Effect.Targets
+```
+Names may be adjusted for clarity if needed. Record any rename in the Log.
+
+### Lead decisions (technical, not rules)
+- **Legal entity:** an Asset on the battlefield that meets the filter. It is not Warded against the chooser: an asset with Ward is illegal only when its controller is not the ability's controller (`FR-KWD-002h`). A face-down Scratch Company is a Unit with the subtype Scratch Company, so `KindUnit` includes it and `NonScratch` excludes it. Without an exclusion, the source itself is legal ("chosen allied unit" may pick the source). "Other" comes in a later task.
+- **When and who:** targets are chosen as each trigger is pushed in `flushTriggers`, after that player's `DecideOrder`, in push order, one `DecideTarget` per `Effect.Targets` entry, in slot order. The trigger's controller chooses. Options are only the legal entities, so a single option is fast-pathed and a timeout picks a random legal one.
+- **No legal target at placement:** the trigger is still placed and still resolves. Steps on that slot do nothing, and other steps run. Deploying never requires a target (`FR-TGT-003`).
+- **At resolution:** before the steps run, check each chosen entity again: still on the battlefield, still meeting the filter, and not Warded against the controller. An illegal slot is treated like an empty one. Store the chosen asset IDs on the `StackItem`.
+- **DealDamage:** `dealDamage(source, target, Amount.N, false)`, so Resistant applies, Stalwart does not, and Armor absorbs. Deaths and HQ defeat are settled by the sweep after the item, as today. `source` is the ability's source asset if it is still on the battlefield, otherwise nil. Today `dealDamage` uses the source only for logging, so make sure nil is safe.
+- **Not in this task:** "up to N", "other", zone filters, stat filters, optional triggers, `Value` sources other than a fixed N, distributed pools, resolution-time targets (`SVY-R3`/`SVY-R4`), Maneuvers and activated abilities.
+
+### What the tests can observe
+- **Filter:** on a board with one entity of each kind for each player, the `DecideTarget` options are exactly the legal entities, read from the scripted chooser's recorded `Decision`. Check each criterion and their conjunction: allied, opposing, unit, structure, Headquarters, "structure or Headquarters", and non-Scratch.
+- **Ward:** an opposing Ward unit is not an option. An allied Ward unit is.
+- **Fast path and fallback:** one legal option means no question is asked, and the damage lands. A timeout on two options damages exactly one of them.
+- **Damage:** non-combat damage goes through Resistant and Armor. Stalwart doesn't reduce it. A unit with lethal damage dies at that item's sweep. An HQ taken to 0 loses the match at that sweep.
+- **Two targets in one effect:** two slots with different filters ask two questions in slot order, and each step damages its own slot.
+- **No legal target:** a "deal damage to chosen opposing unit" trigger with no opposing unit asks nothing and damages nothing. A second, untargeted step in the same effect (for example `Draw 1`) still happens, and the deployed unit stays on the battlefield.
+- **Re-verification:** an entity chosen at placement that is gone at resolution takes no damage, and a composite effect's other steps still run. For example, a source with two deploy triggers both choose the same 1-health opposing unit. The first to resolve kills it at its sweep, so the second's damage step does nothing but its `Draw 1` still happens. A slot whose target is still legal resolves normally next to an illegal one (partial invalidation).
+- **Deep cascade (board directive #11, `FR-TRG-004`), a required named case:** a trigger's damage kills a unit that has its own death trigger. That death trigger must resolve completely before the next item deeper in the stack. For example, the source has two deploy triggers, X above Y. X deals lethal damage to a chosen allied 1-health unit whose death trigger draws a card, and Y draws a card. The death trigger's draw takes the top card, and Y's draw takes the second. Name it `TestFR_TRG_004_*`.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+- (rules-test-author fills this in.)
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected. A synthetic-card builder for targeted triggers may go in the test file as setup.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go`
+- `pkg/engine/trigger.go`
+- `pkg/engine/stack.go`
+- `pkg/engine/damage.go` (only if needed for a nil source)
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes, because no card is defined.
+
+## Log
+- 2026-10-20 lead-architect: Wrote the task (wave A2 task 1), with status `tests` for `rules-test-author`. Planned A2 order, with deck cards first per directive #14. Only this task is written, and the others stay unwritten until their dependencies are done:
+  1. This shape.
+  2. Card task (flash): *Saboteur* (deck) and *Chainbreaker Sappers* (non-deck, allowed by #14c because its shapes exist).
+  3. Shape: the `toZone` deploy gate (*Devilhorn Guerrillas*, deck), plus `Heal` and `AddArmor` (*Spoil Forest Colossus*, deck; *Ironclad Colossus*).
+  4. Shape: "up to N", "other", optional "you may", `Value` from the source's power, and "all assets" (*Craterfall Ancient*, deck).
+  5. Shape: the last-known effective power snapshot (*Necropolis Hunt*, deck; triggers directive #13).
+  The card tasks follow each shape.
