@@ -377,3 +377,164 @@ func TestCard_TitanicSporeCarrier_FaceDownCopyDoesNothingWhenKilled(t *testing.T
 		t.Errorf("a face-down Scratch Company has no abilities, so its death neither scratches nor draws (FR-ZON-004)")
 	}
 }
+
+// --- Portent Scrivener: "When this unit is killed on your turn, draw a card." ---
+
+// scrivenerKilledOnOwnTurn puts the real Scrivener (face-down if asked) for
+// player 0 and has it attack a 9/9 that destroys it on player 0's own turn.
+func scrivenerKilledOnOwnTurn(s *scene, faceDown bool) {
+	s.t.Helper()
+	scr := s.put(0, ZoneMainTheater, s.card("Portent Scrivener"))
+	scr.FaceDown = faceDown
+	def := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	s.do(s.attack(scr, def))
+	if s.alive(scr) {
+		s.t.Fatalf("precondition: the Scrivener is destroyed")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_PortentScrivener_KilledOnYourTurnDrawsOne(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	top := s.onTop(0, vanilla("A", "B")...)
+	scrivenerKilledOnOwnTurn(s, false)
+	if !inHand(p, top[0]) {
+		t.Errorf("killed on its controller's turn, the Scrivener's controller draws the top card (FR-ZON-004)")
+	}
+	if inHand(p, top[1]) || len(p.Deck) == 0 || p.Deck[0] != top[1] {
+		t.Errorf("exactly one card is drawn; the second stays on top of the deck")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_PortentScrivener_KilledOnOpponentsTurnDrawsNothing(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	top := s.onTop(0, vanilla("A", "B")...)
+	killOnOpponentsTurn(s, s.card("Portent Scrivener"), false)
+	if inHand(p, top[0]) || len(p.Deck) == 0 || p.Deck[0] != top[0] {
+		t.Errorf("killed on the opponent's turn, the Scrivener's 'on your turn' condition fails and nothing is drawn")
+	}
+	if s.g.Outcome.Over {
+		t.Errorf("no draw happens, so no one loses: %+v", s.g.Outcome)
+	}
+}
+
+// Covers: FR-WIN-001
+func TestCard_PortentScrivener_DrawFromEmptyDeckLosesAtThatSweep(t *testing.T) {
+	s := newScene(t)
+	s.g.Players[0].Deck = nil
+	scrivenerKilledOnOwnTurn(s, false)
+	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 1 {
+		t.Errorf("the Scrivener's required draw from an empty deck loses its controller at the trigger's sweep (FR-WIN-001): outcome %+v", o)
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_PortentScrivener_FaceDownCopyDoesNotDraw(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	top := s.onTop(0, vanilla("A", "B")...)
+	scrivenerKilledOnOwnTurn(s, true)
+	if inHand(p, top[0]) || len(p.Deck) == 0 || p.Deck[0] != top[0] {
+		t.Errorf("a face-down Scratch Company has no abilities, so its death draws nothing (FR-ZON-004)")
+	}
+}
+
+// --- Despoiler Worm: "When this unit is killed, all opponents draw 2 cards." ---
+
+// wormKilled puts the real Worm (face-down if asked) for player 0 and has a
+// 20-power hitter destroy it, on player 0's turn if ownTurn, else on player 1's.
+// Player 1's deck is replaced by exactly oppDeck once the hitter's turn begins,
+// so the turn-start draw cannot disturb it.
+func wormKilled(s *scene, ownTurn, faceDown bool, oppDeck ...*Card) []*Instance {
+	s.t.Helper()
+	worm := s.put(0, ZoneMainTheater, s.card("Despoiler Worm"))
+	worm.FaceDown = faceDown
+	if !ownTurn {
+		s.endTurn()
+	}
+	s.g.Players[1].Deck = nil
+	insts := s.onTop(1, oppDeck...)
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	if ownTurn {
+		s.do(s.attack(worm, hit))
+	} else {
+		s.do(s.attack(hit, worm))
+	}
+	if s.alive(worm) {
+		s.t.Fatalf("precondition: the Worm is destroyed")
+	}
+	return insts
+}
+
+// Covers: FR-ZON-004
+func TestCard_DespoilerWorm_KilledMakesOpponentDrawTwo(t *testing.T) {
+	s := newScene(t)
+	opp := s.g.Players[1]
+	top := wormKilled(s, false, false, vanilla("A", "B", "C")...)
+	if !inHand(opp, top[0]) || !inHand(opp, top[1]) {
+		t.Errorf("when the Worm is killed the opponent draws the top two cards (FR-ZON-004)")
+	}
+	if inHand(opp, top[2]) || len(opp.Deck) == 0 || opp.Deck[0] != top[2] {
+		t.Errorf("exactly two cards are drawn; the third stays on top of the opponent's deck")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_DespoilerWorm_ControllerDrawsNothing(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	mine := s.onTop(0, vanilla("Mine1", "Mine2")...)
+	wormKilled(s, false, false, vanilla("A", "B", "C")...)
+	if inHand(p, mine[0]) || len(p.Deck) == 0 || p.Deck[0] != mine[0] {
+		t.Errorf("only opponents draw from the Worm's trigger; its controller draws nothing")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_DespoilerWorm_TriggersOnItsControllersTurnToo(t *testing.T) {
+	s := newScene(t)
+	opp := s.g.Players[1]
+	top := wormKilled(s, true, false, vanilla("A", "B", "C")...)
+	if !inHand(opp, top[0]) || !inHand(opp, top[1]) || inHand(opp, top[2]) {
+		t.Errorf("the Worm's trigger has no turn condition, so killed on its controller's turn the opponent still draws exactly two (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-WIN-001
+func TestCard_DespoilerWorm_OpponentWithOneCardInDeckLosesAtThatSweep(t *testing.T) {
+	s := newScene(t)
+	wormKilled(s, false, false, vanilla("Only")...)
+	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 0 {
+		t.Errorf("the opponent cannot draw its second card and loses at the trigger's sweep (FR-WIN-001): outcome %+v", o)
+	}
+}
+
+// Covers: FR-WIN-001
+func TestCard_DespoilerWorm_OpponentWithEmptyDeckLosesAtThatSweep(t *testing.T) {
+	s := newScene(t)
+	wormKilled(s, false, false)
+	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 0 {
+		t.Errorf("the opponent's required draw from an empty deck loses at the trigger's sweep (FR-WIN-001): outcome %+v", o)
+	}
+}
+
+func TestCard_DespoilerWorm_ResistantTwoReducesDamage(t *testing.T) {
+	s := newScene(t)
+	hit := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	worm := s.put(1, ZoneMainTheater, s.card("Despoiler Worm"))
+	s.do(s.attack(hit, worm))
+	s.wantDamage(worm, 3) // 5 -> 3 (Resistant 2)
+}
+
+// Covers: FR-ZON-004
+func TestCard_DespoilerWorm_FaceDownCopyDoesNotMakeOpponentDraw(t *testing.T) {
+	s := newScene(t)
+	opp := s.g.Players[1]
+	top := wormKilled(s, false, true, vanilla("A", "B", "C")...)
+	if inHand(opp, top[0]) || len(opp.Deck) == 0 || opp.Deck[0] != top[0] {
+		t.Errorf("a face-down Scratch Company has no abilities, so its death makes no one draw (FR-ZON-004)")
+	}
+}

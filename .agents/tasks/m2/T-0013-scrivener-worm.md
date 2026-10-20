@@ -4,7 +4,7 @@ title: Make Portent Scrivener and Despoiler Worm executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 3 of 4)
-status: tests
+status: tests-review
 branch: m2/T-0013-scrivener-worm
 depends_on: [T-0012]
 claims: [card:Portent Scrivener, card:Despoiler Worm]
@@ -30,7 +30,19 @@ Two Animus units with draw death triggers now run in the kernel. One is gated to
 - Each `Text` is the quoted line exactly. No new types, fields or logic. If a card seems to need one, set `blocked`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/cards_animus_test.go`, loading the real cards with `s.card(name)`:
+- `TestCard_PortentScrivener_KilledOnYourTurnDrawsOne`: attacks and dies on its controller's turn; controller draws exactly the top card.
+- `TestCard_PortentScrivener_KilledOnOpponentsTurnDrawsNothing`: no draw on the opponent's turn.
+- `TestCard_PortentScrivener_DrawFromEmptyDeckLosesAtThatSweep` (FR-WIN-001).
+- `TestCard_PortentScrivener_FaceDownCopyDoesNotDraw` (FR-ZON-004).
+- `TestCard_DespoilerWorm_KilledMakesOpponentDrawTwo`: exactly the top two named cards.
+- `TestCard_DespoilerWorm_ControllerDrawsNothing`.
+- `TestCard_DespoilerWorm_TriggersOnItsControllersTurnToo`.
+- `TestCard_DespoilerWorm_OpponentWithOneCardInDeckLosesAtThatSweep` and `..._OpponentWithEmptyDeckLosesAtThatSweep` (FR-WIN-001).
+- `TestCard_DespoilerWorm_ResistantTwoReducesDamage`: 5 damage becomes 3.
+- `TestCard_DespoilerWorm_FaceDownCopyDoesNotMakeOpponentDraw` (FR-ZON-004).
+- Local helpers added in the same file: `scrivenerKilledOnOwnTurn`, `wormKilled`.
+- Left out: the APNAP case (FR-TRG-003) with a Worm and a Scrivener dying in one combat. Resistant 2 means the Worm cannot be killed by the Scrivener's 2 power, and the Scrivener only triggers on its own controller's turn, so no clean two-sided setup exists through state.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -50,3 +62,4 @@ Two Animus units with draw death triggers now run in the kernel. One is gated to
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 3 of 4). It stays `queued` until T-0012 is `done`, because they share `animus.go` and `cards.go`.
 - 2026-10-20 lead-architect: T-0012 is `done`, so status `tests` for `rules-test-author`.
+- 2026-10-20 rules-test-author: Wrote 11 tests (4 Scrivener, 7 Worm) in `cards_animus_test.go`; see Tests. No helpers requested (two local helpers added in the test file). Left out the APNAP case: the Worm's Resistant 2 stops a Scrivener from killing it, and the Scrivener triggers only on its controller's turn, so no clean state-observable setup exists. Status `tests-review`.
