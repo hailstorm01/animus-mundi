@@ -51,4 +51,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0013 | Make Portent Scrivener and Despoiler Worm executable (A1 cards, flash) | done |
 | T-0014 | Make Stormfront of Ideals and Unceasing Tide executable (A1 cards, flash) | done |
 | T-0015 | Pin FR-SET-003, FR-CRD-101, FR-ZON-003 and FR-ZON-001 with scenario tests (directive #16) | done |
-| T-0016 | Refresh stale milestone notes in engine comments and messages (directive #17, harness, flash) | ready |
+| T-0016 | Refresh stale milestone notes in engine comments and messages (directive #17, harness, flash) | done |
