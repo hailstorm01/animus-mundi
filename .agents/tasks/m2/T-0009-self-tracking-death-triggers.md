@@ -4,7 +4,7 @@ title: Let death triggers move the card itself, tracked in its owner's discard p
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 3)
-status: ready
+status: in-progress
 branch: m2/T-0009-self-tracking
 depends_on: [T-0008]
 claims: [type:ability.Subject, subject:self, op:ReturnToHand, op:PutOnDeck, field:Step.Bottom, func:self-tracking-fizzle]
