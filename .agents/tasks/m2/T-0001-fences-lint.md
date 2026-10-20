@@ -4,7 +4,7 @@ title: Add a fences check to cardtown lint
 kind: harness
 tier: flash
 wave: A1
-status: review
+status: done
 branch: m2/T-0001-fences-lint
 depends_on: []
 claims: [linter:fences, cli:lint-fences]
@@ -95,3 +95,8 @@ Each case except the last uses a fixture repo built in `t.TempDir()` that has `d
   - Reviewer notes:
     - Check the word normalization splitting rules in `splitWords` against edge cases.
     - Note that existing pre-commit file `pkg/toolchain/git/git.go` has a pre-existing gofmt alignment discrepancy from an earlier commit; left untouched per `Allowed Files` constraints.
+- 2026-10-19 lead-architect: Reviewed and approved; merged into `rework/executable-rules` with `--no-ff`.
+  - Scope: only the three allowed files plus `fences_test.go` changed. The `test(T-0001)` commit carried a compiling stub, all 20 tests failed there, and none were edited afterwards.
+  - Gates re-run by the reviewer: `go test ./...` and `go vet ./...` clean; `lint fences` and `lint --all` exit 0; a scratch `// Rift` file makes smart `cardtown lint` exit 1. `gofmt -l pkg cmd` reports only `pkg/toolchain/git/git.go`, which is already unformatted on the integration branch.
+  - Accepted deviation: camelCase splitting runs over the whole line, not just identifiers. Card names go through the same normalization, so matching stays symmetric.
+  - Non-blocking follow-ups: (1) a missing matrix or survey file is read as empty instead of returning an error. It still fails closed, but the message says "not in the matrix" when it should name the missing file. (2) The case-2 test does not assert exactly one `[ERROR]` line. (3) `git.go` needs a gofmt pass.

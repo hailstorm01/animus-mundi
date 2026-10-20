@@ -8,4 +8,4 @@ Task files are the source of truth. This board is an index.
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0001 | Add a fences check to cardtown lint | ready |
+| T-0001 | Add a fences check to cardtown lint | done |
