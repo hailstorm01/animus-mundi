@@ -4,7 +4,7 @@ title: Run self-deploy triggers through a pending buffer, with player-ordered pl
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2a)
-status: review
+status: done
 branch: m2/T-0007-trigger-pipeline
 depends_on: [T-0006]
 claims: [type:ability.Trigger, type:ability.Hook, hook:deploy, type:ability.Effect, type:ability.Step, type:ability.Op, type:ability.Value, op:Scratch, op:Draw, kind:StackAbility, func:pending-trigger-buffer, decision:DecideOrder]
@@ -105,15 +105,20 @@ A synthetic test card is an ordinary `*Card` with `Ability: &ability.Def{Trigger
 - `pkg/engine/choice.go` (`DecideOrder`: no take-everything fast path, collection-order fallback)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_TRG_003|TestFR_TRG_004'`
-- [ ] T-0006's tests still pass unchanged: `go test ./pkg/engine -run 'TestFR_MOD_001|TestFR_TRG_002|TestRandomChooser'`
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `cardtown lint rules` shows `FR-TRG-003` and `FR-TRG-004` pinned
-- [ ] `go run ./cmd/cardtown lint --all` passes (fences: no card names in `pkg/engine` or `pkg/engine/ability`)
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch (no real card has a `Def` yet)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_TRG_003|TestFR_TRG_004'`
+- [x] T-0006's tests still pass unchanged: `go test ./pkg/engine -run 'TestFR_MOD_001|TestFR_TRG_002|TestRandomChooser'`
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `cardtown lint rules` shows `FR-TRG-003` and `FR-TRG-004` pinned
+- [x] `go run ./cmd/cardtown lint --all` passes (fences: no card names in `pkg/engine` or `pkg/engine/ability`)
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is unchanged from the integration branch (no real card has a `Def` yet)
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task (board directive #4, task 2, split under the D2 size rule into 2a, this one, and 2b, T-0008: death triggers, cross-player APNAP and the playout invariants). Applies directive #10 (collection-order fallback). Set `status: tests` for `rules-test-author`. Note for tests: FR-TRG-003's cross-player half can't be built yet, because one deploy event only triggers its own card. Pin same-player ordering here; T-0008 pins cross-player APNAP.
 - 2026-10-19 rules-test-author: Wrote pkg/engine/trigger_test.go (see Tests). `go vet` fails only on the missing ability vocabulary, DecideOrder and s.onTop (already requested). `cardtown lint rules` passes with FR-TRG-003/004 traced. No new helpers requested; local helpers (trigUnit, deployFromHand, inHand, scratched) live in trigger_test.go. Left out: cross-player APNAP, deep cascade. Status set to tests-review.
 - 2026-10-19 lead-architect: Test review: **approved**, status `ready`. Checked against FR-TRG-003, FR-TRG-004, directive #10 and the placement-order decision. The permutation cases (`[0 1]`, `[1 0]`, `[2 0 1]`) and the fallback subcases expect the right resolution order. Order is observed through state (top cards in hand versus face-down in Reserves), not internals. Setting `s.g.choosers[0]` directly in the first test is setup, so it's allowed. Accepted weakness: `EmptyDeckDrawLosesAtItsOwnSweepBeforeNextTrigger` can't tell its own sweep apart from a later one, because no A1 step acts after an empty deck. M1 tests already pin sweep timing for empty-deck loss. Next: `kernel-engineer` (tier sonnet).
 - 2026-10-19 kernel-engineer: Implemented. Reuse: g.scratch, g.draw, g.choose/Decision, push, deathSweep (no second implementation). Diff: ability.go vocabulary exactly as the task block; trigger.go (pendingTrigger, fireDeploy, flushTriggers with APNAP and DecideOrder, resolveAbility); stack.go (StackAbility, Trigger field on StackItem, fireDeploy at end of resolveDeploy, flushTriggers after each deathSweep; buffer discarded if Outcome.Over); choice.go (DecideOrder kind, no fast path with 2+ options, identity fallback; RandomChooser already yields permutations via partial Fisher-Yates); scenario_test.go onTop helper. **state.go touched** (lead-approved exception): one field `pending []pendingTrigger` on Game, no logic. Answer is placement order (first pick pushed first). Gates: go test ./..., go vet ./..., gofmt -l pkg cmd all clean; cardtown lint --all passes; lint rules passes; sim exits 0 and output is byte-identical to the pre-change run (git stash -u comparison). Look closely: flushTriggers runs after every sweep, including non-deploy items, and is a no-op on an empty buffer.
+- 2026-10-19 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: the four allowed files, plus one approved exception: a single field declaration in `state.go` (`pending []pendingTrigger`). Go can't declare a struct field outside the struct's file. The lead's dispatch had wrongly told the engineer to block on this, and was corrected before any work. The other change is the requested `onTop` helper. `trigger_test.go` and `choice_test.go` are unchanged since `9241df8`. Engine code contains no card names; the option label uses the card's name at runtime.
+  - Fidelity: the flush follows every lead decision (placement order, no question for a single trigger, buffer discarded when the match ends, active player placed first). `choose` excludes `DecideOrder` with 2+ options from the fast path, and `RandomChooser` already returns a random permutation.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `lint rules` shows 37 of 62, with FR-TRG-003 and FR-TRG-004 pinned. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and plain `sim` output is byte-identical to the integration branch.
+  - For T-0008: the buffer keeps triggers in the order they fired. With one deploy event per item, that is printed order. When several deaths fire in one sweep, the buffer has to come out in battlefield order (`g.Assets()`) to match directive #10, so either `deathSweep` fires in that order or the flush sorts. T-0008's lead decisions must say which.
