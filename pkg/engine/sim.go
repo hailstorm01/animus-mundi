@@ -56,7 +56,8 @@ func Simulate(decks [2]DeckList, games int, seed uint64, maxTurns int) (SimStats
 	st := SimStats{Reasons: map[string]int{}}
 	for i := range uint64(games) {
 		s := seed + i
-		g, err := NewGame(Config{Seed: s, Decks: decks})
+		g, err := NewGame(Config{Seed: s, Decks: decks,
+			Choosers: [2]Chooser{RandomChooser(s*2 + 1), RandomChooser(s*2 + 2)}})
 		if err != nil {
 			return st, err
 		}

@@ -131,8 +131,9 @@ type Game struct {
 	Outcome     Outcome
 	Log         []Event
 
-	rng    *rand.Rand
-	nextID int
+	rng      *rand.Rand
+	nextID   int
+	choosers [2]Chooser // per-seat answerers of Decisions; nil always times out
 
 	// lastKnown holds each asset's characteristics as it left the battlefield,
 	// for effects that still need them afterwards (FR-ZON-004).
