@@ -4,7 +4,7 @@ title: Add attack triggers (with Aggressive in the same window), an "on your tur
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 4, the last A1 shape task)
-status: tests
+status: tests-review
 branch: m2/T-0010-attack-turn-opponents
 depends_on: [T-0009]
 claims: [hook:attacks, type:ability.TurnOwner, gate:turn-owner, subject:opponents, func:attack-step-2-flush]
@@ -74,7 +74,26 @@ const (
 - **Opponents:** a death trigger "all opponents draw 2" makes the opponent draw two named top cards, and the controller draws nothing. With the opponent's deck empty, the opponent loses at that trigger's sweep.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/attack_trigger_test.go` (local helpers: attackTrigger, striker, opponentsDraw, gatedKilled).
+- `TestFR_CBT_002_AttackTriggerResolvesBeforeCombatDamage` (empty-deck Draw attack trigger loses before the HQ takes damage; also FR-WIN-001)
+- `TestFR_CBT_002_AttackTriggerScratchHappensBeforeCombat`
+- `TestFR_CBT_002_AttackTriggerFiresOncePerAttack`
+- `TestFR_CBT_002_OnlyTheAttackerFiresItsAttackTrigger`
+- `TestFR_CBT_002_AggressiveAndAttackTriggerAreOrderedTogether` (one DecideOrder, 2 options)
+- `TestFR_CBT_002_AggressiveAloneIsNotAskedAbout`
+- `TestFR_CBT_002_AttackTriggerAloneIsNotAskedAbout`
+- `TestFR_CBT_002_TwoPrintedAttackTriggersAreOrderedTogether`
+- `TestFR_CBT_002_OrderAnswerDecidesWhichPrintedAttackTriggerResolvesFirst`
+- `TestFR_KWD_002f_AggressiveStillGivesPowerWithAnAttackTrigger`
+- `TestFR_KWD_002f_AggressiveAloneStillGivesPowerForTheCombat`
+- `TestFR_WIN_001_OpponentsDrawFromEmptyDeckLosesAtThatSweep`
+- `TestFR_WIN_001_ControllersOwnEmptyDeckIsUnaffectedByOpponentsDraw`
+- `TestShape_OpponentsDrawIsPerformedByTheOpponentNotTheController`
+- `TestShape_OpponentsScratchIsPerformedByTheOpponent`
+- `TestShape_TurnYoursDeathTriggerFiresOnItsControllersTurn`
+- `TestShape_TurnYoursDeathTriggerDoesNotFireOnTheOpponentsTurn`
+- `TestShape_UngatedDeathTriggerFiresOnEitherTurn`
+- `TestShape_TurnYoursAttackTriggerFiresWhenAttackingOnYourTurn`
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -93,3 +112,4 @@ const (
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (board directive #4, task 4, the last A1 shape task). Aggressive moves into the Step 2 buffer because `FR-CBT-002` names it among the Step 2 triggers placed in APNAP order, so a unit with Aggressive and a printed attack trigger lets its controller order them. Set `status: tests` for `rules-test-author`.
+- 2026-10-20 rules-test-author: Wrote 19 tests in `attack_trigger_test.go` (listed under Tests). No helpers requested. TestShape_* prefix used for the turn gate and opponents-subject tests, since no FRD 01 requirement defines them (not traced by lint). `go vet` fails only on the not-yet-existing new vocabulary (`ability.TurnOwner` etc.); `cardtown lint rules` passes. Left out: relative order of Aggressive vs a printed trigger (both resolve before damage, so unobservable without a ruling); cross-player APNAP for attack triggers (needs opposing-attack hooks, out of scope); both-empty Match Draw via opponents draw (existing sweep tests cover it); opposing/exhaust hooks, attacks-and-kills, Cornered. Status: tests-review.
