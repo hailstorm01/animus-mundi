@@ -13,6 +13,7 @@ import (
 	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/hook"
 	"animus-mundi/pkg/toolchain/linter/cards"
+	"animus-mundi/pkg/toolchain/linter/fences"
 	"animus-mundi/pkg/toolchain/linter/frd"
 	"animus-mundi/pkg/toolchain/linter/rules"
 	"animus-mundi/pkg/toolchain/linter/syntax"
@@ -75,7 +76,7 @@ func printUsage() {
 	fmt.Println("  cardtown <command> [subcommand] [flags] [arguments]")
 	fmt.Println()
 	fmt.Println("Available Commands:")
-	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax)")
+	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax, fences)")
 	fmt.Println("  hook      Manage Git lifecycle hooks (install pre-commit)")
 	fmt.Println("  audit     Manage PM Devil's Advocate audit lifecycle (status, resolve)")
 	fmt.Println("  tdd       Technical Design Document tools (slicing & GitHub issue publishing)")
@@ -268,6 +269,12 @@ func runLint(args []string) {
 				os.Exit(1)
 			}
 			os.Exit(0)
+		case "fences":
+			ok, err := fences.Lint(repoRoot, remaining)
+			if err != nil || !ok {
+				os.Exit(1)
+			}
+			os.Exit(0)
 		case "syntax":
 			ok, err := syntax.Lint(repoRoot, remaining, true)
 			if err != nil || !ok {
@@ -293,6 +300,7 @@ func runLint(args []string) {
 	cardsFlag := fs.Bool("cards", false, "Run sheet integrity & syntax linters")
 	sheetsFlag := fs.Bool("sheets", false, "Run sheet integrity linter only")
 	syntaxFlag := fs.Bool("syntax", false, "Run rules syntax linter only")
+	fencesFlag := fs.Bool("fences", false, "Run engine architecture fences linter")
 	stagedFlag := fs.Bool("staged", false, "Smart-run only on Git staged files")
 	filesFlag := fs.String("files", "", "Comma-separated list of target files")
 	repoRootFlag := fs.String("repo-root", "", "Path to repository root")
@@ -326,6 +334,7 @@ func runLint(args []string) {
 	runRules := false
 	runSheets := false
 	runSyntax := false
+	runFences := false
 
 	var changedFrds []string
 	var changedTdds []string
@@ -337,7 +346,8 @@ func runLint(args []string) {
 		runRules = true
 		runSheets = true
 		runSyntax = true
-	} else if *frdFlag || *tddFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag {
+		runFences = true
+	} else if *frdFlag || *tddFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag || *fencesFlag {
 		if *frdFlag {
 			runFrd = true
 		}
@@ -352,6 +362,9 @@ func runLint(args []string) {
 		}
 		if *cardsFlag || *syntaxFlag {
 			runSyntax = true
+		}
+		if *fencesFlag {
+			runFences = true
 		}
 	} else {
 		// Smart change detection
@@ -370,6 +383,9 @@ func runLint(args []string) {
 					pLower := strings.ToLower(filepath.ToSlash(path))
 					if isRulesPath(pLower) {
 						runRules = true
+					}
+					if isFencesPath(pLower) {
+						runFences = true
 					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, path)
@@ -396,6 +412,9 @@ func runLint(args []string) {
 					if isRulesPath(pLower) {
 						runRules = true
 					}
+					if isFencesPath(pLower) {
+						runFences = true
+					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, sf.Path)
 					} else if strings.HasPrefix(pLower, "docs/tdd/") && strings.HasSuffix(pLower, ".md") && filepath.Base(pLower) != "readme.md" {
@@ -421,7 +440,7 @@ func runLint(args []string) {
 			runSyntax = true
 		}
 
-		if !runFrd && !runTdd && !runRules && !runSheets && !runSyntax {
+		if !runFrd && !runTdd && !runRules && !runSheets && !runSyntax && !runFences {
 			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, pkg/engine/, or data/cards/.")
 			fmt.Println("  Nothing to lint! (Use --all to force full audit across all files)")
 			fmt.Println()
@@ -493,6 +512,15 @@ func runLint(args []string) {
 		}
 	}
 
+	// 5. Engine Architecture Fences Linter
+	if runFences {
+		fmt.Println("\n>>> Running Engine Architecture Fences Linter...")
+		ok, err := fences.Lint(repoRoot, nil)
+		if err != nil || !ok {
+			anyFailed = true
+		}
+	}
+
 	fmt.Println("\n==========================================================")
 	if anyFailed {
 		fmt.Println("  LINTER SUMMARY: One or more checks FAILED!             ")
@@ -525,6 +553,8 @@ func normalizeArgs(args []string) []string {
 				lower = "sheets"
 			case "syntax":
 				lower = "syntax"
+			case "fences":
+				lower = "fences"
 			case "staged":
 				lower = "staged"
 			case "files":
@@ -578,4 +608,12 @@ func normalizeArgs(args []string) []string {
 // isRulesPath reports whether a change can affect executable rules traceability.
 func isRulesPath(pLower string) bool {
 	return pLower == "docs/frd/01_game_rules_frd.md" || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
+}
+
+// isFencesPath reports whether a change can affect engine architecture fences.
+func isFencesPath(pLower string) bool {
+	return (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go")) ||
+		(strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv")) ||
+		pLower == "docs/frd/keyword_interaction_matrix.md" ||
+		pLower == "docs/design/m2_starter_set_ability_survey.md"
 }

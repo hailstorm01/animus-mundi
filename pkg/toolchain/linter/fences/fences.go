@@ -1,0 +1,364 @@
+package fences
+
+import (
+	"bufio"
+	"encoding/csv"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"unicode"
+)
+
+var (
+	// Exemptions maps card names that FRD 01 also defines as game objects to their FR ID.
+	Exemptions = map[string]string{
+		"Scratch Company": "FR-ZON-005",
+	}
+
+	markerRegex = regexp.MustCompile(`OPEN\(([A-Z]+-[A-Z]+\d+[a-z]?)\)`)
+)
+
+// Report holds fence violations found in engine code.
+type Report struct {
+	Violations []string
+}
+
+type violationItem struct {
+	file string
+	line int
+	msg  string
+}
+
+type cardInfo struct {
+	name  string
+	words []string
+}
+
+// Analyze scans engine code for card names and invalid markers.
+func Analyze(repoRoot string) (*Report, error) {
+	cardsDir := filepath.Join(repoRoot, "data", "cards")
+	info, err := os.Stat(cardsDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading data/cards directory: %w", err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("data/cards is not a directory")
+	}
+
+	csvFiles, err := filepath.Glob(filepath.Join(cardsDir, "*.csv"))
+	if err != nil {
+		return nil, fmt.Errorf("listing card csv files: %w", err)
+	}
+
+	cardNames := make(map[string]bool)
+	for _, csvFile := range csvFiles {
+		f, err := os.Open(csvFile)
+		if err != nil {
+			return nil, fmt.Errorf("opening card sheet %s: %w", filepath.Base(csvFile), err)
+		}
+		cr := csv.NewReader(f)
+		cr.FieldsPerRecord = -1
+		rows, err := cr.ReadAll()
+		f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("reading card sheet %s: %w", filepath.Base(csvFile), err)
+		}
+		if len(rows) == 0 {
+			continue
+		}
+		nameCol := -1
+		for i, h := range rows[0] {
+			clean := strings.TrimSpace(strings.TrimPrefix(h, "\ufeff"))
+			if strings.EqualFold(clean, "name") {
+				nameCol = i
+				break
+			}
+		}
+		if nameCol == -1 {
+			continue
+		}
+		for _, row := range rows[1:] {
+			if nameCol < len(row) {
+				cName := strings.TrimSpace(row[nameCol])
+				if cName == "" || cName == "--" {
+					continue
+				}
+				if _, exempt := Exemptions[cName]; exempt {
+					continue
+				}
+				cardNames[cName] = true
+			}
+		}
+	}
+
+	var cards []cardInfo
+	for name := range cardNames {
+		words := splitWords(name)
+		if len(words) > 0 {
+			cards = append(cards, cardInfo{name: name, words: words})
+		}
+	}
+	sort.Slice(cards, func(i, j int) bool {
+		return cards[i].name < cards[j].name
+	})
+
+	openMatrix := make(map[string]bool)
+	ruledMatrix := make(map[string]bool)
+	matrixPath := filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md")
+	if mContent, err := os.ReadFile(matrixPath); err == nil {
+		lines := strings.Split(string(mContent), "\n")
+		currentSec := ""
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "## ") {
+				currentSec = trimmed
+				continue
+			}
+			if !strings.HasPrefix(trimmed, "|") {
+				continue
+			}
+			cells := strings.Split(trimmed, "|")
+			if len(cells) < 3 {
+				continue
+			}
+			id := strings.TrimSpace(cells[1])
+			if strings.HasPrefix(id, "KIM-") {
+				if strings.HasPrefix(currentSec, "## Open Items") {
+					openMatrix[id] = true
+				} else if strings.HasPrefix(currentSec, "## Rulings") {
+					ruledMatrix[id] = true
+				}
+			}
+		}
+	}
+
+	openSurvey := make(map[string]bool)
+	ruledSurvey := make(map[string]bool)
+	surveyPath := filepath.Join(repoRoot, "docs", "design", "m2_starter_set_ability_survey.md")
+	if sContent, err := os.ReadFile(surveyPath); err == nil {
+		lines := strings.Split(string(sContent), "\n")
+		inRulingQuestions := false
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
+				inRulingQuestions = true
+				continue
+			}
+			if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
+				inRulingQuestions = false
+				continue
+			}
+			if !inRulingQuestions || !strings.HasPrefix(trimmed, "|") {
+				continue
+			}
+			cells := strings.Split(trimmed, "|")
+			if len(cells) < 4 {
+				continue
+			}
+			rawID := strings.TrimSpace(cells[1])
+			cleanID := strings.Trim(rawID, "* ")
+			if cleanID == "" || strings.EqualFold(cleanID, "id") || strings.HasPrefix(cleanID, ":-") {
+				continue
+			}
+			svyID := "SVY-" + cleanID
+			lastCell := strings.TrimSpace(cells[len(cells)-2])
+			if strings.Contains(lastCell, "Ruled") {
+				ruledSurvey[svyID] = true
+			} else {
+				openSurvey[svyID] = true
+			}
+		}
+	}
+
+	engineDir := filepath.Join(repoRoot, "pkg", "engine")
+	entries, err := os.ReadDir(engineDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading pkg/engine directory: %w", err)
+	}
+
+	var items []violationItem
+
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+
+		filePath := filepath.Join(engineDir, name)
+		lines, err := readLines(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", name, err)
+		}
+
+		for idx, line := range lines {
+			lineNum := idx + 1
+
+			// Check markers
+			markers := markerRegex.FindAllStringSubmatch(line, -1)
+			for _, m := range markers {
+				markerID := m[1]
+				parts := strings.SplitN(markerID, "-", 2)
+				prefix := parts[0]
+				switch prefix {
+				case "KIM":
+					if openMatrix[markerID] {
+						// Open item: valid marker
+					} else if ruledMatrix[markerID] {
+						items = append(items, violationItem{
+							file: name,
+							line: lineNum,
+							msg:  fmt.Sprintf("OPEN(%s) is ruled and the marker should be removed", markerID),
+						})
+					} else {
+						items = append(items, violationItem{
+							file: name,
+							line: lineNum,
+							msg:  fmt.Sprintf("OPEN(%s) is not in the matrix", markerID),
+						})
+					}
+				case "SVY":
+					if openSurvey[markerID] {
+						// Open survey item: valid marker
+					} else if ruledSurvey[markerID] {
+						items = append(items, violationItem{
+							file: name,
+							line: lineNum,
+							msg:  fmt.Sprintf("OPEN(%s) is ruled and the marker should be removed", markerID),
+						})
+					} else {
+						items = append(items, violationItem{
+							file: name,
+							line: lineNum,
+							msg:  fmt.Sprintf("OPEN(%s) is not in the survey", markerID),
+						})
+					}
+				default:
+					items = append(items, violationItem{
+						file: name,
+						line: lineNum,
+						msg:  fmt.Sprintf("OPEN(%s): markers must name a KIM- or SVY- item", markerID),
+					})
+				}
+			}
+
+			// Check card names
+			lineWords := splitWords(line)
+			if len(lineWords) > 0 {
+				for _, c := range cards {
+					if containsWordSequence(lineWords, c.words) {
+						items = append(items, violationItem{
+							file: name,
+							line: lineNum,
+							msg:  fmt.Sprintf("contains card name %q", c.name),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].file != items[j].file {
+			return items[i].file < items[j].file
+		}
+		if items[i].line != items[j].line {
+			return items[i].line < items[j].line
+		}
+		return items[i].msg < items[j].msg
+	})
+
+	rep := &Report{}
+	for _, it := range items {
+		rep.Violations = append(rep.Violations, fmt.Sprintf("%s:%d: %s", it.file, it.line, it.msg))
+	}
+	return rep, nil
+}
+
+// Lint runs the fences check and prints the results.
+func Lint(repoRoot string, _ []string) (bool, error) {
+	fmt.Println("==========================================================")
+	fmt.Println("  CARD TOWN LINTER: ENGINE ARCHITECTURE FENCES            ")
+	fmt.Println("==========================================================")
+	rep, err := Analyze(repoRoot)
+	if err != nil {
+		return false, err
+	}
+
+	if len(rep.Violations) > 0 {
+		for _, v := range rep.Violations {
+			fmt.Printf("  [ERROR] %s\n", v)
+		}
+		fmt.Printf("\n  [FAIL] %d fence violation(s) found.\n", len(rep.Violations))
+		fmt.Println("==========================================================")
+		return false, nil
+	}
+
+	fmt.Println("  [PASS] Engine code is free of card names and invalid markers.")
+	fmt.Println("==========================================================")
+	return true, nil
+}
+
+func splitWords(s string) []string {
+	var b strings.Builder
+	runes := []rune(s)
+	for i := 0; i < len(runes); i++ {
+		b.WriteRune(runes[i])
+		if i+1 < len(runes) {
+			r1 := runes[i]
+			r2 := runes[i+1]
+			isLowerUpper := unicode.IsLower(r1) && unicode.IsUpper(r2)
+			isLetterDigit := (unicode.IsLetter(r1) && unicode.IsDigit(r2)) || (unicode.IsDigit(r1) && unicode.IsLetter(r2))
+			if isLowerUpper || isLetterDigit {
+				b.WriteRune(' ')
+			}
+		}
+	}
+	expanded := strings.ToLower(b.String())
+	expanded = strings.ReplaceAll(expanded, "'", "")
+	expanded = strings.ReplaceAll(expanded, "’", "")
+	return strings.FieldsFunc(expanded, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+}
+
+func containsWordSequence(haystack, needle []string) bool {
+	if len(needle) == 0 || len(needle) > len(haystack) {
+		return false
+	}
+	for i := 0; i <= len(haystack)-len(needle); i++ {
+		match := true
+		for j := 0; j < len(needle); j++ {
+			if haystack[i+j] != needle[j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return true
+		}
+	}
+	return false
+}
+
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
