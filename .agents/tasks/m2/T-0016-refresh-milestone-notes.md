@@ -4,7 +4,7 @@ title: Refresh stale milestone notes in engine comments and messages
 kind: harness
 tier: flash
 wave: none (board directive #17, audit finding 4)
-status: ready
+status: in-progress
 branch: m2/T-0016-refresh-milestone-notes
 depends_on: []
 claims: [file:pkg/engine/doc.go, comments:engine-milestone-wording]
