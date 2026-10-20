@@ -187,11 +187,18 @@ func runTdd(args []string) {
 
 func runSim(args []string) {
 	fs := flag.NewFlagSet("sim", flag.ExitOnError)
+	deck := fs.String("deck", "", "Decklist name under data/decks/ (<faction>-<name>.txt) to play instead of stress decks")
 	games := fs.Int("games", 200, "Number of matches to play")
 	seed := fs.Uint64("seed", 1, "First seed; match i uses seed+i")
 	p0 := fs.String("p0", "SOULLESS", "Faction for player 0")
 	p1 := fs.String("p1", "CONCORDIA", "Faction for player 1")
 	maxTurns := fs.Int("max-turns", 400, "Fail if a match runs longer than this")
+	fs.Usage = func() {
+		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
+		fmt.Println("Random-policy playouts on the rules kernel (termination, invariants, win rates)")
+		fmt.Println("\nFlags:")
+		fs.PrintDefaults()
+	}
 	fs.Parse(normalizeArgs(args))
 
 	repoRoot := findRepoRoot()
@@ -201,10 +208,19 @@ func runSim(args []string) {
 		os.Exit(1)
 	}
 	var decks [2]engine.DeckList
-	for i, faction := range []string{*p0, *p1} {
-		if decks[i], err = engine.FactionDeck(cards, faction); err != nil {
+	if *deck != "" {
+		decksDir := filepath.Join(repoRoot, "data", "decks")
+		decks, err = engine.SimDecks(cards, decksDir, *deck, [2]string{*p0, *p1})
+		if err != nil {
 			fmt.Printf("[ERROR] %v\n", err)
 			os.Exit(1)
+		}
+	} else {
+		for i, faction := range []string{*p0, *p1} {
+			if decks[i], err = engine.FactionDeck(cards, faction); err != nil {
+				fmt.Printf("[ERROR] %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 
@@ -218,7 +234,24 @@ func runSim(args []string) {
 	fmt.Println("  CARD TOWN RULES KERNEL: RANDOM-POLICY PLAYOUTS           ")
 	fmt.Println("==========================================================")
 	fmt.Printf("  %s (%s) vs %s (%s), %d games, seeds %d..%d\n", *p0, decks[0].HQ.Name, *p1, decks[1].HQ.Name, st.Games, *seed, *seed+uint64(st.Games)-1)
-	fmt.Println("  Decks cycle each faction's kernel-executable cards; HQ abilities are ignored.")
+	if *deck != "" {
+		file0 := fmt.Sprintf("%s-%s.txt", strings.ToLower(*p0), *deck)
+		file1 := fmt.Sprintf("%s-%s.txt", strings.ToLower(*p1), *deck)
+		countSupported := func(main []*engine.Card) int {
+			n := 0
+			for _, c := range main {
+				if c.Supported() {
+					n++
+				}
+			}
+			return n
+		}
+		fmt.Printf("  P0 (%s): %d/%d main cards executable now (Supported())\n", filepath.ToSlash(filepath.Join("data", "decks", file0)), countSupported(decks[0].Main), len(decks[0].Main))
+		fmt.Printf("  P1 (%s): %d/%d main cards executable now (Supported())\n", filepath.ToSlash(filepath.Join("data", "decks", file1)), countSupported(decks[1].Main), len(decks[1].Main))
+		fmt.Println("  HQ abilities are ignored.")
+	} else {
+		fmt.Println("  Decks cycle each faction's kernel-executable cards; HQ abilities are ignored.")
+	}
 	fmt.Printf("  P0 wins %.1f%%  P1 wins %.1f%%  draws %.1f%%  first player wins %.1f%%\n", pct(st.Wins[0]), pct(st.Wins[1]), pct(st.Draws), pct(st.FirstPlayerWin))
 	fmt.Printf("  Average match length: %.1f turns\n", float64(st.TotalTurns)/float64(st.Games))
 	fmt.Println("  End reasons:")
@@ -581,6 +614,8 @@ func normalizeArgs(args []string) []string {
 				lower = "section"
 			case "rules":
 				lower = "rules"
+			case "deck":
+				lower = "deck"
 			case "games":
 				lower = "games"
 			case "seed":
