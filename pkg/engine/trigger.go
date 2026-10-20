@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
@@ -104,19 +105,16 @@ func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
 		return
 	}
 	owner := g.Players[it.Inst.Owner]
-	for i, c := range owner.Discard {
-		if c != it.Inst {
-			continue
-		}
-		owner.Discard = append(owner.Discard[:i:i], owner.Discard[i+1:]...)
-		switch {
-		case st.Op == ability.OpReturnToHand:
-			owner.Hand = append(owner.Hand, c)
-		case st.Bottom:
-			owner.Deck = append(owner.Deck, c)
-		default:
-			owner.Deck = append([]*Instance{c}, owner.Deck...)
-		}
+	if !slices.Contains(owner.Discard, it.Inst) {
 		return
+	}
+	owner.Discard = remove(owner.Discard, it.Inst)
+	switch {
+	case st.Op == ability.OpReturnToHand:
+		owner.Hand = append(owner.Hand, it.Inst)
+	case st.Bottom:
+		owner.Deck = append(owner.Deck, it.Inst)
+	default:
+		owner.Deck = append([]*Instance{it.Inst}, owner.Deck...)
 	}
 }
