@@ -2,13 +2,15 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
 
 // pendingTrigger is a fired trigger waiting in the buffer for the flush.
 type pendingTrigger struct {
-	source     int // source asset ID
+	source     int       // source asset ID
+	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	controller PlayerID
 	label      string
 	trig       ability.Trigger
@@ -38,7 +40,7 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			continue
 		}
 		g.pending = append(g.pending, pendingTrigger{
-			source: a.ID, controller: a.Controller, trig: t,
+			source: a.ID, inst: a.Inst, controller: a.Controller, trig: t,
 			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1),
 		})
 	}
@@ -74,7 +76,7 @@ func (g *Game) flushTriggers() {
 		}
 		for _, i := range order {
 			p := mine[i]
-			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Trigger: p.trig})
+			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig})
 		}
 	}
 }
@@ -88,6 +90,31 @@ func (g *Game) resolveAbility(it *StackItem) {
 			g.scratch(it.Controller, st.Amount.N)
 		case ability.OpDraw:
 			g.draw(it.Controller, st.Amount.N)
+		case ability.OpReturnToHand, ability.OpPutOnDeck:
+			g.relocateSelf(it, st)
 		}
+	}
+}
+
+// relocateSelf moves a death trigger's own card from its owner's discard pile
+// to the owner's hand or deck. It tracks the exact instance: if that instance
+// is no longer in the discard pile, it does nothing (FR-ZON-004). Only defined
+// for SubjectSelf on a HookKilled trigger.
+func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
+	if st.Subject != ability.SubjectSelf || it.Trigger.Hook != ability.HookKilled || it.Inst == nil {
+		return
+	}
+	owner := g.Players[it.Inst.Owner]
+	if !slices.Contains(owner.Discard, it.Inst) {
+		return
+	}
+	owner.Discard = remove(owner.Discard, it.Inst)
+	switch {
+	case st.Op == ability.OpReturnToHand:
+		owner.Hand = append(owner.Hand, it.Inst)
+	case st.Bottom:
+		owner.Deck = append(owner.Deck, it.Inst)
+	default:
+		owner.Deck = append([]*Instance{it.Inst}, owner.Deck...)
 	}
 }
