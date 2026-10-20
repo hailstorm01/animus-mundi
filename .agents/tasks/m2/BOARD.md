@@ -55,4 +55,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0015 | Pin FR-SET-003, FR-CRD-101, FR-ZON-003 and FR-ZON-001 with scenario tests (directive #16) | done |
 | T-0016 | Refresh stale milestone notes in engine comments and messages (directive #17, harness, flash) | done |
 | T-0017 | Chosen targets with conjunction filters, two-stage verification, and DealDamage (A2 shape, sonnet) | done |
-| T-0018 | Make Saboteur and Chainbreaker Sappers executable (A2 cards, flash) | tests |
+| T-0018 | Make Saboteur and Chainbreaker Sappers executable (A2 cards, flash) | ready |
