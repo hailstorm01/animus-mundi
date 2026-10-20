@@ -20,7 +20,7 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	r := DamageResult{Raw: raw}
 	kw := g.Keywords(target)
 
-	// Stage 1: target redirection. No M1 card redirects damage.
+	// Stage 1: target redirection. No executable card redirects damage yet.
 
 	// Stage 2: flat Resistant N. Negative Resistant amplifies, even 0 raw damage.
 	dmg := max(0, raw-kw.Resistant)

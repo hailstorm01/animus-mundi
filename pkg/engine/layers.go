@@ -1,8 +1,8 @@
 package engine
 
 // Effective characteristics through the six-layer pipeline (FR-LAY-001).
-// M1 has no type grants (Layer 2), keyword grants (Layer 3) or auras
-// (Layer 4), so the pipeline reduces to Layer 1 + Layer 5 + Layer 6 clamping.
+// Nothing grants types (Layer 2) or keywords (Layer 3), and there are no auras
+// (Layer 4) yet, so the pipeline reduces to Layer 1 + Layer 5 + Layer 6 clamping.
 
 // Power returns effective Combat Power, the only stat that clamps at 0.
 func (g *Game) Power(a *Asset) int {

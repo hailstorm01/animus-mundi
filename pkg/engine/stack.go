@@ -124,6 +124,7 @@ func combatLegalZone(a *Asset) bool {
 // whether both combatants are still where they can fight.
 func (g *Game) resolveAttack(it *StackItem) {
 	def := g.Asset(it.Target)
+	// OPEN(SVY-R8): fizzles if the defender changed controller before resolution.
 	if def == nil || !combatLegalZone(def) || def.Controller == it.Controller {
 		g.logf("fizzle", "attack fizzles: the defender is gone, so there is no Berserk cleave")
 		return

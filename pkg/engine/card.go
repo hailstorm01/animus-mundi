@@ -61,7 +61,7 @@ type Card struct {
 	RulesText   string
 	Keywords    Keywords
 
-	// Unsupported lists rules-text lines the M1 kernel cannot execute.
+	// Unsupported lists rules-text lines the kernel cannot execute.
 	// A card with unsupported lines cannot be deployed.
 	Unsupported []string
 

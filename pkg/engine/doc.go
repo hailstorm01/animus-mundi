@@ -3,7 +3,7 @@
 // this package disagree, one of them has a bug, and a scenario test named
 // after the FR ID (TestFR_CBT_002_...) settles which.
 //
-// M1 scope (see docs/frd/README.md, "Executable Rules"):
+// What runs now:
 //   - Match setup, first-player choice, partial mulligan, turn phases.
 //   - Dual-resource economy: Generate Resources, 2R -> 1T conversion.
 //   - Deploying Unit and Structure cards, March, Attack, Deploy Scratch Company.
@@ -12,13 +12,27 @@
 //     state-based death sweeps, HQ defeat, empty-deck loss and Match Draws.
 //   - Standalone keywords: Resistant N, Stalwart, Aggressive N, Ethereal,
 //     Ward, Versatile, Guardian, Armor N, Deploys Exhausted, Berserk N.
+//   - Ability shapes as plain data in pkg/engine/ability, and card definitions
+//     keyed by card name in pkg/engine/cards. Engine code never names a card
+//     (cardtown lint fences).
+//   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks)
+//     run through a pending-trigger buffer, in APNAP order with cascades
+//     (FR-TRG-002 to FR-TRG-004).
+//   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001).
+//   - Untargeted steps OpScratch, OpDraw, OpReturnToHand and OpPutOnDeck, the
+//     TurnYours gate, SubjectSelf (tracked in discard, FR-ZON-004) and
+//     SubjectOpponents.
 //
-// Out of scope until the ability model lands (M3): Maneuvers, printed
-// triggered/activated/continuous abilities (including Headquarters
-// abilities), Unbowed, Cornered, Heal N, Regroup N, replacement effects
-// beyond the damage pipeline, and match clocks. Cards whose rules text needs
-// any of these load with Card.Unsupported set and cannot be deployed.
+// Not built yet:
+//   - Targeted abilities, Maneuvers, activated and continuous abilities,
+//     Headquarters abilities, Unbowed, Cornered, Heal N, Regroup N, replacement
+//     effects beyond the damage pipeline, and match clocks. Cards whose text
+//     needs any of these load with Card.Unsupported set and cannot be deployed.
+//     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
-// it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md.
+// it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md
+// or an "OPEN(SVY-...)" comment pointing at the survey's ruling questions in
+// docs/design/m2_starter_set_ability_survey.md. The fences linter
+// (cardtown lint fences) checks both against those files.
 package engine
