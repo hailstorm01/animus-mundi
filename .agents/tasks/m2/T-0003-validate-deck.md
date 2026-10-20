@@ -4,7 +4,7 @@ title: Validate deck construction (FR-SET-001)
 kind: shape
 tier: sonnet
 wave: none (design note Deliverable 2, first half)
-status: tests
+status: tests-review
 branch: m2/T-0003-validate-deck
 depends_on: [T-0002]
 claims: [func:ValidateDeck, var:ErrIllegalDeck]
@@ -39,7 +39,29 @@ Tests check `errors.Is(err, ErrIllegalDeck)`. Where a card is at fault, they che
 - **A main-deck card whose rarity is not one of the four FR-SET-001 rarities** is a violation (fail closed on bad data). A test may pin this.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-<!-- rules-test-author fills this in. Cover the main rule and every edge FR-SET-001 names: exactly 50 is legal, 49 is not, and there is no maximum; HQ missing, not a Headquarters, or Neutral; a Headquarters card in the main deck; off-faction versus Neutral cards; Scratch Company; each rarity at its limit and one over; several violations reported together. File: pkg/engine/deck_test.go. Use synthetic cards or realCard(name) from scenario_test.go. -->
+File: `pkg/engine/deck_test.go` (synthetic cards; local fixtures `deckHQ`, `deckCard`, `legalMain`, `copies`, `legalDeck`, `wantLegal`, `wantIllegal`).
+- `TestFR_SET_001_LegalDeckAccepted`: a 50-card faction deck with a matching HQ is legal.
+- `TestFR_SET_001_FiftyCardsIsLegal`: exactly 50 is legal (Path deck).
+- `TestFR_SET_001_FortyNineCardsIsIllegal`: 49 is illegal.
+- `TestFR_SET_001_EmptyMainDeckIsIllegal`: an empty main deck is illegal.
+- `TestFR_SET_001_NoMaximumDeckSize`: 200 cards is legal.
+- `TestFR_SET_001_MissingHQIsIllegal`: nil HQ is illegal.
+- `TestFR_SET_001_HQMustBeHeadquartersCard`: an HQ that is not a Headquarters card is illegal and named.
+- `TestFR_SET_001_NeutralHQIsIllegal`: a Neutral HQ is illegal and named.
+- `TestFR_SET_001_HQInMainDeckIsIllegal`: a Headquarters card in the main deck is illegal and named.
+- `TestFR_SET_001_OffFactionCardIsIllegal`: a Path card in an Animus deck is illegal and named.
+- `TestFR_SET_001_OffFactionIsIllegalForEveryPairing`: every ordered pair of distinct factions is illegal.
+- `TestFR_SET_001_NeutralCardsLegalInAnyDeck`: a Neutral card is legal under each of the four factions.
+- `TestFR_SET_001_FactionComparedCaseInsensitively`: lead decision; "Animus" cards under an "ANIMUS" HQ are legal.
+- `TestFR_SET_001_ScratchCompanyInMainDeckIsIllegal`: a Neutral Common with the Scratch Company subtype is illegal and named.
+- `TestFR_SET_001_CommonLimitIsFour`: 4 legal, 5 illegal.
+- `TestFR_SET_001_UncommonLimitIsThree`: 3 legal, 4 illegal.
+- `TestFR_SET_001_RareLimitIsTwo`: 2 legal, 3 illegal.
+- `TestFR_SET_001_MythicLimitIsOne`: 1 legal, 2 illegal.
+- `TestFR_SET_001_CopyLimitCountsByPrintedName`: lead decision; three distinct `*Card` values with one name count together.
+- `TestFR_SET_001_LimitsApplyPerName`: two Mythics with different names are legal.
+- `TestFR_SET_001_UnknownRarityIsIllegal`: lead decision; an unrecognised rarity in the main deck is illegal and named.
+- `TestFR_SET_001_AllViolationsReportedTogether`: a deck with faction, copy-limit and size faults names both offending cards in one error.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -55,3 +77,4 @@ Tests check `errors.Is(err, ErrIllegalDeck)`. Where a card is at fault, they che
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task, applying board directive #2 (first half). Data checked: all Animus and Path names use straight apostrophes, the HQ rarity is `HQ`, and Scratch Company is COMMON and NEUTRAL, so only the token prohibition catches it. Next: `rules-test-author`.
+- 2026-10-19 rules-test-author: Wrote 22 `TestFR_SET_001_*` tests in `pkg/engine/deck_test.go`. Helpers requested: none (fixtures are local to deck_test.go). `go vet ./pkg/engine` fails only on undefined `ValidateDeck` and `ErrIllegalDeck`, as expected until the engineer adds them; `cardtown lint rules` passes. Left out: wording beyond `errors.Is` and card names, and the exact count of joined errors, because FRD 01 does not fix them. Next: lead-architect review.
