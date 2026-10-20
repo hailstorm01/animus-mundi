@@ -684,3 +684,108 @@ func TestFences_Case20_RealRepositoryClean(t *testing.T) {
 		t.Fatalf("expected real repo to pass fences check, but failed")
 	}
 }
+
+func writeEngineFile(t *testing.T, repo, rel, code string) {
+	t.Helper()
+	p := filepath.Join(repo, "pkg", "engine", filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		t.Fatalf("mkdir for %s: %v", rel, err)
+	}
+	if err := os.WriteFile(p, []byte(code), 0644); err != nil {
+		t.Fatalf("write %s: %v", rel, err)
+	}
+}
+
+func lintFixture(t *testing.T, repo string) (bool, error, string) {
+	t.Helper()
+	var ok bool
+	var err error
+	out := captureOutput(func() {
+		ok, err = fences.Lint(repo, nil)
+	})
+	return ok, err, out
+}
+
+// 21. A card name in pkg/engine/ability/z.go -> fails, naming ability/z.go:<line>.
+func TestFences_Case21_AbilityPackageInScope(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writeEngineFile(t, repo, "ability/z.go", "package ability\n\n// Steel Rain\nvar _ = 1\n")
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok {
+		t.Fatalf("expected failure, got true")
+	}
+	if !strings.Contains(out, "[ERROR] ability/z.go:3") {
+		t.Fatalf("expected [ERROR] ability/z.go:3, got:\n%s", out)
+	}
+}
+
+// 22. A card name in a new subfolder pkg/engine/foo/w.go -> fails.
+func TestFences_Case22_NewSubfolderInScope(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writeEngineFile(t, repo, "foo/w.go", "package foo\n\nvar _ = \"Steel Rain\"\n")
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok || !strings.Contains(out, "foo/w.go:3") {
+		t.Fatalf("expected failure naming foo/w.go:3 (ok=%v), got:\n%s", ok, out)
+	}
+}
+
+// 23. Cards subtree files and test files at any depth -> pass.
+func TestFences_Case23_CardsSubtreeAndTestsExempt(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writeEngineFile(t, repo, "cards/sub/w.go", "package sub\n\nvar _ = \"Steel Rain\"\n")
+	writeEngineFile(t, repo, "ability/z_test.go", "package ability\n\nvar _ = \"Steel Rain\"\n")
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if !ok {
+		t.Fatalf("expected pass, got:\n%s", out)
+	}
+}
+
+// 24. Missing matrix or survey -> Lint errors, naming the file.
+func TestFences_Case24_MissingDocsError(t *testing.T) {
+	for _, rel := range []string{
+		filepath.Join("docs", "frd", "keyword_interaction_matrix.md"),
+		filepath.Join("docs", "design", "m2_starter_set_ability_survey.md"),
+	} {
+		repo := setupFixtureRepo(t)
+		if err := os.Remove(filepath.Join(repo, rel)); err != nil {
+			t.Fatalf("remove %s: %v", rel, err)
+		}
+		ok, err, _ := lintFixture(t, repo)
+		if err == nil {
+			t.Fatalf("missing %s: expected error, got nil (ok=%v)", rel, ok)
+		}
+		if ok {
+			t.Fatalf("missing %s: expected ok=false", rel)
+		}
+		if !strings.Contains(err.Error(), filepath.Base(rel)) {
+			t.Fatalf("missing %s: error %q should name the file", rel, err)
+		}
+	}
+}
+
+// 25. Violations in x.go and ability/z.go -> both reported, sorted by path.
+func TestFences_Case25_SortedByRelativePath(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writeEngineFile(t, repo, "x.go", "package engine\n\nvar _ = \"Steel Rain\"\n")
+	writeEngineFile(t, repo, "ability/z.go", "package ability\n\nvar _ = \"Steel Rain\"\n")
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok {
+		t.Fatalf("expected failure")
+	}
+	iz, ix := strings.Index(out, "ability/z.go:3"), strings.Index(out, "x.go:3")
+	if iz == -1 || ix == -1 || iz > ix {
+		t.Fatalf("expected ability/z.go:3 before x.go:3, got:\n%s", out)
+	}
+}

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"animus-mundi/pkg/engine/ability"
+	"animus-mundi/pkg/engine/cards"
 )
 
 // CardType is the mutually exclusive primary classification (FR-CRD-101).
@@ -61,6 +65,9 @@ type Card struct {
 	// Unsupported lists rules-text lines the M1 kernel cannot execute.
 	// A card with unsupported lines cannot be deployed.
 	Unsupported []string
+
+	// Ability is the card's executable definition from package cards, if any.
+	Ability *ability.Def
 }
 
 // HasSubtype reports whether the card carries the subtype (case-insensitive).
@@ -129,6 +136,15 @@ func ParseKeywordLine(line string, kw *Keywords) bool {
 
 // LoadCards reads every CSV in dir (data/cards) and returns cards by name.
 func LoadCards(dir string) (map[string]*Card, error) {
+	_ = cards.Defs // stub: wired in the implementation commit
+	return loadCardsOld(dir)
+}
+
+func loadCards(dir string, defs map[string]*ability.Def) (map[string]*Card, error) {
+	return nil, errors.New("loadCards: not implemented")
+}
+
+func loadCardsOld(dir string) (map[string]*Card, error) {
 	paths, err := filepath.Glob(filepath.Join(dir, "*.csv"))
 	if err != nil {
 		return nil, err

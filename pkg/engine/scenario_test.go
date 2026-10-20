@@ -100,3 +100,19 @@ func (s *scene) wantDamage(a *Asset, want int) {
 		s.t.Errorf("%s damage = %d, want %d", a, a.Damage, want)
 	}
 }
+
+// realCard returns a shallow copy of the named card from data/cards, loaded
+// once per test binary.
+func realCard(name string) (*Card, error) {
+	return nil, errors.New("realCard: not implemented")
+}
+
+// card returns the real repository card, or fails the test.
+func (s *scene) card(name string) *Card {
+	s.t.Helper()
+	c, err := realCard(name)
+	if err != nil {
+		s.t.Fatalf("%v", err)
+	}
+	return c
+}
