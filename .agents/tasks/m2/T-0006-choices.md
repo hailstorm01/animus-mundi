@@ -4,7 +4,7 @@ title: Ask players through a per-seat Chooser, with the FR-MOD-001 fast path and
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 1 of 4)
-status: ready
+status: in-progress
 branch: m2/T-0006-choices
 depends_on: [T-0005]
 claims: [type:Decision, type:DecisionKind, type:Option, type:Answer, type:Chooser, config:Choosers, func:Game.choose, func:RandomChooser]
