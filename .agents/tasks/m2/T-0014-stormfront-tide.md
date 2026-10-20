@@ -4,7 +4,7 @@ title: Make Stormfront of Ideals and Unceasing Tide executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 4 of 4)
-status: review
+status: done
 branch: m2/T-0014-stormfront-tide
 depends_on: [T-0013]
 claims: [card:Stormfront of Ideals, card:Unceasing Tide]
@@ -66,3 +66,9 @@ All in `pkg/engine/cards_animus_test.go`, loading the real cards; each covers FR
   - Re-run: 6 fail (no trigger yet), 2 guards pass, and no other test fails.
   - Next: **the user runs `@kernel-engineer T-0014` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-20 kernel-engineer: Implemented. animus.go: added definitions to animusDefs for "Stormfront of Ideals" (HookKilled, OpPutOnDeck, Subject: SubjectSelf, Bottom: true) and "Unceasing Tide" (HookKilled, OpReturnToHand, Subject: SubjectSelf) in alphabetical order. cards.go: removed "Stormfront of Ideals" and "Unceasing Tide" from NotYetExecutable allowlist while preserving sort order. Reused HookKilled, SubjectSelf, OpPutOnDeck with Bottom: true, OpReturnToHand; no new shapes or engine logic added. Gates: go test ./pkg/engine -run 'TestCard_(StormfrontOfIdeals|UnceasingTide)' passed (8/8), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go test ./... ok, go vet ./... clean, gofmt -l pkg cmd clean, cardtown lint --all passed. Starter deck sim reported P0 (Animus starter) main executable cards rose from 14/50 to 19/50 (2 Stormfront, 3 Tide). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged as default sim runs Soulless vs Concordia). Reviewer: check that Stormfront of Ideals sets Bottom: true with OpPutOnDeck and SubjectSelf, and Unceasing Tide sets OpReturnToHand with SubjectSelf.
+- 2026-10-20 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 94567e7 changes only `animus.go` and `cards.go`. No test changed after `test(T-0014)` 19bf43e.
+  - Fences: plain `ability` data with no new shapes. Both use `HookKilled` and `SubjectSelf`. Stormfront's `{OpPutOnDeck, Bottom: true}` and Tide's `{OpReturnToHand}` match T-0009's `putSelfOnDeck` and `returnSelf` in `self_tracking_test.go`. Each `Text` is the CSV line exactly. The fences lint passes.
+  - Gates re-run by the reviewer: 8/8 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass. `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean, and `cardtown lint --all` passes.
+  - Starter sim exits 0. Animus executable count goes from 14/50 to 19/50 (+5). Result: P0 51.0%, P1 16.5%, draws 32.5%, all invariants hold. The default sim also exits 0.
+  - With this task, all 8 wave A1 cards are executable.
