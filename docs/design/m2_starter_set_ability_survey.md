@@ -118,7 +118,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Melodic Pummeler | E | Continuous | allied Horror units in same zone +1 power | `FR-LAY-001` | Includes itself |
 | Hulking Incongruity | E | Continuous | allied Horror units in same zone gain Resistant 1 | `FR-LAY-001` | G2; includes itself |
 | Veil Render ★ | F | Continuous (discard-active permission) | deploy from discard + kill allied asset | `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001` | Benchmark #6 |
-| Mutation Swell ★ | F | Maneuver | `KILL` 2 or 4 allied Scratch Company; `DEPLOY_FREE` per 2 killed | `FR-TGT-002`, `FR-TRN-003a` | Benchmark #14 |
+| Mutation Swell ★ | F | Maneuver | `KILL` 2 or 4 allied Scratch Company (untargeted, picked on resolution); `DEPLOY_FREE` per 2 killed | `FR-TGT-002`, `FR-TRN-003a` (`SVY-R3`) | Benchmark #14, but its `CHOSEN` targeting is superseded: the kill is untargeted (2026-10-20) |
 | Forced Mutation | F | Maneuver | `MORPH_SCRATCH` chosen opposing unit | `FR-ENT-103` | |
 | Animoceps Spore Cloud ★ | G | Replacement | `WOULD_TAKE_DAMAGE` on allied units in same zone → `REDIRECT_DAMAGE_TARGET` self | `FR-REP-001`–`FR-REP-004` | Benchmark #3 |
 | Shifting Impossibility | G | Replacement | `WOULD_BE_DESTROYED` on allied Scratch Company → `RETURN_TO_HAND` + `DEAL_DAMAGE 1` self | `FR-REP-001`–`FR-REP-003`, `FR-LAY-002` | R5 |
