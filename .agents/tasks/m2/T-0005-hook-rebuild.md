@@ -4,7 +4,7 @@ title: Make the pre-commit hook rebuild a stale CLI
 kind: harness
 tier: flash
 wave: none (board directive #9, before wave A1)
-status: review
+status: done
 branch: m2/T-0005-hook-rebuild
 depends_on: []
 claims: [file:pkg/toolchain/hook, hook:pre-commit-rebuild]
@@ -88,3 +88,9 @@ Each case runs in a fixture repository in `t.TempDir()`: `git init`, a `go.mod`,
 
     ==========================================================
     ```
+- 2026-10-19 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only `hook.go`, `tools/linter/pre-commit` and the new test file changed. The test file is unchanged since `0bc16ab`. `.git/hooks/pre-commit` is byte-identical to `tools/linter/pre-commit`.
+  - Tests at the test commit: cases 2, 3, 4, 6 and 7 fail there, and 8 and 9 pass as allowed. Cases 1 and 5 also pass there. That is the lead's spec, not the engineer's: a "no rebuild" case cannot fail against a script that never rebuilds. They still catch an always-rebuild implementation. From now on, a case that pins an absence is listed with the cases allowed to pass at the test commit.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass, and `sim -deck starter -p0 ANIMUS -p1 PATH -games 20` exits 0.
+  - Hand checks in a scratch repo: missing → `Rebuilding bin/cardtown.exe (missing)...`. Source touched with no content change → one `stale` rebuild, then the next run is quiet, because `go build -o` updates the target's mtime even when it skips relinking (so there is no rebuild-every-commit loop). Case 7 → compiler error naming `broken.go`, `Rebuild failed; falling back to go run`, exit 1, and the old binary never ran.
+  - Non-blocking: case 6 checks for `cardtown.exe` but not the `bin/` prefix. The script prints `bin/cardtown.exe`, so behavior is right.
