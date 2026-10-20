@@ -4,7 +4,7 @@ title: Ask players through a per-seat Chooser, with the FR-MOD-001 fast path and
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 1 of 4)
-status: tests
+status: tests-review
 branch: m2/T-0006-choices
 depends_on: [T-0005]
 claims: [type:Decision, type:DecisionKind, type:Option, type:Answer, type:Chooser, config:Choosers, func:Game.choose, func:RandomChooser]
@@ -80,7 +80,12 @@ func (g *Game) choose(d Decision) []int
 No card asks a question yet, so rule tests call `s.g.choose(d)` directly on a scene, with a scripted chooser installed through the helper below. This seam is allowed for this task only. Later tasks test choices through play.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/choice_test.go`, calling `s.g.choose(d)` directly.
+- FR-MOD-001 §1 fast path: `TestFR_MOD_001_FastPathSoleTargetNotAsked`, `_FastPathTakeEverythingNotAsked`, `_FastPathRepeatsSingleOptionNotAsked`, `_MultipleOptionsAskedAndAnswerUsed`, `_FastPathNotTakenWhenHidden`, `_OptionalAlwaysAsked`, `_OptionalDeclineAnswerHonoured`, `_NoLegalAnswerReturnsNothingAndAsksNoOne`
+- FR-MOD-001 §5 distinct modes: `_DistinctModesRepeatedPickIsInvalid`, `_RepeatedModeAllowedWhenCardSaysSo`
+- FR-MOD-001 §6 fallbacks: `_ModeFallbackOnTimeoutPicksFirstListed`, `_ModeFallbackWithNoChooserPicksFirstListed`, `_OptionalFallbackOnTimeoutDeclines`, `_OptionalFallbackWithNoChooserDeclines`, `_TargetFallbackOnTimeoutPicksLegalDistinctTargets`, `_TargetFallbackWithNoChooserPicksLegalTarget`, `_TargetFallbackDeterministicForSameSeed`, `_TargetFallbackIsRandomNotFixed`, `_InvalidAnswerFallsBackAndIsLogged` (5 subcases), `_InvalidOptionalAnswerDeclines`
+- FR-TRG-002: `TestFR_TRG_002_InactivePlayerIsAskedOwnChooser`, `_InactivePlayerFastPathsSoleOption`, `_InactivePlayerHiddenInspectionStillAsked`
+- `TestRandomChooser_AnswersAreAlwaysValid`, `_SameSeedSameAnswers`, `_NotConstant`, `_DifferentSeedsDiffer`
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - `func (s *scene) script(p PlayerID, answers ...Answer)`: installs a chooser for seat p that returns `answers` in order and records every `Decision` it is asked. Asked past the end of the script, it calls `s.t.Errorf` naming the decision's prompt and returns a timeout.
@@ -101,3 +106,4 @@ No card asks a question yet, so rule tests call `s.g.choose(d)` directly on a sc
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task (board directive #4, task 1 of 4: choices first). Set `status: tests` for `rules-test-author`. Besides the rule tests, I'd like `TestRandomChooser_*` tests for: every answer valid across many decisions of each kind, including `Repeats`; the same seed gives the same answers; and it covers more than one answer (it isn't constant).
+- 2026-10-19 rules-test-author: Wrote the tests above on m2/T-0006-choices and set `status: tests-review`. Helpers requested: `s.script`, `s.asked` (as already listed). Tests do not compile until the engineer adds the API. Left out: trigger ordering, top-of-deck inspections, and the random-target fallback when Min < Max (out of scope per the task). FRD 01 does not say which index the random fallback picks, so tests assert validity, distinctness, determinism per game seed and non-constancy only. The invalid-answer log test checks that the detail contains the prompt and the player's digit, since the format is not specified. Engineer note: the RandomChooser mix covers Min=0 target/mode decisions and Repeats with Max above the option count.
