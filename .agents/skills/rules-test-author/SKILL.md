@@ -36,7 +36,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
    - Card tests are named `TestCard_<CardSlug>_<Behavior>`, for example `TestCard_SpoilForestCreeper_DeployScratchesOne`.
    - Build state with the `newScene` helpers. If a helper you need does not exist, call it anyway and add its exact signature and a one-line contract under `Helpers Needed`. Helpers set up state; they never assert. Use the exported API wherever it is enough.
    - Each test has one behavior and a failure message that names the expected rule outcome.
-5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `cardtown lint rules` to confirm every new `TestFR_*` traces to an active requirement.
+5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `cardtown lint rules` to confirm every new `TestFR_*` traces to an active requirement. Don't use `go tool task check` here: your tests are meant to fail until the engineer implements them, so it would always report red.
 6. **Hand off:** commit on the task branch as `test(T-NNNN): <summary>`. Set `status: tests-review`, and append a Log entry listing the tests, the helpers requested and any cases deliberately left out (with the reason).
 
 ## 4. Guard Rails

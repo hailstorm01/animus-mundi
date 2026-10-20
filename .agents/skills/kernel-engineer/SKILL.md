@@ -35,13 +35,11 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
 4. **Harness tasks only:** before any implementation, write one test per item under `Acceptance Cases`, run them to confirm they fail, and commit them as `test(T-NNNN): <summary>`. After that commit, those tests are protected exactly like a test author's tests.
 5. **Implement:** first add the requested helpers in `scenario_test.go`, then the smallest change in the allowed files that makes the tests pass. Follow the surrounding code's naming, comment density and idioms.
    - **Edit with the editor's edit tool**, not `sed`, `perl` or other shell substitutions. A substitution whose pattern doesn't match changes nothing and reports no error. If you must use one, check right afterwards that the file changed.
-6. **Verify:** run every command under `Done When`. All must pass:
+6. **Verify:** run every command under `Done When`. All must pass. The standard gate is one command, the same on every OS:
    ```powershell
-   go test ./...
-   go vet ./...
-   gofmt -l pkg
-   cardtown lint --all
+   go tool task check
    ```
+   It runs gofmt, `go vet`, every test and `cardtown lint --all`, and stops at the first failure. If a stage fails, fix it and run `check` again. `go tool task fmt` fixes formatting. To see each stage on its own, run `go tool task fmt-check`, `vet`, `test` or `lint`.
 7. **Stop conditions:** if any of these is true, set `status: blocked`, commit, and explain in the Log. Do not work around it:
    - the task needs a shape that no merged or `done` task provides;
    - a test seems to contradict FRD 01;

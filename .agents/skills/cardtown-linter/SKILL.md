@@ -15,7 +15,7 @@ This skill provides automated verification across Card Town specifications, the 
 
 ## Native Go CLI Commands
 
-The CLI is compiled to `bin/cardtown.exe` (rebuild with `go build -o bin/cardtown.exe ./cmd/cardtown`, or run directly via `go run ./cmd/cardtown`):
+The CLI is compiled to `bin/cardtown.exe` (`bin/cardtown` off Windows). Rebuild it with `go tool task build`, or run it directly via `go run ./cmd/cardtown`. `go tool task check` runs every linter together with gofmt, `go vet` and the tests:
 
 1. **FRD Cross-Reference & Ownership Linter:**
    - **When to run:** When changes are made to anything in `docs/frd/`.
