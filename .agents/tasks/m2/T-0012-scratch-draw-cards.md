@@ -54,4 +54,4 @@ All in `pkg/engine/cards_animus_test.go`, loaded with `s.card`. Controls (marked
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 2 of 4, grouped as controller Scratch/Draw triggers). Set `status: tests` for `rules-test-author`. After test review it goes to `ready` for `@kernel-engineer T-0012` (tier flash, Antigravity).
-- 2026-10-20 rules-test-author: Wrote 15 TestCard_* tests (listed under Tests) from the CSV text. 10 fail now; 5 are controls that pass until a definition fires wrongly. No helpers requested. Left out: a two-attack Larva test (the faceDownCount==1 check pins once per attack) and Evangelist trigger-ordering tests (its two triggers are never simultaneous).
+- 2026-10-20 rules-test-author: Wrote 16 TestCard_* tests (listed under Tests) from the CSV text. 10 fail now; 6 are controls that pass until a definition fires wrongly. No helpers requested. Left out: a two-attack Larva test (the faceDownCount==1 check pins once per attack) and Evangelist trigger-ordering tests (its two triggers are never simultaneous).
