@@ -4,7 +4,7 @@ title: Validate deck construction (FR-SET-001)
 kind: shape
 tier: sonnet
 wave: none (design note Deliverable 2, first half)
-status: ready
+status: review
 branch: m2/T-0003-validate-deck
 depends_on: [T-0002]
 claims: [func:ValidateDeck, var:ErrIllegalDeck]
@@ -70,10 +70,10 @@ File: `pkg/engine/deck_test.go` (synthetic cards; local fixtures `deckHQ`, `deck
 - `pkg/engine/deck.go` (new: `ErrIllegalDeck`, `ValidateDeck`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_SET_001'`
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `cardtown lint rules` shows FR-SET-001 pinned
-- [ ] `go run ./cmd/cardtown lint --all` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_SET_001'`
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `cardtown lint rules` shows FR-SET-001 pinned
+- [x] `go run ./cmd/cardtown lint --all` passes
 
 ## Log
 - 2026-10-19 lead-architect: Wrote the task, applying board directive #2 (first half). Data checked: all Animus and Path names use straight apostrophes, the HQ rarity is `HQ`, and Scratch Company is COMMON and NEUTRAL, so only the token prohibition catches it. Next: `rules-test-author`.
@@ -83,3 +83,4 @@ File: `pkg/engine/deck_test.go` (synthetic cards; local fixtures `deckHQ`, `deck
   2. `TestFR_SET_001_NeutralHQIsIllegal`: the main deck is 50 ANIMUS cards under a NEUTRAL Headquarters, so a faction-mismatch error fails the deck regardless, and its text may contain the HQ's name. Build the main deck from 50 NEUTRAL cards (legal under any HQ), so only the "Headquarters cannot be Neutral" rule can fire.
 - 2026-10-19 rules-test-author: Round 1 notes fixed. (1) `HQInMainDeckIsIllegal`: stray HQ now has rarity COMMON, so only the HQ-in-main-deck rule can fire. (2) `NeutralHQIsIllegal`: main deck is now 50 NEUTRAL cards, so only the Neutral-HQ rule can fire. No other changes. Next: lead-architect review.
 - 2026-10-19 lead-architect: Test review round 2: **approved** (checked against the diff of `5316a77`). Both isolation notes are fixed. Status `ready`, and `kernel-engineer` (Sonnet subagent) is dispatched. The engineer must not edit `deck_test.go`.
+- 2026-10-19 kernel-engineer: Added `pkg/engine/deck.go` (only file touched besides this task): `ErrIllegalDeck` and `ValidateDeck`. Reused: `TypeHeadquarters`, `Card.HasSubtype("Scratch Company")`, `strings.EqualFold` faction compare as in `FactionDeck`; nothing else in `pkg/engine` already validated decks. Checks: size >= 50 (no max); HQ non-nil, a Headquarters card, not Neutral; no Headquarters or Scratch Company in main; faction matches HQ or is Neutral; copy limits by `Card.Name` per rarity (Common 4, Uncommon 3, Rare 2, Mythic 1); unknown rarity in main is a violation. All violations are joined with `errors.Join`. Commands: `go test ./pkg/engine -run TestFR_SET_001` ok; `go test ./...` ok; `go vet ./...` clean; `gofmt -l pkg cmd` empty; `go run ./cmd/cardtown lint rules` passes and FR-SET-001 is no longer in the not-yet-executable list; `go run ./cmd/cardtown lint --all` passes. Reviewer notes: (a) a nil card in Main is reported as a violation; (b) faction mismatch is skipped when the HQ is missing/not-HQ/Neutral, so that fault is reported once, not once per card; (c) rarity matching is case-insensitive; (d) a stray Headquarters in Main gets only the HQ-in-main error, not the rarity one.
