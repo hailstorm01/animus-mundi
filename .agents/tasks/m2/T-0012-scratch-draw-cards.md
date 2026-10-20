@@ -4,7 +4,7 @@ title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executa
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 2 of 4)
-status: tests
+status: tests-review
 branch: m2/T-0012-scratch-draw-cards
 depends_on: [T-0011]
 claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
@@ -32,7 +32,10 @@ Three Animus units whose printed triggers make their controller Scratch or draw 
 - Each `Text` is the quoted line exactly. No new types, fields or logic. If a card seems to need one, set `blocked`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/cards_animus_test.go`, loaded with `s.card`. Controls (marked) pass before the definitions exist because nothing fires; the rest fail now.
+- Despoiler Larva: `AttackScratchesOne`, `ScratchResolvesBeforeCombatDamage` (lethal on a 19-damage HQ; the Scratch must still happen, FR-CBT-002 Step 2), `ScratchOnEmptyDeckDoesNothing` (control), `FaceDownCopyAttackingDoesNotScratch` (control, FR-ZON-005), `DefendingDoesNotScratch` (control).
+- Fungal Evangelist: `DeployScratchesTwo`, `DeployWithOneCardLeftScratchesItAndDoesNotLose`, `DeployOnEmptyDeckDoesNothing`, `DeathScratchesTwoOnItsControllersTurn`, `DeathOnOpponentsTurnScratchesForItsController`, `DeathOnEmptyDeckDoesNothing` (control), `FaceDownCopyDoesNotScratchWhenKilled` (control, FR-ZON-004).
+- Titanic Spore Carrier: `DeathScratchesFirstCardThenDrawsSecond`, `DrawFromEmptyDeckLosesAtThatSweep`, `ScratchTakesTheLastCardSoOnlyTheDrawLoses`, `FaceDownCopyDoesNothingWhenKilled` (control).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
 - None expected.
@@ -51,3 +54,4 @@ Three Animus units whose printed triggers make their controller Scratch or draw 
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 2 of 4, grouped as controller Scratch/Draw triggers). Set `status: tests` for `rules-test-author`. After test review it goes to `ready` for `@kernel-engineer T-0012` (tier flash, Antigravity).
+- 2026-10-20 rules-test-author: Wrote 15 TestCard_* tests (listed under Tests) from the CSV text. 10 fail now; 5 are controls that pass until a definition fires wrongly. No helpers requested. Left out: a two-attack Larva test (the faceDownCount==1 check pins once per attack) and Evangelist trigger-ordering tests (its two triggers are never simultaneous).
