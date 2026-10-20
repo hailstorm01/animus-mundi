@@ -4,7 +4,7 @@ title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executa
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 2 of 4)
-status: ready
+status: in-progress
 branch: m2/T-0012-scratch-draw-cards
 depends_on: [T-0011]
 claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
