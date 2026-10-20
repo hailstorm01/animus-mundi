@@ -4,7 +4,7 @@ title: Make Spoil Forest Creeper executable
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: first card task)
-status: review
+status: done
 branch: m2/T-0011-spoil-forest-creeper
 depends_on: [T-0010]
 claims: [card:Spoil Forest Creeper, file:pkg/engine/cards/animus.go]
@@ -58,3 +58,8 @@ requirements: []
 - 2026-10-20 rules-test-author: Wrote 6 TestCard_SpoilForestCreeper_* tests in pkg/engine/cards_animus_test.go (see Tests). No helpers requested (`deployCreeper` is local to the new test file). Nothing left out. Status set to `tests-review`.
 - 2026-10-20 lead-architect: Test review: **approved**, status `ready`. The tests are written from the CSV text and use the real card through `s.card` and `ActDeploy`. They match the CSV row (3R, 3/2, Reserves), FR-KWD-002m (Scratch 1, and safe on an empty deck) and FR-ZON-005 (enters face-down and Exhausted; a face-down copy has no abilities). The first five fail today because deploying is rejected while the line is unsupported. The face-down test is a guard, and it passes today. Next: **the user runs `@kernel-engineer T-0011` in the Antigravity agent (Gemini Flash)**. The lead reviews when the task reaches `review` or `blocked`.
 - 2026-10-20 kernel-engineer: Implemented. animus.go: new file declaring animusDefs and init() populating Defs with "Spoil Forest Creeper" (Text: "When this unit deploys, Scratch 1.", HookDeploy, OpScratch 1). cards.go: removed "Spoil Forest Creeper" from NotYetExecutable allowlist. Reused HookDeploy, OpScratch, Value{N: 1}, SubjectController (zero value); no new shapes or logic added. Gates: go test ./pkg/engine -run 'TestCard_SpoilForestCreeper' passed (6/6), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go test ./... ok, go vet ./... clean, gofmt -l pkg cmd clean, cardtown lint --all passed. Sim -deck starter reported P0 main executable cards increased from 1/50 to 5/50 (4 copies of Creeper). Default sim before and after: "SOULLESS vs CONCORDIA, P0 wins 66.0% P1 wins 30.0% draws 4.0% first player wins 47.0%, Avg match length: 30.2 turns" (unchanged as default sim runs Soulless vs Concordia). Reviewer: check that animusDefs in animus.go can cleanly take further definitions as later Animus tasks land.
+- 2026-10-20 lead-architect: Review: **approved**, merged into `rework/executable-rules` with `--no-ff`. Checked against the diff, not the Log.
+  - Scope: only `cards/animus.go` (new) and `cards/cards.go` (one allowlist line) changed. `cards_animus_test.go` changed only in the test author's own second `test(T-0011)` commit (`ea37be3`, adjusting `// Covers:` comments), before test review, so the approved tests are what is on the branch. The engineer touched no test. The card name appears only under `pkg/engine/cards`.
+  - Fences: the definition is plain `ability` data (`HookDeploy`, `OpScratch`, `Value{N: 1}`) with no new shape. `init` merges `animusDefs` into `Defs`, a form later Animus card tasks can append to.
+  - Gates re-run by the reviewer with `-count=1`: `go test ./...`, the 6 `TestCard_SpoilForestCreeper_*` tests plus `TestDefs_MatchRulesText` and `TestStarterSet_Executable`, `go vet`, `gofmt -l pkg cmd` and `lint --all` pass. `sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 and reports Animus 5/50 executable (was 1/50). Sorted plain `sim` output is identical to the integration branch: the default stress matchup is Soulless vs Concordia, so the card doesn't appear.
+  - The pipeline is proven, so later A1 card tasks may batch cards with identical shapes.
