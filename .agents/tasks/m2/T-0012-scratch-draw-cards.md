@@ -4,7 +4,7 @@ title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executa
 kind: card
 tier: flash
 wave: A1 (board directive #4, task 4: card task 2 of 4)
-status: tests-review
+status: ready
 branch: m2/T-0012-scratch-draw-cards
 depends_on: [T-0011]
 claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
@@ -55,3 +55,9 @@ All in `pkg/engine/cards_animus_test.go`, loaded with `s.card`. Controls (marked
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A1 card task 2 of 4, grouped as controller Scratch/Draw triggers). Set `status: tests` for `rules-test-author`. After test review it goes to `ready` for `@kernel-engineer T-0012` (tier flash, Antigravity).
 - 2026-10-20 rules-test-author: Wrote 16 TestCard_* tests (listed under Tests) from the CSV text. 10 fail now; 6 are controls that pass until a definition fires wrongly. No helpers requested. Left out: a two-attack Larva test (the faceDownCount==1 check pins once per attack) and Evangelist trigger-ordering tests (its two triggers are never simultaneous).
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. 16 tests were appended to `cards_animus_test.go`, with no line of an existing test changed. They are written from the CSV text with the real cards.
+  - The Larva-versus-HQ case can only see the Scratch if Step 2 resolves before damage (FR-CBT-002).
+  - `killOnOpponentsTurn` arranges the deck before the turn passes, so the opponent's draw doesn't disturb it.
+  - The Carrier's Scratch-then-Draw order shows on named cards, and the one-card case separates a safe Scratch from a losing Draw (FR-KWD-002m, FR-WIN-001).
+  - The six controls pass today, and they guard against definitions that fire on face-down copies, on defense or on an empty deck.
+  - Next: **the user runs `@kernel-engineer T-0012` in the Antigravity agent (Gemini Flash)**.
