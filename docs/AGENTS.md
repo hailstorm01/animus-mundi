@@ -11,6 +11,7 @@ This directory houses the specifications, decision records and card balance data
   - `frd/05_Headless_Game_Engine_FRD.md`: design reference while extending `pkg/engine`.
 - **M2 Starter Set Ability Survey:** `design/m2_starter_set_ability_survey.md`, which maps every Animus and Path card onto FRD 02's ability model and lists the M2 build waves, FRD 02 gaps and open ruling questions.
 - **Technical Design Documents:** `tdd/*.md`. `tdd/03_Card_Compiler_TDD.md` is parked with FRD 03; do not slice it into issues before M3.
+- **Design Notes:** `architecture/<milestone>-<topic>.md`, one per milestone topic. `architecture/m2-ability-model.md` fixes the ability shape types, where card definitions live, and the M2 deliverable order.
 - **Architecture Decision Records:** `architecture/decisions/*.md`, one page per technical decision, written when the code that needs it is built.
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 

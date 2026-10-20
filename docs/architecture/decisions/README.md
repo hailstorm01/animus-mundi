@@ -28,3 +28,5 @@ What becomes easier, what becomes harder, and what would make us revisit this.
 
 - [0001. Executable rules kernel as the rules oracle; freeze FRDs 02–05](0001-executable-rules-and-frozen-frds.md)
 - [0002. Single seeded PCG stream in the M1 kernel](0002-single-prng-stream-in-m1.md)
+- [0003. Synchronous Chooser for player choices](0003-synchronous-chooser-for-player-choices.md)
+- [0004. Abilities as data values in Go, interpreted by the kernel](0004-abilities-as-data-in-go.md)
