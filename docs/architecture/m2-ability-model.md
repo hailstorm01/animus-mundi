@@ -8,7 +8,7 @@ FRD 02 is frozen. This note borrows its names for hooks and primitives (as the s
 
 Every Animus and Path card executes in `pkg/engine` as a Go value built from a small set of named shapes, and the kernel's shape vocabulary is the M2 write-up that FRD 02/03 are rewritten from in M3. We know it works when:
 
-- every Animus, Path and starter Headquarters card loads with `Unsupported` empty and has at least one `TestCard_*` test;
+- every Animus and Path card, plus the starter Headquarters *Animoceps Rager* and *Eternal Watchman*, loads with `Unsupported` empty and has at least one `TestCard_*` test;
 - `cardtown lint rules` shows every requirement the survey says the starter set reaches as pinned (27 of the 30 that are unpinned today, see survey §1);
 - `cardtown sim -p0 ANIMUS -p1 PATH` runs clean on construction-legal decks, and a human can finish a `cardtown play` match.
 
