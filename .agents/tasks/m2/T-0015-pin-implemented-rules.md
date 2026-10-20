@@ -4,7 +4,7 @@ title: Pin four implemented but untested requirements with scenario tests
 kind: shape
 tier: sonnet
 wave: A1 (board directive #16)
-status: tests-review
+status: done
 branch: m2/T-0015-pin-implemented-rules
 depends_on: []
 claims: [tests:FR-SET-003, tests:FR-ZON-001, tests:FR-ZON-003, tests:FR-CRD-101]
@@ -46,10 +46,10 @@ Written in `pkg/engine/foundation_test.go` (17 tests):
 - None unless a test fails. The lead then fills this in before any engineer step.
 
 ## Done When
-- [ ] `go test ./pkg/engine -run 'TestFR_(SET_003|CRD_101|ZON_003|ZON_001)_'` passes
-- [ ] `go run ./cmd/cardtown lint rules` passes and traces all four IDs
-- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
-- [ ] `go run ./cmd/cardtown lint --all` passes
+- [x] `go test ./pkg/engine -run 'TestFR_(SET_003|CRD_101|ZON_003|ZON_001)_'` passes
+- [x] `go run ./cmd/cardtown lint rules` passes and traces all four IDs
+- [x] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [x] `go run ./cmd/cardtown lint --all` passes
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #16 (audit finding 3), with status `tests` for `rules-test-author`. The kernel already has the behavior, so the tests are expected to pass when written. No engineer step happens unless one fails.
@@ -60,3 +60,7 @@ Written in `pkg/engine/foundation_test.go` (17 tests):
   - Accepted as written: the omission of "before opening hands" (not observable), of control diverging from ownership (cited instead), and of the Attached zone and an uncapped Discard. The rest pins the FRD text through the public API.
   - Gate: these tests are meant to pass, so run `go tool task check`. It must be green before `tests-review`.
 - 2026-10-20 rules-test-author: Applied review notes. (1) `TestFR_CRD_101_HeadquartersCarriesCSVCharacteristics` now compares `c.Rarity` with the CSV token (HQ), like the other types, and no longer asserts the engine string is "Headquarters". (2) `TestFR_SET_003_TimeoutDefaultsToPlayFirst` now records the decider per seed from a callback that returns true, and asserts the nil-callback run has that decider as FirstPlayer and Active on Turn 1. All 17 tests pass; `go tool task check` is green.
+- 2026-10-20 lead-architect: Test review round 2: **approved**, status `done`. No engineer step was needed because every test passes, so the kernel has no bug here.
+  - b2819f1 fixes both notes. The HQ test compares the CSV rarity token, and the timeout test compares each seed's nil-callback first player with the decider recorded on the same seed, so a Draw First default would now fail.
+  - Gates re-run by the reviewer: 17/17 `TestFR_(SET_003|CRD_101|ZON_003|ZON_001)_*` pass, `cardtown lint rules` passes, and `go tool task check` exits 0.
+  - Only `foundation_test.go` and this task file changed. No non-test file and no existing test changed.
