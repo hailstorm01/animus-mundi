@@ -1,0 +1,53 @@
+---
+id: T-0012
+title: Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executable
+kind: card
+tier: flash
+wave: A1 (board directive #4, task 4: card task 2 of 4)
+status: tests
+branch: m2/T-0012-scratch-draw-cards
+depends_on: [T-0011]
+claims: [card:Despoiler Larva, card:Fungal Evangelist, card:Titanic Spore Carrier]
+cards: [Despoiler Larva, Fungal Evangelist, Titanic Spore Carrier]
+requirements: []
+---
+
+## Goal
+Three Animus units whose printed triggers make their controller Scratch or draw now run in the kernel. Each is plain `ability` data in `pkg/engine/cards/animus.go`, added to the `animusDefs` map that T-0011 created.
+
+## Inputs
+- Cards (`data/cards/units-and-structures-animus.csv`). Each has exactly one unsupported line today, quoted here:
+  - *Despoiler Larva*: Unit, 1R 0T, Reserves, 1/1. "Whenever this unit attacks, Scratch 1."
+  - *Fungal Evangelist*: Unit, 6R 0T, Reserves, 2/3. "When this unit deploys or is killed, Scratch 2."
+  - *Titanic Spore Carrier*: Unit, 8R 0T, Reserves, 7/7. "When this unit is killed, Scratch 1 and draw a card."
+- Survey rows: `docs/design/m2_starter_set_ability_survey.md` (*Despoiler Larva*, *Fungal Evangelist* "Compound hook", *Titanic Spore Carrier* "Composite sequence").
+- Shapes they use (all `done`): `HookAttacks` (T-0010, Step 2 with Aggressive), `HookDeploy` (T-0007), `HookKilled` (T-0008), `OpScratch` and `OpDraw` with the zero `Subject` (controller), and `Value{N}`.
+- Requirements for context: `FR-CBT-002` Step 2 (attack triggers before damage), `FR-KWD-002m` (Scratch N), `FR-ZON-005`, `FR-ZON-004` (death triggers; a face-down copy never triggers), `FR-TRG-003` (one player's simultaneous triggers are ordered), `FR-WIN-001`.
+- Rulings that apply: none.
+
+### Definitions (the engineer adds them to `animusDefs` in `pkg/engine/cards/animus.go`)
+- *Despoiler Larva*: one `HookAttacks` trigger, `Scratch 1`.
+- *Fungal Evangelist*: one `Text` line and **two** triggers, `HookDeploy` and `HookKilled`, each `Scratch 2`. "deploys or is killed" is two events.
+- *Titanic Spore Carrier*: one `HookKilled` trigger with two steps in printed order, `Scratch 1` then `Draw 1`.
+- Each `Text` is the quoted line exactly. No new types, fields or logic. If a card seems to need one, set `blocked`.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+- (rules-test-author fills this in.)
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected.
+
+## Allowed Files
+- `pkg/engine/cards/animus.go` (three entries in `animusDefs`)
+- `pkg/engine/cards/cards.go` (remove the three names from `NotYetExecutable`)
+
+## Done When
+- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(DespoilerLarva|FungalEvangelist|TitanicSporeCarrier)'`
+- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [ ] `go test ./...`, `go vet ./...` and `gofmt -l pkg cmd` are clean
+- [ ] `go run ./cmd/cardtown lint --all` passes
+- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0, and the Animus executable count rises by the copies in the deck. Of these three only *Despoiler Larva* is in it (4 copies), so expect 5/50 → 9/50.
+- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+
+## Log
+- 2026-10-20 lead-architect: Wrote the task (A1 card task 2 of 4, grouped as controller Scratch/Draw triggers). Set `status: tests` for `rules-test-author`. After test review it goes to `ready` for `@kernel-engineer T-0012` (tier flash, Antigravity).
