@@ -286,6 +286,8 @@ Present a clean handoff table to the user containing:
 
 Owns the queue so that no two tasks build the same thing, and reviews everything `rules-test-author` and `kernel-engineer` produce. Task format and lifecycle: `.agents/tasks/README.md`. Runs in the main Claude Code session on Opus. If the session is on any other model, say so and stop.
 
+**One task per prompt.** Follow the "No unattended chains" guard rail in `.agents/rules/AGENTS.md`. Each human prompt moves one task until it is `done` or `blocked`, or needs the user. Then stop and report: what merged, the task's final status, and what `next` would pick up. Never dispatch another task without a new prompt. Other tasks of the same deliverable may be written, but stay `queued`.
+
 #### D1. Before the first task of a milestone
 1. The milestone needs a design note from Runbook A that fixes the shapes' Go types and where card definitions live (M2: `docs/architecture/m2-ability-model.md`). No shape or card task is written before it exists. Harness tasks that don't depend on it may run first.
 2. Create `.agents/tasks/<milestone>/BOARD.md` with four things: the integration branch, the mode (`serial` or `parallel`), a `Directives for the Lead` table (`# | Directive | Source | Status`) where the user and reviews leave instructions, and one line per task (`id | title | status`). Task files remain the source of truth; the board is an index.
