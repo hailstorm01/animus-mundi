@@ -46,6 +46,6 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0009 | Let death triggers move the card itself, tracked in discard (FR-ZON-004) | done |
 | T-0010 | Attack triggers with Aggressive at Step 2, "on your turn" gate, opponents subject (FR-CBT-002) | done |
 | T-0011 | Make Spoil Forest Creeper executable (A1 card, flash) | done |
-| T-0012 | Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executable (A1 cards, flash) | tests |
+| T-0012 | Make Despoiler Larva, Fungal Evangelist and Titanic Spore Carrier executable (A1 cards, flash) | ready |
 | T-0013 | Make Portent Scrivener and Despoiler Worm executable (A1 cards, flash) | queued |
 | T-0014 | Make Stormfront of Ideals and Unceasing Tide executable (A1 cards, flash) | queued |
