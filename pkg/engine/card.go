@@ -10,6 +10,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"animus-mundi/pkg/engine/ability"
+	"animus-mundi/pkg/engine/cards"
 )
 
 // CardType is the mutually exclusive primary classification (FR-CRD-101).
@@ -61,6 +64,9 @@ type Card struct {
 	// Unsupported lists rules-text lines the M1 kernel cannot execute.
 	// A card with unsupported lines cannot be deployed.
 	Unsupported []string
+
+	// Ability is the card's executable definition from package cards, if any.
+	Ability *ability.Def
 }
 
 // HasSubtype reports whether the card carries the subtype (case-insensitive).
@@ -129,6 +135,52 @@ func ParseKeywordLine(line string, kw *Keywords) bool {
 
 // LoadCards reads every CSV in dir (data/cards) and returns cards by name.
 func LoadCards(dir string) (map[string]*Card, error) {
+	return loadCards(dir, cards.Defs)
+}
+
+// loadCards reads the sheets in dir, then attaches each def to its card and
+// removes the lines it covers from Unsupported. Defs are processed in name
+// order so the first error is stable; a def whose card is not in dir is
+// ignored (fixtures hold subsets; TestDefs_MatchRulesText checks real data).
+func loadCards(dir string, defs map[string]*ability.Def) (map[string]*Card, error) {
+	loaded, err := loadSheets(dir)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(defs))
+	for name := range defs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		c, ok := loaded[name]
+		if !ok {
+			continue
+		}
+		rest := append([]string(nil), c.Unsupported...)
+		for _, line := range defs[name].Text {
+			i := indexOf(rest, line)
+			if i < 0 {
+				return nil, fmt.Errorf("card %q: ability text %q is not an unclaimed non-keyword rules-text line", name, line)
+			}
+			rest = append(rest[:i], rest[i+1:]...)
+		}
+		c.Ability = defs[name]
+		c.Unsupported = rest
+	}
+	return loaded, nil
+}
+
+func indexOf(lines []string, s string) int {
+	for i, l := range lines {
+		if l == s {
+			return i
+		}
+	}
+	return -1
+}
+
+func loadSheets(dir string) (map[string]*Card, error) {
 	paths, err := filepath.Glob(filepath.Join(dir, "*.csv"))
 	if err != nil {
 		return nil, err

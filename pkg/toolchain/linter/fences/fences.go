@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -108,29 +109,31 @@ func Analyze(repoRoot string) (*Report, error) {
 	openMatrix := make(map[string]bool)
 	ruledMatrix := make(map[string]bool)
 	matrixPath := filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md")
-	if mContent, err := os.ReadFile(matrixPath); err == nil {
-		lines := strings.Split(string(mContent), "\n")
-		currentSec := ""
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if strings.HasPrefix(trimmed, "## ") {
-				currentSec = trimmed
-				continue
-			}
-			if !strings.HasPrefix(trimmed, "|") {
-				continue
-			}
-			cells := strings.Split(trimmed, "|")
-			if len(cells) < 3 {
-				continue
-			}
-			id := strings.TrimSpace(cells[1])
-			if strings.HasPrefix(id, "KIM-") {
-				if strings.HasPrefix(currentSec, "## Open Items") {
-					openMatrix[id] = true
-				} else if strings.HasPrefix(currentSec, "## Rulings") {
-					ruledMatrix[id] = true
-				}
+	mContent, err := os.ReadFile(matrixPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading keyword_interaction_matrix.md: %w", err)
+	}
+	matrixLines := strings.Split(string(mContent), "\n")
+	currentSec := ""
+	for _, line := range matrixLines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "## ") {
+			currentSec = trimmed
+			continue
+		}
+		if !strings.HasPrefix(trimmed, "|") {
+			continue
+		}
+		cells := strings.Split(trimmed, "|")
+		if len(cells) < 3 {
+			continue
+		}
+		id := strings.TrimSpace(cells[1])
+		if strings.HasPrefix(id, "KIM-") {
+			if strings.HasPrefix(currentSec, "## Open Items") {
+				openMatrix[id] = true
+			} else if strings.HasPrefix(currentSec, "## Rulings") {
+				ruledMatrix[id] = true
 			}
 		}
 	}
@@ -138,60 +141,73 @@ func Analyze(repoRoot string) (*Report, error) {
 	openSurvey := make(map[string]bool)
 	ruledSurvey := make(map[string]bool)
 	surveyPath := filepath.Join(repoRoot, "docs", "design", "m2_starter_set_ability_survey.md")
-	if sContent, err := os.ReadFile(surveyPath); err == nil {
-		lines := strings.Split(string(sContent), "\n")
-		inRulingQuestions := false
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
-				inRulingQuestions = true
-				continue
-			}
-			if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
-				inRulingQuestions = false
-				continue
-			}
-			if !inRulingQuestions || !strings.HasPrefix(trimmed, "|") {
-				continue
-			}
-			cells := strings.Split(trimmed, "|")
-			if len(cells) < 4 {
-				continue
-			}
-			rawID := strings.TrimSpace(cells[1])
-			cleanID := strings.Trim(rawID, "* ")
-			if cleanID == "" || strings.EqualFold(cleanID, "id") || strings.HasPrefix(cleanID, ":-") {
-				continue
-			}
-			svyID := "SVY-" + cleanID
-			lastCell := strings.TrimSpace(cells[len(cells)-2])
-			if strings.Contains(lastCell, "Ruled") {
-				ruledSurvey[svyID] = true
-			} else {
-				openSurvey[svyID] = true
-			}
+	sContent, err := os.ReadFile(surveyPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading m2_starter_set_ability_survey.md: %w", err)
+	}
+	surveyLines := strings.Split(string(sContent), "\n")
+	inRulingQuestions := false
+	for _, line := range surveyLines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
+			inRulingQuestions = true
+			continue
+		}
+		if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
+			inRulingQuestions = false
+			continue
+		}
+		if !inRulingQuestions || !strings.HasPrefix(trimmed, "|") {
+			continue
+		}
+		cells := strings.Split(trimmed, "|")
+		if len(cells) < 4 {
+			continue
+		}
+		rawID := strings.TrimSpace(cells[1])
+		cleanID := strings.Trim(rawID, "* ")
+		if cleanID == "" || strings.EqualFold(cleanID, "id") || strings.HasPrefix(cleanID, ":-") {
+			continue
+		}
+		svyID := "SVY-" + cleanID
+		lastCell := strings.TrimSpace(cells[len(cells)-2])
+		if strings.Contains(lastCell, "Ruled") {
+			ruledSurvey[svyID] = true
+		} else {
+			openSurvey[svyID] = true
 		}
 	}
 
 	engineDir := filepath.Join(repoRoot, "pkg", "engine")
-	entries, err := os.ReadDir(engineDir)
+	var files []string
+	err = filepath.WalkDir(engineDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(engineDir, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if d.IsDir() {
+			if rel == "cards" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go") {
+			files = append(files, rel)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading pkg/engine directory: %w", err)
 	}
 
 	var items []violationItem
 
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		name := e.Name()
-		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
-			continue
-		}
-
-		filePath := filepath.Join(engineDir, name)
-		lines, err := readLines(filePath)
+	for _, name := range files {
+		lines, err := readLines(filepath.Join(engineDir, filepath.FromSlash(name)))
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", name, err)
 		}
