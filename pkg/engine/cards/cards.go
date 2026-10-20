@@ -77,7 +77,6 @@ var NotYetExecutable = []string{
 	"Sinuous Growth",
 	"Solarheart Monk",
 	"Spoil Forest Colossus",
-	"Spoil Forest Creeper",
 	"Steel Rain",
 	"Stormfront of Ideals",
 	"Tactical Withdrawal",
