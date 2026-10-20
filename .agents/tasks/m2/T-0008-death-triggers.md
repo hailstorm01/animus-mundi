@@ -4,7 +4,7 @@ title: Fire death triggers from the death sweep, placed in APNAP order
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 2b)
-status: ready
+status: in-progress
 branch: m2/T-0008-death-triggers
 depends_on: [T-0007]
 claims: [hook:killed, func:fire-killed, invariant:pending-buffer-empty, invariant:no-invalid-answer]
