@@ -4,7 +4,7 @@ title: Refresh stale milestone notes in engine comments and messages
 kind: harness
 tier: flash
 wave: none (board directive #17, audit finding 4)
-status: in-progress
+status: review
 branch: m2/T-0016-refresh-milestone-notes
 depends_on: []
 claims: [file:pkg/engine/doc.go, comments:engine-milestone-wording]
@@ -49,9 +49,10 @@ Comments and messages only, so these are checked by command, not by new tests:
 - `pkg/engine/playout_test.go` (line 85 only, in the `test(T-0016)` commit)
 
 ## Done When
-- [ ] Every acceptance case above holds
-- [ ] `go tool task check` passes
-- [ ] The diff contains no change other than comments, the `actions.go` message and `playout_test.go:85`
+- [x] Every acceptance case above holds
+- [x] `go tool task check` passes
+- [x] The diff contains no change other than comments, the `actions.go` message and `playout_test.go:85`
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #17, with status `ready` (harness, flash: Antigravity). Size exception: seven non-test files exceed the D2.4 limit of four, but every change is a comment or one message string. The user's directive asks for one task, so it isn't split.
+- 2026-10-20 kernel-engineer: Implemented. playout_test.go:85 committed in test(T-0016) updating log message from "the M1 kernel" to "the kernel". doc.go: replaced "M1 scope" and "M3" paragraphs with "What runs now" and "Not built yet" lists, and updated marker documentation to include OPEN(SVY-...) and cardtown lint fences. actions.go:151: changed message to "%s needs rules the kernel does not implement yet". card.go:64: changed comment from "the M1 kernel" to "the kernel". damage.go:23: changed comment to "No executable card redirects damage yet." layers.go:4-5: updated comment to "Nothing grants types (Layer 2) or keywords (Layer 3), and there are no auras (Layer 4) yet, so...". turn.go:112, 142: updated comments to "No executable card has start-of-turn triggers yet." and "no executable card has end-of-turn triggers yet." stack.go:127: added "// OPEN(SVY-R8): fizzles if the defender changed controller before resolution." Verification: grep for 'M1|M3' across pkg/engine excluding _test.go returned 0 results; go doc ./pkg/engine confirms ability and cards packages, both marker types, and no M1 scope or M3 wording; cardtown lint fences passed with OPEN(SVY-R8) and failed when temporarily set to OPEN(SVY-R99); go test ./... passed; go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH produced identical summary metrics before and after (P0 19/50, P1 6/50, P0 wins 51.0%, P1 wins 16.5%, draws 32.5%, avg length 27.3 turns, HQ destroyed 135, simultaneous 65); go tool task check passed.

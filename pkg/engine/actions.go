@@ -148,7 +148,7 @@ func (g *Game) check(a Action) error {
 		}
 		c := inst.Card
 		if !c.Supported() {
-			return illegal("%s needs rules the M1 kernel does not implement", c.Name)
+			return illegal("%s needs rules the kernel does not implement yet", c.Name)
 		}
 		if c.Type != TypeUnit && c.Type != TypeStructure {
 			return illegal("%s cannot be deployed", c.Name)
