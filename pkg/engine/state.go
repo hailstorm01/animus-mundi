@@ -138,6 +138,8 @@ type Game struct {
 	// lastKnown holds each asset's characteristics as it left the battlefield,
 	// for effects that still need them afterwards (FR-ZON-004).
 	lastKnown map[int]*Asset
+
+	pending []pendingTrigger // triggers fired while an item resolves, awaiting the flush (FR-TRG-004)
 }
 
 // LastKnown returns the asset as it was when it last left the battlefield,
