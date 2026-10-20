@@ -14,17 +14,50 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 if [ -z "$REPO_ROOT" ]; then
     REPO_ROOT="."
 fi
+cd "$REPO_ROOT" || exit 1
 
-CARDTOWN_BIN="$REPO_ROOT/bin/cardtown.exe"
+CARDTOWN_BIN="bin/cardtown.exe"
 if [ ! -f "$CARDTOWN_BIN" ]; then
-    CARDTOWN_BIN="$REPO_ROOT/bin/cardtown"
+    CARDTOWN_BIN="bin/cardtown"
 fi
 
-if [ -f "$CARDTOWN_BIN" ]; then
-    "$CARDTOWN_BIN" lint --staged --repo-root "$REPO_ROOT"
+REBUILD_REASON=""
+if [ ! -f "$CARDTOWN_BIN" ]; then
+    GOEXE="$(go env GOEXE)"
+    CARDTOWN_BIN="bin/cardtown$GOEXE"
+    REBUILD_REASON="missing"
+else
+    if [ -f "go.mod" ] && [ -n "$(find go.mod -newer "$CARDTOWN_BIN" 2>/dev/null)" ]; then
+        REBUILD_REASON="stale"
+    else
+        SEARCH_DIRS=""
+        [ -d "cmd" ] && SEARCH_DIRS="$SEARCH_DIRS cmd"
+        [ -d "pkg" ] && SEARCH_DIRS="$SEARCH_DIRS pkg"
+        if [ -n "$SEARCH_DIRS" ] && [ -n "$(find $SEARCH_DIRS -type f -name '*.go' -newer "$CARDTOWN_BIN" 2>/dev/null)" ]; then
+            REBUILD_REASON="stale"
+        fi
+    fi
+fi
+
+USE_GO_RUN=0
+if [ -n "$REBUILD_REASON" ]; then
+    echo "Rebuilding $CARDTOWN_BIN ($REBUILD_REASON)..."
+    BUILD_OUT="$(go build -o "$CARDTOWN_BIN" ./cmd/cardtown 2>&1)"
+    BUILD_STATUS=$?
+    if [ $BUILD_STATUS -ne 0 ]; then
+        if [ -n "$BUILD_OUT" ]; then
+            echo "$BUILD_OUT"
+        fi
+        echo "Rebuild failed; falling back to go run"
+        USE_GO_RUN=1
+    fi
+fi
+
+if [ $USE_GO_RUN -eq 1 ]; then
+    go run ./cmd/cardtown lint --staged --repo-root "$REPO_ROOT"
     EXIT_CODE=$?
 else
-    go run "$REPO_ROOT/cmd/cardtown" lint --staged --repo-root "$REPO_ROOT"
+    "$CARDTOWN_BIN" lint --staged --repo-root "$REPO_ROOT"
     EXIT_CODE=$?
 fi
 
