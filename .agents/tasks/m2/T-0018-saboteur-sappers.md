@@ -4,7 +4,7 @@ title: Make Saboteur and Chainbreaker Sappers executable
 kind: card
 tier: flash
 wave: A2 (task 2, card task 1)
-status: tests-review
+status: ready
 branch: m2/T-0018-saboteur-sappers
 depends_on: [T-0017]
 claims: [card:Saboteur, card:Chainbreaker Sappers, file:pkg/engine/cards/path.go]
@@ -48,7 +48,7 @@ All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `
 - `pkg/engine/cards/cards.go` (remove the two names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)'`
+- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(Saboteur|ChainbreakerSappers)|TestFR_TGT_003_Saboteur'`
 - [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
 - [ ] `go tool task check` passes
 - [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with every invariant holding, and the Path executable count rises by 3 (3 Saboteur), from 6/50 to 9/50
@@ -57,3 +57,10 @@ All in `pkg/engine/cards_path_test.go`: real cards via `s.card`, deployed with `
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 card task 1), with status `tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote 23 card tests in cards_path_test.go (see Tests for omissions). No helpers requested. All 23 fail today because the kernel rejects both deploys ("needs rules the kernel does not implement yet"), so no control test passes in isolation; every other engine test still passes. Status tests-review.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. 9fa2050 adds `cards_path_test.go`, with 23 tests (one has 4 subtests), and changes no existing test.
+  - Written from the CSV text with the real cards, deployed through `ActDeploy`, with targets chosen by asset.
+  - Saboteur: both clauses, slot order, Scratch Companies excluded only from the opposing clause, units only, and itself as a legal allied target. FR-TGT-003's named case (no opposing target: it still deploys and the allied clause resolves) is covered, as are Ward on both sides, lethal damage, the fast path and the timeout.
+  - Sappers: structures and Headquarters of either side, and each kind damaged. Ward on both sides, lethal damage, the HQ to 0 winning the match, the timeout and the fast path are covered. Ward on an HQ follows FR-KWD-002h's "asset", and each scene builds its own HQ card, so the mutation doesn't leak.
+  - Accepted omissions: the allied clause can't lack a target, because the Saboteur is always one. Loss at resolution and mitigation are pinned generically in `targeting_test.go`.
+  - Lead fix: the Done When regex now also matches `TestFR_TGT_003_Saboteur…`.
+  - Next: **the user runs `@kernel-engineer T-0018` in the Antigravity agent (Gemini Flash)**.
