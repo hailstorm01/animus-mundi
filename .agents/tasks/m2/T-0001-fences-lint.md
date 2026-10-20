@@ -4,7 +4,7 @@ title: Add a fences check to cardtown lint
 kind: harness
 tier: flash
 wave: A1
-status: ready
+status: in-progress
 branch: m2/T-0001-fences-lint
 depends_on: []
 claims: [linter:fences, cli:lint-fences]
