@@ -1,0 +1,2 @@
+# Go source is LF everywhere so gofmt checks are stable on Windows checkouts.
+*.go text eol=lf

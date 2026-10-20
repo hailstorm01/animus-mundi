@@ -9,9 +9,9 @@ import (
 
 // StatusFile represents a changed file detected via git status.
 type StatusFile struct {
-	StagingCode byte
+	StagingCode  byte
 	WorktreeCode byte
-	Path        string
+	Path         string
 }
 
 // GetStatus returns porcelain status entries for the given repo root.
