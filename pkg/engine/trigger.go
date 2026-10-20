@@ -14,6 +14,7 @@ type pendingTrigger struct {
 	controller PlayerID
 	label      string
 	trig       ability.Trigger
+	item       *StackItem // a ready-made stack item (keyword trigger); used instead of trig when set
 }
 
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
@@ -36,7 +37,7 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		return
 	}
 	for i, t := range def.Triggers {
-		if t.Hook != hook {
+		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != a.Controller) {
 			continue
 		}
 		g.pending = append(g.pending, pendingTrigger{
@@ -44,6 +45,19 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1),
 		})
 	}
+}
+
+// fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger, if
+// any, then its printed attack triggers (FR-CBT-002).
+func (g *Game) fireAttacks(a *Asset) {
+	if n := g.Keywords(a).Aggressive; n > 0 {
+		g.pending = append(g.pending, pendingTrigger{
+			source: a.ID, inst: a.Inst, controller: a.Controller,
+			label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n),
+			item:  &StackItem{Kind: StackAggressive, Controller: a.Controller, Source: a.ID, Amount: n},
+		})
+	}
+	g.fireHook(a, ability.HookAttacks)
 }
 
 // flushTriggers places the buffer on the stack: the active player's triggers
@@ -76,6 +90,10 @@ func (g *Game) flushTriggers() {
 		}
 		for _, i := range order {
 			p := mine[i]
+			if p.item != nil {
+				g.push(p.item)
+				continue
+			}
 			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig})
 		}
 	}
@@ -85,11 +103,19 @@ func (g *Game) flushTriggers() {
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
 	for _, st := range it.Trigger.Effect.Steps {
+		who := []PlayerID{it.Controller}
+		if st.Subject == ability.SubjectOpponents {
+			who = []PlayerID{it.Controller.Opponent()}
+		}
 		switch st.Op {
 		case ability.OpScratch:
-			g.scratch(it.Controller, st.Amount.N)
+			for _, pid := range who {
+				g.scratch(pid, st.Amount.N)
+			}
 		case ability.OpDraw:
-			g.draw(it.Controller, st.Amount.N)
+			for _, pid := range who {
+				g.draw(pid, st.Amount.N)
+			}
 		case ability.OpReturnToHand, ability.OpPutOnDeck:
 			g.relocateSelf(it, st)
 		}

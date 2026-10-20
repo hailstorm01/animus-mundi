@@ -16,13 +16,23 @@ type Def struct {
 type Hook int
 
 const (
-	HookDeploy Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
-	HookKilled                 // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
+	HookDeploy  Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
+	HookKilled                  // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
+	HookAttacks                 // this asset attacked (combat Step 2, FR-CBT-002)
+)
+
+// TurnOwner gates a trigger on whose turn it is when its event happens.
+type TurnOwner int
+
+const (
+	TurnAny   TurnOwner = iota // the zero value: no gate
+	TurnYours                  // only during the trigger controller's own turn
 )
 
 // Trigger is one printed triggered ability.
 type Trigger struct {
 	Hook   Hook
+	Turn   TurnOwner
 	Effect Effect
 }
 
@@ -47,6 +57,7 @@ type Subject int
 const (
 	SubjectController Subject = iota // the ability's controller (the zero value; Scratch and Draw)
 	SubjectSelf                      // the ability's own source card, tracked by card instance (FR-ZON-004)
+	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
 )
 
 // Step applies one primitive.

@@ -99,9 +99,8 @@ func (g *Game) declareAttack(a Action) {
 	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target, Secondary: a.Secondary})
 	g.logf("attack", "%s attacks %s", att, g.Asset(a.Target))
 	// Step 2: attack triggers enqueue on top of the Attack action.
-	if n := g.Keywords(att).Aggressive; n > 0 {
-		g.push(&StackItem{Kind: StackAggressive, Controller: a.Player, Source: att.ID, Amount: n})
-	}
+	g.fireAttacks(att)
+	g.flushTriggers()
 }
 
 func handCard(p *Player, id int) *Instance {

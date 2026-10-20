@@ -4,7 +4,7 @@ title: Add attack triggers (with Aggressive in the same window), an "on your tur
 kind: shape
 tier: sonnet
 wave: A1 (board directive #4, task 4, the last A1 shape task)
-status: ready
+status: review
 branch: m2/T-0010-attack-turn-opponents
 depends_on: [T-0009]
 claims: [hook:attacks, type:ability.TurnOwner, gate:turn-owner, subject:opponents, func:attack-step-2-flush]
@@ -122,3 +122,4 @@ All in `pkg/engine/attack_trigger_test.go` (local helpers: attackTrigger, strike
   - `OnlyTheAttackerFiresItsAttackTrigger` and `AggressiveAloneIsNotAskedAbout` pin something not happening and pass today. They are accepted as guards.
   - `TestShape_*` naming for the turn gate and the opponents subject is fine, because no FRD 01 requirement defines them.
   - Next: `kernel-engineer` (tier sonnet).
+- 2026-10-20 kernel-engineer: Implemented. ability.go: HookAttacks, TurnOwner (TurnAny/TurnYours), Trigger.Turn, SubjectOpponents. trigger.go: `pendingTrigger.item` (optional ready-made StackItem, pushed as-is by the flush; its label feeds DecideOrder), new `fireAttacks` (Aggressive keyword item first, then `fireHook(HookAttacks)`), turn gate in `fireHook` (`TurnYours` needs `g.Active == a.Controller`), SubjectOpponents in `resolveAbility` for OpScratch/OpDraw via a `who` list (ReturnToHand/PutOnDeck untouched, still SubjectSelf only). actions.go: `declareAttack` calls `fireAttacks` then `flushTriggers`; StackAggressive resolution unchanged. Reused fireHook, buffer, flushTriggers, scratch, draw. No state.go/stack.go change. Gates: go test ./... ok, go vet clean, gofmt -l pkg cmd empty, cardtown lint --all passed, sim -deck starter -p0 ANIMUS -p1 PATH exit 0, plain sim sorted output identical to rework/executable-rules. Reviewer: check that the Aggressive item is pushed even if the match ended (flush discards it, fine since the match is over).
