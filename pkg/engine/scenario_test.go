@@ -103,14 +103,14 @@ func (s *scene) wantDamage(a *Asset, want int) {
 	}
 }
 
-// realCard returns a shallow copy of the named card from data/cards, loaded
-// once per test binary.
 var (
 	realCardsOnce sync.Once
 	realCards     map[string]*Card
 	realCardsErr  error
 )
 
+// realCard returns a shallow copy of the named card from data/cards, loaded
+// once per test binary.
 func realCard(name string) (*Card, error) {
 	realCardsOnce.Do(func() {
 		realCards, realCardsErr = LoadCards(filepath.Join("..", "..", "data", "cards"))

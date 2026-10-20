@@ -158,6 +158,9 @@ func Check(c struct{ Name string }) {
 	if !strings.Contains(out, "[ERROR]") || !strings.Contains(out, "x.go:4") || !strings.Contains(out, "Chainbreaker Phalanx") {
 		t.Fatalf("expected [ERROR] with x.go:4 and Chainbreaker Phalanx, got:\n%s", out)
 	}
+	if n := strings.Count(out, "[ERROR]"); n != 1 {
+		t.Fatalf("expected exactly one [ERROR] line, got %d:\n%s", n, out)
+	}
 }
 
 // 3. A card name inside a comment (// mirrors Steel Rain) -> fails, same as case 2.

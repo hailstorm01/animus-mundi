@@ -113,29 +113,27 @@ func Analyze(repoRoot string) (*Report, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading keyword_interaction_matrix.md: %w", err)
 	}
-	{
-		lines := strings.Split(string(mContent), "\n")
-		currentSec := ""
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if strings.HasPrefix(trimmed, "## ") {
-				currentSec = trimmed
-				continue
-			}
-			if !strings.HasPrefix(trimmed, "|") {
-				continue
-			}
-			cells := strings.Split(trimmed, "|")
-			if len(cells) < 3 {
-				continue
-			}
-			id := strings.TrimSpace(cells[1])
-			if strings.HasPrefix(id, "KIM-") {
-				if strings.HasPrefix(currentSec, "## Open Items") {
-					openMatrix[id] = true
-				} else if strings.HasPrefix(currentSec, "## Rulings") {
-					ruledMatrix[id] = true
-				}
+	matrixLines := strings.Split(string(mContent), "\n")
+	currentSec := ""
+	for _, line := range matrixLines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "## ") {
+			currentSec = trimmed
+			continue
+		}
+		if !strings.HasPrefix(trimmed, "|") {
+			continue
+		}
+		cells := strings.Split(trimmed, "|")
+		if len(cells) < 3 {
+			continue
+		}
+		id := strings.TrimSpace(cells[1])
+		if strings.HasPrefix(id, "KIM-") {
+			if strings.HasPrefix(currentSec, "## Open Items") {
+				openMatrix[id] = true
+			} else if strings.HasPrefix(currentSec, "## Rulings") {
+				ruledMatrix[id] = true
 			}
 		}
 	}
@@ -147,38 +145,36 @@ func Analyze(repoRoot string) (*Report, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading m2_starter_set_ability_survey.md: %w", err)
 	}
-	{
-		lines := strings.Split(string(sContent), "\n")
-		inRulingQuestions := false
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
-				inRulingQuestions = true
-				continue
-			}
-			if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
-				inRulingQuestions = false
-				continue
-			}
-			if !inRulingQuestions || !strings.HasPrefix(trimmed, "|") {
-				continue
-			}
-			cells := strings.Split(trimmed, "|")
-			if len(cells) < 4 {
-				continue
-			}
-			rawID := strings.TrimSpace(cells[1])
-			cleanID := strings.Trim(rawID, "* ")
-			if cleanID == "" || strings.EqualFold(cleanID, "id") || strings.HasPrefix(cleanID, ":-") {
-				continue
-			}
-			svyID := "SVY-" + cleanID
-			lastCell := strings.TrimSpace(cells[len(cells)-2])
-			if strings.Contains(lastCell, "Ruled") {
-				ruledSurvey[svyID] = true
-			} else {
-				openSurvey[svyID] = true
-			}
+	surveyLines := strings.Split(string(sContent), "\n")
+	inRulingQuestions := false
+	for _, line := range surveyLines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
+			inRulingQuestions = true
+			continue
+		}
+		if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
+			inRulingQuestions = false
+			continue
+		}
+		if !inRulingQuestions || !strings.HasPrefix(trimmed, "|") {
+			continue
+		}
+		cells := strings.Split(trimmed, "|")
+		if len(cells) < 4 {
+			continue
+		}
+		rawID := strings.TrimSpace(cells[1])
+		cleanID := strings.Trim(rawID, "* ")
+		if cleanID == "" || strings.EqualFold(cleanID, "id") || strings.HasPrefix(cleanID, ":-") {
+			continue
+		}
+		svyID := "SVY-" + cleanID
+		lastCell := strings.TrimSpace(cells[len(cells)-2])
+		if strings.Contains(lastCell, "Ruled") {
+			ruledSurvey[svyID] = true
+		} else {
+			openSurvey[svyID] = true
 		}
 	}
 

@@ -4,7 +4,7 @@ title: Scaffold the ability and cards packages
 kind: harness
 tier: sonnet
 wave: A1
-status: changes
+status: review
 branch: m2/T-0002-scaffold
 depends_on: [T-0001]
 claims: [package:ability, type:ability.Def, package:cards, var:cards.Defs, var:cards.NotYetExecutable, field:Card.Ability, loader:def-attach, test:TestDefs_MatchRulesText, test:TestStarterSet_Executable, helper:scene.card, linter:fences-scope]
@@ -107,3 +107,8 @@ The two new packages from the design note exist and are wired in: `pkg/engine/ab
   1. **Acceptance case 27 is missing.** `TestFences_Case02_CardNameInCode` is unchanged on the branch, and no test counts `[ERROR]` lines, although the previous Log entry says the assertion was added. Add an assertion that `out` contains exactly one `[ERROR]` line (`strings.Count(out, "[ERROR]") == 1`). This is the only edit allowed to that test. Correct the earlier Log entry's claim in your new entry.
   2. **`realCard`'s doc comment is attached to the `var` block** in `scenario_test.go`, so `realCard` itself has no doc. Move the comment onto `func realCard` (the var block may have its own one-line comment or none).
   3. **`fences.go`: remove the bare `{ }` blocks** after the matrix and survey read errors. Drop the braces and dedent, with no behavior change.
+- 2026-10-19 kernel-engineer: Review round 1 fixes.
+  1. Case 27: my earlier Log and report were wrong; the assertion had not been added (the perl edit silently did not match). `TestFences_Case02_CardNameInCode` now also asserts `strings.Count(out, "[ERROR]") == 1`. No other edit to it.
+  2. `realCard`'s doc comment moved from the var block onto `func realCard`.
+  3. Bare `{ }` blocks in `fences.go` removed and dedented; the two `lines` variables are now `matrixLines` and `surveyLines` to avoid a redeclaration. No behavior change.
+  Gates: `go test ./...` ok, `go vet ./...` ok, `gofmt -l pkg cmd` empty, `TestLoadCardsFromRepositoryData` still 29 of 169, `lint fences` and `lint --all` exit 0, scratch `// Rift` in `pkg/engine/ability/` made `lint` exit 1 (file deleted).
