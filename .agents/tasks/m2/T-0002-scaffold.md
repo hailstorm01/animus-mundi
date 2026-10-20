@@ -4,7 +4,7 @@ title: Scaffold the ability and cards packages
 kind: harness
 tier: sonnet
 wave: A1
-status: ready
+status: in-progress
 branch: m2/T-0002-scaffold
 depends_on: [T-0001]
 claims: [package:ability, type:ability.Def, package:cards, var:cards.Defs, var:cards.NotYetExecutable, field:Card.Ability, loader:def-attach, test:TestDefs_MatchRulesText, test:TestStarterSet_Executable, helper:scene.card, linter:fences-scope]
