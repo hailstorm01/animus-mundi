@@ -538,3 +538,153 @@ func TestCard_DespoilerWorm_FaceDownCopyDoesNotMakeOpponentDraw(t *testing.T) {
 		t.Errorf("a face-down Scratch Company has no abilities, so its death makes no one draw (FR-ZON-004)")
 	}
 }
+
+// --- Stormfront of Ideals and Unceasing Tide: self-relocating death triggers ---
+
+func inDiscardPile(p *Player, inst *Instance) bool {
+	for _, d := range p.Discard {
+		if d == inst {
+			return true
+		}
+	}
+	return false
+}
+
+// bottomOfDeck reports whether inst is the last card of p's deck.
+func bottomOfDeck(p *Player, inst *Instance) bool {
+	return len(p.Deck) > 0 && p.Deck[len(p.Deck)-1] == inst
+}
+
+// selfRelocKilled puts the real named card (face-down if asked) for player 0
+// and has a 20-power hitter destroy it, on player 0's turn if ownTurn, else on
+// player 1's. It returns the destroyed card's instance.
+func selfRelocKilled(s *scene, name string, ownTurn, faceDown bool) *Instance {
+	s.t.Helper()
+	victim := s.put(0, ZoneMainTheater, s.card(name))
+	victim.FaceDown = faceDown
+	inst := victim.Inst
+	if !ownTurn {
+		s.endTurn()
+	}
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	if ownTurn {
+		s.do(s.attack(victim, hit))
+	} else {
+		s.do(s.attack(hit, victim))
+	}
+	if s.alive(victim) {
+		s.t.Fatalf("precondition: %s is destroyed", name)
+	}
+	return inst
+}
+
+// stolenKilled puts the real named card owned by player 0 but controlled by
+// player 1, and has player 0's 20-power hitter destroy it on player 0's turn.
+func stolenKilled(s *scene, name string) *Instance {
+	s.t.Helper()
+	c := s.card(name)
+	a := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: c, Owner: 0}, Controller: 1, Armor: c.Keywords.Armor}
+	s.g.placeOnBattlefield(a, ZoneMainTheater)
+	hit := s.put(0, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	s.do(s.attack(hit, a))
+	if s.alive(a) {
+		s.t.Fatalf("precondition: %s is destroyed", name)
+	}
+	return a.Inst
+}
+
+// Covers: FR-ZON-004
+func TestCard_StormfrontOfIdeals_KilledGoesToBottomOfOwnersDeck(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	before := len(p.Deck)
+	inst := selfRelocKilled(s, "Stormfront of Ideals", false, false)
+	if !bottomOfDeck(p, inst) {
+		t.Errorf("when Stormfront is killed that exact card goes to the bottom of its owner's deck (FR-ZON-004)")
+	}
+	if inDiscardPile(p, inst) {
+		t.Errorf("the card leaves the discard pile for the deck; it must not stay in discard (FR-ZON-004)")
+	}
+	if len(p.Deck) != before+1 {
+		t.Errorf("exactly one card is added to the deck: had %d, now %d", before, len(p.Deck))
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_StormfrontOfIdeals_TriggersOnItsControllersTurnToo(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	inst := selfRelocKilled(s, "Stormfront of Ideals", true, false)
+	if !bottomOfDeck(p, inst) || inDiscardPile(p, inst) {
+		t.Errorf("Stormfront's trigger has no turn condition, so killed on its controller's turn it still goes to the bottom of the deck (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_StormfrontOfIdeals_OwnerGetsItNotController(t *testing.T) {
+	s := newScene(t)
+	owner, ctrl := s.g.Players[0], s.g.Players[1]
+	inst := stolenKilled(s, "Stormfront of Ideals")
+	if !bottomOfDeck(owner, inst) {
+		t.Errorf("Stormfront goes to the bottom of its owner's deck, not its controller's (FR-ZON-004)")
+	}
+	if bottomOfDeck(ctrl, inst) || inDiscardPile(ctrl, inst) || inDiscardPile(owner, inst) {
+		t.Errorf("the card must not remain in either discard pile or enter the controller's deck (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_StormfrontOfIdeals_FaceDownCopyStaysInDiscard(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	inst := selfRelocKilled(s, "Stormfront of Ideals", false, true)
+	if !inDiscardPile(p, inst) || bottomOfDeck(p, inst) {
+		t.Errorf("a face-down Scratch Company has no abilities, so it stays in discard and is not moved to the deck (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_UnceasingTide_KilledReturnsToOwnersHand(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	inst := selfRelocKilled(s, "Unceasing Tide", false, false)
+	if !inHand(p, inst) {
+		t.Errorf("when Unceasing Tide is killed that exact card returns to its owner's hand (FR-ZON-004)")
+	}
+	if inDiscardPile(p, inst) {
+		t.Errorf("the card leaves the discard pile for the hand (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_UnceasingTide_TriggersOnItsControllersTurnToo(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	inst := selfRelocKilled(s, "Unceasing Tide", true, false)
+	if !inHand(p, inst) || inDiscardPile(p, inst) {
+		t.Errorf("Tide's trigger has no turn condition, so killed on its controller's turn it still returns to hand (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_UnceasingTide_OwnerGetsItNotController(t *testing.T) {
+	s := newScene(t)
+	owner, ctrl := s.g.Players[0], s.g.Players[1]
+	inst := stolenKilled(s, "Unceasing Tide")
+	if !inHand(owner, inst) {
+		t.Errorf("Tide returns to its owner's hand, not its controller's (FR-ZON-004)")
+	}
+	if inHand(ctrl, inst) || inDiscardPile(ctrl, inst) || inDiscardPile(owner, inst) {
+		t.Errorf("the card must not remain in either discard pile or enter the controller's hand (FR-ZON-004)")
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_UnceasingTide_FaceDownCopyStaysInDiscard(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	inst := selfRelocKilled(s, "Unceasing Tide", false, true)
+	if !inDiscardPile(p, inst) || inHand(p, inst) {
+		t.Errorf("a face-down Scratch Company has no abilities, so it stays in discard and is not returned to hand (FR-ZON-004)")
+	}
+}
