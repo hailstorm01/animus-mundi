@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/eventlog"
+	"animus-mundi/pkg/engine/sim"
 	"animus-mundi/pkg/toolchain/audit"
 	"animus-mundi/pkg/toolchain/docs"
 	"animus-mundi/pkg/toolchain/git"
@@ -229,14 +231,14 @@ func runSim(args []string) {
 	var decks [2]engine.DeckList
 	if *deck != "" {
 		decksDir := filepath.Join(repoRoot, "data", "decks")
-		decks, err = engine.SimDecks(cards, decksDir, *deck, [2]string{*p0, *p1})
+		decks, err = sim.SimDecks(cards, decksDir, *deck, [2]string{*p0, *p1})
 		if err != nil {
 			fmt.Printf("[ERROR] %v\n", err)
 			os.Exit(1)
 		}
 	} else {
 		for i, faction := range []string{*p0, *p1} {
-			if decks[i], err = engine.FactionDeck(cards, faction); err != nil {
+			if decks[i], err = sim.FactionDeck(cards, faction); err != nil {
 				fmt.Printf("[ERROR] %v\n", err)
 				os.Exit(1)
 			}
@@ -250,9 +252,9 @@ func runSim(args []string) {
 			os.Exit(1)
 		}
 	}
-	opt := engine.SimOptions{}
+	opt := sim.SimOptions{}
 	if *policy == "progress" {
-		opt.Policy = engine.ProgressPolicy
+		opt.Policy = sim.ProgressPolicy
 	}
 	if *deck != "" {
 		for i, f := range []string{*p0, *p1} {
@@ -269,7 +271,7 @@ func runSim(args []string) {
 			return c
 		}
 	}
-	st, err := engine.SimulateWith(decks, *games, *seed, *maxTurns, opt)
+	st, err := sim.SimulateWith(decks, *games, *seed, *maxTurns, opt)
 	if err != nil {
 		if out != nil {
 			out.Close()
@@ -280,7 +282,7 @@ func runSim(args []string) {
 	if out != nil {
 		var werr error
 		for i, c := range played {
-			if werr = engine.WriteEventsJSONL(out, i+1, c.events); werr != nil {
+			if werr = eventlog.WriteEventsJSONL(out, i+1, c.events); werr != nil {
 				break
 			}
 		}
@@ -294,7 +296,7 @@ func runSim(args []string) {
 	}
 	if *logGame {
 		for _, e := range played[0].events {
-			fmt.Println(engine.FormatEvent(e))
+			fmt.Println(eventlog.FormatEvent(e))
 		}
 	}
 	pct := func(n int) float64 { return 100 * float64(n) / float64(st.Games) }

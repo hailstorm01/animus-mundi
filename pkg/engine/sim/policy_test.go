@@ -1,19 +1,21 @@
-package engine
+package sim
 
 import (
 	"bytes"
 	"reflect"
 	"sort"
 	"testing"
+
+	"animus-mundi/pkg/engine"
 )
 
 // Tests for T-0022: ProgressPolicy and SimOptions.Policy. Each
 // TestProgress_Case<N> is Acceptance Case N (cases 6 and 7 are CLI checks).
 
-func progressGame(t *testing.T, decks [2]DeckList, seed uint64) *Game {
+func progressGame(t *testing.T, decks [2]engine.DeckList, seed uint64) *engine.Game {
 	t.Helper()
-	g, err := NewGame(Config{Seed: seed, Decks: decks,
-		Choosers: [2]Chooser{RandomChooser(seed*2 + 1), RandomChooser(seed*2 + 2)}})
+	g, err := engine.NewGame(engine.Config{Seed: seed, Decks: decks,
+		Choosers: [2]engine.Chooser{engine.RandomChooser(seed*2 + 1), engine.RandomChooser(seed*2 + 2)}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +29,7 @@ func TestProgress_Case1_LegalOnly(t *testing.T) {
 		inner := [2]Policy{ProgressPolicy(s*2 + 1), ProgressPolicy(s*2 + 2)}
 		var wrapped [2]Policy
 		for seat := range wrapped {
-			wrapped[seat] = func(g *Game, legal []Action) Action {
+			wrapped[seat] = func(g *engine.Game, legal []engine.Action) engine.Action {
 				a := inner[seat](g, legal)
 				for _, l := range legal {
 					if l == a {
@@ -49,23 +51,23 @@ func TestProgress_Case2_Preferences(t *testing.T) {
 		// An affordable card and a readied asset: Deploy.
 		s := newScene(t)
 		s.g.Players[0].Hand = nil
-		s.give(0, unit("Free", 1, 1, Keywords{}))
-		s.put(0, ZoneReserves, unit("Worker", 1, 1, Keywords{}))
-		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != ActDeploy {
+		s.give(0, unit("Free", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != engine.ActDeploy {
 			t.Errorf("seed %d: affordable card in hand, got %s, want Deploy", seed, got.Kind)
 		}
 
 		// Nothing affordable, a 2R card in hand, pool 0: Generate Requisition.
 		s = newScene(t)
 		s.g.Players[0].Hand = nil
-		costly := unit("Costly", 1, 1, Keywords{})
+		costly := unit("Costly", 1, 1, engine.Keywords{})
 		costly.ReqCost = 2
 		s.give(0, costly)
 		s.g.Players[0].Req, s.g.Players[0].Tac = 0, 0
-		s.put(0, ZoneReserves, unit("Worker", 1, 1, Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
 		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
-		if got.Kind != ActGenerate || got.Resource != Requisition {
-			t.Errorf("seed %d: short on Requisition, got %+v, want Generate Requisition", seed, got)
+		if got.Kind != engine.ActGenerate || got.Resource != engine.Requisition {
+			t.Errorf("seed %d: short on engine.Requisition, got %+v, want Generate Requisition", seed, got)
 		}
 
 		// Empty hand, every asset exhausted: EndTurn.
@@ -75,7 +77,7 @@ func TestProgress_Case2_Preferences(t *testing.T) {
 		for _, a := range s.g.Assets() {
 			a.Exhausted = true
 		}
-		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != ActEndTurn {
+		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != engine.ActEndTurn {
 			t.Errorf("seed %d: nothing to do, got %s, want EndTurn", seed, got.Kind)
 		}
 	}
@@ -85,7 +87,7 @@ func progressRun(t *testing.T) (SimStats, []byte) {
 	t.Helper()
 	var cols []*gameCollector
 	opt := SimOptions{DeckNames: simDeckNames, Policy: ProgressPolicy,
-		Observer: func(game int, s uint64) Observer {
+		Observer: func(game int, s uint64) engine.Observer {
 			c := &gameCollector{}
 			cols = append(cols, c)
 			return c
@@ -94,7 +96,7 @@ func progressRun(t *testing.T) (SimStats, []byte) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	games := make([][]Event, len(cols))
+	games := make([][]engine.Event, len(cols))
 	for i, c := range cols {
 		games[i] = c.events
 	}
@@ -116,7 +118,7 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 	decks := simStarterDecks(t)
 	counts := map[string]int{}
 	opt := SimOptions{DeckNames: simDeckNames, Policy: ProgressPolicy,
-		Observer: func(game int, s uint64) Observer { return &deployCounter{counts} }}
+		Observer: func(game int, s uint64) engine.Observer { return &deployCounter{counts} }}
 	if _, err := SimulateWith(decks, 200, 1, 400, opt); err != nil {
 		t.Fatal(err)
 	}
@@ -143,12 +145,12 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 
 type deployCounter struct{ counts map[string]int }
 
-func (c *deployCounter) Event(e Event) {
+func (c *deployCounter) Event(e engine.Event) {
 	if e.Kind == "deploy" {
 		c.counts[e.Card]++
 	}
 }
-func (c *deployCounter) Settled(s Snapshot) {}
+func (c *deployCounter) Settled(s engine.Snapshot) {}
 
 func TestProgress_Case5_TerminatesAndHolds(t *testing.T) {
 	opt := SimOptions{Policy: ProgressPolicy}
@@ -159,11 +161,11 @@ func TestProgress_Case5_TerminatesAndHolds(t *testing.T) {
 	if st.Games != 200 {
 		t.Errorf("starter: played %d games, want 200", st.Games)
 	}
-	cards, err := LoadCards("../../data/cards")
+	cards, err := engine.LoadCards("../../../data/cards")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var stress [2]DeckList
+	var stress [2]engine.DeckList
 	for i, f := range []string{"SOULLESS", "CONCORDIA"} {
 		if stress[i], err = FactionDeck(cards, f); err != nil {
 			t.Fatal(err)

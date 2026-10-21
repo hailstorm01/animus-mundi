@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -284,14 +285,38 @@ func twoTriggerDeck() DeckList {
 	return DeckList{HQ: hq(3, 20), Main: main}
 }
 
+// playDeploy plays g to completion with deployPolicy for both seats, as sim.Playout
+// would (sim imports engine, so it cannot be called here): it checks invariants
+// after every action and returns an error on a rejected chooser answer.
+func playDeploy(g *Game) error {
+	for !g.Outcome.Over {
+		if g.Turn > 400 {
+			return fmt.Errorf("match did not end within %d turns", 400)
+		}
+		a := deployPolicy(g, g.LegalActions())
+		logged := len(g.Log)
+		if err := g.Apply(a); err != nil {
+			return fmt.Errorf("turn %d: policy chose an action LegalActions offered but Apply rejected: %w", g.Turn, err)
+		}
+		for _, e := range g.Log[logged:] {
+			if e.Kind == "invalid-answer" {
+				return fmt.Errorf("turn %d after %s: a chooser answer was rejected: %s", g.Turn, a.Kind, e.Detail)
+			}
+		}
+		if err := g.CheckInvariants(); err != nil {
+			return fmt.Errorf("turn %d after %s: %w", g.Turn, a.Kind, err)
+		}
+	}
+	return nil
+}
+
 func playoutWith(t *testing.T, ch Chooser) error {
 	t.Helper()
 	g, err := NewGame(Config{Seed: 3, Decks: [2]DeckList{twoTriggerDeck(), twoTriggerDeck()}, Choosers: [2]Chooser{ch, ch}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Playout(g, [2]Policy{deployPolicy, deployPolicy}, 400)
-	return err
+	return playDeploy(g)
 }
 
 func TestPlayout_InvalidOrderAnswerIsAnError(t *testing.T) {

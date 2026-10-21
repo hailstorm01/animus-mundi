@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -170,22 +169,4 @@ func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
 	}
 
 	return deck, nil
-}
-
-// SimDecks loads and validates decklists for the given factions and deck name.
-func SimDecks(cards map[string]*Card, decksDir, name string, factions [2]string) ([2]DeckList, error) {
-	var decks [2]DeckList
-	for i, f := range factions {
-		filename := fmt.Sprintf("%s-%s.txt", strings.ToLower(f), name)
-		path := filepath.Join(decksDir, filename)
-		d, err := LoadDeck(path, cards)
-		if err != nil {
-			return decks, err
-		}
-		if err := ValidateDeck(d); err != nil {
-			return decks, fmt.Errorf("%s: %w", filename, err)
-		}
-		decks[i] = d
-	}
-	return decks, nil
 }

@@ -1,4 +1,4 @@
-package engine
+package sim
 
 import (
 	"bytes"
@@ -8,26 +8,29 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/eventlog"
 )
 
 // Tests for T-0021: SimulateWith, FormatEvent and WriteEventsJSONL. Each
 // TestSimEvents_Case<N> is Acceptance Case N.
 
 // gameCollector keeps one game's events.
-type gameCollector struct{ events []Event }
+type gameCollector struct{ events []engine.Event }
 
-func (c *gameCollector) Event(e Event)      { c.events = append(c.events, e) }
-func (c *gameCollector) Settled(s Snapshot) {}
+func (c *gameCollector) Event(e engine.Event)      { c.events = append(c.events, e) }
+func (c *gameCollector) Settled(s engine.Snapshot) {}
 
 var simDeckNames = [2]string{"data/decks/animus-starter.txt", "data/decks/path-starter.txt"}
 
-func simStarterDecks(t *testing.T) [2]DeckList {
+func simStarterDecks(t *testing.T) [2]engine.DeckList {
 	t.Helper()
-	cards, err := LoadCards(filepath.Join("..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("load cards: %v", err)
 	}
-	decks, err := SimDecks(cards, filepath.Join("..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
+	decks, err := SimDecks(cards, filepath.Join("..", "..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
 	if err != nil {
 		t.Fatalf("SimDecks: %v", err)
 	}
@@ -35,10 +38,10 @@ func simStarterDecks(t *testing.T) [2]DeckList {
 }
 
 // collectGames plays games and returns each game's events, game 1 first.
-func collectGames(t *testing.T, games int, seed uint64) ([][]Event, SimStats) {
+func collectGames(t *testing.T, games int, seed uint64) ([][]engine.Event, SimStats) {
 	t.Helper()
 	var cols []*gameCollector
-	opt := SimOptions{DeckNames: simDeckNames, Observer: func(game int, s uint64) Observer {
+	opt := SimOptions{DeckNames: simDeckNames, Observer: func(game int, s uint64) engine.Observer {
 		if game != len(cols)+1 {
 			t.Errorf("observer asked for game %d, want %d", game, len(cols)+1)
 		}
@@ -53,18 +56,18 @@ func collectGames(t *testing.T, games int, seed uint64) ([][]Event, SimStats) {
 	if err != nil {
 		t.Fatalf("SimulateWith: %v", err)
 	}
-	out := make([][]Event, len(cols))
+	out := make([][]engine.Event, len(cols))
 	for i, c := range cols {
 		out[i] = c.events
 	}
 	return out, st
 }
 
-func jsonlBytes(t *testing.T, games [][]Event) []byte {
+func jsonlBytes(t *testing.T, games [][]engine.Event) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	for i, evs := range games {
-		if err := WriteEventsJSONL(&buf, i+1, evs); err != nil {
+		if err := eventlog.WriteEventsJSONL(&buf, i+1, evs); err != nil {
 			t.Fatalf("WriteEventsJSONL: %v", err)
 		}
 	}
@@ -186,7 +189,7 @@ func TestSimEvents_Case5_FormatEvent(t *testing.T) {
 	games, _ := collectGames(t, 1, 7)
 	sawDecision, sawStart := false, false
 	for _, e := range games[0] {
-		line := FormatEvent(e)
+		line := eventlog.FormatEvent(e)
 		if strings.Contains(line, "\n") {
 			t.Errorf("seq %d: line has a newline: %q", e.Seq, line)
 		}
@@ -218,10 +221,10 @@ func TestSimEvents_Case5_FormatEvent(t *testing.T) {
 	// The starter decks make no decisions under random play (sawDecision stays
 	// false for them), so check the decision line on a constructed event too.
 	_ = sawDecision
-	d := Event{Seq: 12, Turn: 2, Phase: "main", Kind: "decision", Player: 1, Decision: &DecisionRecord{
+	d := engine.Event{Seq: 12, Turn: 2, Phase: "main", Kind: "decision", Player: 1, Decision: &engine.DecisionRecord{
 		Kind: "Target", Player: 1, Prompt: "pick a target", Options: []string{"Alpha", "Beta"},
 		Refs: []int{4, 5}, Picks: []int{1}, How: "answer"}}
-	line := FormatEvent(d)
+	line := eventlog.FormatEvent(d)
 	if !strings.HasPrefix(line, "12") || !strings.Contains(line, "decision") ||
 		!strings.Contains(line, "Beta") || !strings.Contains(line, "answer") || strings.Contains(line, "Alpha") {
 		t.Errorf("decision line wrong: %q", line)

@@ -1,33 +1,35 @@
-package engine
+package sim
 
 import (
 	"path/filepath"
 	"sort"
 	"testing"
+
+	"animus-mundi/pkg/engine"
 )
 
 // keywordDeck exercises every M1 keyword.
-func keywordDeck() []*Card {
-	pool := []*Card{
-		unit("Vanilla", 2, 2, Keywords{}),
-		unit("Resister", 1, 3, Keywords{Resistant: 1}),
-		unit("Brittle", 3, 2, Keywords{Resistant: -1}),
-		unit("Stalwart", 1, 2, Keywords{Stalwart: true}),
-		unit("Brawler", 1, 3, Keywords{Aggressive: 2}),
-		unit("Ghost", 2, 1, Keywords{Ethereal: true}),
-		unit("Warded", 2, 2, Keywords{Ward: true}),
-		unit("Sneak", 1, 2, Keywords{Versatile: true}),
-		unit("Bodyguard", 0, 4, Keywords{Guardian: true}),
-		unit("Plated", 2, 1, Keywords{Armor: 2}),
-		unit("Slowpoke", 3, 3, Keywords{DeploysExhausted: true}),
-		unit("Berserker", 2, 3, Keywords{Berserk: 2}),
-		structure("Bastion", 0, 6, Keywords{Guardian: true}),
+func keywordDeck() []*engine.Card {
+	pool := []*engine.Card{
+		unit("Vanilla", 2, 2, engine.Keywords{}),
+		unit("Resister", 1, 3, engine.Keywords{Resistant: 1}),
+		unit("Brittle", 3, 2, engine.Keywords{Resistant: -1}),
+		unit("Stalwart", 1, 2, engine.Keywords{Stalwart: true}),
+		unit("Brawler", 1, 3, engine.Keywords{Aggressive: 2}),
+		unit("Ghost", 2, 1, engine.Keywords{Ethereal: true}),
+		unit("Warded", 2, 2, engine.Keywords{Ward: true}),
+		unit("Sneak", 1, 2, engine.Keywords{Versatile: true}),
+		unit("Bodyguard", 0, 4, engine.Keywords{Guardian: true}),
+		unit("Plated", 2, 1, engine.Keywords{Armor: 2}),
+		unit("Slowpoke", 3, 3, engine.Keywords{DeploysExhausted: true}),
+		unit("Berserker", 2, 3, engine.Keywords{Berserk: 2}),
+		structure("Bastion", 0, 6, engine.Keywords{Guardian: true}),
 	}
 	for i, c := range pool {
 		c.ReqCost = i % 3
 		c.TacCost = i % 2
 	}
-	var deck []*Card
+	var deck []*engine.Card
 	for len(deck) < 50 {
 		deck = append(deck, pool[len(deck)%len(pool)])
 	}
@@ -40,7 +42,7 @@ func TestRandomPlayoutsTerminateAndHoldInvariants(t *testing.T) {
 		games = 30
 	}
 	for seed := range uint64(games) {
-		g, err := NewGame(Config{Seed: seed, Decks: [2]DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(2, 25), Main: keywordDeck()}}})
+		g, err := engine.NewGame(engine.Config{Seed: seed, Decks: [2]engine.DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(2, 25), Main: keywordDeck()}}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,8 +54,8 @@ func TestRandomPlayoutsTerminateAndHoldInvariants(t *testing.T) {
 }
 
 func TestPlayoutsAreDeterministicPerSeed(t *testing.T) {
-	run := func() (Outcome, int) {
-		g, _ := NewGame(Config{Seed: 42, Decks: [2]DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(3, 20), Main: keywordDeck()}}})
+	run := func() (engine.Outcome, int) {
+		g, _ := engine.NewGame(engine.Config{Seed: 42, Decks: [2]engine.DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(3, 20), Main: keywordDeck()}}})
 		res, err := Playout(g, [2]Policy{RandomPolicy(1, 0.1), RandomPolicy(2, 0.1)}, 400)
 		if err != nil {
 			t.Fatal(err)
@@ -68,7 +70,7 @@ func TestPlayoutsAreDeterministicPerSeed(t *testing.T) {
 }
 
 func TestLoadCardsFromRepositoryData(t *testing.T) {
-	cards, err := LoadCards(filepath.Join("..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatal(err)
 	}
