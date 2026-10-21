@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: review
+status: done
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -166,10 +166,10 @@ Deliberately left out:
 - `pkg/engine/damage.go`
 
 ## Done When
-- [ ] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
-- [ ] Every existing test passes unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
+- [x] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
+- [x] Every existing test passes unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 shape), with status `tests` for `rules-test-author`.
@@ -223,3 +223,18 @@ Deliberately left out:
     3. `dealDamage` may now get a source that is a last-known copy and is not on the battlefield. Today it reads only the source's ID and name. A future "when this deals damage" hook must not treat that copy as a live asset.
     4. `SubjectAll` evaluates the value once per step, before any instance is dealt.
     5. Directive #13's monitor switch to effective keywords stays out of scope, per this task's "Not in this task" list.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 4de1413 touches only the four Allowed Files. No `_test.go` change after a1a3705.
+  - Shapes: `ValueSource`/`ValueSourcePower`, `Value.From`, `SubjectAll` and `Step.Filter` are exactly as specced.
+  - Rules fidelity:
+    - `value` reads source power when the step resolves: the live effective power, else the last-known effective power, else 0 (`SVY-R10`).
+    - `deathSweep` takes every dying asset's `EffectiveState` before any of them leaves. That is the order directive #13 asks for, checked in the code.
+    - `SubjectAll` uses `matchesFilter` without Ward and oldest ID first, with one instance per asset before the sweep.
+  - Reuse: `matchesFilter` is factored out of `legalTarget`, with Ward kept only on the targeting path, and `assetsByID` is shared with `chooseTargets`.
+  - Fences: no card names.
+  - Engineer notes 1 to 5 are accepted.
+    - Note 3, a last-known copy passed as a damage source, is the one to remember. A future "when this deals damage" hook must not treat it as a live asset.
+    - Note 5: the monitor switch waits for the first keyword grant, as directive #13 now says.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, and `go tool task check` exits 0.
+    - For starter and stress games under both policies, `cardtown sim` is byte-identical to a baseline CLI built from `rework/executable-rules`.
