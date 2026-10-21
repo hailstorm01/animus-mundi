@@ -71,6 +71,7 @@ func NewGame(cfg Config) (*Game, error) {
 		}
 	}
 	var setAside [2][]string
+	var setAsideInsts [2][]int
 	for _, p := range g.Players {
 		if cfg.Mulligan == nil {
 			continue
@@ -81,6 +82,7 @@ func NewGame(cfg Config) (*Game, error) {
 				p.Hand = remove(p.Hand, inst)
 				aside = append(aside, inst)
 				setAside[p.ID] = append(setAside[p.ID], inst.Card.Name)
+				setAsideInsts[p.ID] = append(setAsideInsts[p.ID], inst.ID)
 			}
 		}
 		for range aside {
@@ -90,7 +92,7 @@ func NewGame(cfg Config) (*Game, error) {
 		g.shuffle(p)
 	}
 
-	g.emitMatchStart(cfg, decider, playFirst, setAside)
+	g.emitMatchStart(cfg, decider, playFirst, setAside, setAsideInsts)
 
 	g.Active = g.FirstPlayer
 	g.Turn = 1

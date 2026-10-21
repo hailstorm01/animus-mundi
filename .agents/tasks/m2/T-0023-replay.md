@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: ready
+status: done
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -79,17 +79,18 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
 
 ## Allowed Files
 - `pkg/engine/eventlog/replay.go` (new) and `pkg/engine/eventlog/eventlog.go` (`ReadEventsJSONL`)
-- `pkg/engine/events.go` (the additive fields and `Game.Snapshot`)
+- `pkg/engine/events.go` (`MulliganInsts`, `MulliganCallback`, `Game.Snapshot`)
+- `pkg/engine/state.go` (only the two additive `Event` fields, `Secondary` and `Resource`)
 - `pkg/engine/turn.go` (`MulliganInsts`)
 - `cmd/cardtown/main.go` (the `replay` command)
 - `pkg/engine/eventlog/replay_test.go` (new, the `test(T-0023)` commit)
 
 ## Done When
-- [ ] Cases 1 to 6 have tests in `replay_test.go`, committed before the implementation, and all pass
-- [ ] Case 7 holds, with its output in the Log
-- [ ] `go tool task check` passes, and existing tests pass unchanged
-- [ ] The `sim` summaries are unchanged (the `-events` files gain the new fields, which is expected)
-- [ ] Never edit a test after its `test(T-0023)` commit. If a case can't pass as written, stop at `blocked` and say why.
+- [x] Cases 1 to 6 have tests in `replay_test.go`, committed before the implementation, and all pass
+- [x] Case 7 holds, with its output in the Log
+- [x] `go tool task check` passes, and existing tests pass unchanged
+- [x] The `sim` summaries are unchanged (the `-events` files gain the new fields, which is expected)
+- [x] Never edit a test after its `test(T-0023)` commit. If a case can't pass as written, stop at `blocked` and say why.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #19, with status `ready` (harness, sonnet).
@@ -100,3 +101,52 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
   - `Replay` and `ReadEventsJSONL` go in `pkg/engine/eventlog`, and the test in `eventlog/replay_test.go`.
   - The unexported emit hook is dropped. The only new engine export is `Game.Snapshot()`, and replay's own observer captures the state at `at`, then stops checking.
   - The rest of the task is unchanged.
+- 2026-10-20 kernel-engineer: Set `blocked` before writing any test or code. The task needs a file outside Allowed Files.
+  - `Event.Secondary` and `Event.Resource` must be added to `type Event struct`, which is defined in `pkg/engine/state.go` (line 116), not in `events.go`. `MatchStart` is in `events.go`, and `Game.Snapshot` and the `MulliganInsts` change fit the allowed files.
+  - Allowed Files lists `events.go`, `turn.go`, `eventlog/*`, `cmd/cardtown/main.go` and the test file. `state.go` is not listed, and the stop condition says not to work around it.
+  - Ask for one of: add `pkg/engine/state.go` (the two `Event` fields only) to Allowed Files, or move `Event` into `events.go` as a pure move first.
+  - Findings for the revision, so the next pass does not re-discover them:
+    - `Event` 1 (`match-start`) and 2 (the turn-1 `turn-start`) are emitted inside `NewGame`, before the `*Game` exists. Replay's observer cannot call `g.Snapshot()` for them. For `at` = 2 it can use the event's own `Snapshot`. For `at` = 1 the state is that snapshot with Turn 0, Phase "setup", Active 0, which I plan to derive.
+    - `NewGame` shuffles after a mulligan even when zero cards are set aside, but only if `cfg.Mulligan != nil`. Replay should pass `Mulligan` only when some seat has `MulliganInsts`.
+    - An `invalid` decision also emitted an `invalid-answer` event first, so a timeout replay would diverge. Sims never produce it (Playout rejects it), so it is out of scope.
+- 2026-10-20 lead-architect: The block is the lead's error: `Event` lives in `state.go`. Status `ready`, with these decisions on the engineer's findings:
+  - **Allowed Files** gains `state.go`, for the two `Event` fields only.
+  - **Events 1 and 2:** emitted inside `NewGame`, before `Replay` has the `*Game`. For `at` 2, return that `turn-start` event's own stored `Snapshot`. For `at` 1, return the same snapshot with `Turn` 0, `Phase` "setup" and `Active` 0. Nothing else changes between `match-start` and turn 1's `turn-start`, so this is exact. Case 1 already covers `at` 2. Add `at` 1 to case 3's checks, in the `test(T-0023)` commit.
+  - **Mulligan shuffle:** a record with empty `MulliganInsts` can't tell whether a `Mulligan` callback ran, and a callback means a shuffle. Add `MulliganCallback bool json:"mulliganCallback"` to `MatchStart` (additive, set when `cfg.Mulligan != nil`). Replay passes a `Mulligan` exactly when it's true.
+  - **`invalid` decisions:** out of scope. When `Replay` meets one, it returns an error naming that Seq ("cannot replay an invalid answer"). It doesn't attempt it. Add this to case 6's bad-input list.
+  - **Build check:** format both revisions with `%q`. Test builds carry no VCS info, so `""` matches `""`, and case 5's mismatch still holds.
+- 2026-10-20 kernel-engineer: Implemented; status `review`.
+  - **Commits:** `7c95b33` `test(T-0023)` with cases 1 to 6 (it didn't compile before the implementation: `Replay`, `ReadEventsJSONL` and `MulliganInsts` were undefined). It was amended once, before any implementation existed, only to apply gofmt. The implementation commit follows it.
+  - **Reuse:** the existing `snapshot()` (now behind `Game.Snapshot()`), `NewGame`'s `PlayFirst`/`Mulligan`/`Chooser` callbacks, `ActionKind.String()` and `Zone.String()` for rebuilding actions, `sim.FactionDeck` and `engine.LoadDeck` in the CLI's resolver.
+  - **Changes:**
+    - `state.go`: `Event.Secondary`, `Event.Resource`.
+    - `events.go`: `MatchStart.MulliganInsts` and `MulliganCallback`, their clone, `Game.Snapshot`, and `emitAction` sets the two new fields. The Generate Detail text is unchanged.
+    - `turn.go`: collects the set-aside instance IDs.
+    - `eventlog.go`: `ReadEventsJSONL`.
+    - `replay.go`: `Replay`, plus `ReplayWarning`, an extra exported helper in `eventlog` that the CLI uses for the modified-build warning line.
+    - `cmd/cardtown/main.go`: the `replay` command.
+  - **Divergence check:** besides the listed fields it also compares Turn, Phase, the Decision, Start (except Revision and Modified, which are checked up front), End and Snapshot records. Errors read `replay diverged at seq N: ...`.
+  - **Gates:**
+    - `go test ./pkg/engine/eventlog -v`: all of cases 1 to 6 pass, and the case 4 answer-pick and attack-target variants both ran and did not skip.
+    - `go tool task check`: exit 0.
+    - Sim summaries: `cardtown sim -deck starter -p0 ANIMUS -p1 PATH -games 5` and `cardtown sim -games 20`, built at `7c95b33` and at the head, print byte-identical output.
+  - **Case 7:**
+    - `cardtown sim -deck starter -p0 ANIMUS -p1 PATH -games 5 -events e.jsonl`, then `cardtown replay -events e.jsonl -game 3 -at 10` (seq 10 is game 3's turn 2 turn-start): exit 0, and the printed JSON equals that line's `snapshot` (compared as parsed JSON).
+    - Two runs give byte-identical output (`cmp`).
+    - `-game 9` prints `[ERROR] <file> has no game 9 (it has 5 games)` and exits 1. `-at 999999` prints `[ERROR] replay: seq 999999 is out of range 1..277` and exits 1.
+    - Run from a built binary with a dirty tree, stderr also shows `[WARN] the record or this build has uncommitted changes; the replay may diverge`.
+  - **For the reviewer:** a replay with `at` 1 waits for event 2 to arrive before capturing, so it still checks events 1 and 2. A record with a `MulliganCallback` but no set-aside cards still replays the shuffle, per the lead's decision. `invalid` decisions at or before `at` are refused up front, naming their Seq.
+- 2026-10-20 lead-architect: Code review: **changes** (one note). The rest is approved as is: the replay chooser checks kind, player and refs, `diff` covers every recorded field, `actionOf` rebuilds every `Action` field, the `at` 1 and 2 cases and `invalid` follow the decisions, and the test file is unchanged since 7c95b33.
+  1. **Build check (`replay.go`, the `st.Revision != rev && !st.Modified && !mod` guard):** a revision mismatch must always be refused (directive #19: "Refuse … when the build revision differs from the record's"). `modified` on either side only adds the CLI warning (`ReplayWarning`); it never bypasses the mismatch. Development builds are usually dirty, so today's guard would almost never refuse. Change the guard to `st.Revision != rev`. Case 5 still passes. Fix it in a new commit, and don't touch `replay_test.go`.
+  - `ReplayWarning` (exported, used by the CLI) is accepted as a small addition.
+- 2026-10-20 kernel-engineer: Answered review note 1; status `review`.
+  1. **Build check:** the guard in `replay.go` is now `st.Revision != rev`. A revision mismatch is always refused, and `modified` only drives the CLI warning (`ReplayWarning`). `replay_test.go` is untouched.
+  - **Gates:** `go tool task check` exit 0 (case 5 still passes). CLI case 7 re-run: `replay -game 3 -at 10` exits 0, its JSON equals the line's `snapshot`, and two runs are byte-identical. `-game 9` and `-at 999999` print `[ERROR]` and exit 1. A dirty-tree binary still prints the stderr `[WARN]` line, and sim and replay come from the same binary so the revisions match.
+- 2026-10-20 lead-architect: Review round 2: **approved**, status `done`.
+  - 6abbd0d makes the guard `st.Revision != rev`, so `modified` only warns. `replay_test.go` is unchanged since 7c95b33.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - `replay -game 3 -at 10` (game 3's turn 2 turn-start) exits 0. Its JSON equals that line's `snapshot` when compared as decoded JSON, and two runs are byte-identical.
+    - `-game 9` and `-at 999999` exit 1.
+    - A record rewritten to revision `"other-commit"` is refused with an error that names both revisions.
+  - Follow-ups: none. Record additions in this task (`Secondary`, `Resource`, `MulliganInsts`, `MulliganCallback`) are additive under ADR-0005.
