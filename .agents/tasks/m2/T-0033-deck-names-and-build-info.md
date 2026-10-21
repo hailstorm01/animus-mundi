@@ -4,7 +4,7 @@ title: One deck-naming scheme and one build-revision reader
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 2 of 4, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0033-deck-names-and-build-info
 depends_on: [T-0032]
 claims: [func:DecklistName, func:StressName, func:ResolveDeck, func:BuildInfo]
