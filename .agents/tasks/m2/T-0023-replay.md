@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: in-progress
+status: blocked
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -100,3 +100,11 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
   - `Replay` and `ReadEventsJSONL` go in `pkg/engine/eventlog`, and the test in `eventlog/replay_test.go`.
   - The unexported emit hook is dropped. The only new engine export is `Game.Snapshot()`, and replay's own observer captures the state at `at`, then stops checking.
   - The rest of the task is unchanged.
+- 2026-10-20 kernel-engineer: Set `blocked` before writing any test or code. The task needs a file outside Allowed Files.
+  - `Event.Secondary` and `Event.Resource` must be added to `type Event struct`, which is defined in `pkg/engine/state.go` (line 116), not in `events.go`. `MatchStart` is in `events.go`, and `Game.Snapshot` and the `MulliganInsts` change fit the allowed files.
+  - Allowed Files lists `events.go`, `turn.go`, `eventlog/*`, `cmd/cardtown/main.go` and the test file. `state.go` is not listed, and the stop condition says not to work around it.
+  - Ask for one of: add `pkg/engine/state.go` (the two `Event` fields only) to Allowed Files, or move `Event` into `events.go` as a pure move first.
+  - Findings for the revision, so the next pass does not re-discover them:
+    - `Event` 1 (`match-start`) and 2 (the turn-1 `turn-start`) are emitted inside `NewGame`, before the `*Game` exists. Replay's observer cannot call `g.Snapshot()` for them. For `at` = 2 it can use the event's own `Snapshot`. For `at` = 1 the state is that snapshot with Turn 0, Phase "setup", Active 0, which I plan to derive.
+    - `NewGame` shuffles after a mulligan even when zero cards are set aside, but only if `cfg.Mulligan != nil`. Replay should pass `Mulligan` only when some seat has `MulliganInsts`.
+    - An `invalid` decision also emitted an `invalid-answer` event first, so a timeout replay would diverge. Sims never produce it (Playout rejects it), so it is out of scope.
