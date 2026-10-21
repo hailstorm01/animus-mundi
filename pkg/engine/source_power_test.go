@@ -443,8 +443,9 @@ func TestFR_CBT_003_AllAssetsOneHeadquartersDestroyedLosesThatPlayer(t *testing.
 // --- FR-TGT-002: filtered "all" ---
 
 // sweeper deploys a free Reserves unit for player p whose deploy trigger is the
-// given step, on a board with one entity of each kind per side.
-func sweeper(t *testing.T, p PlayerID, step ability.Step) (*scene, tboard, *Asset) {
+// given step, on a board with one entity of each kind per side. It returns the
+// source's asset (nil if the step destroyed it) and its card.
+func sweeper(t *testing.T, p PlayerID, step ability.Step) (*scene, tboard, *Asset, *Card) {
 	t.Helper()
 	s := newScene(t)
 	b := s.targetBoard()
@@ -452,15 +453,11 @@ func sweeper(t *testing.T, p PlayerID, step ability.Step) (*scene, tboard, *Asse
 	s.script(1)
 	c := trigUnit("Sweeper", targetTrigger(nil, step))
 	s.deployFromHand(p, c)
-	src := assetOf(s.g, c)
-	if src == nil {
-		t.Fatalf("precondition: Sweeper is on the battlefield")
-	}
-	return s, b, src
+	return s, b, assetOf(s.g, c), c
 }
 
 func TestFR_TGT_002_FilteredAllOpposingUnitsHitsOnlyOpposingUnits(t *testing.T) {
-	s, b, src := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))
+	s, b, src, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))
 	s.wantDamage(b.u1, 1)
 	if s.alive(b.c1) {
 		t.Errorf("a Scratch Company is a unit and an opposing 1/1 one is destroyed by 1 damage")
@@ -478,13 +475,13 @@ func TestFR_TGT_002_FilteredAllOpposingUnitsHitsOnlyOpposingUnits(t *testing.T) 
 }
 
 func TestFR_TGT_002_FilteredAllNonScratchSkipsScratchCompanies(t *testing.T) {
-	s, b, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, NonScratch: true}))
+	s, b, _, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, NonScratch: true}))
 	s.wantDamage(b.u1, 1)
 	s.wantDamage(b.c1, 0)
 }
 
 func TestFR_TGT_002_FilteredAllStructuresAndHeadquartersHitsExactlyThose(t *testing.T) {
-	s, b, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindStructure | ability.KindHeadquarters}))
+	s, b, _, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindStructure | ability.KindHeadquarters}))
 	s.wantDamage(b.s1, 1)
 	s.wantDamage(s.g.Players[1].HQ, 1)
 	s.wantDamage(b.u1, 0)
@@ -495,9 +492,15 @@ func TestFR_TGT_002_FilteredAllStructuresAndHeadquartersHitsExactlyThose(t *test
 
 func TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself(t *testing.T) {
 	// The filter has no "other", so the 1/1 Sweeper on the battlefield is hit.
-	s, b, src := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}))
-	if s.alive(src) {
-		t.Errorf("the source is an allied unit still on the battlefield, so it takes the 1 damage and dies")
+	s, b, src, card := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}))
+	inDiscard := false
+	for _, inst := range s.g.Players[0].Discard {
+		if inst.Card == card {
+			inDiscard = true
+		}
+	}
+	if src != nil || !inDiscard {
+		t.Errorf("the source is an allied unit still on the battlefield when the step resolves, so it takes the 1 damage and is destroyed: on battlefield %v, in Discard %v", src != nil, inDiscard)
 	}
 	s.wantDamage(b.u0, 1)
 	if s.alive(b.c0) {
