@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: tests
+status: tests-review
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -118,10 +118,46 @@ All with synthetic cards in a new `pkg/engine/source_power_test.go`.
 - **Formatting:** across the death-trigger scenes, no event `Detail` contains `%!`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author.
+All in `pkg/engine/source_power_test.go`. Run regex for Done When: `TestFR_(TRG_004_SourcePower|ZON_004_(SourceGone|DeathTrigger)|TGT_001_DeathTriggerPower|TGT_002_|KWD_002h_(AllAssets|FilteredAll)|REP_004_(AllAssets|NoEventDetail)|TRG_003_AllAssets|TRG_004_AllAssets|CBT_003_AllAssets|KWD_002d_AllHeal|LAY_002_AllAddArmor)`
+
+Source power (`SVY-R10`, `// Covers:` comments):
+- `TestFR_TRG_004_SourcePowerIsReadWhenTheStepResolves`: Aggressive resolves first gives 5, power trigger first gives 3.
+- `TestFR_ZON_004_SourceGoneBeforeResolutionDealsItsLastKnownEffectivePower`: Aggressive, then self-kill, then power trigger: 5 dealt, event `Source` = the dead unit's asset ID, Raw and Amount 5.
+- `TestFR_ZON_004_DeathTriggerUsesLastKnownPowerWithTheAggressiveBonus`: 5, `Source` = dead unit.
+- `TestFR_ZON_004_DeathTriggerOutsideCombatHasNoAggressiveBonus`: 3.
+- `TestFR_ZON_004_DeathTriggerOfAZeroPowerUnitDealsZero`: 0.
+- `TestFR_TGT_001_DeathTriggerPowerTargetExcludesHeadquartersAndTheDeadUnit`: options are exactly the non-HQ assets other than the dead unit.
+
+All assets (`FR-TGT-002`):
+- `TestFR_TGT_002_AllAssetsDealsOneInstanceToEveryAssetOnBothSidesWithoutAsking`
+- `TestFR_KWD_002h_AllAssetsIgnoresWard`
+- `TestFR_REP_004_AllAssetsAppliesResistantStalwartAndArmorPerInstance`
+- `TestFR_TGT_002_AllAssetsKillsEveryAssetWithFourOrLessHealthInOneSweep`
+- `TestFR_TRG_003_AllAssetsDeathTriggersResolveInApnapOrder`
+- `TestFR_TRG_004_AllAssetsDeathTriggersCascade`
+- `TestFR_CBT_003_AllAssetsBothHeadquartersDestroyedIsADraw` (reason contains "both players lost", case-insensitive)
+- `TestFR_CBT_003_AllAssetsOneHeadquartersDestroyedLosesThatPlayer`
+
+Filtered all and the other ops:
+- `TestFR_TGT_002_FilteredAllOpposingUnitsHitsOnlyOpposingUnits`
+- `TestFR_TGT_002_FilteredAllNonScratchSkipsScratchCompanies`
+- `TestFR_TGT_002_FilteredAllStructuresAndHeadquartersHitsExactlyThose`
+- `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself`
+- `TestFR_TGT_002_FilteredAllWithNoMatchDoesNothingAndAsksNothing`
+- `TestFR_KWD_002h_FilteredAllHitsOpposingWardUnits`
+- `TestFR_KWD_002d_AllHealRemovesDamageFromEveryMatchingAsset`
+- `TestFR_LAY_002_AllAddArmorGrantsEveryMatchingAsset`
+
+Formatting: `TestFR_REP_004_NoEventDetailContainsAFormattingFailure` (no `%!` in any Detail across the death-trigger and all-assets scenes; other tests also call the same check).
+
+Deliberately left out:
+- Negative-power clamp to 0 (Layer 6): no way to give a unit negative power without grants.
+- Whether the "simultaneous" damage events all precede the death events in the log: the event kind names are an implementation detail. Simultaneity is observed through the one-sweep deaths and the both-HQ draw.
+- The exact `Detail` text for a dead source ("names the source by its last-known record"): not fixed by FRD 01 or SVY-R10; only the absence of `%!` is pinned.
+- The effective-record accessor and its snapshot-before-any-departure order: no test can observe it today; the reviewer checks the code.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. The tests define their own local helpers in `source_power_test.go` (`scene.scriptAnyOf`, `powerStep`, `allStep`, `noFormatErrors` and others), and use existing ones (`killedTrigger`, `mortal`, `striker`, `targetBoard`, `deployFromHand`, `putScratch`).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -140,3 +176,8 @@ To be filled in by rules-test-author.
   - Tier `opus`, per the user ("use Opus for the shapes this time"; board directive #25).
   - It applies directive #13 and cites `SVY-R10`, which the user ruled on 2026-10-21.
   - It is split from its first card, Necropolis Hunt, to keep within four non-test files.
+- 2026-10-21 rules-test-author: Wrote the failing tests in `pkg/engine/source_power_test.go` (list under Tests). Status `tests-review`.
+  - Expected failure: the package's tests don't compile, because `ability.ValueSourcePower`, `Value.From`, `ability.SubjectAll` and `Step.Filter` don't exist yet. With the file moved aside, the engine package passes unchanged.
+  - Helpers requested: none.
+  - Assumptions: Order options are Aggressive first, then printed triggers (FRD 01 `SVY-R7`), and the "both players lost" draw reason is taken from the task text, not from FRD 01.
+  - Omissions: see Tests.
