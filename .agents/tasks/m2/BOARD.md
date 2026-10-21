@@ -71,4 +71,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0026 | Damage-stage and stack-placement event facts, with the damage-sequence and targeting monitors (directive #23 part 2, harness, sonnet) | done |
 | T-0027 | Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus executable (A2 cards, flash) | done |
 | T-0028 | Damage equal to the source's power, last-known effective state, and steps on all matching assets (A2 shape, opus) | done |
-| T-0029 | Make Necropolis Hunt executable (A2 card, flash) | tests |
+| T-0029 | Make Necropolis Hunt executable (A2 card, flash) | ready |

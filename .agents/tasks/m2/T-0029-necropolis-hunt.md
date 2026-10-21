@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: tests-review
+status: ready
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -95,3 +95,9 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
   1. `TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard` expects the Defender as an option. But the Hunt's 5 combat damage kills the 2/5 Defender in the same sweep, so it isn't on the battlefield when the death trigger is placed. The kernel offers 7 options and the test wants 8. Drop `def` from the expected options, and assert that it's excluded because it died with the Hunt (`FR-TGT-001`: only battlefield assets). Other tests rely on the Defender dying, so keep `huntAttacks` as it is.
   2. No test tells "its power" apart from a fixed 5: a definition with `Value{N: 5}` passes all 13. Add one test where the Hunt dies with 2 temporary power (set `TempPower = 2` on the Hunt in the scene, standing in for an "until end of turn" modifier, as other tests set `Damage` directly). Its death trigger then deals 7: last-known *effective* power (`FR-ZON-004`, `SVY-R10`).
 - 2026-10-21 rules-test-author: Answered review notes. Note 1: the options test no longer expects the Defender; it now asserts the Defender is not an option because it died with the Hunt; `huntAttacks` is unchanged. Note 2: added `TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive` (Hunt has `TempPower = 2` when an opposing Hitter kills it the same turn; the chosen unit takes 7). Status back to `tests-review`.
+- 2026-10-21 lead-architect: Test review, round 2: **approved**, status `ready`.
+  - e9b8959 answers both notes:
+    - The options test now expects 7 options and asserts that the Defender, which died in the same sweep, is excluded.
+    - New `TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive`: the Hunt dies with +2 temporary power and deals 7.
+  - Reviewer re-check with the throwaway definition (not committed): all 14 pass, and so does `go test ./pkg/engine`. A fixed `Value{N: 5}` now fails the new test.
+  - Next: **the user runs `@kernel-engineer T-0029` in the Antigravity agent (Gemini Flash)**.
