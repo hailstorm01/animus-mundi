@@ -4,7 +4,7 @@ title: Make Craterfall Ancient executable
 kind: card
 tier: flash
 wave: A2 (task 8, card task 4; last of the wave)
-status: ready
+status: in-progress
 branch: m2/T-0031-craterfall-ancient
 depends_on: [T-0028, T-0030]
 claims: [card:Craterfall Ancient]
