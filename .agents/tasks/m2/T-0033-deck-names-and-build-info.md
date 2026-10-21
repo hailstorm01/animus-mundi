@@ -4,7 +4,7 @@ title: One deck-naming scheme and one build-revision reader
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 2 of 4, before cardtown play)
-status: queued
+status: ready
 branch: m2/T-0033-deck-names-and-build-info
 depends_on: [T-0032]
 claims: [func:DecklistName, func:StressName, func:ResolveDeck, func:BuildInfo]
@@ -90,3 +90,4 @@ Cases 3 to 5 are CLI checks, recorded in the Log.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0032 (harness, sonnet).
+- 2026-10-21 lead-architect: T-0032 is merged (e9ddbc5). Set to `ready`. File paths in Inputs are unchanged by T-0032, apart from `emitMatchStart`, which is still in `events.go`.
