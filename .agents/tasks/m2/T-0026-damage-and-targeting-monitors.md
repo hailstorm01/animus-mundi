@@ -4,7 +4,7 @@ title: Damage-stage and stack-placement event facts, with the damage-sequence an
 kind: harness
 tier: sonnet
 wave: none (board directive #23, part 2 of 2)
-status: ready
+status: in-progress
 branch: m2/T-0026-damage-and-targeting-monitors
 depends_on: [T-0025]
 claims: [event:place, field:Event.Raw, field:Event.Combat, field:Event.Armor, field:Event.Absorbed, field:combat-event.Source-Target, monitor:damage-sequence, monitor:targeting]
