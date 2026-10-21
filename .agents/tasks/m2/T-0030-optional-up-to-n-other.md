@@ -1,0 +1,131 @@
+---
+id: T-0030
+title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
+kind: shape
+tier: opus
+wave: A2 (task 7, shape)
+status: tests
+branch: m2/T-0030-optional-up-to-n-other
+depends_on: [T-0028]
+claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
+cards: []
+requirements: [FR-TGT-001, FR-TGT-002, FR-TGT-003, FR-MOD-001]
+---
+
+## Goal
+Triggers can now be optional ("you may"), a targeted clause can choose "up to N" distinct entities, and a filter can exclude the ability's own source ("other"). These are the last wave A2 shapes. With them and T-0028's shapes, *Craterfall Ancient* (Animus, 2 copies in the starter deck) becomes buildable:
+- "Whenever this unit attacks, you may deal damage equal to its power to each of up to 2 other chosen assets."
+- "When this unit is killed, deal 4 damage to all assets."
+
+Its card task comes next (flash). This task has no cards of its own, and the tests use synthetic cards.
+
+## Inputs
+- Survey rulings (`docs/design/m2_starter_set_ability_survey.md`, ruled by the user on 2026-10-21; not yet in FRD 01):
+  - `SVY-R9`: "you may" is answered when the trigger is placed on the stack, before its targets. A declined trigger chooses no targets and does nothing, and a timeout declines.
+  - `SVY-R11`: "up to N chosen" means distinct entities.
+- FRD 01:
+  - `FR-TGT-001`: conjunction filters; targets are locked on placement (`SVY-R3`).
+  - `FR-TGT-002`: quantifiers, including "up to 2 chosen units".
+  - `FR-TGT-003`: two-stage verification, and partial invalidation. If some targets are illegal at resolution, the effect still resolves for the legal ones.
+  - `FR-MOD-001` §1 (fast path) and §6 (an optional trigger declines; mandatory targets pick at random).
+- **Choice machinery, already built and tested (T-0006, `choice.go`, `TestFR_MOD_001_*`):**
+  - `DecideOptional` is a decision with one option, `Min 0`, `Max 1`. It is always asked, and its fallback declines.
+  - A `DecideTarget` with `Min < Max` is never fast-pathed, and its fallback picks `Min` random legal options. So an "up to N" timeout picks none.
+  - Picks are distinct unless `Repeats` is set.
+  - Reuse all of this. Don't add a new decision kind.
+- **Kernel today:**
+  - `chooseTargets` (`trigger.go`) asks one `DecideTarget` (`Min 1, Max 1`) per `Effect.Targets` slot when a trigger is placed.
+  - `StackItem.Chosen []int` holds one asset ID per slot.
+  - `resolveAbility` re-verifies each slot, and `stepAssets` returns the chosen asset or, for `SubjectAll`, the matches.
+  - `matchesFilter` and `legalTarget` take the controller, the filter and the asset, but not the source.
+- Rulings that apply: `SVY-R3`, `SVY-R9` and `SVY-R11`.
+
+### Shapes
+```go
+// pkg/engine/ability
+// Trigger gains:
+	Optional bool // "you may": asked when the trigger is placed, before its targets (SVY-R9)
+
+// Target gains:
+	UpTo int // 0: exactly one chosen entity (today's behavior). N > 0: up to N distinct entities, possibly none (SVY-R11)
+
+// Filter gains:
+	Other bool // excludes the ability's own source asset ("other")
+```
+`StackItem.Chosen` changes so that a slot can hold several asset IDs, in pick order. The engineer picks the representation (for example `[][]int`).
+
+### Lead decisions (technical)
+- **Optional triggers:**
+  - When the flush is about to place an optional trigger, in its turn in the placement order (after any Order decision), its controller is asked one `DecideOptional`. Its prompt names the trigger, and its single option is "yes".
+  - **Yes:** its targets are chosen as usual, and it is placed.
+  - **No, a timeout, no chooser or an invalid answer** (T-0006's fallback): it isn't placed at all. No targets are asked, and no `place` event is emitted. With no responses in this game, that is the same as placing a trigger that does nothing.
+  - The optional question comes even if the trigger has no targets.
+- **"Up to N" (`UpTo > 0`):**
+  - One `DecideTarget` per slot, with `Min 0`, `Max min(N, number of legal options)`, offering the same legal options as today, oldest first.
+  - With no legal option, nothing is asked and no decision is recorded. The slot stays empty.
+  - With one or more options, it is always asked (`Min != Max`, so no fast path, per T-0006).
+  - A timeout picks none (T-0006's `Min` fallback).
+  - Picks are distinct (`SVY-R11`). A repeated pick is an invalid answer and falls back.
+- **Steps on a multi-entity slot:**
+  - A `SubjectTarget` step acts on each entity chosen for its slot, in pick order.
+  - Each entity is re-verified at resolution (`FR-TGT-003`). The step skips illegal ones and still acts on the legal ones (partial invalidation).
+  - Each entity gets its own damage instance, all dealt before the item's death sweep.
+  - The step's `Value` is read once per step, as in T-0028.
+- **`Filter.Other`:** excludes the source asset (`pendingTrigger.source`, then `StackItem.Source`) in `matchesFilter`, which takes the source as an extra argument. That way it applies to chosen targets at placement, to re-verification and to `SubjectAll`.
+- **Unchanged:** a slot with `UpTo == 0` behaves exactly as today: one mandatory target, with the fast path and the random fallback. Every existing test passes unchanged.
+- **The `targeting` rule monitor** needs no change. An "up to N" `Target` decision is still followed by its item's `place` event, and a declined optional trigger has no `Target` decision.
+- **Fences:** no card names.
+- **Not in this task:**
+  - the Craterfall Ancient definition (its card task is next);
+  - optional non-resource *costs* on triggers (`FR-TRG-005`, Arkha, wave B);
+  - "up to N" with distributed values (`FR-TGT-002` pools);
+  - untargeted picks (directive #20, wave C).
+
+### What the tests can observe
+All with synthetic cards in a new `pkg/engine/optional_upto_test.go`.
+- **Optional:**
+  - The controller is asked a `DecideOptional` (always, even when only one answer would matter). Yes leads to the trigger's target question and the effect.
+  - No leads to no target question, no effect, no `place` event for it, and an empty stack.
+  - A timeout and a nil chooser both decline.
+  - The optional question comes before the target question.
+  - With two triggers of the same player, one of them optional, the Order decision comes first. The optional question is asked when that trigger's turn to be placed comes.
+  - An optional trigger with no targets ("you may draw a card") works both ways.
+- **Up to N:**
+  - Picking 0, 1 or 2 distinct legal entities is valid. Each chosen entity gets its own damage instance from one step, and with 0 picked nothing happens.
+  - A repeated pick is invalid. It is logged and falls back to none.
+  - With exactly one legal option, the player is still asked (not fast-pathed).
+  - With no legal option, nothing is asked and nothing happens.
+  - A timeout picks none.
+  - Options still exclude opposing Ward assets.
+- **Partial invalidation (`FR-TGT-003`):** two entities are chosen, and one is destroyed by an item resolving above this one before it resolves. The surviving one still takes the damage, and the destroyed one takes none.
+- **Other:**
+  - "other chosen asset" never offers the source itself, while the same filter without `Other` does (today's convention).
+  - `SubjectAll` with `Other` skips the source.
+- **Composite (the Craterfall shape):** a unit with power 4, with an attack trigger that is optional, has `UpTo 2` targets `{Other: true}`, and deals `ValueSourcePower` damage.
+  - Yes, picking two assets, deals 4 to each.
+  - Yes, picking one asset, deals 4 to it.
+  - No deals nothing.
+  - Its own HQ is a legal option (any asset), and the unit itself is not.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+To be filled in by rules-test-author.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- To be filled in by rules-test-author, or "None".
+
+## Allowed Files
+- `pkg/engine/ability/ability.go`
+- `pkg/engine/trigger.go`
+- `pkg/engine/stack.go` (the `StackItem.Chosen` field and its `place` event handling, if needed)
+
+## Done When
+- [ ] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
+- [ ] Every existing test passes unchanged
+- [ ] `go tool task check` passes
+- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
+
+## Log
+- 2026-10-21 lead-architect: Wrote the task (A2 shape, last of the wave), with status `tests` for `rules-test-author`.
+  - Tier `opus` (board directive #25).
+  - It cites `SVY-R9` and `SVY-R11`.
+  - No new rules question: the timeout and fast-path behavior for "up to N" and "you may" follows T-0006's tested choice rules.
