@@ -4,7 +4,7 @@ title: Make Craterfall Ancient executable
 kind: card
 tier: flash
 wave: A2 (task 8, card task 4; last of the wave)
-status: review
+status: done
 branch: m2/T-0031-craterfall-ancient
 depends_on: [T-0028, T-0030]
 claims: [card:Craterfall Ancient]
@@ -129,3 +129,10 @@ Expected today: 18 tests fail on `Deploy rejected: ... needs rules the kernel do
     - the attack trigger on deploy instead: 18.
   - Next: **the user runs `@kernel-engineer T-0031` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-21 kernel-engineer: Implemented. Defined Craterfall Ancient in pkg/engine/cards/animus.go in animusDefs: Trigger 1 (HookAttacks, Optional: true, Target: {Filter: {Other: true}, UpTo: 2}, Step: OpDealDamage with Amount: Value{From: ValueSourcePower} to SubjectTarget slot 0), Trigger 2 (HookKilled, Step: OpDealDamage with Amount: Value{N: 4} to SubjectAll with empty Filter), and 2-line Text in printed order. Removed Craterfall Ancient from NotYetExecutable in pkg/engine/cards/cards.go while maintaining sort order. Reused HookAttacks, HookKilled, Optional, Filter.Other, Target.UpTo, OpDealDamage, ValueSourcePower, SubjectTarget, and SubjectAll; added no new shapes or engine logic. Gates: go test ./pkg/engine -run 'TestCard_CraterfallAncient' passed (20/20), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (fmt-check, vet, all tests including TestProgress_Case4_Coverage, full lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding: Animus executable cards rose from 21/50 to 23/50 (+2 Craterfall Ancient); before: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 51.0%, Avg match length: 32.5 turns", after: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 50.0%, Avg match length: 35.5 turns". Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), 200 games: P0 wins 18.0% P1 wins 82.0% draws 0.0% first player wins 55.0%, Avg match length: 19.5 turns" (unchanged). Reviewer: check Craterfall Ancient's 2-line Text and Trigger 1 / Trigger 2 definitions in animus.go.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 727672f touches only `cards/animus.go` and `cards/cards.go`, and its definition is exactly the one verified at test review. No test changed after `test(T-0031)` 29c1d48.
+  - Gates re-run by the reviewer:
+    - The 20 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, and `go tool task check` exits 0, the 1000-game coverage check included.
+    - The starter sim exits 0, byte-identical across runs, with no monitor violation. Animus is at 23/50 (+2). Result: P0 88.0%, P1 12.0%, draws 0.0%.
+    - The random-policy starter and stress sims are unchanged.
+  - Wave A2 is complete. Starter-deck cards not yet executable: 30.
