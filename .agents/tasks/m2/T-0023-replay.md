@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: blocked
+status: ready
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -79,7 +79,8 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
 
 ## Allowed Files
 - `pkg/engine/eventlog/replay.go` (new) and `pkg/engine/eventlog/eventlog.go` (`ReadEventsJSONL`)
-- `pkg/engine/events.go` (the additive fields and `Game.Snapshot`)
+- `pkg/engine/events.go` (`MulliganInsts`, `MulliganCallback`, `Game.Snapshot`)
+- `pkg/engine/state.go` (only the two additive `Event` fields, `Secondary` and `Resource`)
 - `pkg/engine/turn.go` (`MulliganInsts`)
 - `cmd/cardtown/main.go` (the `replay` command)
 - `pkg/engine/eventlog/replay_test.go` (new, the `test(T-0023)` commit)
@@ -108,3 +109,9 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
     - `Event` 1 (`match-start`) and 2 (the turn-1 `turn-start`) are emitted inside `NewGame`, before the `*Game` exists. Replay's observer cannot call `g.Snapshot()` for them. For `at` = 2 it can use the event's own `Snapshot`. For `at` = 1 the state is that snapshot with Turn 0, Phase "setup", Active 0, which I plan to derive.
     - `NewGame` shuffles after a mulligan even when zero cards are set aside, but only if `cfg.Mulligan != nil`. Replay should pass `Mulligan` only when some seat has `MulliganInsts`.
     - An `invalid` decision also emitted an `invalid-answer` event first, so a timeout replay would diverge. Sims never produce it (Playout rejects it), so it is out of scope.
+- 2026-10-20 lead-architect: The block is the lead's error: `Event` lives in `state.go`. Status `ready`, with these decisions on the engineer's findings:
+  - **Allowed Files** gains `state.go`, for the two `Event` fields only.
+  - **Events 1 and 2:** emitted inside `NewGame`, before `Replay` has the `*Game`. For `at` 2, return that `turn-start` event's own stored `Snapshot`. For `at` 1, return the same snapshot with `Turn` 0, `Phase` "setup" and `Active` 0. Nothing else changes between `match-start` and turn 1's `turn-start`, so this is exact. Case 1 already covers `at` 2. Add `at` 1 to case 3's checks, in the `test(T-0023)` commit.
+  - **Mulligan shuffle:** a record with empty `MulliganInsts` can't tell whether a `Mulligan` callback ran, and a callback means a shuffle. Add `MulliganCallback bool json:"mulliganCallback"` to `MatchStart` (additive, set when `cfg.Mulligan != nil`). Replay passes a `Mulligan` exactly when it's true.
+  - **`invalid` decisions:** out of scope. When `Replay` meets one, it returns an error naming that Seq ("cannot replay an invalid answer"). It doesn't attempt it. Add this to case 6's bad-input list.
+  - **Build check:** format both revisions with `%q`. Test builds carry no VCS info, so `""` matches `""`, and case 5's mismatch still holds.
