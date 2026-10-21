@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: ready
+status: in-progress
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
