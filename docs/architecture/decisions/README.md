@@ -30,3 +30,4 @@ What becomes easier, what becomes harder, and what would make us revisit this.
 - [0002. Single seeded PCG stream in the M1 kernel](0002-single-prng-stream-in-m1.md)
 - [0003. Synchronous Chooser for player choices](0003-synchronous-chooser-for-player-choices.md)
 - [0004. Abilities as data values in Go, interpreted by the kernel](0004-abilities-as-data-in-go.md)
+- [0005. Structured game events, one read-only observer, and turn-start snapshots](0005-structured-game-events-and-observer.md)
