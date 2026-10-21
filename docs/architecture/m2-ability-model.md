@@ -21,7 +21,7 @@ Five packages. The rules core imports one way only: `engine` → `cards` → `ab
 | `pkg/engine/ability` | The shape vocabulary: plain data types and enums with no game logic. Its `go doc` output is the M2 write-up. | No (fenced) | `shape` tasks |
 | `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go`, `path.go` and `headquarters.go`. `cards.go` holds the `Defs` map and the `NotYetExecutable` allowlist. | Yes (only place) | `card` tasks |
 | `pkg/engine` | The interpreter: events, trigger collection, stack, choices, layers, replacements. | No (fenced) | `shape` tasks |
-| `pkg/engine/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`. `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
+| `pkg/engine/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`, and the rule monitors (`Monitors`, `Violation`, `Coverage`, `ReplayCommand`). `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
 | `pkg/engine/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
@@ -52,6 +52,8 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 - **Layers:** `Asset.TempPower` becomes a list of timestamped modifiers (Layers 2, 3 and 5, with a duration), and Layer 4 is computed on demand from battlefield `Statics`. The last-known snapshot stores effective values (power, keywords) at departure, not just the raw asset, because death triggers read them (`FR-ZON-004`).
 - **Replacements:** `dealDamage` Stage 1 asks redirection replacements. The death sweep becomes per-entity, with the controller ordering replaced deaths and a sweep between them (`SVY-R5`).
 - **Fences:** `cardtown lint fences` scans all of `pkg/engine` at any depth except `pkg/engine/cards` (harness deliverable 1).
+
+**Rule monitors** (board directive #23, T-0025). A rule monitor is an `engine.Observer` in `pkg/engine/sim` that checks named FRD 01 rules in every `cardtown sim` game. It sees only `Event` and `Settled` calls plus the decklists' card data, never a `*Game`, so it cannot change a game: sim output, `-events` and `-log` are byte-identical with monitors on or off (`-monitors=false`, `SimOptions.NoMonitors`). "Before" an action is the most recent settled snapshot before its `action` event, and "after" is the next one; a check still waiting when the game ends is dropped. A monitor records only the first violation of a game, and later events are still counted. Each check adds 1 to the count of every rule ID it exercised, and `Coverage` lists every monitor and rule ID, zero counts included, so `cardtown sim` can print which rules the sim reaches and which it never reaches. A `Violation` names the monitor, all its rule IDs, the game, the seed and the event `Seq`; `ReplayCommand` turns it into the two commands that replay the game to that event (`cardtown sim … -seed S -games 1 -events monitor-S.jsonl`, then `cardtown replay`). Monitors read printed characteristics from the decklist, which equal the effective ones until a task grants or removes keywords. A later `shape` task may add a monitor for the rule it implements.
 
 ## Decisions
 
