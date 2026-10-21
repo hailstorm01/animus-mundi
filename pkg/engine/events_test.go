@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -84,12 +85,51 @@ func starterGame(t *testing.T, seed uint64, obs Observer) *Game {
 	return g
 }
 
-func playStarter(t *testing.T, g *Game, seed uint64) PlayoutResult {
+// playResult is what playStarter reports about a finished match.
+type playResult struct {
+	Outcome Outcome
+	Turns   int
+	Actions int
+}
+
+// playStarter plays g to completion with a seeded random pick per seat, using
+// sim.RandomPolicy's rule (end the turn with probability 0.1, else a uniform
+// non-EndTurn action). It cannot call sim, which imports engine. Like
+// sim.Playout, it checks invariants after every action and fails on an
+// invalid-answer event.
+func playStarter(t *testing.T, g *Game, seed uint64) playResult {
 	t.Helper()
-	res, err := Playout(g, [2]Policy{RandomPolicy(seed*2+1, 0.1), RandomPolicy(seed*2+2, 0.1)}, 400)
-	if err != nil {
-		t.Fatalf("seed %d: %v", seed, err)
+	var rs [2]*rand.Rand
+	for i, s := range [2]uint64{seed*2 + 1, seed*2 + 2} {
+		rs[i] = rand.New(rand.NewPCG(s, ^s))
 	}
+	var res playResult
+	for !g.Outcome.Over {
+		if g.Turn > 400 {
+			t.Fatalf("seed %d: match did not end within 400 turns", seed)
+		}
+		legal := g.LegalActions()
+		r := rs[g.Active]
+		a := legal[len(legal)-1] // LegalActions always ends with EndTurn
+		if len(legal) > 1 && r.Float64() >= 0.1 {
+			a = legal[r.IntN(len(legal)-1)]
+		}
+		logged := len(g.Log)
+		if err := g.Apply(a); err != nil {
+			t.Fatalf("seed %d: turn %d: Apply rejected an action LegalActions offered: %v", seed, g.Turn, err)
+		}
+		for _, e := range g.Log[logged:] {
+			if e.Kind == "invalid-answer" {
+				t.Fatalf("seed %d: turn %d after %s: a chooser answer was rejected: %s", seed, g.Turn, a.Kind, e.Detail)
+			}
+		}
+		res.Actions++
+		if err := g.CheckInvariants(); err != nil {
+			t.Fatalf("seed %d: turn %d after %s: %v", seed, g.Turn, a.Kind, err)
+		}
+	}
+	res.Outcome = g.Outcome
+	res.Turns = g.Turn
 	return res
 }
 

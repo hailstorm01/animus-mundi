@@ -1,28 +1,30 @@
-package engine
+package sim
 
 import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"animus-mundi/pkg/engine"
 )
 
 // FactionDeck builds a 50-card simulation deck from the faction's executable
 // cards (plus executable Neutral cards), cycling them to reach 50. The result
 // ignores rarity copy limits, so it is a stress-test deck, not a legal one.
 // The faction's first Headquarters is used with its printed abilities ignored.
-func FactionDeck(cards map[string]*Card, faction string) (DeckList, error) {
+func FactionDeck(cards map[string]*engine.Card, faction string) (engine.DeckList, error) {
 	var names []string
 	for name := range cards {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 
-	var deck DeckList
-	var pool []*Card
+	var deck engine.DeckList
+	var pool []*engine.Card
 	for _, name := range names {
 		c := cards[name]
 		switch {
-		case c.Type == TypeHeadquarters && strings.EqualFold(c.Faction, faction) && deck.HQ == nil:
+		case c.Type == engine.TypeHeadquarters && strings.EqualFold(c.Faction, faction) && deck.HQ == nil:
 			deck.HQ = c
 		case c.Supported() && !c.HasSubtype("Scratch Company") &&
 			(strings.EqualFold(c.Faction, faction) || strings.EqualFold(c.Faction, "NEUTRAL")):
@@ -53,28 +55,28 @@ type SimStats struct {
 
 // SimOptions are the optional extras of SimulateWith.
 type SimOptions struct {
-	DeckNames [2]string                            // recorded in each match-start
-	Observer  func(game int, seed uint64) Observer // optional; one observer per game, game counts from 1
-	Policy    func(seed uint64) Policy             // nil means RandomPolicy(seed, 0.1), today's behavior
+	DeckNames [2]string                                   // recorded in each match-start
+	Observer  func(game int, seed uint64) engine.Observer // optional; one observer per game, game counts from 1
+	Policy    func(seed uint64) Policy                    // nil means RandomPolicy(seed, 0.1), today's behavior
 }
 
 // Simulate plays games random-policy matches between two decks.
-func Simulate(decks [2]DeckList, games int, seed uint64, maxTurns int) (SimStats, error) {
+func Simulate(decks [2]engine.DeckList, games int, seed uint64, maxTurns int) (SimStats, error) {
 	return SimulateWith(decks, games, seed, maxTurns, SimOptions{})
 }
 
 // SimulateWith is Simulate with the options: deck names for the match-start
 // record and one observer per game. Observing does not change the result.
-func SimulateWith(decks [2]DeckList, games int, seed uint64, maxTurns int, opt SimOptions) (SimStats, error) {
+func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int, opt SimOptions) (SimStats, error) {
 	st := SimStats{Reasons: map[string]int{}}
 	for i := range uint64(games) {
 		s := seed + i
-		cfg := Config{Seed: s, Decks: decks, DeckNames: opt.DeckNames,
-			Choosers: [2]Chooser{RandomChooser(s*2 + 1), RandomChooser(s*2 + 2)}}
+		cfg := engine.Config{Seed: s, Decks: decks, DeckNames: opt.DeckNames,
+			Choosers: [2]engine.Chooser{engine.RandomChooser(s*2 + 1), engine.RandomChooser(s*2 + 2)}}
 		if opt.Observer != nil {
 			cfg.Observer = opt.Observer(int(i)+1, s)
 		}
-		g, err := NewGame(cfg)
+		g, err := engine.NewGame(cfg)
 		if err != nil {
 			return st, err
 		}

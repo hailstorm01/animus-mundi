@@ -30,6 +30,13 @@
 //     needs any of these load with Card.Unsupported set and cannot be deployed.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
+// Package boundary: this package holds the rules, the game state, the Observer
+// and the event and record types, and nothing that drives or prints a match.
+// Match driving (policies, playouts, simulation, simulation decks) lives in
+// pkg/engine/sim, and event output (readable lines, JSON Lines) lives in
+// pkg/engine/eventlog. Both import engine and nothing else in this family;
+// engine never imports either of them.
+//
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
 // it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md
 // or an "OPEN(SVY-...)" comment pointing at the survey's ruling questions in
