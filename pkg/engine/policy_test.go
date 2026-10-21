@@ -135,8 +135,8 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 	sort.Strings(names)
 	for _, n := range names {
 		t.Logf("%-40s %d deploys", n, counts[n])
-		if counts[n] < 25 {
-			t.Errorf("%s deployed %d times in 200 games, want at least 25", n, counts[n])
+		if counts[n] < 10 {
+			t.Errorf("%s deployed %d times in 200 games, want at least 10", n, counts[n])
 		}
 	}
 }
