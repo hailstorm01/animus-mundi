@@ -1,3 +1,5 @@
+// Events: the Observer, event and snapshot records, and the emit helpers.
+
 package engine
 
 import (
@@ -332,4 +334,36 @@ func (g *Game) emitMatchEnd(o Outcome) {
 		end.Winner = int(o.Winner)
 	}
 	g.emit(Event{Kind: "match-end", Detail: o.Reason, Player: -1, End: end})
+}
+
+// Event is an entry in the game log. Tests and the simulator read it; the
+// kernel never reads it back.
+type Event struct {
+	Seq    int    `json:"seq"` // 1, 2, 3 ... per game, no gaps
+	Turn   int    `json:"turn"`
+	Phase  string `json:"phase"` // Phase.String()
+	Kind   string `json:"kind"`
+	Detail string `json:"detail"`
+	Player int    `json:"player"` // the acting player, -1 if none
+
+	Card   string `json:"card,omitempty"`   // card name from card data
+	Inst   int    `json:"inst,omitempty"`   // card instance ID
+	Source int    `json:"source,omitempty"` // asset ID
+	Target int    `json:"target,omitempty"` // asset ID
+	Zone   string `json:"zone,omitempty"`   // Zone.String()
+	Amount int    `json:"amount,omitempty"`
+
+	Secondary int    `json:"secondary,omitempty"` // action events: an Attack's Berserk secondary target (asset ID)
+	Resource  string `json:"resource,omitempty"`  // action events: a Generate's "Requisition" or "Tactics"
+
+	// Damage events only. Amount is the damage committed to Health (Stage 5).
+	Raw      int  `json:"raw,omitempty"`      // the incoming damage before Stage 2
+	Combat   bool `json:"combat,omitempty"`   // combat damage (Stalwart applies)
+	Armor    int  `json:"armor,omitempty"`    // the target's Armor pool before this damage
+	Absorbed int  `json:"absorbed,omitempty"` // Stage 4: damage absorbed by Armor
+
+	Decision *DecisionRecord `json:"decision,omitempty"`
+	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
+	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"
+	End      *MatchEnd       `json:"end,omitempty"`      // Kind "match-end"
 }

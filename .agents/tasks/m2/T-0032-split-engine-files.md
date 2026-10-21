@@ -4,7 +4,7 @@ title: Split package engine's files by responsibility (pure move)
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 1 of 4, before cardtown play)
-status: in-progress
+status: review
 branch: m2/T-0032-split-engine-files
 depends_on: [T-0031]
 claims: [file:pkg/engine/setup.go, file:pkg/engine/zones.go, file:pkg/engine/combat.go, file:pkg/engine/targeting.go, file:pkg/engine/effects.go, file:pkg/engine/cardload.go]
@@ -83,8 +83,16 @@ No new tests. These are checks the engineer runs before and after and records in
 - new: `pkg/engine/setup.go`, `zones.go`, `combat.go`, `targeting.go`, `effects.go`, `cardload.go`
 
 ## Done When
-- [ ] Acceptance cases 1 to 6 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Acceptance cases 1 to 6 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26 (the user's audit), with status `ready` (harness, sonnet). It is cleanup 1 of 4, ahead of `cardtown play` (design note Deliverable 4a). File-count exception recorded above.
+- 2026-10-21 kernel-engineer: Pure move done. Baselines were captured before any edit: sorted declaration list, `go doc -all ./pkg/engine | sort`, `go test -list . ./...`, and a CLI built from `rework/executable-rules` (226e84c) in a temporary `git worktree` (now removed). Reuse search: not applicable (no new code). Tool: a throwaway Go splitter (outside the repo) moved each declaration with its leading comment block; headers, imports and `doc.go` were then edited by hand.
+  1. Same declarations: `diff` of the sorted `grep -h "^func \|^type \|^var \|^const "` lists (161 lines) is empty. `go doc -all ./pkg/engine | sort` differs only on `doc.go` package-comment lines; from the first `const ` line on, the unsorted `go doc -all` output (485 lines, all declaration comments included) is identical to the baseline's.
+  2. Bodies unchanged: `git diff --cached -M --stat` shows 15 files (864 insertions, 794 deletions). A multiset comparison of added against removed lines, excluding `doc.go`, leaves only: the per-file header comments, `package engine` lines of the 6 new files, and import lines and parentheses. No removed line is unmatched. `--color-moved=zebra --color-moved-ws=allow-indentation-change` shows the rest as moved blocks. Lines changed other than by moving: none, apart from `doc.go`'s comment.
+  3. Tests unchanged: `go test -list . ./...` is identical before and after except for the timing column. `git status` shows no `_test.go` change.
+  4. Behavior: `sim -deck starter -p0 ANIMUS -p1 PATH` and bare `sim`, each under `-policy progress` and `-policy random`, `-games 20 -events` (all four combos, `revision` and `modified` normalized with sed), and `-log -seed 7 -games 1` (all four combos): all 16 outputs byte-identical (`cmp`) between the baseline CLI and the new CLI.
+  5. Gate: `go tool task check` exits 0 (gofmt, vet, tests, `cardtown lint --all`).
+  6. Layout: every table declaration is in its target file (checked by listing each file's declarations). `turn.go` holds only `beginTurn` and `endTurn`.
+  Notes for the reviewer: the FR IDs in the header comments are those already cited near the moved code. In `events.go`, `Event` is appended after the existing code and in `deck.go` `DeckList` is appended last (the table says "+"). The new "Files" paragraph also maps `choice.go`, `damage.go`, `layers.go` and `invariants.go`, which this task does not touch.
