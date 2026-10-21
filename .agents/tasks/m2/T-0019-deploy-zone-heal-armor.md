@@ -1,0 +1,89 @@
+---
+id: T-0019
+title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor steps
+kind: shape
+tier: sonnet
+wave: A2 (task 3)
+status: tests
+branch: m2/T-0019-deploy-zone-heal-armor
+depends_on: [T-0017]
+claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
+cards: []
+requirements: [FR-KWD-002d, FR-LAY-002, FR-TRN-003]
+---
+
+## Goal
+Three shapes:
+- **Deploy-zone gate:** "When this unit deploys, if it was deployed to the Main Theater, …" fires only when the unit entered that zone.
+- **Heal:** "chosen asset heals N" removes up to N accumulated damage.
+- **AddArmor:** "chosen unit gains N armor" adds N to the asset's Armor pool.
+
+After this task, *Devilhorn Guerrillas*, *Spoil Forest Colossus* and *Ironclad Colossus* can be written as card data. The first two are in the starter decks.
+
+## Inputs
+- FRD 01 (`docs/frd/01_Game_Rules_FRD.md`):
+  - `FR-KWD-002d` Heal N (line 491): removes up to N accumulated damage. It can't go below 0 or raise Current Health above Effective Maximum Health.
+  - `FR-LAY-002` (lines 389–393), the Dynamic Armor Pool: a grant adds to Armor, grants stack additively, Armor never expires at end of turn, and it absorbs damage 1-for-1 in Stage 4 (`FR-REP-004`).
+  - `FR-KWD-002k` Armor N: printed Armor and granted Armor share one pool.
+  - `FR-ZON-004` (line 165): dynamic Armor and damage are removed when the asset leaves the battlefield. Line 166: moving between Reserves and the Main Theater keeps them.
+  - `FR-TRN-003` (line 268): a Unit enters its declared battlefield zone.
+- Card text for context. The card tasks that follow use these, and this task's tests use synthetic cards:
+  - *Devilhorn Guerrillas* (deploy zones Main Theater, Reserves): "When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit."
+  - *Spoil Forest Colossus*: "Whenever this unit deploys or attacks, chosen asset heals 2."
+  - *Ironclad Colossus*: "Whenever this unit deploys or attacks, chosen unit gains 2 armor."
+  - "Deploys or attacks" is two triggers with the same effect, written as `HookDeploy` and `HookAttacks` under one `Text` line (precedent: *Fungal Evangelist*, "deploys or is killed").
+- Built on: T-0017 (`Effect.Targets`, `Filter`, `SubjectTarget`, `chooseTargets`, `legalTarget`, re-verification in `resolveAbility`), T-0007 (`fireDeploy`, called from `stack.go` once the deploy resolves) and T-0010 (`HookAttacks`).
+- Rulings that apply: none. FRD 01 has no rule for when a "was deployed to" condition is checked. The zone a unit entered can't change, and nothing can move it before its trigger resolves, because March needs an empty stack (`FR-QUE-001`). So checking it when the deploy fires is complete.
+
+### Vocabulary (`pkg/engine/ability/ability.go`)
+```go
+// Zone names a battlefield zone a shape refers to.
+type Zone int
+
+const (
+	ZoneAny         Zone = iota // the zero value: no zone condition
+	ZoneReserves
+	ZoneMainTheater
+)
+
+// Trigger gains:
+	ToZone Zone // HookDeploy only: fires only if the asset was deployed into this zone
+
+const ( // Op gains:
+	OpHeal     // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
+	OpAddArmor // add Amount to the Subject's Armor pool (FR-LAY-002)
+)
+```
+Names may be adjusted for clarity if needed. Record any rename in the Log. Later tasks reuse `ability.Zone` for zone filters, so keep it free of engine types.
+
+### Lead decisions (technical, not rules)
+- **Deploy-zone gate:** checked in `fireHook` when `HookDeploy` fires, against the zone the asset is in at that moment, which is the zone its deploy put it in. A trigger whose gate fails is never buffered, so its targets are never asked for. `ToZone` on any other hook is ignored. No card builds that.
+- **Heal:** `Damage = max(0, Damage - N)` on the chosen asset. Damage never exceeds what the Effective Maximum Health allows, so "not above Effective Maximum Health" follows. Healing an undamaged asset does nothing. Heal doesn't touch Armor.
+- **AddArmor:** `Armor += N` on the chosen asset. No end-of-turn expiry. Leaving the battlefield already discards the `Asset`, so the pool goes with it.
+- Both ops use `SubjectTarget` with T-0017's choose-at-placement and re-verification, unchanged. A Heal or AddArmor slot with no legal target does nothing.
+- **Not in this task:** "up to N", "other", zone filters on targets, "Heal N" as a keyword on cards (Survey wave B), distributed armor pools (`FR-TGT-002`), and Regroup.
+
+### What the tests can observe
+- **Gate:** a synthetic unit with deploy zones Main Theater and Reserves and a gated deploy trigger. Deployed to the Main Theater, it fires (a target is asked, or fast-pathed, and damage lands). Deployed to Reserves, nothing is asked and nothing happens. An ungated twin fires in both zones. A gate for Reserves behaves the mirror way.
+- **Heal:** a damaged asset heals by N. If its damage is below N, it goes to 0, not negative. An undamaged asset is unchanged. Any kind of asset can be healed, including a Headquarters and an allied or opposing one, as the filter allows. Heal leaves Armor alone. Ward still blocks an opponent choosing it (T-0017).
+- **AddArmor:** a unit gains N Armor. A second grant stacks. A unit with printed Armor adds to its pool. The pool still holds after the turn ends. Later damage is absorbed 1-for-1 before health (`FR-REP-004` Stage 4). After the unit marches between Reserves and the Main Theater it keeps the Armor (FR-ZON-004 line 166).
+- **Deploys-or-attacks:** a unit with the same Heal effect on `HookDeploy` and `HookAttacks` heals once when deployed and once each time it attacks. On attack, the heal resolves at Step 2, before combat damage (`FR-CBT-002`). So healing the attacker itself doesn't save it from lethal retaliation, but healing an already damaged ally is visible after combat.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+- (rules-test-author fills this in.)
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go`
+- `pkg/engine/trigger.go`
+- `pkg/engine/stack.go` (only if the deploy zone must be passed to `fireDeploy`)
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
+- [ ] `go tool task check` passes
+- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes.
+
+## Log
+- 2026-10-20 lead-architect: Wrote the task (A2 task 3), with status `tests` for `rules-test-author`.
