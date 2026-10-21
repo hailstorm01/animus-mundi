@@ -4,7 +4,7 @@ title: Damage-stage and stack-placement event facts, with the damage-sequence an
 kind: harness
 tier: sonnet
 wave: none (board directive #23, part 2 of 2)
-status: review
+status: done
 branch: m2/T-0026-damage-and-targeting-monitors
 depends_on: [T-0025]
 claims: [event:place, field:Event.Raw, field:Event.Combat, field:Event.Armor, field:Event.Absorbed, field:combat-event.Source-Target, monitor:damage-sequence, monitor:targeting]
@@ -120,10 +120,10 @@ If a monitor reports a violation in case 4, 6 or 7, it may be a real engine bug.
 - `pkg/engine/sim/monitor_test.go` (only the case 5 edit, in the `test(T-0026)` commit)
 
 ## Done When
-- [ ] Cases 1 to 5 have tests, committed before the implementation, and all pass
-- [ ] Cases 6 and 7 hold, with their output and the new starter coverage rows in the Log
-- [ ] `go tool task check` passes
-- [ ] Existing tests pass, unchanged apart from the authorized edit
+- [x] Cases 1 to 5 have tests, committed before the implementation, and all pass
+- [x] Cases 6 and 7 hold, with their output and the new starter coverage rows in the Log
+- [x] `go tool task check` passes
+- [x] Existing tests pass, unchanged apart from the authorized edit
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #23 (part 2 of 2), with status `ready` (harness, sonnet). It has one recorded file-count exception, the ADR-0005 addendum.
@@ -139,3 +139,21 @@ If a monitor reports a violation in case 4, 6 or 7, it may be a real engine bug.
   - **New coverage rows, bare stress decks (SOULLESS vs CONCORDIA, 200 games, random policy):** damage-sequence FR-CBT-002 3506, FR-KWD-002b 21, FR-KWD-002c 495, FR-KWD-002k 489, FR-REP-004 7012; targeting all three not reached (progress policy and starter-deck rows are in the commands above).
   - **No violation** in any real game (cases 4, 6, 7).
   - **Look closely at:** the Seq choice for targeting violations; the combat-pair rule (a non-combat damage event inside an open exchange is a violation, and an exchange left open is not flagged); `FR-KWD-002k` is counted when the event's own `Armor` > 0 (not the printed keyword).
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Process: the test commit 2e55670 comes first and failed (unknown field `Raw`). No `_test.go` file changes after it. The `monitor_test.go` change is exactly the authorized case 5 edit.
+  - Engine: the changes are additive.
+    - `push` is the one emit point for `place`.
+    - `combat` gains Source/Target, with the same Detail.
+    - Damage events carry `Raw`, `Combat`, `Armor` and `Absorbed`.
+    - `TestEvents_Case9_ExistingEventsUnchanged` passes unchanged.
+    - The ADR-0005 addendum matches the code.
+    - The five non-test files are the recorded exception.
+  - Monitors follow the spec. The armor pool is tracked per settled step, and a target missing from the last snapshot falls back to the next one. Engineer notes 1 to 5 are accepted: a targeting violation's Seq is the decision's, and an exchange with fewer than two damage events goes unflagged.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - For starter and stress games under both policies, two runs are byte-identical. `-monitors=false` is byte-identical to a baseline CLI built from `rework/executable-rules`, and with monitors on, the only difference from the baseline is the added coverage rows.
+    - In 20 starter games, the per-event kind sequence with the 1102 `place` lines removed equals the baseline's (7285 events).
+  - **Planted-bug checks (both reverted, not committed):**
+    - Stalwart capping non-combat damage: `damage-sequence` broke at game 46, seed 46, event 322 (Saboteur's 2 damage to Spoil Forest Amalgam committed 1, want 2), with the replay lines.
+    - Choosing an ability's targets after pushing it: `targeting` broke at game 1, seed 1, event 79.
+  - Coverage: starter games reach `FR-REP-004`, `FR-CBT-002`, `FR-KWD-002b/c/k`, `FR-TGT-001` and `SVY-R3`. `FR-KWD-002h` (Ward) is not reached anywhere, because no executable card with a targeted ability meets a Ward asset.
