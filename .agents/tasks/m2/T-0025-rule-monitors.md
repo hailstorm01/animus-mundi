@@ -4,7 +4,7 @@ title: Rule monitors in every sim game, with a coverage table (framework and thr
 kind: harness
 tier: sonnet
 wave: none (board directive #23, part 1 of 2)
-status: ready
+status: in-progress
 branch: m2/T-0025-rule-monitors
 depends_on: [T-0024]
 claims: [type:Violation, type:Monitors, type:Coverage, func:NewMonitors, func:ReplayCommand, field:SimOptions.NoMonitors, field:SimStats.Coverage, cli:sim-monitors, monitor:attack-declaration, monitor:entry-state, monitor:resources]
