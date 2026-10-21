@@ -4,7 +4,7 @@ title: Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus ex
 kind: card
 tier: flash
 wave: A2 (task 4, card task 2)
-status: review
+status: done
 branch: m2/T-0027-guerrillas-colossi
 depends_on: [T-0019]
 claims: [card:Devilhorn Guerrillas, card:Spoil Forest Colossus, card:Ironclad Colossus]
@@ -139,3 +139,13 @@ Deliberately left out:
     - heal on units only: 2.
   - Next: **the user runs `@kernel-engineer T-0027` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-21 kernel-engineer: Implemented. Created ability definitions for "Devilhorn Guerrillas" (HookDeploy, ToZone: ZoneMainTheater, Target 0: Opposing Unit, Step: DealDamage 2 to slot 0) and "Ironclad Colossus" (HookDeploy and HookAttacks, Target 0: Kinds Unit, Step: AddArmor 2 to slot 0) in pkg/engine/cards/path.go; added "Spoil Forest Colossus" (HookDeploy and HookAttacks, Target 0: empty filter matching any asset, Step: Heal 2 to slot 0) in pkg/engine/cards/animus.go; removed all three from NotYetExecutable in pkg/engine/cards/cards.go while maintaining sort order. Reused HookDeploy, HookAttacks, ToZone: ZoneMainTheater, Effect.Targets, Filter, AllegianceOpposing, KindUnit, OpDealDamage, OpHeal, OpAddArmor, SubjectTarget, and Step.Target; added no new shapes or engine logic. Gates: go test ./pkg/engine -run 'TestCard_(DevilhornGuerrillas|SpoilForestColossus|IroncladColossus)' passed (34/34), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (fmt-check, vet, all tests, full lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding: P0 (Animus starter) executable cards rose from 19/50 to 21/50 (+2 Spoil Forest Colossus), P1 (Path starter) rose from 9/50 to 12/50 (+3 Devilhorn Guerrillas); targeting coverage rose from 170 (FR-TGT-001: 170, SVY-R3: 170) to 436 (FR-TGT-001: 436, SVY-R3: 436); damage-sequence coverage changed from (FR-CBT-002: 2037, FR-KWD-002b: 55, FR-KWD-002c: 49, FR-KWD-002k: 18, FR-REP-004: 4244) to (FR-CBT-002: 1913, FR-KWD-002b: 53, FR-KWD-002c: 46, FR-KWD-002k: 25, FR-REP-004: 4005). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), 200 games: P0 wins 18.0% P1 wins 82.0% draws 0.0% first player wins 55.0%, Avg match length: 19.5 turns" (unchanged). Reviewer: check ToZone: ZoneMainTheater on Guerrillas and filter scope on the two Colossi.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 8e7025e touches only `cards/path.go`, `cards/animus.go` and `cards/cards.go`. No test changed after `test(T-0027)` 33557b6.
+  - Fences: plain data with no new shapes. The definitions are exactly the ones checked at test review, and each `Text` is the CSV line exactly.
+  - Gates re-run by the reviewer:
+    - The 34 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, and `go tool task check` exits 0.
+    - The starter sim (progress) exits 0, byte-identical across runs, with no monitor violation. Counts: Animus 21/50 (+2), Path 12/50 (+3). Result: P0 85.5%, P1 14.5%, draws 0.0%.
+    - `targeting` checks go from 170 to 436.
+    - New deploys in 200 games: Guerrillas 54 and Spoil Forest Colossus 147 under progress. Random deploys Guerrillas once and the Colossus never, so the random starter summary is unchanged at 51.0/17.0/32.0.
+    - The default stress sim is unchanged at 18.0/82.0.
+  - Starter-deck cards not yet executable: 32 (from 34).
