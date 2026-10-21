@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: tests
+status: tests-review
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
@@ -108,10 +108,41 @@ All with synthetic cards in a new `pkg/engine/optional_upto_test.go`.
   - Its own HQ is a legal option (any asset), and the unit itself is not.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author.
+All in `pkg/engine/optional_upto_test.go`, synthetic cards only. Every scene has "Hero" (player 0) attack "Dummy" with attack triggers, and counts non-combat damage events and `place` events with Hero as Source (the attack itself is one). Targets are chosen by asset.
+- Optional (SVY-R9, FR-MOD-001):
+  - `TestFR_MOD_001_OptionalTriggerYesAsksOptionalThenTargetsThenResolves`
+  - `TestFR_MOD_001_OptionalTriggerNoIsNotPlacedAndAsksNoTargets`
+  - `TestFR_MOD_001_OptionalTriggerTimeoutNoChooserAndInvalidAnswerDecline`
+  - `TestFR_MOD_001_OptionalTriggerWithNoTargetsIsStillAskedBothWays`
+  - `TestFR_MOD_001_OptionalQuestionComesAfterTheOrderDecisionInPlacementOrder`
+  - `TestFR_MOD_001_OptionalAndMandatoryTriggersOfOnePlayerShareAnOrderDecision`
+- Up to N (SVY-R11, FR-TGT-002, FR-MOD-001, FR-KWD-002h):
+  - `TestFR_TGT_002_UpToTwoAcceptsZeroOneOrTwoDistinctTargets`
+  - `TestFR_TGT_002_UpToWithOneLegalOptionIsStillAsked`
+  - `TestFR_TGT_002_UpToOptionsAreOldestFirst`
+  - `TestFR_TGT_002_UpToRepeatedPickIsInvalidAndFallsBackToNone`
+  - `TestFR_TGT_002_UpToNoLegalOptionAsksNothingAndDoesNothing`
+  - `TestFR_MOD_001_UpToTimeoutAndNoChooserPickNone`
+  - `TestFR_KWD_002h_UpToOptionsExcludeOpposingWardAssets`
+- Partial invalidation (FR-TGT-003): `TestFR_TGT_003_UpToResolvesForTheSurvivingChosenEntity`
+- Other (FR-TGT-001, FR-TGT-002):
+  - `TestFR_TGT_001_OtherExcludesTheSourceFromChosenOptionsAndOnlyThat`
+  - `TestFR_TGT_002_AllWithOtherSkipsTheSourceAndHitsTheRest`
+- Composite (the Craterfall shape):
+  - `TestFR_TGT_002_CompositeYesWithTwoAssetsDealsPowerToEach`
+  - `TestFR_TGT_002_CompositeYesWithOneAssetDealsPowerToIt`
+  - `TestFR_TGT_002_CompositeNoDealsNothing`
+
+Run regex for Done When: `go test ./pkg/engine -run 'TestFR_(MOD_001_(Optional|UpTo)|TGT_002_(UpTo|AllWithOther|Composite)|TGT_003_UpTo|TGT_001_Other|KWD_002h_UpTo)'`
+
+Omissions:
+- The exact prompt wording of the optional question: only "non-empty, one option, Min 0, Max 1" is asserted.
+- Re-verifying `Other` at resolution: the source cannot change, so it is not observable.
+- `Other` on a death trigger's `SubjectAll`: the dead source is already off the battlefield, so the filter is the same as without it.
+- Optional triggers of the non-active player (APNAP): T-0030 does not list it, and the same flush path covers it.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. The tests define `arena`, `scriptPlan`, `pick` and the other helpers locally, and reuse existing test helpers (`striker`, `tgt`, `dmgTo`, `powerStep`, `allDamage`, `damageTo`, `nonCombatDamage`, `invalidLogs`, `eventsOfKind`, `noFormatErrors`).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -129,3 +160,8 @@ To be filled in by rules-test-author.
   - Tier `opus` (board directive #25).
   - It cites `SVY-R9` and `SVY-R11`.
   - No new rules question: the timeout and fast-path behavior for "up to N" and "you may" follows T-0006's tested choice rules.
+- 2026-10-21 rules-test-author: Wrote `pkg/engine/optional_upto_test.go` (16 tests, listed under Tests), status `tests-review`.
+  - Expected failure: the file does not compile, because `Trigger.Optional`, `Target.UpTo` and `Filter.Other` do not exist. With the file moved aside, every other engine test passes.
+  - Helpers requested: none. `cardtown lint rules` passes.
+  - Omissions: see the Tests section.
+  - No open questions.
