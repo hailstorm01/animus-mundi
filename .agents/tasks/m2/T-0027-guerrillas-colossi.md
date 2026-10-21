@@ -4,7 +4,7 @@ title: Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus ex
 kind: card
 tier: flash
 wave: A2 (task 4, card task 2)
-status: ready
+status: in-progress
 branch: m2/T-0027-guerrillas-colossi
 depends_on: [T-0019]
 claims: [card:Devilhorn Guerrillas, card:Spoil Forest Colossus, card:Ironclad Colossus]
