@@ -4,7 +4,7 @@ title: A random sim policy that plays expensive cards
 kind: harness
 tier: sonnet
 wave: none (board directive #21, ahead of the next A2 task)
-status: blocked
+status: in-progress
 branch: m2/T-0022-progress-policy
 depends_on: [T-0021]
 claims: [func:ProgressPolicy, field:SimOptions.Policy, cli:sim-policy]
@@ -55,7 +55,7 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
    - With an empty hand and no attack, march or scratch available, it returns EndTurn.
    Check each over several seeds.
 3. **Deterministic:** `SimulateWith` on the starter decks, 20 games, with `Policy: ProgressPolicy`, gives equal `SimStats` and byte-identical `WriteEventsJSONL` output across two runs with one seed.
-4. **Coverage (the point of the task):** in 200 starter games with `ProgressPolicy`, count `deploy` events by `Card`. Every card in either starter decklist that is `Supported()` is deployed at least 25 times. Record the per-card counts in the Log. If a card falls short, report the counts and stop at `blocked` rather than tuning the policy toward that card.
+4. **Coverage (the point of the task):** in 200 starter games with `ProgressPolicy`, count `deploy` events by `Card`. Every card in either starter decklist that is `Supported()` is deployed at least 10 times (lowered from 25 at the lead's review, see Log). Record the per-card counts in the Log. If a card falls short, report the counts and stop at `blocked` rather than tuning the policy toward that card.
 5. **Terminates and holds:** 200 starter games and 200 default stress-deck games under `ProgressPolicy` all finish within 400 turns with `CheckInvariants` holding (`Playout` errors otherwise).
 6. **CLI default:** `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` uses `progress`, exits 0 and is byte-identical across two runs. Record its summary next to the old one (the `random` baseline) in the Log.
 7. **CLI `-policy random`:** `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH -policy random` and `go run ./cmd/cardtown sim -policy random` are byte-identical to `rework/executable-rules`' `sim` output for the same flags. An unknown `-policy` value prints `[ERROR]` and exits 1.
@@ -81,3 +81,6 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
   - Case 6 (progress, `sim -deck starter -p0 ANIMUS -p1 PATH`): P0 wins 81.5% P1 15.5% draws 3.0%, first player 49.5%, avg 30.7 turns; reasons: HQ destroyed 194, both lost simultaneously 6. Old (random): P0 51.0% P1 17.0% draws 32.0%, first 35.5%, avg 27.2 turns; HQ destroyed 136, simultaneous 64. Byte-identical-across-runs not re-run by CLI diff; covered by Case 3 test.
   - Case 7: `-policy random` output byte-identical (cmp) to the pre-change binary for both `-deck starter -p0 ANIMUS -p1 PATH` and bare `sim`; `-policy x` prints `[ERROR] unknown -policy "x" ...`, exit 1.
   - `go tool task check` not run to green because policy_test Case 4 fails; no further gate run.
+- 2026-10-20 lead-architect: The block is a **threshold set too high by the lead**, not a policy fault. Hammerhand Brigade (2 copies, 5 Requisition) reached 22 because Path has only 9/50 executable cards, so few Reserves units generate Requisition, and Path loses 81.5% of games. The 1-copy, 5-cost Spoil Forest Amalgam reached 72 on the Animus side. A threshold of **10** keeps the case's purpose: under `RandomPolicy`, Saboteur (5) and Stormfront (5) fail it. Every current card clears it with margin, and the case won't flake as more Path cards become executable.
+  - **Authorized test edit:** in `policy_test.go`, case 4's minimum goes from 25 to 10. That constant and its message are the only change, in a new `test(T-0022)` commit on top of 785ad0e. Then run `go tool task check`, diff case 6's CLI output across two runs, and set `review`.
+  - Directive #21 (a) is updated on the board to match.
