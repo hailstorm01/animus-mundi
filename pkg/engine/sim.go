@@ -55,6 +55,7 @@ type SimStats struct {
 type SimOptions struct {
 	DeckNames [2]string                            // recorded in each match-start
 	Observer  func(game int, seed uint64) Observer // optional; one observer per game, game counts from 1
+	Policy    func(seed uint64) Policy             // nil means RandomPolicy(seed, 0.1), today's behavior
 }
 
 // Simulate plays games random-policy matches between two decks.
@@ -77,7 +78,11 @@ func SimulateWith(decks [2]DeckList, games int, seed uint64, maxTurns int, opt S
 		if err != nil {
 			return st, err
 		}
-		res, err := Playout(g, [2]Policy{RandomPolicy(s*2+1, 0.1), RandomPolicy(s*2+2, 0.1)}, maxTurns)
+		pol := opt.Policy
+		if pol == nil {
+			pol = func(seed uint64) Policy { return RandomPolicy(seed, 0.1) }
+		}
+		res, err := Playout(g, [2]Policy{pol(s*2 + 1), pol(s*2 + 2)}, maxTurns)
 		if err != nil {
 			return st, fmt.Errorf("seed %d: %w", s, err)
 		}
