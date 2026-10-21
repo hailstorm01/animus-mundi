@@ -1,0 +1,76 @@
+---
+id: T-0029
+title: Make Necropolis Hunt executable
+kind: card
+tier: flash
+wave: A2 (task 6, card task 3)
+status: tests
+branch: m2/T-0029-necropolis-hunt
+depends_on: [T-0028]
+claims: [card:Necropolis Hunt]
+cards: [Necropolis Hunt]
+requirements: []
+---
+
+## Goal
+*Necropolis Hunt* (Path, 1 copy in the starter deck) now runs in the kernel. It is plain `ability` data, using the source-power value that T-0028 added.
+
+## Inputs
+- Card (`data/cards/units-and-structures-path.csv`):
+  - *Necropolis Hunt*: Path Unit, subtypes Reaver and Cavalry, costs 3R 3T, deploys to the Main Theater only, is 5/2, yields 1R 2T, rarity Mythic.
+  - Its one unsupported line: "When this unit is killed, deal damage equal to its power to chosen non-Headquarters asset."
+- Survey row: `docs/design/m2_starter_set_ability_survey.md` line 134.
+- Shapes it uses (all `done`):
+  - `HookKilled` (T-0008);
+  - `Effect.Targets`, `Filter{Kinds}`, `SubjectTarget` and `OpDealDamage` (T-0017);
+  - `Value{From: ValueSourcePower}` (T-0028).
+- Requirements and rulings for context:
+  - `FR-ZON-004`: a death trigger reads the last-known characteristics. A face-down Scratch Company fires no printed death trigger.
+  - `SVY-R10`: "its power" of a source that has left is its last-known effective power.
+  - `FR-TGT-001`, `FR-TGT-003` and `FR-KWD-002h`: targeting, verification and Ward.
+  - `FR-MOD-001` §1 and §6: the fast path and the timeout.
+  - `FR-TRG-003`: death triggers are placed after the sweep, APNAP.
+  - `FR-REP-004`: non-combat damage skips Stalwart.
+- Kernel conventions:
+  - Targets are chosen when the death trigger is placed, after the sweep, so the dead unit is never an option.
+  - Options are listed oldest first.
+  - Tests choose by asset (`scriptRefs`).
+  - Since T-0028, a damage event from a dead source carries that source's asset ID.
+
+### Definition (the engineer adds it to `pathDefs` in `pkg/engine/cards/path.go`)
+- *Necropolis Hunt*: one `HookKilled` trigger with no turn gate. It has one target, `{Kinds: KindUnit | KindStructure}` (any allegiance, so "non-Headquarters asset" means a unit or a structure of either side), and the step `DealDamage` with `Amount: Value{From: ValueSourcePower}` to slot 0.
+- The `Text` is the quoted line exactly. No new types, fields or logic. If the card seems to need one, set `blocked`.
+
+### What the tests can observe (for rules-test-author)
+- It deploys to the Main Theater as a 5/2 for 3R 3T.
+- **Killed while attacking** (lethal retaliation):
+  - Its controller chooses among every unit and structure of both sides. Both Headquarters, the dead Hunt and opposing Ward assets are excluded, and Scratch Companies are included.
+  - The chosen asset takes 5 non-combat damage. The damage event's `Source` is the Hunt's asset ID.
+- **Killed on the opponent's turn** (it defends, or takes Saboteur-style damage): it still triggers, because there is no turn gate, and still deals 5. Its controller chooses.
+- **Damage rules:** the damage is non-combat, so a Stalwart target takes the full 5, while Resistant and Armor still apply. 5 damage destroys a unit with 5 health or less.
+- **Edge cases:**
+  - With no other unit or structure on the battlefield, nothing is asked, and nothing happens.
+  - A sole legal target is not asked about.
+  - A timeout damages exactly one legal target.
+- **Face-down:** a Necropolis Hunt card that is a face-down Scratch Company when it dies fires nothing (`FR-ZON-004`).
+- **No Detail text:** no event `Detail` contains `%!`.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+To be filled in by rules-test-author, in `pkg/engine/cards_path_test.go`, named `TestCard_NecropolisHunt_*`.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- To be filled in by rules-test-author, or "None".
+
+## Allowed Files
+- `pkg/engine/cards/path.go`
+- `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
+
+## Done When
+- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'`
+- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [ ] `go tool task check` passes
+- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Path executable count rises by 1, from 12/50 to 13/50. Report the number of `Necropolis Hunt` deploys in 200 games (from `-events`) in the Log.
+- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+
+## Log
+- 2026-10-21 lead-architect: Wrote the task (A2 card task 3), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 32. Expected after: 31.
