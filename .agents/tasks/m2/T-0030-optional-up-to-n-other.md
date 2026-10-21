@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: tests
+status: done
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
@@ -108,10 +108,41 @@ All with synthetic cards in a new `pkg/engine/optional_upto_test.go`.
   - Its own HQ is a legal option (any asset), and the unit itself is not.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author.
+All in `pkg/engine/optional_upto_test.go`, synthetic cards only. Every scene has "Hero" (player 0) attack "Dummy" with attack triggers, and counts non-combat damage events and `place` events with Hero as Source (the attack itself is one). Targets are chosen by asset.
+- Optional (SVY-R9, FR-MOD-001):
+  - `TestFR_MOD_001_OptionalTriggerYesAsksOptionalThenTargetsThenResolves`
+  - `TestFR_MOD_001_OptionalTriggerNoIsNotPlacedAndAsksNoTargets`
+  - `TestFR_MOD_001_OptionalTriggerTimeoutNoChooserAndInvalidAnswerDecline`
+  - `TestFR_MOD_001_OptionalTriggerWithNoTargetsIsStillAskedBothWays`
+  - `TestFR_MOD_001_OptionalQuestionComesAfterTheOrderDecisionInPlacementOrder`
+  - `TestFR_MOD_001_OptionalAndMandatoryTriggersOfOnePlayerShareAnOrderDecision`
+- Up to N (SVY-R11, FR-TGT-002, FR-MOD-001, FR-KWD-002h):
+  - `TestFR_TGT_002_UpToTwoAcceptsZeroOneOrTwoDistinctTargets`
+  - `TestFR_TGT_002_UpToWithOneLegalOptionIsStillAsked`
+  - `TestFR_TGT_002_UpToOptionsAreOldestFirst`
+  - `TestFR_TGT_002_UpToRepeatedPickIsInvalidAndFallsBackToNone`
+  - `TestFR_TGT_002_UpToNoLegalOptionAsksNothingAndDoesNothing`
+  - `TestFR_MOD_001_UpToTimeoutAndNoChooserPickNone`
+  - `TestFR_KWD_002h_UpToOptionsExcludeOpposingWardAssets`
+- Partial invalidation (FR-TGT-003): `TestFR_TGT_003_UpToResolvesForTheSurvivingChosenEntity`
+- Other (FR-TGT-001, FR-TGT-002):
+  - `TestFR_TGT_001_OtherExcludesTheSourceFromChosenOptionsAndOnlyThat`
+  - `TestFR_TGT_002_AllWithOtherSkipsTheSourceAndHitsTheRest`
+- Composite (the Craterfall shape):
+  - `TestFR_TGT_002_CompositeYesWithTwoAssetsDealsPowerToEach`
+  - `TestFR_TGT_002_CompositeYesWithOneAssetDealsPowerToIt`
+  - `TestFR_TGT_002_CompositeNoDealsNothing`
+
+Run regex for Done When: `go test ./pkg/engine -run 'TestFR_(MOD_001_(Optional|UpTo)|TGT_002_(UpTo|AllWithOther|Composite)|TGT_003_UpTo|TGT_001_Other|KWD_002h_UpTo)'`
+
+Omissions:
+- The exact prompt wording of the optional question: only "non-empty, one option, Min 0, Max 1" is asserted.
+- Re-verifying `Other` at resolution: the source cannot change, so it is not observable.
+- `Other` on a death trigger's `SubjectAll`: the dead source is already off the battlefield, so the filter is the same as without it.
+- Optional triggers of the non-active player (APNAP): T-0030 does not list it, and the same flush path covers it.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. The tests define `arena`, `scriptPlan`, `pick` and the other helpers locally, and reuse existing test helpers (`striker`, `tgt`, `dmgTo`, `powerStep`, `allDamage`, `damageTo`, `nonCombatDamage`, `invalidLogs`, `eventsOfKind`, `noFormatErrors`).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -119,13 +150,72 @@ To be filled in by rules-test-author.
 - `pkg/engine/stack.go` (the `StackItem.Chosen` field and its `place` event handling, if needed)
 
 ## Done When
-- [ ] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
-- [ ] Every existing test passes unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
+- [x] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
+- [x] Every existing test passes unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 shape, last of the wave), with status `tests` for `rules-test-author`.
   - Tier `opus` (board directive #25).
   - It cites `SVY-R9` and `SVY-R11`.
   - No new rules question: the timeout and fast-path behavior for "up to N" and "you may" follows T-0006's tested choice rules.
+- 2026-10-21 rules-test-author: Wrote `pkg/engine/optional_upto_test.go` (16 tests, listed under Tests), status `tests-review`.
+  - Expected failure: the file does not compile, because `Trigger.Optional`, `Target.UpTo` and `Filter.Other` do not exist. With the file moved aside, every other engine test passes.
+  - Helpers requested: none. `cardtown lint rules` passes.
+  - Omissions: see the Tests section.
+  - No open questions.
+- 2026-10-21 lead-architect: Test review: **approved**, status `ready`.
+  - 672bbf1 adds `optional_upto_test.go` with 19 tests and changes no existing test.
+  - Rules content checks out against FRD 01, `SVY-R9`, `SVY-R11`, T-0006's choice rules and the lead decisions. The omissions are accepted.
+  - **Reviewer prototype** (a throwaway worktree, not committed): `Optional` asked via `DecideOptional` before targets, with a decline skipping placement; `UpTo` as `Min 0`, `Max min(N, options)`, with no question when there are no options; `Chosen [][]int` re-verified per entity; `Other` in `matchesFilter`. With it, all of `go test ./pkg/engine` passes.
+  - **Mutations each fail tests:**
+    - optional ignored: 8;
+    - a declined trigger still placed: 5;
+    - `UpTo` ignored: 7;
+    - `Other` ignored: 3;
+    - asking with no options: 1;
+    - a whole slot dropped on one invalid target: 1;
+    - repeats allowed: 1.
+  - Next: `kernel-engineer` on **Opus** (directive #25).
+- 2026-10-21 kernel-engineer (Opus): Implemented, status `review`. The diff touches only the three Allowed Files. No test file and no `scenario_test.go` helper changed.
+  - **`ability.go`:** adds `Trigger.Optional`, `Target.UpTo` and `Filter.Other`, as in the Shapes block. The `Target` and `SubjectTarget` comments now describe "up to N" and pick order.
+  - **`stack.go`:** `StackItem.Chosen` is now `[][]int`: the asset IDs for each slot, in pick order, empty if none. `push` needed no change.
+  - **`trigger.go`, optional triggers:**
+    - In `flushTriggers`, inside the placement loop (after any Order decision), an optional trigger first calls the new `accepts(p)`.
+    - `accepts` asks one `DecideOptional` through `g.choose`: prompt `"<label>: you may use it"`, one option "yes" (`Ref` is the source), `Min 0`, `Max 1`.
+    - Unless exactly one pick comes back, the loop `continue`s, so no targets are asked and there is no `place` event. Keyword items (`p.item`) are never optional.
+  - **`trigger.go`, "up to N":**
+    - `chooseTargets` returns `[][]int`. It builds the same oldest-first option list as before.
+    - When `UpTo > 0`, it skips the slot if there are no options (no `choose` call, so no decision is recorded). Otherwise it sets `Min 0`, `Max min(UpTo, options)` and the prompt `"<label>: choose up to N for target i"`.
+    - `UpTo == 0` keeps today's `Min 1`, `Max 1` decision. Its prompt is unchanged, and so are the fast path, the fallback and the RNG use.
+  - **`trigger.go`, resolution:**
+    - `resolveAbility` re-verifies every chosen ID on its own with `legalTarget`, and keeps the legal ones in pick order (`[][]*Asset`, FR-TGT-003 partial invalidation).
+    - `stepAssets` returns the slot's surviving list for `SubjectTarget`.
+    - The deal-damage loop is unchanged: `Value` is read once per step, there is one `dealDamage` per entity, and every instance is dealt before the item's sweep.
+  - **`trigger.go`, "other":** `matchesFilter(ctl, src, f, a)` and `legalTarget(ctl, src, f, a)` take the source asset ID, and `f.Other && a.ID == src` excludes it. Callers pass `p.source` at placement, and `it.Source` at re-verification and for `SubjectAll`.
+  - **Reused:** T-0006's `choose`, `DecideOptional` and `DecideTarget`. Its validation already rejects repeats and out-of-range picks, and its fallback gives none for `Min 0` and declines for Optional. No new decision kind or helper. `matchesFilter` and `legalTarget` were extended, not duplicated.
+  - **Done When regex** `go test ./pkg/engine -run 'TestFR_(MOD_001_(Optional|UpTo)|TGT_002_(UpTo|AllWithOther|Composite)|TGT_003_UpTo|TGT_001_Other|KWD_002h_UpTo)' -v`: ok. All 19 T-0030 tests pass, plus 4 existing T-0006 `Optional*` tests that the regex also matches.
+  - `go test ./...`: ok.
+  - `go tool task check`: exit 0 (fmt-check, vet, test, build, `lint --all` all PASS, and fences PASS).
+  - **Sim byte identity:**
+    - **Baseline:** a CLI built in a separate `git worktree` at `rework/executable-rules` (01512ab) before any edit. The worktree was removed afterwards.
+    - **Stdout:** `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` both exit 0. Their stdout is byte-identical to the baseline (`cmp`), with every invariant holding and the monitors finding no violation. `-policy random` stdout is also byte-identical, for starter and for stress.
+    - **Events:** every game's events were also compared through `-events`: starter and stress, progress and random, 200 games each. The JSONL is identical once the match-start `revision` and `modified` build stamp is normalized. That stamp is the only difference.
+  - **Reviewer, look closely at:**
+    1. **"Up to N" with zero options:** this case returns before `choose` on purpose. `choose` would otherwise take the sole-answer fast path (`Min == Max == 0 == len(options)`) and record an `auto` decision, and the tests forbid any record.
+    2. **The Optional prompt and the "up to" prompt text:** both are new wording. Tests assert only that a prompt is non-empty.
+    3. **`RandomChooser` on an optional trigger** says yes or no at random, and both sim policies answer every decision with it (`sim.go`). No card uses `Optional` yet, so that sim behavior first shows up in the Craterfall Ancient card task.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: e6e1d55 touches only the three Allowed Files. No `_test.go` change after 672bbf1.
+  - Code:
+    - It matches the reviewer's test-review prototype: `accepts` for `DecideOptional` before targets, with a decline skipping placement; `UpTo` with `Min 0`, `Max min(N, options)`, and no question with zero options; `Chosen [][]int` re-verified per entity; `Other` in `matchesFilter`, with the source passed at placement, re-verification and `SubjectAll`.
+    - `UpTo == 0` keeps the old decision exactly (prompt, fast path, fallback, RNG).
+    - No new decision kind, and no card names.
+  - Engineer notes accepted:
+    - Note 1: returning before `choose` with zero options is correct. Otherwise the Min == Max == 0 fast path would record an `auto` decision.
+    - Note 3: the sim answers optional triggers at random. That is fine for coverage, and the Craterfall card task will show it.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, and `go tool task check` exits 0.
+    - For starter and stress games under both policies, `cardtown sim` is byte-identical to a baseline CLI built from `rework/executable-rules`.
+  - Wave A2's shapes are complete.
