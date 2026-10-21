@@ -4,7 +4,7 @@ title: One deck-naming scheme and one build-revision reader
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 2 of 4, before cardtown play)
-status: review
+status: done
 branch: m2/T-0033-deck-names-and-build-info
 depends_on: [T-0032]
 claims: [func:DecklistName, func:StressName, func:ResolveDeck, func:BuildInfo]
@@ -84,9 +84,9 @@ Cases 3 to 5 are CLI checks, recorded in the Log.
 - the new test files (the `test(T-0033)` commit)
 
 ## Done When
-- [ ] Cases 1 and 2 have tests, committed before the implementation, and pass
-- [ ] Cases 3 and 4 hold, with output in the Log
-- [ ] `go tool task check` passes
+- [x] Cases 1 and 2 have tests, committed before the implementation, and pass
+- [x] Cases 3 and 4 hold, with output in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0032 (harness, sonnet).
@@ -98,3 +98,13 @@ Cases 3 to 5 are CLI checks, recorded in the Log.
   - Case 4: baseline CLI built from `rework/executable-rules` in a separate worktree (`../baseline-T0033`, now removed). `sim` starter and stress, `-policy random` and `progress`, and `-log -seed 7` (starter and stress): stdout byte-identical, `-events` files byte-identical after normalizing `revision`/`modified`. Error outputs for a missing decklist differ only in the repo-root prefix (the two checkouts live in different directories).
   - Gates: `go test ./...` all ok; `go tool task check` rc=0.
   - Reviewer: `SimDecks` derives `filename` with `strings.TrimPrefix(DecklistName(...), "data/decks/")`, which couples it to that prefix. `ResolveDeck` is not validated, as asked.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Process: test commit 04f97c5 comes first and failed to compile. No `_test.go` change after it. The implementation 2088a51 stays within the Allowed Files.
+  - Code:
+    - Every deck-name encode and decode goes through `DecklistName`/`StressName`/`ResolveDeck`: `SimDecks`, `runSim`'s recorded names and printed paths, and `runReplay`'s resolver.
+    - `engine.BuildInfo` is the single revision reader, and `eventlog.buildInfo` is gone.
+    - Engineer note accepted. `SimDecks` trims `data/decks/` from `DecklistName` to keep its error text identical. It couples `SimDecks` to the prefix, but the prefix lives in `DecklistName` beside it.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - `sim` (starter and stress, both policies) and `-log -seed 7` are byte-identical to a baseline CLI built from `rework/executable-rules`.
+    - `replay -game 3 -at 12` (game 3's turn-2 turn-start) exits 0 on fresh starter and stress `-events` files.
