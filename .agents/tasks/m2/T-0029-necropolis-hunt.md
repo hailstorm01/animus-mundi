@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: review
+status: done
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -110,3 +110,13 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
   - **Authorized test edit:** in `pkg/engine/sim/policy_test.go`, `TestProgress_Case4_Coverage`, change the `SimulateWith` game count from 200 to 1000 and the failure message's "in 200 games" to "in 1000 games". Nothing else in that test or file changes. `rules-test-author` makes the edit in a new `test(T-0029): …` commit on top of a0ece3a. The engineer's definition (a0ece3a) is already reviewed against the test-review prototype and needs no change.
   - Then the lead re-runs the gates and reviews the task.
 - 2026-10-21 rules-test-author: Made the lead-authorized edit (directive #21a) to `TestProgress_Case4_Coverage` in `pkg/engine/sim/policy_test.go`: `SimulateWith` game count 200 to 1000, and the failure message "in 200 games" to "in 1000 games". The minimum stays at 10; nothing else changed. The test passes. Deploys in 1000 games: Chainbreaker Sneak 1730, Despoiler Larva 1898, Despoiler Worm 344, Devilhorn Guerrillas 319, Hammerhand Brigade 148, Necropolis Hunt 45 (lowest), Portent Scrivener 1903, Saboteur 424, Spoil Forest Amalgam 410, Spoil Forest Colossus 774, Spoil Forest Creeper 1662, Stormfront of Ideals 822, Unceasing Tide 1781. `go tool task check` passes (exit 0). Status set to `review`.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope:
+    - a0ece3a touches only `cards/path.go` and `cards/cards.go`. Its definition is exactly the one verified at test review: `HookKilled`, `{Kinds: Unit|Structure}`, `DealDamage` with `ValueSourcePower`, and `Text` equal to the CSV line.
+    - No test changed after e9b8959 except the authorized 63acd4f: two lines in `TestProgress_Case4_Coverage`, 200 to 1000 games, in the call and the message.
+  - Gates re-run by the reviewer:
+    - The 14 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, and `go tool task check` exits 0.
+    - The starter sim exits 0, byte-identical across runs, with no monitor violation. Path is at 13/50 (+1). Result: P0 88.0%, P1 12.0%.
+    - The stress sim is unchanged at 18.0/82.0.
+    - Coverage over 1000 games: Necropolis Hunt 45, which is the lowest.
+  - Starter-deck cards not yet executable: 31.
