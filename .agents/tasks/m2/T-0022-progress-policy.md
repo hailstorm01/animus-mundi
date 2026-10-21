@@ -4,7 +4,7 @@ title: A random sim policy that plays expensive cards
 kind: harness
 tier: sonnet
 wave: none (board directive #21, ahead of the next A2 task)
-status: review
+status: done
 branch: m2/T-0022-progress-policy
 depends_on: [T-0021]
 claims: [func:ProgressPolicy, field:SimOptions.Policy, cli:sim-policy]
@@ -67,10 +67,10 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
 - `pkg/engine/policy_test.go` (new, the `test(T-0022)` commit)
 
 ## Done When
-- [ ] Cases 1 to 5 have tests in `policy_test.go`, committed before the implementation, and all pass
-- [ ] Cases 6 and 7 hold, with their output and the per-card deploy counts in the Log
-- [ ] `go tool task check` passes
-- [ ] Existing tests pass unchanged
+- [x] Cases 1 to 5 have tests in `policy_test.go`, committed before the implementation, and all pass
+- [x] Cases 6 and 7 hold, with their output and the per-card deploy counts in the Log
+- [x] `go tool task check` passes
+- [x] Existing tests pass unchanged
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #21, with status `ready` (harness, sonnet). The user set its priority ahead of the next A2 task.
@@ -85,3 +85,12 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
   - **Authorized test edit:** in `policy_test.go`, case 4's minimum goes from 25 to 10. That constant and its message are the only change, in a new `test(T-0022)` commit on top of 785ad0e. Then run `go tool task check`, diff case 6's CLI output across two runs, and set `review`.
   - Directive #21 (a) is updated on the board to match.
 - 2026-10-20 kernel-engineer: Case 4 minimum changed 25 -> 10 in policy_test.go only (comparison and message), commit f34fe2e, lead-authorized. `go tool task check` exit 0 (gofmt, vet, all tests, lint). Case 6: two runs of `sim -deck starter -p0 ANIMUS -p1 PATH` exit 0 and `cmp` byte-identical. Case 7 results as in the earlier entry. Lowest deploy count is Hammerhand Brigade at 22, above 10. Status review.
+- 2026-10-20 lead-architect: Review: **approved**, status `done`.
+  - Process: test commit 1a3cded comes first. The implementation is 785ad0e, and the only later test change is the lead-authorized f34fe2e (case 4's minimum constant and its message). The engineer stopped at `blocked` instead of editing the test, which is the right call.
+  - Code: `ProgressPolicy` follows the preference order exactly. It picks only from `legal`, reads only costs, pools and printed yields, and names no card. `SimOptions.Policy` nil keeps `RandomPolicy`, so `Simulate` and existing tests are unchanged.
+  - Gates re-run by the reviewer:
+    - 5 `TestProgress_*` pass, and `go tool task check` exits 0.
+    - The default starter sim (progress) is byte-identical across runs: P0 81.5%, P1 15.5%, draws 3.0%, all invariants hold.
+    - `-policy random` is byte-identical to `rework/executable-rules` for the starter flags and for bare `sim`, and `-policy bogus` exits 1.
+    - The default stress-deck sim under progress: P0 18.0%, P1 82.0%, draws 0.0%, all invariants hold.
+  - **New baselines for later reviews:** starter progress P0 81.5 / P1 15.5 / draws 3.0, and stress progress P0 18.0 / P1 82.0 / draws 0.0. The random baselines are reproducible with `-policy random`.
