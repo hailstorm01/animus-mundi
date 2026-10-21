@@ -4,7 +4,7 @@ title: Make Craterfall Ancient executable
 kind: card
 tier: flash
 wave: A2 (task 8, card task 4; last of the wave)
-status: tests
+status: done
 branch: m2/T-0031-craterfall-ancient
 depends_on: [T-0028, T-0030]
 claims: [card:Craterfall Ancient]
@@ -73,21 +73,66 @@ requirements: []
 - **Face-down:** a Craterfall Ancient card that dies as a face-down Scratch Company fires nothing.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author, in `pkg/engine/cards_animus_test.go`, named `TestCard_CraterfallAncient_*`.
+Written in `pkg/engine/cards_animus_test.go`. Scenes use the real card deployed through `ActDeploy` with 10 Requisition (`deployPath`), marched and readied by `colossusCycle`, around a board of ally, opposing units (20+ health, so nothing dies unless a test says so) and an opposing Ward unit. Targets are chosen by asset (`scriptPlan`, `pick`). 20 tests:
+- `EntersReservesAsSixThirteenForTenRequisition`: 6/13, Reserves, 0 Requisition left, no question and no damage on deploy (kills "attack trigger also fires on deploy").
+- `AttackAsksMayThenOffersEveryOtherAssetButOpposingWard`: decisions are Optional then Target, Min 0 Max 2 (kills exactly 1 target, not optional), options are both HQs and every asset except the Ancient and the opposing Ward unit (kills no `Other`).
+- `YesDealsPowerToEachOfTwoAssetsOwnHeadquartersIncluded`: 6 to own HQ and an opposing unit, one instance each, source is the Ancient, nothing else damaged.
+- `YesCanHitTheOpposingHeadquartersAndAnAlliedUnit`: opposing HQ and allied unit take 6.
+- `YesWithOneAssetDealsOneInstance`, `YesWithZeroAssetsDamagesNothing` (SVY-R11).
+- `NoDealsNothingAndAsksNoTarget`, `TimeoutOnTheQuestionDeclines` (SVY-R9).
+- `DamageEqualsEffectivePowerAtResolution`: +2 `TempPower` gives 8 (SVY-R10, kills fixed 6).
+- `AttackDamageResolvesBeforeCombatSoAKilledDefenderFizzlesTheAttack`: choosing a 5-power 6-health defender destroys it at Step 2 and the Ancient takes 0 (FR-CBT-002).
+- `AsksAgainOnEachAttack`, `DefendingDoesNotTrigger`.
+- `FaceDownCopyAttackingAsksNothing` (FR-ZON-004). Passes today, since a face-down card fires no printed trigger; it guards against regressions.
+- `DeathDealsFourToEveryAssetOfBothSidesWithoutAQuestion`: both HQs, allied, opposing, the opposing Ward unit and the killer each take exactly one 4 instance, source is the dead Ancient, no question (kills "opposing only", "skips HQ", Ward protection).
+- `DeathKillsAssetsWithFourOrLessHealthAndSparesTheRest`.
+- `DeathAppliesResistantAndArmorPerInstance` (FR-REP-004): Resistant 2 takes 2; Armor 3 takes 1 and ends with 0 Armor.
+- `DeathWithBothHeadquartersAtFourOrLessIsAMatchDraw`, `DeathWithOneHeadquartersAtFourOrLessLosesThatPlayer` (both players tried) (FR-CBT-003).
+- `FaceDownCopyFiresNothingWhenKilled` (FR-ZON-004). Passes today, same reason.
+- `AttackThenLethalRetaliationFiresBothTriggers`: yes, picks 2 assets, 13 retaliation kills it; they take 6 then 4, unchosen assets and the HQ take 4.
+
+Deliberately left out:
+- Repeated pick of one asset and timeout on the target question: the fallback is T-0030's engine-level behavior (`optional_upto_test.go`), not specific to this card.
+- Losing the attack trigger when the Ancient dies mid-resolution, and the "last-known power" branch of SVY-R10 on the death trigger (the death trigger has a fixed 4).
+- Text, yield and rarity checks: `TestDefs_MatchRulesText` covers the text.
+
+Expected today: 18 tests fail on `Deploy rejected: ... needs rules the kernel does not implement yet`; the two face-down tests pass.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. Every helper used already exists: `deployPath`, `colossusCycle`, `wantOptions`, `killOnOpponentsTurn`, `scriptPlan`, `pick`, `wantDealt`, `kindsOf`. The tests add `ancientScene` and `ancientKilled` in `cards_animus_test.go`.
 
 ## Allowed Files
 - `pkg/engine/cards/animus.go`
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_CraterfallAncient'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes, `TestProgress_Case4_Coverage` included
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Animus executable count rises by 2, from 21/50 to 23/50. Report the before and after summary lines in the Log.
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_CraterfallAncient'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes, `TestProgress_Case4_Coverage` included
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Animus executable count rises by 2, from 21/50 to 23/50. Report the before and after summary lines in the Log.
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 4, last of the wave), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 31. Expected after: 30.
+- 2026-10-21 rules-test-author: Wrote 20 `TestCard_CraterfallAncient_*` tests in `pkg/engine/cards_animus_test.go` (list and omissions in Tests). No helpers requested. gofmt, vet and `cardtown lint rules` are clean. 18 tests fail today with the kernel rejecting the deploy of a not-yet-executable card; the two face-down tests pass already. Every other engine test passes. No open questions. Status: `tests-review`.
+- 2026-10-21 lead-architect: Test review: **approved**, status `ready`.
+  - 29c1d48 adds 20 `TestCard_CraterfallAncient_*` tests plus the `ancientScene` and `ancientKilled` helpers, and changes no existing test.
+  - Rules content checks out against FRD 01 (`FR-CBT-002` Step 2 timing and fizzle, `FR-CBT-003` draw, `FR-TGT-002`, `FR-KWD-002h`), `SVY-R9`/`R10`/`R11`, and the task's conventions. The omissions are accepted.
+  - **Reviewer check** (the throwaway definition from the pre-check, not committed): all 20 pass, and so does `go test ./...`.
+  - **Mutations each fail tests:**
+    - not optional: 5;
+    - exactly one target: 6;
+    - no `Other`: 1;
+    - a fixed 6: 1;
+    - the death trigger on opposing assets only: 6;
+    - the death trigger skipping HQs: 4;
+    - the attack trigger on deploy instead: 18.
+  - Next: **the user runs `@kernel-engineer T-0031` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-21 kernel-engineer: Implemented. Defined Craterfall Ancient in pkg/engine/cards/animus.go in animusDefs: Trigger 1 (HookAttacks, Optional: true, Target: {Filter: {Other: true}, UpTo: 2}, Step: OpDealDamage with Amount: Value{From: ValueSourcePower} to SubjectTarget slot 0), Trigger 2 (HookKilled, Step: OpDealDamage with Amount: Value{N: 4} to SubjectAll with empty Filter), and 2-line Text in printed order. Removed Craterfall Ancient from NotYetExecutable in pkg/engine/cards/cards.go while maintaining sort order. Reused HookAttacks, HookKilled, Optional, Filter.Other, Target.UpTo, OpDealDamage, ValueSourcePower, SubjectTarget, and SubjectAll; added no new shapes or engine logic. Gates: go test ./pkg/engine -run 'TestCard_CraterfallAncient' passed (20/20), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (fmt-check, vet, all tests including TestProgress_Case4_Coverage, full lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding: Animus executable cards rose from 21/50 to 23/50 (+2 Craterfall Ancient); before: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 51.0%, Avg match length: 32.5 turns", after: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 50.0%, Avg match length: 35.5 turns". Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), 200 games: P0 wins 18.0% P1 wins 82.0% draws 0.0% first player wins 55.0%, Avg match length: 19.5 turns" (unchanged). Reviewer: check Craterfall Ancient's 2-line Text and Trigger 1 / Trigger 2 definitions in animus.go.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 727672f touches only `cards/animus.go` and `cards/cards.go`, and its definition is exactly the one verified at test review. No test changed after `test(T-0031)` 29c1d48.
+  - Gates re-run by the reviewer:
+    - The 20 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, and `go tool task check` exits 0, the 1000-game coverage check included.
+    - The starter sim exits 0, byte-identical across runs, with no monitor violation. Animus is at 23/50 (+2). Result: P0 88.0%, P1 12.0%, draws 0.0%.
+    - The random-policy starter and stress sims are unchanged.
+  - Wave A2 is complete. Starter-deck cards not yet executable: 30.

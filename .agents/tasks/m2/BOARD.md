@@ -73,4 +73,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0028 | Damage equal to the source's power, last-known effective state, and steps on all matching assets (A2 shape, opus) | done |
 | T-0029 | Make Necropolis Hunt executable (A2 card, flash) | done |
 | T-0030 | Optional ("you may") triggers, "up to N" chosen targets, and "other" (A2 shape, opus) | done |
-| T-0031 | Make Craterfall Ancient executable (A2 card, flash; last of the wave) | tests |
+| T-0031 | Make Craterfall Ancient executable (A2 card, flash; last of the wave) | done |

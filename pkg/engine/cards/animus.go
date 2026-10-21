@@ -10,6 +10,47 @@ func init() {
 
 // animusDefs holds ability definitions for Animus cards.
 var animusDefs = map[string]*ability.Def{
+	"Craterfall Ancient": {
+		Text: []string{
+			"Whenever this unit attacks, you may deal damage equal to its power to each of up to 2 other chosen assets.",
+			"When this unit is killed, deal 4 damage to all assets.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook:     ability.HookAttacks,
+				Optional: true,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Other: true},
+							UpTo:   2,
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{From: ability.ValueSourcePower},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+			{
+				Hook: ability.HookKilled,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 4},
+							Subject: ability.SubjectAll,
+							Filter:  ability.Filter{},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Despoiler Larva": {
 		Text: []string{"Whenever this unit attacks, Scratch 1."},
 		Triggers: []ability.Trigger{
