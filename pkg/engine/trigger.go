@@ -133,31 +133,88 @@ func (g *Game) resolveAbility(it *StackItem) {
 		}
 		switch st.Op {
 		case ability.OpDealDamage:
-			if st.Subject != ability.SubjectTarget || st.Target < 0 || st.Target >= len(chosen) || chosen[st.Target] == nil {
-				continue
+			// One instance per asset, all dealt before the item's death sweep,
+			// so the deaths they cause are simultaneous (FR-REP-004, FR-LAY-002).
+			n, src := g.value(it, st.Amount), g.itemSource(it)
+			for _, a := range g.stepAssets(it, st, chosen) {
+				g.dealDamage(src, a, n, false)
 			}
-			g.dealDamage(g.Asset(it.Source), chosen[st.Target], st.Amount.N, false) // nil source if it left
 		case ability.OpHeal, ability.OpAddArmor:
-			if st.Subject != ability.SubjectTarget || st.Target < 0 || st.Target >= len(chosen) || chosen[st.Target] == nil {
-				continue
-			}
-			if st.Op == ability.OpHeal {
-				chosen[st.Target].Damage = max(0, chosen[st.Target].Damage-st.Amount.N)
-			} else {
-				chosen[st.Target].Armor += st.Amount.N
+			n := g.value(it, st.Amount)
+			for _, a := range g.stepAssets(it, st, chosen) {
+				if st.Op == ability.OpHeal {
+					a.Damage = max(0, a.Damage-n)
+				} else {
+					a.Armor += n
+				}
 			}
 		case ability.OpScratch:
 			for _, pid := range who {
-				g.scratch(pid, st.Amount.N)
+				g.scratch(pid, g.value(it, st.Amount))
 			}
 		case ability.OpDraw:
 			for _, pid := range who {
-				g.draw(pid, st.Amount.N)
+				g.draw(pid, g.value(it, st.Amount))
 			}
 		case ability.OpReturnToHand, ability.OpPutOnDeck:
 			g.relocateSelf(it, st)
 		}
 	}
+}
+
+// value reads v for it as its step resolves (SVY-R10). Source power is the
+// source's effective power if it is on the battlefield, else the effective
+// power recorded as it left (FR-ZON-004), else 0.
+func (g *Game) value(it *StackItem, v ability.Value) int {
+	if v.From != ability.ValueSourcePower {
+		return v.N
+	}
+	if a := g.Asset(it.Source); a != nil {
+		return g.Power(a)
+	}
+	if k := g.LastKnownEffective(it.Source); k != nil {
+		return k.Power
+	}
+	return 0
+}
+
+// itemSource returns the item's source asset, or its last-known record once it has
+// left the battlefield, so a damage event still names and attributes it
+// (FR-REP-004 Stage 5). It is nil only for a source that was never an asset.
+func (g *Game) itemSource(it *StackItem) *Asset {
+	if a := g.Asset(it.Source); a != nil {
+		return a
+	}
+	return g.LastKnown(it.Source)
+}
+
+// stepAssets returns the assets an asset step acts on: its chosen target if
+// still legal, or for SubjectAll every battlefield asset matching st.Filter
+// now, oldest first. "All" is not a target, so Ward excludes nothing and
+// nothing is asked (FR-TGT-002, FR-KWD-002h, SVY-R3).
+func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen []*Asset) []*Asset {
+	switch st.Subject {
+	case ability.SubjectTarget:
+		if st.Target >= 0 && st.Target < len(chosen) && chosen[st.Target] != nil {
+			return []*Asset{chosen[st.Target]}
+		}
+	case ability.SubjectAll:
+		var out []*Asset
+		for _, a := range g.assetsByID() {
+			if g.matchesFilter(it.Controller, st.Filter, a) {
+				out = append(out, a)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+// assetsByID returns every battlefield asset, oldest (lowest ID) first.
+func (g *Game) assetsByID() []*Asset {
+	assets := g.Assets()
+	slices.SortFunc(assets, func(x, y *Asset) int { return x.ID - y.ID })
+	return assets
 }
 
 // relocateSelf moves a death trigger's own card from its owner's discard pile
@@ -198,9 +255,7 @@ func (g *Game) chooseTargets(p pendingTrigger) []int {
 		d := Decision{Player: p.controller, Kind: DecideTarget, Min: 1, Max: 1,
 			Prompt: fmt.Sprintf("%s: choose target %d", p.label, i+1)}
 		// Options are listed oldest asset first (by ID), not by zone.
-		assets := g.Assets()
-		slices.SortFunc(assets, func(x, y *Asset) int { return x.ID - y.ID })
-		for _, a := range assets {
+		for _, a := range g.assetsByID() {
 			if g.legalTarget(p.controller, t.Filter, a) {
 				d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
 			}
@@ -216,6 +271,16 @@ func (g *Game) chooseTargets(p pendingTrigger) []int {
 // for an ability controlled by ctl. An opponent's Ward asset is never legal
 // (FR-KWD-002h).
 func (g *Game) legalTarget(ctl PlayerID, f ability.Filter, a *Asset) bool {
+	if a.Controller != ctl && g.Keywords(a).Ward {
+		return false
+	}
+	return g.matchesFilter(ctl, f, a)
+}
+
+// matchesFilter reports whether battlefield asset a meets every criterion of f
+// (allegiance relative to ctl, kinds, NonScratch). Targeting adds Ward on top
+// (legalTarget); an untargeted "all" step uses this alone.
+func (g *Game) matchesFilter(ctl PlayerID, f ability.Filter, a *Asset) bool {
 	switch f.Allegiance {
 	case ability.AllegianceAllied:
 		if a.Controller != ctl {
@@ -225,9 +290,6 @@ func (g *Game) legalTarget(ctl PlayerID, f ability.Filter, a *Asset) bool {
 		if a.Controller == ctl {
 			return false
 		}
-	}
-	if a.Controller != ctl && g.Keywords(a).Ward {
-		return false
 	}
 	if f.Kinds != 0 {
 		var k ability.Kinds

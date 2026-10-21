@@ -46,10 +46,16 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	if combat {
 		kind = "combat"
 	}
+	// A source that has left the battlefield is passed as its last-known
+	// record, so it is still named; a nil source never reaches the format.
+	from := "an unknown source"
+	if source != nil {
+		from = source.String()
+	}
 	g.logEvent(Event{Kind: "damage", Player: -1, Source: assetID(source), Target: target.ID, Amount: r.Committed,
 		Raw: raw, Combat: combat, Armor: armorBefore, Absorbed: r.Absorbed},
 		"%s deals %d %s damage to %s (resist->%d, cap->%d, armor %d, health %d)",
-		source, raw, kind, target, r.AfterRes, r.AfterCap, r.Absorbed, r.Committed)
+		from, raw, kind, target, r.AfterRes, r.AfterCap, r.Absorbed, r.Committed)
 	return r
 }
 
@@ -73,9 +79,16 @@ func (g *Game) deathSweep() {
 			loses[a.Controller], reasons[a.Controller] = true, "Headquarters destroyed"
 		}
 	}
-	for _, a := range dying {
+	// Every dying asset's last-known effective state is taken immediately prior
+	// to departure, before any of them leaves, so the departure of one cannot
+	// change what another is recorded with (FR-ZON-004, board directive #13).
+	known := make([]EffectiveState, len(dying))
+	for i, a := range dying {
+		known[i] = g.effectiveState(a)
+	}
+	for i, a := range dying {
 		g.fireKilled(a)
-		g.leaveBattlefield(a)
+		g.leaveBattlefield(a, known[i])
 		owner := g.Players[a.Inst.Owner]
 		owner.Discard = append(owner.Discard, a.Inst)
 		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)

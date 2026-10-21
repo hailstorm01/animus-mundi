@@ -103,6 +103,7 @@ const (
 	SubjectSelf                      // the ability's own source card, tracked by card instance (FR-ZON-004)
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
 	SubjectTarget                    // the entity chosen for Effect.Targets[Step.Target]
+	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
 )
 
 // Step applies one primitive.
@@ -110,12 +111,22 @@ type Step struct {
 	Op      Op
 	Amount  Value
 	Subject Subject
-	Bottom  bool // OpPutOnDeck: the bottom of the deck instead of the top
-	Target  int  // SubjectTarget: index into Effect.Targets
+	Bottom  bool   // OpPutOnDeck: the bottom of the deck instead of the top
+	Target  int    // SubjectTarget: index into Effect.Targets
+	Filter  Filter // SubjectAll: which assets
 }
 
-// Value is a number a step uses. Later shape tasks add other sources; the
-// zero source always means the fixed N.
+// ValueSource is where a Value's number comes from.
+type ValueSource int
+
+const (
+	ValueFixed       ValueSource = iota // the zero value: N
+	ValueSourcePower                    // the source's effective power when the step resolves, or its last-known effective power (SVY-R10); N is ignored
+)
+
+// Value is a number a step uses, read when the step resolves. The zero source
+// always means the fixed N.
 type Value struct {
-	N int
+	N    int
+	From ValueSource
 }
