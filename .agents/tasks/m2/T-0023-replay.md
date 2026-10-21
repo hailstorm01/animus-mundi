@@ -4,10 +4,10 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: queued
+status: ready
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
-claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, hook:replay-emit]
+claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
 cards: []
 requirements: []
 ---
@@ -18,7 +18,8 @@ Given one recorded game (its `match-start` and the events after it), the kernel 
 ## Inputs
 - Board directive #19 (`.agents/tasks/m2/BOARD.md`).
 - ADR-0005: the storage model. Events are permanent, full state is stored only at turn starts, and any other point comes from deterministic replay on the same build.
-- T-0020 and T-0021 (`pkg/engine/events.go`, `sim.go`): `Event`, `MatchStart` (the seed, deck names, decider, play-first choice, mulligans, revision, modified), `DecisionRecord` (`how`: answer, auto, timeout, invalid), `action` events, `Snapshot`, `WriteEventsJSONL`. Deck names are a decklist path such as `data/decks/animus-starter.txt`, or `stress:<FACTION>`.
+- The package boundary from T-0024 (design note, Boundaries). Replay builds and drives a game, so it goes in `pkg/engine/eventlog`, next to `FormatEvent` and `WriteEventsJSONL`, never in `engine`. The sample records come from `sim.SimulateWith`.
+- T-0020 and T-0021 (`pkg/engine/events.go`, now `pkg/engine/sim` and `pkg/engine/eventlog`): `Event`, `MatchStart` (the seed, deck names, decider, play-first choice, mulligans, revision, modified), `DecisionRecord` (`how`: answer, auto, timeout, invalid), `action` events, `Snapshot`, `WriteEventsJSONL`. Deck names are a decklist path such as `data/decks/animus-starter.txt`, or `stress:<FACTION>`.
 - A game is fully determined by its seed, its decks, the play-first choice, the mulligan, every `Chooser` answer and every applied `Action` (ADR-0002, ADR-0003).
 - Rulings that apply: none.
 
@@ -29,15 +30,19 @@ Given one recorded game (its `match-start` and the events after it), the kernel 
 
 ### Shapes
 ```go
-// pkg/engine/events.go
-// ReadEventsJSONL reads a -events file back: game number -> that game's events in Seq order.
-func ReadEventsJSONL(r io.Reader) (map[int][]Event, error)
+// pkg/engine (events.go): the one new export.
+// Snapshot deep-copies the full current state (the existing unexported snapshot()).
+func (g *Game) Snapshot() Snapshot
 
-// pkg/engine/replay.go (new)
+// pkg/engine/eventlog (eventlog.go)
+// ReadEventsJSONL reads a -events file back: game number -> that game's events in Seq order.
+func ReadEventsJSONL(r io.Reader) (map[int][]engine.Event, error)
+
+// pkg/engine/eventlog (replay.go, new)
 // Replay rebuilds the game recorded in events (match-start first, Seq order)
 // and returns the state immediately after event `at` was emitted. That point
 // may be mid-resolution. resolveDeck turns a recorded deck name into a DeckList.
-func Replay(events []Event, at int, resolveDeck func(name string) (DeckList, error)) (Snapshot, error)
+func Replay(events []engine.Event, at int, resolveDeck func(name string) (engine.DeckList, error)) (engine.Snapshot, error)
 ```
 
 ### Lead decisions (technical)
@@ -46,13 +51,14 @@ func Replay(events []Event, at int, resolveDeck func(name string) (DeckList, err
   - `timeout` and `invalid`: `Answer{Timeout: true}`. Both fall back through the same seeded draw, so the picks match.
   Then each recorded `action` event is rebuilt into its `Action` and passed to `Apply`, in order.
 - **Divergence check:** compare every replayed event with the recorded one at the same Seq: Kind, Detail, and the structured fields (Player, Card, Inst, Source, Target, Zone, Amount, Secondary, Resource). The first mismatch, a chooser asked something that doesn't match the next recorded decision (kind, player, refs), or a rejected `Apply` returns an error naming the Seq. It never panics.
-- **State at `at`:** an unexported hook on `Game` (for example `onEmit func(Event)`), set only by `Replay`, takes `g.snapshot()` right after event `at` is emitted. Then replay stops: return as soon as `at` is reached, without replaying further. The hook isn't on `Observer` and isn't exported. The observer contract (copies only) doesn't change.
+- **State at `at`:** `Replay` passes its own `Observer` in `Config`. That observer's `Event` method runs the divergence check and holds the `*Game` that `Replay` built, so when event `at` arrives it takes `g.Snapshot()`. After that capture, the observer stops checking, the replay chooser answers any further question with a timeout, and `Replay` applies no further action. The current `Apply` finishes harmlessly, and nothing recorded after `at` can raise an error. Don't panic for control flow. `Game.Snapshot()` is the only new engine export. The observer contract for other callers (copies only, no game access) doesn't change.
+- **Rebuilding an `Action`:** the ActionKind is the first word of an `action` event's Detail (the T-0020 convention). `eventlog` maps it back by comparing with `ActionKind.String()` for each kind. Player, Source (Asset), Target, Secondary, Resource, Inst (Card) and Zone fill the rest.
 - **Build check:** if the record's `Revision` differs from this build's (`runtime/debug.ReadBuildInfo`), refuse with an error that names both. If either side is `modified`, proceed, because the divergence check still guards correctness. The CLI prints one warning line.
 - **CLI:** `cardtown replay -events <file> -game N [-at SEQ]`. `-at` defaults to the game's last Seq. It prints the snapshot as indented JSON to stdout. Its `resolveDeck` loads `data/decks/*.txt` paths with `LoadDeck` from the repo root, and `stress:<FACTION>` with `FactionDeck`. A missing file, a missing game, an `-at` out of range, divergence or a build mismatch prints `[ERROR] …` and exits 1. Add it to `cardtown`'s usage list.
 - **Not in this task:** stepping or interactive replay, replaying `cardtown play` games (no such files yet), metrics, and redaction.
 
 ## Acceptance Cases (harness tasks only; written by the lead)
-Cases 1 to 6 go in a new `pkg/engine/replay_test.go`, committed first as `test(T-0023): …` and failing before the implementation. Case 7 is a CLI check, run by the engineer and re-run by the reviewer. Record its output in the Log. Build the sample records in-process: `SimulateWith` with collecting observers, then `WriteEventsJSONL` and `ReadEventsJSONL`, so the round trip goes through JSON.
+Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first as `test(T-0023): …` and failing before the implementation. Case 7 is a CLI check, run by the engineer and re-run by the reviewer. Record its output in the Log. Build the sample records in-process: `sim.SimulateWith` with collecting observers, then `WriteEventsJSONL` and `ReadEventsJSONL`, so the round trip goes through JSON. The test may import `sim`, which never imports `eventlog`, so there's no cycle.
 1. **Turn starts round-trip:** for 20 starter games (progress policy) and 5 stress-deck games, `Replay` to each `turn-start` event's Seq returns a `Snapshot` deep-equal to that event's stored snapshot, for every turn of every game.
 2. **Whole game reproduces:** replaying each of those games to its last Seq raises no divergence error, and the result reports the recorded outcome (`Over`, `Draw`, `Winner`, `Reason`).
 3. **Mid-game point:** for a recorded `damage` event, `Replay` to its Seq returns a snapshot whose `Turn` equals the event's `Turn`. Two calls with the same `at` are deep-equal.
@@ -72,11 +78,11 @@ Cases 1 to 6 go in a new `pkg/engine/replay_test.go`, committed first as `test(T
    - Running the replay twice gives identical output.
 
 ## Allowed Files
-- `pkg/engine/replay.go` (new)
-- `pkg/engine/events.go` (the additive fields, `ReadEventsJSONL`, the unexported emit hook)
+- `pkg/engine/eventlog/replay.go` (new) and `pkg/engine/eventlog/eventlog.go` (`ReadEventsJSONL`)
+- `pkg/engine/events.go` (the additive fields and `Game.Snapshot`)
 - `pkg/engine/turn.go` (`MulliganInsts`)
 - `cmd/cardtown/main.go` (the `replay` command)
-- `pkg/engine/replay_test.go` (new, the `test(T-0023)` commit)
+- `pkg/engine/eventlog/replay_test.go` (new, the `test(T-0023)` commit)
 
 ## Done When
 - [ ] Cases 1 to 6 have tests in `replay_test.go`, committed before the implementation, and all pass
@@ -90,3 +96,7 @@ Cases 1 to 6 go in a new `pkg/engine/replay_test.go`, committed first as `test(T
 - 2026-10-20 lead-architect: Back to `queued`, depending on T-0024. Board directive #22 (added by the user the same day) runs before replay and moves sim and event output out of `pkg/engine`. When T-0024 is `done`, revise Shapes and Allowed Files before dispatch:
   - `ReadEventsJSONL` and the CLI glue go to `pkg/engine/eventlog`.
   - `Replay` stays in `engine` only if it needs the unexported emit hook and `snapshot()`. Otherwise it goes to `eventlog`, behind a minimal exported hook.
+- 2026-10-20 lead-architect: Revised for T-0024's boundary and set to `ready`.
+  - `Replay` and `ReadEventsJSONL` go in `pkg/engine/eventlog`, and the test in `eventlog/replay_test.go`.
+  - The unexported emit hook is dropped. The only new engine export is `Game.Snapshot()`, and replay's own observer captures the state at `at`, then stops checking.
+  - The rest of the task is unchanged.
