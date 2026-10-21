@@ -31,8 +31,33 @@ type StackItem struct {
 	Chosen  []int           // StackAbility: asset ID chosen for each Trigger.Effect.Targets slot, 0 if none
 }
 
+// push puts item on the stack and records where it went: the one place event
+// for every item kind, with the stack depth after the push as Amount.
 func (g *Game) push(item *StackItem) {
 	g.Stack = append(g.Stack, item)
+	e := Event{Kind: "place", Player: int(item.Controller), Source: item.Source, Amount: len(g.Stack)}
+	var what string
+	switch item.Kind {
+	case StackDeploy:
+		e.Card, e.Inst = item.Inst.Card.Name, item.Inst.ID
+		what = "Deploy of " + e.Card
+	case StackMarch:
+		what = "March"
+	case StackAttack:
+		e.Target, e.Secondary = item.Target, item.Secondary
+		what = "Attack"
+	case StackScratch:
+		what = "Scratch"
+	case StackAggressive:
+		what = "Aggressive trigger"
+	case StackAbility:
+		e.Card, e.Inst = cardName(item.Inst), 0
+		if item.Inst != nil {
+			e.Inst = item.Inst.ID
+		}
+		what = "ability of " + e.Card
+	}
+	g.logEvent(e, "player %d places %s on the stack", item.Controller, what)
 }
 
 // resolveStack resolves top-down until the stack is empty, sweeping for
@@ -151,7 +176,8 @@ func (g *Game) resolveAttack(it *StackItem) {
 
 	// Lock effective values at the start of the simultaneous step (FR-LAY-003).
 	attPower, defPower := g.Power(att), g.Power(def)
-	g.logf("combat", "%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
+	g.logEvent(Event{Kind: "combat", Player: -1, Source: att.ID, Target: def.ID},
+		"%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
 	g.dealDamage(att, def, attPower, true)
 	g.dealDamage(def, att, defPower, true)
 	// Berserk cleave is committed within Step 3, before the death sweep,

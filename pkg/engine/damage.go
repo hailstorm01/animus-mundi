@@ -19,6 +19,7 @@ func (r DamageResult) Taken() bool { return r.Absorbed+r.Committed > 0 }
 func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageResult {
 	r := DamageResult{Raw: raw}
 	kw := g.Keywords(target)
+	armorBefore := target.Armor
 
 	// Stage 1: target redirection. No executable card redirects damage yet.
 
@@ -45,7 +46,8 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	if combat {
 		kind = "combat"
 	}
-	g.logEvent(Event{Kind: "damage", Player: -1, Source: assetID(source), Target: target.ID, Amount: r.Committed},
+	g.logEvent(Event{Kind: "damage", Player: -1, Source: assetID(source), Target: target.ID, Amount: r.Committed,
+		Raw: raw, Combat: combat, Armor: armorBefore, Absorbed: r.Absorbed},
 		"%s deals %d %s damage to %s (resist->%d, cap->%d, armor %d, health %d)",
 		source, raw, kind, target, r.AfterRes, r.AfterCap, r.Absorbed, r.Committed)
 	return r

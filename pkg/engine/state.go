@@ -131,6 +131,12 @@ type Event struct {
 	Secondary int    `json:"secondary,omitempty"` // action events: an Attack's Berserk secondary target (asset ID)
 	Resource  string `json:"resource,omitempty"`  // action events: a Generate's "Requisition" or "Tactics"
 
+	// Damage events only. Amount is the damage committed to Health (Stage 5).
+	Raw      int  `json:"raw,omitempty"`      // the incoming damage before Stage 2
+	Combat   bool `json:"combat,omitempty"`   // combat damage (Stalwart applies)
+	Armor    int  `json:"armor,omitempty"`    // the target's Armor pool before this damage
+	Absorbed int  `json:"absorbed,omitempty"` // Stage 4: damage absorbed by Armor
+
 	Decision *DecisionRecord `json:"decision,omitempty"`
 	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
 	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"

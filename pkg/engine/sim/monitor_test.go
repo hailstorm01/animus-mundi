@@ -342,7 +342,8 @@ func TestMonitor_Case4_Coverage(t *testing.T) {
 	if !reflect.DeepEqual(a, b) {
 		t.Errorf("coverage differs between identical runs:\n%v\n%v", a, b)
 	}
-	want := map[string][]string{"attack-declaration": attackRules, "entry-state": entryRules, "resources": resourceRules}
+	want := map[string][]string{"attack-declaration": attackRules, "entry-state": entryRules, "resources": resourceRules,
+		"damage-sequence": damageRules, "targeting": targetingRules}
 	if len(a) != len(want) {
 		t.Errorf("coverage has %d monitors, want %d: %v", len(a), len(want), a)
 	}
@@ -359,6 +360,7 @@ func TestMonitor_Case4_Coverage(t *testing.T) {
 	for _, c := range [][2]string{
 		{"attack-declaration", "FR-CBT-001"}, {"attack-declaration", "FR-CAP-001"}, {"resources", "FR-CAP-001"},
 		{"entry-state", "FR-SET-004"}, {"entry-state", "FR-ZON-005"},
+		{"damage-sequence", "FR-REP-004"}, {"damage-sequence", "FR-CBT-002"}, {"targeting", "FR-TGT-001"}, {"targeting", "SVY-R3"},
 	} {
 		if a[c[0]][c[1]] == 0 {
 			t.Errorf("coverage %s/%s is 0 on the starter decks", c[0], c[1])

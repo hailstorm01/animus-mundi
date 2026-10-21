@@ -27,6 +27,8 @@ It receives copies only and has no path to the game or its random source, so a g
 
 Every accepted action emits one `action` event.
 
+**Addendum (T-0026).** Damage events carry the mitigation facts as well as the committed `Amount`: `Raw` (before Stage 2), `Combat`, `Armor` (the target's pool before the damage) and `Absorbed` (Stage 4). Every item put on the Resolution Stack emits one `place` event right after it is pushed: `Player` is its controller, `Source`, `Target`, `Secondary`, `Card` and `Inst` describe the item, and `Amount` is the stack depth after the push. The `combat` event now also carries the attacker as `Source` and the defender as `Target`. All of these are additive and omitted when unused.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences
@@ -34,5 +36,5 @@ Every accepted action emits one `action` event.
 - Metrics, replay and telemetry read one schema. Adding a field is additive. Renaming or removing one supersedes this record.
 - `Log` now holds turn-start snapshots, so a long simulated game holds one full state per turn in memory. Revisit this if `sim` memory becomes a problem: the snapshot can move to observer-only, with `Log` keeping a marker.
 - Snapshots and event logs contain hidden information (hands, deck order, face-down identities). They are omniscient records for testing and analysis. Anything shown to a player (M5) must be redacted per seat first.
-- Resolving a printed triggered ability emits no event of its own. Only its effects are logged. Add an `ability` event (source, card, chosen targets) when the metrics work starts.
+- Placing any item on the stack, a triggered ability included, now emits a `place` event. Resolving a printed triggered ability still emits no event of its own: only its effects are logged. Add an `ability` event (source, card, chosen targets) when the metrics work starts.
 - A replay only reproduces a game exactly on the same build. A rules change makes old records non-replayable, but they stay readable.
