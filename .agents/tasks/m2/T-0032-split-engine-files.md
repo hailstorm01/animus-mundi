@@ -4,7 +4,7 @@ title: Split package engine's files by responsibility (pure move)
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 1 of 4, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0032-split-engine-files
 depends_on: [T-0031]
 claims: [file:pkg/engine/setup.go, file:pkg/engine/zones.go, file:pkg/engine/combat.go, file:pkg/engine/targeting.go, file:pkg/engine/effects.go, file:pkg/engine/cardload.go]
