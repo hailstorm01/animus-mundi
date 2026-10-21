@@ -4,7 +4,7 @@ title: A random sim policy that plays expensive cards
 kind: harness
 tier: sonnet
 wave: none (board directive #21, ahead of the next A2 task)
-status: ready
+status: blocked
 branch: m2/T-0022-progress-policy
 depends_on: [T-0021]
 claims: [func:ProgressPolicy, field:SimOptions.Policy, cli:sim-policy]
@@ -74,3 +74,10 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #21, with status `ready` (harness, sonnet). The user set its priority ahead of the next A2 task.
+- 2026-10-20 kernel-engineer: BLOCKED on Acceptance Case 4. Tests committed first (1a3cded, failing: ProgressPolicy undefined), then ProgressPolicy, SimOptions.Policy and `sim -policy random|progress` implemented as specced. Cases 1, 2, 3, 5 pass. Case 4 fails for one card; per the process rule the test is untouched and the policy is not tuned toward it.
+  - Per-card deploys, 200 starter games (seeds 1..200, progress): Chainbreaker Sneak 326, Despoiler Larva 361, Despoiler Worm 56, **Hammerhand Brigade 22 (needs 25)**, Portent Scrivener 393, Saboteur 90, Spoil Forest Amalgam 72, Spoil Forest Creeper 296, Stormfront of Ideals 155, Unceasing Tide 361. (Random baseline from T-0021 review: Saboteur 5, Stormfront 5, Unceasing Tide 13, Portent Scrivener 270.)
+  - Reason: Hammerhand Brigade has 2 copies in path-starter.txt, so few are drawn; the 25 threshold is likely too high for a 2-copy card, not a policy fault. Lead decides: lower the threshold (e.g. per-copy rate), more games, or accept a policy change.
+  - Policy design (exact choices): step 1 uniform over legal Deploy actions; step 2 "short" = any supported hand card with deploy zones whose ReqCost > Req (Requisition Generate with ReqYield>0 closes it) or TacCost > Tac (Tactics Generate with TacYield>0, or any legal Convert closes it), uniform over closers; step 3 uniform over Attack/March/Scratch with p=0.9 else EndTurn; step 4 EndTurn. Reads only LegalActions, hand costs, pools and printed yields. Reuse: modeled on RandomPolicy (PCG seeding, EndTurn last).
+  - Case 6 (progress, `sim -deck starter -p0 ANIMUS -p1 PATH`): P0 wins 81.5% P1 15.5% draws 3.0%, first player 49.5%, avg 30.7 turns; reasons: HQ destroyed 194, both lost simultaneously 6. Old (random): P0 51.0% P1 17.0% draws 32.0%, first 35.5%, avg 27.2 turns; HQ destroyed 136, simultaneous 64. Byte-identical-across-runs not re-run by CLI diff; covered by Case 3 test.
+  - Case 7: `-policy random` output byte-identical (cmp) to the pre-change binary for both `-deck starter -p0 ANIMUS -p1 PATH` and bare `sim`; `-policy x` prints `[ERROR] unknown -policy "x" ...`, exit 1.
+  - `go tool task check` not run to green because policy_test Case 4 fails; no further gate run.

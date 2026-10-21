@@ -195,9 +195,10 @@ func runSim(args []string) {
 	p1 := fs.String("p1", "CONCORDIA", "Faction for player 1")
 	maxTurns := fs.Int("max-turns", 400, "Fail if a match runs longer than this")
 	logGame := fs.Bool("log", false, "Play only the -seed game and print its events, then the summary (-games must be 1)")
+	policy := fs.String("policy", "progress", "Seat policy: progress (deploys, generates toward cards in hand) or random")
 	eventsFile := fs.String("events", "", "Write every game's events to this file as JSON Lines (game, then the event)")
 	fs.Usage = func() {
-		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N] [-log] [-events FILE]")
+		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N] [-policy random|progress] [-log] [-events FILE]")
 		fmt.Println("Random-policy playouts on the rules kernel (termination, invariants, win rates)")
 		fmt.Println("\nFlags:")
 		fs.PrintDefaults()
@@ -212,6 +213,11 @@ func runSim(args []string) {
 			os.Exit(1)
 		}
 		*games = 1
+	}
+
+	if *policy != "random" && *policy != "progress" {
+		fmt.Printf("[ERROR] unknown -policy %q (want random or progress)\n", *policy)
+		os.Exit(1)
 	}
 
 	repoRoot := findRepoRoot()
@@ -245,6 +251,9 @@ func runSim(args []string) {
 		}
 	}
 	opt := engine.SimOptions{}
+	if *policy == "progress" {
+		opt.Policy = engine.ProgressPolicy
+	}
 	if *deck != "" {
 		for i, f := range []string{*p0, *p1} {
 			opt.DeckNames[i] = filepath.ToSlash(filepath.Join("data", "decks", fmt.Sprintf("%s-%s.txt", strings.ToLower(f), *deck)))
