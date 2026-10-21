@@ -1,4 +1,4 @@
-// The Resolution Stack: stack items, pushing, LIFO resolution and the Deploy and March items (FR-CBT-002).
+// The Resolution Stack: stack items, pushing, LIFO resolution and the Deploy and March items (FR-QUE-001).
 
 package engine
 
