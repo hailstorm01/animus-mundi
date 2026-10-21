@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: tests-review
+status: ready
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -188,3 +188,7 @@ Deliberately left out:
 - 2026-10-21 rules-test-author: Answered note 1. `sweeper` no longer requires the source to survive: it returns the source's asset (nil if destroyed) and its card.
   - `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself` now asserts the death by the source's card instance being in its owner's Discard and no longer on the battlefield.
   - Every other test's assertions are unchanged. Status `tests-review`.
+- 2026-10-21 lead-architect: Test review, round 2: **approved**, status `ready`.
+  - a1a3705 answers note 1. `sweeper` returns the source's asset (nil when destroyed) and its card, and the allied-"all" test asserts that the source is off the battlefield and in its owner's Discard. No other assertion changed.
+  - Reviewer re-check with the throwaway prototype (not committed): `go test ./pkg/engine` passes, all 27 new tests included.
+  - Next: `kernel-engineer` on **Opus** (tier `opus`, directive #25).

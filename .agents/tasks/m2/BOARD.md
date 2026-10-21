@@ -70,4 +70,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0025 | Rule monitors in every sim game, with a coverage table: framework and three monitors (directive #23 part 1, harness, sonnet) | done |
 | T-0026 | Damage-stage and stack-placement event facts, with the damage-sequence and targeting monitors (directive #23 part 2, harness, sonnet) | done |
 | T-0027 | Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus executable (A2 cards, flash) | done |
-| T-0028 | Damage equal to the source's power, last-known effective state, and steps on all matching assets (A2 shape, opus) | tests |
+| T-0028 | Damage equal to the source's power, last-known effective state, and steps on all matching assets (A2 shape, opus) | ready |
