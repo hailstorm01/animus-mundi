@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: blocked
+status: tests
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -80,6 +80,7 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
 ## Allowed Files
 - `pkg/engine/cards/path.go`
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
+- `pkg/engine/sim/policy_test.go` (only the authorized edit below, by `rules-test-author` in a `test(T-0029)` commit)
 
 ## Done When
 - [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'`
@@ -102,3 +103,9 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
   - Reviewer re-check with the throwaway definition (not committed): all 14 pass, and so does `go test ./pkg/engine`. A fixed `Value{N: 5}` now fails the new test.
   - Next: **the user runs `@kernel-engineer T-0029` in the Antigravity agent (Gemini Flash)**.
 - 2026-10-21 kernel-engineer: BLOCKED on `go tool task check` (TestProgress_Case4_Coverage). Implemented Necropolis Hunt in `pkg/engine/cards/path.go` (HookKilled, Target: Kinds Unit|Structure, Step: OpDealDamage with Amount: Value{From: ValueSourcePower} to slot 0) and removed from NotYetExecutable in `pkg/engine/cards/cards.go`. Reused HookKilled, Effect.Targets, Filter, Kinds (Unit|Structure), OpDealDamage, ValueSourcePower, SubjectTarget, and Step.Target; added no new shapes or engine logic. Tests: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'` passes (14/14); `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass; `pkg/engine` passes all tests. Simulations: `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with all invariants holding; Path executable cards rose from 12/50 to 13/50 (+1 Necropolis Hunt); Necropolis Hunt deployed 3 times in 200 games (verified via `-events`). Default sim exits 0 (before and after: P0 18.0%, P1 82.0%, draws 0.0%, first player 55.0%, avg 19.5 turns). Block: `go tool task check` runs `go test ./...` which fails at `pkg/engine/sim/policy_test.go:141` (`TestProgress_Case4_Coverage`): "Necropolis Hunt deployed 3 times in 200 games, want at least 10". Necropolis Hunt is a 1-of card in path-starter.txt (1 copy in 50 cards) with cost 3R 3T, unlike previous 2- or 3-copy cards. Fixing the test threshold or policy requires modifying `pkg/engine/sim/policy_test.go` or `policy.go`, which are outside Allowed Files.
+- 2026-10-21 lead-architect: The block is **not a policy or engine fault**. Necropolis Hunt is a 1-copy card costing 3R and 3T, so it is just rare.
+  - Measured with the definition in place: 45 deploys in 1000 starter games (about 4.5% of games), so about 9 are expected in 200. Seeds 1 to 200 happen to give 3, and the same seeds with the seats swapped give 11. A 200-game minimum of 10 is a coin flip for this card.
+  - In the same 1000 games, the next-rarest card is Hammerhand Brigade with 148.
+  - **Lead decision (harness parameter, recorded on directive #21):** the coverage check runs **1000 games** instead of 200, and the minimum stays at 10. A 1000-game run takes about 5 s with `-events` written.
+  - **Authorized test edit:** in `pkg/engine/sim/policy_test.go`, `TestProgress_Case4_Coverage`, change the `SimulateWith` game count from 200 to 1000 and the failure message's "in 200 games" to "in 1000 games". Nothing else in that test or file changes. `rules-test-author` makes the edit in a new `test(T-0029): …` commit on top of a0ece3a. The engineer's definition (a0ece3a) is already reviewed against the test-review prototype and needs no change.
+  - Then the lead re-runs the gates and reviews the task.
