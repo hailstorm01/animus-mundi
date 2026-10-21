@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: in-progress
+status: review
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -192,3 +192,34 @@ Deliberately left out:
   - a1a3705 answers note 1. `sweeper` returns the source's asset (nil when destroyed) and its card, and the allied-"all" test asserts that the source is off the battlefield and in its owner's Discard. No other assertion changed.
   - Reviewer re-check with the throwaway prototype (not committed): `go test ./pkg/engine` passes, all 27 new tests included.
   - Next: `kernel-engineer` on **Opus** (tier `opus`, directive #25).
+- 2026-10-21 kernel-engineer (Opus): Implemented in 4de1413. Status `review`. No test file was edited, and only the four Allowed Files changed.
+  - `ability.go`: adds `ValueSource` (`ValueFixed`, `ValueSourcePower`), `Value.From`, `SubjectAll` and `Step.Filter`, exactly as in Shapes.
+  - `state.go`: `lastKnown` now maps to a `lastKnownRecord`, which holds the raw `Asset` copy and an `EffectiveState` (`Power`, `MaxHealth`, `Keywords`). `effectiveState(a)` reads those through the existing `layers.go` functions.
+    - `LastKnown(id) *Asset` keeps its signature and behavior.
+    - The new accessor is `LastKnownEffective(id) *EffectiveState`, which is nil if the asset never left. This is the claimed `func:lastKnownEffective`, exported.
+    - `leaveBattlefield(a, eff)` now takes the state from its caller. A lone departure passes `g.effectiveState(a)`.
+  - `damage.go`:
+    - `deathSweep` computes `known[i] = g.effectiveState(a)` for every dying asset in one loop. Only then does the existing loop run `fireKilled`, `leaveBattlefield(a, known[i])`, discard and the log. The event order is unchanged.
+    - `dealDamage` formats the source through an explicit nil guard (`"an unknown source"`), so `%!` cannot appear.
+  - `trigger.go`:
+    - `resolveAbility` reads every `Amount` through `value(it, v)` when the step resolves. For `ValueSourcePower` the order is: `Power(source)` if the source is on the battlefield, else `LastKnownEffective(source).Power`, else 0.
+    - DealDamage, Heal and AddArmor act on `stepAssets(it, st, chosen)`: the chosen target if it is still legal, or for `SubjectAll` every asset matching the filter, oldest ID first. There is one `dealDamage` per asset, and all of them come before the item's sweep.
+    - The damage source is `itemSource(it)`: the live asset, else its `LastKnown` copy. So `Source` stays the asset ID, and `Detail` names it as `Name#ID`.
+  - Reuse:
+    - `legalTarget` is now the Ward check plus the new `matchesFilter` (allegiance, kinds and NonScratch, moved out of `legalTarget` without change), and `SubjectAll` calls `matchesFilter` alone.
+    - The oldest-first sort that was inline in `chooseTargets` became `assetsByID()`, which `chooseTargets` and `SubjectAll` share.
+    - `itemSource` follows the existing live-or-`LastKnown` fallback in `resolveAttack`.
+    - I searched for an existing value evaluator or "all assets" selector and found none.
+  - Verification:
+    - `go test ./pkg/engine -run '<Done When regex>' -v`: PASS (all T-0028 tests, plus the three older `TestFR_ZON_004_DeathTrigger*` tests the regex also matches).
+    - `go test ./...`: exit 0.
+    - `go tool task check`: exit 0 (fmt-check, vet, test, `lint --all`, fences PASS).
+    - `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim`: exit 0, `[PASS] Every match terminated with all invariants holding.`, and the monitors found no violation.
+    - Sim byte-identity: the baseline CLI was built from `rework/executable-rules` (b862750) in a separate `git worktree` before any code edit. For each of the two policies (`progress` and `random`), the stdout of three runs (starter ANIMUS vs PATH, starter PATH vs ANIMUS, and stress) is byte-identical (`cmp`), and so are both `go run` outputs.
+    - `-events` JSONL for starter ANIMUS vs PATH is also identical, except for the `match-start` build stamp (`revision`/`modified`). Neither log contains `%!`.
+  - For the reviewer:
+    1. The snapshot order is in `deathSweep`: the `known` loop runs before the `fireKilled`/`leaveBattlefield` loop.
+    2. Intended event change: a damage event from a departed source used to carry `Source: 0` and `%!s(<nil>)`. It now carries the dead asset's ID and `Name#ID` in `Detail`. No starter or stress card reaches this path, which is why the sim output is unchanged.
+    3. `dealDamage` may now get a source that is a last-known copy and is not on the battlefield. Today it reads only the source's ID and name. A future "when this deals damage" hook must not treat that copy as a live asset.
+    4. `SubjectAll` evaluates the value once per step, before any instance is dealt.
+    5. Directive #13's monitor switch to effective keywords stays out of scope, per this task's "Not in this task" list.
