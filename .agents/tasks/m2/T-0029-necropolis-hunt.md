@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: tests
+status: tests-review
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -70,6 +70,7 @@ In `pkg/engine/cards_path_test.go` (local helpers `deployHunt`, `huntAttacks`, `
 - `TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget`
 - `TestCard_NecropolisHunt_FaceDownCopyFiresNothingWhenKilled` (scratched from the deck top, readied, marched, killed; passes today)
 - `TestCard_NecropolisHunt_NoEventDetailHasAFormatError`
+- `TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive` (TempPower 2 on the Hunt, dies the same turn, deals 7)
 
 Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not require it. No FR-* requirement is listed, so there are no TestFR tests.
 
@@ -93,3 +94,4 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
 - 2026-10-21 lead-architect: Test review: **changes**, status `tests`. The reviewer ran a throwaway definition (`HookKilled`, `{Kinds: Unit|Structure}`, `DealDamage` with `ValueSourcePower`), not committed: 12 of 13 pass. Mutations "units only" and "any asset including HQs" are each caught by 3 to 4 tests.
   1. `TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard` expects the Defender as an option. But the Hunt's 5 combat damage kills the 2/5 Defender in the same sweep, so it isn't on the battlefield when the death trigger is placed. The kernel offers 7 options and the test wants 8. Drop `def` from the expected options, and assert that it's excluded because it died with the Hunt (`FR-TGT-001`: only battlefield assets). Other tests rely on the Defender dying, so keep `huntAttacks` as it is.
   2. No test tells "its power" apart from a fixed 5: a definition with `Value{N: 5}` passes all 13. Add one test where the Hunt dies with 2 temporary power (set `TempPower = 2` on the Hunt in the scene, standing in for an "until end of turn" modifier, as other tests set `Damage` directly). Its death trigger then deals 7: last-known *effective* power (`FR-ZON-004`, `SVY-R10`).
+- 2026-10-21 rules-test-author: Answered review notes. Note 1: the options test no longer expects the Defender; it now asserts the Defender is not an option because it died with the Hunt; `huntAttacks` is unchanged. Note 2: added `TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive` (Hunt has `TempPower = 2` when an opposing Hitter kills it the same turn; the chosen unit takes 7). Status back to `tests-review`.

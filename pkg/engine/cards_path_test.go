@@ -934,7 +934,12 @@ func TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHea
 		t.Errorf("a mandatory single DecideTarget for the Hunt's controller: %+v", d)
 	}
 	wantOptions(t, asked[0], "any unit or structure of either side, Scratch Companies included; no Headquarters, no dead Hunt, no opposing Ward asset",
-		b.u0, b.s0, b.c0, b.u1, b.s1, b.c1, reserve, def)
+		b.u0, b.s0, b.c0, b.u1, b.s1, b.c1, reserve)
+	for _, o := range asked[0].Options {
+		if o.Ref == def.ID {
+			t.Errorf("the Defender died with the Hunt in the same sweep, so it is not on the battlefield when the trigger is placed and is not an option (FR-TGT-001)")
+		}
+	}
 	s.wantDamage(b.s1, 5)
 }
 
@@ -1106,4 +1111,23 @@ func TestCard_NecropolisHunt_NoEventDetailHasAFormatError(t *testing.T) {
 			t.Errorf("event %d (%s) Detail has a formatting error: %q", e.Seq, e.Kind, e.Detail)
 		}
 	}
+}
+
+// SVY-R10: "its power" of a source that has left is its last-known effective
+// power, so a temporary bonus the Hunt had when it died still counts.
+// Covers: FR-ZON-004
+func TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive(t *testing.T) {
+	s := newScene(t)
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	hunt := deployHunt(s)
+	s.endTurn()
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
+	hunt.TempPower = 2 // stands in for an until-end-of-turn bonus, still active this turn
+	s.scriptRefs(0, nil, e)
+	s.script(1)
+	s.do(s.attack(hit, hunt))
+	if s.alive(hunt) {
+		t.Fatalf("precondition: the Hunt is destroyed by the Hitter")
+	}
+	s.wantDamage(e, 7)
 }
