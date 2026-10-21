@@ -77,8 +77,9 @@ func (g *Game) fireAttacks(a *Asset) {
 
 // flushTriggers places the buffer on the stack: the active player's triggers
 // first, then the non-active player's on top (FR-TRG-003). Each player orders
-// their own triggers; a single trigger is not asked about. A match that ended
-// discards the buffer.
+// their own triggers; a single trigger is not asked about. An optional trigger
+// is asked about in its turn to be placed, before its targets; declined, it is
+// not placed (SVY-R9). A match that ended discards the buffer.
 func (g *Game) flushTriggers() {
 	buf := g.pending
 	g.pending = nil
@@ -109,21 +110,37 @@ func (g *Game) flushTriggers() {
 				g.push(p.item)
 				continue
 			}
+			if p.trig.Optional && !g.accepts(p) {
+				continue
+			}
 			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig,
 				Chosen: g.chooseTargets(p)})
 		}
 	}
 }
 
+// accepts asks p's controller the "you may" question of an optional trigger
+// (SVY-R9). A decline, a timeout, no chooser or an invalid answer all decline
+// (FR-MOD-001 §6).
+func (g *Game) accepts(p pendingTrigger) bool {
+	d := Decision{Player: p.controller, Kind: DecideOptional, Min: 0, Max: 1,
+		Prompt:  fmt.Sprintf("%s: you may use it", p.label),
+		Options: []Option{{Label: "yes", Ref: p.source}}}
+	return len(g.choose(d)) == 1
+}
+
 // resolveAbility runs a triggered ability's steps in order. It resolves even if
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
-	// Second verification stage (FR-TGT-003): a chosen entity that is gone or
-	// no longer legal is treated like an empty slot.
-	chosen := make([]*Asset, len(it.Chosen))
-	for i, id := range it.Chosen {
-		if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Trigger.Effect.Targets[i].Filter, a) {
-			chosen[i] = a
+	// Second verification stage (FR-TGT-003), entity by entity: one that is
+	// gone or no longer legal is dropped, and the slot keeps the rest (partial
+	// invalidation).
+	chosen := make([][]*Asset, len(it.Chosen))
+	for i, ids := range it.Chosen {
+		for _, id := range ids {
+			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Trigger.Effect.Targets[i].Filter, a) {
+				chosen[i] = append(chosen[i], a)
+			}
 		}
 	}
 	for _, st := range it.Trigger.Effect.Steps {
@@ -188,20 +205,21 @@ func (g *Game) itemSource(it *StackItem) *Asset {
 	return g.LastKnown(it.Source)
 }
 
-// stepAssets returns the assets an asset step acts on: its chosen target if
-// still legal, or for SubjectAll every battlefield asset matching st.Filter
-// now, oldest first. "All" is not a target, so Ward excludes nothing and
-// nothing is asked (FR-TGT-002, FR-KWD-002h, SVY-R3).
-func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen []*Asset) []*Asset {
+// stepAssets returns the assets an asset step acts on: the entities chosen for
+// its slot that are still legal, in pick order, or for SubjectAll every
+// battlefield asset matching st.Filter now, oldest first. "All" is not a
+// target, so Ward excludes nothing and nothing is asked (FR-TGT-002,
+// FR-KWD-002h, SVY-R3).
+func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen [][]*Asset) []*Asset {
 	switch st.Subject {
 	case ability.SubjectTarget:
-		if st.Target >= 0 && st.Target < len(chosen) && chosen[st.Target] != nil {
-			return []*Asset{chosen[st.Target]}
+		if st.Target >= 0 && st.Target < len(chosen) {
+			return chosen[st.Target]
 		}
 	case ability.SubjectAll:
 		var out []*Asset
 		for _, a := range g.assetsByID() {
-			if g.matchesFilter(it.Controller, st.Filter, a) {
+			if g.matchesFilter(it.Controller, it.Source, st.Filter, a) {
 				out = append(out, a)
 			}
 		}
@@ -242,45 +260,58 @@ func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
 
 // chooseTargets asks p's controller to choose each of its Effect.Targets, in
 // slot order, when the trigger is placed on the stack (FR-TGT-001). Only legal
-// entities are offered, so a single one is not asked about and a timeout picks
-// a random legal one. A slot with no legal entity stays 0: deploying never
-// requires a target (FR-TGT-003).
-func (g *Game) chooseTargets(p pendingTrigger) []int {
+// entities are offered. A single-entity slot is not asked about with one
+// option, and a timeout picks a random legal one. An "up to N" slot is always
+// asked (Min 0 != Max), its picks are distinct and a timeout picks none
+// (SVY-R11). A slot with no legal entity stays empty and asks nothing:
+// deploying never requires a target (FR-TGT-003).
+func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	targets := p.trig.Effect.Targets
 	if len(targets) == 0 {
 		return nil
 	}
-	chosen := make([]int, len(targets))
+	chosen := make([][]int, len(targets))
 	for i, t := range targets {
 		d := Decision{Player: p.controller, Kind: DecideTarget, Min: 1, Max: 1,
 			Prompt: fmt.Sprintf("%s: choose target %d", p.label, i+1)}
 		// Options are listed oldest asset first (by ID), not by zone.
 		for _, a := range g.assetsByID() {
-			if g.legalTarget(p.controller, t.Filter, a) {
+			if g.legalTarget(p.controller, p.source, t.Filter, a) {
 				d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
 			}
 		}
-		if picks := g.choose(d); len(picks) == 1 {
-			chosen[i] = d.Options[picks[0]].Ref
+		if t.UpTo > 0 {
+			if len(d.Options) == 0 {
+				continue
+			}
+			d.Prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
+			d.Min, d.Max = 0, min(t.UpTo, len(d.Options))
+		}
+		for _, k := range g.choose(d) {
+			chosen[i] = append(chosen[i], d.Options[k].Ref)
 		}
 	}
 	return chosen
 }
 
 // legalTarget reports whether battlefield asset a meets every criterion of f
-// for an ability controlled by ctl. An opponent's Ward asset is never legal
-// (FR-KWD-002h).
-func (g *Game) legalTarget(ctl PlayerID, f ability.Filter, a *Asset) bool {
+// for an ability controlled by ctl whose source is asset src. An opponent's
+// Ward asset is never legal (FR-KWD-002h).
+func (g *Game) legalTarget(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
 	if a.Controller != ctl && g.Keywords(a).Ward {
 		return false
 	}
-	return g.matchesFilter(ctl, f, a)
+	return g.matchesFilter(ctl, src, f, a)
 }
 
 // matchesFilter reports whether battlefield asset a meets every criterion of f
-// (allegiance relative to ctl, kinds, NonScratch). Targeting adds Ward on top
-// (legalTarget); an untargeted "all" step uses this alone.
-func (g *Game) matchesFilter(ctl PlayerID, f ability.Filter, a *Asset) bool {
+// (allegiance relative to ctl, kinds, NonScratch, Other: not the source asset
+// src). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
+// this alone.
+func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
+	if f.Other && a.ID == src {
+		return false
+	}
 	switch f.Allegiance {
 	case ability.AllegianceAllied:
 		if a.Controller != ctl {

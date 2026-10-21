@@ -28,7 +28,7 @@ type StackItem struct {
 	Amount    int // StackAggressive: N
 
 	Trigger ability.Trigger // StackAbility: the ability resolving (Source is its source asset)
-	Chosen  []int           // StackAbility: asset ID chosen for each Trigger.Effect.Targets slot, 0 if none
+	Chosen  [][]int         // StackAbility: asset IDs chosen for each Trigger.Effect.Targets slot, in pick order; empty if none
 }
 
 // push puts item on the stack and records where it went: the one place event

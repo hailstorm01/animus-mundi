@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: in-progress
+status: review
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
@@ -178,3 +178,31 @@ Omissions:
     - a whole slot dropped on one invalid target: 1;
     - repeats allowed: 1.
   - Next: `kernel-engineer` on **Opus** (directive #25).
+- 2026-10-21 kernel-engineer (Opus): Implemented, status `review`. The diff touches only the three Allowed Files. No test file and no `scenario_test.go` helper changed.
+  - **`ability.go`:** adds `Trigger.Optional`, `Target.UpTo` and `Filter.Other`, as in the Shapes block. The `Target` and `SubjectTarget` comments now describe "up to N" and pick order.
+  - **`stack.go`:** `StackItem.Chosen` is now `[][]int`: the asset IDs for each slot, in pick order, empty if none. `push` needed no change.
+  - **`trigger.go`, optional triggers:**
+    - In `flushTriggers`, inside the placement loop (after any Order decision), an optional trigger first calls the new `accepts(p)`.
+    - `accepts` asks one `DecideOptional` through `g.choose`: prompt `"<label>: you may use it"`, one option "yes" (`Ref` is the source), `Min 0`, `Max 1`.
+    - Unless exactly one pick comes back, the loop `continue`s, so no targets are asked and there is no `place` event. Keyword items (`p.item`) are never optional.
+  - **`trigger.go`, "up to N":**
+    - `chooseTargets` returns `[][]int`. It builds the same oldest-first option list as before.
+    - When `UpTo > 0`, it skips the slot if there are no options (no `choose` call, so no decision is recorded). Otherwise it sets `Min 0`, `Max min(UpTo, options)` and the prompt `"<label>: choose up to N for target i"`.
+    - `UpTo == 0` keeps today's `Min 1`, `Max 1` decision. Its prompt is unchanged, and so are the fast path, the fallback and the RNG use.
+  - **`trigger.go`, resolution:**
+    - `resolveAbility` re-verifies every chosen ID on its own with `legalTarget`, and keeps the legal ones in pick order (`[][]*Asset`, FR-TGT-003 partial invalidation).
+    - `stepAssets` returns the slot's surviving list for `SubjectTarget`.
+    - The deal-damage loop is unchanged: `Value` is read once per step, there is one `dealDamage` per entity, and every instance is dealt before the item's sweep.
+  - **`trigger.go`, "other":** `matchesFilter(ctl, src, f, a)` and `legalTarget(ctl, src, f, a)` take the source asset ID, and `f.Other && a.ID == src` excludes it. Callers pass `p.source` at placement, and `it.Source` at re-verification and for `SubjectAll`.
+  - **Reused:** T-0006's `choose`, `DecideOptional` and `DecideTarget`. Its validation already rejects repeats and out-of-range picks, and its fallback gives none for `Min 0` and declines for Optional. No new decision kind or helper. `matchesFilter` and `legalTarget` were extended, not duplicated.
+  - **Done When regex** `go test ./pkg/engine -run 'TestFR_(MOD_001_(Optional|UpTo)|TGT_002_(UpTo|AllWithOther|Composite)|TGT_003_UpTo|TGT_001_Other|KWD_002h_UpTo)' -v`: ok. All 19 T-0030 tests pass, plus 4 existing T-0006 `Optional*` tests that the regex also matches.
+  - `go test ./...`: ok.
+  - `go tool task check`: exit 0 (fmt-check, vet, test, build, `lint --all` all PASS, and fences PASS).
+  - **Sim byte identity:**
+    - **Baseline:** a CLI built in a separate `git worktree` at `rework/executable-rules` (01512ab) before any edit. The worktree was removed afterwards.
+    - **Stdout:** `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` both exit 0. Their stdout is byte-identical to the baseline (`cmp`), with every invariant holding and the monitors finding no violation. `-policy random` stdout is also byte-identical, for starter and for stress.
+    - **Events:** every game's events were also compared through `-events`: starter and stress, progress and random, 200 games each. The JSONL is identical once the match-start `revision` and `modified` build stamp is normalized. That stamp is the only difference.
+  - **Reviewer, look closely at:**
+    1. **"Up to N" with zero options:** this case returns before `choose` on purpose. `choose` would otherwise take the sole-answer fast path (`Min == Max == 0 == len(options)`) and record an `auto` decision, and the tests forbid any record.
+    2. **The Optional prompt and the "up to" prompt text:** both are new wording. Tests assert only that a prompt is non-empty.
+    3. **`RandomChooser` on an optional trigger** says yes or no at random, and both sim policies answer every decision with it (`sim.go`). No card uses `Optional` yet, so that sim behavior first shows up in the Craterfall Ancient card task.

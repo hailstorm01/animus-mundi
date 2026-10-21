@@ -31,10 +31,11 @@ const (
 
 // Trigger is one printed triggered ability.
 type Trigger struct {
-	Hook   Hook
-	Turn   TurnOwner
-	ToZone Zone // HookDeploy only: fires only if the asset was deployed into this zone
-	Effect Effect
+	Hook     Hook
+	Turn     TurnOwner
+	ToZone   Zone // HookDeploy only: fires only if the asset was deployed into this zone
+	Optional bool // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
+	Effect   Effect
 }
 
 // Zone names a battlefield zone a shape refers to.
@@ -52,9 +53,10 @@ type Effect struct {
 	Steps   []Step
 }
 
-// Target is one "chosen" entity: exactly one, for now ("up to N" comes later).
+// Target is one "chosen" clause: exactly one entity, or with UpTo "up to N".
 type Target struct {
 	Filter Filter
+	UpTo   int // 0: exactly one chosen entity. N > 0: up to N distinct entities, possibly none (SVY-R11)
 }
 
 // Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
@@ -62,6 +64,7 @@ type Filter struct {
 	Allegiance Allegiance // relative to the ability's controller
 	Kinds      Kinds      // zero means any asset
 	NonScratch bool       // excludes Scratch Company units
+	Other      bool       // excludes the ability's own source asset ("other")
 }
 
 // Allegiance is whose side an entity is on, relative to the ability's controller.
@@ -102,7 +105,7 @@ const (
 	SubjectController Subject = iota // the ability's controller (the zero value; Scratch and Draw)
 	SubjectSelf                      // the ability's own source card, tracked by card instance (FR-ZON-004)
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
-	SubjectTarget                    // the entity chosen for Effect.Targets[Step.Target]
+	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
 )
 
