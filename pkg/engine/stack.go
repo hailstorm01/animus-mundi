@@ -1,3 +1,5 @@
+// The Resolution Stack: stack items, pushing, LIFO resolution and the Deploy and March items (FR-QUE-001).
+
 package engine
 
 import "animus-mundi/pkg/engine/ability"
@@ -123,78 +125,4 @@ func (g *Game) resolveMarch(it *StackItem) {
 	g.placeOnBattlefield(a, dest)
 	g.logEvent(Event{Kind: "march", Player: int(it.Controller), Source: a.ID, Zone: dest.String()},
 		"%s marches to %s", a, dest)
-}
-
-// scratch performs Deploy Scratch Company n times (FR-ZON-005, FR-KWD-002m).
-func (g *Game) scratch(pid PlayerID, n int) {
-	p := g.Players[pid]
-	for range n {
-		if len(p.Deck) == 0 {
-			return // not a draw: no Empty Deck Loss
-		}
-		inst := p.Deck[0]
-		p.Deck = p.Deck[1:]
-		// A new Scratch Company always enters Exhausted (FR-ZON-005).
-		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true, Exhausted: true}
-		g.placeOnBattlefield(a, ZoneReserves)
-		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
-	}
-}
-
-// combatLegalZone reports whether a is still somewhere it can fight from.
-func combatLegalZone(a *Asset) bool {
-	if a.Printed().Type == TypeHeadquarters {
-		return a.Zone == ZoneHeadquarters
-	}
-	return a.Zone == ZoneMainTheater
-}
-
-// resolveAttack is Step 3 of combat (FR-CBT-002). The target was committed at
-// declaration: Guardian or Ethereal changes since then do not matter, only
-// whether both combatants are still where they can fight.
-func (g *Game) resolveAttack(it *StackItem) {
-	def := g.Asset(it.Target)
-	// OPEN(SVY-R8): fizzles if the defender changed controller before resolution.
-	if def == nil || !combatLegalZone(def) || def.Controller == it.Controller {
-		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
-			"attack fizzles: the defender is gone, so there is no Berserk cleave")
-		return
-	}
-
-	att := g.Asset(it.Source)
-	if att == nil || !combatLegalZone(att) {
-		// Attacker-side fizzle: no combat damage, but Berserk cleave still
-		// happens from the attacker's last-known characteristics (FR-CBT-002).
-		src := att
-		if src == nil {
-			src = g.LastKnown(it.Source)
-		}
-		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source}, "attack fizzles: the attacker is gone")
-		g.cleave(it, src, def)
-		return
-	}
-
-	// Lock effective values at the start of the simultaneous step (FR-LAY-003).
-	attPower, defPower := g.Power(att), g.Power(def)
-	g.logEvent(Event{Kind: "combat", Player: -1, Source: att.ID, Target: def.ID},
-		"%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
-	g.dealDamage(att, def, attPower, true)
-	g.dealDamage(def, att, defPower, true)
-	// Berserk cleave is committed within Step 3, before the death sweep,
-	// whether or not either combatant dies (FR-KWD-002o).
-	g.cleave(it, att, def)
-}
-
-// cleave deals Berserk N non-combat damage to the attack's secondary target if
-// it is still legal (two-stage verification, FR-TGT-003).
-func (g *Game) cleave(it *StackItem, att, def *Asset) {
-	if att == nil || it.Secondary == 0 || att.Printed().Type != TypeUnit || def.Zone != ZoneMainTheater {
-		return
-	}
-	n := g.Keywords(att).Berserk
-	sec := g.Asset(it.Secondary)
-	if n <= 0 || sec == nil || !g.legalSecondary(att, sec) {
-		return
-	}
-	g.dealDamage(att, sec, n, false)
 }

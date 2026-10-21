@@ -1,3 +1,5 @@
+// Core state: the game, player and asset types and their lookups, with last-known information (FR-ZON-004).
+
 package engine
 
 import (
@@ -111,38 +113,6 @@ type Outcome struct {
 	Reason string
 }
 
-// Event is an entry in the game log. Tests and the simulator read it; the
-// kernel never reads it back.
-type Event struct {
-	Seq    int    `json:"seq"` // 1, 2, 3 ... per game, no gaps
-	Turn   int    `json:"turn"`
-	Phase  string `json:"phase"` // Phase.String()
-	Kind   string `json:"kind"`
-	Detail string `json:"detail"`
-	Player int    `json:"player"` // the acting player, -1 if none
-
-	Card   string `json:"card,omitempty"`   // card name from card data
-	Inst   int    `json:"inst,omitempty"`   // card instance ID
-	Source int    `json:"source,omitempty"` // asset ID
-	Target int    `json:"target,omitempty"` // asset ID
-	Zone   string `json:"zone,omitempty"`   // Zone.String()
-	Amount int    `json:"amount,omitempty"`
-
-	Secondary int    `json:"secondary,omitempty"` // action events: an Attack's Berserk secondary target (asset ID)
-	Resource  string `json:"resource,omitempty"`  // action events: a Generate's "Requisition" or "Tactics"
-
-	// Damage events only. Amount is the damage committed to Health (Stage 5).
-	Raw      int  `json:"raw,omitempty"`      // the incoming damage before Stage 2
-	Combat   bool `json:"combat,omitempty"`   // combat damage (Stalwart applies)
-	Armor    int  `json:"armor,omitempty"`    // the target's Armor pool before this damage
-	Absorbed int  `json:"absorbed,omitempty"` // Stage 4: damage absorbed by Armor
-
-	Decision *DecisionRecord `json:"decision,omitempty"`
-	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
-	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"
-	End      *MatchEnd       `json:"end,omitempty"`      // Kind "match-end"
-}
-
 // Game is the complete match state.
 type Game struct {
 	Players     [2]*Player
@@ -207,18 +177,6 @@ func (g *Game) LastKnownEffective(id int) *EffectiveState {
 	return nil
 }
 
-// leaveBattlefield removes a from the battlefield to a non-battlefield zone,
-// keeping a last-known record with eff, a's effective characteristics taken
-// immediately prior to departure. A lone departure passes g.effectiveState(a);
-// the death sweep takes every dying asset's state before any of them leaves.
-func (g *Game) leaveBattlefield(a *Asset, eff EffectiveState) {
-	if g.lastKnown == nil {
-		g.lastKnown = make(map[int]*lastKnownRecord)
-	}
-	g.lastKnown[a.ID] = &lastKnownRecord{asset: *a, eff: eff}
-	g.removeFromBattlefield(a)
-}
-
 func (g *Game) newID() int {
 	g.nextID++
 	return g.nextID
@@ -257,40 +215,4 @@ func (g *Game) TheaterOf(p PlayerID) []*Asset {
 		}
 	}
 	return out
-}
-
-func remove[T comparable](s []T, v T) []T {
-	for i, x := range s {
-		if x == v {
-			return append(s[:i:i], s[i+1:]...)
-		}
-	}
-	return s
-}
-
-// removeFromBattlefield detaches a from whichever battlefield zone holds it.
-func (g *Game) removeFromBattlefield(a *Asset) {
-	switch a.Zone {
-	case ZoneMainTheater:
-		g.Theater = remove(g.Theater, a)
-	case ZoneReserves:
-		p := g.Players[a.Controller]
-		p.Reserves = remove(p.Reserves, a)
-	case ZoneHeadquarters:
-		g.Players[a.Controller].HQ = nil
-	}
-}
-
-// placeOnBattlefield puts a into zone under its controller.
-func (g *Game) placeOnBattlefield(a *Asset, zone Zone) {
-	a.Zone = zone
-	switch zone {
-	case ZoneMainTheater:
-		g.Theater = append(g.Theater, a)
-	case ZoneReserves:
-		p := g.Players[a.Controller]
-		p.Reserves = append(p.Reserves, a)
-	case ZoneHeadquarters:
-		g.Players[a.Controller].HQ = a
-	}
 }

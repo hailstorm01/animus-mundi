@@ -1,3 +1,5 @@
+// Decks: DeckList, deck validation and deck loading (FR-SET-001).
+
 package engine
 
 import (
@@ -169,4 +171,10 @@ func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
 	}
 
 	return deck, nil
+}
+
+// DeckList is one player's deck: a Headquarters plus the main deck.
+type DeckList struct {
+	HQ   *Card
+	Main []*Card
 }

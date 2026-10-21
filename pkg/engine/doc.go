@@ -17,18 +17,36 @@
 //     (cardtown lint fences).
 //   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks)
 //     run through a pending-trigger buffer, in APNAP order with cascades
-//     (FR-TRG-002 to FR-TRG-004).
+//     (FR-TRG-002 to FR-TRG-004). A trigger may be optional, and its effects
+//     may choose targets ("up to N", "other") that are verified when it is
+//     placed and again when it resolves (FR-TGT-001, FR-TGT-003).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001).
-//   - Untargeted steps OpScratch, OpDraw, OpReturnToHand and OpPutOnDeck, the
-//     TurnYours gate, SubjectSelf (tracked in discard, FR-ZON-004) and
-//     SubjectOpponents.
+//   - Steps OpScratch, OpDraw, OpReturnToHand, OpPutOnDeck, OpDealDamage,
+//     OpHeal and OpAddArmor, with "all" steps, source-power values, the
+//     deploy-zone gate, the TurnYours gate, SubjectSelf (tracked in discard,
+//     FR-ZON-004) and SubjectOpponents.
+//   - Ward on targets, and last-known effective state for effects whose
+//     source has left the battlefield.
 //
 // Not built yet:
-//   - Targeted abilities, Maneuvers, activated and continuous abilities,
-//     Headquarters abilities, Unbowed, Cornered, Heal N, Regroup N, replacement
-//     effects beyond the damage pipeline, and match clocks. Cards whose text
-//     needs any of these load with Card.Unsupported set and cannot be deployed.
+//   - Maneuvers, activated and continuous abilities, Headquarters abilities,
+//     Unbowed, Cornered, Heal N, Regroup N, replacement effects beyond the
+//     damage pipeline, and match clocks. Cards whose text needs any of these
+//     load with Card.Unsupported set and cannot be deployed.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
+//
+// Files:
+//   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
+//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets.
+//   - actions.go: Action, Apply, checks and LegalActions. combat.go: attack
+//     legality and combat resolution. stack.go: the Resolution Stack.
+//   - trigger.go: the pending-trigger buffer and firing. targeting.go: target
+//     choice and filters. effects.go: running a resolved ability's steps.
+//   - state.go: core state types and lookups. card.go: card types.
+//     cardload.go: the CSV loader and keyword lines.
+//   - events.go: Event, the Observer and snapshots. choice.go: decisions.
+//     damage.go: the damage pipeline. layers.go: derived power, health and keywords.
+//     invariants.go: state checks.
 //
 // Package boundary: this package holds the rules, the game state, the Observer
 // and the event and record types, and nothing that drives or prints a match.
