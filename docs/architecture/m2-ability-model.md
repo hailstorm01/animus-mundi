@@ -76,6 +76,13 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 2. **Starter decks (harness):** a decklist format under `data/decks/`, `engine.LoadDeck` and `ValidateDeck` (`FR-SET-001`), the two lists in [Starter Decks](#starter-decks) transcribed into it, and a `-deck` option on `cardtown sim`. Done when `TestFR_SET_001_*` pass and both lists validate.
 3. **Wave A1:** events, triggers on self hooks, APNAP placement and cascade, the `Chooser` with the scripted and random implementations, self-tracking death triggers (`FR-ZON-004`), and untargeted steps. The last-known effective-value snapshot waits for its first reader (board directive #13). Done when the 8 A1 cards pass and `FR-TRG-003`, `FR-TRG-004` and `FR-ZON-004` death-trigger tests pass.
 4. **Wave A2:** targets, filters, two-stage verification, optional triggers, `FR-MOD-001` fast-path and fallbacks, `DealDamage`, `Heal` and `AddArmor`. Done when the 7 A2 cards pass.
+4a. **Cleanup (harness), added 2026-10-21 from the user's audit (board directive #26):**
+   - T-0032 splits package `engine`'s files by responsibility, as a pure move.
+   - T-0033 gives one deck-naming scheme and one build-revision reader.
+   - T-0034 removes duplicated rule code.
+   - T-0035 splits `cmd/cardtown/main.go` into one file per command.
+
+   Done when all four are merged, with `cardtown sim` output unchanged.
 5. **`cardtown play` (text mode):** a terminal `Chooser` and action menu against the random policy. Done when a human finishes a match with the cards executable so far. It goes early so physical-prototype comparison starts while waves land.
 6. **Waves B, C, D, E, F, G** in the survey's order (C–G may be reordered). Each is done when its survey rows pass and `cardtown sim` stays clean.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
