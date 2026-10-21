@@ -4,7 +4,7 @@ title: Structured game events, one observer, settled notifications and match rec
 kind: harness
 tier: sonnet
 wave: none (board directive #18, part 1 of 2: engine)
-status: review
+status: done
 branch: m2/T-0020-game-events-observer
 depends_on: []
 claims: [type:Event-fields, type:Observer, type:Snapshot, type:MatchStart, type:MatchEnd, type:DecisionRecord, func:Game.emit, config:Observer, config:DeckNames, event:action, event:decision, event:settled]
@@ -134,10 +134,10 @@ Each case becomes a test in a new `pkg/engine/events_test.go`, committed first a
 - Size exception: 7 non-test files against the limit of 4. The user chose this two-task split on 2026-10-20, so the schema stays in one task.
 
 ## Done When
-- [ ] Every acceptance case has a test in `events_test.go`, committed before the implementation, and all pass
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, and their summaries are byte-identical to `rework/executable-rules` (sort the end-reason lines; #12 lands in T-0021)
-- [ ] At review, the lead writes ADR-0005 (event schema, observer contract, storage model) from the merged code
+- [x] Every acceptance case has a test in `events_test.go`, committed before the implementation, and all pass
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, and their summaries are byte-identical to `rework/executable-rules` (sort the end-reason lines; #12 lands in T-0021)
+- [x] At review, the lead writes ADR-0005 (event schema, observer contract, storage model) from the merged code
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #18 (part 1 of 2, after the user chose the two-task split), with status `ready` (harness, sonnet). T-0021 (CLI) follows when this is `done`.
@@ -147,3 +147,18 @@ Each case becomes a test in a new `pkg/engine/events_test.go`, committed first a
   - **Choices for the reviewer:** (1) action Detail is the ActionKind name; Generate is "Generate Requisition"/"Generate Tactics" (resource in Detail), so match on the first word. (2) `DecisionKind.String()` is "Target", "Mode", "Optional", "Order". (3) The turn-start snapshot is always built, because it is part of Log and Case 8 needs Log equal with or without an observer; only the Settled snapshot is built on demand. (4) The observer gets a deep clone of each event (Decision, Start, Snapshot, End), so editing it cannot change Log. (5) match-start has Turn 0 and phase "setup"; turn-start is emitted after Phase is set to ready, so its phase is "ready". (6) `trigger`, `fizzle`, `damage`, `destroy` have Player -1; `draw` has the drawing player.
   - **Reuse:** no existing event or snapshot code; `handCard` reused for the action event's card, `Power`/`MaxHealth` for effective values.
   - **Gates:** `go tool task check` green (fmt, vet, all tests, lint). `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `cardtown sim` exit 0; summaries are identical to the pre-change output after sorting lines (win rates 51.0/17.0/32.0 and 66.0/30.0/4.0, average length 27.2 and 30.2 turns, end-reason counts 136/64 and 192/8). Existing tests untouched.
+- 2026-10-20 lead-architect: Review: **approved**, status `done`.
+  - Scope: the `test(T-0020)` commit 8157983 adds only `events_test.go`, which didn't compile before the schema, so it failed as required. The implementation 46f377c stays inside the Allowed Files and changes no existing test.
+  - The 13 tests cover all 9 cases. Case 8 tampers with every copy the observer receives and still gets a deep-equal `Log`.
+  - Design:
+    - `emit` is the single path (Seq, Turn and Phase set there, `Log` appended, then the observer gets a clone). `logf` is a thin wrapper with Player -1.
+    - `settled` runs only at the three settled points. `resolveStack` is called only from `Apply`, so it is never nested.
+    - Decision events are emitted on every path through `choose`, and the `invalid-answer` event is kept.
+    - Nothing reaches `rng`.
+  - Accepted choices from the engineer's notes:
+    - `action` Detail starts with the `ActionKind` name, and Generate adds the resource.
+    - The turn-start snapshot is always built, because it is part of `Log`.
+    - turn-start reads phase "ready", emitted before anything is readied.
+  - Gap for later, not a defect: resolving a printed triggered ability (`StackAbility`) emits no event of its own. Only its effects are logged (damage, draw from empty, deploys). Add an `ability` event (Source, Card, the chosen targets) when the metrics work starts. This is recorded in ADR-0005.
+  - Gates re-run by the reviewer: 13 events tests pass, and `go tool task check` exits 0. The sorted starter-sim and default-sim outputs are identical to `rework/executable-rules`.
+  - ADR-0005 is written from this code. Next: T-0021 (directive #18 part 2, CLI).
