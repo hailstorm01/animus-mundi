@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: tests-review
+status: ready
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -26,7 +26,7 @@ After this task, *Devilhorn Guerrillas*, *Spoil Forest Colossus* and *Ironclad C
   - `FR-LAY-002` (lines 389–393), the Dynamic Armor Pool: a grant adds to Armor, grants stack additively, Armor never expires at end of turn, and it absorbs damage 1-for-1 in Stage 4 (`FR-REP-004`).
   - `FR-KWD-002k` Armor N: printed Armor and granted Armor share one pool.
   - `FR-ZON-004` (line 165): dynamic Armor and damage are removed when the asset leaves the battlefield. Line 166: moving between Reserves and the Main Theater keeps them.
-  - `FR-TRN-003` (line 268): a Unit enters its declared battlefield zone.
+  - `FR-TRN-003` (line 273): a Unit enters its declared battlefield zone.
 - Card text for context. The card tasks that follow use these, and this task's tests use synthetic cards:
   - *Devilhorn Guerrillas* (deploy zones Main Theater, Reserves): "When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit."
   - *Spoil Forest Colossus*: "Whenever this unit deploys or attacks, chosen asset heals 2."
@@ -94,3 +94,13 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 task 3), with status `tests` for `rules-test-author`.
 - 2026-10-20 rules-test-author: Wrote the tests above (status tests-review). The package will not compile until the Vocabulary block exists (`ability.Zone`, `ZoneAny/ZoneReserves/ZoneMainTheater`, `Trigger.ToZone`, `OpHeal`, `OpAddArmor`); `go vet` fails only on those. Left out: (1) FR-ZON-004 line 165 (Armor and damage discarded on leaving the battlefield): not observable without redeploying the same asset, and the observation list does not call for it. (2) `ToZone` on a non-deploy hook: the task says it is ignored and no card builds it, so FRD 01 has no rule to pin. (3) "Heal can't exceed Effective Maximum Health" is pinned only through Damage clamping at 0 plus CurrentHealth == max. The task cites FR-TRN-003 at line 268, but the text is at line 273 (268 is the FR-ACT-001 heading). The attack-heal ordering test relies on FR-CBT-002 Step 2: an attacker with 4 damage on 5 health survives a 1-power retaliation only if the heal resolves first.
+- 2026-10-20 lead-architect: Test review: **approved**, status `ready`. 71cfdc1 adds `heal_armor_test.go` (synthetic cards) and changes no existing test.
+  - The tests cover:
+    - The gate: it fires in its zone, does nothing in the other, the ungated twin fires in both, and the Reserves gate is the mirror. A gated-off trigger is never collected, so no order question is asked.
+    - Heal: removes up to N, never goes below 0, leaves an undamaged asset and Armor alone, and reaches every asset kind. Ward and no-target are covered too.
+    - The Armor pool: grants are additive and join printed Armor. It survives end of turn, absorbs 1-for-1 before health, and is kept through March.
+    - The Step 2 attack-trigger timing, through the two retaliation cases.
+  - Targets are chosen by asset.
+  - Accepted omissions: line 165 (state reset on leaving the battlefield) isn't observable on a discarded `Asset`, and `ToZone` on non-deploy hooks has no rule to pin.
+  - Lead fix: the task's FR-TRN-003 citation is line 273, not 268. FRD 01 v3.7 (09b9bdb) shifted the lines.
+  - Next: dispatch `kernel-engineer` (tier sonnet).
