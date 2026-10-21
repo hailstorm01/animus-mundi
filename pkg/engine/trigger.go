@@ -40,11 +40,26 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != a.Controller) {
 			continue
 		}
+		if hook == ability.HookDeploy && !deployedTo(a, t.ToZone) {
+			continue
+		}
 		g.pending = append(g.pending, pendingTrigger{
 			source: a.ID, inst: a.Inst, controller: a.Controller, trig: t,
 			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1),
 		})
 	}
+}
+
+// deployedTo reports whether a is in zone z now, which for a deploy trigger is
+// the zone its deploy put it in. ZoneAny always holds.
+func deployedTo(a *Asset, z ability.Zone) bool {
+	switch z {
+	case ability.ZoneReserves:
+		return a.Zone == ZoneReserves
+	case ability.ZoneMainTheater:
+		return a.Zone == ZoneMainTheater
+	}
+	return true
 }
 
 // fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger, if
@@ -122,6 +137,15 @@ func (g *Game) resolveAbility(it *StackItem) {
 				continue
 			}
 			g.dealDamage(g.Asset(it.Source), chosen[st.Target], st.Amount.N, false) // nil source if it left
+		case ability.OpHeal, ability.OpAddArmor:
+			if st.Subject != ability.SubjectTarget || st.Target < 0 || st.Target >= len(chosen) || chosen[st.Target] == nil {
+				continue
+			}
+			if st.Op == ability.OpHeal {
+				chosen[st.Target].Damage = max(0, chosen[st.Target].Damage-st.Amount.N)
+			} else {
+				chosen[st.Target].Armor += st.Amount.N
+			}
 		case ability.OpScratch:
 			for _, pid := range who {
 				g.scratch(pid, st.Amount.N)

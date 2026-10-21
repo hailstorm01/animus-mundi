@@ -33,8 +33,18 @@ const (
 type Trigger struct {
 	Hook   Hook
 	Turn   TurnOwner
+	ToZone Zone // HookDeploy only: fires only if the asset was deployed into this zone
 	Effect Effect
 }
+
+// Zone names a battlefield zone a shape refers to.
+type Zone int
+
+const (
+	ZoneAny Zone = iota // the zero value: no zone condition
+	ZoneReserves
+	ZoneMainTheater
+)
 
 // Effect is what a resolving ability does: its steps, in order.
 type Effect struct {
@@ -81,6 +91,8 @@ const (
 	OpReturnToHand               // put the Subject card into its owner's hand
 	OpPutOnDeck                  // put the Subject card into its owner's deck: on top, or on the bottom if Bottom
 	OpDealDamage                 // Amount non-combat damage to the Subject (FR-REP-004)
+	OpHeal                       // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
+	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
 )
 
 // Subject is what a step acts on.
