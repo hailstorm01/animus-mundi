@@ -264,10 +264,10 @@ func runSim(args []string) {
 	}
 	if *deck != "" {
 		for i, f := range []string{*p0, *p1} {
-			opt.DeckNames[i] = filepath.ToSlash(filepath.Join("data", "decks", fmt.Sprintf("%s-%s.txt", strings.ToLower(f), *deck)))
+			opt.DeckNames[i] = sim.DecklistName(f, *deck)
 		}
 	} else {
-		opt.DeckNames = [2]string{"stress:" + *p0, "stress:" + *p1}
+		opt.DeckNames = [2]string{sim.StressName(*p0), sim.StressName(*p1)}
 	}
 	var played []*eventCollector // one per game, only when -log or -events asks for events
 	if *logGame || out != nil {
@@ -336,8 +336,6 @@ func runSim(args []string) {
 	fmt.Println("==========================================================")
 	fmt.Printf("  %s (%s) vs %s (%s), %d games, seeds %d..%d\n", *p0, decks[0].HQ.Name, *p1, decks[1].HQ.Name, st.Games, *seed, *seed+uint64(st.Games)-1)
 	if *deck != "" {
-		file0 := fmt.Sprintf("%s-%s.txt", strings.ToLower(*p0), *deck)
-		file1 := fmt.Sprintf("%s-%s.txt", strings.ToLower(*p1), *deck)
 		countSupported := func(main []*engine.Card) int {
 			n := 0
 			for _, c := range main {
@@ -347,8 +345,8 @@ func runSim(args []string) {
 			}
 			return n
 		}
-		fmt.Printf("  P0 (%s): %d/%d main cards executable now (Supported())\n", filepath.ToSlash(filepath.Join("data", "decks", file0)), countSupported(decks[0].Main), len(decks[0].Main))
-		fmt.Printf("  P1 (%s): %d/%d main cards executable now (Supported())\n", filepath.ToSlash(filepath.Join("data", "decks", file1)), countSupported(decks[1].Main), len(decks[1].Main))
+		fmt.Printf("  P0 (%s): %d/%d main cards executable now (Supported())\n", sim.DecklistName(*p0, *deck), countSupported(decks[0].Main), len(decks[0].Main))
+		fmt.Printf("  P1 (%s): %d/%d main cards executable now (Supported())\n", sim.DecklistName(*p1, *deck), countSupported(decks[1].Main), len(decks[1].Main))
 		fmt.Println("  HQ abilities are ignored.")
 	} else {
 		fmt.Println("  Decks cycle each faction's kernel-executable cards; HQ abilities are ignored.")
@@ -836,12 +834,7 @@ func runReplay(args []string) {
 	if err != nil {
 		fail("loading cards: %v", err)
 	}
-	resolve := func(name string) (engine.DeckList, error) {
-		if faction, ok := strings.CutPrefix(name, "stress:"); ok {
-			return sim.FactionDeck(cards, faction)
-		}
-		return engine.LoadDeck(filepath.Join(repoRoot, filepath.FromSlash(name)), cards)
-	}
+	resolve := func(name string) (engine.DeckList, error) { return sim.ResolveDeck(repoRoot, cards, name) }
 	snap, err := eventlog.Replay(events, *at, resolve)
 	if err != nil {
 		fail("%v", err)

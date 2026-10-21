@@ -3,33 +3,17 @@ package eventlog
 import (
 	"fmt"
 	"reflect"
-	"runtime/debug"
 	"slices"
 	"strings"
 
 	"animus-mundi/pkg/engine"
 )
 
-// buildInfo is this build's VCS revision and dirty flag, as emitMatchStart records them.
-func buildInfo() (revision string, modified bool) {
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, s := range info.Settings {
-			switch s.Key {
-			case "vcs.revision":
-				revision = s.Value
-			case "vcs.modified":
-				modified = s.Value == "true"
-			}
-		}
-	}
-	return revision, modified
-}
-
 // ReplayWarning is a one-line warning when a replay of events is only
 // best-effort because the record or this build has uncommitted changes. It is
 // "" otherwise. The divergence check still guards correctness.
 func ReplayWarning(events []engine.Event) string {
-	_, buildMod := buildInfo()
+	_, buildMod := engine.BuildInfo()
 	recMod := len(events) > 0 && events[0].Start != nil && events[0].Start.Modified
 	if buildMod || recMod {
 		return "the record or this build has uncommitted changes; the replay may diverge"
@@ -56,7 +40,7 @@ func Replay(events []engine.Event, at int, resolveDeck func(name string) (engine
 		return engine.Snapshot{}, fmt.Errorf("replay: seq %d is out of range 1..%d", at, last)
 	}
 	st := events[0].Start
-	if rev, _ := buildInfo(); st.Revision != rev { // modified never bypasses a mismatch; it only adds the CLI warning
+	if rev, _ := engine.BuildInfo(); st.Revision != rev { // modified never bypasses a mismatch; it only adds the CLI warning
 		return engine.Snapshot{}, fmt.Errorf("replay: the record is from revision %q, this build is revision %q", st.Revision, rev)
 	}
 	for _, e := range events[:at] {
