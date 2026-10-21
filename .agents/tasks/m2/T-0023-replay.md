@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: review
+status: changes
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -136,3 +136,6 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
     - `-game 9` prints `[ERROR] <file> has no game 9 (it has 5 games)` and exits 1. `-at 999999` prints `[ERROR] replay: seq 999999 is out of range 1..277` and exits 1.
     - Run from a built binary with a dirty tree, stderr also shows `[WARN] the record or this build has uncommitted changes; the replay may diverge`.
   - **For the reviewer:** a replay with `at` 1 waits for event 2 to arrive before capturing, so it still checks events 1 and 2. A record with a `MulliganCallback` but no set-aside cards still replays the shuffle, per the lead's decision. `invalid` decisions at or before `at` are refused up front, naming their Seq.
+- 2026-10-20 lead-architect: Code review: **changes** (one note). The rest is approved as is: the replay chooser checks kind, player and refs, `diff` covers every recorded field, `actionOf` rebuilds every `Action` field, the `at` 1 and 2 cases and `invalid` follow the decisions, and the test file is unchanged since 7c95b33.
+  1. **Build check (`replay.go`, the `st.Revision != rev && !st.Modified && !mod` guard):** a revision mismatch must always be refused (directive #19: "Refuse … when the build revision differs from the record's"). `modified` on either side only adds the CLI warning (`ReplayWarning`); it never bypasses the mismatch. Development builds are usually dirty, so today's guard would almost never refuse. Change the guard to `st.Revision != rev`. Case 5 still passes. Fix it in a new commit, and don't touch `replay_test.go`.
+  - `ReplayWarning` (exported, used by the CLI) is accepted as a small addition.
