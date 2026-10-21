@@ -212,7 +212,18 @@ func TestSimEvents_Case5_FormatEvent(t *testing.T) {
 			}
 		}
 	}
-	if !sawDecision || !sawStart {
-		t.Errorf("game had decision with picks %t, match-start %t", sawDecision, sawStart)
+	if !sawStart {
+		t.Errorf("game had no match-start")
+	}
+	// The starter decks make no decisions under random play (sawDecision stays
+	// false for them), so check the decision line on a constructed event too.
+	_ = sawDecision
+	d := Event{Seq: 12, Turn: 2, Phase: "main", Kind: "decision", Player: 1, Decision: &DecisionRecord{
+		Kind: "Target", Player: 1, Prompt: "pick a target", Options: []string{"Alpha", "Beta"},
+		Refs: []int{4, 5}, Picks: []int{1}, How: "answer"}}
+	line := FormatEvent(d)
+	if !strings.HasPrefix(line, "12") || !strings.Contains(line, "decision") ||
+		!strings.Contains(line, "Beta") || !strings.Contains(line, "answer") || strings.Contains(line, "Alpha") {
+		t.Errorf("decision line wrong: %q", line)
 	}
 }

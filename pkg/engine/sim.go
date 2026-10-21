@@ -51,13 +51,29 @@ type SimStats struct {
 	Reasons        map[string]int
 }
 
+// SimOptions are the optional extras of SimulateWith.
+type SimOptions struct {
+	DeckNames [2]string                            // recorded in each match-start
+	Observer  func(game int, seed uint64) Observer // optional; one observer per game, game counts from 1
+}
+
 // Simulate plays games random-policy matches between two decks.
 func Simulate(decks [2]DeckList, games int, seed uint64, maxTurns int) (SimStats, error) {
+	return SimulateWith(decks, games, seed, maxTurns, SimOptions{})
+}
+
+// SimulateWith is Simulate with the options: deck names for the match-start
+// record and one observer per game. Observing does not change the result.
+func SimulateWith(decks [2]DeckList, games int, seed uint64, maxTurns int, opt SimOptions) (SimStats, error) {
 	st := SimStats{Reasons: map[string]int{}}
 	for i := range uint64(games) {
 		s := seed + i
-		g, err := NewGame(Config{Seed: s, Decks: decks,
-			Choosers: [2]Chooser{RandomChooser(s*2 + 1), RandomChooser(s*2 + 2)}})
+		cfg := Config{Seed: s, Decks: decks, DeckNames: opt.DeckNames,
+			Choosers: [2]Chooser{RandomChooser(s*2 + 1), RandomChooser(s*2 + 2)}}
+		if opt.Observer != nil {
+			cfg.Observer = opt.Observer(int(i)+1, s)
+		}
+		g, err := NewGame(cfg)
 		if err != nil {
 			return st, err
 		}
