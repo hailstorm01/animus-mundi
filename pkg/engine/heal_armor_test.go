@@ -241,9 +241,35 @@ func TestFR_KWD_002d_AnyKindOfAssetCanBeHealed(t *testing.T) {
 			b := s.targetBoard()
 			victims := []*Asset{b.u0, b.s0, b.c0, b.u1, b.s1, b.c1, s.g.Players[0].HQ, s.g.Players[1].HQ}
 			v := victims[i]
-			v.Damage = 4
+			// A face-down Scratch Company is 1/1 (FR-ZON-005), so no damage on it
+			// survives a sweep. For those rows the check is that it is an option,
+			// is chosen and resolves cleanly, and stays undamaged.
+			scratch := v.FaceDown
+			if !scratch {
+				v.Damage = 4
+			}
 			s.scriptRefs(0, nil, v)
 			s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{anyAsset}, healStep(3, 0))), ZoneReserves)
+			if scratch {
+				if len(s.asked(0)) != 1 {
+					t.Fatalf("the any-asset heal asks one question: asked %d times", len(s.asked(0)))
+				}
+				found := false
+				for _, r := range refs(s.asked(0)[0]) {
+					found = found || r == v.ID
+				}
+				if !found {
+					t.Errorf("a Scratch Company is among the options of an any-asset heal (FR-KWD-002d)")
+				}
+				if !s.alive(v) {
+					t.Errorf("healing an undamaged Scratch Company leaves it on the battlefield")
+				}
+				s.wantDamage(v, 0)
+				if got := totalDamage(s.g); got != 0 {
+					t.Errorf("nothing is damaged: total damage %d, want 0", got)
+				}
+				return
+			}
 			s.wantDamage(v, 1)
 			if got := totalDamage(s.g); got != 1 {
 				t.Errorf("only the chosen asset is healed: total damage %d, want 1 (FR-KWD-002d)", got)

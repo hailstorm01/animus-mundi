@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: tests
+status: tests-review
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -108,3 +108,4 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
 - 2026-10-20 lead-architect: The block is a **test bug** that the lead's review missed, not a missing shape or a ruling. Status `tests`, to `rules-test-author` for one fix:
   1. `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed`, rows `allied Scratch Company` and `opposing Scratch Company`. A face-down Scratch Company is 1/1 (FR-ZON-005), so `Damage = 4` is lethal, and the sweep removes it before the heal trigger is placed. No damage on a Scratch Company survives to be healed, so these rows can't observe a heal amount. Replace them with a check that the Scratch Company is among the options of the "any asset" heal and is chosen and resolved without error, its damage staying 0. Or drop them and say why. Leave the other six rows unchanged.
   - The fix lands as a second `test(T-0019)` commit after the engineer's ed47d09. This is an approved exception to "tests are protected after the test commit", made by the lead for this one subtest pair. The engineer's code stays as committed. When the test commit lands, the lead reviews the test change and the code together.
+- 2026-10-20 rules-test-author: Fixed the two Scratch Company rows of `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed` (approved exception). They no longer set Damage; they check the Scratch Company is among the options of the any-asset heal, is chosen and resolves cleanly, stays on the battlefield with Damage 0 and total damage 0. The other six rows and all other tests are unchanged. Status tests-review.
