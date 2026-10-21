@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: tests-review
+status: ready
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
@@ -165,3 +165,16 @@ Omissions:
   - Helpers requested: none. `cardtown lint rules` passes.
   - Omissions: see the Tests section.
   - No open questions.
+- 2026-10-21 lead-architect: Test review: **approved**, status `ready`.
+  - 672bbf1 adds `optional_upto_test.go` with 19 tests and changes no existing test.
+  - Rules content checks out against FRD 01, `SVY-R9`, `SVY-R11`, T-0006's choice rules and the lead decisions. The omissions are accepted.
+  - **Reviewer prototype** (a throwaway worktree, not committed): `Optional` asked via `DecideOptional` before targets, with a decline skipping placement; `UpTo` as `Min 0`, `Max min(N, options)`, with no question when there are no options; `Chosen [][]int` re-verified per entity; `Other` in `matchesFilter`. With it, all of `go test ./pkg/engine` passes.
+  - **Mutations each fail tests:**
+    - optional ignored: 8;
+    - a declined trigger still placed: 5;
+    - `UpTo` ignored: 7;
+    - `Other` ignored: 3;
+    - asking with no options: 1;
+    - a whole slot dropped on one invalid target: 1;
+    - repeats allowed: 1.
+  - Next: `kernel-engineer` on **Opus** (directive #25).

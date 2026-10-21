@@ -72,4 +72,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0027 | Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus executable (A2 cards, flash) | done |
 | T-0028 | Damage equal to the source's power, last-known effective state, and steps on all matching assets (A2 shape, opus) | done |
 | T-0029 | Make Necropolis Hunt executable (A2 card, flash) | done |
-| T-0030 | Optional ("you may") triggers, "up to N" chosen targets, and "other" (A2 shape, opus) | tests |
+| T-0030 | Optional ("you may") triggers, "up to N" chosen targets, and "other" (A2 shape, opus) | ready |
