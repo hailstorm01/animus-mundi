@@ -4,9 +4,9 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: ready
+status: queued
 branch: m2/T-0023-replay
-depends_on: [T-0021]
+depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, hook:replay-emit]
 cards: []
 requirements: []
@@ -87,3 +87,6 @@ Cases 1 to 6 go in a new `pkg/engine/replay_test.go`, committed first as `test(T
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #19, with status `ready` (harness, sonnet).
+- 2026-10-20 lead-architect: Back to `queued`, depending on T-0024. Board directive #22 (added by the user the same day) runs before replay and moves sim and event output out of `pkg/engine`. When T-0024 is `done`, revise Shapes and Allowed Files before dispatch:
+  - `ReadEventsJSONL` and the CLI glue go to `pkg/engine/eventlog`.
+  - `Replay` stays in `engine` only if it needs the unexported emit hook and `snapshot()`. Otherwise it goes to `eventlog`, behind a minimal exported hook.
