@@ -4,7 +4,7 @@ title: Split package engine's files by responsibility (pure move)
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 1 of 4, before cardtown play)
-status: review
+status: done
 branch: m2/T-0032-split-engine-files
 depends_on: [T-0031]
 claims: [file:pkg/engine/setup.go, file:pkg/engine/zones.go, file:pkg/engine/combat.go, file:pkg/engine/targeting.go, file:pkg/engine/effects.go, file:pkg/engine/cardload.go]
@@ -104,3 +104,6 @@ No new tests. These are checks the engineer runs before and after and records in
   - `cardtown sim` (starter and stress, both policies) is byte-identical to a baseline CLI built from `rework/executable-rules`.
   1. `stack.go`'s header comment cites `FR-CBT-002`, the combat sequence, for the stack. The Resolution Stack's rule is `FR-QUE-001`, which `stack.go` already cites at `resolveStack`. Change the header to cite `FR-QUE-001`. That one comment line is the only change. Commit it as a new `refactor(engine): … (T-0032)` commit and set `review`.
 - 2026-10-21 kernel-engineer: Answer to note 1: `stack.go`'s header comment now cites `FR-QUE-001` instead of `FR-CBT-002`. That one comment line is the only change (`git diff` shows a single line in `stack.go`). `go tool task check` exits 0.
+- 2026-10-21 lead-architect: Review, round 2: **approved**, status `done`.
+  - 106a052 changes only `stack.go`'s header line, to cite `FR-QUE-001`.
+  - Round 1's checks stand: moved lines only, layout as specced, and `cardtown sim` byte-identical. `go tool task check` exits 0 again.
