@@ -306,18 +306,25 @@ func (g *Game) emitMatchStart(cfg Config, decider PlayerID, playFirst bool, asid
 			st.MulliganInsts[i] = []int{}
 		}
 	}
+	st.Revision, st.Modified = BuildInfo()
+	g.emit(Event{Kind: "match-start", Detail: fmt.Sprintf("seed %d, player %d decides, play first %t", cfg.Seed, decider, playFirst),
+		Player: -1, Start: st})
+}
+
+// BuildInfo is this binary's VCS revision and dirty flag from
+// runtime/debug.ReadBuildInfo, "" and false when absent.
+func BuildInfo() (revision string, modified bool) {
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, s := range info.Settings {
 			switch s.Key {
 			case "vcs.revision":
-				st.Revision = s.Value
+				revision = s.Value
 			case "vcs.modified":
-				st.Modified = s.Value == "true"
+				modified = s.Value == "true"
 			}
 		}
 	}
-	g.emit(Event{Kind: "match-start", Detail: fmt.Sprintf("seed %d, player %d decides, play first %t", cfg.Seed, decider, playFirst),
-		Player: -1, Start: st})
+	return revision, modified
 }
 
 // emitTurnStart carries the full-state snapshot for the turn that begins now.
