@@ -68,4 +68,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0024 | Move the sim and event-log code out of package engine (directive #22, harness, sonnet; runs before T-0023) | done |
 | T-0025 | Rule monitors in every sim game, with a coverage table: framework and three monitors (directive #23 part 1, harness, sonnet) | done |
 | T-0026 | Damage-stage and stack-placement event facts, with the damage-sequence and targeting monitors (directive #23 part 2, harness, sonnet) | done |
-| T-0027 | Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus executable (A2 cards, flash) | tests |
+| T-0027 | Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus executable (A2 cards, flash) | ready |

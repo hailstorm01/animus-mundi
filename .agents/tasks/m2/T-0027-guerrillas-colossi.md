@@ -4,7 +4,7 @@ title: Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus ex
 kind: card
 tier: flash
 wave: A2 (task 4, card task 2)
-status: tests-review
+status: ready
 branch: m2/T-0027-guerrillas-colossi
 depends_on: [T-0019]
 claims: [card:Devilhorn Guerrillas, card:Spoil Forest Colossus, card:Ironclad Colossus]
@@ -115,3 +115,26 @@ Deliberately left out:
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 2), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 34. Expected after: 32.
 - 2026-10-21 rules-test-author: Wrote 34 tests (11 Guerrillas, 11 Ironclad, 12 Spoil Forest); see Tests for the list and omissions. All fail today with `Deploy rejected: <card> needs rules the kernel does not implement yet`; every other engine test passes. gofmt, vet and `cardtown lint rules` are clean. Helpers requested: none. No open rule questions. The march-and-cycle setup in the attack tests is unrun until the cards deploy. Status set to `tests-review`.
+- 2026-10-21 lead-architect: Test review: **approved**, status `ready`.
+  - Scope: 33557b6 adds 34 `TestCard_*` tests and changes no existing test.
+    - Guerrillas: 11 tests, and Ironclad Colossus: 11, both in `cards_path_test.go`.
+    - Spoil Forest Colossus: 12, in `cards_animus_test.go`. It shares `deployPath`, `colossusCycle` and `wantOptions` from the Path file, which is fine within one package.
+    - Real cards, `ActDeploy`, targets chosen by asset.
+  - Rules: every expected outcome checks against the cited text.
+    - `FR-TRN-003`: the gate fails in Reserves, and nothing is asked.
+    - `FR-KWD-002d`: heal to a floor of 0, Armor untouched, any asset including HQs.
+    - `FR-KWD-002k` and `FR-LAY-002`: grants stack with printed Armor and persist.
+    - `FR-CBT-002`: the Step 2 attack trigger comes before combat damage, and defending doesn't trigger.
+    - `FR-KWD-002h`: Ward blocks opponents only.
+    - `FR-MOD-001` §1 and §6: the fast path and the timeout.
+  - The omissions are accepted. Spoil Forest Colossus can't take the fast path, because both HQs are always options. The Colossus timeout duplicates the Guerrillas case. Loss at resolution is pinned by the shape tests.
+  - **Satisfiability check by the reviewer** (a throwaway worktree, not committed). These definitions make all 34 pass:
+    - Guerrillas: `HookDeploy` with `ToZone: ZoneMainTheater` and `{Opposing, Unit}`, `DealDamage 2`.
+    - Spoil Forest Colossus: `HookDeploy` and `HookAttacks`, each `{}` with `Heal 2`.
+    - Ironclad Colossus: the same two hooks, each `{Kinds: Unit}` with `AddArmor 2`.
+  - **Mutations each fail the tests:**
+    - no zone gate: 2 failures;
+    - no attack triggers: 4;
+    - armor on any asset: 6;
+    - heal on units only: 2.
+  - Next: **the user runs `@kernel-engineer T-0027` in the Antigravity agent (Gemini Flash)**.
