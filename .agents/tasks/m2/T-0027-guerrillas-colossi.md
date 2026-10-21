@@ -4,7 +4,7 @@ title: Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus ex
 kind: card
 tier: flash
 wave: A2 (task 4, card task 2)
-status: in-progress
+status: review
 branch: m2/T-0027-guerrillas-colossi
 depends_on: [T-0019]
 claims: [card:Devilhorn Guerrillas, card:Spoil Forest Colossus, card:Ironclad Colossus]
@@ -106,11 +106,11 @@ Deliberately left out:
 - `pkg/engine/cards/cards.go` (remove the three names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(DevilhornGuerrillas|SpoilForestColossus|IroncladColossus)'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The executable counts rise by 3 for Path (3 Guerrillas) and 2 for Animus (2 Spoil Forest Colossus). Report the counts and the `targeting` and `damage-sequence` coverage rows, before and after, in the Log.
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The cards' tests pass: `go test ./pkg/engine -run 'TestCard_(DevilhornGuerrillas|SpoilForestColossus|IroncladColossus)'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The executable counts rise by 3 for Path (3 Guerrillas) and 2 for Animus (2 Spoil Forest Colossus). Report the counts and the `targeting` and `damage-sequence` coverage rows, before and after, in the Log.
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 2), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 34. Expected after: 32.
@@ -138,3 +138,4 @@ Deliberately left out:
     - armor on any asset: 6;
     - heal on units only: 2.
   - Next: **the user runs `@kernel-engineer T-0027` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-21 kernel-engineer: Implemented. Created ability definitions for "Devilhorn Guerrillas" (HookDeploy, ToZone: ZoneMainTheater, Target 0: Opposing Unit, Step: DealDamage 2 to slot 0) and "Ironclad Colossus" (HookDeploy and HookAttacks, Target 0: Kinds Unit, Step: AddArmor 2 to slot 0) in pkg/engine/cards/path.go; added "Spoil Forest Colossus" (HookDeploy and HookAttacks, Target 0: empty filter matching any asset, Step: Heal 2 to slot 0) in pkg/engine/cards/animus.go; removed all three from NotYetExecutable in pkg/engine/cards/cards.go while maintaining sort order. Reused HookDeploy, HookAttacks, ToZone: ZoneMainTheater, Effect.Targets, Filter, AllegianceOpposing, KindUnit, OpDealDamage, OpHeal, OpAddArmor, SubjectTarget, and Step.Target; added no new shapes or engine logic. Gates: go test ./pkg/engine -run 'TestCard_(DevilhornGuerrillas|SpoilForestColossus|IroncladColossus)' passed (34/34), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (fmt-check, vet, all tests, full lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding: P0 (Animus starter) executable cards rose from 19/50 to 21/50 (+2 Spoil Forest Colossus), P1 (Path starter) rose from 9/50 to 12/50 (+3 Devilhorn Guerrillas); targeting coverage rose from 170 (FR-TGT-001: 170, SVY-R3: 170) to 436 (FR-TGT-001: 436, SVY-R3: 436); damage-sequence coverage changed from (FR-CBT-002: 2037, FR-KWD-002b: 55, FR-KWD-002c: 49, FR-KWD-002k: 18, FR-REP-004: 4244) to (FR-CBT-002: 1913, FR-KWD-002b: 53, FR-KWD-002c: 46, FR-KWD-002k: 25, FR-REP-004: 4005). Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), 200 games: P0 wins 18.0% P1 wins 82.0% draws 0.0% first player wins 55.0%, Avg match length: 19.5 turns" (unchanged). Reviewer: check ToZone: ZoneMainTheater on Guerrillas and filter scope on the two Colossi.

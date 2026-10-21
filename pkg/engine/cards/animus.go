@@ -87,6 +87,47 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Spoil Forest Colossus": {
+		Text: []string{"Whenever this unit deploys or attacks, chosen asset heals 2."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpHeal,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+			{
+				Hook: ability.HookAttacks,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpHeal,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Spoil Forest Creeper": {
 		Text: []string{"When this unit deploys, Scratch 1."},
 		Triggers: []ability.Trigger{
