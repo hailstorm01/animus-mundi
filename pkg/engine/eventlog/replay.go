@@ -56,7 +56,7 @@ func Replay(events []engine.Event, at int, resolveDeck func(name string) (engine
 		return engine.Snapshot{}, fmt.Errorf("replay: seq %d is out of range 1..%d", at, last)
 	}
 	st := events[0].Start
-	if rev, mod := buildInfo(); st.Revision != rev && !st.Modified && !mod {
+	if rev, _ := buildInfo(); st.Revision != rev { // modified never bypasses a mismatch; it only adds the CLI warning
 		return engine.Snapshot{}, fmt.Errorf("replay: the record is from revision %q, this build is revision %q", st.Revision, rev)
 	}
 	for _, e := range events[:at] {

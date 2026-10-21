@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: changes
+status: review
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -139,3 +139,6 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
 - 2026-10-20 lead-architect: Code review: **changes** (one note). The rest is approved as is: the replay chooser checks kind, player and refs, `diff` covers every recorded field, `actionOf` rebuilds every `Action` field, the `at` 1 and 2 cases and `invalid` follow the decisions, and the test file is unchanged since 7c95b33.
   1. **Build check (`replay.go`, the `st.Revision != rev && !st.Modified && !mod` guard):** a revision mismatch must always be refused (directive #19: "Refuse … when the build revision differs from the record's"). `modified` on either side only adds the CLI warning (`ReplayWarning`); it never bypasses the mismatch. Development builds are usually dirty, so today's guard would almost never refuse. Change the guard to `st.Revision != rev`. Case 5 still passes. Fix it in a new commit, and don't touch `replay_test.go`.
   - `ReplayWarning` (exported, used by the CLI) is accepted as a small addition.
+- 2026-10-20 kernel-engineer: Answered review note 1; status `review`.
+  1. **Build check:** the guard in `replay.go` is now `st.Revision != rev`. A revision mismatch is always refused, and `modified` only drives the CLI warning (`ReplayWarning`). `replay_test.go` is untouched.
+  - **Gates:** `go tool task check` exit 0 (case 5 still passes). CLI case 7 re-run: `replay -game 3 -at 10` exits 0, its JSON equals the line's `snapshot`, and two runs are byte-identical. `-game 9` and `-at 999999` print `[ERROR]` and exit 1. A dirty-tree binary still prints the stderr `[WARN]` line, and sim and replay come from the same binary so the revisions match.
