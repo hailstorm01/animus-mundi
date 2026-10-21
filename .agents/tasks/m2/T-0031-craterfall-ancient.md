@@ -4,7 +4,7 @@ title: Make Craterfall Ancient executable
 kind: card
 tier: flash
 wave: A2 (task 8, card task 4; last of the wave)
-status: tests-review
+status: ready
 branch: m2/T-0031-craterfall-ancient
 depends_on: [T-0028, T-0030]
 claims: [card:Craterfall Ancient]
@@ -115,3 +115,16 @@ Expected today: 18 tests fail on `Deploy rejected: ... needs rules the kernel do
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 4, last of the wave), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 31. Expected after: 30.
 - 2026-10-21 rules-test-author: Wrote 20 `TestCard_CraterfallAncient_*` tests in `pkg/engine/cards_animus_test.go` (list and omissions in Tests). No helpers requested. gofmt, vet and `cardtown lint rules` are clean. 18 tests fail today with the kernel rejecting the deploy of a not-yet-executable card; the two face-down tests pass already. Every other engine test passes. No open questions. Status: `tests-review`.
+- 2026-10-21 lead-architect: Test review: **approved**, status `ready`.
+  - 29c1d48 adds 20 `TestCard_CraterfallAncient_*` tests plus the `ancientScene` and `ancientKilled` helpers, and changes no existing test.
+  - Rules content checks out against FRD 01 (`FR-CBT-002` Step 2 timing and fizzle, `FR-CBT-003` draw, `FR-TGT-002`, `FR-KWD-002h`), `SVY-R9`/`R10`/`R11`, and the task's conventions. The omissions are accepted.
+  - **Reviewer check** (the throwaway definition from the pre-check, not committed): all 20 pass, and so does `go test ./...`.
+  - **Mutations each fail tests:**
+    - not optional: 5;
+    - exactly one target: 6;
+    - no `Other`: 1;
+    - a fixed 6: 1;
+    - the death trigger on opposing assets only: 6;
+    - the death trigger skipping HQs: 4;
+    - the attack trigger on deploy instead: 18.
+  - Next: **the user runs `@kernel-engineer T-0031` in the Antigravity agent (Gemini Flash)**.
