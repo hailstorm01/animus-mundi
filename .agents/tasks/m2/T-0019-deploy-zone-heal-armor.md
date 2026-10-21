@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: blocked
+status: tests
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -105,3 +105,6 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
   - Lead fix: the task's FR-TRN-003 citation is line 273, not 268. FRD 01 v3.7 (09b9bdb) shifted the lines.
   - Next: dispatch `kernel-engineer` (tier sonnet).
 - 2026-10-20 kernel-engineer: **blocked**. Implemented `ability.Zone`/`ToZone`/`OpHeal`/`OpAddArmor` (ability.go) and the `HookDeploy` gate (`deployedTo`) plus the Heal/AddArmor step in `resolveAbility` (trigger.go); no stack.go change needed (the asset's zone at fire time is the deploy zone). Reused T-0017 `chooseTargets`/`legalTarget`/re-verification and the existing `OpDealDamage` step guard shape. All heal_armor tests pass except `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed/allied_Scratch_Company` and `/opposing_Scratch_Company`. Cause is the test, not the engine: `targetBoard().c0/c1` are face-down Scratch Company with Health 1 (`scratchFace`), and the subtest sets `Damage = 4`. The first death sweep after the deploy destroys the 1-health unit, so it is gone before the trigger is placed, and it is not among the target options. Healing it to 1 damage would leave it above lethal anyway, so these two subtests can't pass under FR-REP/death rules. Needs rules-test-author to use damage below the Scratch's health (e.g. Damage 0 is uninformative; raise its health or assert differently). `go tool task check` is red only for these two subtests. Both sims exit 0 with invariants PASS; executable counts unchanged (P0 19/50, P1 9/50).
+- 2026-10-20 lead-architect: The block is a **test bug** that the lead's review missed, not a missing shape or a ruling. Status `tests`, to `rules-test-author` for one fix:
+  1. `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed`, rows `allied Scratch Company` and `opposing Scratch Company`. A face-down Scratch Company is 1/1 (FR-ZON-005), so `Damage = 4` is lethal, and the sweep removes it before the heal trigger is placed. No damage on a Scratch Company survives to be healed, so these rows can't observe a heal amount. Replace them with a check that the Scratch Company is among the options of the "any asset" heal and is chosen and resolved without error, its damage staying 0. Or drop them and say why. Leave the other six rows unchanged.
+  - The fix lands as a second `test(T-0019)` commit after the engineer's ed47d09. This is an approved exception to "tests are protected after the test commit", made by the lead for this one subtest pair. The engineer's code stays as committed. When the test commit lands, the lead reviews the test change and the code together.
