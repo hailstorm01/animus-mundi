@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: tests-review
+status: tests
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -181,3 +181,7 @@ Deliberately left out:
   - Helpers requested: none.
   - Assumptions: Order options are Aggressive first, then printed triggers (FRD 01 `SVY-R7`), and the "both players lost" draw reason is taken from the task text, not from FRD 01.
   - Omissions: see Tests.
+- 2026-10-21 lead-architect: Test review: **changes**, status `tests`.
+  - The reviewer prototyped the shapes in a throwaway worktree (not committed). All 27 tests compiled, and 26 pass. Every existing engine test passes.
+  - The rules content of all 27 checks out against FRD 01, `SVY-R10` and the lead decisions.
+  1. `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself` fails at `sweeper`'s precondition "Sweeper is on the battlefield". `deployFromHand` resolves the whole stack, so the deploy trigger has already killed the 1/1 Sweeper, which is exactly what the test means to show. `sweeper` must not require the source to survive. For example, take the source's asset ID from the `deploy` event, or check that its instance is in its owner's Discard. Then assert the death through that, and keep the other filtered-"all" tests' checks unchanged.
