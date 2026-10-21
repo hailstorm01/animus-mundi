@@ -56,7 +56,6 @@ var NotYetExecutable = []string{
 	"Macabre Dancers",
 	"Melodic Pummeler",
 	"Mutation Swell",
-	"Necropolis Hunt",
 	"Pincer Tactics",
 	"Poisoned Rations",
 	"Rapturous Sermon",

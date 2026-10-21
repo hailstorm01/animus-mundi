@@ -107,6 +107,31 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Necropolis Hunt": {
+		Text: []string{"When this unit is killed, deal damage equal to its power to chosen non-Headquarters asset."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookKilled,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Kinds: ability.KindUnit | ability.KindStructure,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{From: ability.ValueSourcePower},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Saboteur": {
 		Text: []string{"When this unit deploys, deal 2 damage to chosen opposing non-Scratch unit and 1 damage to chosen allied unit."},
 		Triggers: []ability.Trigger{

@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: in-progress
+status: blocked
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -82,11 +82,11 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
 - [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Path executable count rises by 1, from 12/50 to 13/50. Report the number of `Necropolis Hunt` deploys in 200 games (from `-events`) in the Log.
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Path executable count rises by 1, from 12/50 to 13/50. Report the number of `Necropolis Hunt` deploys in 200 games (from `-events`) in the Log.
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 3), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 32. Expected after: 31.
@@ -101,3 +101,4 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
     - New `TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive`: the Hunt dies with +2 temporary power and deals 7.
   - Reviewer re-check with the throwaway definition (not committed): all 14 pass, and so does `go test ./pkg/engine`. A fixed `Value{N: 5}` now fails the new test.
   - Next: **the user runs `@kernel-engineer T-0029` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-21 kernel-engineer: BLOCKED on `go tool task check` (TestProgress_Case4_Coverage). Implemented Necropolis Hunt in `pkg/engine/cards/path.go` (HookKilled, Target: Kinds Unit|Structure, Step: OpDealDamage with Amount: Value{From: ValueSourcePower} to slot 0) and removed from NotYetExecutable in `pkg/engine/cards/cards.go`. Reused HookKilled, Effect.Targets, Filter, Kinds (Unit|Structure), OpDealDamage, ValueSourcePower, SubjectTarget, and Step.Target; added no new shapes or engine logic. Tests: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'` passes (14/14); `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass; `pkg/engine` passes all tests. Simulations: `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0 with all invariants holding; Path executable cards rose from 12/50 to 13/50 (+1 Necropolis Hunt); Necropolis Hunt deployed 3 times in 200 games (verified via `-events`). Default sim exits 0 (before and after: P0 18.0%, P1 82.0%, draws 0.0%, first player 55.0%, avg 19.5 turns). Block: `go tool task check` runs `go test ./...` which fails at `pkg/engine/sim/policy_test.go:141` (`TestProgress_Case4_Coverage`): "Necropolis Hunt deployed 3 times in 200 games, want at least 10". Necropolis Hunt is a 1-of card in path-starter.txt (1 copy in 50 cards) with cost 3R 3T, unlike previous 2- or 3-copy cards. Fixing the test threshold or policy requires modifying `pkg/engine/sim/policy_test.go` or `policy.go`, which are outside Allowed Files.
