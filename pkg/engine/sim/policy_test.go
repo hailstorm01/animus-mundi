@@ -119,7 +119,7 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 	counts := map[string]int{}
 	opt := SimOptions{DeckNames: simDeckNames, Policy: ProgressPolicy,
 		Observer: func(game int, s uint64) engine.Observer { return &deployCounter{counts} }}
-	if _, err := SimulateWith(decks, 200, 1, 400, opt); err != nil {
+	if _, err := SimulateWith(decks, 1000, 1, 400, opt); err != nil {
 		t.Fatal(err)
 	}
 	want := map[string]bool{}
@@ -138,7 +138,7 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 	for _, n := range names {
 		t.Logf("%-40s %d deploys", n, counts[n])
 		if counts[n] < 10 {
-			t.Errorf("%s deployed %d times in 200 games, want at least 10", n, counts[n])
+			t.Errorf("%s deployed %d times in 1000 games, want at least 10", n, counts[n])
 		}
 	}
 }

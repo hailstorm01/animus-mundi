@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: tests
+status: review
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -85,7 +85,7 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
 ## Done When
 - [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_NecropolisHunt'`
 - [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
+- [x] `go tool task check` passes
 - [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Path executable count rises by 1, from 12/50 to 13/50. Report the number of `Necropolis Hunt` deploys in 200 games (from `-events`) in the Log.
 - [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
@@ -109,3 +109,4 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
   - **Lead decision (harness parameter, recorded on directive #21):** the coverage check runs **1000 games** instead of 200, and the minimum stays at 10. A 1000-game run takes about 5 s with `-events` written.
   - **Authorized test edit:** in `pkg/engine/sim/policy_test.go`, `TestProgress_Case4_Coverage`, change the `SimulateWith` game count from 200 to 1000 and the failure message's "in 200 games" to "in 1000 games". Nothing else in that test or file changes. `rules-test-author` makes the edit in a new `test(T-0029): …` commit on top of a0ece3a. The engineer's definition (a0ece3a) is already reviewed against the test-review prototype and needs no change.
   - Then the lead re-runs the gates and reviews the task.
+- 2026-10-21 rules-test-author: Made the lead-authorized edit (directive #21a) to `TestProgress_Case4_Coverage` in `pkg/engine/sim/policy_test.go`: `SimulateWith` game count 200 to 1000, and the failure message "in 200 games" to "in 1000 games". The minimum stays at 10; nothing else changed. The test passes. Deploys in 1000 games: Chainbreaker Sneak 1730, Despoiler Larva 1898, Despoiler Worm 344, Devilhorn Guerrillas 319, Hammerhand Brigade 148, Necropolis Hunt 45 (lowest), Portent Scrivener 1903, Saboteur 424, Spoil Forest Amalgam 410, Spoil Forest Colossus 774, Spoil Forest Creeper 1662, Stormfront of Ideals 822, Unceasing Tide 1781. `go tool task check` passes (exit 0). Status set to `review`.
