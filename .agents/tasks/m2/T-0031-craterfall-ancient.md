@@ -4,7 +4,7 @@ title: Make Craterfall Ancient executable
 kind: card
 tier: flash
 wave: A2 (task 8, card task 4; last of the wave)
-status: in-progress
+status: review
 branch: m2/T-0031-craterfall-ancient
 depends_on: [T-0028, T-0030]
 claims: [card:Craterfall Ancient]
@@ -106,11 +106,11 @@ Expected today: 18 tests fail on `Deploy rejected: ... needs rules the kernel do
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_CraterfallAncient'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes, `TestProgress_Case4_Coverage` included
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Animus executable count rises by 2, from 21/50 to 23/50. Report the before and after summary lines in the Log.
-- [ ] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_CraterfallAncient'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes, `TestProgress_Case4_Coverage` included
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` exits 0. Every invariant holds and the rule monitors report no violation. The Animus executable count rises by 2, from 21/50 to 23/50. Report the before and after summary lines in the Log.
+- [x] `go run ./cmd/cardtown sim` exits 0. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 4, last of the wave), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 31. Expected after: 30.
@@ -128,3 +128,4 @@ Expected today: 18 tests fail on `Deploy rejected: ... needs rules the kernel do
     - the death trigger skipping HQs: 4;
     - the attack trigger on deploy instead: 18.
   - Next: **the user runs `@kernel-engineer T-0031` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-21 kernel-engineer: Implemented. Defined Craterfall Ancient in pkg/engine/cards/animus.go in animusDefs: Trigger 1 (HookAttacks, Optional: true, Target: {Filter: {Other: true}, UpTo: 2}, Step: OpDealDamage with Amount: Value{From: ValueSourcePower} to SubjectTarget slot 0), Trigger 2 (HookKilled, Step: OpDealDamage with Amount: Value{N: 4} to SubjectAll with empty Filter), and 2-line Text in printed order. Removed Craterfall Ancient from NotYetExecutable in pkg/engine/cards/cards.go while maintaining sort order. Reused HookAttacks, HookKilled, Optional, Filter.Other, Target.UpTo, OpDealDamage, ValueSourcePower, SubjectTarget, and SubjectAll; added no new shapes or engine logic. Gates: go test ./pkg/engine -run 'TestCard_CraterfallAncient' passed (20/20), TestDefs_MatchRulesText and TestStarterSet_Executable passed, go tool task check passed (fmt-check, vet, all tests including TestProgress_Case4_Coverage, full lint --all). Starter deck sim (ANIMUS vs PATH) exited 0 with all invariants holding: Animus executable cards rose from 21/50 to 23/50 (+2 Craterfall Ancient); before: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 51.0%, Avg match length: 32.5 turns", after: "P0 wins 88.0% P1 wins 12.0% draws 0.0% first player wins 50.0%, Avg match length: 35.5 turns". Default sim before and after: "SOULLESS (Colossus Platform) vs CONCORDIA (Enclave), 200 games: P0 wins 18.0% P1 wins 82.0% draws 0.0% first player wins 55.0%, Avg match length: 19.5 turns" (unchanged). Reviewer: check Craterfall Ancient's 2-line Text and Trigger 1 / Trigger 2 definitions in animus.go.
