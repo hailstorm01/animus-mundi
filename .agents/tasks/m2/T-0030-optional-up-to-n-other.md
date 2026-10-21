@@ -4,7 +4,7 @@ title: Optional ("you may") triggers, "up to N" chosen targets, and "other"
 kind: shape
 tier: opus
 wave: A2 (task 7, shape)
-status: review
+status: done
 branch: m2/T-0030-optional-up-to-n-other
 depends_on: [T-0028]
 claims: [field:Trigger.Optional, field:Target.UpTo, field:Filter.Other, field:StackItem.Chosen-multi]
@@ -150,10 +150,10 @@ Omissions:
 - `pkg/engine/stack.go` (the `StackItem.Chosen` field and its `place` event handling, if needed)
 
 ## Done When
-- [ ] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
-- [ ] Every existing test passes unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
+- [x] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
+- [x] Every existing test passes unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 shape, last of the wave), with status `tests` for `rules-test-author`.
@@ -206,3 +206,16 @@ Omissions:
     1. **"Up to N" with zero options:** this case returns before `choose` on purpose. `choose` would otherwise take the sole-answer fast path (`Min == Max == 0 == len(options)`) and record an `auto` decision, and the tests forbid any record.
     2. **The Optional prompt and the "up to" prompt text:** both are new wording. Tests assert only that a prompt is non-empty.
     3. **`RandomChooser` on an optional trigger** says yes or no at random, and both sim policies answer every decision with it (`sim.go`). No card uses `Optional` yet, so that sim behavior first shows up in the Craterfall Ancient card task.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: e6e1d55 touches only the three Allowed Files. No `_test.go` change after 672bbf1.
+  - Code:
+    - It matches the reviewer's test-review prototype: `accepts` for `DecideOptional` before targets, with a decline skipping placement; `UpTo` with `Min 0`, `Max min(N, options)`, and no question with zero options; `Chosen [][]int` re-verified per entity; `Other` in `matchesFilter`, with the source passed at placement, re-verification and `SubjectAll`.
+    - `UpTo == 0` keeps the old decision exactly (prompt, fast path, fallback, RNG).
+    - No new decision kind, and no card names.
+  - Engineer notes accepted:
+    - Note 1: returning before `choose` with zero options is correct. Otherwise the Min == Max == 0 fast path would record an `auto` decision.
+    - Note 3: the sim answers optional triggers at random. That is fine for coverage, and the Craterfall card task will show it.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, and `go tool task check` exits 0.
+    - For starter and stress games under both policies, `cardtown sim` is byte-identical to a baseline CLI built from `rework/executable-rules`.
+  - Wave A2's shapes are complete.
