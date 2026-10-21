@@ -114,9 +114,24 @@ type Outcome struct {
 // Event is an entry in the game log. Tests and the simulator read it; the
 // kernel never reads it back.
 type Event struct {
-	Turn   int
-	Kind   string
-	Detail string
+	Seq    int    `json:"seq"` // 1, 2, 3 ... per game, no gaps
+	Turn   int    `json:"turn"`
+	Phase  string `json:"phase"` // Phase.String()
+	Kind   string `json:"kind"`
+	Detail string `json:"detail"`
+	Player int    `json:"player"` // the acting player, -1 if none
+
+	Card   string `json:"card,omitempty"`   // card name from card data
+	Inst   int    `json:"inst,omitempty"`   // card instance ID
+	Source int    `json:"source,omitempty"` // asset ID
+	Target int    `json:"target,omitempty"` // asset ID
+	Zone   string `json:"zone,omitempty"`   // Zone.String()
+	Amount int    `json:"amount,omitempty"`
+
+	Decision *DecisionRecord `json:"decision,omitempty"`
+	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
+	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"
+	End      *MatchEnd       `json:"end,omitempty"`      // Kind "match-end"
 }
 
 // Game is the complete match state.
@@ -134,6 +149,7 @@ type Game struct {
 	rng      *rand.Rand
 	nextID   int
 	choosers [2]Chooser // per-seat answerers of Decisions; nil always times out
+	obs      Observer   // optional read-only observer of events and settled states
 
 	// lastKnown holds each asset's characteristics as it left the battlefield,
 	// for effects that still need them afterwards (FR-ZON-004).
@@ -160,10 +176,6 @@ func (g *Game) leaveBattlefield(a *Asset) {
 func (g *Game) newID() int {
 	g.nextID++
 	return g.nextID
-}
-
-func (g *Game) logf(kind, format string, args ...any) {
-	g.Log = append(g.Log, Event{Turn: g.Turn, Kind: kind, Detail: fmt.Sprintf(format, args...)})
 }
 
 // Assets returns every asset on the battlefield, HQs first.

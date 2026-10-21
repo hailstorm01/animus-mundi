@@ -45,7 +45,8 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	if combat {
 		kind = "combat"
 	}
-	g.logf("damage", "%s deals %d %s damage to %s (resist->%d, cap->%d, armor %d, health %d)",
+	g.logEvent(Event{Kind: "damage", Player: -1, Source: assetID(source), Target: target.ID, Amount: r.Committed},
+		"%s deals %d %s damage to %s (resist->%d, cap->%d, armor %d, health %d)",
 		source, raw, kind, target, r.AfterRes, r.AfterCap, r.Absorbed, r.Committed)
 	return r
 }
@@ -75,7 +76,7 @@ func (g *Game) deathSweep() {
 		g.leaveBattlefield(a)
 		owner := g.Players[a.Inst.Owner]
 		owner.Discard = append(owner.Discard, a.Inst)
-		g.logf("destroy", "%s is destroyed", a)
+		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
 	}
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
@@ -112,4 +113,5 @@ func (g *Game) end(o Outcome) {
 	} else {
 		g.logf("result", "player %d wins: %s", o.Winner, o.Reason)
 	}
+	g.emitMatchEnd(o)
 }

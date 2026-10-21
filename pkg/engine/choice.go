@@ -94,6 +94,7 @@ func (g *Game) choose(d Decision) []int {
 	// Order matters for DecideOrder, so with 2+ options there is no sole answer.
 	if !d.Hidden && !(d.Kind == DecideOrder && len(d.Options) >= 2) {
 		if picks, ok := d.soleAnswer(); ok {
+			g.emitDecision(d, picks, "auto")
 			return picks
 		}
 	}
@@ -101,16 +102,21 @@ func (g *Game) choose(d Decision) []int {
 	if int(d.Player) >= 0 && int(d.Player) < len(g.choosers) {
 		ch = g.choosers[d.Player]
 	}
+	how := "timeout"
 	if ch != nil {
 		a := ch(g, d)
 		if !a.Timeout {
 			if d.valid(a.Picks) {
+				g.emitDecision(d, a.Picks, "answer")
 				return a.Picks
 			}
 			g.logf("invalid-answer", "player %d gave an invalid answer %v to %q", d.Player, a.Picks, d.Prompt)
+			how = "invalid"
 		}
 	}
-	return g.fallbackPicks(d)
+	picks := g.fallbackPicks(d)
+	g.emitDecision(d, picks, how)
+	return picks
 }
 
 // fallbackPicks is the FR-MOD-001 §6 answer for a missing, timed-out or invalid reply.

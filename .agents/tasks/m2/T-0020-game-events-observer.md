@@ -4,7 +4,7 @@ title: Structured game events, one observer, settled notifications and match rec
 kind: harness
 tier: sonnet
 wave: none (board directive #18, part 1 of 2: engine)
-status: ready
+status: review
 branch: m2/T-0020-game-events-observer
 depends_on: []
 claims: [type:Event-fields, type:Observer, type:Snapshot, type:MatchStart, type:MatchEnd, type:DecisionRecord, func:Game.emit, config:Observer, config:DeckNames, event:action, event:decision, event:settled]
@@ -141,3 +141,9 @@ Each case becomes a test in a new `pkg/engine/events_test.go`, committed first a
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #18 (part 1 of 2, after the user chose the two-task split), with status `ready` (harness, sonnet). T-0021 (CLI) follows when this is `done`.
+- 2026-10-20 kernel-engineer: Implemented on `m2/T-0020-game-events-observer`. Tests first in commit 8157983 (they did not compile before the schema existed, which is the failing state). 9 acceptance cases are `TestEvents_Case1..9*` in `events_test.go`; cases 4 and 5 have several tests.
+  - **Changed:** new `events.go` (Observer, DecisionRecord, MatchStart, MatchEnd, Snapshot types, `emit`, `logEvent`, `logf` wrapper, `settled`, snapshot/clone, `Phase.String`, `DecisionKind.String`, emit helpers). `state.go`: tagged Event fields, `Game.obs`, old `logf` removed. `turn.go`: `Config.Observer`/`DeckNames`, mulligan names, match-start, turn-start at the top of `beginTurn`, Settled after setup, draw fields. `actions.go`: one `action` event per accepted Apply, generate/attack fields, Settled at end of Apply (EndTurn included). `choice.go`: one `decision` event per choose that returns picks (auto/answer/timeout/invalid; `invalid-answer` kept). `stack.go`: settled after each item's sweep and flush, fields on trigger/deploy/march/scratch/fizzle. `damage.go`: damage/destroy fields, `match-end` after `result`.
+  - **Snapshot fields:** `Snapshot{Turn, Phase, Active, First, Over, Draw, Winner (-1 until won), Reason, StackLen, Players [2]PlayerSnap, Theater []AssetSnap}`; `PlayerSnap{HQ *AssetSnap, Reserves []AssetSnap, Deck, Hand, Discard []CardSnap, Req, Tac}`; `CardSnap{Inst, Card}`; `AssetSnap{ID, Inst, Card (real name, also when face-down), Owner, Controller, Zone, Exhausted, FaceDown, Damage, Armor, TempPower, Power, MaxHealth}`. json tags are lowerCamel.
+  - **Choices for the reviewer:** (1) action Detail is the ActionKind name; Generate is "Generate Requisition"/"Generate Tactics" (resource in Detail), so match on the first word. (2) `DecisionKind.String()` is "Target", "Mode", "Optional", "Order". (3) The turn-start snapshot is always built, because it is part of Log and Case 8 needs Log equal with or without an observer; only the Settled snapshot is built on demand. (4) The observer gets a deep clone of each event (Decision, Start, Snapshot, End), so editing it cannot change Log. (5) match-start has Turn 0 and phase "setup"; turn-start is emitted after Phase is set to ready, so its phase is "ready". (6) `trigger`, `fizzle`, `damage`, `destroy` have Player -1; `draw` has the drawing player.
+  - **Reuse:** no existing event or snapshot code; `handCard` reused for the action event's card, `Power`/`MaxHealth` for effective values.
+  - **Gates:** `go tool task check` green (fmt, vet, all tests, lint). `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `cardtown sim` exit 0; summaries are identical to the pre-change output after sorting lines (win rates 51.0/17.0/32.0 and 66.0/30.0/4.0, average length 27.2 and 30.2 turns, end-reason counts 136/64 and 192/8). Existing tests untouched.

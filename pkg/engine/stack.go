@@ -44,6 +44,7 @@ func (g *Game) resolveStack() {
 		g.resolve(top)
 		g.deathSweep()
 		g.flushTriggers()
+		g.settled()
 	}
 }
 
@@ -64,7 +65,8 @@ func (g *Game) resolve(it *StackItem) {
 		// attacker already left the battlefield.
 		if a := g.Asset(it.Source); a != nil {
 			a.TempPower += it.Amount
-			g.logf("trigger", "%s Aggressive %d: +%d power until end of turn", a, it.Amount, it.Amount)
+			g.logEvent(Event{Kind: "trigger", Player: -1, Source: a.ID},
+				"%s Aggressive %d: +%d power until end of turn", a, it.Amount, it.Amount)
 		}
 	}
 }
@@ -77,7 +79,8 @@ func (g *Game) resolveDeploy(it *StackItem) {
 	// Armor N initializes the Armor pool on entry (FR-LAY-002, FR-KWD-002k).
 	a.Armor = c.Keywords.Armor
 	g.placeOnBattlefield(a, it.Zone)
-	g.logf("deploy", "player %d deploys %s to %s", it.Controller, a, it.Zone)
+	g.logEvent(Event{Kind: "deploy", Player: int(it.Controller), Card: c.Name, Inst: it.Inst.ID, Source: a.ID, Zone: it.Zone.String()},
+		"player %d deploys %s to %s", it.Controller, a, it.Zone)
 	g.fireDeploy(a)
 }
 
@@ -93,7 +96,8 @@ func (g *Game) resolveMarch(it *StackItem) {
 	}
 	// Damage, Armor and modifiers persist across battlefield zones (FR-ZON-004).
 	g.placeOnBattlefield(a, dest)
-	g.logf("march", "%s marches to %s", a, dest)
+	g.logEvent(Event{Kind: "march", Player: int(it.Controller), Source: a.ID, Zone: dest.String()},
+		"%s marches to %s", a, dest)
 }
 
 // scratch performs Deploy Scratch Company n times (FR-ZON-005, FR-KWD-002m).
@@ -108,7 +112,7 @@ func (g *Game) scratch(pid PlayerID, n int) {
 		// A new Scratch Company always enters Exhausted (FR-ZON-005).
 		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true, Exhausted: true}
 		g.placeOnBattlefield(a, ZoneReserves)
-		g.logf("scratch", "player %d deploys %s", pid, a)
+		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
 	}
 }
 
@@ -127,7 +131,8 @@ func (g *Game) resolveAttack(it *StackItem) {
 	def := g.Asset(it.Target)
 	// OPEN(SVY-R8): fizzles if the defender changed controller before resolution.
 	if def == nil || !combatLegalZone(def) || def.Controller == it.Controller {
-		g.logf("fizzle", "attack fizzles: the defender is gone, so there is no Berserk cleave")
+		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
+			"attack fizzles: the defender is gone, so there is no Berserk cleave")
 		return
 	}
 
@@ -139,7 +144,7 @@ func (g *Game) resolveAttack(it *StackItem) {
 		if src == nil {
 			src = g.LastKnown(it.Source)
 		}
-		g.logf("fizzle", "attack fizzles: the attacker is gone")
+		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source}, "attack fizzles: the attacker is gone")
 		g.cleave(it, src, def)
 		return
 	}
