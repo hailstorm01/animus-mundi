@@ -4,7 +4,7 @@ title: A random sim policy that plays expensive cards
 kind: harness
 tier: sonnet
 wave: none (board directive #21, ahead of the next A2 task)
-status: in-progress
+status: review
 branch: m2/T-0022-progress-policy
 depends_on: [T-0021]
 claims: [func:ProgressPolicy, field:SimOptions.Policy, cli:sim-policy]
@@ -84,3 +84,4 @@ Cases 1 to 5 go in a new `pkg/engine/policy_test.go`, committed first as `test(T
 - 2026-10-20 lead-architect: The block is a **threshold set too high by the lead**, not a policy fault. Hammerhand Brigade (2 copies, 5 Requisition) reached 22 because Path has only 9/50 executable cards, so few Reserves units generate Requisition, and Path loses 81.5% of games. The 1-copy, 5-cost Spoil Forest Amalgam reached 72 on the Animus side. A threshold of **10** keeps the case's purpose: under `RandomPolicy`, Saboteur (5) and Stormfront (5) fail it. Every current card clears it with margin, and the case won't flake as more Path cards become executable.
   - **Authorized test edit:** in `policy_test.go`, case 4's minimum goes from 25 to 10. That constant and its message are the only change, in a new `test(T-0022)` commit on top of 785ad0e. Then run `go tool task check`, diff case 6's CLI output across two runs, and set `review`.
   - Directive #21 (a) is updated on the board to match.
+- 2026-10-20 kernel-engineer: Case 4 minimum changed 25 -> 10 in policy_test.go only (comparison and message), commit f34fe2e, lead-authorized. `go tool task check` exit 0 (gofmt, vet, all tests, lint). Case 6: two runs of `sim -deck starter -p0 ANIMUS -p1 PATH` exit 0 and `cmp` byte-identical. Case 7 results as in the earlier entry. Lowest deploy count is Hammerhand Brigade at 22, above 10. Status review.
