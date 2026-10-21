@@ -688,3 +688,188 @@ func TestCard_UnceasingTide_FaceDownCopyStaysInDiscard(t *testing.T) {
 		t.Errorf("a face-down Scratch Company has no abilities, so it stays in discard and is not returned to hand (FR-ZON-004)")
 	}
 }
+
+// --- Spoil Forest Colossus ---
+// "Whenever this unit deploys or attacks, chosen asset heals 2."  Unit,
+// 6 Requisition, Reserves, 6/7. Uses deployPath, colossusCycle and wantOptions
+// from cards_path_test.go.
+
+func TestCard_SpoilForestColossus_EntersReservesAsSixSeven(t *testing.T) {
+	s := newScene(t)
+	s.script(0, Answer{Timeout: true})
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	a := assetOf(s.g, c)
+	if a == nil || a.Zone != ZoneReserves {
+		t.Fatalf("Spoil Forest Colossus is on the battlefield in Reserves after deploying")
+	}
+	if p := a.Printed(); p.Power != 6 || p.Health != 7 {
+		t.Errorf("Spoil Forest Colossus is a 6/7: got %d/%d", p.Power, p.Health)
+	}
+	if s.g.Players[0].Req != 0 {
+		t.Errorf("Spoil Forest Colossus costs 6 Requisition: %d left", s.g.Players[0].Req)
+	}
+}
+
+// Covers: FR-TGT-001, FR-KWD-002h
+func TestCard_SpoilForestColossus_DeployOffersEveryAssetOfBothSidesButOpposingWard(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.scriptRefs(0, nil, b.u0)
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "chosen asset: every asset of both sides (both Headquarters, Structures, Scratch Companies and the Colossus itself included), no opposing Ward unit",
+		s.g.Players[0].HQ, s.g.Players[1].HQ, b.u0, b.s0, b.c0, b.u1, b.s1, b.c1, assetOf(s.g, c))
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_DeployHealsChosenAssetOf2(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally.Damage = 5
+	s.scriptRefs(0, nil, ally)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	s.wantDamage(ally, 3)
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_CanHealAnOpposingAsset(t *testing.T) {
+	s := newScene(t)
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	enemy.Damage = 4
+	s.scriptRefs(0, nil, enemy)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	s.wantDamage(enemy, 2)
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_CanHealAHeadquarters(t *testing.T) {
+	s := newScene(t)
+	hq0 := s.g.Players[0].HQ
+	hq0.Damage = 6
+	s.scriptRefs(0, nil, hq0)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	s.wantDamage(hq0, 4)
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_HealNeverGoesBelowZero(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally.Damage = 1
+	s.scriptRefs(0, nil, ally)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	s.wantDamage(ally, 0)
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_HealingAnUndamagedAssetChangesNothing(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	s.scriptRefs(0, nil, ally)
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("healing an undamaged asset leaves no damage anywhere: total %d", got)
+	}
+	if assetOf(s.g, c) == nil || !s.alive(ally) {
+		t.Errorf("both assets are still on the battlefield")
+	}
+}
+
+// Covers: FR-KWD-002d
+func TestCard_SpoilForestColossus_HealLeavesArmorAlone(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 9, Keywords{Armor: 2}))
+	ally.Damage = 3
+	s.scriptRefs(0, nil, ally)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	s.wantDamage(ally, 1)
+	if ally.Armor != 2 {
+		t.Errorf("Heal removes damage and does not touch Armor: got %d, want 2 (FR-KWD-002d)", ally.Armor)
+	}
+}
+
+// Covers: FR-KWD-002h
+func TestCard_SpoilForestColossus_OpposingWardUnitCannotBeChosenButAlliedCan(t *testing.T) {
+	s := newScene(t)
+	enemyWard := s.put(1, ZoneMainTheater, unit("Warded Enemy", 1, 9, Keywords{Ward: true}))
+	enemyWard.Damage = 4
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, Keywords{Ward: true}))
+	allyWard.Damage = 4
+	s.scriptRefs(0, nil, allyWard)
+	deployPath(s, "Spoil Forest Colossus", 6)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one question: asked %d times", len(asked))
+	}
+	for _, o := range asked[0].Options {
+		if o.Ref == enemyWard.ID {
+			t.Errorf("an opposing Ward asset cannot be chosen by a triggered ability (FR-KWD-002h)")
+		}
+	}
+	s.wantDamage(allyWard, 2)
+	s.wantDamage(enemyWard, 4)
+}
+
+// Covers: FR-CBT-002, FR-KWD-002d
+func TestCard_SpoilForestColossus_HealsAgainEachTimeItAttacks(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, Keywords{}))
+	ally.Damage = 9
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	s.scriptRefs(0, nil, ally, ally, ally)
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	a := assetOf(s.g, c)
+	s.wantDamage(ally, 7)
+	colossusCycle(s, a)
+	s.do(s.attack(a, dummy))
+	s.wantDamage(ally, 5)
+	s.endTurn()
+	s.endTurn()
+	s.do(s.attack(a, dummy))
+	s.wantDamage(ally, 3)
+	if n := len(s.asked(0)); n != 3 {
+		t.Errorf("one question for the deploy and one per attack: asked %d times, want 3", n)
+	}
+}
+
+// Covers: FR-CBT-002
+func TestCard_SpoilForestColossus_AttackHealResolvesBeforeCombatDamage(t *testing.T) {
+	// The Colossus has 6 damage on 7 health. It heals itself 2 at Step 2 (4
+	// damage), then takes 2 retaliation and ends at 6. Without a Step 2 heal it
+	// would take 8 and die.
+	s := newScene(t)
+	s.script(0, Answer{Timeout: true})
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	a := assetOf(s.g, c)
+	colossusCycle(s, a)
+	a.Damage = 6
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 30, Keywords{}))
+	s.scriptRefs(0, nil, a)
+	s.do(s.attack(a, def))
+	if !s.alive(a) {
+		t.Fatalf("the Step 2 heal resolves before combat damage, so the Colossus survives 2 retaliation (FR-CBT-002)")
+	}
+	s.wantDamage(a, 6)
+}
+
+// Covers: FR-CBT-002
+func TestCard_SpoilForestColossus_DefendingDoesNotHeal(t *testing.T) {
+	s := newScene(t)
+	s.script(0, Answer{Timeout: true})
+	c := deployPath(s, "Spoil Forest Colossus", 6)
+	a := assetOf(s.g, c)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
+	s.endTurn()
+	a.Damage = 3
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	s.script(0)
+	s.do(s.attack(hitter, a))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("only attacking triggers the Colossus: asked %d times while defending", n)
+	}
+	s.wantDamage(a, 4)
+}

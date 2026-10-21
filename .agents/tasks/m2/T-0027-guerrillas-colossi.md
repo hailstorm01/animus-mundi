@@ -4,7 +4,7 @@ title: Make Devilhorn Guerrillas, Spoil Forest Colossus and Ironclad Colossus ex
 kind: card
 tier: flash
 wave: A2 (task 4, card task 2)
-status: tests
+status: tests-review
 branch: m2/T-0027-guerrillas-colossi
 depends_on: [T-0019]
 claims: [card:Devilhorn Guerrillas, card:Spoil Forest Colossus, card:Ironclad Colossus]
@@ -67,10 +67,38 @@ Three units with targeted triggers now run in the kernel. Each one is plain `abi
 - **All three:** the cards are real (`s.card`) and deployed with `ActDeploy`, never placed directly.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author. Guerrillas and Ironclad Colossus go in `pkg/engine/cards_path_test.go`, and Spoil Forest Colossus goes in `pkg/engine/cards_animus_test.go`.
+### Devilhorn Guerrillas (`pkg/engine/cards_path_test.go`, 11 tests)
+- `TestCard_DevilhornGuerrillas_EntersDeclaredZoneAsThreeFive`: 3/5, costs 4R, enters whichever zone was declared.
+- `..._MainTheaterOffersOnlyOpposingUnitsAndDeals2`: options are opposing units only (Scratch and Reserves units included; no Structures, HQs or allied units); the chosen one takes 2.
+- `..._ScratchCompanyIsALegalTargetAndDies`: a sole Scratch Company is auto-selected and destroyed.
+- `..._ReservesAsksNothingAndDamagesNothing` and `..._ReservesWithSoleOpposingUnitDoesNothing`: the zone gate (FR-TRN-003); no ask, no damage, even with a sole target.
+- `..._NoOpposingUnitStillDeploys`: only an opposing Structure and HQ exist; no ask, it deploys.
+- `..._OpposingWardUnitCannotBeChosen` and `..._OnlyOpposingUnitHasWardSoNothingHappens` (FR-KWD-002h).
+- `..._SoleOpposingTargetIsNotAsked` (FR-MOD-001 sec. 1) and `..._TimeoutDamagesExactlyOneLegalUnit` (sec. 6).
+- `..._LethalDamageDestroysTheUnit`.
+
+### Ironclad Colossus (`pkg/engine/cards_path_test.go`, 11 tests)
+- `EntersReservesAsSixSeven`; `DeployOffersAnyUnitButNotStructuresHeadquartersOrOpposingWard` (itself and Scratch included); `AlliedWardUnitIsAnOption`; `CanArmorAnOpposingUnit`.
+- `OnlyItselfOnTheBoardIsGivenArmorWithoutAsking` and `OpposingWardIsTheOnlyOtherUnitSoOnlyItselfIsChosen` (self is the sole option, fast path).
+- `GrantAddsToPrintedArmor` (printed 1 + 2 = 3), `GrantPersistsPastEndOfTurn`, `EachAttackGrantsAgainAndGrantsStack` (deploy + attack = 4, two questions).
+- `AttackGrantResolvesBeforeCombatDamage` (Step 2: choosing itself, 3 retaliation leaves 1 damage, not 3), `DefendingDoesNotTrigger`.
+
+### Spoil Forest Colossus (`pkg/engine/cards_animus_test.go`, 12 tests)
+- `EntersReservesAsSixSeven`; `DeployOffersEveryAssetOfBothSidesButOpposingWard` (both HQs, Structures, Scratch, itself).
+- `DeployHealsChosenAssetOf2`, `CanHealAnOpposingAsset`, `CanHealAHeadquarters`, `HealNeverGoesBelowZero`, `HealingAnUndamagedAssetChangesNothing`, `HealLeavesArmorAlone` (FR-KWD-002d).
+- `OpposingWardUnitCannotBeChosenButAlliedCan`.
+- `HealsAgainEachTimeItAttacks` (deploy plus two attacks, three questions).
+- `AttackHealResolvesBeforeCombatDamage` (6 damage, heals itself at Step 2, takes 2, ends at 6 and survives), `DefendingDoesNotHeal`.
+
+Attack tests deploy through `ActDeploy` into Reserves, then use `ActMarch` and two end-turns (helper `colossusCycle` in `cards_path_test.go`, shared with the animus file) so the Colossus attacks from the Main Theater, Readied.
+
+Deliberately left out:
+- Spoil Forest Colossus fast path: never reachable, because both HQs and the Colossus itself are always options.
+- Timeout fallback for the two Colossi: not in the task's observable list, and the Guerrillas and Saboteur tests already pin FR-MOD-001 sec. 6.
+- A chosen target that dies or leaves before resolution: covered by the T-0017 and T-0019 shape tests.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. The tests use only existing helpers (`scriptRefs`, `targetBoard`, `putScratch`, `assetOf`, `wantOptions`) plus local helpers defined in the test files.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -86,3 +114,4 @@ To be filled in by rules-test-author. Guerrillas and Ironclad Colossus go in `pk
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 2), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 34. Expected after: 32.
+- 2026-10-21 rules-test-author: Wrote 34 tests (11 Guerrillas, 11 Ironclad, 12 Spoil Forest); see Tests for the list and omissions. All fail today with `Deploy rejected: <card> needs rules the kernel does not implement yet`; every other engine test passes. gofmt, vet and `cardtown lint rules` are clean. Helpers requested: none. No open rule questions. The march-and-cycle setup in the attack tests is unrun until the cards deploy. Status set to `tests-review`.

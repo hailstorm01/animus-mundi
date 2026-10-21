@@ -463,3 +463,386 @@ func TestCard_ChainbreakerSappers_SoleLegalTargetIsNotAsked(t *testing.T) {
 	s.wantDamage(s.g.Players[0].HQ, 1)
 	s.wantDamage(s.g.Players[1].HQ, 0)
 }
+
+// colossusCycle marches a freshly deployed Reserves unit to the Main Theater
+// and passes a full round, so it is Readied there on its controller's next
+// turn. Deploying is not moving (FR-ZON-002), so the march is a separate action.
+func colossusCycle(s *scene, a *Asset) {
+	s.t.Helper()
+	s.do(Action{Kind: ActMarch, Player: a.Controller, Asset: a.ID})
+	if a.Zone != ZoneMainTheater {
+		s.t.Fatalf("precondition: %s marched to the Main Theater, zone %s", a, a.Zone)
+	}
+	s.endTurn()
+	s.endTurn()
+}
+
+// --- Devilhorn Guerrillas ---
+// "When this unit deploys, if it was deployed to the Main Theater, deal 2
+// damage to chosen opposing unit."  Unit, 4 Requisition, Main Theater or
+// Reserves, 3/5.
+
+// deployGuerrillas gives player 0 the real card with 4 Requisition and declares
+// its deploy into zone z. It returns the card; find the asset with assetOf.
+func deployGuerrillas(s *scene, z Zone) *Card {
+	s.t.Helper()
+	c := s.card("Devilhorn Guerrillas")
+	inst := s.give(0, c)
+	s.g.Players[0].Req = 4
+	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: z})
+	return c
+}
+
+// Control: the unit is a 3/5 that enters the zone it was deployed to.
+func TestCard_DevilhornGuerrillas_EntersDeclaredZoneAsThreeFive(t *testing.T) {
+	for _, z := range []Zone{ZoneMainTheater, ZoneReserves} {
+		s := newScene(t)
+		s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+		s.script(0)
+		c := deployGuerrillas(s, z)
+		a := assetOf(s.g, c)
+		if a == nil || a.Zone != z {
+			t.Fatalf("Guerrillas deployed to %s are on the battlefield in %s", z, z)
+		}
+		if p := a.Printed(); p.Power != 3 || p.Health != 5 {
+			t.Errorf("Guerrillas are a 3/5: got %d/%d", p.Power, p.Health)
+		}
+		if s.g.Players[0].Req != 0 {
+			t.Errorf("Guerrillas cost 4 Requisition: %d left", s.g.Players[0].Req)
+		}
+	}
+}
+
+// Covers: FR-TGT-001
+func TestCard_DevilhornGuerrillas_MainTheaterOffersOnlyOpposingUnitsAndDeals2(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	e2 := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, Keywords{}))
+	s.scriptRefs(0, nil, e2)
+	deployGuerrillas(s, ZoneMainTheater)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one opposing-unit question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "chosen opposing unit: opposing Units only, Scratch Companies included, no Structures or Headquarters, no allied units", b.u1, b.c1, e2)
+	s.wantDamage(e2, 2)
+	s.wantDamage(b.u1, 0)
+	s.wantDamage(b.c1, 0)
+}
+
+// The text has no "non-Scratch", so a Scratch Company is a legal target.
+func TestCard_DevilhornGuerrillas_ScratchCompanyIsALegalTargetAndDies(t *testing.T) {
+	s := newScene(t)
+	sc := s.putScratch(1)
+	inst := sc.Inst
+	s.script(0)
+	deployGuerrillas(s, ZoneMainTheater)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a Scratch Company is the sole legal target and is selected automatically: asked %d times", n)
+	}
+	if s.alive(sc) || !inZone(s.g.Players[1].Discard, inst) {
+		t.Errorf("2 damage destroys the 1/1 Scratch Company into its owner's Discard (FR-ZON-002)")
+	}
+}
+
+// Covers: FR-TRN-003
+func TestCard_DevilhornGuerrillas_ReservesAsksNothingAndDamagesNothing(t *testing.T) {
+	s := newScene(t)
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	s.script(0)
+	c := deployGuerrillas(s, ZoneReserves)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("deployed to Reserves the gate fails and no trigger is placed, so no target is asked: asked %d times (FR-TRN-003)", n)
+	}
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("deployed to Reserves, nothing happens: total damage %d, want 0", got)
+	}
+	s.wantDamage(e1, 0)
+	if a := assetOf(s.g, c); a == nil || a.Zone != ZoneReserves {
+		t.Errorf("the unit still deploys to Reserves")
+	}
+}
+
+// Covers: FR-TRN-003
+func TestCard_DevilhornGuerrillas_ReservesWithSoleOpposingUnitDoesNothing(t *testing.T) {
+	s := newScene(t)
+	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, Keywords{}))
+	s.script(0)
+	deployGuerrillas(s, ZoneReserves)
+	s.wantDamage(e, 0)
+}
+
+// Covers: FR-TGT-003
+func TestCard_DevilhornGuerrillas_NoOpposingUnitStillDeploys(t *testing.T) {
+	s := newScene(t)
+	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	s.script(0)
+	c := deployGuerrillas(s, ZoneMainTheater)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("no legal target: no question, asked %d times", n)
+	}
+	if a := assetOf(s.g, c); a == nil || a.Zone != ZoneMainTheater {
+		t.Fatalf("the unit still deploys to the Main Theater when the trigger has no legal target (FR-TGT-003)")
+	}
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("an opposing Structure and HQ are not units: total damage %d, want 0", got)
+	}
+	if len(s.g.Stack) != 0 {
+		t.Errorf("the stack is empty: %d items", len(s.g.Stack))
+	}
+}
+
+// Covers: FR-KWD-002h, FR-TGT-001
+func TestCard_DevilhornGuerrillas_OpposingWardUnitCannotBeChosen(t *testing.T) {
+	s := newScene(t)
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.scriptRefs(0, nil, e1)
+	deployGuerrillas(s, ZoneMainTheater)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "an opposing Ward unit cannot be chosen by a triggered ability (FR-KWD-002h)", e1, e2)
+	s.wantDamage(ward, 0)
+	s.wantDamage(e1, 2)
+}
+
+// Covers: FR-KWD-002h, FR-TGT-003
+func TestCard_DevilhornGuerrillas_OnlyOpposingUnitHasWardSoNothingHappens(t *testing.T) {
+	s := newScene(t)
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.script(0)
+	c := deployGuerrillas(s, ZoneMainTheater)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("no legal target: no question, asked %d times", n)
+	}
+	s.wantDamage(ward, 0)
+	if assetOf(s.g, c) == nil {
+		t.Errorf("the unit still deploys (FR-TGT-003)")
+	}
+}
+
+// Covers: FR-MOD-001
+func TestCard_DevilhornGuerrillas_SoleOpposingTargetIsNotAsked(t *testing.T) {
+	s := newScene(t)
+	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	s.script(0)
+	deployGuerrillas(s, ZoneMainTheater)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a single legal target is selected automatically (FR-MOD-001 sec. 1): asked %d times", n)
+	}
+	s.wantDamage(e, 2)
+}
+
+// Covers: FR-MOD-001
+func TestCard_DevilhornGuerrillas_TimeoutDamagesExactlyOneLegalUnit(t *testing.T) {
+	s := newScene(t)
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	s.script(0, Answer{Timeout: true})
+	c := deployGuerrillas(s, ZoneMainTheater)
+	if n := len(s.asked(0)); n != 1 {
+		t.Fatalf("asked %d times, want 1", n)
+	}
+	if (e1.Damage == 2) == (e2.Damage == 2) || e1.Damage+e2.Damage != 2 {
+		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage A=%d B=%d, want exactly one with 2", e1.Damage, e2.Damage)
+	}
+	s.wantDamage(st, 0)
+	s.wantDamage(assetOf(s.g, c), 0)
+}
+
+// Covers: FR-ZON-002
+func TestCard_DevilhornGuerrillas_LethalDamageDestroysTheUnit(t *testing.T) {
+	s := newScene(t)
+	e := s.put(1, ZoneMainTheater, unit("Fragile Enemy", 1, 2, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Other Enemy", 1, 5, Keywords{}))
+	inst := e.Inst
+	s.scriptRefs(0, nil, e)
+	deployGuerrillas(s, ZoneMainTheater)
+	if s.alive(e) || !inZone(s.g.Players[1].Discard, inst) {
+		t.Errorf("the 1/2 opposing unit takes 2 and is destroyed into its owner's Discard")
+	}
+	if len(s.g.Stack) != 0 {
+		t.Errorf("the stack is empty after resolution: %d items", len(s.g.Stack))
+	}
+}
+
+// --- Ironclad Colossus ---
+// "Whenever this unit deploys or attacks, chosen unit gains 2 armor."  Unit,
+// 6 Requisition, Reserves, 6/7.
+
+func TestCard_IroncladColossus_EntersReservesAsSixSeven(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	a := assetOf(s.g, c)
+	if a == nil || a.Zone != ZoneReserves {
+		t.Fatalf("Ironclad Colossus is on the battlefield in Reserves after deploying")
+	}
+	if p := a.Printed(); p.Power != 6 || p.Health != 7 {
+		t.Errorf("Ironclad Colossus is a 6/7: got %d/%d", p.Power, p.Health)
+	}
+	if s.g.Players[0].Req != 0 {
+		t.Errorf("Ironclad Colossus costs 6 Requisition: %d left", s.g.Players[0].Req)
+	}
+}
+
+// Covers: FR-TGT-001, FR-KWD-002h
+func TestCard_IroncladColossus_DeployOffersAnyUnitButNotStructuresHeadquartersOrOpposingWard(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.scriptRefs(0, nil, b.u0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "chosen unit: every Unit of either side (Scratch Companies and the Colossus itself included), no Structures, Headquarters or opposing Ward units", b.u0, b.c0, b.u1, b.c1, assetOf(s.g, c))
+	if b.u0.Armor != 2 {
+		t.Errorf("the chosen unit gains 2 Armor: got %d", b.u0.Armor)
+	}
+}
+
+// Covers: FR-KWD-002h
+func TestCard_IroncladColossus_AlliedWardUnitIsAnOption(t *testing.T) {
+	s := newScene(t)
+	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	s.scriptRefs(0, nil, ward)
+	deployPath(s, "Ironclad Colossus", 6)
+	if ward.Armor != 2 {
+		t.Errorf("Ward restricts only opponents, so the controller's Ward unit can be chosen (FR-KWD-002h): Armor %d, want 2", ward.Armor)
+	}
+}
+
+func TestCard_IroncladColossus_CanArmorAnOpposingUnit(t *testing.T) {
+	s := newScene(t)
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.scriptRefs(0, nil, e)
+	deployPath(s, "Ironclad Colossus", 6)
+	if e.Armor != 2 {
+		t.Errorf("the chosen unit may be opposing: Armor %d, want 2", e.Armor)
+	}
+}
+
+// Covers: FR-MOD-001
+func TestCard_IroncladColossus_OnlyItselfOnTheBoardIsGivenArmorWithoutAsking(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("the Colossus is the sole legal target and is selected automatically (FR-MOD-001 sec. 1): asked %d times", n)
+	}
+	if a := assetOf(s.g, c); a == nil || a.Armor != 2 {
+		t.Errorf("the Colossus gains 2 Armor")
+	}
+}
+
+// Covers: FR-KWD-002h, FR-TGT-003
+func TestCard_IroncladColossus_OpposingWardIsTheOnlyOtherUnitSoOnlyItselfIsChosen(t *testing.T) {
+	s := newScene(t)
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.script(0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("asked %d times, want 0", n)
+	}
+	if ward.Armor != 0 {
+		t.Errorf("an opposing Ward unit cannot be chosen: Armor %d", ward.Armor)
+	}
+	if a := assetOf(s.g, c); a == nil || a.Armor != 2 {
+		t.Errorf("the Colossus gains 2 Armor")
+	}
+}
+
+// Covers: FR-KWD-002k, FR-LAY-002
+func TestCard_IroncladColossus_GrantAddsToPrintedArmor(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 5, Keywords{Armor: 1}))
+	s.scriptRefs(0, nil, ally)
+	deployPath(s, "Ironclad Colossus", 6)
+	if ally.Armor != 3 {
+		t.Errorf("printed Armor 1 plus a grant of 2 is one pool of 3: got %d (FR-KWD-002k)", ally.Armor)
+	}
+}
+
+// Covers: FR-LAY-002
+func TestCard_IroncladColossus_GrantPersistsPastEndOfTurn(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.scriptRefs(0, nil, ally)
+	deployPath(s, "Ironclad Colossus", 6)
+	s.endTurn()
+	s.endTurn()
+	if ally.Armor != 2 {
+		t.Errorf("granted Armor never expires at end of turn: got %d after a full round, want 2 (FR-KWD-002k)", ally.Armor)
+	}
+}
+
+// Covers: FR-CBT-002
+func TestCard_IroncladColossus_EachAttackGrantsAgainAndGrantsStack(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, Keywords{}))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	s.scriptRefs(0, nil, ally, ally)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	a := assetOf(s.g, c)
+	colossusCycle(s, a)
+	if ally.Armor != 2 {
+		t.Fatalf("precondition: the deploy grant landed: Armor %d", ally.Armor)
+	}
+	s.do(s.attack(a, dummy))
+	if ally.Armor != 4 {
+		t.Errorf("attacking grants 2 more Armor, stacking with the deploy grant: got %d, want 4", ally.Armor)
+	}
+	if n := len(s.asked(0)); n != 2 {
+		t.Errorf("one question for the deploy and one for the attack: asked %d times, want 2", n)
+	}
+}
+
+// Covers: FR-CBT-002, FR-REP-004
+func TestCard_IroncladColossus_AttackGrantResolvesBeforeCombatDamage(t *testing.T) {
+	// The Colossus chooses itself at Step 2 and gains 2 Armor. Retaliation of 3
+	// then loses 2 to Armor 1-for-1 and 1 reaches health. Without a Step 2
+	// grant, 3 would reach health.
+	s := newScene(t)
+	s.script(0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	a := assetOf(s.g, c)
+	colossusCycle(s, a)
+	a.Armor = 0
+	def := s.put(1, ZoneMainTheater, unit("Defender", 3, 30, Keywords{}))
+	s.scriptRefs(0, nil, a)
+	s.do(s.attack(a, def))
+	s.wantDamage(a, 1)
+	if a.Armor != 0 {
+		t.Errorf("the 2 granted Armor was consumed by retaliation: Armor %d, want 0 (FR-REP-004 Stage 4)", a.Armor)
+	}
+}
+
+// Covers: FR-CBT-002
+func TestCard_IroncladColossus_DefendingDoesNotTrigger(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	c := deployPath(s, "Ironclad Colossus", 6)
+	a := assetOf(s.g, c)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
+	s.endTurn()
+	a.Armor = 0
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	s.do(s.attack(hitter, a))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("only attacking triggers the Colossus: asked %d times while defending", n)
+	}
+	if a.Armor != 0 {
+		t.Errorf("no Armor is granted when defending: got %d", a.Armor)
+	}
+	s.wantDamage(a, 1)
+}
