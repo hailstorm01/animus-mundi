@@ -4,7 +4,7 @@ title: Damage-stage and stack-placement event facts, with the damage-sequence an
 kind: harness
 tier: sonnet
 wave: none (board directive #23, part 2 of 2)
-status: in-progress
+status: review
 branch: m2/T-0026-damage-and-targeting-monitors
 depends_on: [T-0025]
 claims: [event:place, field:Event.Raw, field:Event.Combat, field:Event.Armor, field:Event.Absorbed, field:combat-event.Source-Target, monitor:damage-sequence, monitor:targeting]
@@ -127,3 +127,15 @@ If a monitor reports a violation in case 4, 6 or 7, it may be a real engine bug.
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #23 (part 2 of 2), with status `ready` (harness, sonnet). It has one recorded file-count exception, the ADR-0005 addendum.
+- 2026-10-21 kernel-engineer: Implemented. Commits: `test(T-0026)` first (failed to build: unknown fields `Raw`/`Combat`, as intended), then the feature commit.
+  - **Reuse:** the T-0025 framework (`Monitors`, `monitorRules`, `pendingCheck`, `find`, `card`, `fail`, `count`), `scene.deployTargeter`/`dmgTo`/`tgt` in the engine tests, `feed`/`baseSnap`/`wantViolation` in the sim tests. `logEvent` for the new events. No second implementation of anything.
+  - **Engine diff:** `Event` gains `Raw/Combat/Armor/Absorbed` (omitempty); `dealDamage` fills them (Armor read before Stage 4); `push` emits one `place` event per item (Deploy and ability items carry Card and Inst; Attack carries Target and Secondary; Amount is the stack depth); the `combat` event gets Source and Target via `logEvent` with the same Detail. ADR-0005 addendum and Consequences bullet edited.
+  - **Monitors:** `damage-sequence` and `targeting` added to `monitorRules` and `Monitors`. Violation Seq for targeting is the Target decision's Seq (the thing chosen at the wrong time), found when the next non-decision event arrives; a Ward offer is reported immediately. Damage target characteristics: the last settled snapshot, else the next one, else the check is skipped. The armor pool is the snapshot Armor less `Absorbed` of earlier damage events on that asset since that snapshot.
+  - **Placement of acceptance tests:** case 2's 20-game sweep needs `SimulateWith`, which the engine package cannot import, so it is `TestDamage_Case2_PlaceFollowsEveryAction` in `monitor_damage_test.go`; the scene half of case 2 is in `event_facts_test.go`.
+  - **Verification:** `go tool task check` passes (all tests, gofmt, vet, lint). No existing test needed a change except the authorized edit to `TestMonitor_Case4_Coverage`.
+  - **Case 6 (baseline CLI built from `rework/executable-rules` in a worktree, since removed):** `sim` with `-monitors=false` for `-deck starter -p0 ANIMUS -p1 PATH` and bare, under `-policy random` and `progress`: all four byte-identical to the baseline. With monitors on, `diff` shows only added lines (0 removed) and two runs of the new binary are byte-identical.
+  - **Case 7 (`-games 20 -events`, same four combinations):** the `"kind"` sequence of the new file with `place` lines removed equals the baseline's in all four (4250/7318/7285/8260 events, 706/1363/1102/1553 place lines); two runs of the new binary are byte-identical. `-log -seed 7` prints lines like `place: player 0 places Attack on the stack`.
+  - **New coverage rows, starter decks (200 games, progress):** damage-sequence FR-CBT-002 2037, FR-KWD-002b 55, FR-KWD-002c 49, FR-KWD-002k 18, FR-REP-004 4244; targeting FR-KWD-002h not reached, FR-TGT-001 170, SVY-R3 170.
+  - **New coverage rows, bare stress decks (SOULLESS vs CONCORDIA, 200 games, random policy):** damage-sequence FR-CBT-002 3506, FR-KWD-002b 21, FR-KWD-002c 495, FR-KWD-002k 489, FR-REP-004 7012; targeting all three not reached (progress policy and starter-deck rows are in the commands above).
+  - **No violation** in any real game (cases 4, 6, 7).
+  - **Look closely at:** the Seq choice for targeting violations; the combat-pair rule (a non-combat damage event inside an open exchange is a violation, and an exchange left open is not flagged); `FR-KWD-002k` is counted when the event's own `Armor` > 0 (not the printed keyword).
