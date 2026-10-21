@@ -27,12 +27,16 @@ type Config struct {
 	// Choosers answer each seat's Decisions, indexed by PlayerID. A nil
 	// entry means that seat always times out (FR-MOD-001 §6).
 	Choosers [2]Chooser
+
+	Observer  Observer  // optional; nil means only Game.Log
+	DeckNames [2]string // optional; recorded in MatchStart
 }
 
 // NewGame runs match setup and returns the game at the start of Turn 1's Main Phase.
 func NewGame(cfg Config) (*Game, error) {
 	g := &Game{rng: rand.New(rand.NewPCG(cfg.Seed, cfg.Seed^0x9E3779B97F4A7C15))}
 	g.choosers = cfg.Choosers
+	g.obs = cfg.Observer
 	for i := range g.Players {
 		pid := PlayerID(i)
 		deck := cfg.Decks[i]
@@ -66,6 +70,7 @@ func NewGame(cfg Config) (*Game, error) {
 			g.moveTopToHand(p)
 		}
 	}
+	var setAside [2][]string
 	for _, p := range g.Players {
 		if cfg.Mulligan == nil {
 			continue
@@ -75,6 +80,7 @@ func NewGame(cfg Config) (*Game, error) {
 			if inst := handCard(p, id); inst != nil {
 				p.Hand = remove(p.Hand, inst)
 				aside = append(aside, inst)
+				setAside[p.ID] = append(setAside[p.ID], inst.Card.Name)
 			}
 		}
 		for range aside {
@@ -84,9 +90,12 @@ func NewGame(cfg Config) (*Game, error) {
 		g.shuffle(p)
 	}
 
+	g.emitMatchStart(cfg, decider, playFirst, setAside)
+
 	g.Active = g.FirstPlayer
 	g.Turn = 1
 	g.beginTurn()
+	g.settled()
 	return g, nil
 }
 
@@ -104,6 +113,7 @@ func (g *Game) moveTopToHand(p *Player) {
 // beginTurn runs the Ready and Draw phases, then opens the Main Phase (FR-TRN-001).
 func (g *Game) beginTurn() {
 	g.Phase = PhaseReady
+	g.emitTurnStart()
 	for _, a := range g.Assets() {
 		if a.Controller == g.Active {
 			a.Exhausted = false
@@ -129,7 +139,7 @@ func (g *Game) draw(pid PlayerID, n int) {
 	for range n {
 		if len(p.Deck) == 0 {
 			p.DrewFromEmpty = true
-			g.logf("draw", "player %d must draw from an empty deck", pid)
+			g.logEvent(Event{Kind: "draw", Player: int(pid)}, "player %d must draw from an empty deck", pid)
 			return
 		}
 		g.moveTopToHand(p)

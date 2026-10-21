@@ -55,17 +55,21 @@ func (g *Game) Apply(a Action) error {
 	if err := g.check(a); err != nil {
 		return err
 	}
+	g.emitAction(a)
 	p := g.Players[a.Player]
 	switch a.Kind {
 	case ActGenerate:
 		as := g.Asset(a.Asset)
 		as.Exhausted = true
+		yield := as.Printed().TacYield
 		if a.Resource == Requisition {
-			p.Req += as.Printed().ReqYield
+			yield = as.Printed().ReqYield
+			p.Req += yield
 		} else {
-			p.Tac += as.Printed().TacYield
+			p.Tac += yield
 		}
-		g.logf("generate", "%s exhausts for resources (R%d T%d)", as, p.Req, p.Tac)
+		g.logEvent(Event{Kind: "generate", Player: int(a.Player), Source: as.ID, Amount: yield},
+			"%s exhausts for resources (R%d T%d)", as, p.Req, p.Tac)
 	case ActConvert:
 		p.Req -= 2
 		p.Tac++
@@ -86,9 +90,11 @@ func (g *Game) Apply(a Action) error {
 		g.push(&StackItem{Kind: StackScratch, Controller: a.Player, Source: p.HQ.ID})
 	case ActEndTurn:
 		g.endTurn()
+		g.settled()
 		return nil
 	}
 	g.resolveStack()
+	g.settled()
 	return nil
 }
 
@@ -97,7 +103,8 @@ func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
 	att.Exhausted = true
 	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target, Secondary: a.Secondary})
-	g.logf("attack", "%s attacks %s", att, g.Asset(a.Target))
+	g.logEvent(Event{Kind: "attack", Player: int(a.Player), Source: att.ID, Target: a.Target},
+		"%s attacks %s", att, g.Asset(a.Target))
 	// Step 2: attack triggers enqueue on top of the Attack action.
 	g.fireAttacks(att)
 	g.flushTriggers()
