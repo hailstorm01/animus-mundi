@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: ready
+status: in-progress
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
