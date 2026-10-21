@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: tests-review
+status: done
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -87,9 +87,9 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
 - `pkg/engine/stack.go` (only if the deploy zone must be passed to `fireDeploy`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes.
+- [x] The listed tests pass: `go test ./pkg/engine -run '<regex from the Tests section>'`
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0 with every invariant holding. No executable count changes.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 task 3), with status `tests` for `rules-test-author`.
@@ -109,3 +109,14 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
   1. `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed`, rows `allied Scratch Company` and `opposing Scratch Company`. A face-down Scratch Company is 1/1 (FR-ZON-005), so `Damage = 4` is lethal, and the sweep removes it before the heal trigger is placed. No damage on a Scratch Company survives to be healed, so these rows can't observe a heal amount. Replace them with a check that the Scratch Company is among the options of the "any asset" heal and is chosen and resolved without error, its damage staying 0. Or drop them and say why. Leave the other six rows unchanged.
   - The fix lands as a second `test(T-0019)` commit after the engineer's ed47d09. This is an approved exception to "tests are protected after the test commit", made by the lead for this one subtest pair. The engineer's code stays as committed. When the test commit lands, the lead reviews the test change and the code together.
 - 2026-10-20 rules-test-author: Fixed the two Scratch Company rows of `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed` (approved exception). They no longer set Damage; they check the Scratch Company is among the options of the any-asset heal, is chosen and resolves cleanly, stays on the battlefield with Damage 0 and total damage 0. The other six rows and all other tests are unchanged. Status tests-review.
+- 2026-10-20 lead-architect: Test fix and code review: **approved**, status `done`.
+  - The test fix 61a0c52 touches only the two Scratch Company rows. They now check that the Scratch Company is an option, is chosen, resolves cleanly and stays at 0 damage, which is what FR-ZON-005's 1/1 allows. The other rows and tests are unchanged.
+  - Code (ed47d09) changes only `ability.go` and `trigger.go`.
+    - `fireHook` skips a `HookDeploy` trigger whose `ToZone` doesn't match the asset's current zone (`deployedTo`).
+    - `OpHeal` is `Damage = max(0, Damage-N)` and `OpAddArmor` is `Armor += N`, both on T-0017's re-verified slots.
+    - There are no card names and no new types beyond the Vocabulary.
+  - Minor, no change requested: the slot guard (`Subject == SubjectTarget`, bounds, nil) is now repeated in two `case` arms. Fold it into a helper when the next targeted op lands (A2 task 4).
+  - Gates re-run by the reviewer:
+    - 27 heal/armor/gate results pass, and `go tool task check` exits 0.
+    - The sorted starter-sim and default-sim summaries are identical to `rework/executable-rules`, and every invariant holds.
+  - Process note: the lead's first test review missed the lethal-damage setup, so the engineer correctly stopped at `blocked` instead of editing a protected test.
