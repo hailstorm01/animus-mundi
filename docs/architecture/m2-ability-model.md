@@ -14,13 +14,15 @@ Every Animus and Path card executes in `pkg/engine` as a Go value built from a s
 
 ## Boundaries
 
-Three packages. Imports go one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle.
+Five packages. The rules core imports one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle. Two driver packages sit on top of `engine` and are never imported by it (board directive #22, T-0024): `sim` and `eventlog` each import `engine` only, and `cmd/cardtown` imports all of them.
 
 | Package | Holds | Card names? | Changed by |
 | :--- | :--- | :--- | :--- |
 | `pkg/engine/ability` | The shape vocabulary: plain data types and enums with no game logic. Its `go doc` output is the M2 write-up. | No (fenced) | `shape` tasks |
 | `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go`, `path.go` and `headquarters.go`. `cards.go` holds the `Defs` map and the `NotYetExecutable` allowlist. | Yes (only place) | `card` tasks |
 | `pkg/engine` | The interpreter: events, trigger collection, stack, choices, layers, replacements. | No (fenced) | `shape` tasks |
+| `pkg/engine/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`. `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
+| `pkg/engine/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
 
