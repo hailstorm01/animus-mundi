@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 // Card tests for Animus cards. Each is written from the card's CSV rules text
 // in data/cards/units-and-structures-animus.csv and loads the real card with
@@ -872,4 +875,332 @@ func TestCard_SpoilForestColossus_DefendingDoesNotHeal(t *testing.T) {
 		t.Errorf("only attacking triggers the Colossus: asked %d times while defending", n)
 	}
 	s.wantDamage(a, 4)
+}
+
+// --- Craterfall Ancient ---
+// "Whenever this unit attacks, you may deal damage equal to its power to each
+// of up to 2 other chosen assets."  "When this unit is killed, deal 4 damage to
+// all assets."  Unit, 10 Requisition, Reserves, 6/13. Rulings SVY-R9 (you may),
+// SVY-R10 (its power), SVY-R11 (up to N, distinct). Uses deployPath,
+// colossusCycle and wantOptions from cards_path_test.go, and scriptPlan, pick,
+// yes, no, wantDealt and kindsOf from optional_upto_test.go.
+
+// ancientBoard is the battlefield around the Ancient. Every asset has 20 or
+// more health, so nothing dies in a sweep or from the Ancient's 6 or 8 damage.
+type ancientBoard struct {
+	ally, enemy, enemy2, ward, dummy *Asset
+}
+
+// ancientScene puts the board on the battlefield, deploys the real Ancient for
+// 10 Requisition (a question on deploy fails the test) and cycles it to the Main
+// Theater, Readied, with player 0 to act. Player 0 then has an empty plan.
+func ancientScene(t *testing.T) (*scene, *Asset, ancientBoard) {
+	t.Helper()
+	s := newScene(t)
+	b := ancientBoard{
+		ally:   s.put(0, ZoneMainTheater, unit("Ally", 0, 20, Keywords{})),
+		enemy:  s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{})),
+		enemy2: s.put(1, ZoneMainTheater, unit("Enemy Two", 0, 20, Keywords{})),
+		ward:   s.put(1, ZoneMainTheater, unit("Warded", 0, 20, Keywords{Ward: true})),
+		dummy:  s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{})),
+	}
+	s.scriptPlan(0, nil, nil)
+	c := deployPath(s, "Craterfall Ancient", 10)
+	anc := assetOf(s.g, c)
+	if anc == nil {
+		t.Fatalf("precondition: the Ancient is on the battlefield after deploying")
+	}
+	colossusCycle(s, anc)
+	s.scriptPlan(0, nil, nil)
+	return s, anc, b
+}
+
+// ancientKilled passes to player 1's turn, where a 13-power Hitter destroys the
+// Readied Ancient, and returns the Hitter. The Hitter has 30 health, so it
+// survives the 6 retaliation and the 4 of the death trigger.
+func ancientKilled(s *scene, anc *Asset) *Asset {
+	s.t.Helper()
+	s.endTurn()
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 13, 30, Keywords{}))
+	s.do(s.attack(hit, anc))
+	if s.alive(anc) {
+		s.t.Fatalf("precondition: the Ancient is destroyed")
+	}
+	return hit
+}
+
+func TestCard_CraterfallAncient_EntersReservesAsSixThirteenForTenRequisition(t *testing.T) {
+	s := newScene(t)
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	s.scriptPlan(0, nil, nil)
+	c := deployPath(s, "Craterfall Ancient", 10)
+	a := assetOf(s.g, c)
+	if a == nil || a.Zone != ZoneReserves {
+		t.Fatalf("Craterfall Ancient is on the battlefield in Reserves after deploying")
+	}
+	if p := a.Printed(); p.Power != 6 || p.Health != 13 {
+		t.Errorf("Craterfall Ancient is a 6/13: got %d/%d", p.Power, p.Health)
+	}
+	if s.g.Players[0].Req != 0 {
+		t.Errorf("Craterfall Ancient costs 10 Requisition: %d left", s.g.Players[0].Req)
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("deploying asks no question, the triggers are on attack and death: asked %d times", n)
+	}
+	if got := nonCombatDamage(s.g.Log); len(got) != 0 {
+		t.Errorf("deploying deals no damage: %d damage events", len(got))
+	}
+}
+
+// Covers: FR-CBT-002, FR-TGT-001, FR-KWD-002h
+func TestCard_CraterfallAncient_AttackAsksMayThenOffersEveryOtherAssetButOpposingWard(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy))
+	s.do(s.attack(anc, b.dummy))
+	asked := s.asked(0)
+	if want := []DecisionKind{DecideOptional, DecideTarget}; !reflect.DeepEqual(kindsOf(asked), want) {
+		t.Fatalf("'you may' is asked first, then the targets: %v (SVY-R9)", kindsOf(asked))
+	}
+	if d := asked[1]; d.Min != 0 || d.Max != 2 {
+		t.Errorf("up to 2 targets: Min 0, Max 2, got Min %d, Max %d (SVY-R11)", d.Min, d.Max)
+	}
+	wantOptions(t, asked[1], "other chosen assets: both Headquarters and every asset of both sides, not the Ancient, not the opposing Ward unit",
+		s.g.Players[0].HQ, s.g.Players[1].HQ, b.ally, b.enemy, b.enemy2, b.dummy)
+}
+
+// Covers: SVY-R9, SVY-R11
+func TestCard_CraterfallAncient_YesDealsPowerToEachOfTwoAssetsOwnHeadquartersIncluded(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	hq0 := s.g.Players[0].HQ
+	s.scriptPlan(0, nil, []Answer{yes}, pick(hq0, b.enemy2))
+	s.do(s.attack(anc, b.dummy))
+	wantDealt(t, s.g, hq0, 1, 6, "the Ancient's own Headquarters is a legal choice and takes its power, 6")
+	wantDealt(t, s.g, b.enemy2, 1, 6, "the second chosen asset takes 6")
+	wantDealt(t, s.g, b.enemy, 0, 0, "an unchosen asset takes none")
+	wantDealt(t, s.g, b.ward, 0, 0, "an unchosen Ward unit takes none")
+	wantDealt(t, s.g, anc, 0, 0, "the Ancient itself is not a legal choice")
+	if got := len(nonCombatDamage(s.g.Log)); got != 2 {
+		t.Errorf("two chosen assets are two non-combat damage instances: %d", got)
+	}
+	for _, e := range nonCombatDamage(s.g.Log) {
+		if e.Source != anc.ID {
+			t.Errorf("the damage comes from the Ancient: source %d, want %d", e.Source, anc.ID)
+		}
+	}
+}
+
+// Covers: SVY-R9, SVY-R11
+func TestCard_CraterfallAncient_YesCanHitTheOpposingHeadquartersAndAnAlliedUnit(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	hq1 := s.g.Players[1].HQ
+	s.scriptPlan(0, nil, []Answer{yes}, pick(hq1, b.ally))
+	s.do(s.attack(anc, b.dummy))
+	wantDealt(t, s.g, hq1, 1, 6, "the opposing Headquarters takes 6")
+	wantDealt(t, s.g, b.ally, 1, 6, "an allied unit takes 6: the targets are not limited to opposing assets")
+}
+
+// Covers: SVY-R11
+func TestCard_CraterfallAncient_YesWithOneAssetDealsOneInstance(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy))
+	s.do(s.attack(anc, b.dummy))
+	wantDealt(t, s.g, b.enemy, 1, 6, "the one chosen asset takes 6")
+	if got := len(nonCombatDamage(s.g.Log)); got != 1 {
+		t.Errorf("up to 2 allows choosing 1, which is one instance: %d", got)
+	}
+}
+
+// Covers: SVY-R11
+func TestCard_CraterfallAncient_YesWithZeroAssetsDamagesNothing(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{yes}, pick())
+	s.do(s.attack(anc, b.dummy))
+	wantNoNonCombatDamage(t, s.g, "up to 2 allows choosing none")
+	wantNoInvalid(t, s.g)
+}
+
+// Covers: SVY-R9
+func TestCard_CraterfallAncient_NoDealsNothingAndAsksNoTarget(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{no})
+	s.do(s.attack(anc, b.dummy))
+	wantNoNonCombatDamage(t, s.g, "the 'you may' was declined")
+	if want := []DecisionKind{DecideOptional}; !reflect.DeepEqual(kindsOf(s.asked(0)), want) {
+		t.Errorf("a declined trigger asks no target: %v", kindsOf(s.asked(0)))
+	}
+}
+
+// Covers: SVY-R9
+func TestCard_CraterfallAncient_TimeoutOnTheQuestionDeclines(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{{Timeout: true}})
+	s.do(s.attack(anc, b.dummy))
+	wantNoNonCombatDamage(t, s.g, "a timeout on 'you may' declines")
+	if want := []DecisionKind{DecideOptional}; !reflect.DeepEqual(kindsOf(s.asked(0)), want) {
+		t.Errorf("a timed-out trigger asks no target: %v", kindsOf(s.asked(0)))
+	}
+}
+
+// Covers: SVY-R10
+func TestCard_CraterfallAncient_DamageEqualsEffectivePowerAtResolution(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	anc.TempPower = 2 // stands in for an until-end-of-turn bonus, active this turn
+	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy, b.enemy2))
+	s.do(s.attack(anc, b.dummy))
+	wantDealt(t, s.g, b.enemy, 1, 8, "power 6 plus 2 temporary is 8, not the printed 6")
+	wantDealt(t, s.g, b.enemy2, 1, 8, "each chosen asset takes the same 8")
+}
+
+// Covers: FR-CBT-002
+func TestCard_CraterfallAncient_AttackDamageResolvesBeforeCombatSoAKilledDefenderFizzlesTheAttack(t *testing.T) {
+	s, anc, _ := ancientScene(t)
+	frail := s.put(1, ZoneMainTheater, unit("Frail Defender", 5, 6, Keywords{}))
+	s.scriptPlan(0, nil, []Answer{yes}, pick(frail))
+	s.do(s.attack(anc, frail))
+	if s.alive(frail) {
+		t.Fatalf("6 damage at Step 2 destroys the 6-health defender")
+	}
+	s.wantDamage(anc, 0) // a destroyed defender deals no retaliation (FR-CBT-002)
+}
+
+// Covers: FR-CBT-002
+func TestCard_CraterfallAncient_AsksAgainOnEachAttack(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	s.scriptPlan(0, nil, []Answer{yes, yes}, pick(b.enemy), pick(b.enemy))
+	s.do(s.attack(anc, b.dummy))
+	s.endTurn()
+	s.endTurn()
+	s.do(s.attack(anc, b.dummy))
+	wantDealt(t, s.g, b.enemy, 2, 12, "each attack fires the trigger once")
+	if n := len(s.asked(0)); n != 4 {
+		t.Errorf("one 'you may' and one target question per attack: asked %d times, want 4", n)
+	}
+}
+
+// Covers: FR-CBT-002
+func TestCard_CraterfallAncient_DefendingDoesNotTrigger(t *testing.T) {
+	s, anc, _ := ancientScene(t)
+	s.endTurn()
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	s.do(s.attack(hit, anc))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("only attacking triggers the Ancient: asked %d times while defending", n)
+	}
+	wantNoNonCombatDamage(t, s.g, "the attack trigger does not fire when defending")
+}
+
+// Covers: FR-ZON-004
+func TestCard_CraterfallAncient_FaceDownCopyAttackingAsksNothing(t *testing.T) {
+	s := newScene(t)
+	fd := s.put(0, ZoneMainTheater, s.card("Craterfall Ancient"))
+	fd.FaceDown = true
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	s.scriptPlan(0, nil, nil)
+	s.do(s.attack(fd, dummy))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a face-down Scratch Company has no printed trigger: asked %d times (FR-ZON-004)", n)
+	}
+	wantNoNonCombatDamage(t, s.g, "a face-down copy fires no attack trigger")
+}
+
+func TestCard_CraterfallAncient_DeathDealsFourToEveryAssetOfBothSidesWithoutAQuestion(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	hit := ancientKilled(s, anc)
+	hq0, hq1 := s.g.Players[0].HQ, s.g.Players[1].HQ
+	for _, a := range []*Asset{hq0, hq1, b.ally, b.enemy, b.enemy2, b.dummy, hit} {
+		wantDealt(t, s.g, a, 1, 4, "every asset on the battlefield takes one 4-damage instance, allied, opposing and Headquarters")
+	}
+	wantDealt(t, s.g, b.ward, 1, 4, "'all assets' is not a target, so an opposing Ward unit still takes 4 (FR-TGT-002)")
+	if got := len(nonCombatDamage(s.g.Log)); got != 8 {
+		t.Errorf("eight assets are left, so eight instances: %d", got)
+	}
+	for _, e := range nonCombatDamage(s.g.Log) {
+		if e.Source != anc.ID {
+			t.Errorf("the damage comes from the dead Ancient: source %d, want %d", e.Source, anc.ID)
+		}
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("the death trigger asks no question: asked %d times", n)
+	}
+}
+
+func TestCard_CraterfallAncient_DeathKillsAssetsWithFourOrLessHealthAndSparesTheRest(t *testing.T) {
+	s, anc, _ := ancientScene(t)
+	frailAlly := s.put(0, ZoneMainTheater, unit("Frail Ally", 0, 4, Keywords{}))
+	frailEnemy := s.put(1, ZoneMainTheater, unit("Frail Enemy", 0, 4, Keywords{}))
+	sturdy := s.put(1, ZoneMainTheater, unit("Sturdy Enemy", 0, 5, Keywords{}))
+	ancientKilled(s, anc)
+	if s.alive(frailAlly) || s.alive(frailEnemy) {
+		t.Errorf("4 damage destroys 4-health assets of both sides in the same sweep")
+	}
+	if !s.alive(sturdy) {
+		t.Fatalf("a 5-health asset survives 4 damage")
+	}
+	s.wantDamage(sturdy, 4)
+}
+
+func TestCard_CraterfallAncient_DeathAppliesResistantAndArmorPerInstance(t *testing.T) {
+	s, anc, _ := ancientScene(t)
+	resist := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 20, Keywords{Resistant: 2}))
+	armored := s.put(0, ZoneMainTheater, unit("Armored Unit", 0, 20, Keywords{Armor: 3}))
+	ancientKilled(s, anc)
+	s.wantDamage(resist, 2) // 4 - Resistant 2 (FR-REP-004)
+	s.wantDamage(armored, 1)
+	if armored.Armor != 0 {
+		t.Errorf("3 Armor absorbs 3 of the 4 damage 1-for-1 and is gone: Armor %d (FR-REP-004)", armored.Armor)
+	}
+}
+
+// Covers: FR-CBT-003
+func TestCard_CraterfallAncient_DeathWithBothHeadquartersAtFourOrLessIsAMatchDraw(t *testing.T) {
+	s, anc, _ := ancientScene(t)
+	s.g.Players[0].HQ.Damage = 16
+	s.g.Players[1].HQ.Damage = 16
+	ancientKilled(s, anc)
+	if o := s.g.Outcome; !o.Over || !o.Draw {
+		t.Errorf("both Headquarters die in the one sweep: outcome %+v, want Match Draw (FR-CBT-003)", o)
+	}
+}
+
+// Covers: FR-CBT-003
+func TestCard_CraterfallAncient_DeathWithOneHeadquartersAtFourOrLessLosesThatPlayer(t *testing.T) {
+	for _, loser := range []PlayerID{0, 1} {
+		s, anc, _ := ancientScene(t)
+		s.g.Players[loser].HQ.Damage = 16
+		ancientKilled(s, anc)
+		if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 1-loser {
+			t.Errorf("player %d's Headquarters dies alone: outcome %+v, want player %d wins (FR-CBT-003)", loser, o, 1-loser)
+		}
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_CraterfallAncient_FaceDownCopyFiresNothingWhenKilled(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 20, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	s.scriptPlan(0, nil, nil)
+	killOnOpponentsTurn(s, s.card("Craterfall Ancient"), true)
+	wantNoNonCombatDamage(t, s.g, "a face-down Scratch Company has no printed death trigger (FR-ZON-004)")
+	s.wantDamage(ally, 0)
+	s.wantDamage(s.g.Players[0].HQ, 0)
+}
+
+// Covers: FR-CBT-002
+func TestCard_CraterfallAncient_AttackThenLethalRetaliationFiresBothTriggers(t *testing.T) {
+	s, anc, b := ancientScene(t)
+	brute := s.put(1, ZoneMainTheater, unit("Brute", 13, 30, Keywords{}))
+	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy, b.ally))
+	s.do(s.attack(anc, brute))
+	if s.alive(anc) {
+		t.Fatalf("precondition: 13 retaliation destroys the 13-health Ancient")
+	}
+	wantDealt(t, s.g, b.enemy, 2, 10, "6 from the attack trigger, then 4 from the death trigger")
+	wantDealt(t, s.g, b.ally, 2, 10, "6 from the attack trigger, then 4 from the death trigger")
+	wantDealt(t, s.g, b.dummy, 1, 4, "an unchosen asset takes only the death trigger's 4")
+	wantDealt(t, s.g, brute, 1, 4, "the defender takes the death trigger's 4 on top of the combat damage")
+	wantDealt(t, s.g, s.g.Players[0].HQ, 1, 4, "the death trigger hits the Headquarters")
+	if want := []DecisionKind{DecideOptional, DecideTarget}; !reflect.DeepEqual(kindsOf(s.asked(0)), want) {
+		t.Errorf("one 'you may' and one target question, none for the death: %v", kindsOf(s.asked(0)))
+	}
 }
