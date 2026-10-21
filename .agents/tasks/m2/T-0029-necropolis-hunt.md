@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: tests-review
+status: tests
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -90,3 +90,6 @@ Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not r
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 3), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 32. Expected after: 31.
 - 2026-10-21 rules-test-author: Wrote 13 `TestCard_NecropolisHunt_*` tests in `cards_path_test.go` (list under Tests). No shared helpers requested. Expected red: 12 fail at Deploy ("needs rules the kernel does not implement yet"); the face-down test passes today because it needs no definition. All other engine tests pass; gofmt, vet and `cardtown lint rules` are clean. Omitted: option-order assertions (not an FRD 01 rule). No open questions.
+- 2026-10-21 lead-architect: Test review: **changes**, status `tests`. The reviewer ran a throwaway definition (`HookKilled`, `{Kinds: Unit|Structure}`, `DealDamage` with `ValueSourcePower`), not committed: 12 of 13 pass. Mutations "units only" and "any asset including HQs" are each caught by 3 to 4 tests.
+  1. `TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard` expects the Defender as an option. But the Hunt's 5 combat damage kills the 2/5 Defender in the same sweep, so it isn't on the battlefield when the death trigger is placed. The kernel offers 7 options and the test wants 8. Drop `def` from the expected options, and assert that it's excluded because it died with the Hunt (`FR-TGT-001`: only battlefield assets). Other tests rely on the Defender dying, so keep `huntAttacks` as it is.
+  2. No test tells "its power" apart from a fixed 5: a definition with `Value{N: 5}` passes all 13. Add one test where the Hunt dies with 2 temporary power (set `TempPower = 2` on the Hunt in the scene, standing in for an "until end of turn" modifier, as other tests set `Damage` directly). Its death trigger then deals 7: last-known *effective* power (`FR-ZON-004`, `SVY-R10`).
