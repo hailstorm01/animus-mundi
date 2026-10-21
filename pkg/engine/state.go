@@ -162,23 +162,60 @@ type Game struct {
 
 	// lastKnown holds each asset's characteristics as it left the battlefield,
 	// for effects that still need them afterwards (FR-ZON-004).
-	lastKnown map[int]*Asset
+	lastKnown map[int]*lastKnownRecord
 
 	pending []pendingTrigger // triggers fired while an item resolves, awaiting the flush (FR-TRG-004)
 }
 
+// EffectiveState is an asset's effective characteristics at one moment, read
+// through the layer pipeline (FR-LAY-001).
+type EffectiveState struct {
+	Power     int
+	MaxHealth int
+	Keywords  Keywords
+}
+
+// effectiveState reads a's effective characteristics now.
+func (g *Game) effectiveState(a *Asset) EffectiveState {
+	return EffectiveState{Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a)}
+}
+
+// lastKnownRecord is an asset as it left the battlefield: a raw copy and its
+// effective characteristics immediately prior to departure (FR-ZON-004, board
+// directive #13).
+type lastKnownRecord struct {
+	asset Asset
+	eff   EffectiveState
+}
+
 // LastKnown returns the asset as it was when it last left the battlefield,
 // or nil if it never has.
-func (g *Game) LastKnown(id int) *Asset { return g.lastKnown[id] }
+func (g *Game) LastKnown(id int) *Asset {
+	if r := g.lastKnown[id]; r != nil {
+		return &r.asset
+	}
+	return nil
+}
+
+// LastKnownEffective returns the effective characteristics the asset had
+// immediately prior to leaving the battlefield, or nil if it never has. Death
+// triggers and other leaves-battlefield effects read these (FR-ZON-004).
+func (g *Game) LastKnownEffective(id int) *EffectiveState {
+	if r := g.lastKnown[id]; r != nil {
+		return &r.eff
+	}
+	return nil
+}
 
 // leaveBattlefield removes a from the battlefield to a non-battlefield zone,
-// keeping a last-known snapshot.
-func (g *Game) leaveBattlefield(a *Asset) {
+// keeping a last-known record with eff, a's effective characteristics taken
+// immediately prior to departure. A lone departure passes g.effectiveState(a);
+// the death sweep takes every dying asset's state before any of them leaves.
+func (g *Game) leaveBattlefield(a *Asset, eff EffectiveState) {
 	if g.lastKnown == nil {
-		g.lastKnown = make(map[int]*Asset)
+		g.lastKnown = make(map[int]*lastKnownRecord)
 	}
-	snap := *a
-	g.lastKnown[a.ID] = &snap
+	g.lastKnown[a.ID] = &lastKnownRecord{asset: *a, eff: eff}
 	g.removeFromBattlefield(a)
 }
 

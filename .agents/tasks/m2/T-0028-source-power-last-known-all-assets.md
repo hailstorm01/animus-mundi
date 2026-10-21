@@ -4,7 +4,7 @@ title: Damage equal to the source's power, last-known effective state, and steps
 kind: shape
 tier: opus
 wave: A2 (task 5, shape)
-status: tests
+status: done
 branch: m2/T-0028-source-power-last-known-all-assets
 depends_on: [T-0019, T-0027]
 claims: [type:ValueSource, const:ValueFixed, const:ValueSourcePower, field:Value.From, const:SubjectAll, field:Step.Filter, func:lastKnownEffective]
@@ -118,10 +118,46 @@ All with synthetic cards in a new `pkg/engine/source_power_test.go`.
 - **Formatting:** across the death-trigger scenes, no event `Detail` contains `%!`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author.
+All in `pkg/engine/source_power_test.go`. Run regex for Done When: `TestFR_(TRG_004_SourcePower|ZON_004_(SourceGone|DeathTrigger)|TGT_001_DeathTriggerPower|TGT_002_|KWD_002h_(AllAssets|FilteredAll)|REP_004_(AllAssets|NoEventDetail)|TRG_003_AllAssets|TRG_004_AllAssets|CBT_003_AllAssets|KWD_002d_AllHeal|LAY_002_AllAddArmor)`
+
+Source power (`SVY-R10`, `// Covers:` comments):
+- `TestFR_TRG_004_SourcePowerIsReadWhenTheStepResolves`: Aggressive resolves first gives 5, power trigger first gives 3.
+- `TestFR_ZON_004_SourceGoneBeforeResolutionDealsItsLastKnownEffectivePower`: Aggressive, then self-kill, then power trigger: 5 dealt, event `Source` = the dead unit's asset ID, Raw and Amount 5.
+- `TestFR_ZON_004_DeathTriggerUsesLastKnownPowerWithTheAggressiveBonus`: 5, `Source` = dead unit.
+- `TestFR_ZON_004_DeathTriggerOutsideCombatHasNoAggressiveBonus`: 3.
+- `TestFR_ZON_004_DeathTriggerOfAZeroPowerUnitDealsZero`: 0.
+- `TestFR_TGT_001_DeathTriggerPowerTargetExcludesHeadquartersAndTheDeadUnit`: options are exactly the non-HQ assets other than the dead unit.
+
+All assets (`FR-TGT-002`):
+- `TestFR_TGT_002_AllAssetsDealsOneInstanceToEveryAssetOnBothSidesWithoutAsking`
+- `TestFR_KWD_002h_AllAssetsIgnoresWard`
+- `TestFR_REP_004_AllAssetsAppliesResistantStalwartAndArmorPerInstance`
+- `TestFR_TGT_002_AllAssetsKillsEveryAssetWithFourOrLessHealthInOneSweep`
+- `TestFR_TRG_003_AllAssetsDeathTriggersResolveInApnapOrder`
+- `TestFR_TRG_004_AllAssetsDeathTriggersCascade`
+- `TestFR_CBT_003_AllAssetsBothHeadquartersDestroyedIsADraw` (reason contains "both players lost", case-insensitive)
+- `TestFR_CBT_003_AllAssetsOneHeadquartersDestroyedLosesThatPlayer`
+
+Filtered all and the other ops:
+- `TestFR_TGT_002_FilteredAllOpposingUnitsHitsOnlyOpposingUnits`
+- `TestFR_TGT_002_FilteredAllNonScratchSkipsScratchCompanies`
+- `TestFR_TGT_002_FilteredAllStructuresAndHeadquartersHitsExactlyThose`
+- `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself`
+- `TestFR_TGT_002_FilteredAllWithNoMatchDoesNothingAndAsksNothing`
+- `TestFR_KWD_002h_FilteredAllHitsOpposingWardUnits`
+- `TestFR_KWD_002d_AllHealRemovesDamageFromEveryMatchingAsset`
+- `TestFR_LAY_002_AllAddArmorGrantsEveryMatchingAsset`
+
+Formatting: `TestFR_REP_004_NoEventDetailContainsAFormattingFailure` (no `%!` in any Detail across the death-trigger and all-assets scenes; other tests also call the same check).
+
+Deliberately left out:
+- Negative-power clamp to 0 (Layer 6): no way to give a unit negative power without grants.
+- Whether the "simultaneous" damage events all precede the death events in the log: the event kind names are an implementation detail. Simultaneity is observed through the one-sweep deaths and the both-HQ draw.
+- The exact `Detail` text for a dead source ("names the source by its last-known record"): not fixed by FRD 01 or SVY-R10; only the absence of `%!` is pinned.
+- The effective-record accessor and its snapshot-before-any-departure order: no test can observe it today; the reviewer checks the code.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. The tests define their own local helpers in `source_power_test.go` (`scene.scriptAnyOf`, `powerStep`, `allStep`, `noFormatErrors` and others), and use existing ones (`killedTrigger`, `mortal`, `striker`, `targetBoard`, `deployFromHand`, `putScratch`).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -130,13 +166,75 @@ To be filled in by rules-test-author.
 - `pkg/engine/damage.go`
 
 ## Done When
-- [ ] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
-- [ ] Every existing test passes unchanged
-- [ ] `go tool task check` passes
-- [ ] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
+- [x] The tests pass: `go test ./pkg/engine -run '<regex from rules-test-author>'`
+- [x] Every existing test passes unchanged
+- [x] `go tool task check` passes
+- [x] `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim` exit 0, with every invariant holding and no rule-monitor violation, and with output byte-identical to `rework/executable-rules` (no card uses the new shapes yet)
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 shape), with status `tests` for `rules-test-author`.
   - Tier `opus`, per the user ("use Opus for the shapes this time"; board directive #25).
   - It applies directive #13 and cites `SVY-R10`, which the user ruled on 2026-10-21.
   - It is split from its first card, Necropolis Hunt, to keep within four non-test files.
+- 2026-10-21 rules-test-author: Wrote the failing tests in `pkg/engine/source_power_test.go` (list under Tests). Status `tests-review`.
+  - Expected failure: the package's tests don't compile, because `ability.ValueSourcePower`, `Value.From`, `ability.SubjectAll` and `Step.Filter` don't exist yet. With the file moved aside, the engine package passes unchanged.
+  - Helpers requested: none.
+  - Assumptions: Order options are Aggressive first, then printed triggers (FRD 01 `SVY-R7`), and the "both players lost" draw reason is taken from the task text, not from FRD 01.
+  - Omissions: see Tests.
+- 2026-10-21 lead-architect: Test review: **changes**, status `tests`.
+  - The reviewer prototyped the shapes in a throwaway worktree (not committed). All 27 tests compiled, and 26 pass. Every existing engine test passes.
+  - The rules content of all 27 checks out against FRD 01, `SVY-R10` and the lead decisions.
+  1. `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself` fails at `sweeper`'s precondition "Sweeper is on the battlefield". `deployFromHand` resolves the whole stack, so the deploy trigger has already killed the 1/1 Sweeper, which is exactly what the test means to show. `sweeper` must not require the source to survive. For example, take the source's asset ID from the `deploy` event, or check that its instance is in its owner's Discard. Then assert the death through that, and keep the other filtered-"all" tests' checks unchanged.
+- 2026-10-21 rules-test-author: Answered note 1. `sweeper` no longer requires the source to survive: it returns the source's asset (nil if destroyed) and its card.
+  - `TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself` now asserts the death by the source's card instance being in its owner's Discard and no longer on the battlefield.
+  - Every other test's assertions are unchanged. Status `tests-review`.
+- 2026-10-21 lead-architect: Test review, round 2: **approved**, status `ready`.
+  - a1a3705 answers note 1. `sweeper` returns the source's asset (nil when destroyed) and its card, and the allied-"all" test asserts that the source is off the battlefield and in its owner's Discard. No other assertion changed.
+  - Reviewer re-check with the throwaway prototype (not committed): `go test ./pkg/engine` passes, all 27 new tests included.
+  - Next: `kernel-engineer` on **Opus** (tier `opus`, directive #25).
+- 2026-10-21 kernel-engineer (Opus): Implemented in 4de1413. Status `review`. No test file was edited, and only the four Allowed Files changed.
+  - `ability.go`: adds `ValueSource` (`ValueFixed`, `ValueSourcePower`), `Value.From`, `SubjectAll` and `Step.Filter`, exactly as in Shapes.
+  - `state.go`: `lastKnown` now maps to a `lastKnownRecord`, which holds the raw `Asset` copy and an `EffectiveState` (`Power`, `MaxHealth`, `Keywords`). `effectiveState(a)` reads those through the existing `layers.go` functions.
+    - `LastKnown(id) *Asset` keeps its signature and behavior.
+    - The new accessor is `LastKnownEffective(id) *EffectiveState`, which is nil if the asset never left. This is the claimed `func:lastKnownEffective`, exported.
+    - `leaveBattlefield(a, eff)` now takes the state from its caller. A lone departure passes `g.effectiveState(a)`.
+  - `damage.go`:
+    - `deathSweep` computes `known[i] = g.effectiveState(a)` for every dying asset in one loop. Only then does the existing loop run `fireKilled`, `leaveBattlefield(a, known[i])`, discard and the log. The event order is unchanged.
+    - `dealDamage` formats the source through an explicit nil guard (`"an unknown source"`), so `%!` cannot appear.
+  - `trigger.go`:
+    - `resolveAbility` reads every `Amount` through `value(it, v)` when the step resolves. For `ValueSourcePower` the order is: `Power(source)` if the source is on the battlefield, else `LastKnownEffective(source).Power`, else 0.
+    - DealDamage, Heal and AddArmor act on `stepAssets(it, st, chosen)`: the chosen target if it is still legal, or for `SubjectAll` every asset matching the filter, oldest ID first. There is one `dealDamage` per asset, and all of them come before the item's sweep.
+    - The damage source is `itemSource(it)`: the live asset, else its `LastKnown` copy. So `Source` stays the asset ID, and `Detail` names it as `Name#ID`.
+  - Reuse:
+    - `legalTarget` is now the Ward check plus the new `matchesFilter` (allegiance, kinds and NonScratch, moved out of `legalTarget` without change), and `SubjectAll` calls `matchesFilter` alone.
+    - The oldest-first sort that was inline in `chooseTargets` became `assetsByID()`, which `chooseTargets` and `SubjectAll` share.
+    - `itemSource` follows the existing live-or-`LastKnown` fallback in `resolveAttack`.
+    - I searched for an existing value evaluator or "all assets" selector and found none.
+  - Verification:
+    - `go test ./pkg/engine -run '<Done When regex>' -v`: PASS (all T-0028 tests, plus the three older `TestFR_ZON_004_DeathTrigger*` tests the regex also matches).
+    - `go test ./...`: exit 0.
+    - `go tool task check`: exit 0 (fmt-check, vet, test, `lint --all`, fences PASS).
+    - `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` and `go run ./cmd/cardtown sim`: exit 0, `[PASS] Every match terminated with all invariants holding.`, and the monitors found no violation.
+    - Sim byte-identity: the baseline CLI was built from `rework/executable-rules` (b862750) in a separate `git worktree` before any code edit. For each of the two policies (`progress` and `random`), the stdout of three runs (starter ANIMUS vs PATH, starter PATH vs ANIMUS, and stress) is byte-identical (`cmp`), and so are both `go run` outputs.
+    - `-events` JSONL for starter ANIMUS vs PATH is also identical, except for the `match-start` build stamp (`revision`/`modified`). Neither log contains `%!`.
+  - For the reviewer:
+    1. The snapshot order is in `deathSweep`: the `known` loop runs before the `fireKilled`/`leaveBattlefield` loop.
+    2. Intended event change: a damage event from a departed source used to carry `Source: 0` and `%!s(<nil>)`. It now carries the dead asset's ID and `Name#ID` in `Detail`. No starter or stress card reaches this path, which is why the sim output is unchanged.
+    3. `dealDamage` may now get a source that is a last-known copy and is not on the battlefield. Today it reads only the source's ID and name. A future "when this deals damage" hook must not treat that copy as a live asset.
+    4. `SubjectAll` evaluates the value once per step, before any instance is dealt.
+    5. Directive #13's monitor switch to effective keywords stays out of scope, per this task's "Not in this task" list.
+- 2026-10-21 lead-architect: Code review: **approved**, status `done`.
+  - Scope: 4de1413 touches only the four Allowed Files. No `_test.go` change after a1a3705.
+  - Shapes: `ValueSource`/`ValueSourcePower`, `Value.From`, `SubjectAll` and `Step.Filter` are exactly as specced.
+  - Rules fidelity:
+    - `value` reads source power when the step resolves: the live effective power, else the last-known effective power, else 0 (`SVY-R10`).
+    - `deathSweep` takes every dying asset's `EffectiveState` before any of them leaves. That is the order directive #13 asks for, checked in the code.
+    - `SubjectAll` uses `matchesFilter` without Ward and oldest ID first, with one instance per asset before the sweep.
+  - Reuse: `matchesFilter` is factored out of `legalTarget`, with Ward kept only on the targeting path, and `assetsByID` is shared with `chooseTargets`.
+  - Fences: no card names.
+  - Engineer notes 1 to 5 are accepted.
+    - Note 3, a last-known copy passed as a damage source, is the one to remember. A future "when this deals damage" hook must not treat it as a live asset.
+    - Note 5: the monitor switch waits for the first keyword grant, as directive #13 now says.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, and `go tool task check` exits 0.
+    - For starter and stress games under both policies, `cardtown sim` is byte-identical to a baseline CLI built from `rework/executable-rules`.
