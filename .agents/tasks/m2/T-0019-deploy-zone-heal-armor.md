@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: ready
+status: blocked
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -104,3 +104,4 @@ Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|
   - Accepted omissions: line 165 (state reset on leaving the battlefield) isn't observable on a discarded `Asset`, and `ToZone` on non-deploy hooks has no rule to pin.
   - Lead fix: the task's FR-TRN-003 citation is line 273, not 268. FRD 01 v3.7 (09b9bdb) shifted the lines.
   - Next: dispatch `kernel-engineer` (tier sonnet).
+- 2026-10-20 kernel-engineer: **blocked**. Implemented `ability.Zone`/`ToZone`/`OpHeal`/`OpAddArmor` (ability.go) and the `HookDeploy` gate (`deployedTo`) plus the Heal/AddArmor step in `resolveAbility` (trigger.go); no stack.go change needed (the asset's zone at fire time is the deploy zone). Reused T-0017 `chooseTargets`/`legalTarget`/re-verification and the existing `OpDealDamage` step guard shape. All heal_armor tests pass except `TestFR_KWD_002d_AnyKindOfAssetCanBeHealed/allied_Scratch_Company` and `/opposing_Scratch_Company`. Cause is the test, not the engine: `targetBoard().c0/c1` are face-down Scratch Company with Health 1 (`scratchFace`), and the subtest sets `Damage = 4`. The first death sweep after the deploy destroys the 1-health unit, so it is gone before the trigger is placed, and it is not among the target options. Healing it to 1 damage would leave it above lethal anyway, so these two subtests can't pass under FR-REP/death rules. Needs rules-test-author to use damage below the Scratch's health (e.g. Damage 0 is uninformative; raise its health or assert differently). `go tool task check` is red only for these two subtests. Both sims exit 0 with invariants PASS; executable counts unchanged (P0 19/50, P1 9/50).
