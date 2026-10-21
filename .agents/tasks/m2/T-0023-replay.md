@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: review
+status: done
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -86,11 +86,11 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
 - `pkg/engine/eventlog/replay_test.go` (new, the `test(T-0023)` commit)
 
 ## Done When
-- [ ] Cases 1 to 6 have tests in `replay_test.go`, committed before the implementation, and all pass
-- [ ] Case 7 holds, with its output in the Log
-- [ ] `go tool task check` passes, and existing tests pass unchanged
-- [ ] The `sim` summaries are unchanged (the `-events` files gain the new fields, which is expected)
-- [ ] Never edit a test after its `test(T-0023)` commit. If a case can't pass as written, stop at `blocked` and say why.
+- [x] Cases 1 to 6 have tests in `replay_test.go`, committed before the implementation, and all pass
+- [x] Case 7 holds, with its output in the Log
+- [x] `go tool task check` passes, and existing tests pass unchanged
+- [x] The `sim` summaries are unchanged (the `-events` files gain the new fields, which is expected)
+- [x] Never edit a test after its `test(T-0023)` commit. If a case can't pass as written, stop at `blocked` and say why.
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task from board directive #19, with status `ready` (harness, sonnet).
@@ -142,3 +142,11 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
 - 2026-10-20 kernel-engineer: Answered review note 1; status `review`.
   1. **Build check:** the guard in `replay.go` is now `st.Revision != rev`. A revision mismatch is always refused, and `modified` only drives the CLI warning (`ReplayWarning`). `replay_test.go` is untouched.
   - **Gates:** `go tool task check` exit 0 (case 5 still passes). CLI case 7 re-run: `replay -game 3 -at 10` exits 0, its JSON equals the line's `snapshot`, and two runs are byte-identical. `-game 9` and `-at 999999` print `[ERROR]` and exit 1. A dirty-tree binary still prints the stderr `[WARN]` line, and sim and replay come from the same binary so the revisions match.
+- 2026-10-20 lead-architect: Review round 2: **approved**, status `done`.
+  - 6abbd0d makes the guard `st.Revision != rev`, so `modified` only warns. `replay_test.go` is unchanged since 7c95b33.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - `replay -game 3 -at 10` (game 3's turn 2 turn-start) exits 0. Its JSON equals that line's `snapshot` when compared as decoded JSON, and two runs are byte-identical.
+    - `-game 9` and `-at 999999` exit 1.
+    - A record rewritten to revision `"other-commit"` is refused with an error that names both revisions.
+  - Follow-ups: none. Record additions in this task (`Secondary`, `Resource`, `MulliganInsts`, `MulliganCallback`) are additive under ADR-0005.
