@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"animus-mundi/pkg/engine"
@@ -193,13 +194,25 @@ func runSim(args []string) {
 	p0 := fs.String("p0", "SOULLESS", "Faction for player 0")
 	p1 := fs.String("p1", "CONCORDIA", "Faction for player 1")
 	maxTurns := fs.Int("max-turns", 400, "Fail if a match runs longer than this")
+	logGame := fs.Bool("log", false, "Play only the -seed game and print its events, then the summary (-games must be 1)")
+	eventsFile := fs.String("events", "", "Write every game's events to this file as JSON Lines (game, then the event)")
 	fs.Usage = func() {
-		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
+		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N] [-log] [-events FILE]")
 		fmt.Println("Random-policy playouts on the rules kernel (termination, invariants, win rates)")
 		fmt.Println("\nFlags:")
 		fs.PrintDefaults()
 	}
 	fs.Parse(normalizeArgs(args))
+
+	if *logGame {
+		gamesSet := false
+		fs.Visit(func(f *flag.Flag) { gamesSet = gamesSet || f.Name == "games" })
+		if gamesSet && *games != 1 {
+			fmt.Println("[ERROR] -log plays exactly one game (the one at -seed); drop -games or use -games 1")
+			os.Exit(1)
+		}
+		*games = 1
+	}
 
 	repoRoot := findRepoRoot()
 	cards, err := engine.LoadCards(filepath.Join(repoRoot, "data", "cards"))
@@ -224,10 +237,56 @@ func runSim(args []string) {
 		}
 	}
 
-	st, err := engine.Simulate(decks, *games, *seed, *maxTurns)
+	var out *os.File
+	if *eventsFile != "" {
+		if out, err = os.Create(*eventsFile); err != nil {
+			fmt.Printf("[ERROR] %v\n", err)
+			os.Exit(1)
+		}
+	}
+	opt := engine.SimOptions{}
+	if *deck != "" {
+		for i, f := range []string{*p0, *p1} {
+			opt.DeckNames[i] = filepath.ToSlash(filepath.Join("data", "decks", fmt.Sprintf("%s-%s.txt", strings.ToLower(f), *deck)))
+		}
+	} else {
+		opt.DeckNames = [2]string{"stress:" + *p0, "stress:" + *p1}
+	}
+	var played []*eventCollector // one per game, only when -log or -events asks for events
+	if *logGame || out != nil {
+		opt.Observer = func(game int, seed uint64) engine.Observer {
+			c := &eventCollector{}
+			played = append(played, c)
+			return c
+		}
+	}
+	st, err := engine.SimulateWith(decks, *games, *seed, *maxTurns, opt)
 	if err != nil {
+		if out != nil {
+			out.Close()
+		}
 		fmt.Printf("[ERROR] %v\n", err)
 		os.Exit(1)
+	}
+	if out != nil {
+		var werr error
+		for i, c := range played {
+			if werr = engine.WriteEventsJSONL(out, i+1, c.events); werr != nil {
+				break
+			}
+		}
+		if cerr := out.Close(); werr == nil {
+			werr = cerr
+		}
+		if werr != nil {
+			fmt.Printf("[ERROR] writing %s: %v\n", *eventsFile, werr)
+			os.Exit(1)
+		}
+	}
+	if *logGame {
+		for _, e := range played[0].events {
+			fmt.Println(engine.FormatEvent(e))
+		}
 	}
 	pct := func(n int) float64 { return 100 * float64(n) / float64(st.Games) }
 	fmt.Println("==========================================================")
@@ -255,12 +314,23 @@ func runSim(args []string) {
 	fmt.Printf("  P0 wins %.1f%%  P1 wins %.1f%%  draws %.1f%%  first player wins %.1f%%\n", pct(st.Wins[0]), pct(st.Wins[1]), pct(st.Draws), pct(st.FirstPlayerWin))
 	fmt.Printf("  Average match length: %.1f turns\n", float64(st.TotalTurns)/float64(st.Games))
 	fmt.Println("  End reasons:")
-	for reason, n := range st.Reasons {
-		fmt.Printf("    %-45s %d\n", reason, n)
+	reasons := make([]string, 0, len(st.Reasons))
+	for reason := range st.Reasons {
+		reasons = append(reasons, reason)
+	}
+	sort.Strings(reasons)
+	for _, reason := range reasons {
+		fmt.Printf("    %-45s %d\n", reason, st.Reasons[reason])
 	}
 	fmt.Println("  [PASS] Every match terminated with all invariants holding.")
 	fmt.Println("==========================================================")
 }
+
+// eventCollector is an Observer that only appends the events it is given.
+type eventCollector struct{ events []engine.Event }
+
+func (c *eventCollector) Event(e engine.Event)      { c.events = append(c.events, e) }
+func (c *eventCollector) Settled(s engine.Snapshot) {}
 
 func runWhatsUp(args []string) {
 	fs := flag.NewFlagSet("whats-up", flag.ExitOnError)

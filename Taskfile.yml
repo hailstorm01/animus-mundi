@@ -57,6 +57,18 @@ tasks:
     cmds:
       - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH {{.CLI_ARGS}}'
 
+  sim-log:
+    desc: Play one starter game (the -seed one) and print its events (cardtown sim -log)
+    deps: [build]
+    cmds:
+      - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH -log {{.CLI_ARGS}}'
+
+  sim-events:
+    desc: Write the starter games' events as JSON Lines, e.g. `go tool task sim-events -- out.jsonl`
+    deps: [build]
+    cmds:
+      - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH -events {{.CLI_ARGS}}'
+
   check:
     desc: Every build-task Done-When gate (gofmt, vet, test, lint)
     cmds:
