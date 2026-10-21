@@ -4,7 +4,7 @@ title: Replay a recorded game to any event, as a function and a cardtown replay 
 kind: harness
 tier: sonnet
 wave: none (board directive #19)
-status: in-progress
+status: review
 branch: m2/T-0023-replay
 depends_on: [T-0021, T-0024]
 claims: [func:Replay, func:ReadEventsJSONL, cli:replay, field:Event.Secondary, field:Event.Resource, field:MatchStart.MulliganInsts, func:Game.Snapshot]
@@ -115,3 +115,24 @@ Cases 1 to 6 go in a new `pkg/engine/eventlog/replay_test.go`, committed first a
   - **Mulligan shuffle:** a record with empty `MulliganInsts` can't tell whether a `Mulligan` callback ran, and a callback means a shuffle. Add `MulliganCallback bool json:"mulliganCallback"` to `MatchStart` (additive, set when `cfg.Mulligan != nil`). Replay passes a `Mulligan` exactly when it's true.
   - **`invalid` decisions:** out of scope. When `Replay` meets one, it returns an error naming that Seq ("cannot replay an invalid answer"). It doesn't attempt it. Add this to case 6's bad-input list.
   - **Build check:** format both revisions with `%q`. Test builds carry no VCS info, so `""` matches `""`, and case 5's mismatch still holds.
+- 2026-10-20 kernel-engineer: Implemented; status `review`.
+  - **Commits:** `7c95b33` `test(T-0023)` with cases 1 to 6 (it didn't compile before the implementation: `Replay`, `ReadEventsJSONL` and `MulliganInsts` were undefined). It was amended once, before any implementation existed, only to apply gofmt. The implementation commit follows it.
+  - **Reuse:** the existing `snapshot()` (now behind `Game.Snapshot()`), `NewGame`'s `PlayFirst`/`Mulligan`/`Chooser` callbacks, `ActionKind.String()` and `Zone.String()` for rebuilding actions, `sim.FactionDeck` and `engine.LoadDeck` in the CLI's resolver.
+  - **Changes:**
+    - `state.go`: `Event.Secondary`, `Event.Resource`.
+    - `events.go`: `MatchStart.MulliganInsts` and `MulliganCallback`, their clone, `Game.Snapshot`, and `emitAction` sets the two new fields. The Generate Detail text is unchanged.
+    - `turn.go`: collects the set-aside instance IDs.
+    - `eventlog.go`: `ReadEventsJSONL`.
+    - `replay.go`: `Replay`, plus `ReplayWarning`, an extra exported helper in `eventlog` that the CLI uses for the modified-build warning line.
+    - `cmd/cardtown/main.go`: the `replay` command.
+  - **Divergence check:** besides the listed fields it also compares Turn, Phase, the Decision, Start (except Revision and Modified, which are checked up front), End and Snapshot records. Errors read `replay diverged at seq N: ...`.
+  - **Gates:**
+    - `go test ./pkg/engine/eventlog -v`: all of cases 1 to 6 pass, and the case 4 answer-pick and attack-target variants both ran and did not skip.
+    - `go tool task check`: exit 0.
+    - Sim summaries: `cardtown sim -deck starter -p0 ANIMUS -p1 PATH -games 5` and `cardtown sim -games 20`, built at `7c95b33` and at the head, print byte-identical output.
+  - **Case 7:**
+    - `cardtown sim -deck starter -p0 ANIMUS -p1 PATH -games 5 -events e.jsonl`, then `cardtown replay -events e.jsonl -game 3 -at 10` (seq 10 is game 3's turn 2 turn-start): exit 0, and the printed JSON equals that line's `snapshot` (compared as parsed JSON).
+    - Two runs give byte-identical output (`cmp`).
+    - `-game 9` prints `[ERROR] <file> has no game 9 (it has 5 games)` and exits 1. `-at 999999` prints `[ERROR] replay: seq 999999 is out of range 1..277` and exits 1.
+    - Run from a built binary with a dirty tree, stderr also shows `[WARN] the record or this build has uncommitted changes; the replay may diverge`.
+  - **For the reviewer:** a replay with `at` 1 waits for event 2 to arrive before capturing, so it still checks events 1 and 2. A record with a `MulliganCallback` but no set-aside cards still replays the shuffle, per the lead's decision. `invalid` decisions at or before `at` are refused up front, naming their Seq.

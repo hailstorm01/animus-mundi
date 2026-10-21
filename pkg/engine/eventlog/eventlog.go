@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"animus-mundi/pkg/engine"
@@ -58,4 +59,30 @@ func WriteEventsJSONL(w io.Writer, game int, events []engine.Event) error {
 		}
 	}
 	return nil
+}
+
+// ReadEventsJSONL reads a WriteEventsJSONL file back: game number -> that
+// game's events in Seq order.
+func ReadEventsJSONL(r io.Reader) (map[int][]engine.Event, error) {
+	out := map[int][]engine.Event{}
+	dec := json.NewDecoder(r)
+	for {
+		var line struct {
+			Game int `json:"game"`
+			engine.Event
+		}
+		if err := dec.Decode(&line); err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, fmt.Errorf("reading events: %w", err)
+		}
+		if line.Game < 1 {
+			return nil, fmt.Errorf("reading events: line with seq %d has no game number", line.Seq)
+		}
+		out[line.Game] = append(out[line.Game], line.Event)
+	}
+	for _, evs := range out {
+		sort.SliceStable(evs, func(i, j int) bool { return evs[i].Seq < evs[j].Seq })
+	}
+	return out, nil
 }

@@ -128,6 +128,9 @@ type Event struct {
 	Zone   string `json:"zone,omitempty"`   // Zone.String()
 	Amount int    `json:"amount,omitempty"`
 
+	Secondary int    `json:"secondary,omitempty"` // action events: an Attack's Berserk secondary target (asset ID)
+	Resource  string `json:"resource,omitempty"`  // action events: a Generate's "Requisition" or "Tactics"
+
 	Decision *DecisionRecord `json:"decision,omitempty"`
 	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
 	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"

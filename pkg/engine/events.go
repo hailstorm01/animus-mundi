@@ -34,6 +34,9 @@ type MatchStart struct {
 	Mulligans [2][]string `json:"mulligans"` // names of the cards each player set aside
 	Revision  string      `json:"revision"`  // vcs.revision from the build info, "" if absent
 	Modified  bool        `json:"modified"`  // vcs.modified
+
+	MulliganInsts    [2][]int `json:"mulliganInsts"`    // instance IDs of the cards set aside, never nil
+	MulliganCallback bool     `json:"mulliganCallback"` // Config.Mulligan was set (a set callback shuffles, even if it sets nothing aside)
 }
 
 // MatchEnd is the last event of a game.
@@ -174,6 +177,10 @@ func cardSnaps(cards []*Instance) []CardSnap {
 	return out
 }
 
+// Snapshot deep-copies the full current state, hidden information included.
+// Replay uses it to capture the state at an event.
+func (g *Game) Snapshot() Snapshot { return g.snapshot() }
+
 // snapshot deep-copies the full game state.
 func (g *Game) snapshot() Snapshot {
 	s := Snapshot{
@@ -226,6 +233,7 @@ func (e Event) clone() Event {
 		st := *e.Start
 		for i := range st.Mulligans {
 			st.Mulligans[i] = slices.Clone(st.Mulligans[i])
+			st.MulliganInsts[i] = slices.Clone(st.MulliganInsts[i])
 		}
 		e.Start = &st
 	}
@@ -263,14 +271,15 @@ func (g *Game) emitAction(a Action) {
 	switch a.Kind {
 	case ActGenerate:
 		e.Source = a.Asset
-		e.Detail += " Requisition"
+		e.Resource = "Requisition"
 		if a.Resource == Tactics {
-			e.Detail = a.Kind.String() + " Tactics"
+			e.Resource = "Tactics"
 		}
+		e.Detail += " " + e.Resource
 	case ActMarch, ActScratch:
 		e.Source = a.Asset
 	case ActAttack:
-		e.Source, e.Target = a.Asset, a.Target
+		e.Source, e.Target, e.Secondary = a.Asset, a.Target, a.Secondary
 	case ActDeploy:
 		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
@@ -281,14 +290,18 @@ func (g *Game) emitAction(a Action) {
 }
 
 // emitMatchStart is the first event of the game, after setup and the mulligan.
-func (g *Game) emitMatchStart(cfg Config, decider PlayerID, playFirst bool, aside [2][]string) {
+func (g *Game) emitMatchStart(cfg Config, decider PlayerID, playFirst bool, aside [2][]string, asideInsts [2][]int) {
 	st := &MatchStart{
 		Seed: cfg.Seed, Decks: cfg.DeckNames, Decider: int(decider), PlayFirst: playFirst, Mulligans: aside,
+		MulliganInsts: asideInsts, MulliganCallback: cfg.Mulligan != nil,
 	}
 	for i, p := range g.Players {
 		st.HQs[i] = p.HQ.Inst.Card.Name
 		if st.Mulligans[i] == nil {
 			st.Mulligans[i] = []string{}
+		}
+		if st.MulliganInsts[i] == nil {
+			st.MulliganInsts[i] = []int{}
 		}
 	}
 	if info, ok := debug.ReadBuildInfo(); ok {
