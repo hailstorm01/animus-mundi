@@ -57,4 +57,4 @@ Instructions from the user or a readiness review that the lead applies before wr
 | T-0017 | Chosen targets with conjunction filters, two-stage verification, and DealDamage (A2 shape, sonnet) | done |
 | T-0018 | Make Saboteur and Chainbreaker Sappers executable (A2 cards, flash) | done |
 | T-0019 | Gate deploy triggers on the deployed zone, and add Heal and AddArmor steps (A2 shape, sonnet) | done |
-| T-0020 | Structured game events, one observer, settled notifications and match records (directive #18 part 1, harness, sonnet) | ready |
+| T-0020 | Structured game events, one observer, settled notifications and match records (directive #18 part 1, harness, sonnet) | done |
