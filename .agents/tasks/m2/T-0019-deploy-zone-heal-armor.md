@@ -4,7 +4,7 @@ title: Gate deploy triggers on the deployed zone, and add Heal and AddArmor step
 kind: shape
 tier: sonnet
 wave: A2 (task 3)
-status: tests
+status: tests-review
 branch: m2/T-0019-deploy-zone-heal-armor
 depends_on: [T-0017]
 claims: [type:ability.Zone, field:Trigger.ToZone, gate:deploy-zone, op:Heal, op:AddArmor]
@@ -70,10 +70,16 @@ Names may be adjusted for clarity if needed. Record any rename in the Log. Later
 - **Deploys-or-attacks:** a unit with the same Heal effect on `HookDeploy` and `HookAttacks` heals once when deployed and once each time it attacks. On attack, the heal resolves at Step 2, before combat damage (`FR-CBT-002`). So healing the attacker itself doesn't save it from lethal retaliation, but healing an already damaged ally is visible after combat.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in.)
+All in `pkg/engine/heal_armor_test.go` (synthetic cards; targets chosen by asset with `scriptRefs`).
+- Gate (FR-TRN-003): `TestFR_TRN_003_GatedDeployTriggerFiresWhenDeployedToMainTheater`, `..._GatedDeployTriggerFastPathsASingleTargetInMainTheater`, `..._GatedDeployTriggerDoesNothingWhenDeployedToReserves`, `..._UngatedDeployTriggerFiresInEitherZone`, `..._ReservesGateFiresInReservesAndNotInMainTheater`, `..._FailedGateTriggerIsNotOrderedWithItsSibling`, `..._PassedGateTriggerIsOrderedWithItsSibling`.
+- Heal (FR-KWD-002d): `TestFR_KWD_002d_HealRemovesUpToNDamage`, `..._HealNeverGoesBelowZeroDamage`, `..._HealingAnUndamagedAssetChangesNothing`, `..._HealLeavesArmorAlone`, `..._AnyKindOfAssetCanBeHealed` (8 subtests: unit, structure, Scratch Company, HQ, both sides), `..._OpposingWardUnitCannotBeChosenToHeal`, `..._HealWithNoLegalTargetDoesNothing`.
+- Armor: `TestFR_LAY_002_ArmorGrantAddsToThePool`, `..._SeparateGrantsStackAdditively`, `..._GrantedArmorDoesNotExpireAtEndOfTurn`, `..._GrantedArmorAbsorbsLaterDamageOneForOneBeforeHealth`, `TestFR_KWD_002k_GrantedArmorJoinsPrintedArmorInOnePool`, `TestFR_ZON_004_MarchKeepsGrantedArmor`.
+- Deploys-or-attacks (FR-CBT-002): `TestFR_CBT_002_DeployOrAttackHealsOnceOnDeployAndOnceEachAttack`, `..._AttackHealResolvesBeforeCombatDamage`, `..._AttackHealOfTheAttackerDoesNotSaveItFromLethalRetaliation`, `..._AttackHealOfADamagedAllyIsVisibleAfterCombat`.
+
+Run: `go test ./pkg/engine -run 'TestFR_(TRN_003_(Gated|Ungated|Reserves|Failed|Passed)|KWD_002d|LAY_002|KWD_002k_Granted|ZON_004_MarchKeepsGranted|CBT_002_(DeployOrAttack|AttackHeal))'`
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected.
+- None. The tests define their own local helpers (`deployTo`, `healStep`, `armorStep`, `gatedDeploy`, `zonedUnit`, `orderAsks`) in `heal_armor_test.go`.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -87,3 +93,4 @@ Names may be adjusted for clarity if needed. Record any rename in the Log. Later
 
 ## Log
 - 2026-10-20 lead-architect: Wrote the task (A2 task 3), with status `tests` for `rules-test-author`.
+- 2026-10-20 rules-test-author: Wrote the tests above (status tests-review). The package will not compile until the Vocabulary block exists (`ability.Zone`, `ZoneAny/ZoneReserves/ZoneMainTheater`, `Trigger.ToZone`, `OpHeal`, `OpAddArmor`); `go vet` fails only on those. Left out: (1) FR-ZON-004 line 165 (Armor and damage discarded on leaving the battlefield): not observable without redeploying the same asset, and the observation list does not call for it. (2) `ToZone` on a non-deploy hook: the task says it is ignored and no card builds it, so FRD 01 has no rule to pin. (3) "Heal can't exceed Effective Maximum Health" is pinned only through Damage clamping at 0 plus CurrentHealth == max. The task cites FR-TRN-003 at line 268, but the text is at line 273 (268 is the FR-ACT-001 heading). The attack-heal ordering test relies on FR-CBT-002 Step 2: an attacker with 4 damage on 5 health survives a 1-power retaliation only if the heal resolves first.
