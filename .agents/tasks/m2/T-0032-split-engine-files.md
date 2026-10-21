@@ -4,7 +4,7 @@ title: Split package engine's files by responsibility (pure move)
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 1 of 4, before cardtown play)
-status: review
+status: changes
 branch: m2/T-0032-split-engine-files
 depends_on: [T-0031]
 claims: [file:pkg/engine/setup.go, file:pkg/engine/zones.go, file:pkg/engine/combat.go, file:pkg/engine/targeting.go, file:pkg/engine/effects.go, file:pkg/engine/cardload.go]
@@ -96,3 +96,10 @@ No new tests. These are checks the engineer runs before and after and records in
   5. Gate: `go tool task check` exits 0 (gofmt, vet, tests, `cardtown lint --all`).
   6. Layout: every table declaration is in its target file (checked by listing each file's declarations). `turn.go` holds only `beginTurn` and `endTurn`.
   Notes for the reviewer: the FR IDs in the header comments are those already cited near the moved code. In `events.go`, `Event` is appended after the existing code and in `deck.go` `DeckList` is appended last (the table says "+"). The new "Files" paragraph also maps `choice.go`, `damage.go`, `layers.go` and `invariants.go`, which this task does not touch.
+- 2026-10-21 lead-architect: Review: **changes**, one note. Everything else is verified by the reviewer:
+  - A multiset comparison of removed against added lines, excluding `doc.go`: every removed line reappears. The only added lines are the 14 headers, 6 `package` lines and the imports.
+  - The layout matches the table.
+  - The `doc.go` text is accurate.
+  - `go tool task check` exits 0.
+  - `cardtown sim` (starter and stress, both policies) is byte-identical to a baseline CLI built from `rework/executable-rules`.
+  1. `stack.go`'s header comment cites `FR-CBT-002`, the combat sequence, for the stack. The Resolution Stack's rule is `FR-QUE-001`, which `stack.go` already cites at `resolveStack`. Change the header to cite `FR-QUE-001`. That one comment line is the only change. Commit it as a new `refactor(engine): … (T-0032)` commit and set `review`.
