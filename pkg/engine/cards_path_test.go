@@ -2,6 +2,7 @@ package engine
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -845,4 +846,264 @@ func TestCard_IroncladColossus_DefendingDoesNotTrigger(t *testing.T) {
 		t.Errorf("no Armor is granted when defending: got %d", a.Armor)
 	}
 	s.wantDamage(a, 1)
+}
+
+// --- Necropolis Hunt ---
+// "When this unit is killed, deal damage equal to its power to chosen
+// non-Headquarters asset."  Unit, 3 Requisition and 3 Tactics, Main Theater
+// only, 5/2.
+
+// deployHunt gives player 0 the real card with 3 Requisition and 3 Tactics and
+// declares its deploy into the Main Theater. It returns the asset.
+func deployHunt(s *scene) *Asset {
+	s.t.Helper()
+	c := s.card("Necropolis Hunt")
+	inst := s.give(0, c)
+	s.g.Players[0].Req = 3
+	s.g.Players[0].Tac = 3
+	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneMainTheater})
+	a := assetOf(s.g, c)
+	if a == nil {
+		s.t.Fatalf("precondition: the Hunt is on the battlefield after deploying")
+	}
+	return a
+}
+
+// huntAttacks deploys the Hunt, readies it over a full round and has it attack
+// a fresh 2/5 opposing Defender, so both die. Player 0 answers its death
+// question by choosing want in order. It returns the Hunt and the Defender.
+func huntAttacks(s *scene, want ...*Asset) (hunt, def *Asset) {
+	s.t.Helper()
+	hunt = deployHunt(s)
+	s.endTurn()
+	s.endTurn()
+	def = s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	s.scriptRefs(0, nil, want...)
+	s.do(s.attack(hunt, def))
+	if s.alive(hunt) {
+		s.t.Fatalf("precondition: the Hunt is destroyed by the Defender's retaliation")
+	}
+	return hunt, def
+}
+
+// huntDefends deploys the Hunt, passes the turn and has an opposing 2/20
+// Hitter attack it. Player 0 answers its death question by choosing want in
+// order; player 1 is given a script that records any question. It returns the
+// Hunt and the Hitter.
+func huntDefends(s *scene, want ...*Asset) (hunt, hit *Asset) {
+	s.t.Helper()
+	hunt = deployHunt(s)
+	s.endTurn()
+	hit = s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
+	s.scriptRefs(0, nil, want...)
+	s.script(1)
+	s.do(s.attack(hit, hunt))
+	if s.alive(hunt) {
+		s.t.Fatalf("precondition: the Hunt is destroyed by the Hitter")
+	}
+	return hunt, hit
+}
+
+func TestCard_NecropolisHunt_EntersMainTheaterAsFiveTwoForThreeRequisitionThreeTactics(t *testing.T) {
+	s := newScene(t)
+	a := deployHunt(s)
+	if a.Zone != ZoneMainTheater {
+		t.Errorf("the Hunt deploys to the Main Theater: %s", a.Zone)
+	}
+	if p := a.Printed(); p.Power != 5 || p.Health != 2 {
+		t.Errorf("the Hunt is a 5/2: got %d/%d", p.Power, p.Health)
+	}
+	if p := s.g.Players[0]; p.Req != 0 || p.Tac != 0 {
+		t.Errorf("the Hunt costs 3 Requisition and 3 Tactics: %d Requisition and %d Tactics left", p.Req, p.Tac)
+	}
+}
+
+// Covers: FR-TGT-001, FR-KWD-002h, FR-ZON-004
+func TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, structure("Warded Structure", 0, 5, Keywords{Ward: true}))
+	reserve := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, Keywords{}))
+	_, def := huntAttacks(s, b.s1)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one death question for the Hunt's controller: asked %d times", len(asked))
+	}
+	if d := asked[0]; d.Kind != DecideTarget || d.Player != 0 || d.Min != 1 || d.Max != 1 {
+		t.Errorf("a mandatory single DecideTarget for the Hunt's controller: %+v", d)
+	}
+	wantOptions(t, asked[0], "any unit or structure of either side, Scratch Companies included; no Headquarters, no dead Hunt, no opposing Ward asset",
+		b.u0, b.s0, b.c0, b.u1, b.s1, b.c1, reserve, def)
+	s.wantDamage(b.s1, 5)
+}
+
+// Covers: FR-ZON-004, FR-REP-004
+func TestCard_NecropolisHunt_DamageEventNamesTheDeadHuntAsSourceAndIsNonCombat(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	hunt, _ := huntAttacks(s, b.u1)
+	var found *Event
+	for _, e := range damageEvents(s.g.Log) {
+		if e.Target == b.u1.ID {
+			e := e
+			found = &e
+		}
+	}
+	if found == nil {
+		t.Fatalf("a damage event against the chosen unit")
+	}
+	if found.Source != hunt.ID || found.Raw != 5 || found.Amount != 5 || found.Combat {
+		t.Errorf("5 non-combat damage whose Source is the dead Hunt's asset: %+v (Hunt asset %d)", *found, hunt.ID)
+	}
+	s.wantDamage(b.u1, 5)
+}
+
+// Covers: FR-ZON-004
+func TestCard_NecropolisHunt_KilledOnOpponentsTurnStillTriggersAndItsControllerChooses(t *testing.T) {
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	_, hit := huntDefends(s, e)
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("no turn gate: the Hunt's controller is asked once on the opponent's turn: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "every other unit and structure of either side", ally, e, hit)
+	s.wantDamage(e, 5)
+	if n := len(s.asked(1)); n != 0 {
+		t.Errorf("the Hunt's controller chooses, not the killer's: opponent asked %d times", n)
+	}
+}
+
+// Covers: FR-REP-004
+func TestCard_NecropolisHunt_StalwartTargetTakesTheFullFive(t *testing.T) {
+	s := newScene(t)
+	wall := s.put(1, ZoneMainTheater, unit("Stalwart Wall", 0, 9, Keywords{Stalwart: true}))
+	huntDefends(s, wall)
+	s.wantDamage(wall, 5)
+}
+
+// Covers: FR-REP-004
+func TestCard_NecropolisHunt_ResistantTargetReducesTheFive(t *testing.T) {
+	s := newScene(t)
+	worm := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 9, Keywords{Resistant: 2}))
+	huntDefends(s, worm)
+	s.wantDamage(worm, 3)
+}
+
+// Covers: FR-REP-004
+func TestCard_NecropolisHunt_ArmorAbsorbsPartOfTheFive(t *testing.T) {
+	s := newScene(t)
+	armored := s.put(1, ZoneMainTheater, unit("Armored Unit", 0, 9, Keywords{Armor: 2}))
+	huntDefends(s, armored)
+	s.wantDamage(armored, 3)
+	if armored.Armor != 0 {
+		t.Errorf("the 2 Armor absorbed 2 of the 5 damage and is spent: Armor %d, want 0", armored.Armor)
+	}
+}
+
+// Covers: FR-ZON-002
+func TestCard_NecropolisHunt_FiveDamageDestroysAFiveHealthUnit(t *testing.T) {
+	s := newScene(t)
+	frail := s.put(1, ZoneMainTheater, unit("Frail", 0, 5, Keywords{}))
+	inst := frail.Inst
+	huntDefends(s, frail)
+	if s.alive(frail) || !inZone(s.g.Players[1].Discard, inst) {
+		t.Errorf("5 damage destroys a 5-health unit into its owner's Discard")
+	}
+}
+
+// Covers: FR-TGT-003, FR-MOD-001
+func TestCard_NecropolisHunt_NoOtherUnitOrStructureAsksNothingAndDoesNothing(t *testing.T) {
+	s := newScene(t)
+	huntAttacks(s)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("no legal target: no question, asked %d times", n)
+	}
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("no legal target: nothing is damaged, total damage %d", got)
+	}
+	if s.g.Outcome.Over {
+		t.Errorf("Headquarters are not legal targets and the match goes on: %+v", s.g.Outcome)
+	}
+}
+
+// Covers: FR-MOD-001
+func TestCard_NecropolisHunt_SoleLegalTargetIsNotAsked(t *testing.T) {
+	s := newScene(t)
+	wall := s.put(1, ZoneMainTheater, structure("Only Wall", 0, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, Keywords{Ward: true}))
+	huntAttacks(s)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a single legal option is chosen without a question (FR-MOD-001 sec. 1): asked %d times", n)
+	}
+	s.wantDamage(wall, 5)
+}
+
+// Covers: FR-MOD-001
+func TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget(t *testing.T) {
+	s := newScene(t)
+	u := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, Keywords{}))
+	w := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 9, Keywords{}))
+	hunt := deployHunt(s)
+	s.endTurn()
+	s.endTurn()
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	s.script(0, Answer{Timeout: true})
+	s.do(s.attack(hunt, def))
+	if n := len(s.asked(0)); n != 1 {
+		t.Fatalf("one death question: asked %d times", n)
+	}
+	if (u.Damage == 5) == (w.Damage == 5) || u.Damage+w.Damage != 5 {
+		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage %d and %d, want exactly one with 5", u.Damage, w.Damage)
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_NecropolisHunt_FaceDownCopyFiresNothingWhenKilled(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	top := s.onTop(0, s.card("Necropolis Hunt"))
+	e := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 0, 9, Keywords{}))
+	s.script(0)
+	s.do(Action{Kind: ActScratch, Player: 0, Asset: p.HQ.ID})
+	if !scratched(p, top[0]) {
+		t.Fatalf("precondition: the Hunt on top of the deck became a face-down Scratch Company")
+	}
+	var sc *Asset
+	for _, a := range p.Reserves {
+		if a.Inst == top[0] {
+			sc = a
+		}
+	}
+	// Ready the Scratch Company over a round, march it to the Main Theater (it
+	// cannot be attacked in Reserves), then have the opponent kill it.
+	s.endTurn()
+	s.endTurn()
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sc.ID})
+	s.endTurn()
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	s.do(s.attack(hit, sc))
+	if s.alive(sc) {
+		t.Fatalf("precondition: the face-down Scratch Company is destroyed")
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a face-down Scratch Company has no printed abilities, so no death trigger: asked %d times (FR-ZON-004)", n)
+	}
+	s.wantDamage(e, 0)
+	s.wantDamage(e2, 0)
+	s.wantDamage(hit, 1) // only the Scratch Company's own 1 retaliation; no death damage
+}
+
+func TestCard_NecropolisHunt_NoEventDetailHasAFormatError(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	huntAttacks(s, b.u1)
+	for _, e := range s.g.Log {
+		if strings.Contains(e.Detail, "%!") {
+			t.Errorf("event %d (%s) Detail has a formatting error: %q", e.Seq, e.Kind, e.Detail)
+		}
+	}
 }

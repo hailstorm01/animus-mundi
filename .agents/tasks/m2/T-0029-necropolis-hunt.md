@@ -4,7 +4,7 @@ title: Make Necropolis Hunt executable
 kind: card
 tier: flash
 wave: A2 (task 6, card task 3)
-status: tests
+status: tests-review
 branch: m2/T-0029-necropolis-hunt
 depends_on: [T-0028]
 claims: [card:Necropolis Hunt]
@@ -56,10 +56,25 @@ requirements: []
 - **No Detail text:** no event `Detail` contains `%!`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be filled in by rules-test-author, in `pkg/engine/cards_path_test.go`, named `TestCard_NecropolisHunt_*`.
+In `pkg/engine/cards_path_test.go` (local helpers `deployHunt`, `huntAttacks`, `huntDefends`):
+- `TestCard_NecropolisHunt_EntersMainTheaterAsFiveTwoForThreeRequisitionThreeTactics`
+- `TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard` (options, Scratch included, both HQs, dead Hunt and opposing Ward assets excluded, chosen asset takes 5)
+- `TestCard_NecropolisHunt_DamageEventNamesTheDeadHuntAsSourceAndIsNonCombat`
+- `TestCard_NecropolisHunt_KilledOnOpponentsTurnStillTriggersAndItsControllerChooses`
+- `TestCard_NecropolisHunt_StalwartTargetTakesTheFullFive`
+- `TestCard_NecropolisHunt_ResistantTargetReducesTheFive` (Resistant 2: 3 damage)
+- `TestCard_NecropolisHunt_ArmorAbsorbsPartOfTheFive` (Armor 2: 3 damage, Armor spent)
+- `TestCard_NecropolisHunt_FiveDamageDestroysAFiveHealthUnit`
+- `TestCard_NecropolisHunt_NoOtherUnitOrStructureAsksNothingAndDoesNothing`
+- `TestCard_NecropolisHunt_SoleLegalTargetIsNotAsked`
+- `TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget`
+- `TestCard_NecropolisHunt_FaceDownCopyFiresNothingWhenKilled` (scratched from the deck top, readied, marched, killed; passes today)
+- `TestCard_NecropolisHunt_NoEventDetailHasAFormatError`
+
+Omitted: option ordering ("oldest first") is not pinned, since FRD 01 does not require it. No FR-* requirement is listed, so there are no TestFR tests.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author, or "None".
+- None. Tactics cost is covered by a local `deployHunt` helper in `cards_path_test.go`.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -74,3 +89,4 @@ To be filled in by rules-test-author, in `pkg/engine/cards_path_test.go`, named 
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (A2 card task 3), with status `tests` for `rules-test-author`. Starter-deck cards not yet executable before this task: 32. Expected after: 31.
+- 2026-10-21 rules-test-author: Wrote 13 `TestCard_NecropolisHunt_*` tests in `cards_path_test.go` (list under Tests). No shared helpers requested. Expected red: 12 fail at Deploy ("needs rules the kernel does not implement yet"); the face-down test passes today because it needs no definition. All other engine tests pass; gofmt, vet and `cardtown lint rules` are clean. Omitted: option-order assertions (not an FRD 01 rule). No open questions.
