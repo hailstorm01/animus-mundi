@@ -42,13 +42,18 @@ func TestRandomPlayoutsTerminateAndHoldInvariants(t *testing.T) {
 		games = 30
 	}
 	for seed := range uint64(games) {
-		g, err := engine.NewGame(engine.Config{Seed: seed, Decks: [2]engine.DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(2, 25), Main: keywordDeck()}}})
+		decks := [2]engine.DeckList{{HQ: hq(3, 20), Main: keywordDeck()}, {HQ: hq(2, 25), Main: keywordDeck()}}
+		mon := NewMonitors(decks, int(seed)+1)
+		g, err := engine.NewGame(engine.Config{Seed: seed, Decks: decks, Observer: mon})
 		if err != nil {
 			t.Fatal(err)
 		}
 		_, err = Playout(g, [2]Policy{RandomPolicy(seed, 0.1), RandomPolicy(seed+1000, 0.1)}, 400)
 		if err != nil {
 			t.Fatalf("seed %d: %v", seed, err)
+		}
+		if v := mon.Violation(); v != nil {
+			t.Fatalf("seed %d: %v", seed, v)
 		}
 	}
 }

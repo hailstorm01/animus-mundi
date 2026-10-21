@@ -4,7 +4,7 @@ title: Rule monitors in every sim game, with a coverage table (framework and thr
 kind: harness
 tier: sonnet
 wave: none (board directive #23, part 1 of 2)
-status: ready
+status: done
 branch: m2/T-0025-rule-monitors
 depends_on: [T-0024]
 claims: [type:Violation, type:Monitors, type:Coverage, func:NewMonitors, func:ReplayCommand, field:SimOptions.NoMonitors, field:SimStats.Coverage, cli:sim-monitors, monitor:attack-declaration, monitor:entry-state, monitor:resources]
@@ -162,10 +162,55 @@ If a monitor finds a violation in case 2, 6 or 7, that may be a real engine bug.
 - `pkg/engine/sim/playout_test.go` (only the case 2 edit, in the `test(T-0025)` commit)
 
 ## Done When
-- [ ] Cases 1 to 5 have tests, committed before the implementation, and all pass
-- [ ] Cases 6 and 7 hold, with their output and the starter coverage table in the Log
-- [ ] `go tool task check` passes
-- [ ] Existing tests pass, unchanged apart from the authorized edit
+- [x] Cases 1 to 5 have tests, committed before the implementation, and all pass
+- [x] Cases 6 and 7 hold, with their output and the starter coverage table in the Log
+- [x] `go tool task check` passes
+- [x] Existing tests pass, unchanged apart from the authorized edit
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #23 (part 1 of 2), with status `ready` (harness, sonnet). The lead chose the first monitors from what starter cards reach without new event facts: attack declaration, entry state and resources. The damage-sequence and target-timing monitors need additive event facts (the damage stages, and an event when an item is placed on the stack), so they go to T-0026, which keeps this task within four non-test files.
+- 2026-10-21 kernel-engineer: Implemented; status `review`. Tests first: commit 0a1a895 `test(T-0025)` held `monitor_test.go` (cases 1 to 5, plus a first-violation-wins test) and the case 2 edit to `TestRandomPlayoutsTerminateAndHoldInvariants` (local `decks`, `Observer: NewMonitors(decks, int(seed)+1)`, fail on `Violation()`); it failed to build (`undefined: Monitors`). Not edited since.
+  - **Reuse search:** no existing monitor or fan-out observer. Reused `engine.Observer`, `Snapshot`/`AssetSnap`, `Zone.String()`, `Card.Keywords`. `scratchFace` is a local copy of the engine's unexported face (a rules term, passes the fences lint).
+  - **Diff:** `pkg/engine/sim/monitor.go` (new): `Violation`, `Coverage`, `Monitors`, `NewMonitors`, `ReplayCommand` and the three monitors. `sim.go`: `SimOptions.NoMonitors`, `SimStats.Coverage`, a `fanout` observer (the caller's observer first, then the monitors), and a violation returns the `*Violation` before that game is counted. `cmd/cardtown/main.go`: `-monitors` flag, `printCoverage`, and the violation output. Docs: a "Rule monitors" paragraph and the sim row in the Boundaries section.
+  - **Choices to review:** (1) A violation's `Seq` is the declaring event (`action`, `deploy`, `scratch` or `turn-start`), also for checks that finish at the next settled snapshot. (2) A card missing from the decklist is a violation of that monitor. (3) On a violation the CLI writes the `-events` file (the games so far, the violating game last) before printing, so the replay hint has a file. Non-violation errors still write nothing. (4) Replay flags print as `-name value`, bools as `-name=value`. (5) Armor in `entry-state` counts `FR-KWD-002k` only when the armor part is not skipped. (6) A monitor violation wins over a Playout error for the same game.
+  - **Verification:**
+    - `go test ./pkg/engine/sim`: ok (500 + 500 starter games clean, 300 keyword-deck playouts clean).
+    - `go tool task check`: passes.
+    - Baseline built from `rework/executable-rules` (d639597, a detached worktree, since removed): for `sim -deck starter -p0 ANIMUS -p1 PATH` and bare `sim`, `-monitors=false` output is byte-identical to the baseline CLI; the default output minus the table is byte-identical to `-monitors=false`; two default runs are byte-identical; all exit 0.
+    - `-games 20 -events` is byte-identical with and without monitors. `-log -seed 7` is byte-identical to the baseline with `-monitors=false`, and the default output starts with the same lines. `-policy random` exits 0 for the starter run and the stress run.
+    - Violation path (checked once with a temporary injected failure, reverted): prints `[ERROR] rule monitor entry-state (…) broke in game 1, seed 1, at event 66: …`, the two replay lines, exits 1; `cardtown replay -events <file> -game 1 -at 66` reaches the event.
+  - **Starter coverage** (`sim -deck starter -p0 ANIMUS -p1 PATH`, 200 games, seeds 1..200, ProgressPolicy):
+    ```
+    attack-declaration   FR-CAP-001   2037
+    attack-declaration   FR-CBT-001   2037
+    attack-declaration   FR-KWD-002g  not reached
+    attack-declaration   FR-KWD-002j  not reached
+    entry-state          FR-KWD-002k  22
+    entry-state          FR-KWD-002l  not reached
+    entry-state          FR-SET-004   2132
+    entry-state          FR-ZON-005   1010
+    resources            FR-CAP-001   12102
+    resources            FR-KWD-002i  1091
+    resources            FR-RES-002   6146
+    resources            FR-RES-003   not reached
+    resources            KIM-S03      not reached
+    ```
+    Bare `sim` (stress decks) reaches `FR-KWD-002j` 172, `FR-KWD-002k` 1036, `FR-KWD-002l` 628, and still not `FR-KWD-002g`, `FR-KWD-002i`, `FR-RES-003`, `KIM-S03`.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Process: the test commit 0a1a895 comes first and failed to build (`undefined: Monitors`). No `_test.go` file changes after it. The `playout_test.go` change is exactly the authorized case 2 edit: the decks move into a local, `Observer: NewMonitors(decks, int(seed)+1)` is added, and so is a `Violation()` check.
+  - Code:
+    - `monitor.go` implements the three monitors as specced. It reads only Event/Settled calls and decklist cards, and it names no card.
+    - Ethereal Guardians don't restrict attackers, and only Main Theater Guardians count (`FR-KWD-002j`).
+    - Face-down assets use the Scratch Company face.
+    - `SimulateWith` fans out to the user observer and the monitors, and returns the `*Violation` before any Playout error.
+    - Engineer notes 1 to 8 are accepted. Notes 1 (the violation Seq is the declaring event) and 3 (a violation still writes `-events`) are the right calls.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - For starter progress, starter random, stress progress and stress random: two runs are byte-identical. `-monitors=false` is byte-identical to a baseline CLI built from `rework/executable-rules`. Removing the coverage table from the default output gives exactly the `-monitors=false` output.
+    - The `-events` files from 20 games are identical with monitors on and off, and `-log -seed 7` with `-monitors=false` matches the baseline.
+    - Monitor overhead is about 5% of run time.
+  - **Planted-bug check (reverted, not committed):** making a Scratch Company enter Readied in `stack.go` gave this in game 1 of `sim -deck starter -p0 ANIMUS -p1 PATH -games 5 -seed 3`: `[ERROR] rule monitor entry-state (…) broke in game 1, seed 3, at event 133`, then the two replay lines and exit 1. So the monitors catch a consistently wrong rule that the invariants miss.
+  - **Coverage now:**
+    - Starter games never reach `FR-KWD-002g`, `FR-KWD-002j`, `FR-KWD-002l`, `FR-RES-003` or `KIM-S03`.
+    - Stress games (bare `sim`) reach `FR-KWD-002j` 184, `FR-KWD-002l` 627, `FR-RES-003` 353 and `KIM-S03` 401. They leave `FR-KWD-002g` and `FR-KWD-002i` not reached.
+    - The keyword-deck playout test covers Ethereal and Versatile.

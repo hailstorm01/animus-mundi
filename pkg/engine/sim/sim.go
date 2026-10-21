@@ -51,13 +51,30 @@ type SimStats struct {
 	FirstPlayerWin int
 	TotalTurns     int
 	Reasons        map[string]int
+	Coverage       Coverage // rule monitor checks summed over games; nil when NoMonitors
 }
 
 // SimOptions are the optional extras of SimulateWith.
 type SimOptions struct {
-	DeckNames [2]string                                   // recorded in each match-start
-	Observer  func(game int, seed uint64) engine.Observer // optional; one observer per game, game counts from 1
-	Policy    func(seed uint64) Policy                    // nil means RandomPolicy(seed, 0.1), today's behavior
+	DeckNames  [2]string                                   // recorded in each match-start
+	Observer   func(game int, seed uint64) engine.Observer // optional; one observer per game, game counts from 1
+	Policy     func(seed uint64) Policy                    // nil means RandomPolicy(seed, 0.1), today's behavior
+	NoMonitors bool                                        // true runs without rule monitors; nothing else changes
+}
+
+// fanout passes every call to its observers in order.
+type fanout []engine.Observer
+
+func (f fanout) Event(e engine.Event) {
+	for _, o := range f {
+		o.Event(e)
+	}
+}
+
+func (f fanout) Settled(s engine.Snapshot) {
+	for _, o := range f {
+		o.Settled(s)
+	}
 }
 
 // Simulate plays games random-policy matches between two decks.
@@ -69,12 +86,28 @@ func Simulate(decks [2]engine.DeckList, games int, seed uint64, maxTurns int) (S
 // record and one observer per game. Observing does not change the result.
 func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int, opt SimOptions) (SimStats, error) {
 	st := SimStats{Reasons: map[string]int{}}
+	if !opt.NoMonitors {
+		st.Coverage = Coverage{}
+	}
 	for i := range uint64(games) {
 		s := seed + i
 		cfg := engine.Config{Seed: s, Decks: decks, DeckNames: opt.DeckNames,
 			Choosers: [2]engine.Chooser{engine.RandomChooser(s*2 + 1), engine.RandomChooser(s*2 + 2)}}
+		var obs fanout
 		if opt.Observer != nil {
-			cfg.Observer = opt.Observer(int(i)+1, s)
+			obs = append(obs, opt.Observer(int(i)+1, s))
+		}
+		var mon *Monitors
+		if !opt.NoMonitors {
+			mon = NewMonitors(decks, int(i)+1)
+			obs = append(obs, mon)
+		}
+		switch len(obs) {
+		case 0:
+		case 1:
+			cfg.Observer = obs[0]
+		default:
+			cfg.Observer = obs
 		}
 		g, err := engine.NewGame(cfg)
 		if err != nil {
@@ -85,6 +118,12 @@ func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int
 			pol = func(seed uint64) Policy { return RandomPolicy(seed, 0.1) }
 		}
 		res, err := Playout(g, [2]Policy{pol(s*2 + 1), pol(s*2 + 2)}, maxTurns)
+		if mon != nil {
+			if v := mon.Violation(); v != nil {
+				return st, v
+			}
+			st.Coverage.add(mon.Coverage())
+		}
 		if err != nil {
 			return st, fmt.Errorf("seed %d: %w", s, err)
 		}
