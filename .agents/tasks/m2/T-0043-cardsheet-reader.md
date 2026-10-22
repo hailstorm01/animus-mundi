@@ -4,7 +4,7 @@ title: One card-sheet reader for the sheets, syntax and fences linters (directiv
 kind: harness
 tier: sonnet
 wave: none (board directive #36, structural review cleanup 6 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0043-cardsheet-reader
 depends_on: [T-0042]
 claims: [pkg:toolchain/linter/cardsheet, func:cardsheet.List, func:cardsheet.Open, func:cardsheet.Column]
