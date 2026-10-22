@@ -4,7 +4,7 @@ title: Split cmd/cardtown/main.go into one file per command (pure move)
 kind: harness
 tier: flash
 wave: none (board directive #26, cleanup 4 of 4, before cardtown play)
-status: ready
+status: done
 branch: m2/T-0035-split-cardtown-main
 depends_on: [T-0034]
 claims: [file:cmd/cardtown/sim.go, file:cmd/cardtown/replay.go, file:cmd/cardtown/lint.go, file:cmd/cardtown/tools.go]
@@ -58,10 +58,29 @@ No new tests. These are checks recorded in the Log, re-run by the reviewer, each
 - new: `cmd/cardtown/sim.go`, `replay.go`, `lint.go`, `tools.go`
 
 ## Done When
-- [ ] Acceptance cases 1 to 4 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Acceptance cases 1 to 4 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0034 (harness, flash). It is a pure move, with five files including the four new ones. The size rule's purpose (one review's scope) is met by the moved-blocks check.
 - 2026-10-21 lead-architect: T-0034 is approved (a69b191). Set to `ready`. The function list in `main.go` matches the Target layout table (checked with `grep -n "^func \|^type " cmd/cardtown/main.go`). The lead has checked out the task branch for the engineer (see T-0034's process slip).
   - Next: **the user runs `@kernel-engineer T-0035` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-21 kernel-engineer: Built baseline binary `bin/cardtown-baseline.exe` prior to file split. Split `cmd/cardtown/main.go` into `sim.go`, `replay.go`, `lint.go`, `tools.go` with 1-line command header comments and imports per target layout, leaving shared helpers (`main`, `printUsage`, `findRepoRoot`, `normalizeArgs`) in `main.go`. Ran `go tool task fmt`.
+  - Case 1 (Same functions): `git grep --untracked -h -E "^(func|type) " cmd/cardtown/ | sort` confirmed exact match of all 17 top-level declarations with baseline.
+  - Case 2 (Only moves): `git diff --cached --color-moved=zebra` shows only moved declaration blocks, file headers, and imports.
+  - Case 3 (Outputs unchanged): Binary `fc /b` verified byte-identical output against baseline for:
+    - Usage text (`cardtown` no args)
+    - Help texts (`cardtown sim -h`, `cardtown replay -h`)
+    - Playouts (`cardtown sim -deck starter -p0 ANIMUS -p1 PATH`, bare `cardtown sim`)
+    - Linters (`cardtown lint --all`)
+    - Deterministic replay (`cardtown replay -events <file> -game 3` on fresh 5-game event log)
+  - Case 4 (Check & hook): `cardtown hook install` ran cleanly; `go tool task check` passed completely (fmt, vet, test, build, lint). Set status to `review`.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Process: the commits landed on the task branch, which the lead checked out before dispatch. d30b931 touches only `cmd/cardtown/`.
+  - A multiset comparison of removed against added lines shows every removed line reappears. The only added lines are the 4 headers, 4 `package main` lines and the import blocks. The layout matches the table, and `main.go` is down to 150 lines.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - These are byte-identical, with the same exit codes, to a baseline CLI built from 81a01f5: `cardtown` (usage), `sim -h`, `replay -h`, `sim -deck starter -p0 ANIMUS -p1 PATH`, bare `sim` and `lint --all`.
+    - `replay -game 3 -at 12` exits 0 on a fresh 5-game starter file.
+    - A cross-binary replay is refused by design, because the build revisions differ, so case 3's "both binaries" part is covered by each binary replaying its own records.
+  - Board directive #26 is complete.
