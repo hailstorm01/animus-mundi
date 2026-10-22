@@ -91,7 +91,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0034 | Remove duplicated rule code: Berserk targeting, combat zones, Scratch Company face, monitor lookups (directive #26, harness, sonnet) | done |
 | T-0035 | Split cmd/cardtown/main.go into one file per command, pure move (directive #26, harness, flash) | done |
 | T-0036 | PlayerView, a per-seat view of the game and its event log (directive #24; Deliverable 5 part 1; harness, opus high) | done |
-| T-0037 | cardtown play, a text-mode match against a sim policy, drawn only from PlayerView (directive #24; Deliverable 5 part 2; harness, flash) | changes |
+| T-0037 | cardtown play, a text-mode match against a sim policy, drawn only from PlayerView (directive #24; Deliverable 5 part 2; harness, flash, escalated to sonnet in review round 2) | changes |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
