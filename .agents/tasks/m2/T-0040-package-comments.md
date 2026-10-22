@@ -4,7 +4,7 @@ title: Package comments for sim and eventlog (directive #33, harness, flash, com
 kind: harness
 tier: flash
 wave: none (board directive #33, structural review cleanup 3 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0040-package-comments
 depends_on: [T-0039]
 claims: [doc:pkg/sim, doc:pkg/eventlog]
