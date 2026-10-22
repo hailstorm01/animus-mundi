@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: ready
+status: in-progress
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
