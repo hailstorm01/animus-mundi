@@ -4,7 +4,7 @@ title: PlayerView, a per-seat view of the game and its event log (directive #24)
 kind: harness
 tier: opus (effort high, board directive #27)
 wave: none (design note Deliverable 5, part 1 of 2; board directive #24)
-status: blocked
+status: ready
 branch: m2/T-0036-player-view
 depends_on: [T-0035]
 claims: [pkg:pkg/engine/view, type:View, func:PlayerView, func:LogLines]
@@ -131,10 +131,13 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
 4. **No leak (directive #24 b):**
    - Play 20 seeded starter matches (ANIMUS vs PATH), each to completion, using `sim.Playout` with `ProgressPolicy` and an observer collecting events.
    - Take `PlayerView` for each seat at every settled point (the observer's `Settled` calls; build the view from the game at that moment).
-   - The view, marshaled to JSON, and the seat's `LogLines` so far never contain, for the *other* seat:
+   - **The view:** at every settled point, the view marshaled to JSON never contains, for the *other* seat:
      - the name of a card in that seat's hand or deck, or
      - the real name of a face-down asset,
      unless that name is publicly visible in the view at that moment (in a discard, face-up on the battlefield, on the stack, or an HQ).
+   - **The log** (amended 2026-10-21 at the T-0036 block): each of the seat's `LogLines` is checked **once**, against the hidden names at the first settled point at or after its event, with the same exception.
+     - A line that named a card while it was public is not a leak later. Death triggers return cards to hand or deck without an event (Unceasing Tide, Stormfront of Ideals).
+     - A line that names a card while it is hidden still fails.
    - Check both seats.
 5. **`LogLines`:**
    - A `match-start` line for each seat lacks the seed, and contains that seat's own mulliganed names and the opponent's mulligan count.
@@ -166,3 +169,8 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
   - **Reuse search.** The view reads `Asset.Printed()`, which already gives the Scratch face for face-down assets, and the layer functions `Power`, `MaxHealth` and `Keywords`. `LogLines` reuses `eventlog.FormatEvent` for every line, including the redacted `match-start` and `turn-start` (as a Detail-only event copy). No engine change is needed.
   - The prototype is kept outside the repository, at `C:\Users\blade\AppData\Local\Temp\claude\c--Users-blade-animus-mundi-animus-mundi\81e84dae-3ae2-4bac-a75d-4500983e2713\scratchpad\T-0036-prototype\` (`view.go`, `log.go`, `view_test.go`). It is ready to commit, tests first, once Case 4 is amended.
   - Commands: `go test ./pkg/engine/view` gives Cases 1, 2, 3 and 5 PASS and Case 4 FAIL (seeds 8 and 10). `go vet ./pkg/engine/view` is clean. `gofmt -l` is clean. The gates `go tool task check` and the `cardtown sim` baseline were not run, because nothing is to be committed.
+- 2026-10-21 lead-architect: The block is a **fault in the lead's case 4**, not in the view.
+  - Re-checking the whole log against the current state treats a name that was public when its line was written as a leak once the card returns to hand. Unceasing Tide's "return it to its owner's hand" makes such a move, and it emits no event.
+  - The engineer's evidence: the view JSON never leaked in 4,594 settled points, and the mutation "real names on face-down assets" is caught with 22 failures.
+  - **Lead decision:** the engineer's proposal. The view check is unchanged. Each log line is checked once, at the first settled point at or after its event, with the same exception (case 4 amended above). The weaker alternative, "public earlier in the match", is rejected.
+  - Status `ready`, for the same engineer to resume: commit `test(T-0036)` with the amended case 4, then the implementation.
