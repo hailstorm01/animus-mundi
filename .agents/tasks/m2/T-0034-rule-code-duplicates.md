@@ -4,7 +4,7 @@ title: Remove duplicated rule code (Berserk targeting, combat zones, Scratch Com
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 3 of 4, before cardtown play)
-status: queued
+status: ready
 branch: m2/T-0034-rule-code-duplicates
 depends_on: [T-0033]
 claims: [func:ScratchFace, func:inCombatZone]
@@ -82,3 +82,4 @@ Case 1 goes in a new `pkg/engine/sim/scratchface_test.go` (or an engine test fil
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0033 (harness, sonnet). The audit's R2 was split into T-0033 and T-0034 to keep each within four non-test files.
+- 2026-10-21 lead-architect: T-0033 is merged (6e02b1c). Set to `ready`. The paths in Inputs are as of T-0032: `combat.go`, `targeting.go` and `card.go` are confirmed.
