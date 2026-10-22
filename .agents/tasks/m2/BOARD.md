@@ -96,4 +96,4 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
 | T-0041 | Split pkg/engine/events.go into events, snapshots and build info (directive #34, harness, flash, pure move) | done |
-| T-0042 | Split pkg/sim/monitor.go into the framework and one file per monitor (directive #35, harness, flash, pure move) | ready |
+| T-0042 | Split pkg/sim/monitor.go into the framework and one file per monitor (directive #35, harness, flash, pure move) | done |

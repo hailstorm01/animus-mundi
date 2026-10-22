@@ -4,7 +4,7 @@ title: Split pkg/sim/monitor.go into the framework and one file per monitor (dir
 kind: harness
 tier: flash
 wave: none (board directive #35, structural review cleanup 5 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0042-split-monitor-go
 depends_on: [T-0041]
 claims: [file:pkg/sim/monitor.go, file:pkg/sim/monitor_attack.go, file:pkg/sim/monitor_entry.go, file:pkg/sim/monitor_resources.go, file:pkg/sim/monitor_damage.go, file:pkg/sim/monitor_targeting.go]
@@ -123,3 +123,12 @@ This is a pure move: the size rule is met by cases 1 to 3, as in T-0041.
     - `cardtown sim -games 10 -events`: JSON lines identical between baseline and new CLI once `"revision":…,"modified":…` is stripped (4138 lines for random, 5367 lines for progress; `fc.exe /b` reports no differences).
   - Case 6 (check gate): `go tool task check` passes cleanly (fmt-check, go vet, all package tests, cardtown lint --all: 0 warnings, 0 errors).
   - Status set to `review`.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 2c267c4, status `done`.
+  - Scope: 311b444 changes only the status line. 9f57fec changes only `monitor.go`, the five new files and this file.
+  - Placement: the Log's `git grep` output matches the target layout row by row.
+  - Only moves: a multiset comparison of removed against added lines in `pkg/sim` leaves no removed line unaccounted for. The only new lines are 5 `package sim` lines, the new files' import lines and blank lines.
+  - Gates, re-run in a scratch worktree against a baseline CLI built from 462cf0a:
+    - The sorted non-test declarations of `pkg/sim` (52) and `go test -list . ./pkg/sim` (32 tests) are identical.
+    - `go tool task check` exits 0.
+    - Under both policies, these are byte-identical (`cmp`): the starter sim (including the monitor coverage table), bare sim and `-games 1 -seed 7 -log`. The starter `-games 10 -events` files are identical with the revision removed.
+  - Directive #35 is complete.
