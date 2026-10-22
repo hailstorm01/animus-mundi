@@ -4,7 +4,7 @@ title: Split cmd/cardtown/main.go into one file per command (pure move)
 kind: harness
 tier: flash
 wave: none (board directive #26, cleanup 4 of 4, before cardtown play)
-status: queued
+status: ready
 branch: m2/T-0035-split-cardtown-main
 depends_on: [T-0034]
 claims: [file:cmd/cardtown/sim.go, file:cmd/cardtown/replay.go, file:cmd/cardtown/lint.go, file:cmd/cardtown/tools.go]
@@ -63,3 +63,5 @@ No new tests. These are checks recorded in the Log, re-run by the reviewer, each
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0034 (harness, flash). It is a pure move, with five files including the four new ones. The size rule's purpose (one review's scope) is met by the moved-blocks check.
+- 2026-10-21 lead-architect: T-0034 is approved (a69b191). Set to `ready`. The function list in `main.go` matches the Target layout table (checked with `grep -n "^func \|^type " cmd/cardtown/main.go`). The lead has checked out the task branch for the engineer (see T-0034's process slip).
+  - Next: **the user runs `@kernel-engineer T-0035` in the Antigravity agent (Gemini Flash)**.
