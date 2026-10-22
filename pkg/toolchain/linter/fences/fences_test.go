@@ -959,3 +959,20 @@ func TestFences_Case36_PassLine(t *testing.T) {
 		t.Fatalf("expected %q, got:\n%s", want, out)
 	}
 }
+
+// 38. An unreadable import block is reported without repeating the absolute path.
+func TestFences_Case38_UnreadableImportsMessage(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/sim/bad.go", "package sim\n\nimport (\n\t\"fmt\n)\n")
+	out := expectFail(t, repo)
+	want := "  [ERROR] pkg/sim/bad.go:4: cannot read imports: string literal not terminated"
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.TrimRight(line, "\r") == want {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected line %q, got:\n%s", want, out)
+	}
+}
