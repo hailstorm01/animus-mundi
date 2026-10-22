@@ -4,11 +4,15 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"go/parser"
+	"go/scanner"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -22,7 +26,20 @@ var (
 	markerRegex = regexp.MustCompile(`OPEN\(([A-Z]+-[A-Z]+\d+[a-z]?)\)`)
 )
 
-// Report holds fence violations found in engine code.
+// modulePath is the Go module path that import rules are written against.
+const modulePath = "animus-mundi"
+
+// allowedImports maps a package directory to the in-module import paths (relative to
+// the module root) its non-test files may use. Packages not listed are not checked.
+var allowedImports = map[string][]string{
+	"pkg/engine/ability":  {},
+	"pkg/engine/cards":    {"pkg/engine/ability"},
+	"pkg/engine/sim":      {"pkg/engine"},
+	"pkg/engine/eventlog": {"pkg/engine"},
+	"pkg/engine/view":     {"pkg/engine", "pkg/engine/eventlog"},
+}
+
+// Report holds fence violations found in package code.
 type Report struct {
 	Violations []string
 }
@@ -38,7 +55,9 @@ type cardInfo struct {
 	words []string
 }
 
-// Analyze scans engine code for card names and invalid markers.
+// Analyze scans non-test Go files under pkg/ (except pkg/engine/cards and pkg/toolchain)
+// for card names and invalid markers, and checks the imports of the packages in
+// allowedImports (pkg/engine/cards included).
 func Analyze(repoRoot string) (*Report, error) {
 	cardsDir := filepath.Join(repoRoot, "data", "cards")
 	info, err := os.Stat(cardsDir)
@@ -178,19 +197,19 @@ func Analyze(repoRoot string) (*Report, error) {
 		}
 	}
 
-	engineDir := filepath.Join(repoRoot, "pkg", "engine")
+	pkgDir := filepath.Join(repoRoot, "pkg")
 	var files []string
-	err = filepath.WalkDir(engineDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(pkgDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		rel, err := filepath.Rel(engineDir, path)
+		rel, err := filepath.Rel(repoRoot, path)
 		if err != nil {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
 		if d.IsDir() {
-			if rel == "cards" {
+			if rel == "pkg/engine/cards" || rel == "pkg/toolchain" {
 				return filepath.SkipDir
 			}
 			return nil
@@ -201,13 +220,13 @@ func Analyze(repoRoot string) (*Report, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("reading pkg/engine directory: %w", err)
+		return nil, fmt.Errorf("reading pkg directory: %w", err)
 	}
 
 	var items []violationItem
 
 	for _, name := range files {
-		lines, err := readLines(filepath.Join(engineDir, filepath.FromSlash(name)))
+		lines, err := readLines(filepath.Join(repoRoot, filepath.FromSlash(name)))
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", name, err)
 		}
@@ -279,6 +298,17 @@ func Analyze(repoRoot string) (*Report, error) {
 		}
 	}
 
+	// Import direction also applies to the cards package, which the scan above skips.
+	importFiles := append([]string(nil), files...)
+	cardsFiles, err := goFilesUnder(repoRoot, "pkg/engine/cards")
+	if err != nil {
+		return nil, err
+	}
+	importFiles = append(importFiles, cardsFiles...)
+	for _, name := range importFiles {
+		items = append(items, checkImports(repoRoot, name)...)
+	}
+
 	sort.Slice(items, func(i, j int) bool {
 		if items[i].file != items[j].file {
 			return items[i].file < items[j].file
@@ -296,7 +326,7 @@ func Analyze(repoRoot string) (*Report, error) {
 	return rep, nil
 }
 
-// Lint runs the fences check and prints the results.
+// Lint runs the fences check over package code under pkg/ and prints the results.
 func Lint(repoRoot string, _ []string) (bool, error) {
 	fmt.Println("==========================================================")
 	fmt.Println("  CARD TOWN LINTER: ENGINE ARCHITECTURE FENCES            ")
@@ -315,9 +345,86 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 		return false, nil
 	}
 
-	fmt.Println("  [PASS] Engine code is free of card names and invalid markers.")
+	fmt.Println("  [PASS] Package code is free of card names, invalid markers and disallowed imports.")
 	fmt.Println("==========================================================")
 	return true, nil
+}
+
+// goFilesUnder lists non-test Go files under a repo-relative directory, slash-separated.
+func goFilesUnder(repoRoot, relDir string) ([]string, error) {
+	root := filepath.Join(repoRoot, filepath.FromSlash(relDir))
+	if _, err := os.Stat(root); os.IsNotExist(err) {
+		return nil, nil
+	}
+	var out []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		rel, err := filepath.Rel(repoRoot, path)
+		if err != nil {
+			return err
+		}
+		out = append(out, filepath.ToSlash(rel))
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", relDir, err)
+	}
+	return out, nil
+}
+
+// checkImports reports imports in a table-listed package's file that leave its allowed set.
+func checkImports(repoRoot, rel string) []violationItem {
+	pkgPath := rel[:strings.LastIndex(rel, "/")]
+	allowed, listed := allowedImports[pkgPath]
+	if !listed {
+		return nil
+	}
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, filepath.Join(repoRoot, filepath.FromSlash(rel)), nil, parser.ImportsOnly)
+	if err != nil {
+		line := 1
+		if el, ok := err.(scanner.ErrorList); ok && len(el) > 0 {
+			line = el[0].Pos.Line
+			err = el[0]
+		}
+		return []violationItem{{file: rel, line: line, msg: fmt.Sprintf("cannot read imports: %v", err)}}
+	}
+	var items []violationItem
+	for _, spec := range f.Imports {
+		path, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+		if path != modulePath && !strings.HasPrefix(path, modulePath+"/") {
+			continue
+		}
+		inModule := strings.TrimPrefix(strings.TrimPrefix(path, modulePath), "/")
+		ok := false
+		for _, a := range allowed {
+			if inModule == a {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			continue
+		}
+		rule := "may import nothing from this module"
+		if len(allowed) > 0 {
+			rule = "may import only " + strings.Join(allowed, ", ")
+		}
+		items = append(items, violationItem{
+			file: rel,
+			line: fset.Position(spec.Pos()).Line,
+			msg:  fmt.Sprintf("imports %s; %s %s", path, pkgPath, rule),
+		})
+	}
+	return items
 }
 
 func splitWords(s string) []string {

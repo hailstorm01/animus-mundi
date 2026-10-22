@@ -318,9 +318,9 @@ func isRulesPath(pLower string) bool {
 	return pLower == "docs/frd/01_game_rules_frd.md" || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
 }
 
-// isFencesPath reports whether a change can affect engine architecture fences.
+// isFencesPath reports whether a change can affect the package fences.
 func isFencesPath(pLower string) bool {
-	return (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go")) ||
+	return (strings.HasPrefix(pLower, "pkg/") && !strings.HasPrefix(pLower, "pkg/toolchain/") && strings.HasSuffix(pLower, ".go")) ||
 		(strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv")) ||
 		pLower == "docs/frd/keyword_interaction_matrix.md" ||
 		pLower == "docs/design/m2_starter_set_ability_survey.md"

@@ -4,7 +4,7 @@ title: Fence every package under pkg/, and check the client packages' imports (d
 kind: harness
 tier: sonnet
 wave: none (board directive #30, structural review cleanup 1 of 7, before cardtown play)
-status: ready
+status: review
 branch: m2/T-0038-fence-all-packages
 depends_on: []
 claims: [lint:fences-scope, lint:fences-imports, func:isFencesPath]
@@ -84,9 +84,10 @@ Recorded in the Log, not as tests:
 - Tests: `pkg/toolchain/linter/fences/fences_test.go` (new cases, a helper, the case 21 edit), new `cmd/cardtown/lint_test.go`
 
 ## Done When
-- [ ] Cases 26–37 have tests, committed as `test(T-0038): …` before the implementation, and each failed before it
-- [ ] `go test ./pkg/toolchain/linter/fences ./cmd/cardtown` passes
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] Cases 26–37 have tests, committed as `test(T-0038): …` before the implementation, and each failed before it
+- [x] `go test ./pkg/toolchain/linter/fences ./cmd/cardtown` passes
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #30, folding in structural finding 10 (the import table). It changes two non-test files. The `ability` and `cards` rows of the import table go beyond the directive's client packages. They cost two rows, and they pin the design note's one-way `engine` → `cards` → `ability` direction, which is otherwise enforced only by Go's cycle rule, and only for `engine`. T-0037 now depends on this task. It has no dependencies of its own, so it is set to `ready`. Branch `m2/T-0038-fence-all-packages` is created from the integration branch. Next: the lead dispatches the `kernel-engineer` subagent (Sonnet).
+- 2026-10-21 kernel-engineer: Implemented. Reuse search: the fences walk, `violationItem` sort and `readLines` are kept; `go/parser` ImportsOnly is the only new mechanism (no existing import checker in pkg/). Tests commit c6490ce (cases 26-37 plus the case 21 edit); before the implementation the failing set was cases 21, 26, 27, 28, 30, 31, 32, 33, 35, 36 and `TestIsFencesPath`. Cases 29 and 34 are negative (must pass) cases, so they passed before the change too. Diff: `fences.go` walks `pkg/` skipping `pkg/engine/cards` and `pkg/toolchain`, reports repo-relative paths, adds `allowedImports` table, `checkImports` and `goFilesUnder` (so `pkg/engine/cards` imports are checked though its names are not), new PASS line and doc comments; `lint.go` `isFencesPath` only. The header line was left unchanged per decision 4. A parse failure reports the first scanner error's line. Commands: `go test ./pkg/toolchain/linter/fences ./cmd/cardtown` ok; `go tool task check` exit 0 (includes `cardtown lint --all` and case 20, real tree clean); `go run ./cmd/cardtown lint fences` PASS with the new line. Reviewer: check the cannot-read-imports line number choice.

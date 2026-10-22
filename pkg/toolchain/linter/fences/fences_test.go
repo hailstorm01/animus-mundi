@@ -720,8 +720,8 @@ func TestFences_Case21_AbilityPackageInScope(t *testing.T) {
 	if ok {
 		t.Fatalf("expected failure, got true")
 	}
-	if !strings.Contains(out, "[ERROR] ability/z.go:3") {
-		t.Fatalf("expected [ERROR] ability/z.go:3, got:\n%s", out)
+	if !strings.Contains(out, "[ERROR] pkg/engine/ability/z.go:3") {
+		t.Fatalf("expected [ERROR] pkg/engine/ability/z.go:3, got:\n%s", out)
 	}
 }
 
@@ -790,5 +790,172 @@ func TestFences_Case25_SortedByRelativePath(t *testing.T) {
 	iz, ix := strings.Index(out, "ability/z.go:3"), strings.Index(out, "x.go:3")
 	if iz == -1 || ix == -1 || iz > ix {
 		t.Fatalf("expected ability/z.go:3 before x.go:3, got:\n%s", out)
+	}
+}
+
+// writePkgFile writes a file at a repo-relative path, for files outside pkg/engine.
+func writePkgFile(t *testing.T, repo, rel, code string) {
+	t.Helper()
+	p := filepath.Join(repo, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		t.Fatalf("mkdir for %s: %v", rel, err)
+	}
+	if err := os.WriteFile(p, []byte(code), 0644); err != nil {
+		t.Fatalf("write %s: %v", rel, err)
+	}
+}
+
+const steelRainSrc = "package x\n\nvar _ = \"Steel Rain\"\n"
+
+func expectFail(t *testing.T, repo string) string {
+	t.Helper()
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok {
+		t.Fatalf("expected failure, got true:\n%s", out)
+	}
+	return out
+}
+
+func expectPass(t *testing.T, repo string) string {
+	t.Helper()
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if !ok {
+		t.Fatalf("expected pass, got:\n%s", out)
+	}
+	return out
+}
+
+// 26. A card name in pkg/sim/x.go -> fails with exactly one error line.
+func TestFences_Case26_PkgSimInScope(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/sim/x.go", steelRainSrc)
+	out := expectFail(t, repo)
+	want := `[ERROR] pkg/sim/x.go:3: contains card name "Steel Rain"`
+	if !strings.Contains(out, want) || strings.Count(out, "[ERROR]") != 1 {
+		t.Fatalf("expected exactly one %s, got:\n%s", want, out)
+	}
+}
+
+// 27. A card name in pkg/engine/sim/x.go -> fails.
+func TestFences_Case27_EngineSimInScope(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/sim/x.go", steelRainSrc)
+	out := expectFail(t, repo)
+	if !strings.Contains(out, "pkg/engine/sim/x.go:3") {
+		t.Fatalf("expected pkg/engine/sim/x.go:3, got:\n%s", out)
+	}
+}
+
+// 28. A card name in a new package pkg/foo/bar/w.go -> fails.
+func TestFences_Case28_NewPackageInScope(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/foo/bar/w.go", steelRainSrc)
+	out := expectFail(t, repo)
+	if !strings.Contains(out, "pkg/foo/bar/w.go:3") {
+		t.Fatalf("expected pkg/foo/bar/w.go:3, got:\n%s", out)
+	}
+}
+
+// 29. Toolchain, cards subtree and test files stay exempt.
+func TestFences_Case29_ExemptPaths(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	for _, rel := range []string{
+		"pkg/toolchain/lint/t.go",
+		"pkg/engine/cards/y.go",
+		"pkg/engine/cards/sub/w.go",
+		"pkg/sim/x_test.go",
+	} {
+		writePkgFile(t, repo, rel, steelRainSrc)
+	}
+	expectPass(t, repo)
+}
+
+// 30. An invalid marker in pkg/view/v.go -> fails.
+func TestFences_Case30_MarkerInPkgView(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/view/v.go", "package view\n\n// OPEN(KIM-Z99)\n")
+	out := expectFail(t, repo)
+	if !strings.Contains(out, "pkg/view/v.go:3") || !strings.Contains(out, "not in the matrix") {
+		t.Fatalf("expected pkg/view/v.go:3 not in the matrix, got:\n%s", out)
+	}
+}
+
+// 31. Violations in pkg/sim/y.go and pkg/engine/x.go -> sorted, counted 2.
+func TestFences_Case31_SortedAcrossPackages(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/sim/y.go", steelRainSrc)
+	writePkgFile(t, repo, "pkg/engine/x.go", steelRainSrc)
+	out := expectFail(t, repo)
+	ie, is := strings.Index(out, "pkg/engine/x.go:3"), strings.Index(out, "pkg/sim/y.go:3")
+	if ie == -1 || is == -1 || ie > is {
+		t.Fatalf("expected pkg/engine/x.go:3 before pkg/sim/y.go:3, got:\n%s", out)
+	}
+	if !strings.Contains(out, "2 fence violation(s)") {
+		t.Fatalf("expected count of 2, got:\n%s", out)
+	}
+}
+
+// 32. A disallowed import is reported at the import's line.
+func TestFences_Case32_DisallowedImport(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/sim/x.go", "package sim\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine/eventlog\"\n)\n\nvar _ = fmt.Sprint\n")
+	out := expectFail(t, repo)
+	want := "pkg/engine/sim/x.go:5: imports animus-mundi/pkg/engine/eventlog; pkg/engine/sim may import only pkg/engine"
+	if !strings.Contains(out, "[ERROR] "+want) {
+		t.Fatalf("expected %q, got:\n%s", want, out)
+	}
+}
+
+// 33. Two import violations, including the import-nothing wording.
+func TestFences_Case33_TwoImportViolations(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/eventlog/x.go", "package eventlog\n\nimport _ \"animus-mundi/pkg/engine/view\"\n")
+	writePkgFile(t, repo, "pkg/engine/ability/x.go", "package ability\n\nimport _ \"animus-mundi/pkg/engine\"\n")
+	out := expectFail(t, repo)
+	if strings.Count(out, "[ERROR]") != 2 {
+		t.Fatalf("expected two errors, got:\n%s", out)
+	}
+	if !strings.Contains(out, "pkg/engine/eventlog/x.go:3: imports animus-mundi/pkg/engine/view; pkg/engine/eventlog may import only pkg/engine") {
+		t.Fatalf("missing eventlog error, got:\n%s", out)
+	}
+	if !strings.Contains(out, "pkg/engine/ability/x.go:3: imports animus-mundi/pkg/engine; pkg/engine/ability may import nothing from this module") {
+		t.Fatalf("missing ability error, got:\n%s", out)
+	}
+}
+
+// 34. Allowed imports, test files and packages outside the table pass.
+func TestFences_Case34_AllowedImportsPass(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/view/x.go", "package view\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine\"\n\t\"animus-mundi/pkg/engine/eventlog\"\n)\n\nvar _, _, _ = fmt.Sprint, engine.Clean, eventlog.X\n")
+	writePkgFile(t, repo, "pkg/engine/cards/x.go", "package cards\n\nimport _ \"animus-mundi/pkg/engine/ability\"\n")
+	writePkgFile(t, repo, "pkg/engine/sim/x_test.go", "package sim\n\nimport _ \"animus-mundi/pkg/engine/view\"\n")
+	writePkgFile(t, repo, "pkg/engine/x.go", "package engine\n\nimport _ \"animus-mundi/pkg/engine/sim\"\n")
+	writePkgFile(t, repo, "pkg/foo/x.go", "package foo\n\nimport _ \"animus-mundi/pkg/engine/sim\"\n")
+	expectPass(t, repo)
+}
+
+// 35. A malformed import block is reported, not returned as an error.
+func TestFences_Case35_UnreadableImports(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/sim/bad.go", "package sim\n\nimport (\n\t\"fmt\n)\n")
+	out := expectFail(t, repo)
+	if strings.Count(out, "[ERROR] pkg/engine/sim/bad.go:") != 1 || !strings.Contains(out, "cannot read imports") {
+		t.Fatalf("expected one cannot-read-imports error, got:\n%s", out)
+	}
+}
+
+// 36. The PASS line names the new scope.
+func TestFences_Case36_PassLine(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	out := expectPass(t, repo)
+	want := "  [PASS] Package code is free of card names, invalid markers and disallowed imports."
+	if !strings.Contains(out, want+"\n") {
+		t.Fatalf("expected %q, got:\n%s", want, out)
 	}
 }
