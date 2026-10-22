@@ -6,7 +6,7 @@ tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
 status: queued
 branch: m2/T-0037-cardtown-play
-depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041]
+depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
 cards: []
 requirements: [FR-MOD-001]
