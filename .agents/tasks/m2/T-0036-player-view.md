@@ -4,7 +4,7 @@ title: PlayerView, a per-seat view of the game and its event log (directive #24)
 kind: harness
 tier: opus (effort high, board directive #27)
 wave: none (design note Deliverable 5, part 1 of 2; board directive #24)
-status: review
+status: done
 branch: m2/T-0036-player-view
 depends_on: [T-0035]
 claims: [pkg:pkg/engine/view, type:View, func:PlayerView, func:LogLines]
@@ -153,9 +153,9 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
 - `pkg/engine/view/view_test.go` (new, the `test(T-0036)` commit)
 
 ## Done When
-- [ ] Cases 1 to 5 have tests, committed before the implementation, and pass
-- [ ] Cases 6 and 7 hold, with output in the Log
-- [ ] M4/M5 gaps recorded in the Log
+- [x] Cases 1 to 5 have tests, committed before the implementation, and pass
+- [x] Cases 6 and 7 hold, with output in the Log
+- [x] M4/M5 gaps recorded in the Log
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (Deliverable 5 part 1, board directive #24), with status `ready`.
@@ -216,3 +216,17 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
     - The Boundaries intro sentence above the table still says "Five packages" and "Two driver packages". The task allows only the row and the Open Question 4 line, so I left it unchanged; the lead may want it updated.
     - `CardView` adds the type, both costs, power, health, printed keywords and rules text for T-0037's screen.
     - `AssetView.Controller` and `Owner` are `int`, as in the shape.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Scope:
+    - The engineer's commits touch only `pkg/engine/view/` (new), the design note's Boundaries row and Open Question 4, and this file. Package `engine` is unchanged.
+    - Test commit 9fc7032 comes first and failed to build. No `_test.go` change after it.
+    - `docs/PRODUCT_SUMMARY.md` (43da63e) was not the engineer's change. Per board directive #28, the lead reverted it on this branch before merging.
+  - Code:
+    - `view.go` follows the visibility rules: the seat's own hand with instance IDs; counts for the opponent's hand and both decks; public zones; face-down assets through `Printed()` and the layers, so the Scratch face is shown to both seats; no instance IDs on assets or discard cards; deep copies.
+    - `log.go` changes only `match-start` (no seed, the seat's own mulligan names, an opponent count) and `turn-start`, and delegates every other line to `FormatEvent`.
+  - Engineer notes accepted:
+    - Gaps 1 to 6 are recorded for M4/M5.
+    - The lead updated the design note's Boundaries intro ("Six packages", three client packages including `view`), which was outside the engineer's Allowed Files.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, cases 1 to 5 included (case 4: 20 starter matches, both seats, 4,594 settled points), and `go tool task check` exits 0.
+    - `cardtown sim` (starter and stress, both policies) is byte-identical to a baseline CLI built from e6981fa.

@@ -14,7 +14,7 @@ Every Animus and Path card executes in `pkg/engine` as a Go value built from a s
 
 ## Boundaries
 
-Five packages. The rules core imports one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle. Two driver packages sit on top of `engine` and are never imported by it (board directive #22, T-0024): `sim` and `eventlog` each import `engine` only, and `cmd/cardtown` imports all of them.
+Six packages. The rules core imports one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle. Three client packages sit on top of `engine` and are never imported by it (board directive #22, T-0024; directive #24, T-0036): `sim` and `eventlog` import `engine` only, `view` imports `engine` and `eventlog`, and `cmd/cardtown` imports all of them.
 
 | Package | Holds | Card names? | Changed by |
 | :--- | :--- | :--- | :--- |
