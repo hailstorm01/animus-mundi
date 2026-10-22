@@ -1,6 +1,6 @@
 # Product Management & Design Audits
 
-Red-team audits of the Game Rules FRD and its keyword interaction matrix. Persona behavior is defined only in `.agents/skills/` (`pm-devils-advocate`, `pm-audit-reviewer`, `game-designer`); this page is the human-facing overview.
+Red-team audits of the Game Rules FRD and its keyword interaction matrix. Persona behavior is defined only in `.agents/skills/` (`pm-devils-advocate`, `game-designer`, `pm-frd-drafter`); this page is the human-facing overview.
 
 ## Scope
 
@@ -10,16 +10,17 @@ Only `docs/frd/01_Game_Rules_FRD.md` and `docs/frd/keyword_interaction_matrix.md
 
 ```text
 FRD 01 majorly revised
-        │  (agent revisions trigger the DA automatically; reviewer edits do not)
+        │  (agent revisions trigger the DA automatically; applying a Design Outcome does not)
         ▼
 pm-devils-advocate ──► docs/audit/pending/[date]-[doc].md (PENDING, committed locally)
         │                (zero findings is a normal, recorded result)
-        ▼  (human asks for review)
-pm-audit-reviewer ── [A] Accept [B] Modify [C] Dismiss [D] Defer [E] Design discussion [F] Prototype ruling
-        │                                                        │
-        │                                                        └──► game-designer
+        ▼  (you ask to work through it)
+game-designer ── per item: Rule | Prototype ruling | Dismiss (Design Rationale) | Defer (matrix) | Wording only
+        │
+        ▼  one Design Outcome Report for the whole audit
+        ├──► board directive ──► lead-architect build loop writes the TestFR_* settling tests
         ▼
-FRD 01 text + TestFR_* scenario test (or a matrix entry if not executable yet)
+pm-frd-drafter ── FRD 01 text, callouts, matrix rows
         │
         ▼
 cardtown audit resolve ──► lint, purge pending file, commit, mark RESOLVED in audit_registry.md
@@ -31,9 +32,9 @@ Nothing pushes automatically. Agents commit locally; push when you decide to.
 
 Every finding names a concrete game state, the competing outcomes, whether today's cards can reach it (`R`/`U`), and the scenario test that would settle it. Findings without those are dropped. Keyword findings are written as proposals for a matrix cell.
 
-## Clearing Loop (human-started only)
+## Working Through an Audit
 
-Say `@pm-audit-reviewer --clear-backlog` to run reviewer -> DA -> reviewer passes on FRD 01 that auto-fix findings below 🔴 Blocker / 🟠 High (and not rule-changing), up to 3 passes. It stops when only human-required items remain, on no-progress/oscillation, or when the DA returns `CONVERGED / PASS`, and then reports what needs you. It never starts on its own.
+Say `@game-designer` and name the pending audit. It takes every finding, redundancy row and Socratic question in severity order and asks you to decide each one; nothing is fixed without you. The result is one Design Outcome Report. You run the `@pm-frd-drafter` prompt it gives you, which applies the FRD 01 and matrix edits and closes the audit. Settling tests for new or changed rules reach the build loop as a board directive.
 
 ## Tooling
 - `cardtown audit status`: read-only status of pending audits (commit-based `STALE`/`CURRENT`, severity counts, human-required flag).
@@ -48,7 +49,8 @@ Say `@pm-audit-reviewer --clear-backlog` to run reviewer -> DA -> reviewer passe
 An audit is stale when its target has commits after the audited commit recorded in the registry (Commit Hash column), or a newer audit exists for the same document. `cardtown audit status` computes this.
 
 ## Severity Taxonomy
-- 🔴 **Blocker / Critical:** reachable (`R`) undefined or contradictory outcome that changes who wins, or a deadlock or infinite loop. Human required.
-- 🟠 **High:** reachable (`R`) undefined or ambiguous outcome that materially changes the game state. Human required.
-- 🟡 **Medium:** unreachable today (`U`) but plausible with future cards, a minor reachable difference, or redundant requirements. Loop-eligible.
-- 🔵 **Low / Clarification:** phrasing ambiguity that every reasonable reading resolves the same way (Socratic questions always need a human).
+Severity sets the order findings are taken in; every one is decided by you.
+- 🔴 **Blocker / Critical:** reachable (`R`) undefined or contradictory outcome that changes who wins, or a deadlock or infinite loop.
+- 🟠 **High:** reachable (`R`) undefined or ambiguous outcome that materially changes the game state.
+- 🟡 **Medium:** unreachable today (`U`) but plausible with future cards, a minor reachable difference, or redundant requirements.
+- 🔵 **Low / Clarification:** phrasing ambiguity that every reasonable reading resolves the same way.

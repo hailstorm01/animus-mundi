@@ -1,6 +1,6 @@
 # Audit Registry
 
-This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved by the **PM Audit Reviewer** (`pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
+This registry tracks the lifecycle of all Functional Requirements Document (FRD) audits conducted by the **PM Devil's Advocate** (`pm-devils-advocate`) and resolved through `game-designer` and `pm-frd-drafter` (before 2026-10-22, by the retired `pm-audit-reviewer`), recording when audits are generated, the associated git commits, and their eventual resolution.
 
 ## Audit Log
 
@@ -53,4 +53,4 @@ This registry tracks the lifecycle of all Functional Requirements Document (FRD)
 - **Status:** Current lifecycle state (`PENDING`, `RESOLVED`, `STALE`).
 - **Resolution Date:** Date & time (`YYYY-MM-DD HH:MM:SS`) when all punch-list items were resolved.
 - **Resolution Commit:** Git commit hash containing the changes that resolved the audit.
-- **Source of Resolution:** Author/method of resolution (`Agentic (pm-audit-reviewer)` or `Manual`), PR number, or resolving description.
+- **Source of Resolution:** Author/method of resolution (`Agentic (game-designer + pm-frd-drafter)` or `Manual`; older rows say `Agentic (pm-audit-reviewer)`), PR number, or resolving description.
