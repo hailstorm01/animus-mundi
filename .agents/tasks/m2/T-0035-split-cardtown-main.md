@@ -4,7 +4,7 @@ title: Split cmd/cardtown/main.go into one file per command (pure move)
 kind: harness
 tier: flash
 wave: none (board directive #26, cleanup 4 of 4, before cardtown play)
-status: review
+status: done
 branch: m2/T-0035-split-cardtown-main
 depends_on: [T-0034]
 claims: [file:cmd/cardtown/sim.go, file:cmd/cardtown/replay.go, file:cmd/cardtown/lint.go, file:cmd/cardtown/tools.go]
@@ -75,3 +75,12 @@ No new tests. These are checks recorded in the Log, re-run by the reviewer, each
     - Linters (`cardtown lint --all`)
     - Deterministic replay (`cardtown replay -events <file> -game 3` on fresh 5-game event log)
   - Case 4 (Check & hook): `cardtown hook install` ran cleanly; `go tool task check` passed completely (fmt, vet, test, build, lint). Set status to `review`.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Process: the commits landed on the task branch, which the lead checked out before dispatch. d30b931 touches only `cmd/cardtown/`.
+  - A multiset comparison of removed against added lines shows every removed line reappears. The only added lines are the 4 headers, 4 `package main` lines and the import blocks. The layout matches the table, and `main.go` is down to 150 lines.
+  - Gates re-run by the reviewer:
+    - `go tool task check` exits 0.
+    - These are byte-identical, with the same exit codes, to a baseline CLI built from 81a01f5: `cardtown` (usage), `sim -h`, `replay -h`, `sim -deck starter -p0 ANIMUS -p1 PATH`, bare `sim` and `lint --all`.
+    - `replay -game 3 -at 12` exits 0 on a fresh 5-game starter file.
+    - A cross-binary replay is refused by design, because the build revisions differ, so case 3's "both binaries" part is covered by each binary replaying its own records.
+  - Board directive #26 is complete.
