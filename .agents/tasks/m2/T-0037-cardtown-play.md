@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: review
+status: changes
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -67,7 +67,7 @@ func runPlay(args []string, in io.Reader, out io.Writer) int // exit code
   - For `DecideOptional`, it reads `y`/`n`.
   - For `DecideOrder`, it reads the full order.
   - An empty line on an optional or "up to N" decision means none.
-  - It returns `Answer{Picks}`. An answer the kernel rejects falls back per `FR-MOD-001` §6, and the loop prints a one-line note.
+  - It returns `Answer{Picks}`. An answer the kernel rejects falls back per `FR-MOD-001` §6. The kernel logs an `invalid-answer` event, and `view.LogLines` shows it to the human; that line is the note. The loop does not read the event itself (revised in review round 1).
 - **The bot seat** uses `RandomChooser` with a seed derived from `-seed`, as `sim` does.
 - **Input:**
   - A non-number or an out-of-range number re-prompts, with no limit.
@@ -76,7 +76,7 @@ func runPlay(args []string, in io.Reader, out io.Writer) int // exit code
   - It may call `LegalActions`, `Apply` and `NewGame`, and use the `Chooser`, `Decision` and `Answer` plumbing.
   - Reading `g.Log[seen:]` only to pass it to `LogLines` is allowed.
   - Reading `g.Outcome.Over` for the loop condition is allowed. The view's `Over` is preferred.
-  - No `g.Players`, `g.Theater`, `g.Stack`, `.Inst.Card` or `Snapshot()`.
+  - No `g.Players`, `g.Theater`, `g.Stack`, `g.Active`, `g.Phase`, `g.Turn`, `.Inst.Card` or `Snapshot()`. The view's own fields (`v.Theater`, `v.Stack`, `v.Active` and so on) are what the view is for; read them directly.
 - **Cards the kernel cannot run yet** (added 2026-10-22). At the time of writing, 30 of the 44 distinct cards in the starter decks are on `cards.NotYetExecutable`. They can be drawn but never deployed, because `LegalActions` never offers them. The human must be able to tell why.
   - `view.CardView` gains one field: `Executable bool // false while the kernel cannot run this card's printed text (Card.Supported)`.
   - `cardView` in `pkg/view/view.go` sets it from `c.Supported()`. This is printed-card information, so it hides nothing.
@@ -106,7 +106,7 @@ Cases 1 to 4 go in a new `cmd/cardtown/play_test.go`, committed first as `test(T
    - In case 1's whole output, no name of a card in the bot seat's hand or deck appears unless it is publicly visible at that time.
    - No face-down asset's real name appears unless it is publicly visible.
    - The test may check this with the same rule as T-0036's case 4, by replaying the seed.
-5. **Grep (directive #24 a):** `grep -nE "\.Players|\.Theater|\.Stack|Inst\.Card|Snapshot\(" cmd/cardtown/play.go` finds nothing. Record the output in the Log.
+5. **Grep (directive #24 a), corrected in review round 1:** `grep -nE "\bg\.(Players|Theater|Stack|Active|Phase|Turn|Outcome)\b|Inst\.Card|Snapshot\(|reflect" cmd/cardtown/play.go` finds nothing. Record the output in the Log. The original pattern (`\.Players|\.Theater|\.Stack|…`) also matched the view's own `v.Theater` and `v.Stack`. That was the lead's error.
 6. **CLI:** `go run ./cmd/cardtown play -deck starter -p0 ANIMUS -p1 PATH -seed 1 < <file of 1s>` finishes. `cardtown` prints `play` in its usage text. Other commands' outputs are unchanged.
 7. `go tool task check` passes.
 8. **Executable flag:** a new `pkg/view/executable_test.go` (in the `test(T-0037)` commit) builds a game from the starter decks with a fixed seed. Every `CardView` in the seat's hand has `Executable == c.Supported()` for that card. At least one hand card in the test's position is unsupported and one is supported; pick a seed where both hold, and say which one in a comment.
@@ -150,3 +150,18 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
     `cardtown` usage output lists `play`.
   - Standard gate: `go tool task check` passed cleanly (fmt-check, vet, test, build, lint --all).
   - Status `review`. Ready for `lead-architect` review.
+- 2026-10-22 lead-architect: Review round 1: **changes requested**, status `changes`.
+  - What holds:
+    - Scope: only Allowed Files changed. The `view.go` change is the `Executable` field and its one line.
+    - The test commit 918d8ec fails without `runPlay`, and `go tool task check` passes at 38f0f40.
+    - Case 4 is effective. With a temporary leak injected (the bot's hand printed after each screen), it fails on turn 1. Its replay follows the real game: the same winner and reason, and all 194 screens checked.
+    - The deck loading, labels, chooser validation and `[not executable yet]` marking are as asked.
+  - Notes (no test changes; the tests stay as committed):
+    1. **Remove the reflection accessors.** Delete `theaterAssets` and `stackItems` and the `reflect` import, and read `v.Theater` and `v.Stack` directly. They exist only to keep case 5's grep quiet, and they hide the reads from review instead of avoiding them. The grep was wrong to flag the view's own fields; case 5 now has the corrected pattern.
+    2. **Use the view for the turn owner.** Line 159 reads `g.Active` (game state). Use `v.Active` from the `PlayerView` built just above.
+    3. **Drop `checkInvalidNote`** and its four calls. It reads `Kind` and `Detail` from raw `g.Log` events, beyond the "only to pass to `LogLines`" allowance. `LogLines` already prints the kernel's `invalid-answer` line to the human, and the revised Lead decision makes that line the note.
+  - Non-blocking, no change needed:
+    - Quitting by `panic(errQuit)` through the engine's call stack works, because `runPlay` recovers only that value.
+    - The `seat` and `policy` cases added to `normalizeArgs` change nothing, but match the existing `p0` and `p1` cases.
+  - After the fixes, re-run case 5 (new pattern), case 6 and `go tool task check`, and record them in the Log.
+  - Next: **the user runs `@kernel-engineer T-0037` in the Antigravity agent (Gemini Flash)** for round 2.
