@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
+	"animus-mundi/pkg/eventlog"
 )
 
 // Tests for T-0021: SimulateWith, FormatEvent and WriteEventsJSONL. Each
@@ -26,11 +26,11 @@ var simDeckNames = [2]string{"data/decks/animus-starter.txt", "data/decks/path-s
 
 func simStarterDecks(t *testing.T) [2]engine.DeckList {
 	t.Helper()
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("load cards: %v", err)
 	}
-	decks, err := SimDecks(cards, filepath.Join("..", "..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
+	decks, err := SimDecks(cards, filepath.Join("..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
 	if err != nil {
 		t.Fatalf("SimDecks: %v", err)
 	}

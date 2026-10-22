@@ -55,8 +55,9 @@ M2 is built by an agent task loop. The lead architect (Opus) writes tasks in `.a
 - `pkg/engine/` - The rules engine (FRD 01 made executable): game state, turns, actions, the stack, combat and damage, triggers, targeting, choices, events and invariants.
   - `pkg/engine/ability/` - Ability shapes as plain data: hooks, ops, filters, targets.
   - `pkg/engine/cards/` - Card ability definitions by name, and the not-yet-executable list.
-  - `pkg/engine/sim/` - Match driving: seat policies, playouts, `Simulate`, stress decks and rule monitors.
-  - `pkg/engine/eventlog/` - Event formatting, JSON Lines output and replay.
+- `pkg/sim/` - Match driving: seat policies, playouts, `Simulate`, stress decks and rule monitors. Imports `pkg/engine` only.
+- `pkg/eventlog/` - Event formatting, JSON Lines output and replay. Imports `pkg/engine` only.
+- `pkg/view/` - One seat's view of a game and its event log, for `cardtown play`. Imports `pkg/engine` and `pkg/eventlog`.
 - `pkg/toolchain/` - The linters, pre-commit hook, audit registry, TDD slicing and docs status behind the CLI.
 - `data/cards/` - Card data CSVs, one per faction and card type.
 - `data/decks/` - Decklists (`<faction>-<name>.txt`), currently the Animus and Path starter decks.

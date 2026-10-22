@@ -904,9 +904,9 @@ func TestFences_Case31_SortedAcrossPackages(t *testing.T) {
 // 32. A disallowed import is reported at the import's line.
 func TestFences_Case32_DisallowedImport(t *testing.T) {
 	repo := setupFixtureRepo(t)
-	writePkgFile(t, repo, "pkg/engine/sim/x.go", "package sim\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine/eventlog\"\n)\n\nvar _ = fmt.Sprint\n")
+	writePkgFile(t, repo, "pkg/sim/x.go", "package sim\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/eventlog\"\n)\n\nvar _ = fmt.Sprint\n")
 	out := expectFail(t, repo)
-	want := "pkg/engine/sim/x.go:5: imports animus-mundi/pkg/engine/eventlog; pkg/engine/sim may import only pkg/engine"
+	want := "pkg/sim/x.go:5: imports animus-mundi/pkg/eventlog; pkg/sim may import only pkg/engine"
 	if !strings.Contains(out, "[ERROR] "+want) {
 		t.Fatalf("expected %q, got:\n%s", want, out)
 	}
@@ -915,13 +915,13 @@ func TestFences_Case32_DisallowedImport(t *testing.T) {
 // 33. Two import violations, including the import-nothing wording.
 func TestFences_Case33_TwoImportViolations(t *testing.T) {
 	repo := setupFixtureRepo(t)
-	writePkgFile(t, repo, "pkg/engine/eventlog/x.go", "package eventlog\n\nimport _ \"animus-mundi/pkg/engine/view\"\n")
+	writePkgFile(t, repo, "pkg/eventlog/x.go", "package eventlog\n\nimport _ \"animus-mundi/pkg/view\"\n")
 	writePkgFile(t, repo, "pkg/engine/ability/x.go", "package ability\n\nimport _ \"animus-mundi/pkg/engine\"\n")
 	out := expectFail(t, repo)
 	if strings.Count(out, "[ERROR]") != 2 {
 		t.Fatalf("expected two errors, got:\n%s", out)
 	}
-	if !strings.Contains(out, "pkg/engine/eventlog/x.go:3: imports animus-mundi/pkg/engine/view; pkg/engine/eventlog may import only pkg/engine") {
+	if !strings.Contains(out, "pkg/eventlog/x.go:3: imports animus-mundi/pkg/view; pkg/eventlog may import only pkg/engine") {
 		t.Fatalf("missing eventlog error, got:\n%s", out)
 	}
 	if !strings.Contains(out, "pkg/engine/ability/x.go:3: imports animus-mundi/pkg/engine; pkg/engine/ability may import nothing from this module") {
@@ -932,20 +932,20 @@ func TestFences_Case33_TwoImportViolations(t *testing.T) {
 // 34. Allowed imports, test files and packages outside the table pass.
 func TestFences_Case34_AllowedImportsPass(t *testing.T) {
 	repo := setupFixtureRepo(t)
-	writePkgFile(t, repo, "pkg/engine/view/x.go", "package view\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine\"\n\t\"animus-mundi/pkg/engine/eventlog\"\n)\n\nvar _, _, _ = fmt.Sprint, engine.Clean, eventlog.X\n")
+	writePkgFile(t, repo, "pkg/view/x.go", "package view\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine\"\n\t\"animus-mundi/pkg/eventlog\"\n)\n\nvar _, _, _ = fmt.Sprint, engine.Clean, eventlog.X\n")
 	writePkgFile(t, repo, "pkg/engine/cards/x.go", "package cards\n\nimport _ \"animus-mundi/pkg/engine/ability\"\n")
-	writePkgFile(t, repo, "pkg/engine/sim/x_test.go", "package sim\n\nimport _ \"animus-mundi/pkg/engine/view\"\n")
-	writePkgFile(t, repo, "pkg/engine/x.go", "package engine\n\nimport _ \"animus-mundi/pkg/engine/sim\"\n")
-	writePkgFile(t, repo, "pkg/foo/x.go", "package foo\n\nimport _ \"animus-mundi/pkg/engine/sim\"\n")
+	writePkgFile(t, repo, "pkg/sim/x_test.go", "package sim\n\nimport _ \"animus-mundi/pkg/view\"\n")
+	writePkgFile(t, repo, "pkg/engine/x.go", "package engine\n\nimport _ \"animus-mundi/pkg/sim\"\n")
+	writePkgFile(t, repo, "pkg/foo/x.go", "package foo\n\nimport _ \"animus-mundi/pkg/sim\"\n")
 	expectPass(t, repo)
 }
 
 // 35. A malformed import block is reported, not returned as an error.
 func TestFences_Case35_UnreadableImports(t *testing.T) {
 	repo := setupFixtureRepo(t)
-	writePkgFile(t, repo, "pkg/engine/sim/bad.go", "package sim\n\nimport (\n\t\"fmt\n)\n")
+	writePkgFile(t, repo, "pkg/sim/bad.go", "package sim\n\nimport (\n\t\"fmt\n)\n")
 	out := expectFail(t, repo)
-	if strings.Count(out, "[ERROR] pkg/engine/sim/bad.go:") != 1 || !strings.Contains(out, "cannot read imports") {
+	if strings.Count(out, "[ERROR] pkg/sim/bad.go:") != 1 || !strings.Contains(out, "cannot read imports") {
 		t.Fatalf("expected one cannot-read-imports error, got:\n%s", out)
 	}
 }

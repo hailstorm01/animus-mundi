@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
+	"animus-mundi/pkg/eventlog"
 )
 
 // LogLines formats events for seat, one line per event, in order, hiding what

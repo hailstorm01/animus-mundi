@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
-	"animus-mundi/pkg/engine/sim"
-	"animus-mundi/pkg/engine/view"
+	"animus-mundi/pkg/eventlog"
+	"animus-mundi/pkg/sim"
+	"animus-mundi/pkg/view"
 )
 
 // Tests for T-0036: PlayerView and LogLines (board directive #24, FR-ZON-005).
@@ -453,11 +453,11 @@ func TestView_Case3_DeepCopy(t *testing.T) {
 
 func starterDecks(t *testing.T) [2]engine.DeckList {
 	t.Helper()
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("load cards: %v", err)
 	}
-	decks, err := sim.SimDecks(cards, filepath.Join("..", "..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
+	decks, err := sim.SimDecks(cards, filepath.Join("..", "..", "data", "decks"), "starter", [2]string{"ANIMUS", "PATH"})
 	if err != nil {
 		t.Fatalf("SimDecks: %v", err)
 	}

@@ -221,7 +221,7 @@ func runLint(args []string) {
 		}
 
 		if !runFrd && !runTdd && !runRules && !runSheets && !runSyntax && !runFences {
-			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, pkg/engine/, or data/cards/.")
+			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, pkg/, or data/cards/.")
 			fmt.Println("  Nothing to lint! (Use --all to force full audit across all files)")
 			fmt.Println()
 			fmt.Println("==========================================================")

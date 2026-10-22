@@ -22,7 +22,7 @@ func deckNames(d engine.DeckList) (hq string, main []string) {
 }
 
 func TestDeckNames_Case1_RoundTrip(t *testing.T) {
-	root := filepath.Join("..", "..", "..")
+	root := filepath.Join("..", "..")
 	cards, err := engine.LoadCards(filepath.Join(root, "data", "cards"))
 	if err != nil {
 		t.Fatalf("load cards: %v", err)

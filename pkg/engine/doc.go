@@ -49,11 +49,13 @@
 //     invariants.go: state checks.
 //
 // Package boundary: this package holds the rules, the game state, the Observer
-// and the event and record types, and nothing that drives or prints a match.
-// Match driving (policies, playouts, simulation, simulation decks) lives in
-// pkg/engine/sim, and event output (readable lines, JSON Lines) lives in
-// pkg/engine/eventlog. Both import engine and nothing else in this family;
-// engine never imports either of them.
+// and the event and record types, and nothing that drives, prints or presents
+// a match. Three client packages import it, and it never imports them:
+// pkg/sim (match driving: policies, playouts, simulation, simulation decks and
+// rule monitors), pkg/eventlog (event output and replay) and pkg/view (one
+// seat's view of the game and its event log). sim and eventlog import only
+// engine from this module, and view imports engine and eventlog; cardtown lint
+// fences checks those imports.
 //
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
 // it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md
