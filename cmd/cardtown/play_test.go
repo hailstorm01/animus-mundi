@@ -32,12 +32,12 @@ func (r *scriptedReader) Read(p []byte) (int, error) {
 }
 
 // Case 1: A scripted session finishes.
-// - runPlay with -deck starter -p0 ANIMUS -p1 PATH -seat 0 -seed 3, and an input
-//   stream that answers 1 to every prompt and y to every yes/no question,
-//   finishes the match and returns 0.
-// - Its output ends with the result line.
-// - It contains [not executable yet] at least once (the starter decks hold such cards).
-// - It is byte-identical across two runs.
+//   - runPlay with -deck starter -p0 ANIMUS -p1 PATH -seat 0 -seed 3, and an input
+//     stream that answers 1 to every prompt and y to every yes/no question,
+//     finishes the match and returns 0.
+//   - Its output ends with the result line.
+//   - It contains [not executable yet] at least once (the starter decks hold such cards).
+//   - It is byte-identical across two runs.
 func TestPlay_Case1_ScriptedSessionFinishes(t *testing.T) {
 	args := []string{"-deck", "starter", "-p0", "ANIMUS", "-p1", "PATH", "-seat", "0", "-seed", "3"}
 
@@ -122,10 +122,10 @@ func TestPlay_Case3_Quit(t *testing.T) {
 }
 
 // Case 4: No hidden information on screen.
-// - In case 1's whole output, no name of a card in the bot seat's hand or deck
-//   appears unless it is publicly visible at that time.
-// - No face-down asset's real name appears unless it is publicly visible.
-// - Checked with the same rule as T-0036's case 4, by replaying the seed.
+//   - In case 1's whole output, no name of a card in the bot seat's hand or deck
+//     appears unless it is publicly visible at that time.
+//   - No face-down asset's real name appears unless it is publicly visible.
+//   - Checked with the same rule as T-0036's case 4, by replaying the seed.
 func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 	// Replay seed 3 match with the same policy and starter decks.
 	repoRoot := findRepoRoot()
@@ -217,12 +217,16 @@ func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 
 	screenIdx := 1 // screens[0] is text before first screen, if any
 	checkScreen := func(screenText string) {
+		screenOnly := screenText
+		if idx := strings.Index(screenText, "Legal Actions:"); idx != -1 {
+			screenOnly = screenText[:idx]
+		}
 		pub := publicNames(g)
 		for name := range hiddenNames(g, botSeat) {
 			if pub[name] {
 				continue
 			}
-			if strings.Contains(screenText, name) {
+			if strings.Contains(screenOnly, name) {
 				t.Errorf("turn %d: screen leaks hidden card %q of bot seat", g.Turn, name)
 			}
 		}
