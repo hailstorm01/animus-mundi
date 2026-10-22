@@ -7,7 +7,7 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 | Opened | Thread | Waiting on |
 | :--- | :--- | :--- |
 | 2026-10-21 | **Explainer persona (deferred).** Structural judgment went to `lead-architect` (Runbook E, placement checks in D2/D5). What remains is an optional read-only persona that explains how parts of the code work. | User: only if wanted later |
-| 2026-10-21 | **First structural review.** Natural first run of Runbook E: whether `pkg/engine/sim`, `eventlog` and `view` should move to the top level of `pkg/` (they are already separate packages that `engine` never imports). | User to run `@lead-architect structural review` |
+| 2026-10-22 | **Directive #32, skills half done.** Dropped the false "`go test ./pkg/engine` runs the playouts" claim from `cardtown-linter` and `docs/AGENTS.md`, and pointed docs-concierge's "check your edits" suggestion at `go tool task test`. Proposed, not made (guard rail): pm-audit-reviewer's commit gate, which may edit `pkg/engine/*.go` at `OPEN(KIM-...)` markers, could run `go tool task test` instead of `go test ./pkg/engine` so a kernel edit cannot break the sim playouts unseen. | User: yes/no on the pm-audit-reviewer gate; pm-lead for the PRODUCT_SUMMARY half |
 
 ## Boundary Exceptions
 

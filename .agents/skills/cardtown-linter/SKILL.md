@@ -29,7 +29,9 @@ The CLI is compiled to `bin/cardtown.exe` (`bin/cardtown` off Windows). Rebuild 
    - **Check:** Every `TestFR_<DOM>_<NNN>_*` scenario test (and every ID on a `// Covers:` line above it) names an active FRD 01 requirement; reports which active requirements have no scenario test yet.
    ```powershell
    cardtown lint rules
-   go test ./pkg/engine        # scenario tests + seeded fuzz playouts
+   go test ./pkg/engine        # scenario tests
+   go test ./pkg/sim           # seeded random playouts (300 games, 30 with -short)
+   go tool task test           # every Go test (go test ./...)
    ```
 
 3. **Rules Kernel Playouts:**
