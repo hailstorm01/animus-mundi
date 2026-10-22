@@ -12,6 +12,10 @@ const (
 	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
 )
 
+func (k DecisionKind) String() string {
+	return [...]string{"Target", "Mode", "Optional", "Order"}[k]
+}
+
 // Option is one legal answer element, in the order the card or rules list it.
 type Option struct {
 	Label string // for logs and cardtown play

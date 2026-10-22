@@ -44,7 +44,8 @@
 //     choice and filters. effects.go: running a resolved ability's steps.
 //   - state.go: core state types and lookups. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.
-//   - events.go: Event, the Observer and snapshots. choice.go: decisions.
+//   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
+//     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
 //     damage.go: the damage pipeline. layers.go: derived power, health and keywords.
 //     invariants.go: state checks.
 //

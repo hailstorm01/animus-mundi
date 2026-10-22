@@ -47,6 +47,10 @@ const (
 	PhaseOver
 )
 
+func (p Phase) String() string {
+	return [...]string{"setup", "ready", "draw", "main", "end", "over"}[p]
+}
+
 // Instance is one physical card for the whole match. Its ID never changes,
 // which is what delayed triggers bind to after the card leaves the battlefield.
 type Instance struct {
