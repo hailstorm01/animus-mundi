@@ -36,7 +36,7 @@ animus-mundi/
 │   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
-│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.8 (Pure Game Rules & Keywords)
+│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.9 (Pure Game Rules & Keywords)
 │       ├── keyword_interaction_matrix.md                # ACTIVE — Bounded keyword edge-case register
 │       ├── 02_Card_Data_Pipeline_FRD.md                 # FROZEN — FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FROZEN — FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
@@ -76,7 +76,7 @@ animus-mundi/
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
-1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.8 — 70 Requirement IDs, 62 active; 8 subsumed)**
+1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.9 — 70 Requirement IDs, 62 active; 8 subsumed)**
    - **Deck Construction, Match Setup & First-Turn Rules (`FR-SET-001` - `FR-SET-004`, `FR-DEK-001` - `FR-DEK-002`, `FR-WIN-001`)**: 50-card minimum main deck, 1 faction Headquarters, rarity copy limits (4/3/2/1), pre-mulligan First-Player Determination (15s clock), 6-card opening hand with single partial mulligan (25s clock), Turn 1 draw skip, absence of summoning sickness, mandatory post-search shuffle, empty-deck draw loss, and a simultaneous empty-deck **Match Draw** (`RESULT_MATCH_DRAW`).
    - **Pure Game Rules, Card Taxonomy & Spatial Zone Model (`FR-CRD-101`, `FR-ZON-001` - `FR-ZON-005`, `FR-ENT-102` - `FR-ENT-103`)**: 14 printed card characteristics, Battlefield Assets vs. non-battlefield Cards, ownership vs. control, uncapped zone capacities (Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard, Attached Sub-Zone, and Resolution Stack), double-blind `1/1/1/1` Scratch Company lifecycle, tucked cards, and face-down transformation. Runtime memory structs (`FR-ENT-001` - `FR-ENT-003`, `FR-SNP-101`) are owned by FRD 05 (`SOC-002`).
    - **Dual-Resource Economy, Turn Sequence & Clean-Stack Model (`FR-RES-001` - `FR-RES-003`, `FR-TRN-001` - `FR-TRN-003a`, `FR-CAP-001`, `FR-MNV-001`, `FR-QUE-001`)**: Explicit off-stack Requisition and Tactics generation, one-way `2R -> 1T` conversion, unified Inherent Capabilities Matrix (`FR-CAP-001`, subsuming `FR-INH-001` - `FR-INH-004`), discard-pile and in-resolution free deployments with destination-zone selection (`FR-TRN-003a`), Ready Phase (unexhaust + start-of-turn triggers), Draw Phase (draw + draw triggers), Main Phase (75s turn clock + 60s Reserve Time Bank, clean-stack priority), and End Phase (Sub-Phases 4a–4d).
@@ -169,7 +169,7 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
    - **Survey rulings:**
      - **Ruled in FRD 01 v3.8:** `SVY-R8`. An attack's defender and Berserk secondary are targets, re-verified at resolution against the attacker's current controller, so a side change on either side fizzles the attack with no cleave. No current card reaches it (*Rhapsody's Hollow* is an activated ability, so it can't be used while an Attack is on the stack), and it no longer counts against the Done-when. The kernel fix is board directive #29, queued after T-0037.
      - **Ward (user ruling, v3.8):** Ward is checked on placement and at resolution for every chosen target (`FR-TGT-003`, `FR-KWD-002h`) and never applies to the defender. The kernel already does this; directive #29 adds the general test.
-     - **Ruled, not yet in FRD 01:** `SVY-R9`–`SVY-R11` (optional triggers asked on placement, last-known effective power, "up to N" distinct targets) were ruled on 2026-10-21 and are implemented.
+     - **Ruled in FRD 01 v3.9:** `SVY-R9`–`SVY-R11` (optional triggers asked on placement, source power read at resolution or last-known, "up to N" distinct targets), ruled on 2026-10-21 and already implemented.
      - **Open, not blocking M2:** `SVY-R12`, a Berserk N design review the user requested after repeated secondary-target rulings. No M2 card has Berserk; it must be settled before the M3 Berserk cards (*Tempest Surge*, *Redline Infusion*) are built.
 2. **Animus vs Path starter set, fully executable. 🟡 In progress.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work in waves A1–G. At M2 start, 9 of the 82 in-scope cards were executable (5 Animus, 4 Path) and no Maneuvers were.
    - **Now:** 24 of 82 are executable. Waves A1 and A2 are done, adding 15 cards. 58 cards remain on `cards.NotYetExecutable`.
@@ -262,9 +262,9 @@ flowchart LR
 
 | Document | Status | Serves | Next action |
 | :--- | :--- | :--- | :--- |
-| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.8 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.9 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
-| [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Write `SVY-R9`–`R11` into FRD 01; hold the `SVY-R12` Berserk review with game-designer before M3's Berserk cards (`SVY-R8` ruled in v3.8) |
+| [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Hold the `SVY-R12` Berserk review with game-designer before M3's Berserk cards (`SVY-R8` ruled in v3.8, `SVY-R9`–`R11` in v3.9) |
 | [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–4a done; Deliverable 5 (`cardtown play`) in progress: T-0036 done, T-0037 next |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |

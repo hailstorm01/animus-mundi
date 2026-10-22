@@ -1,4 +1,4 @@
-# Game Rules - Functional Requirements Document (Master FRD v3.8)
+# Game Rules - Functional Requirements Document (Master FRD v3.9)
 **Authoritative Game Rules, Card Taxonomy, Zone Topology, Turn Structure & Keyword Dictionary**
 
 ---
@@ -13,6 +13,12 @@ To maintain strict separation of concerns across the specification suite:
 3. **Card Compiler (`03_Card_Compiler_FRD.md`)**: Translates authoring CSVs and rules text into compiled `blueprints.json` AST payloads.
 4. **Client-Engine Protocol & Networking (`04_Client_Engine_Protocol_Networking_FRD.md`)**: Defines the WebSocket/Protobuf wire protocol, session handshakes, fog-of-war serialization, and `.rec` replay format.
 5. **Headless Game Engine (`05_Headless_Game_Engine_FRD.md`)**: Specifies *how* the deterministic Go match kernel models entities in memory (`FR-ENT-001`–`FR-ENT-003`, `FR-SNP-101`) and executes the rules of `01` using the AST components of `02`.
+
+### Revision Summary (v3.8 -> v3.9): Optional Triggers, Source Power and Distinct "Up To" Targets (2026-10-21)
+Rulings made by the user on 2026-10-21 for *Craterfall Ancient* and *Necropolis Hunt*, already pinned by the kernel's scenario tests:
+1. **Optional Triggers Are Answered on Placement (`SVY-R9`, `FR-MOD-001`)**: a *"you may"* trigger asks its controller whether to use it as it is placed on the Resolution Stack, before its targets are chosen. A declined trigger is not placed: it chooses no targets and does nothing. A timeout declines.
+2. **Source Power Is Read When the Step Resolves (`SVY-R10`, `FR-ZON-004`)**: *"damage equal to its power"* uses the source's current effective power when that step resolves, or its last-known effective power if it has left the battlefield.
+3. **"Up To N" Targets Are Distinct (`SVY-R11`, `FR-TGT-002`)**: an *"up to N chosen"* clause cannot choose the same entity twice. Repeated choices stay a *"for each"*-only feature (`SVY-R4`).
 
 ### Revision Summary (v3.7 -> v3.8): An Attack's Targets Are Re-verified at Resolution (2026-10-21)
 1. **An Attack's Targets Are Re-verified at Resolution (`SVY-R8`; `FR-CAP-001`, `FR-CBT-001`, `FR-CBT-002`, `FR-KWD-002o`)**: the defender and the Berserk secondary are targets and are re-checked when the Attack resolves, including allegiance to the attacker's current controller. If either combatant changes sides, the attack fizzles with no cleave. Guardian and Ethereal are still checked only at declaration. Ward never applies to the defender, and a secondary that gains Ward before Step 3 still makes the cleave dissipate (`KIM-B01`).
@@ -170,6 +176,7 @@ Every card in Card Town possesses the following canonical printed characteristic
 - **Intra-Battlefield Movement Preservation**: Moving a Unit between **Reserves** and the **Main Theater** does **not** reset its state; all accumulated damage, dynamic Armor, and active modifiers are preserved across battlefield zones.
 - **Last-Known Battlefield State & Trigger Scope**:
   - *Leaves-Battlefield Triggers (`"When this unit/structure is killed"`, `"When this asset leaves the battlefield"`)*: Evaluated strictly against the asset's last-known characteristics on the battlefield immediately prior to departure (`FR-ZON-004`). Because a face-down Scratch Company had no abilities on the battlefield and is not revealed until it enters Discard (after leaving the battlefield), it never triggers printed leaves-battlefield death abilities.
+  - *Values Read From the Source (`SVY-R10`)*: An effect that uses its source's stats (*"deal damage equal to its power"*: *Craterfall Ancient*, *Necropolis Hunt*) reads the source's current effective value (Layer 6, `FR-LAY-001`) when that step resolves, not when the card or ability was placed on the Resolution Stack. If the source has left the battlefield by then, the step reads the source's last-known effective value from immediately before it departed, as Berserk cleave does after an attacker-side fizzle (`FR-CBT-002`). For example, *Necropolis Hunt* killed while it has +2 power until end of turn deals 7 damage, not 5.
   - *Enter-Discard Triggers (`"When this card is put into your discard pile"`, e.g., *Solarheart Monk*)*: Evaluated against the card's revealed face-up printed characteristics upon entering the Discard pile (`FR-ZON-005`, `FR-ENT-102`). Tucked or destroyed Scratch Companies entering Discard face-up do trigger printed enter-discard abilities (provided explicit condition gates are satisfied; e.g., *Eerie Remnant* requires discarding from hand).
   - *Self-Relocating Trigger Tracking*: Any death trigger or enter-discard trigger that moves `"it"` (the triggering card itself) out of the Discard pile (such as *Unceasing Tide*: *"When this unit is killed, return it to its owner's hand"*; *Stormfront of Ideals*: *"When this unit is killed, put it on the bottom of its owner's deck"*) tracks that card in the Discard pile and fizzles (does nothing) if the card has already departed the Discard pile prior to the trigger's resolution.
 
@@ -302,6 +309,7 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
 
 #### FR-TGT-002: Target Quantifiers & Distributed Value Allocations
 - **Quantifiers**: Targeting clauses may require a single mandatory target (*"chosen unit"*), an optional or bounded number of targets (*"up to 2 chosen units"*), or apply globally without targeting (*"all assets"*). A count without *"chosen"* is an untargeted selection, not a target (`SVY-R3`): *Mutation Swell*'s *"Kill 2 or 4 allied Scratch Company units"* picks its units as it resolves.
+- **"Up To N" Targets Are Distinct (`SVY-R11`)**: An *"up to N chosen"* clause (*Craterfall Ancient*: *"each of up to 2 other chosen assets"*) chooses N or fewer **different** entities. The same entity cannot be chosen twice. Only a clause repeated *"for each"* outcome may choose the same entity more than once (`SVY-R4`, `FR-TGT-001`).
 - **Distributed Pool Allocations**: Effects that distribute a fixed pool of damage or armor across multiple targets (*Macrocannon Barrage*: *"Distribute 5 damage among up to 5 chosen units"*; *Hammerhand Bivouac*: *"Distribute 2 armor among allied units in the same zone"*) require the acting player to assign positive integer amounts to each chosen target upon declaration such that the assigned amounts sum exactly to the total pool value.
 
 #### FR-TGT-003 & FR-TGT-103: Two-Stage Target Verification, Fizzle & Evaporation
@@ -324,9 +332,10 @@ Every battlefield Asset possesses built-in capabilities governed by its Card Typ
 6. **Deterministic Fallbacks on Timeout**: If both the action clock and the player's Reserve Time Bank expire on a pending choice:
    - *Top-of-Deck Inspections*: Automatically selects the first eligible card(s) in order and places the remainder on the bottom of the deck.
    - *Modal Choices*: Automatically selects the first listed legal mode(s).
-   - *Optional Triggers ("you may")*: Automatically declines the optional effect.
+   - *Optional Triggers ("you may")*: Automatically declines the optional effect, so the trigger is not placed (§7, `SVY-R9`).
    - *Mandatory Multi-Option Targets*: Automatically selects a random legal target.
    - *Ordering Own Simultaneous Triggers (`SVY-R7`, `FR-TRG-003`)*: Places that player's triggers in a fixed default order, not a random one. Triggers from different sources go by source position: the Headquarters first, then Reserves, then the Main Theater, each zone in the order its assets entered it. A single source's triggers go keyword triggers (such as **Aggressive N**) first, then its printed triggers in printed order. The first trigger in this order is placed first, so it resolves last.
+7. **Optional Triggers Are Answered on Placement (`SVY-R9`)**: A triggered ability that says *"you may"* (*Craterfall Ancient*) asks its controller whether to use it as it is placed on the Resolution Stack, before its targets are chosen. This matches `SVY-R2` and `SVY-R3`: every commitment is made on placement (`FR-TGT-001`). If the controller accepts, the trigger's targets are chosen and it is placed as usual. If they decline, it is not placed: it chooses no targets and does nothing. A timeout declines (§6).
 
 ---
 
