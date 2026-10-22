@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: sonnet (escalated after two changes rounds, Runbook D5; board directive #27 set flash)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: review
+status: done
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -218,3 +218,9 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
        ```
   3. **Real leak**: none. The unmutated `play.go` passes the new head, tail and final-tail checks, so `play.go` is unchanged this round.
   - Gate: `go tool task check` run, result below in the final report. Diff this round: `play_test.go` (commit aba46c8) and this task file only.
+- 2026-10-22 lead-architect: Review round 3: **approved**, merged as e8cd970, status `done`.
+  - aba46c8 changes only `TestPlay_Case4_NoHiddenInformation`, as note 1 specified: the head is checked at its screen, the previous tail at the next screen, and the final tail at the end. Since the test commit 918d8ec, `play_test.go` has changed only by the accepted `gofmt` comment reflow and this authorized edit. No other test changed.
+  - The lead's own mutation, with the bot's hand printed only after the bot's turn, gives 570 `tail leaks` and 0 `head leaks` failures. So the tail check works on its own, alongside the engineer's head and tail mutations.
+  - `play.go` is unchanged since round 2. Case 5's grep finds nothing, and `go tool task check` exits 0 in a scratch worktree.
+  - Board directive #24 is complete. Case (a) is held by `play.go` (case 5) and case (b) by T-0036. The design note's Hidden information item already points at the view.
+  - Deliverable 5's done-when needs the user: one match played by hand (`go tool task play`).
