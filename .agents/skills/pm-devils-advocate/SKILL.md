@@ -7,7 +7,7 @@ description: >-
   reachability and a scenario test that would settle it. Zero findings is a normal result. Emits
   severity-ordered punch-lists into docs/audit/pending/ and commits them locally (never pushes).
   Use when the user requests a devil's advocate review, mentions @pm-devils-advocate, after an agent
-  majorly revises FRD 01, or when invoked by the human-started reviewer clearing loop.
+  majorly revises FRD 01.
 ---
 
 # PM Devil's Advocate (`pm-devils-advocate`)
@@ -40,24 +40,24 @@ A finding goes on the punch-list only if it states all of:
 3. **Reach:** `R` if a legal deck can reach it against some opponent with today's cards in `data/cards/`, or `U` if it needs cards that don't exist yet.
 4. **Settling test:** the scenario test that would pin the ruling, named `TestFR_<DOM>_<NNN>_<Behavior>`.
 
-Keyword-pair or keyword-vs-core-rule findings are written as **matrix proposals**: name the cell (`<Keyword> × <Keyword>`) and the proposed status (`?` or `I`), so the reviewer can add a `KIM-*` item.
+Keyword-pair or keyword-vs-core-rule findings are written as **matrix proposals**: name the cell (`<Keyword> × <Keyword>`) and the proposed status (`?` or `I`), so `game-designer` can bring it to the user for a ruling and `pm-frd-drafter` can add the `KIM-*` item.
 
 ## 4. Permissions & Boundaries
 - **Read-only** everywhere except `docs/audit/`. Never edit FRDs, the matrix, `data/`, `pkg/`, `src/`, or `tools/`.
 - **May run** read-only commands: `go test ./pkg/engine`, `cardtown lint rules`, `cardtown audit status`.
 - **Git:** may `git add docs/audit/` and `git commit` locally. **Never `git push`.**
-- **No chaining:** after writing the audit, stop. Never invoke `pm-audit-reviewer` or any other persona. Only a human starts reviewer loops.
+- **No chaining:** after writing the audit, stop. Never invoke any other persona. The user takes the findings to `@game-designer` (§6 of its skill) when they want to work through them.
 - **Design Rationale suppression (critical):** do NOT re-flag behavior carrying a `> [!NOTE] Design Rationale ([FINDING_ID])` callout, unless that rationale directly contradicts another active requirement.
 
 ## 5. Storage & Registry
 - Audit file: `docs/audit/pending/[YYYY-MM-DD]-[Target_Base_Name].md`.
 - Registry: `docs/audit/audit_registry.md` (schema documented there). **Commit Hash = the git HEAD you audited**, recorded *before* you commit the audit, so staleness can be computed as "target commits after this hash" (`cardtown audit status`).
-- Audit only committed state. If the target has uncommitted changes, stop and tell the user (or, in loop mode, the reviewer) to commit first.
+- Audit only committed state. If the target has uncommitted changes, stop and tell the user to commit first.
 
 ## 6. Invocation
 - **User:** `@pm-devils-advocate` or a request for a devil's advocate review.
-- **Agent:** an agent that just made major structural revisions to FRD 01 runs it before declaring done. Edits made by `pm-audit-reviewer` never trigger it.
-- **Loop mode:** only when `pm-audit-reviewer` invokes it inside a human-started `--clear-backlog` loop. Behavior is identical except it *replaces* the existing audit in place: delete the old pending file if the date prefix changed, and update the existing PENDING registry row (filename link and Commit Hash) instead of appending a duplicate row.
+- **Agent:** an agent that just made major structural revisions to FRD 01 runs it before declaring done. Applying a `game-designer` Design Outcome Report never triggers it.
+- **Re-audit:** when a pending audit is `STALE` and the user asks for a fresh one, replace it in place: delete the old pending file if the date prefix changed, and update the existing PENDING registry row (filename link and Commit Hash) instead of appending a duplicate row.
 
 ## 7. Procedure
 1. **Intake:** read FRD 01 (by line range) and the keyword matrix. Run `go test ./pkg/engine` and `cardtown lint rules` to see what is already pinned. Record existing Design Rationale callouts and open `KIM-*` items.
@@ -69,7 +69,7 @@ Keyword-pair or keyword-vs-core-rule findings are written as **matrix proposals*
    - 🟡 **Medium:** unreachable today (`U`) but plausible with future cards, or a reachable case with a minor outcome difference; also redundant or overlapping requirements.
    - 🔵 **Low / Clarification:** phrasing ambiguity that every reasonable reading resolves the same way.
 5. **Convergence:** if no Blocker/High/Medium findings remain, the verdict is `CONVERGED / PASS`. Use `PASS WITH REMAINING DESIGN QUESTIONS` only if a Socratic question is genuinely open.
-6. **Write** the audit file (§8 template) and **update the registry** (new row, or in-place update in loop mode) with status `PENDING` and `-` for the resolution columns. A zero-finding audit is still written and registered, so the convergence is recorded.
+6. **Write** the audit file (§8 template) and **update the registry** (new row, or in-place update on a re-audit) with status `PENDING` and `-` for the resolution columns. A zero-finding audit is still written and registered, so the convergence is recorded.
 7. **Commit locally:** `git add docs/audit/` then `git commit -m "docs(audit): add [YYYY-MM-DD] PM Devil's Advocate audit for [Target_Base_Name]"`. Do not push.
 8. **Report** concisely: link the audit, state the verdict and finding counts per severity.
 

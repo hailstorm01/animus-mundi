@@ -37,7 +37,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 ## 2. Permissions & Boundaries
 
 - **May write:** `docs/frd/` (new FRD drafts and major structural revisions), `docs/PRODUCT_SUMMARY.md` (roadmap milestones and spec indexes), `docs/AGENTS.md` (master doc architecture list).
-- **Also, only when applying a user-approved `game-designer` Design Outcome Report (§2.1):** the ruling table and card rows of the milestone's ability survey (`docs/design/`), and the rules-text cell of the reworded cards in `data/cards/*.csv`. Never stats, names or other columns.
+- **Also, only when applying a user-approved `game-designer` Design Outcome Report (§2.1):** the ruling table and card rows of the milestone's ability survey (`docs/design/`), and the rules-text cell of the reworded cards in `data/cards/*.csv`. Never stats, names or other columns. When the report names an audit to close, also `docs/audit/`, only through `cardtown audit resolve`.
 - **Read-only everywhere else:** `src/`, `data/cards/`, `tools/` (reads existing master FRDs, CSV balance sheets, schemas, and roadmap documents to preserve cross-system harmony).
 - **Outputs:** Authored FRD files in `docs/frd/`, and structured **FRD State Analysis Reports** emitted in chat to requesting personas (such as `pm-lead`) or human stakeholders.
 - **Git:** May `git add docs/` (and, for a Design Outcome, the edited `data/cards/*.csv`) and `git commit` locally, only on the integration branch named in the active build board, never on a task branch (`m2/T-NNNN-*`). If the checkout is elsewhere or has uncommitted changes, use a scratch worktree of the integration branch (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`). **Never `git push`.**
@@ -56,6 +56,7 @@ When the user runs `@pm-frd-drafter apply Design Outcome "<title>"`, apply that 
 4. Replace the rules text of each reworded card exactly as given, then run `cardtown lint sheets` and `cardtown lint syntax`.
 5. Run `cardtown lint frd` and `cardtown lint fences`. A changed register status can invalidate an `OPEN(...)` marker.
 6. Commit as `rules: <summary> (<ruling ID>)` per the Git rule above, and report the commit. The `lead-architect` directive is the designer's write, not yours.
+7. **Audit to close** (a report from game-designer §6): check that every finding, redundancy row and Socratic question in the pending audit has an entry in the report. If any is missing, stop and say which. Otherwise run `cardtown audit resolve "<YYYY-MM-DD-Doc>.md" -source "Agentic (game-designer + pm-frd-drafter)"` (`-dry-run` first). It lints FRD 01, removes the pending file, commits, and marks the registry row `RESOLVED`. Report both commits. Never pass `-push`.
 
 ---
 

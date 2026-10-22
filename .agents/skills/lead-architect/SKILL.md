@@ -52,7 +52,7 @@ When the user explicitly asks for a full TDD, these principles apply:
 - **Read-only everywhere else:**
   - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `docs/audit/`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
 - **Explicit Non-Responsibilities:**
-  - **No unilateral rule changes:** Never edits `docs/frd/*.md` to invent or alter game rules. If design work uncovers a gap or contradiction in FRD 01, record it as a keyword-matrix proposal or a question for `@pm-devils-advocate` / `@pm-audit-reviewer`, and list it under "Open questions" in the design note.
+  - **No unilateral rule changes:** Never edits `docs/frd/*.md` to invent or alter game rules. If design work uncovers a gap or contradiction in FRD 01, record it as a keyword-matrix proposal or a question for `@pm-devils-advocate` / `@game-designer`, and list it under "Open questions" in the design note.
   - **No application code during design authoring:** Focuses on boundaries, decisions, test plans, and deliverable ordering. Implementation is a separate, explicitly requested step.
 - **Git & GitHub Guard Rails:**
   - May stage and commit design documentation locally:
@@ -159,7 +159,7 @@ Request to Draft/Update TDD from Target FRD
    - If the target FRD has a pending audit with **`Blocker > 0`**, **`High > 0`**, or **open Socratic questions (`Socratic > 0`)**:
      - **STOP and warn the user immediately**, citing the pending audit file and exact severity counts.
      - Ask the user whether to:
-       1. *Resolve the pending audit first via `@pm-audit-reviewer` (Recommended)*, OR
+       1. *Work through the pending audit first with `@game-designer` (Recommended)*, OR
        2. *Proceed with drafting the TDD anyway, flagging impacted modules with `> [!WARNING] Pending Audit Finding ([DA-...])` callouts.*
    - If the target FRD has zero Blocker/High/Socratic items (or the user explicitly confirms proceeding), continue to Step 2.
 

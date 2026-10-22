@@ -7,7 +7,7 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 | Opened | Thread | Waiting on |
 | :--- | :--- | :--- |
 | 2026-10-21 | **Explainer persona (deferred).** Structural judgment went to `lead-architect` (Runbook E, placement checks in D2/D5). What remains is an optional read-only persona that explains how parts of the code work. | User: only if wanted later |
-| 2026-10-22 | **Directive #32, skills half done.** Dropped the false "`go test ./pkg/engine` runs the playouts" claim from `cardtown-linter` and `docs/AGENTS.md`, and pointed docs-concierge's "check your edits" suggestion at `go tool task test`. Proposed, not made (guard rail): pm-audit-reviewer's commit gate, which may edit `pkg/engine/*.go` at `OPEN(KIM-...)` markers, could run `go tool task test` instead of `go test ./pkg/engine` so a kernel edit cannot break the sim playouts unseen. | User: yes/no on the pm-audit-reviewer gate; pm-lead for the PRODUCT_SUMMARY half |
+| 2026-10-22 | **pm-audit-reviewer retired, loose ends.** The persona was removed at the user's request, which settles the #32 gate question (it was the last path that edited `pkg/engine` outside the build loop). DA audits now go to `game-designer` §6, and `pm-frd-drafter` §2.1 step 7 closes them. Still naming the old persona: `docs/audit/README.md` (workflow diagram, Clearing Loop section) and the `audit_registry.md` header (outside fences, asked separately); the default `-source "Agentic (pm-audit-reviewer)"` in `cmd/cardtown/tools.go` and `pkg/toolchain/audit/audit.go` (code, build loop if wanted); the #32 status cell on the M2 board (lead's). | User: docs/audit sign-off; lead for the board cell |
 
 ## Boundary Exceptions
 

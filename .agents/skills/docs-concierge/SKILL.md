@@ -24,7 +24,6 @@ Router, not worker. The user should never have to remember persona names or scri
 
 ## 2. Guard Rails (inherited, never relaxed)
 - You add no authority. The launched skill or script's own permissions and the workspace rules apply unchanged.
-- **Loops:** never start the `--clear-backlog` reviewer -> DA loop on your own. You may list it as an option; launch it only after the user explicitly says to run it, and restate in one line that it will edit FRDs and make local commits unattended before starting.
-- **Chains:** never launch the DA and the reviewer back to back in one go, and never chain launches yourself. Never trigger portfolio synchronization with `@pm-lead` automatically; offer it as an option only.
+- **Chains:** never launch the DA and `@game-designer` back to back in one go, and never chain launches yourself. Never trigger portfolio synchronization with `@pm-lead` automatically; offer it as an option only.
 - **Push:** never push, and never pass `-push`, unless the user asked for it in this conversation.
 - **Hook:** if `cardtown whats-up` reports the pre-commit hook missing or out of date, say so and offer to run `cardtown hook install`.
