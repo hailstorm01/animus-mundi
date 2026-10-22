@@ -17,15 +17,22 @@
 
 ## 2. What We Have Built (Current Foundation)
 
-The repository is currently organized around authoritative specifications, verified balance datasets, and automated quality assurance tooling:
+The repository is organized around an executable rules kernel, the one active rules specification, verified balance datasets, quality assurance tooling, and a task-file build loop:
 
 ```text
 animus-mundi/
+├── .agents/
+│   ├── skills/                            # Persona definitions (pm-lead, lead-architect, rules-test-author, kernel-engineer, ...)
+│   └── tasks/m2/                          # M2 build loop: BOARD.md (directives + index) and one file per task (T-0001 ... T-0035)
 ├── docs/
 │   ├── AGENTS.md                          # Engineering & agent guidelines
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
 │   ├── audit/                             # Socratic audit registry, guidelines & pending reviews
-│   ├── architecture/decisions/            # One-page decision records (ADRs)
+│   ├── architecture/
+│   │   ├── m2-ability-model.md            # M2 design note: ability shapes, boundaries, ordered deliverables
+│   │   └── decisions/                     # Decision records ADR-0001 ... ADR-0005
+│   ├── design/
+│   │   └── m2_starter_set_ability_survey.md # Every Animus/Path card mapped to shapes, waves A1-G, SVY-R* rulings
 │   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
@@ -39,11 +46,16 @@ animus-mundi/
 │   ├── cards/                             # 10 Authoritative RFC-4180 CSV Balance Sheets
 │   │   ├── maneuvers-{animus, concordia, path, soulless}.csv
 │   │   └── units-and-structures-{animus, concordia, path, soulless, HQ, common}.csv
+│   ├── decks/                             # Starter decklists (animus-starter.txt, path-starter.txt)
 │   └── schemas/                           # Target directory for JSON schemas & blueprints.json
 ├── cmd/
-│   └── cardtown/                          # Native Go developer CLI & toolchain
+│   └── cardtown/                          # Native Go developer CLI, one file per command (lint, sim, replay, tools)
 ├── pkg/
-│   ├── engine/                            # Executable FRD 01: rules kernel, scenario tests & fuzz playouts
+│   ├── engine/                            # Executable FRD 01: rules kernel and TestFR_*/TestCard_* scenario tests
+│   │   ├── ability/                       # Ability shapes as Go data: hooks, gates, steps, subjects, values, targets
+│   │   ├── cards/                         # Card ability definitions and the NotYetExecutable list
+│   │   ├── sim/                           # Policies, playouts, `cardtown sim` driver and rule monitors
+│   │   └── eventlog/                      # Event formatting and JSON Lines output
 │   └── toolchain/                         # High-performance validation, audit & slicing engine
 └── tools/
     ├── audit/                             # Audit records & registry
@@ -113,18 +125,24 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
 
 ### 2.3 Verification & Quality Assurance Tooling
 - **Executable Rules Verification (`pkg/engine`)**:
-  - `go test ./pkg/engine` runs the FR-named scenario tests plus 300 seeded fuzz playouts that check termination and state invariants after every action.
+  - `go tool task check` is the standard gate: gofmt, `go vet`, every test, and `cardtown lint --all`.
+  - `go test ./pkg/engine/...` runs the FR-named (`TestFR_*`) and card (`TestCard_*`) scenario tests. It also runs 300 seeded random playouts (in `pkg/engine/sim`) that check termination and state invariants after every action.
   - `cardtown lint rules` traces every `TestFR_*` test to an active FRD 01 requirement and lists requirements with no executable test yet.
-  - `cardtown sim` runs random-policy playouts between faction decks built from real card data.
+  - `cardtown lint fences` keeps card names out of engine code and requires every `OPEN(…)` marker to match a matrix or survey item.
+  - `cardtown sim` plays random-policy matches on real card data. It takes the starter decklists (`-deck starter`, or `go tool task sim`) or the faction stress decks, plus a choice of `RandomPolicy` or `ProgressPolicy` (`-policy`).
+    - **Rule monitors** check named FRD 01 rules across every event of every game and print a coverage table. They cover attack declaration, entry state, resources, the damage sequence and targeting.
+    - **Structured events** ([ADR-0005](architecture/decisions/0005-structured-game-events-and-observer.md)): a readable game log (`-log`), and a JSON Lines stream (`-events`) with match-start, turn-start snapshot and match-end records.
+  - `cardtown replay` rebuilds a recorded game deterministically and prints its state at any event.
   - `cardtown lint frd` enforces a single owner per requirement ID and rejects keyword definitions restated outside FRD 01.
 - **Native Go Developer CLI & Automated Linter Suite (`cardtown lint`, `cmd/cardtown`)**:
   - Blazing-fast sub-100ms native Go toolchain replacing legacy PowerShell scripts.
-  - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) across all 5 FRDs and verifies **1,944 cross-references** with **0 dangling references** (`cardtown lint frd`).
+  - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) and verifies **2,072 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`).
   - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`cardtown lint sheets`).
   - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`cardtown lint syntax`).
   - Audits TDD metadata, 100% FRD requirement coverage, and topological acyclic DAGs (`cardtown lint tdd`).
 - **Audit Lifecycle & Pre-commit Hooks**:
-  - Native Git pre-commit hook (`cardtown hook install`) enforcing zero lint violations in < 100ms prior to local commits.
+  - Native Git pre-commit hook (`cardtown hook install`) enforcing zero lint violations in < 100ms prior to local commits; it rebuilds a stale `cardtown` binary first.
+  - `cardtown whats-up` prints a live snapshot of capabilities and state for the docs workflow.
   - Socratic audit triage and resolution engine (`cardtown audit status`, `cardtown audit resolve`) tracking audits in `docs/audit/audit_registry.md`.
   - Topological deliverable issue slicer (`cardtown tdd slice`) generating DAG-ordered GitHub Milestones and Issues with zero guesswork.
 - **Sheets Publisher & Importer ([`tools/sheets/publish_card_sheets`](../tools/sheets/README.md), [`tools/sheets/import_card_sheets`](../tools/sheets/README.md))**:
@@ -144,13 +162,55 @@ The physical prototype has shown the core loop is fun, so the open risk is not w
 - **[Keyword Interaction Matrix](frd/keyword_interaction_matrix.md)**: all 105 keyword pairs and 15 self-stacking cases classified. 29 are defined and 87 have no interaction. Open items await rulings: 4 undefined pairs, plus 3 undefined and 4 inferred keyword-vs-core-rule cases, ranked by whether current cards can reach them.
 
 ### 3.2 M2 Deliverables
+The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilities are Go data values that the kernel interprets ([ADR-0004](architecture/decisions/0004-abilities-as-data-in-go.md)), and player choices go through a synchronous per-seat `Chooser` ([ADR-0003](architecture/decisions/0003-synchronous-chooser-for-player-choices.md)). Work runs through the task-file loop in [`.agents/tasks/m2/`](../.agents/tasks/m2/BOARD.md): `lead-architect` writes and reviews every task, `rules-test-author` writes the failing tests, and `kernel-engineer` makes them pass.
+
 1. **Rulings for reachable open matrix items. ✅ Done 2026-10-19 (FRD 01 v3.3–v3.4).** Eleven items were ruled, covering Berserk targeting and fizzles, Berserk 2 on *Tempest Surge* and *Redline Infusion*, Scratch Companies entering Exhausted, committed combat targets, zero-yield generation, and HQ defeat and empty-deck loss both settling at the death sweep. The two remaining open items (`KIM-C01`, `KIM-B07`) are unreachable with current cards. New cards or new keywords reopen this.
-2. **Animus vs Path starter set, fully executable.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work. Abilities are modeled directly as Go values in the kernel, with no compiler. At M2 start, 5 of 42 Animus cards and 4 of 42 Path cards are executable, and no Maneuvers are.
-3. **Kernel coverage pulled by starter cards.** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card. Rules of FRD 01 that no starter card reaches move to M3. The candidates are triggered abilities and APNAP ordering (`FR-TRG-002`–`FR-TRG-006`), replacement effects (`FR-REP-001`–`FR-REP-003`), targeting and fizzle (`FR-TGT-001`–`FR-TGT-003`), interactive choices and timeout fallbacks (`FR-MOD-001`), Layers 2–4 and Cornered timing (`FR-LAY-001`–`FR-LAY-003`), tucked and face-down cards (`FR-ENT-102`, `FR-ENT-103`), deck search (`FR-DEK-001`), activated abilities (`FR-ACT-001`, `FR-ACT-002`), additional costs and free deployments (`FR-TRN-003a`), Maneuvers (`FR-MNV-001`), and the remaining keywords (Unbowed, Heal N, Cornered, Scratch N, Regroup N).
-4. **`cardtown play`: a text-mode match.** One human plays a starter deck against the random policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client.
-5. **Write-up of the ability shapes the kernel needed.** This is the input to rewriting FRD 02/03 in M3.
+   - **Survey rulings still open:**
+     - `SVY-R8` (an attack fizzles if the defender changes controller) is unruled. It becomes reachable once *Rhapsody's Hollow* is built, and that card is in M2 scope.
+     - `SVY-R9`–`SVY-R11` (optional triggers asked on placement, last-known effective power, "up to N" distinct targets) are ruled and implemented, but not yet written into FRD 01.
+2. **Animus vs Path starter set, fully executable. 🟡 In progress.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work in waves A1–G. At M2 start, 9 of the 82 in-scope cards were executable (5 Animus, 4 Path) and no Maneuvers were.
+   - **Now:** 24 of 82 are executable. Waves A1 and A2 are done, adding 15 cards. 58 cards remain on `cards.NotYetExecutable`.
+   - **Starter decks:** 14 of the 46 distinct cards in the two lists execute; 32 do not, including both Headquarters.
+   - **Build order** (board directive #14): deck cards first. Shapes needed only by non-deck cards wait for a playtest checkpoint. At the checkpoint, every deck card is executable, starter sim is clean, and a human can finish `cardtown play`. The user then decides whether the remaining Animus and Path cards stay in M2 or move to M3.
+3. **Kernel coverage pulled by starter cards. 🟡 In progress: 44 of 62 FRD 01 requirements pinned (M1: 30).** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card.
+   - **Pinned during M2:** triggers, APNAP order and cascades (`FR-TRG-002`–`FR-TRG-004`), targeting and two-stage verification (`FR-TGT-001`–`FR-TGT-003`), choices and timeout fallbacks (`FR-MOD-001`), Layers 1–2 (`FR-LAY-001`, `FR-LAY-002`), Heal N (`FR-KWD-002d`) and self-tracking death triggers (`FR-ZON-004`).
+   - **Still to pin in M2 (15):** `FR-ACT-001`/`002`, `FR-CST-001`, `FR-DEK-001`/`002`, `FR-ENT-103`, `FR-KWD-002a`/`002e`, `FR-LAY-003`, `FR-MNV-001`, `FR-REP-001`–`003`, `FR-TRG-005` and `FR-TRN-003a`.
+   - **Out of starter reach, so they move to M3 (3):** `FR-ENT-102`, `FR-KWD-002n` and `FR-TRG-006`. The M2 target is therefore 59 of 62.
+4. **`cardtown play`: a text-mode match. ⏳ Next.** One human plays a starter deck against the random policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client. It is built as a thin client of a per-player `PlayerView` (board directive #24), which gives the M4/M5 client boundary a cheap first draft. No task has been written yet.
+5. **Write-up of the ability shapes the kernel needed. ⏳ Not started.** `docs/design/m2_ability_shapes.md` will be the input to rewriting FRD 02/03 in M3.
 
 **Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card plus the starter Headquarters (Animoceps Rager, Eternal Watchman) is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
+
+### 3.3 M2 Accomplished So Far (lead-architect report, 2026-10-21)
+All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`: 11 shape, 8 card and 16 harness tasks. None are open. **Nothing from M1 or M2 is merged to `main` yet**: the branch is 338 commits ahead and the `main` branch has no `pkg/engine`.
+
+| # | Design-note deliverable | Status | Tasks |
+| :---: | :--- | :---: | :--- |
+| 1 | Scaffold: `ability` and `cards` packages, coverage tests, fences | ✅ Done | T-0001, T-0002 |
+| 2 | Starter decks: `data/decks/`, `ValidateDeck`/`LoadDeck` (`FR-SET-001`), `sim -deck` | ✅ Done | T-0003, T-0004 |
+| 3 | Wave A1 (8 cards): events, self-hook triggers, APNAP and cascade, `Chooser`, self-tracking death triggers | ✅ Done | T-0006–T-0014, T-0015 |
+| 4 | Wave A2 (7 cards): targets, filters, two-stage verification, optional and "up to N" triggers, `DealDamage`, `Heal`, `AddArmor` | ✅ Done | T-0017–T-0019, T-0027–T-0031 |
+| 4a | Cleanup: engine files split by responsibility, deduplicated rule code, CLI split per command | ✅ Done | T-0032–T-0035 |
+| 5 | `cardtown play` (text mode) | ⏳ Next | — |
+| 6 | Waves B–G | ⏳ Planned | — |
+| 7 | Ability shapes write-up | ⏳ Planned | — |
+
+Tooling tasks outside the deliverables list: the hook's stale-binary rebuild (T-0005), refreshed engine docs (T-0016), structured events and the observer (T-0020, T-0021), `ProgressPolicy` (T-0022), `cardtown replay` (T-0023), the move of sim code out of the engine (T-0024), and the rule monitors (T-0025, T-0026).
+
+**Machinery now in the kernel:**
+- **Hooks:** deploy, killed and attacks. Gates on turn owner and deploy zone.
+- **Optional triggers:** "you may" triggers are asked on placement.
+- **Steps:** Scratch, Draw, ReturnToHand, PutOnDeck (top or bottom), DealDamage, Heal and AddArmor.
+- **Subjects and values:** controller, self (tracked across zones), opponents, a target, or all matching assets. Values are fixed, or read from source power (last-known effective).
+- **Targeting:** targets are locked on placement with conjunction filters, "up to N" distinct targets, and two-stage verification.
+- **Infrastructure:** a pending-trigger buffer with APNAP order and a last-known effective snapshot taken when an asset leaves. Roughly 4.6k lines of engine code and 11k lines of tests.
+
+**Gates (re-run 2026-10-21):**
+- `go tool task check` passes, with 483 tests (246 `TestFR_*`, 131 `TestCard_*`).
+- `go tool task sim` passes: 200 Animus vs Path starter games, all invariants hold and no monitor violations. Animus wins 88% of games. This is not a balance signal yet: Animus has 23 executable main-deck cards to Path's 13, and neither Headquarters ability executes.
+- The [keyword interaction matrix](frd/keyword_interaction_matrix.md) now has 32 defined, 1 undefined and 87 no-interaction cells. Its 2 open items are unreachable.
+
+**Not yet verified:** catalog-wide executable count (all 169 cards), and the T-0035 claim that sim output stayed byte-identical through the cleanup (attested in the task log, not re-diffed).
 
 > [!NOTE]
 > **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it. [TDD 03](tdd/03_Card_Compiler_TDD.md) is parked until then.
@@ -200,6 +260,8 @@ flowchart LR
 | :--- | :--- | :--- | :--- |
 | [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.7 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
+| [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Rule `SVY-R8` before *Rhapsody's Hollow* is built; write `SVY-R9`–`R11` into FRD 01 |
+| [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–4a done; Deliverable 5 (`cardtown play`) next |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Parked | M3 | Revise after FRD 03 rewrite |
