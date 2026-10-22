@@ -4,7 +4,7 @@ title: Split pkg/sim/monitor.go into the framework and one file per monitor (dir
 kind: harness
 tier: flash
 wave: none (board directive #35, structural review cleanup 5 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0042-split-monitor-go
 depends_on: [T-0041]
 claims: [file:pkg/sim/monitor.go, file:pkg/sim/monitor_attack.go, file:pkg/sim/monitor_entry.go, file:pkg/sim/monitor_resources.go, file:pkg/sim/monitor_damage.go, file:pkg/sim/monitor_targeting.go]
