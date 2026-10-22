@@ -4,7 +4,7 @@ title: Move sim, eventlog and view to the top of pkg/ (directive #31, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #31, structural review cleanup 2 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0039-move-client-packages
 depends_on: [T-0038]
 claims: [dir:pkg/sim, dir:pkg/eventlog, dir:pkg/view, file:pkg/engine/doc.go, var:fences.allowedImports]
@@ -128,3 +128,16 @@ This is a pure move, so the size rule is met by the rename checks, as in T-0035.
   - Case 6 (Layout): `go list ./pkg/engine/...` prints `animus-mundi/pkg/engine`, `.../ability`, `.../cards`. `go list ./pkg/sim ./pkg/eventlog ./pkg/view` succeeds.
   - Case 7 (No stale paths): `git grep -n -I -E 'pkg/engine/(sim|eventlog|view)'` matches only allowed `.agents/tasks/`, `.agents/steward-log.md`, `.agents/skills/`, `docs/PRODUCT_SUMMARY.md`, `docs/architecture/m2-ability-model.md`, and the Case 27 fixture in `fences_test.go`.
   - Case 8 (Gates): `bin/cardtown.exe lint fences` passes; `go tool task check` passes (gofmt, `go vet`, all tests, `cardtown lint --all`).
+- 2026-10-22 lead-architect: Review: **approved**, merged as 94a8593, status `done`.
+  - Scope, checked against the diff:
+    - aa4a33f changes only the status line.
+    - 996fcbf changes only cases 32–35, with the exact path swaps the task authorized.
+    - 0906c32 changes only Allowed Files. 13 of the 21 moved files are R100. The other 8 differ only in import paths and one fewer `..`.
+    - The `doc.go` and README text is the task's text, word for word. The fence table and the `lint.go` message are as specified.
+  - Gates, re-run in a scratch worktree:
+    - At 996fcbf, cases 32, 33 and 35 fail.
+    - At 0906c32, `go tool task check` exits 0, and `go list ./pkg/engine/...` lists only `engine`, `ability` and `cards`.
+    - Against a baseline CLI built at 996fcbf (same non-test code as the integration branch), under both policies, these are byte-identical (`cmp`): starter sim (1830 and 1797 bytes), bare sim, and `-games 1 -seed 7 -log`.
+    - The 10-game `-events` files (2386 and 4213 lines) are identical with `revision`/`modified` removed. Each binary's `replay -game 3 -at 12` exits 0, with the same output once revisions are removed.
+  - Case 7: the only remaining code match is case 27's fixture `pkg/engine/sim/x.go`. It is correct: it pins that a nested folder under `pkg/engine/` is still fenced. The task's list should have named it.
+  - The lead updated the design note's Boundaries (the package paths, the monitors paragraph, and a sentence on the move and the fence). Board directive #32's trigger has fired.
