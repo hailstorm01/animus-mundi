@@ -4,7 +4,7 @@ title: Split pkg/engine/events.go into events, snapshots and build info (directi
 kind: harness
 tier: flash
 wave: none (board directive #34, structural review cleanup 4 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0041-split-events-go
 depends_on: [T-0040]
 claims: [file:pkg/engine/snapshot.go, file:pkg/engine/buildinfo.go, file:pkg/engine/events.go]
@@ -111,3 +111,11 @@ This is a pure move: the size rule is met by cases 1 and 2, as in T-0032 and T-0
     - `cardtown sim -games 10 -events`: JSON lines identical between baseline and new CLI once `"revision":…,"modified":…` is stripped (`fc.exe /b` reports no differences).
   - Case 5 (check gate): `go tool task check` passes cleanly (fmt-check, go vet, all package tests, cardtown lint --all: 0 warnings, 0 errors).
   - Status set to `review`.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 2e93fee, status `done`.
+  - Scope: f27f2d9 changes only the status line. 933b105 changes only the six Allowed Files and this file.
+  - Only moves: a multiset comparison of removed against added lines in `pkg/engine` shows every removed line reappears. The exceptions are the old `events.go` header, its `runtime/debug` import and the old `doc.go` line. The only new lines are the three specified headers, the two `doc.go` lines, the `package` and `import` lines of the new files, and blank lines. `Phase.String` and `DecisionKind.String` sit directly after their const blocks.
+  - Gates, re-run in a scratch worktree against a baseline CLI built from 47bda86:
+    - The sorted non-test declarations (192) and the `go test -list` output are identical.
+    - `go tool task check` exits 0.
+    - Under both policies, these are byte-identical (`cmp`): the starter sim, bare sim and `-games 1 -seed 7 -log`. The 10-game `-events` files (2386 and 4213 lines) are identical with the revision removed.
+  - Directive #34 is complete.
