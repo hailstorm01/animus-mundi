@@ -4,7 +4,7 @@ title: Fence every package under pkg/, and check the client packages' imports (d
 kind: harness
 tier: sonnet
 wave: none (board directive #30, structural review cleanup 1 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0038-fence-all-packages
 depends_on: []
 claims: [lint:fences-scope, lint:fences-imports, func:isFencesPath]
@@ -91,3 +91,10 @@ Recorded in the Log, not as tests:
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #30, folding in structural finding 10 (the import table). It changes two non-test files. The `ability` and `cards` rows of the import table go beyond the directive's client packages. They cost two rows, and they pin the design note's one-way `engine` → `cards` → `ability` direction, which is otherwise enforced only by Go's cycle rule, and only for `engine`. T-0037 now depends on this task. It has no dependencies of its own, so it is set to `ready`. Branch `m2/T-0038-fence-all-packages` is created from the integration branch. Next: the lead dispatches the `kernel-engineer` subagent (Sonnet).
 - 2026-10-21 kernel-engineer: Implemented. Reuse search: the fences walk, `violationItem` sort and `readLines` are kept; `go/parser` ImportsOnly is the only new mechanism (no existing import checker in pkg/). Tests commit c6490ce (cases 26-37 plus the case 21 edit); before the implementation the failing set was cases 21, 26, 27, 28, 30, 31, 32, 33, 35, 36 and `TestIsFencesPath`. Cases 29 and 34 are negative (must pass) cases, so they passed before the change too. Diff: `fences.go` walks `pkg/` skipping `pkg/engine/cards` and `pkg/toolchain`, reports repo-relative paths, adds `allowedImports` table, `checkImports` and `goFilesUnder` (so `pkg/engine/cards` imports are checked though its names are not), new PASS line and doc comments; `lint.go` `isFencesPath` only. The header line was left unchanged per decision 4. A parse failure reports the first scanner error's line. Commands: `go test ./pkg/toolchain/linter/fences ./cmd/cardtown` ok; `go tool task check` exit 0 (includes `cardtown lint --all` and case 20, real tree clean); `go run ./cmd/cardtown lint fences` PASS with the new line. Reviewer: check the cannot-read-imports line number choice.
+- 2026-10-21 lead-architect: Review: **approved**, merged as d474cd9, status `done`.
+  - Scope: the test commit c6490ce touches only the two test files. The feat commit 26668e8 touches only `fences.go`, `isFencesPath` in `lint.go` and this file, and changes no test. The only edit to an existing test is the authorized case 21 string.
+  - Tests: every acceptance case has a test. Re-run at c6490ce, the failing set matches the Log; cases 29 and 34 are must-pass cases. Case 27 failed only on the new path format, which is expected.
+  - Gates re-run in a scratch worktree at 26668e8: `go tool task check` exits 0, and `cardtown lint fences` on the real tree prints the new `[PASS]` line. No gameplay changed, so `go tool task sim` was not needed.
+  - The line choice for a file that fails to parse (first scanner error, else line 1) is fine.
+  - Follow-up, non-blocking: that message repeats the file as an absolute path, because it prints the whole `scanner.Error`. Example: `[ERROR] pkg/engine/sim/zz_bad.go:4: cannot read imports: C:\…\rev38\pkg\engine\sim\zz_bad.go:4:2: string literal not terminated`. It should print `el[0].Msg`. This is folded into directive #36, whose task edits `fences.go`.
+  - Process slip: step 1's `in-progress` status commit was skipped. This is harmless in serial mode, but it is the step that shows the task is taken.
