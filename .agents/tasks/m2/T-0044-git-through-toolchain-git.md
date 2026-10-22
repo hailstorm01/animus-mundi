@@ -4,7 +4,7 @@ title: Run git through pkg/toolchain/git in audit, docs and tddslice (directive 
 kind: harness
 tier: sonnet
 wave: none (board directive #37, structural review cleanup 7 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0044-git-through-toolchain-git
 depends_on: [T-0043]
 claims: [func:git.Lines, func:git.Output, func:git.Combined]
@@ -82,3 +82,12 @@ Cases 1–4 are unit tests in a new `pkg/toolchain/git/git_test.go`. Each one bu
   - Case 7: no pending audit exists, so `audit resolve -dry-run` (no args) gives identical usage output, exit 1 both; `audit resolve -dry-run nonexistent.md` gives identical "no registry row" error, exit 1 both. No live resolve, no `-publish`.
   - Case 8 / Done When: `go test ./pkg/toolchain/...` passes; `go tool task check` exit 0.
   - Reviewer: compare was of combined stdout+stderr, a superset of stdout; exit codes also compared.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 42e6812, status `done`.
+  - Scope: e4540b1 and f9bb518 change only this file, and 0687b4a adds only `git_test.go`. ed91744 changes only the four Allowed Files: in `slice.go`, only the `remote get-url` call and its import.
+  - Design: it matches the Lead decisions. Every call keeps its arguments, error text and output mode: CombinedOutput becomes `Combined`, Output becomes `Output`, and `getGit` becomes `Lines`. `Lines` is built on `Output` with `getGit`'s scanner and trim, unchanged.
+  - Gates, re-run in a scratch worktree:
+    - At 0687b4a, `go test ./pkg/toolchain/git` fails to build (`undefined: Lines`, `Output`).
+    - At ed91744, `go tool task check` exits 0.
+    - Against a baseline CLI built from 0687b4a (same non-test code as the integration branch), both run back to back from the same clean worktree, these are byte-identical with stdout and stderr merged, and so are their exit codes: `whats-up` (exit 0), `tdd slice -dry-run docs/tdd/03_Card_Compiler_TDD.md` (exit 0, `gh` signed in) and `audit resolve -dry-run` (usage, exit 1).
+    - `exec.Command("git"` appears outside tests only in `pkg/toolchain/git/git.go` (6 calls).
+  - Directive #37 is complete. With it, the structural-review directives #30–#37 are all applied, and T-0037 has no open dependency.
