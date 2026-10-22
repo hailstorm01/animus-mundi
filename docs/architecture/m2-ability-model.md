@@ -23,6 +23,7 @@ Five packages. The rules core imports one way only: `engine` → `cards` → `ab
 | `pkg/engine` | The interpreter: events, trigger collection, stack, choices, layers, replacements. | No (fenced) | `shape` tasks |
 | `pkg/engine/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`, and the rule monitors (`Monitors`, `Violation`, `Coverage`, `ReplayCommand`). `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
 | `pkg/engine/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
+| `pkg/engine/view` | One seat's view: `PlayerView` (own hand, counts for the opponent's hand and both decks, public zones, face-down assets as Scratch Company to both seats) and `LogLines` (the event log that seat may read). It imports `engine` and `eventlog` only (board directive #24, T-0036). | No (fenced) | `harness` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
 
@@ -92,7 +93,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 1. **Starter decklists: answered 2026-10-19.** See [Starter Decks](#starter-decks). The other 38 Animus and Path cards stay in M2 under the current done-when.
 2. **Survey gaps G1–G3:** decided in the kernel as the survey proposes. G1 is `Trigger.ActiveZone`, G2 puts keyword grants in Layer 3 per `FR-LAY-001`, and G3 is a `KillSelf` cost. No ruling is needed.
 3. **Action clocks:** M2 has no clocks. A `Chooser` may answer "timeout", which applies the `FR-MOD-001` §6 fallback. Clocks and time banks wait for M4/M5.
-4. **Hidden information:** in M2 a `Chooser` can read the whole `Game`. The fog-of-war boundary is M5 work (FRD 04 rewrite). `cardtown play` shows the human only their own zones by convention.
+4. **Hidden information:** in M2 a `Chooser` can read the whole `Game`. `cardtown play` (T-0037) draws the human's screen from `view.PlayerView` and `view.LogLines` (T-0036), which show one seat only what it may see. That boundary is a first draft for M4/M5: the fog-of-war boundary itself is M5 work (FRD 04 rewrite).
 5. **Partitioned inspections** (`FR-MOD-001` §4, Devilhorn Scouting Party) are one `Decision` with a per-card destination and a bottom order. The Wave F task fixes the answer encoding.
 6. **Trigger-order timeout: provisionally answered 2026-10-19.** `FR-MOD-001` §6 has no fallback for a player ordering their own simultaneous triggers (`FR-TRG-003`). The user accepted the lead's recommendation for now: they go on the stack in the order the kernel collected them (battlefield order, then each card's own trigger order). It is not yet in FRD 01. `pm-frd-drafter` adds it to `FR-MOD-001` §6, or the user overrides it.
 
