@@ -94,4 +94,4 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0037 | cardtown play, a text-mode match against a sim policy, drawn only from PlayerView (directive #24; Deliverable 5 part 2; harness, flash) | queued (behind the structural cleanup, directives #30–#37) |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
-| T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | ready |
+| T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |

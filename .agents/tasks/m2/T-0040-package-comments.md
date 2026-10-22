@@ -4,7 +4,7 @@ title: Package comments for sim and eventlog (directive #33, harness, flash, com
 kind: harness
 tier: flash
 wave: none (board directive #33, structural review cleanup 3 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0040-package-comments
 depends_on: [T-0039]
 claims: [doc:pkg/sim, doc:pkg/eventlog]
@@ -74,3 +74,7 @@ No new tests. These are checks recorded in the Log, and the reviewer re-runs the
   - Case 3: `go doc ./pkg/engine/ability`, `go doc ./pkg/engine/cards`, and `go doc ./pkg/view` produce identical output before and after.
   - Case 4: `cardtown lint fences` passes; `go tool task check` passes (gofmt, `go vet`, all tests, `cardtown lint --all`). Neither package comment names any card; "Scratch Company" does not appear.
   - Status set to `review`.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 8183fa6, status `done`.
+  - Scope: b331588 changes the status line, and 63b367c changes only the two Allowed Files and this file. Every added line in `pkg/` starts with `//`, and nothing is removed. Both comments are the task's text word for word, directly above `package`.
+  - Gates, re-run in a scratch worktree: `go doc` prints both paragraphs, and `go tool task check` exits 0.
+  - Directive #33 is complete.
