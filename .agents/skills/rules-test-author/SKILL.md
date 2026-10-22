@@ -28,7 +28,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
 
 ## 3. Runbook: Write Tests for T-NNNN
 
-1. **Load the task:** read the task file and confirm `status: tests`. Check out its branch (create it from the integration branch if missing).
+1. **Load the task:** read the task file and confirm `status: tests`. Never switch the main checkout's branch. Open a scratch worktree on the task's branch, creating the branch from the integration branch if missing (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`), and do every later step inside it.
 2. **Read the rules:** read the listed FRD 01 sections by line range, the rulings named in the task, and each card's exact rules text from `data/cards/*.csv`.
 3. **Plan the cases:** for each requirement in `requirements:`, list the behavior and the edges FRD 01 names. For each card in `cards:`, write at least one test that plays the card and checks its printed effect.
 4. **Write the tests:**
@@ -37,7 +37,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
    - Build state with the `newScene` helpers. If a helper you need does not exist, call it anyway and add its exact signature and a one-line contract under `Helpers Needed`. Helpers set up state; they never assert. Use the exported API wherever it is enough.
    - Each test has one behavior and a failure message that names the expected rule outcome.
 5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `cardtown lint rules` to confirm every new `TestFR_*` traces to an active requirement. Don't use `go tool task check` here: your tests are meant to fail until the engineer implements them, so it would always report red.
-6. **Hand off:** commit on the task branch as `test(T-NNNN): <summary>`. Set `status: tests-review`, and append a Log entry listing the tests, the helpers requested and any cases deliberately left out (with the reason).
+6. **Hand off:** commit on the task branch as `test(T-NNNN): <summary>`. Set `status: tests-review`, and append a Log entry listing the tests, the helpers requested and any cases deliberately left out (with the reason). Commit that too, then remove the worktree. The same goes for a `blocked` handoff.
 
 ## 4. Guard Rails
 

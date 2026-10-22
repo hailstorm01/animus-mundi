@@ -81,7 +81,7 @@ One report per discussion. Include only the handoff sections that apply; write "
 2. **Board directive (the one write):**
    - Append the row to the `Directives for the Lead` table of the active milestone's `BOARD.md`. Number it after the last row. Set the source to `User via game-designer, <date>`, and the status to `open` or `waiting: <trigger>`.
    - Commit it only on the board's **integration branch** (named at the top of `BOARD.md`), as `chore(tasks): directive #<n>, <summary> (game-designer)`. Never commit on a task branch (`m2/T-NNNN-*`): the lead's merge would then carry it as part of someone else's task.
-   - If the checkout is on any other branch, or has uncommitted changes, leave it untouched and use a temporary worktree:
+   - Follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`. If the checkout is on any other branch, or has uncommitted changes, leave it untouched and use a scratch worktree:
      ```sh
      git worktree add <scratch-dir>/integ <integration-branch>
      # edit <scratch-dir>/integ/.agents/tasks/<milestone>/BOARD.md, then:
@@ -89,7 +89,6 @@ One report per discussion. Include only the handoff sections that apply; write "
      git -C <scratch-dir>/integ commit -m "chore(tasks): directive #<n>, <summary> (game-designer)"
      git worktree remove <scratch-dir>/integ
      ```
-   - If `git worktree add` fails because the integration branch is already checked out in another worktree (`git worktree list`), commit in that worktree only when `git -C <that worktree> status --short` is empty. Otherwise another session is mid-edit: commit to a side branch instead (`git worktree add -b <side-branch> <scratch-dir>/side <integration-branch>`) and ask the user to merge it once that session is done.
    - Never `git push`.
 3. **Other owners:** give the user the `pm-frd-drafter` and `pm-lead` prompts from the report, in the order to run them. FRD 01 and card text go first, so the lead's next task reads the new rule. Do not run them yourself.
 4. **Close** with a one-line summary per owner: what was recorded (with the directive number and commit) and what still waits on the user.

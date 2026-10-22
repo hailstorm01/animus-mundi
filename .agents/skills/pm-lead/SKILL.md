@@ -57,7 +57,7 @@ High-level product strategist, portfolio architect, and guardian of the core pro
     git add docs/PRODUCT_SUMMARY.md docs/AGENTS.md
     git commit -m "docs(product): [action summary]"
     ```
-  - **Integration branch only.** Commit only on the integration branch named at the top of the active `BOARD.md`, never on a build-task branch (`m2/T-NNNN-*`). The lead would merge it as part of that task, and the scope review would flag it. Before writing, run `git branch --show-current` and `git status --short`. If the checkout is on another branch or has uncommitted changes, leave it alone and use a temporary worktree. If the integration branch is already checked out in another worktree (`git worktree list`), commit there only when `git -C <that worktree> status --short` is empty. Otherwise another session is mid-edit: commit to a side branch and ask the stakeholder to merge it later. `game-designer` §5 has the commands.
+  - **Integration branch only.** Commit only on the integration branch named at the top of the active `BOARD.md`, never on a build-task branch (`m2/T-NNNN-*`). The lead would merge it as part of that task, and the scope review would flag it. Before writing, run `git branch --show-current` and `git status --short`. If the checkout is on another branch or has uncommitted changes, leave it alone and use a scratch worktree, following the **Worktrees** guard rail in `.agents/rules/AGENTS.md` (commands, and what to do when another session holds the branch).
   - **Never `git push`** unless explicitly requested by the stakeholder.
 
 ---

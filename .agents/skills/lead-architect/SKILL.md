@@ -60,6 +60,7 @@ When the user explicitly asks for a full TDD, these principles apply:
     git commit -m "docs(architecture): [design note | ADR NNNN | TDD] for [topic]"
     ```
   - **Never `git push`** unless explicitly instructed by the human user.
+  - **Worktrees:** never switch the main checkout's branch. Reviewing, running gates on a task branch, and merging all follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
   - **Two-Stage Gate (TDD $\rightarrow$ GitHub Issues):** Never automatically publishes GitHub Issues right after drafting a TDD. Always pause after Runbook B for human review of the TDD. In Runbook C, always run `cardtown tdd slice "docs/tdd/<Target_TDD>.md" -dry-run` first and obtain explicit human confirmation before running `-publish`.
 - **Mandatory Quality Gate:**
   - Design notes and decision records: `cardtown lint frd` must still pass (no dangling `FR-*` references).
@@ -303,7 +304,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 4. **Size:** a card task covers one card, or a few cards with identical shapes. A shape task covers one shape plus the cards that first exercise it. If the `Allowed Files` list exceeds four non-test files, split the task.
    - **Test files hold only tests and setup.** Code that tests exercise (checkers, validators, parsers) goes in a non-test file, never in a `_test.go` file. That way "tests are protected after the test commit" stays a clean rule.
    - **Editing an existing test** (one from an earlier task) is allowed only when the task names that test and the exact change under `Tests` or `Acceptance Cases`. The change lands in the `test(T-NNNN)` commit, like any new test.
-5. **Mode:** in `serial` mode, at most one task is in `tests`, `in-progress` or `changes`. Switch to `parallel` (one worktree per task) only after the user agrees, and only for tasks with disjoint claims and allowed files.
+5. **Mode:** in `serial` mode, at most one task is in `tests`, `in-progress` or `changes`. Switch to `parallel` (one scratch worktree per task) only after the user agrees, and only for tasks with disjoint claims and allowed files.
 
 #### D3. Dispatching
 - **Tests:** set `status: tests` and run the `rules-test-author` subagent (Sonnet) with the task id. Harness tasks skip this step and go straight to `ready`.
@@ -321,10 +322,10 @@ Review `git diff <integration-branch>...<task-branch>`:
 2. **Fences:** no engine code branches on, or contains, a card name. No new shape in a card task. No `OPEN(…)` marker without a matching matrix or survey item.
 3. **Reuse:** nothing duplicates an existing shape or helper. Name the existing one in the note if it does.
 4. **Rules fidelity:** the code implements the cited requirements generally, not just the tested cases, and does not special-case test inputs.
-5. **Gates:** the commands under `Done When` pass when re-run by the reviewer, not only as reported in the Log. The standard gate is `go tool task check`. Also run `go tool task sim`, which plays the starter decklists (`cardtown sim -deck starter -p0 ANIMUS -p1 PATH`). Without `-deck`, sim plays the stress decks. When you write a task, use `go tool task check` as its standard gate line, plus any task-specific commands.
+5. **Gates:** the commands under `Done When` pass when re-run by the reviewer (in a scratch worktree of the task branch), not only as reported in the Log. The standard gate is `go tool task check`. Also run `go tool task sim`, which plays the starter decklists (`cardtown sim -deck starter -p0 ANIMUS -p1 PATH`). Without `-deck`, sim plays the stress decks. When you write a task, use `go tool task check` as its standard gate line, plus any task-specific commands.
 
 **Verdict:**
-- **Approve:** merge with `git merge --no-ff`, set `status: done`, and update `BOARD.md`.
+- **Approve:** merge with `git merge --no-ff` on the integration branch (in the main checkout only if it is on that branch and clean, otherwise in a scratch worktree), set `status: done`, and update `BOARD.md`. Remove the review worktree.
 - **Request changes:** set `status: changes` and add numbered notes.
 - **Escalate:** after two `changes` rounds on a `flash` task, set `tier: sonnet` and re-dispatch. After two more rounds, split the task or mark it `blocked` for the user.
 

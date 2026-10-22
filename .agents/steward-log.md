@@ -7,7 +7,6 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 | Opened | Thread | Waiting on |
 | :--- | :--- | :--- |
 | 2026-10-21 | **Architecture persona.** A separate persona for "how does this part work" and code-structure questions (for example "should sim code be separated from engine code?"), split out of the steward's role. | User: on hold until the steward is settled |
-| 2026-10-21 | **Worktree convention.** Personas created ad hoc worktrees (`../am-integration`). Options: one shared integration worktree at a fixed path, or always a temporary worktree in the session scratch folder. To be added to `.agents/rules/AGENTS.md`. | User decision |
 | 2026-10-21 | **`SVY-R9`–`SVY-R11` are not in FRD 01.** Ruled by the user on 2026-10-21 (optional triggers asked on placement, last-known effective power for "damage equal to its power", "up to N" targets distinct) and implemented, but FRD 01 (v3.8) does not mention them. | User to run `pm-frd-drafter` |
 
 ## Boundary Exceptions

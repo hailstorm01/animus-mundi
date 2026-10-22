@@ -22,4 +22,12 @@ Read a skill only when its trigger fires. Do not load persona skills for unrelat
 ## Guard Rails
 - **No unattended chains:** The reviewer -> DA -> reviewer clearing loop (`--clear-backlog`) starts only on an explicit human command. DA never invokes the reviewer. Reviewer edits never trigger the DA outside a human-started loop. Portfolio reconciliation via `pm-lead` starts only on an explicit human prompt; FRD edits never auto-trigger synchronization. Design notes and TDDs (`lead-architect` Runbooks A and B) never auto-trigger GitHub issue publication (Runbook C); always run `cardtown tdd slice -dry-run` first and require explicit human confirmation before `-publish`. The build loop (`lead-architect` Runbook D) runs **one task per human prompt**: once that task is `done` or `blocked`, or needs the user (a Flash dispatch or a ruling), the lead stops and reports. It never dispatches another task, or starts the next deliverable, without a new human prompt. It may write the current deliverable's other tasks, but leaves them `queued`. A merge never triggers the next task.
 - **No agent `git push`:** Agents commit locally. Push only when the user asks.
+- **Worktrees (all personas):** The main checkout belongs to the user. Never switch its branch, and never stage, stash or reset changes you did not make. Work there only when it is already on the branch you need and `git status --short` is empty. Otherwise work in a temporary worktree in your session's scratch folder (the one the harness provides, or a new folder under the system temp directory if it gives none), never beside the repository:
+  ```sh
+  git worktree add <scratch-dir>/<name> <branch>                       # existing branch
+  git worktree add -b <new-branch> <scratch-dir>/<name> <base-branch>  # new branch
+  # edit, run gates and commit inside <scratch-dir>/<name>, then before handing off:
+  git worktree remove <scratch-dir>/<name>
+  ```
+  If `git worktree add` fails because the branch is checked out in another worktree (`git worktree list`), work there only when `git -C <that worktree> status --short` is empty. Otherwise another session is mid-edit: for the integration branch, commit to a side branch (`git worktree add -b <side-branch> <scratch-dir>/side <integration-branch>`) and ask the user to merge it later; for a task branch, stop and tell the user.
 - **Pre-commit hook:** It is not versioned by git. After a fresh clone run `cardtown hook install`.

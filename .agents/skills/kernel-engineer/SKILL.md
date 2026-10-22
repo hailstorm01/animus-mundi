@@ -29,7 +29,7 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
 
 ## 3. Runbook: Implement T-NNNN
 
-1. **Load:** read the task file and confirm `status` is `ready` (or `changes`, then start at step 8). Check out its `branch:`, set `status: in-progress`, and commit that change.
+1. **Load:** read the task file and confirm `status` is `ready` or `changes`. Never switch the main checkout's branch. Open a scratch worktree on its `branch:` (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`) and do every later step inside it. For `changes`, go straight to step 8. Otherwise set `status: in-progress` and commit that change.
 2. **Read in this order:** the tests listed in the task; the design note section named in `Inputs`; the FRD 01 requirements in `requirements:`. Read the rules text so you implement the rule, not only the visible cases.
 3. **Search for reuse:** for each thing you plan to add, search `pkg/engine` for an existing equivalent and note what you found in the Log.
 4. **Harness tasks only:** before any implementation, write one test per item under `Acceptance Cases`, run them to confirm they fail, and commit them as `test(T-NNNN): <summary>`. After that commit, those tests are protected exactly like a test author's tests.
@@ -46,3 +46,4 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
    - the change needs a file outside `Allowed Files`;
    - two honest attempts have failed to make the tests pass.
 8. **Hand off:** before committing, run `git diff` and confirm that every change you plan to report is actually there. This includes each acceptance case, each requested helper, and each review note being answered. Then commit on the task branch as `feat(<area>): <summary> (T-NNNN)`, where `<area>` is `engine` or the tooling package. Set `status: review`, and append a Log entry describing what the diff shows, not what you intended: what you changed, what you reused, the commands you ran with their results, and anything the reviewer should look at closely. When fixing review notes (`changes`), answer each numbered note in the Log.
+9. **Clean up:** after the final commit, whether the task is `review` or `blocked`, remove the scratch worktree so the next persona can open the branch.

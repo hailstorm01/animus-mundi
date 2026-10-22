@@ -37,6 +37,8 @@ queued → tests → tests-review → ready → in-progress → review → done
 
 **One at a time (current mode):** at most one task is in `tests`, `in-progress` or `changes`. Parallel work, with one git worktree per task, starts only when the lead says so in the milestone's `BOARD.md`.
 
+**Worktrees:** no persona switches the main checkout's branch. Task-branch work happens in a scratch worktree that is removed at handoff (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`).
+
 ## Task File Template (`.agents/tasks/m2/T-NNNN-<slug>.md`)
 
 ```markdown
