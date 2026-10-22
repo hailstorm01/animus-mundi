@@ -1,3 +1,12 @@
+// Package eventlog writes, reads and replays a game's event stream:
+// FormatEvent for readable lines, WriteEventsJSONL and ReadEventsJSONL for
+// JSON Lines, and Replay, which rebuilds a recorded game up to any event and
+// refuses a record from another build revision. The event and record types
+// live in engine (ADR-0005).
+//
+// It is a client of the engine's exported API: it imports engine only from
+// this module, and engine never imports it. cardtown lint fences checks its
+// imports.
 package eventlog
 
 import (

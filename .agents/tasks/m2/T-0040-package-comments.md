@@ -4,7 +4,7 @@ title: Package comments for sim and eventlog (directive #33, harness, flash, com
 kind: harness
 tier: flash
 wave: none (board directive #33, structural review cleanup 3 of 7, before cardtown play)
-status: ready
+status: review
 branch: m2/T-0040-package-comments
 depends_on: [T-0039]
 claims: [doc:pkg/sim, doc:pkg/eventlog]
@@ -60,9 +60,17 @@ No new tests. These are checks recorded in the Log, and the reviewer re-runs the
 - `pkg/eventlog/eventlog.go` (decision 2 only)
 
 ## Done When
-- [ ] Acceptance cases 1 to 4 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Acceptance cases 1 to 4 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #33, narrowed to `sim` and `eventlog` after the lead found that `ability`, `cards` and `view` already have package comments (see Inputs). It is a harness task, tier flash, as the directive sets. T-0039 is done, so the task is `ready` on branch `m2/T-0040-package-comments`. T-0037 now depends on it too.
   - Next: **the user runs `@kernel-engineer T-0040` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-22 kernel-engineer: Added package doc comments to `pkg/sim/sim.go` and `pkg/eventlog/eventlog.go` (lead decisions 1 and 2). Status set to `in-progress` in b331588.
+  - Diff: only comment additions to `pkg/sim/sim.go` (lines 1-9) and `pkg/eventlog/eventlog.go` (lines 1-9); no lines removed, no other files in `pkg/` modified.
+  - Reuse: follows short-comment convention directly above `package` line in main package files (`ability.go`, `cards.go`, `view.go`). No code, shapes, or card names introduced.
+  - Case 1: `go doc ./pkg/sim` and `go doc ./pkg/eventlog` each print their respective package paragraph ("Package sim drives..." and "Package eventlog writes...").
+  - Case 2: `git diff rework/executable-rules -- pkg/` adds only comment lines (all starting with `//`) to `pkg/sim/sim.go` and `pkg/eventlog/eventlog.go`, and removes nothing.
+  - Case 3: `go doc ./pkg/engine/ability`, `go doc ./pkg/engine/cards`, and `go doc ./pkg/view` produce identical output before and after.
+  - Case 4: `cardtown lint fences` passes; `go tool task check` passes (gofmt, `go vet`, all tests, `cardtown lint --all`). Neither package comment names any card; "Scratch Company" does not appear.
+  - Status set to `review`.

@@ -1,3 +1,12 @@
+// Package sim drives matches on the rules kernel: the seat policies
+// (RandomPolicy, ProgressPolicy), Playout for one game, Simulate and
+// SimulateWith for many, the simulation decks (FactionDeck, SimDecks,
+// ResolveDeck) and the rule monitors (Monitors, Violation, Coverage) that
+// check named FRD 01 rules in every simulated game.
+//
+// It is a client of the engine's exported API: it imports engine only from
+// this module, and engine never imports it. cardtown lint fences checks its
+// imports. CheckInvariants and RandomChooser stay in engine.
 package sim
 
 import (
