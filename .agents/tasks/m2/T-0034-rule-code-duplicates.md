@@ -4,7 +4,7 @@ title: Remove duplicated rule code (Berserk targeting, combat zones, Scratch Com
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 3 of 4, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0034-rule-code-duplicates
 depends_on: [T-0033]
 claims: [func:ScratchFace, func:inCombatZone]
