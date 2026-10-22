@@ -4,7 +4,7 @@ title: Run git through pkg/toolchain/git in audit, docs and tddslice (directive 
 kind: harness
 tier: sonnet
 wave: none (board directive #37, structural review cleanup 7 of 7, before cardtown play)
-status: ready
+status: review
 branch: m2/T-0044-git-through-toolchain-git
 depends_on: [T-0043]
 claims: [func:git.Lines, func:git.Output, func:git.Combined]
@@ -74,3 +74,11 @@ Cases 1–4 are unit tests in a new `pkg/toolchain/git/git_test.go`. Each one bu
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #37. It narrows the directive's "one function per command" suggestion to three runners by output mode (Lead decision 1), because `whats-up`'s six queries and `audit`'s calls differ only in their arguments. It is a harness task, tier sonnet, as the directive sets. T-0043 is done, so the task is `ready` on branch `m2/T-0044-git-through-toolchain-git`. T-0037 now depends on it too. This is the last structural-cleanup task.
   - Next: the lead dispatches the `kernel-engineer` subagent (Sonnet).
+- 2026-10-22 kernel-engineer: Implemented. Commits: `e4540b1` status, `0687b4a` tests (cases 1-4; failed to compile before the runners existed: undefined Lines/Output/Combined), then the feat commit.
+  - Reuse search: no existing runner in `pkg/toolchain/git` (only GetStatus, GetStagedFiles, CommitExists, GetNewerCommits, left untouched). `Lines` is `getGit`'s body moved over, built on `Output`.
+  - Diff: `git.go` gains `Lines`, `Output`, `Combined` (+ `bufio` import). `audit.go`: rm/add/commit/push use `git.Combined` with all `fmt.Errorf` texts unchanged, rev-parse uses `git.Output`, the two registry calls are `_, _ = git.Combined(...)`; `os/exec` import dropped. `whatsup.go`: `getGit` deleted, six callers use `git.Lines`; `os/exec`, `bufio`, `bytes` imports dropped, `git` import added. `slice.go`: only the `remote get-url origin` call uses `git.Output`; `os/exec` kept for `gh`.
+  - Case 5: `git grep -n 'exec.Command("git"' -- pkg cmd ':!*_test.go'` matches only `pkg/toolchain/git/git.go` (4 old functions + the new Output and Combined); `git grep getGit` matches only this task file.
+  - Case 6: baseline `ct44-base.exe` built from ffbed69 before edits. Both binaries run from this scratch worktree with a clean `git status`, after the feat commit. `whats-up` and `tdd slice -dry-run docs/tdd/03_Card_Compiler_TDD.md`: stdout+stderr `cmp` identical, exit 0 both. `gh` was available (signed in as hailstorm01).
+  - Case 7: no pending audit exists, so `audit resolve -dry-run` (no args) gives identical usage output, exit 1 both; `audit resolve -dry-run nonexistent.md` gives identical "no registry row" error, exit 1 both. No live resolve, no `-publish`.
+  - Case 8 / Done When: `go test ./pkg/toolchain/...` passes; `go tool task check` exit 0.
+  - Reviewer: compare was of combined stdout+stderr, a superset of stdout; exit codes also compared.

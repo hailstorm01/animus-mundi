@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -252,15 +251,13 @@ func Resolve(repoRoot string, opts ResolveOptions) error {
 
 	// 1. Git rm pending file
 	if _, err := os.Stat(pendingFilePath); err == nil {
-		cmd := exec.Command("git", "-C", repoRoot, "rm", filepath.ToSlash(pendingRel))
-		if out, err := cmd.CombinedOutput(); err != nil {
+		if out, err := git.Combined(repoRoot, "rm", filepath.ToSlash(pendingRel)); err != nil {
 			return fmt.Errorf("git rm %s failed: %s (%w)", pendingRel, string(out), err)
 		}
 	}
 
 	// 2. Git add target FRD
-	cmdAdd := exec.Command("git", "-C", repoRoot, "add", filepath.ToSlash(targetFRD))
-	if out, err := cmdAdd.CombinedOutput(); err != nil {
+	if out, err := git.Combined(repoRoot, "add", filepath.ToSlash(targetFRD)); err != nil {
 		return fmt.Errorf("git add %s failed: %s (%w)", targetFRD, string(out), err)
 	}
 
@@ -269,14 +266,12 @@ func Resolve(repoRoot string, opts ResolveOptions) error {
 	if commitMsg == "" {
 		commitMsg = fmt.Sprintf("docs(audit): resolve %s findings in %s", auditFileName, filepath.Base(targetFRD))
 	}
-	cmdCommit := exec.Command("git", "-C", repoRoot, "commit", "-m", commitMsg)
-	if out, err := cmdCommit.CombinedOutput(); err != nil {
+	if out, err := git.Combined(repoRoot, "commit", "-m", commitMsg); err != nil {
 		return fmt.Errorf("git commit failed: %s (%w)", string(out), err)
 	}
 
 	// Get remediation commit hash
-	cmdRev := exec.Command("git", "-C", repoRoot, "rev-parse", "--short", "HEAD")
-	revOut, err := cmdRev.Output()
+	revOut, err := git.Output(repoRoot, "rev-parse", "--short", "HEAD")
 	if err != nil {
 		return fmt.Errorf("getting HEAD commit: %w", err)
 	}
@@ -295,17 +290,14 @@ func Resolve(repoRoot string, opts ResolveOptions) error {
 	}
 
 	// Commit registry update
-	cmdRegAdd := exec.Command("git", "-C", repoRoot, "add", filepath.ToSlash(registryRel))
-	_ = cmdRegAdd.Run()
-	cmdRegCommit := exec.Command("git", "-C", repoRoot, "commit", "-m", fmt.Sprintf("docs(audit): mark %s resolved in registry", auditFileName))
-	_ = cmdRegCommit.Run()
+	_, _ = git.Combined(repoRoot, "add", filepath.ToSlash(registryRel))
+	_, _ = git.Combined(repoRoot, "commit", "-m", fmt.Sprintf("docs(audit): mark %s resolved in registry", auditFileName))
 
 	fmt.Printf("[SUCCESS] Audit %s resolved in commit %s\n", auditFileName, resCommit)
 
 	if opts.Push {
 		fmt.Println("Pushing to remote...")
-		cmdPush := exec.Command("git", "-C", repoRoot, "push")
-		if out, err := cmdPush.CombinedOutput(); err != nil {
+		if out, err := git.Combined(repoRoot, "push"); err != nil {
 			return fmt.Errorf("git push failed: %s (%w)", string(out), err)
 		}
 	}

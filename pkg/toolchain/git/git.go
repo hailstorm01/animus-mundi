@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
 	"os/exec"
 	"path/filepath"
@@ -89,4 +90,28 @@ func GetNewerCommits(repoRoot, commitHash, targetRelPath string) []string {
 		}
 	}
 	return results
+}
+
+// Lines runs git in repoRoot and returns stdout as trimmed lines, or nil on any error.
+func Lines(repoRoot string, args ...string) []string {
+	out, err := Output(repoRoot, args...)
+	if err != nil {
+		return nil
+	}
+	var lines []string
+	scanner := bufio.NewScanner(bytes.NewReader(out))
+	for scanner.Scan() {
+		lines = append(lines, strings.TrimSpace(scanner.Text()))
+	}
+	return lines
+}
+
+// Output runs git in repoRoot and returns its stdout only.
+func Output(repoRoot string, args ...string) ([]byte, error) {
+	return exec.Command("git", append([]string{"-C", repoRoot}, args...)...).Output()
+}
+
+// Combined runs git in repoRoot and returns stdout and stderr together.
+func Combined(repoRoot string, args ...string) ([]byte, error) {
+	return exec.Command("git", append([]string{"-C", repoRoot}, args...)...).CombinedOutput()
 }

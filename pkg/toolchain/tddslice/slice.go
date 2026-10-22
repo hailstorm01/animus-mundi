@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/linter/tdd"
 )
 
@@ -93,8 +94,7 @@ func Slice(repoRoot string, opts SliceOptions) error {
 	// Step 2: Resolve GitHub repository
 	repo := opts.Repo
 	if repo == "" {
-		cmd := exec.Command("git", "-C", repoRoot, "remote", "get-url", "origin")
-		if out, err := cmd.Output(); err == nil {
+		if out, err := git.Output(repoRoot, "remote", "get-url", "origin"); err == nil {
 			rem := strings.TrimSpace(string(out))
 			re := regexp.MustCompile(`github\.com[:/]([^/]+/[^/.]+?)(?:\.git)?$`)
 			if m := re.FindStringSubmatch(rem); len(m) > 1 {
