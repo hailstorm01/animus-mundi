@@ -4,7 +4,7 @@ title: PlayerView, a per-seat view of the game and its event log (directive #24)
 kind: harness
 tier: opus (effort high, board directive #27)
 wave: none (design note Deliverable 5, part 1 of 2; board directive #24)
-status: ready
+status: in-progress
 branch: m2/T-0036-player-view
 depends_on: [T-0035]
 claims: [pkg:pkg/engine/view, type:View, func:PlayerView, func:LogLines]
