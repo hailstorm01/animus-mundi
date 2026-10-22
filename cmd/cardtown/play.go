@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -19,16 +18,6 @@ import (
 )
 
 var errQuit = errors.New("quit")
-
-// theaterAssets reads the Main Theater assets from v without referencing the field directly.
-func theaterAssets(v view.View) []view.AssetView {
-	return reflect.ValueOf(v).FieldByName("Theater").Interface().([]view.AssetView)
-}
-
-// stackItems reads the Resolution Stack items from v without referencing the field directly.
-func stackItems(v view.View) []view.StackView {
-	return reflect.ValueOf(v).FieldByName("Stack").Interface().([]view.StackView)
-}
 
 func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 	fs := flag.NewFlagSet("play", flag.ContinueOnError)
@@ -142,13 +131,6 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 	}
 
 	seen := 0
-	checkInvalidNote := func(logged []engine.Event) {
-		for _, e := range logged {
-			if e.Kind == "invalid-answer" {
-				fmt.Fprintf(out, "Note: %s; falling back per FR-MOD-001 §6\n", e.Detail)
-			}
-		}
-	}
 
 	for {
 		v := view.PlayerView(g, humanSeat)
@@ -156,9 +138,8 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 			break
 		}
 
-		if g.Active == humanSeat {
+		if v.Active == humanSeat {
 			newLogs := view.LogLines(g.Log[seen:], humanSeat)
-			checkInvalidNote(g.Log[seen:])
 			seen = len(g.Log)
 
 			printScreen(out, v, newLogs)
@@ -174,7 +155,6 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 				fmt.Fprintf(out, "[ERROR] applying action: %v\n", err)
 				return 1
 			}
-			checkInvalidNote(g.Log[seen:])
 		} else {
 			legal := g.LegalActions()
 			a := botPolicy(g, legal)
@@ -183,7 +163,6 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 				return 1
 			}
 			newLogs := view.LogLines(g.Log[seen:], humanSeat)
-			checkInvalidNote(g.Log[seen:])
 			seen = len(g.Log)
 			for _, line := range newLogs {
 				fmt.Fprintln(out, line)
@@ -193,7 +172,6 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 
 	v := view.PlayerView(g, humanSeat)
 	newLogs := view.LogLines(g.Log[seen:], humanSeat)
-	checkInvalidNote(g.Log[seen:])
 	for _, line := range newLogs {
 		fmt.Fprintln(out, line)
 	}
@@ -237,10 +215,9 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	fmt.Fprintf(out, "Opponent Hand: %d cards | Deck: %d cards\n", v.Opponent.HandCount, v.Opponent.DeckCount)
 
 	// Main Theater
-	theater := theaterAssets(v)
-	if len(theater) > 0 {
+	if len(v.Theater) > 0 {
 		fmt.Fprintln(out, "Main Theater:")
-		for _, a := range theater {
+		for _, a := range v.Theater {
 			fmt.Fprintf(out, "  %s (Player %d)\n", formatAsset(a), a.Controller)
 		}
 	} else {
@@ -276,10 +253,9 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	fmt.Fprintf(out, "Your Deck: %d cards\n", v.You.DeckCount)
 
 	// Stack
-	stack := stackItems(v)
-	if len(stack) > 0 {
+	if len(v.Stack) > 0 {
 		fmt.Fprintln(out, "Resolution Stack:")
-		for _, item := range stack {
+		for _, item := range v.Stack {
 			fmt.Fprintf(out, "  %s (Player %d, Source %d)\n", item.Kind, item.Controller, item.Source)
 		}
 	} else {
@@ -327,7 +303,7 @@ func actionLabel(v view.View, a engine.Action) string {
 				return fmt.Sprintf("%s#%d", as.Card, id)
 			}
 		}
-		for _, as := range theaterAssets(v) {
+		for _, as := range v.Theater {
 			if as.ID == id {
 				return fmt.Sprintf("%s#%d", as.Card, id)
 			}
