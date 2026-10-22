@@ -4,7 +4,7 @@ title: Move sim, eventlog and view to the top of pkg/ (directive #31, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #31, structural review cleanup 2 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0039-move-client-packages
 depends_on: [T-0038]
 claims: [dir:pkg/sim, dir:pkg/eventlog, dir:pkg/view, file:pkg/engine/doc.go, var:fences.allowedImports]
