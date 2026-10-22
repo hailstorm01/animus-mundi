@@ -4,7 +4,7 @@ title: One card-sheet reader for the sheets, syntax and fences linters (directiv
 kind: harness
 tier: sonnet
 wave: none (board directive #36, structural review cleanup 6 of 7, before cardtown play)
-status: review
+status: done
 branch: m2/T-0043-cardsheet-reader
 depends_on: [T-0042]
 claims: [pkg:toolchain/linter/cardsheet, func:cardsheet.List, func:cardsheet.Open, func:cardsheet.Column]
@@ -105,3 +105,16 @@ Cases 1–7 are unit tests in a new `pkg/toolchain/linter/cardsheet/cardsheet_te
     - Case 10: `lint sheets` and `lint syntax` given `data/cards/units-and-structures-path.csv data/cards/nope.csv <scratch>/edge43/empty.csv <scratch>/edge43/hdr.csv` (empty file and header-only copy made in the scratch folder): both identical, exit 1 each.
     - Case 11: `git grep -n 'csv.NewReader' -- pkg/toolchain ':!*_test.go'` and `git grep -n 'filepath.Glob' -- pkg/toolchain/linter/fences/fences.go`: first prints only `pkg/toolchain/linter/cardsheet/cardsheet.go:61` (run after `git add`, since the file is new); second prints nothing.
     - `go test ./pkg/toolchain/...`: all ok. `go tool task check`: passes (gofmt, vet, tests, lint --all).
+- 2026-10-22 lead-architect: Review: **approved**, merged as 7b0012f, status `done`.
+  - Scope:
+    - b829cbf changes only the status line.
+    - 74e872e adds only `cardsheet_test.go` (cases 1–7) and case 38 in `fences_test.go`. The BOM in case 7 is the `﻿` escape.
+    - 2cd8965 changes only the four Allowed Files and this file, and no test.
+  - Design: it matches the Lead decisions. Each caller keeps its messages and call order, and `sheets` still checks the header before reading rows.
+  - One accepted behavior change: `syntax` now ignores a leading BOM when it finds the `name` and rules columns (via `Column`). Before, a BOM-prefixed `name` header went unmatched. No real sheet has a BOM, so the output on the tree is unchanged.
+  - Gates, re-run in a scratch worktree:
+    - At 74e872e, `cardsheet` fails to build and case 38 fails.
+    - At 2cd8965, `go tool task check` exits 0.
+    - Against a baseline CLI built from 74e872e (same non-test code as the integration branch), stdout and exit code are byte-identical (`cmp`) for `lint sheets`, `syntax`, `fences`, `cards` and `--all` (exit 0 each). They are also byte-identical for `lint sheets` and `lint syntax`, each given a real sheet, `data/cards/nope.csv`, an empty file and a header-only file (exit 1 each). That run printed the missing-file, empty-file and header-mismatch messages.
+    - `csv.NewReader` appears outside tests in `pkg/toolchain` only at `cardsheet.go:61`.
+  - Directive #36 is complete, including its case (d).
