@@ -4,7 +4,7 @@ title: Split cmd/cardtown/main.go into one file per command (pure move)
 kind: harness
 tier: flash
 wave: none (board directive #26, cleanup 4 of 4, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0035-split-cardtown-main
 depends_on: [T-0034]
 claims: [file:cmd/cardtown/sim.go, file:cmd/cardtown/replay.go, file:cmd/cardtown/lint.go, file:cmd/cardtown/tools.go]
