@@ -29,4 +29,5 @@ Read a skill only when its trigger fires. Do not load persona skills for unrelat
   git worktree remove <scratch-dir>/<name>
   ```
   If `git worktree add` fails because the branch is checked out in another worktree (`git worktree list`), work there only when `git -C <that worktree> status --short` is empty. Otherwise another session is mid-edit: for the integration branch, commit to a side branch (`git worktree add -b <side-branch> <scratch-dir>/side <integration-branch>`) and ask the user to merge it later; for a task branch, stop and tell the user.
+- **Path-limited commits (all personas):** Another session may share your checkout, and a bare `git commit` takes whatever is staged, including its changes, under your message. Commit only the paths you changed: `git commit -m "<message>" -- <path> <path> ...`. Never leave changes staged in the main checkout between commands; stage and commit in one step. Tools that commit for you (`cardtown audit resolve`) are path-limited already.
 - **Pre-commit hook:** It is not versioned by git. After a fresh clone run `cardtown hook install`.
