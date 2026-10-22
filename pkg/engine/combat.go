@@ -93,7 +93,8 @@ func inCombatZone(a *Asset) bool {
 // whether both combatants are still where they can fight.
 func (g *Game) resolveAttack(it *StackItem) {
 	def := g.Asset(it.Target)
-	// OPEN(SVY-R8): fizzles if the defender changed controller before resolution.
+	// SVY-R8 (FRD 01 v3.8) compares with the attacker's current controller, not
+	// the declaring player; board directive #29 brings this check in line.
 	if def == nil || !inCombatZone(def) || def.Controller == it.Controller {
 		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
 			"attack fizzles: the defender is gone, so there is no Berserk cleave")
