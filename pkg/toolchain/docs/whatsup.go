@@ -1,11 +1,8 @@
 package docs
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -13,6 +10,7 @@ import (
 	"strings"
 
 	"animus-mundi/pkg/toolchain/audit"
+	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/linter/rules"
 )
 
@@ -33,21 +31,6 @@ func limitText(text string, max int) string {
 		cut = cut[:space]
 	}
 	return cut + " ..."
-}
-
-func getGit(repoRoot string, args ...string) []string {
-	cmdArgs := append([]string{"-C", repoRoot}, args...)
-	cmd := exec.Command("git", cmdArgs...)
-	out, err := cmd.Output()
-	if err != nil {
-		return nil
-	}
-	var lines []string
-	scanner := bufio.NewScanner(bytes.NewReader(out))
-	for scanner.Scan() {
-		lines = append(lines, strings.TrimSpace(scanner.Text()))
-	}
-	return lines
 }
 
 // ShowSkills displays skills and personas in .agents/skills.
@@ -132,20 +115,20 @@ func ShowTools(repoRoot string) {
 func ShowState(repoRoot string) {
 	fmt.Println("== LIVE STATE ==")
 
-	branchLines := getGit(repoRoot, "rev-parse", "--abbrev-ref", "HEAD")
+	branchLines := git.Lines(repoRoot, "rev-parse", "--abbrev-ref", "HEAD")
 	branch := "unknown"
 	if len(branchLines) > 0 {
 		branch = branchLines[0]
 	}
 
-	aheadLines := getGit(repoRoot, "rev-list", "--count", "@{u}..HEAD")
+	aheadLines := git.Lines(repoRoot, "rev-list", "--count", "@{u}..HEAD")
 	ahead := "?"
 	if len(aheadLines) > 0 {
 		ahead = aheadLines[0]
 	}
 	fmt.Printf("Git: branch '%s', %s unpushed commit(s)\n", branch, ahead)
 
-	changed := getGit(repoRoot, "status", "--porcelain", "--", "docs", "data/cards", "tools", ".agents", "cmd", "pkg")
+	changed := git.Lines(repoRoot, "status", "--porcelain", "--", "docs", "data/cards", "tools", ".agents", "cmd", "pkg")
 	if len(changed) == 0 {
 		fmt.Println("Uncommitted changes: none")
 	} else {
@@ -189,7 +172,7 @@ func ShowState(repoRoot string) {
 	// Portfolio sync staleness check
 	sumFile := filepath.Join(repoRoot, "docs", "PRODUCT_SUMMARY.md")
 	if _, err := os.Stat(sumFile); err == nil {
-		sumLog := getGit(repoRoot, "log", "-1", "--format=%ct", "--", "docs/PRODUCT_SUMMARY.md")
+		sumLog := git.Lines(repoRoot, "log", "-1", "--format=%ct", "--", "docs/PRODUCT_SUMMARY.md")
 		if len(sumLog) > 0 {
 			if sumTime, err := strconv.ParseInt(sumLog[0], 10, 64); err == nil {
 				frdDir := filepath.Join(repoRoot, "docs", "frd")
@@ -198,7 +181,7 @@ func ShowState(repoRoot string) {
 					for _, f := range frdEntries {
 						if !f.IsDir() && strings.HasSuffix(f.Name(), ".md") {
 							relFrd := "docs/frd/" + f.Name()
-							frdLog := getGit(repoRoot, "log", "-1", "--format=%ct", "--", relFrd)
+							frdLog := git.Lines(repoRoot, "log", "-1", "--format=%ct", "--", relFrd)
 							if len(frdLog) > 0 {
 								if frdTime, err := strconv.ParseInt(frdLog[0], 10, 64); err == nil && frdTime > sumTime {
 									staleFrds = append(staleFrds, f.Name())
@@ -265,7 +248,7 @@ func ShowState(repoRoot string) {
 
 			tStale := "CURRENT"
 			if srcFrd != "?" && len(tHash) >= 7 {
-				newer := getGit(repoRoot, "log", "--format=%h", tHash+"..HEAD", "--", "docs/frd/"+srcFrd)
+				newer := git.Lines(repoRoot, "log", "--format=%h", tHash+"..HEAD", "--", "docs/frd/"+srcFrd)
 				if len(newer) > 0 {
 					tStale = fmt.Sprintf("STALE (%d newer FRD commit(s))", len(newer))
 				}
