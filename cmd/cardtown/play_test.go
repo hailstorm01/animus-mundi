@@ -216,27 +216,36 @@ func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 	}
 
 	screenIdx := 1 // screens[0] is text before first screen, if any
-	checkScreen := func(screenText string) {
-		screenOnly := screenText
-		if idx := strings.Index(screenText, "Legal Actions:"); idx != -1 {
-			screenOnly = screenText[:idx]
-		}
+	// checkText fails for any hidden bot card name in text that is not public
+	// in the current game state.
+	checkText := func(text, part string) {
 		pub := publicNames(g)
 		for name := range hiddenNames(g, botSeat) {
 			if pub[name] {
 				continue
 			}
-			if strings.Contains(screenOnly, name) {
-				t.Errorf("turn %d: screen leaks hidden card %q of bot seat", g.Turn, name)
+			if strings.Contains(text, name) {
+				t.Errorf("turn %d: %s leaks hidden card %q of bot seat", g.Turn, part, name)
 			}
 		}
 	}
+	// Each chunk has a head (the screen, before "Legal Actions:") and a tail
+	// (action list, decision prompts and the log lines up to the next screen).
+	// The head is checked when its screen is shown; the tail is checked when the
+	// next screen is shown, after the bot's turn has played out.
+	prevTail := ""
 
 	// Replay step-by-step
 	for !g.Outcome.Over {
 		if g.Active == 0 {
 			if screenIdx < len(screens) {
-				checkScreen(screens[screenIdx])
+				head, tail := screens[screenIdx], ""
+				if idx := strings.Index(head, "Legal Actions:"); idx != -1 {
+					head, tail = head[:idx], head[idx:]
+				}
+				checkText(prevTail, "tail")
+				checkText(head, "head")
+				prevTail = tail
 				screenIdx++
 			}
 			legal := g.LegalActions()
@@ -251,4 +260,5 @@ func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 			}
 		}
 	}
+	checkText(prevTail, "final tail")
 }
