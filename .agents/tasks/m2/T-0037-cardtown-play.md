@@ -6,7 +6,7 @@ tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
 status: queued
 branch: m2/T-0037-cardtown-play
-depends_on: [T-0036]
+depends_on: [T-0036, T-0038]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
 cards: []
 requirements: [FR-MOD-001]
@@ -117,3 +117,4 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (Deliverable 5 part 2, board directive #24), with status `queued` behind T-0036. Harness task, tier flash (board directive #27, the user's choice).
+- 2026-10-21 lead-architect: Held behind the structural cleanup (board directives #30–#37; the user ruled that it comes before feature work). It now depends on T-0038 (directive #30). Each later cleanup task is added here as D2 writes it. After directive #31 moves `view`, this task imports `animus-mundi/pkg/view` instead of `pkg/engine/view`.
