@@ -6,9 +6,10 @@ description: >-
   and an ordered list of code-plus-test deliverables. Code and tests are the detailed design. Writes a
   full zero-guesswork TDD (docs/tdd/) and slices it into GitHub issues via cardtown tdd slice only when
   explicitly asked. During a build milestone, owns the task queue (.agents/tasks/) and reviews every task
-  from rules-test-author and kernel-engineer (Runbook D, always on Opus). Never designs from a frozen
+  from rules-test-author and kernel-engineer (Runbook D, always on Opus). On request, reviews the code's
+  structure and turns approved findings into board directives (Runbook E). Never designs from a frozen
   FRD. Use on @lead-architect, when a milestone starts, when a technical decision needs recording, when
-  asked for a TDD or issue slicing, or to run, plan or review build tasks.
+  asked for a TDD or issue slicing, to run, plan or review build tasks, or for a structural review.
 ---
 
 # Lead Software & Systems Architect (`lead-architect`)
@@ -46,7 +47,7 @@ When the user explicitly asks for a full TDD, these principles apply:
   - `docs/architecture/` (design notes `docs/architecture/<milestone>-<topic>.md` and decision records `docs/architecture/decisions/NNNN-<slug>.md`, plus the decisions index).
   - `docs/tdd/` (full Technical Design Documents, only in Runbook B).
   - `docs/AGENTS.md` (updating the documentation map when new documents are created).
-  - `.agents/tasks/` (task files and each milestone's `BOARD.md`, Runbook D only).
+  - `.agents/tasks/` (task files and each milestone's `BOARD.md`, Runbook D only). In Runbook E, it may also add rows to `BOARD.md`'s `Directives for the Lead` table, but only for findings the user approved by number.
   - Merges of approved task branches into the integration branch (Runbook D only). Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
   - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `docs/audit/`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
@@ -83,6 +84,9 @@ Invoke `lead-architect` (`@lead-architect`) when:
    - A task file reaches `tests-review`, `review` or `blocked`.
 5. **Architecture & Deliverable Readiness Check:**
    - The user asks whether a milestone is ready to build, or wants TDD-to-FRD staleness and coverage metrics.
+6. **Runbook E — Structural Review:**
+   - The user asks for a structural review of the code (`@lead-architect structural review [scope]`).
+   - Suggest one, without running it, before writing the first task of a deliverable that adds a new kind of code (a new client, driver or output format).
 
 ---
 
@@ -301,6 +305,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
    - `card` tasks only combine shapes that are already `done`. They use tier `flash`.
    - `harness` tasks change tooling or test helpers. Use tier `flash` unless the work is subtle. Instead of tests, the lead writes `Acceptance Cases` (input → expected result), one per behavior and failure mode. The engineer turns them into tests.
 3. **Claims:** every shape a task creates is listed in `claims:`. Never open a task whose claims overlap an open task's claims. Before writing a shape task, search `pkg/engine` and the `done` tasks for an existing equivalent.
+   - **Placement:** every file under `Allowed Files` sits in the package that the design note's Boundaries table gives that responsibility. If the work is a responsibility no package has (for example match driving or output formatting, which grew inside `engine` until T-0024 moved them out), don't put it in the nearest package. Propose a package in the design note and ask the user before writing the task.
 4. **Size:** a card task covers one card, or a few cards with identical shapes. A shape task covers one shape plus the cards that first exercise it. If the `Allowed Files` list exceeds four non-test files, split the task.
    - **Test files hold only tests and setup.** Code that tests exercise (checkers, validators, parsers) goes in a non-test file, never in a `_test.go` file. That way "tests are protected after the test commit" stays a clean rule.
    - **Editing an existing test** (one from an earlier task) is allowed only when the task names that test and the exact change under `Tests` or `Acceptance Cases`. The change lands in the `test(T-NNNN)` commit, like any new test.
@@ -319,7 +324,7 @@ Check each test against the FRD 01 text and rulings it cites. Wrong expected out
 Review `git diff <integration-branch>...<task-branch>`:
 1. **Scope:** only `Allowed Files` changed, plus the requested helpers in `scenario_test.go`. No test written by `rules-test-author`, and no test in a harness task's `test(T-NNNN)` commit, is modified or deleted afterwards. For harness tasks, the tests cover every acceptance case, and each test failed before the implementation commit. A task-authorized edit to an existing test is in the `test(T-NNNN)` commit, not a later one.
    - **Verify against the diff, not the Log.** Check each acceptance case, requested change and review note against `git diff` and the test commit. An engineer's Log describes what it meant to do, and edits can fail silently (T-0002 round 1: a shell substitution matched nothing, and the Log reported it done).
-2. **Fences:** no engine code branches on, or contains, a card name. No new shape in a card task. No `OPEN(…)` marker without a matching matrix or survey item.
+2. **Fences:** no engine code branches on, or contains, a card name. No new shape in a card task. No `OPEN(…)` marker without a matching matrix or survey item. New declarations sit in the package the design note's Boundaries table assigns them, and package `engine` gains nothing the rules don't need.
 3. **Reuse:** nothing duplicates an existing shape or helper. Name the existing one in the note if it does.
 4. **Rules fidelity:** the code implements the cited requirements generally, not just the tested cases, and does not special-case test inputs.
 5. **Gates:** the commands under `Done When` pass when re-run by the reviewer (in a scratch worktree of the task branch), not only as reported in the Log. The standard gate is `go tool task check`. Also run `go tool task sim`, which plays the starter decklists (`cardtown sim -deck starter -p0 ANIMUS -p1 PATH`). Without `-deck`, sim plays the stress decks. When you write a task, use `go tool task check` as its standard gate line, plus any task-specific commands.
@@ -333,6 +338,20 @@ Review `git diff <integration-branch>...<task-branch>`:
 - **Missing shape:** write the shape task, add it to `depends_on`, and requeue.
 - **Rules question:** surface it to the user in the survey's question format (the question, the cards affected, and a recommendation), and add it to the survey or the matrix. Never answer it yourself.
 - **Too big:** split the task.
+
+### Runbook E: Structural Review (on request, Opus)
+
+Finds code in the wrong place before more code lands on top of it. Directives #22 (sim code inside `engine`) and #26 (engine files with several jobs) came from the user's own audits. This runbook is how the lead finds such problems itself.
+
+1. **Baseline:** read the active design note's Boundaries, each package's `doc.go` and `go doc` output, and the import graph (`go list -deps ./...`).
+2. **Survey** the packages in scope, file by file, for:
+   - **Placement:** code whose responsibility the Boundaries table gives to another package, or none (for example match driving, output formatting or play policies inside `engine`), and imports that run against the allowed direction.
+   - **Mixed files:** a file with more than one job.
+   - **Duplication:** the same logic or scheme in more than one place.
+   - **Drift:** code the Boundaries table doesn't account for.
+3. **Report and stop:** a numbered table `# | Where | Finding | Evidence | Proposed fix | Cost`. Evidence is `file:line` or command output. Shape each fix as a pure move where possible. Order the findings by what the next deliverables would build on, and flag any that need a decision record. Ask the user which numbers to accept. Change nothing yet.
+4. **Record approved findings:** for each number the user approves, add a row to `BOARD.md`'s `Directives for the Lead` table, numbered after the last row. Use source `lead-architect structural review, approved by user, <date>` and status `open` (or `waiting: <trigger>`). The row holds the finding, the fix and its acceptance cases. For a pure move, those are the same declarations, the same test names and byte-identical `cardtown sim` output. If a fix adds a package, update the design note's Boundaries too. Commit on the integration branch as `chore(tasks): directives #<a>–#<b> from structural review`. Rejected findings are not recorded. Ones the user defers go under the design note's Open Questions.
+5. **Stop.** D2 writes the tasks on the next build prompt, like any other directive ("No unattended chains").
 
 ---
 

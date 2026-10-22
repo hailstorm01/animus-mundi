@@ -6,7 +6,8 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 
 | Opened | Thread | Waiting on |
 | :--- | :--- | :--- |
-| 2026-10-21 | **Architecture persona.** A separate persona for "how does this part work" and code-structure questions (for example "should sim code be separated from engine code?"), split out of the steward's role. | User: on hold until the steward is settled |
+| 2026-10-21 | **Explainer persona (deferred).** Structural judgment went to `lead-architect` (Runbook E, placement checks in D2/D5). What remains is an optional read-only persona that explains how parts of the code work. | User: only if wanted later |
+| 2026-10-21 | **First structural review.** Natural first run of Runbook E: whether `pkg/engine/sim`, `eventlog` and `view` should move to the top level of `pkg/` (they are already separate packages that `engine` never imports). | User to run `@lead-architect structural review` |
 | 2026-10-21 | **`SVY-R9`–`SVY-R11` are not in FRD 01.** Ruled by the user on 2026-10-21 (optional triggers asked on placement, last-known effective power for "damage equal to its power", "up to N" targets distinct) and implemented, but FRD 01 (v3.8) does not mention them. | User to run `pm-frd-drafter` |
 
 ## Boundary Exceptions
