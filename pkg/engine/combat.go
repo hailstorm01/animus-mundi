@@ -2,6 +2,8 @@
 
 package engine
 
+import "animus-mundi/pkg/engine/ability"
+
 // declareAttack is Steps 1 and 2 of combat (FR-CBT-002).
 func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
@@ -15,13 +17,8 @@ func (g *Game) declareAttack(a Action) {
 }
 
 func canDeclareAttack(a *Asset) bool {
-	switch a.Printed().Type {
-	case TypeUnit:
-		return a.Zone == ZoneMainTheater
-	case TypeHeadquarters:
-		return a.Zone == ZoneHeadquarters
-	}
-	return false
+	t := a.Printed().Type
+	return (t == TypeUnit || t == TypeHeadquarters) && inCombatZone(a)
 }
 
 // CanAttack implements defender eligibility, Ethereal and Guardian (FR-CBT-001).
@@ -78,11 +75,13 @@ func (g *Game) hasCleaveTarget(att, def *Asset) bool {
 // an opposing Main Theater asset the attacker's controller may choose. Ward
 // blocks it; Ethereal and Guardian restrict only attacks (FR-KWD-002o).
 func (g *Game) legalSecondary(att, sec *Asset) bool {
-	return sec.Zone == ZoneMainTheater && sec.Controller != att.Controller && !g.Keywords(sec).Ward
+	return sec.Zone == ZoneMainTheater &&
+		g.legalTarget(att.Controller, att.ID, ability.Filter{Allegiance: ability.AllegianceOpposing}, sec)
 }
 
-// combatLegalZone reports whether a is still somewhere it can fight from.
-func combatLegalZone(a *Asset) bool {
+// inCombatZone reports whether a is where it can fight: a Headquarters in the
+// Headquarters Zone, anything else in the Main Theater.
+func inCombatZone(a *Asset) bool {
 	if a.Printed().Type == TypeHeadquarters {
 		return a.Zone == ZoneHeadquarters
 	}
@@ -95,14 +94,14 @@ func combatLegalZone(a *Asset) bool {
 func (g *Game) resolveAttack(it *StackItem) {
 	def := g.Asset(it.Target)
 	// OPEN(SVY-R8): fizzles if the defender changed controller before resolution.
-	if def == nil || !combatLegalZone(def) || def.Controller == it.Controller {
+	if def == nil || !inCombatZone(def) || def.Controller == it.Controller {
 		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
 			"attack fizzles: the defender is gone, so there is no Berserk cleave")
 		return
 	}
 
 	att := g.Asset(it.Source)
-	if att == nil || !combatLegalZone(att) {
+	if att == nil || !inCombatZone(att) {
 		// Attacker-side fizzle: no combat damage, but Berserk cleave still
 		// happens from the attacker's last-known characteristics (FR-CBT-002).
 		src := att

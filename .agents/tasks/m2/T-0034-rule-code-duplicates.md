@@ -4,7 +4,7 @@ title: Remove duplicated rule code (Berserk targeting, combat zones, Scratch Com
 kind: harness
 tier: sonnet
 wave: none (board directive #26, cleanup 3 of 4, before cardtown play)
-status: in-progress
+status: review
 branch: m2/T-0034-rule-code-duplicates
 depends_on: [T-0033]
 claims: [func:ScratchFace, func:inCombatZone]
@@ -76,10 +76,17 @@ Case 1 goes in a new `pkg/engine/sim/scratchface_test.go` (or an engine test fil
 - the new test file (the `test(T-0034)` commit)
 
 ## Done When
-- [ ] Case 1 has a test, committed before the implementation, and passes
-- [ ] Cases 2 and 3 hold, with output in the Log
-- [ ] `go tool task check` passes
+- [x] Case 1 has a test, committed before the implementation, and passes
+- [x] Cases 2 and 3 hold, with output in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task from board directive #26, with status `queued` behind T-0033 (harness, sonnet). The audit's R2 was split into T-0033 and T-0034 to keep each within four non-test files.
 - 2026-10-21 lead-architect: T-0033 is merged (6e02b1c). Set to `ready`. The paths in Inputs are as of T-0032: `combat.go`, `targeting.go` and `card.go` are confirmed.
+- 2026-10-21 kernel-engineer: Implemented. Test commit 9135a24 (`pkg/engine/sim/scratchface_test.go`) failed first with `undefined: engine.ScratchFace`.
+  - Reuse: `legalSecondary` now calls the existing `legalTarget` (Ward rule written once); `canDeclareAttack` calls `inCombatZone` (the renamed `combatLegalZone`, same body); monitors call `engine.ScratchFace()` and their own copy is gone.
+  - `ScratchFace()` copies the struct and clones `Subtypes` and `DeployZones`, so no caller can change the engine's face.
+  - Monitor lookups: `find` and `battlefield` both use one new helper `eachAsset` (same order: Theater, then per player Reserves and HQ). `find` still returns pointers into the snapshot.
+  - Monitor `card()` now returns a pointer to a fresh copy per face-down call (the face now has subtypes; the monitors never read them).
+  - Case 2: `go test ./...` passes with no existing test edited. `go tool task check` passes.
+  - Case 3: baseline CLI built from `rework/executable-rules` (759c5ae) in a separate worktree, new CLI built from this branch. Both run with `sim` on `-deck starter -p0 ANIMUS -p1 PATH`, `-games 100` (stress decks) and `-games 100 -p0 ANIMUS -p1 PATH`, each with `-policy random` and `-policy progress`, coverage tables included. Combined output compared with `cmp`: identical (219 lines, all exit codes 0). Worktree removed.

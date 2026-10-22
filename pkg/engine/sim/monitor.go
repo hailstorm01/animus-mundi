@@ -70,10 +70,6 @@ func ReplayCommand(simArgs []string, v *Violation) string {
 		fmt.Sprintf("cardtown replay -events %s -game 1 -at %d", file, v.Seq)
 }
 
-// scratchFace is the face-down Scratch Company face (FR-ZON-005): a Unit, 1/1,
-// yields 1/1, no keywords.
-var scratchFace = &engine.Card{Name: "Scratch Company", Type: engine.TypeUnit, Power: 1, Health: 1, ReqYield: 1, TacYield: 1}
-
 // pendingCheck waits for the next settled snapshot after the event at seq.
 type pendingCheck struct {
 	seq      int
@@ -202,29 +198,42 @@ func (m *Monitors) Settled(s engine.Snapshot) {
 
 // find returns the battlefield asset with id in s, nil if there is none.
 func find(s engine.Snapshot, id int) *engine.AssetSnap {
+	var found *engine.AssetSnap
+	eachAsset(s, func(a *engine.AssetSnap) bool {
+		if a.ID == id {
+			found = a
+		}
+		return found == nil
+	})
+	return found
+}
+
+// eachAsset calls f on every battlefield asset in s, the Main Theater first,
+// then each player's Reserves and Headquarters, until f returns false.
+func eachAsset(s engine.Snapshot, f func(*engine.AssetSnap) bool) {
 	for i := range s.Theater {
-		if s.Theater[i].ID == id {
-			return &s.Theater[i]
+		if !f(&s.Theater[i]) {
+			return
 		}
 	}
 	for p := range s.Players {
 		for i := range s.Players[p].Reserves {
-			if s.Players[p].Reserves[i].ID == id {
-				return &s.Players[p].Reserves[i]
+			if !f(&s.Players[p].Reserves[i]) {
+				return
 			}
 		}
-		if hq := s.Players[p].HQ; hq != nil && hq.ID == id {
-			return hq
+		if hq := s.Players[p].HQ; hq != nil && !f(hq) {
+			return
 		}
 	}
-	return nil
 }
 
 // card is a's printed characteristics: the Scratch Company face if face-down,
 // else the owner's decklist card of that name. nil if the decklist lacks it.
 func (m *Monitors) card(a engine.AssetSnap) *engine.Card {
 	if a.FaceDown {
-		return scratchFace
+		c := engine.ScratchFace()
+		return &c
 	}
 	d := m.decks[a.Owner]
 	if d.HQ != nil && d.HQ.Name == a.Card {
@@ -570,13 +579,11 @@ func (m *Monitors) checkDamage(e engine.Event) {
 
 // battlefield lists every asset on the battlefield in s.
 func battlefield(s engine.Snapshot) []engine.AssetSnap {
-	out := slices.Clone(s.Theater)
-	for p := range s.Players {
-		out = append(out, s.Players[p].Reserves...)
-		if hq := s.Players[p].HQ; hq != nil {
-			out = append(out, *hq)
-		}
-	}
+	var out []engine.AssetSnap
+	eachAsset(s, func(a *engine.AssetSnap) bool {
+		out = append(out, *a)
+		return true
+	})
 	return out
 }
 

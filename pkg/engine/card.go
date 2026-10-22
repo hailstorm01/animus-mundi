@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"slices"
 	"strings"
 
 	"animus-mundi/pkg/engine/ability"
@@ -85,4 +86,12 @@ var scratchFace = &Card{
 	Subtypes: []string{"Infantry", "Scratch Company"},
 	Power:    1, Health: 1, ReqYield: 1, TacYield: 1,
 	DeployZones: []Zone{ZoneReserves},
+}
+
+// ScratchFace returns a copy of the face-down Scratch Company characteristics (FR-ZON-005).
+func ScratchFace() Card {
+	c := *scratchFace
+	c.Subtypes = slices.Clone(c.Subtypes)
+	c.DeployZones = slices.Clone(c.DeployZones)
+	return c
 }
