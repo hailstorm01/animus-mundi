@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: changes
+status: review
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -165,3 +165,16 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
     - The `seat` and `policy` cases added to `normalizeArgs` change nothing, but match the existing `p0` and `p1` cases.
   - After the fixes, re-run case 5 (new pattern), case 6 and `go tool task check`, and record them in the Log.
   - Next: **the user runs `@kernel-engineer T-0037` in the Antigravity agent (Gemini Flash)** for round 2.
+- 2026-10-22 kernel-engineer: Review round 1 fixes applied, status `review`.
+  - Addressed review notes:
+    1. Removed reflection accessors `theaterAssets` and `stackItems` and dropped `reflect` import. `v.Theater` and `v.Stack` are now read directly.
+    2. Switched turn owner check from `g.Active == humanSeat` to `v.Active == humanSeat`.
+    3. Dropped `checkInvalidNote` helper and all its calls; `view.LogLines` already passes the kernel's `invalid-answer` note to the player.
+  - Acceptance Case 5 verification (corrected regex):
+    Command: `git grep -nE "\bg\.(Players|Theater|Stack|Active|Phase|Turn|Outcome)\b|Inst\.Card|Snapshot\(|reflect" cmd/cardtown/play.go`
+    Output: (none / exit code 1)
+  - Acceptance Case 6 verification:
+    Command: `$inputStr = ("1`n" * 1000); $inputStr | go run ./cmd/cardtown play -deck starter -p0 ANIMUS -p1 PATH -seed 1`
+    Output: match finished cleanly, exit code 0, ending with `Result: Player 0 won (drew from an empty deck)`.
+  - Standard gate: `go tool task check` passed cleanly (fmt-check, vet, test, build, lint --all).
+  - Status `review`. Ready for `lead-architect` review round 2.
