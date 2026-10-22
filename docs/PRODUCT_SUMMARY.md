@@ -150,7 +150,7 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
 
 ---
 
-## 3. Current Milestone: M2 — Complete Executable Game Rules
+## 3. Current Milestone: M2 — Animus vs Path Starter Set
 
 The physical prototype has shown the core loop is fun, so the open risk is not whether the game is good. It is whether the digital rules are complete and consistent enough to referee every card. The roadmap is therefore ordered around making [FRD 01](frd/01_Game_Rules_FRD.md) executable first, and building everything else on top of a kernel that already plays the game (see [ADR-0001](architecture/decisions/0001-executable-rules-and-frozen-frds.md)).
 
@@ -165,9 +165,9 @@ The physical prototype has shown the core loop is fun, so the open risk is not w
 The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilities are Go data values that the kernel interprets ([ADR-0004](architecture/decisions/0004-abilities-as-data-in-go.md)), and player choices go through a synchronous per-seat `Chooser` ([ADR-0003](architecture/decisions/0003-synchronous-chooser-for-player-choices.md)). Work runs through the task-file loop in [`.agents/tasks/m2/`](../.agents/tasks/m2/BOARD.md): `lead-architect` writes and reviews every task, `rules-test-author` writes the failing tests, and `kernel-engineer` makes them pass.
 
 1. **Rulings for reachable open matrix items. ✅ Done 2026-10-19 (FRD 01 v3.3–v3.4).** Eleven items were ruled, covering Berserk targeting and fizzles, Berserk 2 on *Tempest Surge* and *Redline Infusion*, Scratch Companies entering Exhausted, committed combat targets, zero-yield generation, and HQ defeat and empty-deck loss both settling at the death sweep. The two remaining open items (`KIM-C01`, `KIM-B07`) are unreachable with current cards. New cards or new keywords reopen this.
-   - **Survey rulings still open:**
-     - `SVY-R8` (an attack fizzles if the defender changes controller) is unruled. It becomes reachable once *Rhapsody's Hollow* is built, and that card is in M2 scope.
-     - `SVY-R9`–`SVY-R11` (optional triggers asked on placement, last-known effective power, "up to N" distinct targets) are ruled and implemented, but not yet written into FRD 01.
+   - **Survey rulings:**
+     - **Open:** `SVY-R8` (an attack fizzles if the defender changes controller) is unruled. It becomes reachable once *Rhapsody's Hollow* is built, and that card is in M2 scope.
+     - **Ruled, not yet in FRD 01:** `SVY-R9`–`SVY-R11` (optional triggers asked on placement, last-known effective power, "up to N" distinct targets) were ruled on 2026-10-21 and are implemented.
 2. **Animus vs Path starter set, fully executable. 🟡 In progress.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work in waves A1–G. At M2 start, 9 of the 82 in-scope cards were executable (5 Animus, 4 Path) and no Maneuvers were.
    - **Now:** 24 of 82 are executable. Waves A1 and A2 are done, adding 15 cards. 58 cards remain on `cards.NotYetExecutable`.
    - **Starter decks:** 14 of the 46 distinct cards in the two lists execute; 32 do not, including both Headquarters.
@@ -176,13 +176,13 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
    - **Pinned during M2:** triggers, APNAP order and cascades (`FR-TRG-002`–`FR-TRG-004`), targeting and two-stage verification (`FR-TGT-001`–`FR-TGT-003`), choices and timeout fallbacks (`FR-MOD-001`), Layers 1–2 (`FR-LAY-001`, `FR-LAY-002`), Heal N (`FR-KWD-002d`) and self-tracking death triggers (`FR-ZON-004`).
    - **Still to pin in M2 (15):** `FR-ACT-001`/`002`, `FR-CST-001`, `FR-DEK-001`/`002`, `FR-ENT-103`, `FR-KWD-002a`/`002e`, `FR-LAY-003`, `FR-MNV-001`, `FR-REP-001`–`003`, `FR-TRG-005` and `FR-TRN-003a`.
    - **Out of starter reach, so they move to M3 (3):** `FR-ENT-102`, `FR-KWD-002n` and `FR-TRG-006`. The M2 target is therefore 59 of 62.
-4. **`cardtown play`: a text-mode match. ⏳ Next.** One human plays a starter deck against the random policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client. It is built as a thin client of a per-player `PlayerView` (board directive #24), which gives the M4/M5 client boundary a cheap first draft. No task has been written yet.
+4. **`cardtown play`: a text-mode match. 🟡 Tasks written.** One human plays a starter deck against a sim policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client. It is built as a thin client of a per-player `PlayerView` (board directive #24), which gives the M4/M5 client boundary a cheap first draft. Written as T-0036 (`PlayerView`, Opus at high effort) and T-0037 (the terminal play loop, Flash), per board directive #27.
 5. **Write-up of the ability shapes the kernel needed. ⏳ Not started.** `docs/design/m2_ability_shapes.md` will be the input to rewriting FRD 02/03 in M3.
 
 **Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card plus the starter Headquarters (Animoceps Rager, Eternal Watchman) is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
 
 ### 3.3 M2 Accomplished So Far (lead-architect report, 2026-10-21)
-All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`: 11 shape, 8 card and 16 harness tasks. None are open. **Nothing from M1 or M2 is merged to `main` yet**: the branch is 338 commits ahead and the `main` branch has no `pkg/engine`.
+All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`: 11 shape, 8 card and 16 harness tasks. The next two, T-0036 and T-0037 (Deliverable 5), are written. **Nothing from M1 or M2 is merged to `main` yet**: `main` has no `pkg/engine`.
 
 | # | Design-note deliverable | Status | Tasks |
 | :---: | :--- | :---: | :--- |
@@ -191,7 +191,7 @@ All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`:
 | 3 | Wave A1 (8 cards): events, self-hook triggers, APNAP and cascade, `Chooser`, self-tracking death triggers | ✅ Done | T-0006–T-0014, T-0015 |
 | 4 | Wave A2 (7 cards): targets, filters, two-stage verification, optional and "up to N" triggers, `DealDamage`, `Heal`, `AddArmor` | ✅ Done | T-0017–T-0019, T-0027–T-0031 |
 | 4a | Cleanup: engine files split by responsibility, deduplicated rule code, CLI split per command | ✅ Done | T-0032–T-0035 |
-| 5 | `cardtown play` (text mode) | ⏳ Next | — |
+| 5 | `cardtown play` (text mode): `PlayerView`, then the play loop | 🟡 Tasks written | T-0036, T-0037 |
 | 6 | Waves B–G | ⏳ Planned | — |
 | 7 | Ability shapes write-up | ⏳ Planned | — |
 
@@ -224,7 +224,7 @@ Each milestone ends with something that runs. The FRD for a milestone is written
 ```mermaid
 flowchart LR
     M1["<b>M1</b><br/>Executable Rules Kernel<br/><i>(DONE — pkg/engine)</i>"]
-    M2["<b>M2</b><br/>Complete Executable Rules<br/><i>(IN PROGRESS — FRD 01)</i>"]
+    M2["<b>M2</b><br/>Animus vs Path Starter Set<br/><i>(IN PROGRESS — FRD 01)</i>"]
     M3["<b>M3</b><br/>Card Data Pipeline & Full Catalog<br/><i>(PLANNED — FRD 02/03 rewrite)</i>"]
     M4["<b>M4</b><br/>Local Playable Client<br/><i>(PLANNED — FRD 07)</i>"]
     M5["<b>M5</b><br/>Networked Play<br/><i>(PLANNED — FRD 04 rewrite, FRD 06)</i>"]
