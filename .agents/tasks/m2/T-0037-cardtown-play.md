@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: sonnet (escalated after two changes rounds, Runbook D5; board directive #27 set flash)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: changes
+status: review
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -199,3 +199,22 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
        - With the bot's hand printed right after the bot's turn (just before the next screen), it must fail on a tail.
     3. If the new check finds a real leak in `play.go`'s output, fix `play.go`, not the test, and say what leaked in the Log.
   - Re-run `go tool task check`, and record it.
+- 2026-10-22 kernel-engineer (sonnet): Review round 2 notes answered, status `review`.
+  1. **Authorized test edit**, its own commit aba46c8 `test(T-0037): case 4 checks each part of the output at the right time (authorized, review round 2)`, touching only `cmd/cardtown/play_test.go` (`TestPlay_Case4_NoHiddenInformation`), made before any other change. The checker is now `checkText(text, part)`. Each chunk is split into head (before `"Legal Actions:"`) and tail (the rest). On each human turn in the replay: check the previous tail against the current state, then the current head, then keep the current tail. After the loop the last tail is checked against the final state. `publicNames`, `hiddenNames` and the comment layout are unchanged. No other test changed.
+  2. **Effectiveness**, temporary mutations of `play.go`, reverted with `git checkout` (`git status` clean and `git diff` empty afterwards):
+     - Bot hand printed after `printScreen` on each human screen. Case 4 failed on heads:
+       ```
+       play_test.go:228: turn 1: head leaks hidden card "Devilhorn Sanction" of bot seat
+       play_test.go:228: turn 1: head leaks hidden card "Hammerhand Brigade" of bot seat
+       play_test.go:228: turn 1: head leaks hidden card "Arkha, Sun's Fury" of bot seat
+       play_test.go:228: turn 1: head leaks hidden card "Macabre Dancers" of bot seat
+       ```
+     - Bot hand printed after the bot's action, when the human is next to act (just before the next screen). Case 4 failed on tails:
+       ```
+       play_test.go:228: turn 3: tail leaks hidden card "Hammerhand Brigands" of bot seat
+       play_test.go:228: turn 3: tail leaks hidden card "Hammerhand Brigade" of bot seat
+       play_test.go:228: turn 3: tail leaks hidden card "Macabre Dancers" of bot seat
+       play_test.go:228: turn 3: tail leaks hidden card "Chainbreaker Phalanx" of bot seat
+       ```
+  3. **Real leak**: none. The unmutated `play.go` passes the new head, tail and final-tail checks, so `play.go` is unchanged this round.
+  - Gate: `go tool task check` run, result below in the final report. Diff this round: `play_test.go` (commit aba46c8) and this task file only.
