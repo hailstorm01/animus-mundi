@@ -4,7 +4,7 @@ title: Run git through pkg/toolchain/git in audit, docs and tddslice (directive 
 kind: harness
 tier: sonnet
 wave: none (board directive #37, structural review cleanup 7 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0044-git-through-toolchain-git
 depends_on: [T-0043]
 claims: [func:git.Lines, func:git.Output, func:git.Combined]
