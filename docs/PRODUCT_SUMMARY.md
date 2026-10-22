@@ -23,7 +23,7 @@ The repository is organized around an executable rules kernel, the one active ru
 animus-mundi/
 ├── .agents/
 │   ├── skills/                            # Persona definitions (pm-lead, lead-architect, rules-test-author, kernel-engineer, ...)
-│   └── tasks/m2/                          # M2 build loop: BOARD.md (directives + index) and one file per task (T-0001 ... T-0035)
+│   └── tasks/m2/                          # M2 build loop: BOARD.md (directives + index) and one file per task (T-0001 ... T-0037)
 ├── docs/
 │   ├── AGENTS.md                          # Engineering & agent guidelines
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
@@ -36,7 +36,7 @@ animus-mundi/
 │   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
-│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.7 (Pure Game Rules & Keywords)
+│       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.8 (Pure Game Rules & Keywords)
 │       ├── keyword_interaction_matrix.md                # ACTIVE — Bounded keyword edge-case register
 │       ├── 02_Card_Data_Pipeline_FRD.md                 # FROZEN — FRD v1.3 (Ingestion, AST, 26 Primitives & Text Rules)
 │       ├── 03_Card_Compiler_FRD.md                      # FROZEN — FRD v1.2 (Go Catalog Linker, Keyword Lookup, AST Registry & Parity)
@@ -55,7 +55,8 @@ animus-mundi/
 │   │   ├── ability/                       # Ability shapes as Go data: hooks, gates, steps, subjects, values, targets
 │   │   ├── cards/                         # Card ability definitions and the NotYetExecutable list
 │   │   ├── sim/                           # Policies, playouts, `cardtown sim` driver and rule monitors
-│   │   └── eventlog/                      # Event formatting and JSON Lines output
+│   │   ├── eventlog/                      # Event formatting and JSON Lines output
+│   │   └── view/                          # Per-seat PlayerView and hidden-information log lines
 │   └── toolchain/                         # High-performance validation, audit & slicing engine
 └── tools/
     ├── audit/                             # Audit records & registry
@@ -75,7 +76,7 @@ animus-mundi/
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
-1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.7 — 70 Requirement IDs, 62 active; 8 subsumed)**
+1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.8 — 70 Requirement IDs, 62 active; 8 subsumed)**
    - **Deck Construction, Match Setup & First-Turn Rules (`FR-SET-001` - `FR-SET-004`, `FR-DEK-001` - `FR-DEK-002`, `FR-WIN-001`)**: 50-card minimum main deck, 1 faction Headquarters, rarity copy limits (4/3/2/1), pre-mulligan First-Player Determination (15s clock), 6-card opening hand with single partial mulligan (25s clock), Turn 1 draw skip, absence of summoning sickness, mandatory post-search shuffle, empty-deck draw loss, and a simultaneous empty-deck **Match Draw** (`RESULT_MATCH_DRAW`).
    - **Pure Game Rules, Card Taxonomy & Spatial Zone Model (`FR-CRD-101`, `FR-ZON-001` - `FR-ZON-005`, `FR-ENT-102` - `FR-ENT-103`)**: 14 printed card characteristics, Battlefield Assets vs. non-battlefield Cards, ownership vs. control, uncapped zone capacities (Reserves, Main Theater, Headquarters Zone, Hand, Deck, Discard, Attached Sub-Zone, and Resolution Stack), double-blind `1/1/1/1` Scratch Company lifecycle, tucked cards, and face-down transformation. Runtime memory structs (`FR-ENT-001` - `FR-ENT-003`, `FR-SNP-101`) are owned by FRD 05 (`SOC-002`).
    - **Dual-Resource Economy, Turn Sequence & Clean-Stack Model (`FR-RES-001` - `FR-RES-003`, `FR-TRN-001` - `FR-TRN-003a`, `FR-CAP-001`, `FR-MNV-001`, `FR-QUE-001`)**: Explicit off-stack Requisition and Tactics generation, one-way `2R -> 1T` conversion, unified Inherent Capabilities Matrix (`FR-CAP-001`, subsuming `FR-INH-001` - `FR-INH-004`), discard-pile and in-resolution free deployments with destination-zone selection (`FR-TRN-003a`), Ready Phase (unexhaust + start-of-turn triggers), Draw Phase (draw + draw triggers), Main Phase (75s turn clock + 60s Reserve Time Bank, clean-stack priority), and End Phase (Sub-Phases 4a–4d).
@@ -136,7 +137,7 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
   - `cardtown lint frd` enforces a single owner per requirement ID and rejects keyword definitions restated outside FRD 01.
 - **Native Go Developer CLI & Automated Linter Suite (`cardtown lint`, `cmd/cardtown`)**:
   - Blazing-fast sub-100ms native Go toolchain replacing legacy PowerShell scripts.
-  - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) and verifies **2,072 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`).
+  - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) and verifies **2,085 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`).
   - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`cardtown lint sheets`).
   - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`cardtown lint syntax`).
   - Audits TDD metadata, 100% FRD requirement coverage, and topological acyclic DAGs (`cardtown lint tdd`).
@@ -166,8 +167,10 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
 
 1. **Rulings for reachable open matrix items. ✅ Done 2026-10-19 (FRD 01 v3.3–v3.4).** Eleven items were ruled, covering Berserk targeting and fizzles, Berserk 2 on *Tempest Surge* and *Redline Infusion*, Scratch Companies entering Exhausted, committed combat targets, zero-yield generation, and HQ defeat and empty-deck loss both settling at the death sweep. The two remaining open items (`KIM-C01`, `KIM-B07`) are unreachable with current cards. New cards or new keywords reopen this.
    - **Survey rulings:**
-     - **Open:** `SVY-R8` (an attack fizzles if the defender changes controller) is unruled. It becomes reachable once *Rhapsody's Hollow* is built, and that card is in M2 scope.
+     - **Ruled in FRD 01 v3.8:** `SVY-R8`. An attack's defender and Berserk secondary are targets, re-verified at resolution against the attacker's current controller, so a side change on either side fizzles the attack with no cleave. No current card reaches it (*Rhapsody's Hollow* is an activated ability, so it can't be used while an Attack is on the stack), and it no longer counts against the Done-when. The kernel fix is board directive #29, queued after T-0037.
+     - **Ward (user ruling, v3.8):** Ward is checked on placement and at resolution for every chosen target (`FR-TGT-003`, `FR-KWD-002h`) and never applies to the defender. The kernel already does this; directive #29 adds the general test.
      - **Ruled, not yet in FRD 01:** `SVY-R9`–`SVY-R11` (optional triggers asked on placement, last-known effective power, "up to N" distinct targets) were ruled on 2026-10-21 and are implemented.
+     - **Open, not blocking M2:** `SVY-R12`, a Berserk N design review the user requested after repeated secondary-target rulings. No M2 card has Berserk; it must be settled before the M3 Berserk cards (*Tempest Surge*, *Redline Infusion*) are built.
 2. **Animus vs Path starter set, fully executable. 🟡 In progress.** These are the two factions with the most physical playtest time, so their matchup is the one we can check the digital rules against. Both decks run in full, including Maneuvers and Headquarters abilities, and are construction-legal under `FR-SET-001`. The [ability survey](design/m2_starter_set_ability_survey.md) maps every card and orders the work in waves A1–G. At M2 start, 9 of the 82 in-scope cards were executable (5 Animus, 4 Path) and no Maneuvers were.
    - **Now:** 24 of 82 are executable. Waves A1 and A2 are done, adding 15 cards. 58 cards remain on `cards.NotYetExecutable`.
    - **Starter decks:** 14 of the 46 distinct cards in the two lists execute; 32 do not, including both Headquarters.
@@ -176,13 +179,13 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
    - **Pinned during M2:** triggers, APNAP order and cascades (`FR-TRG-002`–`FR-TRG-004`), targeting and two-stage verification (`FR-TGT-001`–`FR-TGT-003`), choices and timeout fallbacks (`FR-MOD-001`), Layers 1–2 (`FR-LAY-001`, `FR-LAY-002`), Heal N (`FR-KWD-002d`) and self-tracking death triggers (`FR-ZON-004`).
    - **Still to pin in M2 (15):** `FR-ACT-001`/`002`, `FR-CST-001`, `FR-DEK-001`/`002`, `FR-ENT-103`, `FR-KWD-002a`/`002e`, `FR-LAY-003`, `FR-MNV-001`, `FR-REP-001`–`003`, `FR-TRG-005` and `FR-TRN-003a`.
    - **Out of starter reach, so they move to M3 (3):** `FR-ENT-102`, `FR-KWD-002n` and `FR-TRG-006`. The M2 target is therefore 59 of 62.
-4. **`cardtown play`: a text-mode match. 🟡 Tasks written.** One human plays a starter deck against a sim policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client. It is built as a thin client of a per-player `PlayerView` (board directive #24), which gives the M4/M5 client boundary a cheap first draft. Written as T-0036 (`PlayerView`, Opus at high effort) and T-0037 (the terminal play loop, Flash), per board directive #27.
+4. **`cardtown play`: a text-mode match. 🟡 In progress.** One human plays a starter deck against a sim policy in the terminal, so the digital rules can be compared with the physical prototype long before the M4 client. It is built as a thin client of a per-player `PlayerView` (board directive #24), which gives the M4/M5 client boundary a cheap first draft. T-0036 (`PlayerView` and per-seat log lines in `pkg/engine/view`, Opus at high effort) is merged; T-0037 (the terminal play loop, Flash) is queued, per board directive #27.
 5. **Write-up of the ability shapes the kernel needed. ⏳ Not started.** `docs/design/m2_ability_shapes.md` will be the input to rewriting FRD 02/03 in M3.
 
 **Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card plus the starter Headquarters (Animoceps Rager, Eternal Watchman) is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
 
 ### 3.3 M2 Accomplished So Far (lead-architect report, 2026-10-21)
-All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`: 11 shape, 8 card and 16 harness tasks. The next two, T-0036 and T-0037 (Deliverable 5), are written. **Nothing from M1 or M2 is merged to `main` yet**: `main` has no `pkg/engine`.
+All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`: 11 shape, 8 card and 16 harness tasks. Since then T-0036 (`PlayerView`, Deliverable 5 part 1) is merged and T-0037 (the play loop) is queued, followed by directive #29 (attack re-verification, `SVY-R8`). **Nothing from M1 or M2 is merged to `main` yet**: `main` has no `pkg/engine`.
 
 | # | Design-note deliverable | Status | Tasks |
 | :---: | :--- | :---: | :--- |
@@ -191,7 +194,7 @@ All 35 build tasks (T-0001 to T-0035) are merged into `rework/executable-rules`:
 | 3 | Wave A1 (8 cards): events, self-hook triggers, APNAP and cascade, `Chooser`, self-tracking death triggers | ✅ Done | T-0006–T-0014, T-0015 |
 | 4 | Wave A2 (7 cards): targets, filters, two-stage verification, optional and "up to N" triggers, `DealDamage`, `Heal`, `AddArmor` | ✅ Done | T-0017–T-0019, T-0027–T-0031 |
 | 4a | Cleanup: engine files split by responsibility, deduplicated rule code, CLI split per command | ✅ Done | T-0032–T-0035 |
-| 5 | `cardtown play` (text mode): `PlayerView`, then the play loop | 🟡 Tasks written | T-0036, T-0037 |
+| 5 | `cardtown play` (text mode): `PlayerView`, then the play loop | 🟡 In progress (T-0036 done, T-0037 queued) | T-0036, T-0037 |
 | 6 | Waves B–G | ⏳ Planned | — |
 | 7 | Ability shapes write-up | ⏳ Planned | — |
 
@@ -236,6 +239,7 @@ flowchart LR
 ### M3: Card Data Pipeline & Full Catalog
 - **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up, then revise or replace TDD 03.
 - **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test. Soulless and Concordia cards, plus the Rift and Encampment Headquarters deferred from M2, pull in the FRD 01 rules that the M2 starter set did not reach.
+- **Before Berserk cards:** settle the Berserk N design review (survey `SVY-R12`) before *Tempest Surge* or *Redline Infusion* is built.
 - **Done when:** `cardtown lint rules` reports every active FRD 01 requirement pinned, every card without a `needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
 
 ### M4: Local Playable Client
@@ -258,10 +262,10 @@ flowchart LR
 
 | Document | Status | Serves | Next action |
 | :--- | :--- | :--- | :--- |
-| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.7 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
+| [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.8 — 70 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
-| [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Rule `SVY-R8` before *Rhapsody's Hollow* is built; write `SVY-R9`–`R11` into FRD 01 |
-| [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–4a done; Deliverable 5 (`cardtown play`) next |
+| [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Write `SVY-R9`–`R11` into FRD 01; hold the `SVY-R12` Berserk review with game-designer before M3's Berserk cards (`SVY-R8` ruled in v3.8) |
+| [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–4a done; Deliverable 5 (`cardtown play`) in progress: T-0036 done, T-0037 next |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Parked | M3 | Revise after FRD 03 rewrite |
