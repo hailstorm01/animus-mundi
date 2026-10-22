@@ -9,7 +9,7 @@ Task files are the source of truth. This board is an index.
 
 ## Directives for the Lead
 
-Instructions from the user or a readiness review that the lead applies before writing the next task (Runbook D2). When one is applied, the lead changes its status to `applied` and names the task or commit that applied it. A `waiting: <trigger>` directive is applied only when its trigger happens.
+Instructions from the user, a readiness review, or a user-approved `game-designer` Design Outcome that the lead applies before writing the next task (Runbook D2). When one is applied, the lead changes its status to `applied` and names the task or commit that applied it. A `waiting: <trigger>` directive is applied only when its trigger happens.
 
 | # | Directive | Source | Status |
 | :---: | :--- | :--- | :--- |
