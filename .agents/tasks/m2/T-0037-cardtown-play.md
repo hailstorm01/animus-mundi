@@ -2,9 +2,9 @@
 id: T-0037
 title: cardtown play, a text-mode match against a sim policy, drawn only from PlayerView
 kind: harness
-tier: flash (board directive #27)
+tier: sonnet (escalated after two changes rounds, Runbook D5; board directive #27 set flash)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: review
+status: changes
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -178,3 +178,24 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
     Output: match finished cleanly, exit code 0, ending with `Result: Player 0 won (drew from an empty deck)`.
   - Standard gate: `go tool task check` passed cleanly (fmt-check, vet, test, build, lint --all).
   - Status `review`. Ready for `lead-architect` review round 2.
+- 2026-10-22 lead-architect: Review round 2: **changes requested**, status `changes`. **Tier escalated to sonnet** (Runbook D5: two `changes` rounds on a flash task). The lead dispatches the `kernel-engineer` subagent.
+  - Round 1's three notes are fixed exactly as asked in d50d575. Case 5's corrected grep finds nothing.
+  - **New finding (the lead missed it in round 1): a protected test was changed after the test commit.** 38f0f40, the implementation commit, edited `TestPlay_Case4_NoHiddenInformation`.
+    - Part of the edit is `gofmt` reflowing the comment lists in cases 1 and 4. That part is harmless and is accepted.
+    - The substantive part cuts each checked chunk at `"Legal Actions:"`. So nothing printed after the screen is checked for leaks: the action list, decision prompts and options, and the bot turn's log lines.
+    - It hid a real flaw in the test-commit version: those later lines were compared against the state from *before* the bot's turn. A bot card that became public during that turn then looked like a leak.
+    - The protected-test rule (Runbook D5 scope) means a fix like this has to come from the lead as a named edit.
+  - Notes:
+    1. **Authorized edit to `TestPlay_Case4_NoHiddenInformation`**, in its own commit `test(T-0037): case 4 checks each part of the output at the right time (authorized, review round 2)`, made before any other change this round:
+       - Split the output into chunks at `"=== Turn "` as now. In each chunk:
+         - the **head** is the text before `"Legal Actions:"`;
+         - the **tail** is the rest: the action list, any decision prompts and options, and the log lines printed until the next screen.
+       - Check a chunk's head against the public and hidden names when that screen is shown, as now: before the human's action.
+       - Check a chunk's tail against the names when the *next* screen is shown. In the replay loop, when the human is active, first check the previous chunk's tail with the current state, then check the current chunk's head, then keep the current tail.
+       - After the loop, check the last chunk's tail, which ends with the result line, against the final state.
+       - Keep the existing `publicNames` and `hiddenNames` rules, and keep the `gofmt` comment layout.
+    2. **Show it is effective, and record both runs in the Log** (temporary, not committed):
+       - With the bot's hand printed on each screen, case 4 must fail on a head.
+       - With the bot's hand printed right after the bot's turn (just before the next screen), it must fail on a tail.
+    3. If the new check finds a real leak in `play.go`'s output, fix `play.go`, not the test, and say what leaked in the Log.
+  - Re-run `go tool task check`, and record it.
