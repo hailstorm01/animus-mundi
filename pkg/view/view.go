@@ -48,15 +48,16 @@ type Side struct {
 
 // CardView is a card off the battlefield, with its printed characteristics.
 type CardView struct {
-	Inst     int // only for the seat's own hand cards (an Action names them); 0 elsewhere
-	Card     string
-	Type     string
-	ReqCost  int
-	TacCost  int
-	Power    int
-	Health   int
-	Keywords []string // printed
-	Text     string   // printed rules text
+	Inst       int // only for the seat's own hand cards (an Action names them); 0 elsewhere
+	Card       string
+	Type       string
+	ReqCost    int
+	TacCost    int
+	Power      int
+	Health     int
+	Keywords   []string // printed
+	Text       string   // printed rules text
+	Executable bool     // false while the kernel cannot run this card's printed text (Card.Supported)
 }
 
 // AssetView is a battlefield asset. Power, MaxHealth and Keywords are
@@ -136,6 +137,7 @@ func cardView(c *engine.Card) CardView {
 	return CardView{
 		Card: c.Name, Type: c.Type.String(), ReqCost: c.ReqCost, TacCost: c.TacCost,
 		Power: c.Power, Health: c.Health, Keywords: keywords(c.Keywords), Text: c.RulesText,
+		Executable: c.Supported(),
 	}
 }
 

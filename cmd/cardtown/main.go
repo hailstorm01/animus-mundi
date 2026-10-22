@@ -34,6 +34,8 @@ func main() {
 
 	command := os.Args[1]
 	switch command {
+	case "play":
+		os.Exit(runPlay(os.Args[2:], os.Stdin, os.Stdout))
 	case "lint":
 		runLint(os.Args[2:])
 	case "hook":
@@ -64,6 +66,7 @@ func printUsage() {
 	fmt.Println("  cardtown <command> [subcommand] [flags] [arguments]")
 	fmt.Println()
 	fmt.Println("Available Commands:")
+	fmt.Println("  play      Play a text-mode match against a sim policy, drawn only from PlayerView")
 	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax, fences)")
 	fmt.Println("  hook      Manage Git lifecycle hooks (install pre-commit)")
 	fmt.Println("  audit     Manage PM Devil's Advocate audit lifecycle (status, resolve)")
@@ -133,6 +136,10 @@ func normalizeArgs(args []string) []string {
 				lower = "p0"
 			case "p1":
 				lower = "p1"
+			case "seat":
+				lower = "seat"
+			case "policy":
+				lower = "policy"
 			case "maxturns", "max-turns":
 				lower = "max-turns"
 			}

@@ -69,6 +69,12 @@ tasks:
     cmds:
       - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH -events {{.CLI_ARGS}}'
 
+  play:
+    desc: Play an interactive match against the bot (cardtown play)
+    deps: [build]
+    cmds:
+      - '{{.BIN}} play -deck starter -p0 ANIMUS -p1 PATH {{.CLI_ARGS}}'
+
   check:
     desc: Every build-task Done-When gate (gofmt, vet, test, lint)
     cmds:
