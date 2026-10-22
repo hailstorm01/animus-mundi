@@ -1,13 +1,12 @@
 package syntax
 
 import (
-	"encoding/csv"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
+
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 )
 
 type SyntaxRule struct {
@@ -31,35 +30,13 @@ func Lint(repoRoot string, targetFilePaths []string, treatWarningsAsErrors bool)
 	fmt.Println("Repo Root:", repoRoot)
 	fmt.Printf("Cards Directory: %s\n\n", cardsDir)
 
-	var csvFiles []string
-	if len(targetFilePaths) > 0 {
-		for _, f := range targetFilePaths {
-			trimmed := strings.TrimSpace(f)
-			if trimmed == "" {
-				continue
-			}
-			p := trimmed
-			if !filepath.IsAbs(p) {
-				p = filepath.Join(repoRoot, p)
-			}
-			if _, err := os.Stat(p); err == nil {
-				csvFiles = append(csvFiles, p)
-			} else {
-				fmt.Printf("  [ERROR] Specified file not found: %s\n", trimmed)
-			}
-		}
-	} else {
-		entries, err := os.ReadDir(cardsDir)
-		if err != nil {
-			return false, fmt.Errorf("reading cards directory: %w", err)
-		}
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".csv") {
-				csvFiles = append(csvFiles, filepath.Join(cardsDir, e.Name()))
-			}
-		}
+	csvFiles, missing, err := cardsheet.List(repoRoot, targetFilePaths)
+	if err != nil {
+		return false, err
 	}
-	sort.Strings(csvFiles)
+	for _, m := range missing {
+		fmt.Printf("  [ERROR] Specified file not found: %s\n", m)
+	}
 
 	if len(csvFiles) == 0 {
 		fmt.Println("  [WARN] No CSV card sheets found to audit.")
@@ -72,35 +49,26 @@ func Lint(repoRoot string, targetFilePaths []string, treatWarningsAsErrors bool)
 
 	for _, csvPath := range csvFiles {
 		fileName := filepath.Base(csvPath)
-		file, err := os.Open(csvPath)
+		sheet, err := cardsheet.Open(csvPath, false)
 		if err != nil {
 			fmt.Printf("  [ERROR] %s: Could not read for syntax check: %v\n", fileName, err)
 			terminologyIssues++
 			continue
 		}
 
-		r := csv.NewReader(file)
-		headers, err := r.Read()
+		headers, err := sheet.Header()
 		if err != nil {
-			file.Close()
+			sheet.Close()
 			fmt.Printf("  [ERROR] %s: Could not read header: %v\n", fileName, err)
 			terminologyIssues++
 			continue
 		}
 
-		nameCol := -1
-		rulesCol := -1
-		for idx, h := range headers {
-			hLower := strings.ToLower(strings.TrimSpace(h))
-			if hLower == "name" {
-				nameCol = idx
-			} else if hLower == "rulestext" || hLower == "text" {
-				rulesCol = idx
-			}
-		}
+		nameCol := cardsheet.Column(headers, "name")
+		rulesCol := cardsheet.Column(headers, "rulestext", "text")
 
-		records, err := r.ReadAll()
-		file.Close()
+		records, err := sheet.Rows()
+		sheet.Close()
 		if err != nil {
 			fmt.Printf("  [ERROR] %s: CSV read error: %v\n", fileName, err)
 			terminologyIssues++

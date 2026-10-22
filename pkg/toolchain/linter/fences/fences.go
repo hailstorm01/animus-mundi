@@ -2,11 +2,11 @@ package fences
 
 import (
 	"bufio"
-	"encoding/csv"
 	"fmt"
 	"go/parser"
 	"go/scanner"
 	"go/token"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 )
 
 var (
@@ -68,39 +70,34 @@ func Analyze(repoRoot string) (*Report, error) {
 		return nil, fmt.Errorf("data/cards is not a directory")
 	}
 
-	csvFiles, err := filepath.Glob(filepath.Join(cardsDir, "*.csv"))
+	csvFiles, _, err := cardsheet.List(repoRoot, nil)
 	if err != nil {
-		return nil, fmt.Errorf("listing card csv files: %w", err)
+		return nil, err
 	}
 
 	cardNames := make(map[string]bool)
 	for _, csvFile := range csvFiles {
-		f, err := os.Open(csvFile)
+		sheet, err := cardsheet.Open(csvFile, true)
 		if err != nil {
 			return nil, fmt.Errorf("opening card sheet %s: %w", filepath.Base(csvFile), err)
 		}
-		cr := csv.NewReader(f)
-		cr.FieldsPerRecord = -1
-		rows, err := cr.ReadAll()
-		f.Close()
+		header, err := sheet.Header()
+		var rows [][]string
+		if err == nil {
+			rows, err = sheet.Rows()
+		}
+		sheet.Close()
+		if err == io.EOF {
+			continue
+		}
 		if err != nil {
 			return nil, fmt.Errorf("reading card sheet %s: %w", filepath.Base(csvFile), err)
 		}
-		if len(rows) == 0 {
-			continue
-		}
-		nameCol := -1
-		for i, h := range rows[0] {
-			clean := strings.TrimSpace(strings.TrimPrefix(h, "\ufeff"))
-			if strings.EqualFold(clean, "name") {
-				nameCol = i
-				break
-			}
-		}
+		nameCol := cardsheet.Column(header, "name")
 		if nameCol == -1 {
 			continue
 		}
-		for _, row := range rows[1:] {
+		for _, row := range rows {
 			if nameCol < len(row) {
 				cName := strings.TrimSpace(row[nameCol])
 				if cName == "" || cName == "--" {
@@ -390,7 +387,7 @@ func checkImports(repoRoot, rel string) []violationItem {
 		line := 1
 		if el, ok := err.(scanner.ErrorList); ok && len(el) > 0 {
 			line = el[0].Pos.Line
-			err = el[0]
+			return []violationItem{{file: rel, line: line, msg: "cannot read imports: " + el[0].Msg}}
 		}
 		return []violationItem{{file: rel, line: line, msg: fmt.Sprintf("cannot read imports: %v", err)}}
 	}

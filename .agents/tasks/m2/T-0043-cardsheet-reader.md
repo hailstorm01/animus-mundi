@@ -4,7 +4,7 @@ title: One card-sheet reader for the sheets, syntax and fences linters (directiv
 kind: harness
 tier: sonnet
 wave: none (board directive #36, structural review cleanup 6 of 7, before cardtown play)
-status: in-progress
+status: review
 branch: m2/T-0043-cardsheet-reader
 depends_on: [T-0042]
 claims: [pkg:toolchain/linter/cardsheet, func:cardsheet.List, func:cardsheet.Open, func:cardsheet.Column]
@@ -95,3 +95,13 @@ Cases 1–7 are unit tests in a new `pkg/toolchain/linter/cardsheet/cardsheet_te
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #36, folding in its case (d), the T-0038 follow-up. The API is deliberately thin (Lead decisions), because the three linters differ in field-count rules, call order and messages, and their output must not change. The shared parts are the listing, which is copied line for line between `sheets` and `syntax`, and the column lookup. It is a harness task, tier sonnet, as the directive sets. T-0042 is done, so the task is `ready` on branch `m2/T-0043-cardsheet-reader`. T-0037 now depends on it too.
   - Next: the lead dispatches the `kernel-engineer` subagent (Sonnet).
+- 2026-10-22 kernel-engineer (sonnet): Implemented T-0043. Status in-progress commit b829cbf; tests commit 74e872e.
+  - Reuse search: no existing cardsheet reader in pkg/toolchain beyond the three copies; `pkg/engine/cardload.go` left alone (out of scope).
+  - Tests first (`test(T-0043)`): cases 1-7 in new `cardsheet_test.go` (failed: package had no non-test Go files, build failed) and case 8 `TestFences_Case38_UnreadableImportsMessage` (failed: output still carried the absolute path before `string literal not terminated`).
+  - Diff: new `cardsheet.go` (List, Open, Sheet.Header/Rows/Close, Column, package doc as specified); `sheets.go` and `syntax.go` use List (sheets sets the error flag per missing path, syntax does not), Open(false), Header, Rows, and syntax uses Column for name and rulestext/text (first match); `fences.go` uses List(repoRoot, nil) after its own Stat checks, Open(true), Header/Rows (io.EOF header skipped), Column "name", and `checkImports` reports `cannot read imports: <first scanner.Error Msg>`. Removed imports `encoding/csv`, `os`, `sort` where unused.
+  - Look closely: fences' removed Glob error text "listing card csv files" is gone (List returns "reading cards directory"); this is only reachable after the Stat checks pass. fences Rows error and Header error share the "reading card sheet" message, as the single ReadAll did.
+  - Verification (baseline CLI `ct43-base.exe` built from 046e27a before any edit; new CLI built from the branch; both run from the same repo root; compared with `cmp -s` on stdout+stderr plus the appended exit code):
+    - Case 9: `lint sheets`, `lint syntax`, `lint fences`, `lint cards`, `lint --all` all identical, exit 0 each.
+    - Case 10: `lint sheets` and `lint syntax` given `data/cards/units-and-structures-path.csv data/cards/nope.csv <scratch>/edge43/empty.csv <scratch>/edge43/hdr.csv` (empty file and header-only copy made in the scratch folder): both identical, exit 1 each.
+    - Case 11: `git grep -n 'csv.NewReader' -- pkg/toolchain ':!*_test.go'` and `git grep -n 'filepath.Glob' -- pkg/toolchain/linter/fences/fences.go`: first prints only `pkg/toolchain/linter/cardsheet/cardsheet.go:61` (run after `git add`, since the file is new); second prints nothing.
+    - `go test ./pkg/toolchain/...`: all ok. `go tool task check`: passes (gofmt, vet, tests, lint --all).

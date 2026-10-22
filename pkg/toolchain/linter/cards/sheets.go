@@ -1,13 +1,13 @@
 package cards
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 )
 
 var (
@@ -65,36 +65,14 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 
 	hasErrors := false
 
-	var csvFiles []string
-	if len(targetFilePaths) > 0 {
-		for _, f := range targetFilePaths {
-			trimmed := strings.TrimSpace(f)
-			if trimmed == "" {
-				continue
-			}
-			p := trimmed
-			if !filepath.IsAbs(p) {
-				p = filepath.Join(repoRoot, p)
-			}
-			if _, err := os.Stat(p); err == nil {
-				csvFiles = append(csvFiles, p)
-			} else {
-				fmt.Printf("  [ERROR] Specified file not found: %s\n", trimmed)
-				hasErrors = true
-			}
-		}
-	} else {
-		entries, err := os.ReadDir(cardsDir)
-		if err != nil {
-			return false, fmt.Errorf("reading cards directory: %w", err)
-		}
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".csv") {
-				csvFiles = append(csvFiles, filepath.Join(cardsDir, e.Name()))
-			}
-		}
+	csvFiles, missing, err := cardsheet.List(repoRoot, targetFilePaths)
+	if err != nil {
+		return false, err
 	}
-	sort.Strings(csvFiles)
+	for _, m := range missing {
+		fmt.Printf("  [ERROR] Specified file not found: %s\n", m)
+		hasErrors = true
+	}
 
 	if len(csvFiles) == 0 {
 		fmt.Println("  [WARN] No CSV card sheets found to audit.")
@@ -105,23 +83,22 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 
 	for _, csvPath := range csvFiles {
 		fileName := filepath.Base(csvPath)
-		file, err := os.Open(csvPath)
+		sheet, err := cardsheet.Open(csvPath, false)
 		if err != nil {
 			fmt.Printf("  [FAIL] %s: Could not open file: %v\n", fileName, err)
 			hasErrors = true
 			continue
 		}
 
-		r := csv.NewReader(file)
 		// Read header line
-		headerParts, err := r.Read()
+		headerParts, err := sheet.Header()
 		if err == io.EOF {
-			file.Close()
+			sheet.Close()
 			fmt.Printf("  [FAIL] %s: File is empty!\n", fileName)
 			hasErrors = true
 			continue
 		} else if err != nil {
-			file.Close()
+			sheet.Close()
 			fmt.Printf("  [FAIL] %s: Header parse error: %v\n", fileName, err)
 			hasErrors = true
 			continue
@@ -142,7 +119,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 			sort.Strings(dupeHeaders)
 			fmt.Printf("  [FAIL] %s: Duplicate column headers found: %s\n", fileName, strings.Join(dupeHeaders, ", "))
 			hasErrors = true
-			file.Close()
+			sheet.Close()
 			continue
 		}
 
@@ -157,7 +134,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		if hasXZ {
 			fmt.Printf("  [FAIL] %s: Corrupted column header 'xz' detected!\n", fileName)
 			hasErrors = true
-			file.Close()
+			sheet.Close()
 			continue
 		}
 
@@ -174,7 +151,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 			fmt.Printf("    Expected: %s\n", strings.Join(expectedHeaders, ", "))
 			fmt.Printf("    Found:    %s\n", strings.Join(headerParts, ", "))
 			hasErrors = true
-			file.Close()
+			sheet.Close()
 			continue
 		}
 
@@ -185,8 +162,8 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		}
 
 		// Read all remaining rows
-		records, err := r.ReadAll()
-		file.Close()
+		records, err := sheet.Rows()
+		sheet.Close()
 		if err != nil {
 			fmt.Printf("  [FAIL] %s: Import error: %v\n", fileName, err)
 			hasErrors = true
