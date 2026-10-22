@@ -4,7 +4,7 @@ title: Split pkg/engine/events.go into events, snapshots and build info (directi
 kind: harness
 tier: flash
 wave: none (board directive #34, structural review cleanup 4 of 7, before cardtown play)
-status: ready
+status: in-progress
 branch: m2/T-0041-split-events-go
 depends_on: [T-0040]
 claims: [file:pkg/engine/snapshot.go, file:pkg/engine/buildinfo.go, file:pkg/engine/events.go]
