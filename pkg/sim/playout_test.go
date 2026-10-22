@@ -75,7 +75,7 @@ func TestPlayoutsAreDeterministicPerSeed(t *testing.T) {
 }
 
 func TestLoadCardsFromRepositoryData(t *testing.T) {
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatal(err)
 	}

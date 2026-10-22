@@ -4,7 +4,7 @@ title: Move sim, eventlog and view to the top of pkg/ (directive #31, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #31, structural review cleanup 2 of 7, before cardtown play)
-status: in-progress
+status: review
 branch: m2/T-0039-move-client-packages
 depends_on: [T-0038]
 claims: [dir:pkg/sim, dir:pkg/eventlog, dir:pkg/view, file:pkg/engine/doc.go, var:fences.allowedImports]
@@ -101,10 +101,30 @@ This is a pure move, so the size rule is met by the rename checks, as in T-0035.
 - Tests: `pkg/toolchain/linter/fences/fences_test.go` (case 1's four authorized edits, in the `test(T-0039)` commit)
 
 ## Done When
-- [ ] Case 1's edited tests are committed as `test(T-0039): …` before the move, and cases 32, 33 and 35 failed before it
-- [ ] Cases 2 to 8 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] Case 1's edited tests are committed as `test(T-0039): …` before the move, and cases 32, 33 and 35 failed before it
+- [x] Cases 2 to 8 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #31, folding in structural finding 4 (`doc.go`'s boundary paragraph) and the stale "nothing to lint" message found in the T-0038 review. It is a harness task, tier flash, as the directive sets. T-0038 is done, so the task is `ready` on branch `m2/T-0039-move-client-packages`. T-0037 now depends on it too.
   - Next: **the user runs `@kernel-engineer T-0039` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-22 kernel-engineer: Implemented pure move of `pkg/engine/{sim,eventlog,view}` to `pkg/{sim,eventlog,view}`. Status set to `in-progress` in aa4a33f.
+  - Case 1: `test(T-0039)` committed in 996fcbf editing cases 32-35 in `pkg/toolchain/linter/fences/fences_test.go`. Before move, cases 32, 33, 35 failed as expected (Case 32 expected failure got pass, Case 33 missing eventlog error, Case 35 expected failure got pass), Case 34 passed.
+  - Reuse search: pure move of existing client packages without adding shapes or new code.
+  - Changes: `git mv pkg/engine/sim pkg/sim`, `git mv pkg/engine/eventlog pkg/eventlog`, `git mv pkg/engine/view pkg/view`.
+  - Imports updated: `cmd/cardtown/replay.go`, `cmd/cardtown/sim.go`, `pkg/view/log.go`, `pkg/eventlog/replay_test.go`, `pkg/sim/sim_events_test.go`, `pkg/view/view_test.go`. Formatted with `gofmt`.
+  - Relative data paths shortened: 8 moved test files (`decknames_test.go`, `decks_test.go`, `monitor_damage_test.go`, `playout_test.go`, `policy_test.go`, `sim_events_test.go`, `replay_test.go`, `view_test.go`). `git grep -n -E '"\.\."'` confirms no 3-level path remains.
+  - Fence table: `pkg/toolchain/linter/fences/fences.go` `allowedImports` updated with keys `pkg/sim`, `pkg/eventlog`, `pkg/view` and view allowed `pkg/eventlog`.
+  - Docs: `pkg/engine/doc.go` Package boundary paragraph replaced; `README.md` Repository Structure updated with 3 top-level bullets; `cmd/cardtown/lint.go` line 224 message updated from `pkg/engine/` to `pkg/`.
+  - Case 2 (Renames): `git show --stat -M` and `git diff -M rework/executable-rules --stat` confirm all 21 moved package files are renames with 0 net logic changes (imports, `..` path edits and import sorting only).
+  - Case 3 (Declarations): `git grep -h -E '^(func|type|var|const) '` sorted output over the three packages is identical before and after (0 differences via `Compare-Object`).
+  - Case 4 (Tests): `go test -list . ./...` reports 542 test names before and after, identical set under new package paths.
+  - Case 5 (Outputs unchanged): `cardtown-base.exe` (built from `rework/executable-rules` clean) vs `cardtown-new.exe` with seed 1:
+    - `sim -deck starter -p0 ANIMUS -p1 PATH`: `fc.exe /b` reports no differences for both `random` and `progress`.
+    - bare `sim`: `fc.exe /b` reports no differences for both `random` and `progress`.
+    - `sim -deck starter -p0 ANIMUS -p1 PATH -games 1 -seed 7 -log`: `fc.exe /b` reports no differences for both `random` and `progress`.
+    - `sim -deck starter -p0 ANIMUS -p1 PATH -games 10 -events`: stripped `.jsonl` files (with revision/modified removed) have 0 differences via `fc.exe /b`.
+    - `replay -events <file> -game 3 -at 12`: exits 0 for each binary with byte-identical stripped output; cross-binary replay refused with revision divergence error (exit code 1).
+  - Case 6 (Layout): `go list ./pkg/engine/...` prints `animus-mundi/pkg/engine`, `.../ability`, `.../cards`. `go list ./pkg/sim ./pkg/eventlog ./pkg/view` succeeds.
+  - Case 7 (No stale paths): `git grep -n -I -E 'pkg/engine/(sim|eventlog|view)'` matches only allowed `.agents/tasks/`, `.agents/steward-log.md`, `.agents/skills/`, `docs/PRODUCT_SUMMARY.md`, `docs/architecture/m2-ability-model.md`, and the Case 27 fixture in `fences_test.go`.
+  - Case 8 (Gates): `bin/cardtown.exe lint fences` passes; `go tool task check` passes (gofmt, `go vet`, all tests, `cardtown lint --all`).

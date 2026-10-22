@@ -214,7 +214,7 @@ func TestDamage_Case4_RealGamesAreClean(t *testing.T) {
 	if testing.Short() {
 		games, stressGames = 50, 20
 	}
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatal(err)
 	}

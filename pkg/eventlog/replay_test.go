@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
-	"animus-mundi/pkg/engine/sim"
+	"animus-mundi/pkg/eventlog"
+	"animus-mundi/pkg/sim"
 )
 
 // Tests for T-0023: ReadEventsJSONL and Replay. Each TestReplay_Case<N> is
@@ -29,7 +29,7 @@ func (c *collector) Settled(s engine.Snapshot) {}
 var (
 	starterNames = [2]string{"data/decks/animus-starter.txt", "data/decks/path-starter.txt"}
 	stressNames  = [2]string{"stress:SOULLESS", "stress:CONCORDIA"}
-	root         = filepath.Join("..", "..", "..")
+	root         = filepath.Join("..", "..")
 
 	cardsOnce sync.Once
 	cardMap   map[string]*engine.Card

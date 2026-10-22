@@ -161,7 +161,7 @@ func TestProgress_Case5_TerminatesAndHolds(t *testing.T) {
 	if st.Games != 200 {
 		t.Errorf("starter: played %d games, want 200", st.Games)
 	}
-	cards, err := engine.LoadCards("../../../data/cards")
+	cards, err := engine.LoadCards("../../data/cards")
 	if err != nil {
 		t.Fatal(err)
 	}

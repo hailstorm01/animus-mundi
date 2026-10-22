@@ -11,8 +11,8 @@ import (
 	"sort"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
-	"animus-mundi/pkg/engine/sim"
+	"animus-mundi/pkg/eventlog"
+	"animus-mundi/pkg/sim"
 )
 
 func runSim(args []string) {

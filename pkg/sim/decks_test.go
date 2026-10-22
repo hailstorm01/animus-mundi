@@ -10,11 +10,11 @@ import (
 )
 
 func TestSimDecks_Case13_BuildsValidDecks(t *testing.T) {
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("failed to load cards: %v", err)
 	}
-	decksDir := filepath.Join("..", "..", "..", "data", "decks")
+	decksDir := filepath.Join("..", "..", "data", "decks")
 	decks, err := SimDecks(cards, decksDir, "starter", [2]string{"ANIMUS", "PATH"})
 	if err != nil {
 		t.Fatalf("SimDecks failed: %v", err)
@@ -34,11 +34,11 @@ func TestSimDecks_Case13_BuildsValidDecks(t *testing.T) {
 }
 
 func TestSimDecks_Case14_MissingFileNamesPath(t *testing.T) {
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("failed to load cards: %v", err)
 	}
-	decksDir := filepath.Join("..", "..", "..", "data", "decks")
+	decksDir := filepath.Join("..", "..", "data", "decks")
 	_, err = SimDecks(cards, decksDir, "starter", [2]string{"SOULLESS", "PATH"})
 	if err == nil {
 		t.Fatal("expected error for missing soulless-starter.txt, got nil")
@@ -65,7 +65,7 @@ func TestSimDecks_Case15_InvalidDeckFails(t *testing.T) {
 }
 
 func TestSimDecks_Case16_FactionDeckStressDecksUnchanged(t *testing.T) {
-	cards, err := engine.LoadCards(filepath.Join("..", "..", "..", "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
 	if err != nil {
 		t.Fatalf("failed to load cards: %v", err)
 	}

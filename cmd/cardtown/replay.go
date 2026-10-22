@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/eventlog"
-	"animus-mundi/pkg/engine/sim"
+	"animus-mundi/pkg/eventlog"
+	"animus-mundi/pkg/sim"
 )
 
 // runReplay rebuilds one recorded game from a `cardtown sim -events` file and
