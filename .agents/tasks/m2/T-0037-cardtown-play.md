@@ -4,7 +4,7 @@ title: cardtown play, a text-mode match against a sim policy, drawn only from Pl
 kind: harness
 tier: flash (board directive #27)
 wave: none (design note Deliverable 5, part 2 of 2; board directive #24)
-status: queued
+status: ready
 branch: m2/T-0037-cardtown-play
 depends_on: [T-0036, T-0038, T-0039, T-0040, T-0041, T-0042, T-0043, T-0044]
 claims: [cli:play, func:runPlay, func:terminalChooser, task:play]
@@ -18,6 +18,8 @@ A human plays a full match in the terminal against a sim policy. `cardtown play`
 ## Inputs
 - Board directive #24, cases (a) and (b). T-0036 covers (b), and this task covers (a): the play code reads state only through `PlayerView`.
 - T-0036: `view.PlayerView`, `view.LogLines`.
+- **Import paths, after the structural cleanup (T-0039):** `animus-mundi/pkg/view` and `animus-mundi/pkg/sim`. They are no longer under `pkg/engine/`.
+- **Deck loading:** do it the way `cmd/cardtown/sim.go` does: `sim.SimDecks` with `-deck`, and `sim.FactionDeck` per seat without it.
 - Engine API:
   - `engine.NewGame` and `Config`, with a per-seat `Chooser`.
   - `Game.LegalActions` (EndTurn is always last) and `Game.Apply`.
@@ -75,6 +77,11 @@ func runPlay(args []string, in io.Reader, out io.Writer) int // exit code
   - Reading `g.Log[seen:]` only to pass it to `LogLines` is allowed.
   - Reading `g.Outcome.Over` for the loop condition is allowed. The view's `Over` is preferred.
   - No `g.Players`, `g.Theater`, `g.Stack`, `.Inst.Card` or `Snapshot()`.
+- **Cards the kernel cannot run yet** (added 2026-10-22). At the time of writing, 30 of the 44 distinct cards in the starter decks are on `cards.NotYetExecutable`. They can be drawn but never deployed, because `LegalActions` never offers them. The human must be able to tell why.
+  - `view.CardView` gains one field: `Executable bool // false while the kernel cannot run this card's printed text (Card.Supported)`.
+  - `cardView` in `pkg/view/view.go` sets it from `c.Supported()`. This is printed-card information, so it hides nothing.
+  - The screen marks such hand cards with ` [not executable yet]`.
+  - No other change to `pkg/view`.
 - **Wiring:**
   - `main.go` dispatches `play` and lists it in the usage text.
   - `Taskfile.yml` gains a `play` task: `cardtown play -deck starter -p0 ANIMUS -p1 PATH {{.CLI_ARGS}}`.
@@ -91,6 +98,7 @@ Cases 1 to 4 go in a new `cmd/cardtown/play_test.go`, committed first as `test(T
 1. **A scripted session finishes:**
    - `runPlay` with `-deck starter -p0 ANIMUS -p1 PATH -seat 0 -seed 3`, and an input stream that answers `1` to every prompt and `y` to every yes/no question, finishes the match and returns 0.
    - Its output ends with the result line.
+   - It contains ` [not executable yet]` at least once (the starter decks hold such cards).
    - It is byte-identical across two runs.
 2. **Re-prompting:** an input of `x`, then `999`, then `1` takes the first legal action. The output shows two re-prompts.
 3. **Quit:** `q` at the first prompt prints "quit" and returns 0. An empty input stream (EOF) does the same.
@@ -101,6 +109,7 @@ Cases 1 to 4 go in a new `cmd/cardtown/play_test.go`, committed first as `test(T
 5. **Grep (directive #24 a):** `grep -nE "\.Players|\.Theater|\.Stack|Inst\.Card|Snapshot\(" cmd/cardtown/play.go` finds nothing. Record the output in the Log.
 6. **CLI:** `go run ./cmd/cardtown play -deck starter -p0 ANIMUS -p1 PATH -seed 1 < <file of 1s>` finishes. `cardtown` prints `play` in its usage text. Other commands' outputs are unchanged.
 7. `go tool task check` passes.
+8. **Executable flag:** a new `pkg/view/executable_test.go` (in the `test(T-0037)` commit) builds a game from the starter decks with a fixed seed. Every `CardView` in the seat's hand has `Executable == c.Supported()` for that card. At least one hand card in the test's position is unsupported and one is supported; pick a seed where both hold, and say which one in a comment.
 
 After merge, the lead asks the user to play one match by hand (Deliverable 5's done-when).
 
@@ -109,12 +118,19 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
 - `cmd/cardtown/main.go` (dispatch and usage only)
 - `Taskfile.yml` (the `play` task)
 - `cmd/cardtown/play_test.go` (new, the `test(T-0037)` commit)
+- `pkg/view/view.go` (the `Executable` field and the line that sets it, only)
+- `pkg/view/executable_test.go` (new, the `test(T-0037)` commit)
 
 ## Done When
-- [ ] Cases 1 to 4 have tests, committed before the implementation, and pass
+- [ ] Cases 1 to 4 and 8 have tests, committed before the implementation, and pass
 - [ ] Cases 5 and 6 hold, with output in the Log
 - [ ] `go tool task check` passes
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (Deliverable 5 part 2, board directive #24), with status `queued` behind T-0036. Harness task, tier flash (board directive #27, the user's choice).
 - 2026-10-21 lead-architect: Held behind the structural cleanup (board directives #30–#37; the user ruled that it comes before feature work). It now depends on T-0038 (directive #30). Each later cleanup task is added here as D2 writes it. After directive #31 moves `view`, this task imports `animus-mundi/pkg/view` instead of `pkg/engine/view`.
+- 2026-10-22 lead-architect: The structural cleanup is done (T-0038 to T-0044), so every dependency is `done`.
+  - Re-checked against the new layout. The import paths are now in Inputs. Every API the task names still exists (`go doc`): `View.Over`, `Answer{Picks, Timeout}`, `Decision.Repeats`, `Game.Log`, `sim.SimDecks`, `FactionDeck` and `ResolveDeck`.
+  - One addition (Lead decisions; case 8; Allowed Files). 30 of the 44 starter-deck cards are not executable yet, so the view gains `CardView.Executable` and the screen marks those cards. Without it, the playtest that board directive #14 (d) calls for would show cards the human can never play, with no reason given. The field is printed-card information.
+  - Status `ready` on branch `m2/T-0037-cardtown-play`, tier flash (board directive #27).
+  - Next: **the user runs `@kernel-engineer T-0037` in the Antigravity agent (Gemini Flash)**.
