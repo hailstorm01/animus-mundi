@@ -4,7 +4,7 @@ title: PlayerView, a per-seat view of the game and its event log (directive #24)
 kind: harness
 tier: opus (effort high, board directive #27)
 wave: none (design note Deliverable 5, part 1 of 2; board directive #24)
-status: ready
+status: done
 branch: m2/T-0036-player-view
 depends_on: [T-0035]
 claims: [pkg:pkg/engine/view, type:View, func:PlayerView, func:LogLines]
@@ -131,10 +131,13 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
 4. **No leak (directive #24 b):**
    - Play 20 seeded starter matches (ANIMUS vs PATH), each to completion, using `sim.Playout` with `ProgressPolicy` and an observer collecting events.
    - Take `PlayerView` for each seat at every settled point (the observer's `Settled` calls; build the view from the game at that moment).
-   - The view, marshaled to JSON, and the seat's `LogLines` so far never contain, for the *other* seat:
+   - **The view:** at every settled point, the view marshaled to JSON never contains, for the *other* seat:
      - the name of a card in that seat's hand or deck, or
      - the real name of a face-down asset,
      unless that name is publicly visible in the view at that moment (in a discard, face-up on the battlefield, on the stack, or an HQ).
+   - **The log** (amended 2026-10-21 at the T-0036 block): each of the seat's `LogLines` is checked **once**, against the hidden names at the first settled point at or after its event, with the same exception.
+     - A line that named a card while it was public is not a leak later. Death triggers return cards to hand or deck without an event (Unceasing Tide, Stormfront of Ideals).
+     - A line that names a card while it is hidden still fails.
    - Check both seats.
 5. **`LogLines`:**
    - A `match-start` line for each seat lacks the seed, and contains that seat's own mulliganed names and the opponent's mulligan count.
@@ -150,11 +153,80 @@ All go in a new `pkg/engine/view/view_test.go`, committed first as `test(T-0036)
 - `pkg/engine/view/view_test.go` (new, the `test(T-0036)` commit)
 
 ## Done When
-- [ ] Cases 1 to 5 have tests, committed before the implementation, and pass
-- [ ] Cases 6 and 7 hold, with output in the Log
-- [ ] M4/M5 gaps recorded in the Log
+- [x] Cases 1 to 5 have tests, committed before the implementation, and pass
+- [x] Cases 6 and 7 hold, with output in the Log
+- [x] M4/M5 gaps recorded in the Log
 
 ## Log
 - 2026-10-21 lead-architect: Wrote the task (Deliverable 5 part 1, board directive #24), with status `ready`.
   - Harness task, tier opus at high effort (board directive #27, the user's choice).
   - Package `pkg/engine/view` is the lead's pick under directive #24.
+- 2026-10-21 kernel-engineer: **Blocked: Acceptance Case 4, as written, contradicts Case 5 in real starter matches.** Nothing is committed under `pkg/engine/view/`, so no test is yet protected.
+  - **The conflict.** Animus's "Unceasing Tide" says "When this unit is killed, return it to its owner's hand" (`OpReturnToHand`, `relocateSelf`). It is deployed, so the log names it ("player 0 places Deploy of … on the stack", then "deploys …", "… is destroyed", "places ability of …"). Those lines must equal `eventlog.FormatEvent` (Case 5). The ability then moves the card from the discard pile to the hand. That move is public, and it emits no event. From then on the opponent's `LogLines` so far still contain the name, while the card is in its owner's hand. If no other copy is in a discard pile, face-up on the battlefield, on the stack or an HQ, Case 4's exception ("publicly visible in the view at that moment") does not apply, and Case 4 fails. No `LogLines` can satisfy both cases: hiding the old lines breaks Case 5. "Stormfront of Ideals" (killed, put on the bottom of the deck) can cause the same failure.
+  - **Evidence.** I prototyped the view and wrote Cases 1 to 5, with Case 4's exception exactly as stated. Seeds 1 to 20, ANIMUS vs PATH, `ProgressPolicy`, `RandomChooser`, and a mulligan callback that sets aside seat+1 cards. Cases 1, 2, 3 and 5 pass. Case 4 checks 4,594 settled points and fails only on seeds 8 and 10, always for seat 1's log naming "Unceasing Tide" after it returned to player 0's hand (seed 10: event 76 places it, event 182 destroys it, event 183 places its ability, and then it is in hand). The view JSON never leaks at any point. A mutation that shows face-down assets under their real names gives 22 failures in Cases 2 and 4, so the check catches real leaks. Choosing other seeds to avoid this would be special-casing the test's inputs, so I did not.
+  - **Proposed amendment (the lead's call).** Keep the view JSON check exactly as written. For the log, check each line at the first settled point after its event, with the same exception. In words: "a log line, when it is first shown, never names a hidden card that is not publicly visible at that moment". With that one change, all 20 matches pass. An alternative is to add "or was publicly visible earlier in the match" to the exception. That is weaker, because it would accept a line that leaked a name which later became public.
+  - **Gaps for M4/M5 found so far** (to record when the task completes): ordinary draws emit no event, so there are no "opponent draws a card" lines; `OpReturnToHand` and `OpPutOnDeck` (`relocateSelf`) emit no event, so a public discard-to-hand or discard-to-deck move has no log line; the observer's `Settled` gets only a `Snapshot`, so the setup settled point inside `NewGame` has to be viewed after `NewGame` returns (the state is identical).
+  - **Reuse search.** The view reads `Asset.Printed()`, which already gives the Scratch face for face-down assets, and the layer functions `Power`, `MaxHealth` and `Keywords`. `LogLines` reuses `eventlog.FormatEvent` for every line, including the redacted `match-start` and `turn-start` (as a Detail-only event copy). No engine change is needed.
+  - The prototype is kept outside the repository, at `C:\Users\blade\AppData\Local\Temp\claude\c--Users-blade-animus-mundi-animus-mundi\81e84dae-3ae2-4bac-a75d-4500983e2713\scratchpad\T-0036-prototype\` (`view.go`, `log.go`, `view_test.go`). It is ready to commit, tests first, once Case 4 is amended.
+  - Commands: `go test ./pkg/engine/view` gives Cases 1, 2, 3 and 5 PASS and Case 4 FAIL (seeds 8 and 10). `go vet ./pkg/engine/view` is clean. `gofmt -l` is clean. The gates `go tool task check` and the `cardtown sim` baseline were not run, because nothing is to be committed.
+- 2026-10-21 lead-architect: The block is a **fault in the lead's case 4**, not in the view.
+  - Re-checking the whole log against the current state treats a name that was public when its line was written as a leak once the card returns to hand. Unceasing Tide's "return it to its owner's hand" makes such a move, and it emits no event.
+  - The engineer's evidence: the view JSON never leaked in 4,594 settled points, and the mutation "real names on face-down assets" is caught with 22 failures.
+  - **Lead decision:** the engineer's proposal. The view check is unchanged. Each log line is checked once, at the first settled point at or after its event, with the same exception (case 4 amended above). The weaker alternative, "public earlier in the match", is rejected.
+  - Status `ready`, for the same engineer to resume: commit `test(T-0036)` with the amended case 4, then the implementation.
+- 2026-10-21 kernel-engineer: Resumed after the Case 4 amendment. Status `review`.
+  - **Commits.** `9fc7032` `test(T-0036)` adds `pkg/engine/view/view_test.go` with Cases 1 to 5 and Case 4 as amended. At that commit the package has no non-test files, so `go test ./pkg/engine/view` fails with "build failed". The test file was not edited afterwards. The `feat(view)` commit adds `view.go`, `log.go` and the design-note edits.
+  - **What the diff holds.**
+    - `view.go`: `View`, `Side`, `CardView`, `AssetView`, `StackView` and `PlayerView`, built only from `Game`'s exported fields, `Asset.Printed()` and the layer functions `Power`, `MaxHealth` and `Keywords`.
+      - `Printed()` already returns the Scratch face for a face-down asset. Both seats therefore see "Scratch Company", 1/1, no keywords.
+      - `AssetView` and the discard `CardView`s have no instance ID. Only the seat's own hand cards set `CardView.Inst`.
+      - Every slice is newly built, and `StackView.Chosen` is copied slot by slot.
+      - A `StackAbility` item whose source is a face-down asset would show the Scratch face's name. That can't happen today, because face-down assets have no abilities.
+    - `log.go`: `LogLines` uses `eventlog.FormatEvent` for every line.
+      - `match-start` and `turn-start` are formatted from a copy of the event that keeps only Seq, Turn, Phase, Kind and Player, with a new Detail.
+      - The `match-start` body is: decks, HQs, "player D decides, play first=B", "you (player S) set aside [own names]", then "player O set aside N". It has no seed and no revision.
+      - The `turn-start` body is FormatEvent's own "turn T, player P is active", and the snapshot is dropped.
+    - Design note: a `pkg/engine/view` row in Boundaries, and Open Question 4 now points to `view.PlayerView` and `view.LogLines` as the M4/M5 first-draft boundary.
+  - **Test design.** Case 4 uses seeds 1 to 20, the starter decks (ANIMUS vs PATH), `ProgressPolicy`, `RandomChooser`, and a mulligan callback that sets aside seat+1 cards, so both seats have mulliganed names to hide. It checks 4,594 settled points.
+    - "Publicly visible" is computed from the game's public zones: discard piles, face-up battlefield assets including HQs, and Deploy or Ability cards on the stack.
+    - The setup settled point fires inside `NewGame`, before the observer has the `*Game`, so it is checked right after `NewGame` returns. Nothing changes in between.
+    - The test asserts that no starter card name contains another one, so the substring checks cannot misfire.
+    - At the end of each match, the line-by-line log is compared with one full `LogLines` call.
+    - Mutation checks, both reverted: showing face-down assets under their real names gives 22 failures in Cases 2 and 4; printing the opponent's mulligan names gives 40 failures in Case 4.
+  - **Commands and results.**
+    - `go test -count=1 -v ./pkg/engine/view`: Cases 1 to 5 PASS, and Case 4 reports "20 matches, 4594 settled points checked".
+    - `go test -count=1 ./...`: all packages ok.
+    - `go tool task check`: exit 0, with "LINTER SUMMARY: All executed checks PASSED!".
+    - Fences cover `pkg/engine/view`. A temporary card-name comment in `view/log.go` made `cardtown lint fences` report `[ERROR] view/log.go:48`. With it reverted, the result is `[PASS] Engine code is free of card names and invalid markers.`
+    - `cardtown sim`: I built a baseline CLI from `rework/executable-rules` (`e3c3c76`) in a separate `git worktree`, which I removed afterwards. Its stdout is byte-identical to the branch build for:
+      - `-deck starter -p0 ANIMUS -p1 PATH` with `-policy progress` and with `-policy random`;
+      - the stress decks ANIMUS vs PATH, with both policies;
+      - the default stress decks SOULLESS vs CONCORDIA, with both policies;
+      - `-deck starter … -games 1 -seed 10 -log`.
+      The `-events` JSONL for 50 starter games is identical too, once the build `revision` and `modified` fields are stripped.
+    - `git diff --name-only 43da63e HEAD` (the branch base): only `pkg/engine/view/` (three files), the design note and this task file. Against `rework/executable-rules`, the only other differences are `docs/AGENTS.md` and `docs/PRODUCT_SUMMARY.md`, which come from commits made before this branch.
+  - **M4/M5 gaps.**
+    1. Ordinary draws emit no event, so there are no "player N draws a card" lines for either seat, and nothing to redact.
+    2. `OpReturnToHand` and `OpPutOnDeck` (`relocateSelf`) emit no event. A public move from discard to hand or deck has no log line, and the view only shows the card leaving the discard. This is what forced the Case 4 amendment.
+    3. `Observer.Settled` receives a `Snapshot`, never the `*Game`. A view-building observer has to hold the game pointer itself, and it cannot see the setup settled point inside `NewGame`.
+    4. The view uses engine asset IDs and hand instance IDs as handles. An asset ID is stable across zones, so a seat can follow a public asset, but it also tells the seat how many IDs were allocated between events. Per-view handles were left out of scope.
+    5. Decision records name option labels and prompts as the engine built them. They hide face-down identities today because they use `Asset.String()`, but nothing enforces that.
+    6. The seed is hidden in the log, but `MatchStart.Revision` and `MulliganInsts` are not shown anywhere either. A wire format will need its own per-seat record.
+  - **For the reviewer.**
+    - The Boundaries intro sentence above the table still says "Five packages" and "Two driver packages". The task allows only the row and the Open Question 4 line, so I left it unchanged; the lead may want it updated.
+    - `CardView` adds the type, both costs, power, health, printed keywords and rules text for T-0037's screen.
+    - `AssetView.Controller` and `Owner` are `int`, as in the shape.
+- 2026-10-21 lead-architect: Review: **approved**, status `done`.
+  - Scope:
+    - The engineer's commits touch only `pkg/engine/view/` (new), the design note's Boundaries row and Open Question 4, and this file. Package `engine` is unchanged.
+    - Test commit 9fc7032 comes first and failed to build. No `_test.go` change after it.
+    - `docs/PRODUCT_SUMMARY.md` (43da63e) was not the engineer's change. Per board directive #28, the lead reverted it on this branch before merging.
+  - Code:
+    - `view.go` follows the visibility rules: the seat's own hand with instance IDs; counts for the opponent's hand and both decks; public zones; face-down assets through `Printed()` and the layers, so the Scratch face is shown to both seats; no instance IDs on assets or discard cards; deep copies.
+    - `log.go` changes only `match-start` (no seed, the seat's own mulligan names, an opponent count) and `turn-start`, and delegates every other line to `FormatEvent`.
+  - Engineer notes accepted:
+    - Gaps 1 to 6 are recorded for M4/M5.
+    - The lead updated the design note's Boundaries intro ("Six packages", three client packages including `view`), which was outside the engineer's Allowed Files.
+  - Gates re-run by the reviewer:
+    - `go test ./...` passes, cases 1 to 5 included (case 4: 20 starter matches, both seats, 4,594 settled points), and `go tool task check` exits 0.
+    - `cardtown sim` (starter and stress, both policies) is byte-identical to a baseline CLI built from e6981fa.
