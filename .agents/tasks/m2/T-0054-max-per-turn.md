@@ -4,7 +4,7 @@ title: A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rag
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0054-max-per-turn
 depends_on: [T-0050, T-0052]
 claims: [trigger:MaxPerTurn]
@@ -89,3 +89,8 @@ None. The test file defines its own `limited(n, trig)` and `(*scene).hitters(n)`
     - never resets: 4;
     - resets once per round (both players' turns share one allowance): 3.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decisions 1-6; status `review`.
+  - **Reuse:** the gate sits in `fireHook` (`trigger.go`) beside the existing `TurnYours` and deploy-zone gates; no second firing path. `Game.Turn` supplies the turn key. No existing equivalent counter was found in `pkg/engine`.
+  - **Diff:** `ability.Trigger.MaxPerTurn int` with a doc comment (0 = no limit); `Game.firings map[firingKey]int` and `firingKey{asset, trigger, turn}` in `state.go` (created lazily, not in snapshots or events); in `fireHook`, a trigger with `MaxPerTurn > 0` is skipped when its `[asset ID, trigger index, Game.Turn]` count has reached the limit, else the count is incremented as it is buffered (counts firings, so a fizzled clause still uses the allowance). Asset IDs are per visit to the battlefield (FR-ZON-004), so a returning card starts fresh. `doc.go`: HookDamaged, zone targets, `MaxPerTurn` and Unbowed added to "What runs now"; Unbowed removed from "Not built yet", which now says Headquarters abilities stay unbuilt "until T-0055".
+  - **Commands:** the 10-test Done When regex: 10 PASS. `go tool task check`: passes (gofmt, vet, all tests, cardtown lint --all). `go tool task sim`: runs clean. `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` on a detached worktree of 667ed90 (the branch start) vs this tree: `cmp` byte-identical (1746 bytes).
+  - **Reviewer:** the check ordering in `fireHook` runs after the Turn and deploy-zone gates, so a trigger skipped by those never spends allowance.

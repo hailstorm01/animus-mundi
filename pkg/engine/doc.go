@@ -15,11 +15,13 @@
 //   - Ability shapes as plain data in pkg/engine/ability, and card definitions
 //     keyed by card name in pkg/engine/cards. Engine code never names a card
 //     (cardtown lint fences).
-//   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks)
-//     run through a pending-trigger buffer, in APNAP order with cascades
+//   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks,
+//     HookDamaged) run through a pending-trigger buffer, in APNAP order with cascades
 //     (FR-TRG-002 to FR-TRG-004). A trigger may be optional, and its effects
-//     may choose targets ("up to N", "other") that are verified when it is
-//     placed and again when it resolves (FR-TGT-001, FR-TGT-003).
+//     may choose targets ("up to N", "other", a zone) that are verified
+//     when it is placed and again when it resolves (FR-TGT-001, FR-TGT-003). A
+//     trigger may be limited to N firings each turn per asset (Trigger.MaxPerTurn,
+//     FR-TRN-001), and Unbowed (FR-KWD-002a) fires on damage taken.
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001).
 //   - Steps OpScratch, OpDraw, OpReturnToHand, OpPutOnDeck, OpDealDamage,
 //     OpHeal and OpAddArmor, with "all" steps, source-power values, the
@@ -29,9 +31,9 @@
 //     source has left the battlefield.
 //
 // Not built yet:
-//   - Maneuvers, activated and continuous abilities, Headquarters abilities,
-//     Unbowed, Cornered, Heal N, Regroup N, replacement effects beyond the
-//     damage pipeline, and match clocks. Cards whose text needs any of these
+//   - Maneuvers, activated and continuous abilities, Headquarters abilities
+//     (until T-0055), Cornered, Heal N, Regroup N, replacement effects beyond
+//     the damage pipeline, and match clocks. Cards whose text needs any of these
 //     load with Card.Unsupported set and cannot be deployed.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
