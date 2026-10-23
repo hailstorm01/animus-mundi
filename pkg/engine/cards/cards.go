@@ -35,7 +35,6 @@ var NotYetExecutable = []string{
 	"Conversion Spike",
 	"Deafening Aria",
 	"Despoiler's Emergence",
-	"Devilhorn Captain",
 	"Devilhorn Sanction",
 	"Devilhorn Scouting Party",
 	"Disorienting Pulse",

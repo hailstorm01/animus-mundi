@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
@@ -107,3 +107,10 @@ Devilhorn Captain (`cards_path_captain_test.go`, real card):
   - The requested `moveTo` is setup only: `s.g.removeFromBattlefield(a)` then `s.g.placeOnBattlefield(a, z)` keeps the zone lists consistent.
   - **Reviewer check** (a throwaway prototype of decisions 1 and 3 plus `moveTo`, not committed): all 26 pass and so does `go test ./...`. Removing the zone check fails 12. The starter sim exits 0 with no monitor violation: Path rises to 19/50, and the summary line becomes `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%`.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decisions 1 and 3; `doc.go` untouched (decision 5).
+  - Diff: `ability.Filter.Zone ability.Zone` (doc comment in the neighbouring style); `matchesFilter` calls `deployedTo(a, f.Zone)` (reused, `ZoneAny` returns true so existing definitions are unchanged); `pathDefs["Devilhorn Captain"]` = `HookDamaged` trigger, one target `{Zone: ZoneMainTheater}`, `OpDealDamage` 1 on `SubjectTarget` slot 0; name removed from `NotYetExecutable`; `scene.moveTo` in `scenario_test.go` (`removeFromBattlefield` then `placeOnBattlefield`, no assertions). No tests edited.
+  - Reuse search: `deployedTo` (trigger.go), `ability.Zone`, `matchesFilter`, `HookDamaged`, `OpDealDamage`; no new shape beyond the Filter field.
+  - Commands: `go test ./pkg/engine -run 'TestFR_TGT_00|TestFR_KWD_002a|TestFR_TRG_00|TestCard_DevilhornCaptain'` ok; `go tool task check` exit 0 (gofmt, vet, all tests, `cardtown lint --all`); `go tool task sim` clean, no monitor violation.
+  - Sim summary before: `P1 16/50 executable`, `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`.
+  - Sim summary after: `P1 19/50 executable`, `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%` (matches the reviewer's prototype).
+  - Reviewer: the `matchesFilter` doc comment was extended to mention Zone.

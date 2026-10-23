@@ -66,6 +66,7 @@ type Filter struct {
 	Kinds      Kinds      // zero means any asset
 	NonScratch bool       // excludes Scratch Company units
 	Other      bool       // excludes the ability's own source asset ("other")
+	Zone       Zone       // ZoneAny (zero) means any battlefield zone; else only assets in that zone
 }
 
 // Allegiance is whose side an entity is on, relative to the ability's controller.

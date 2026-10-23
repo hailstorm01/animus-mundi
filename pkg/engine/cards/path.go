@@ -35,6 +35,31 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Devilhorn Captain": {
+		Text: []string{"Unbowed: Deal 1 damage to chosen asset in the Main Theater."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDamaged,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Zone: ability.ZoneMainTheater,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Devilhorn Guerrillas": {
 		Text: []string{"When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit."},
 		Triggers: []ability.Trigger{

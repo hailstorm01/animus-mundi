@@ -57,10 +57,13 @@ func (g *Game) legalTarget(ctl PlayerID, src int, f ability.Filter, a *Asset) bo
 
 // matchesFilter reports whether battlefield asset a meets every criterion of f
 // (allegiance relative to ctl, kinds, NonScratch, Other: not the source asset
-// src). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
+// src, Zone: currently in that battlefield zone). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
 // this alone.
 func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
 	if f.Other && a.ID == src {
+		return false
+	}
+	if !deployedTo(a, f.Zone) {
 		return false
 	}
 	switch f.Allegiance {
