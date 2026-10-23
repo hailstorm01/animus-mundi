@@ -4,7 +4,7 @@ title: A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rag
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0054-max-per-turn
 depends_on: [T-0050, T-0052]
 claims: [trigger:MaxPerTurn]
@@ -79,3 +79,13 @@ None. The test file defines its own `limited(n, trig)` and `(*scene).hitters(n)`
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B shape 3), with status `tests` for `rules-test-author`. Checked every waiting directive's trigger first: none has fired (#8: no `deck.go` change; #15: this is a limit, not a turn hook; #20: wave B). Animoceps Rager was picked over Infested Apostle, Chainbreaker Irregulars and Animoceps Shambler because those three each need a ruling (design note Open Question 8). The card task T-0055 follows. Starter-deck cards not yet executable: 28, plus both Headquarters.
 - 2026-10-23 rules-test-author: Wrote 10 tests in `pkg/engine/max_per_turn_test.go` (listed under Tests). The package does not compile until `ability.Trigger` has `MaxPerTurn int` (`go vet` reports only `trig.MaxPerTurn undefined`); that is expected. `cardtown lint rules` passes. Once it compiles, the tests that fail against an engine ignoring the limit are: LimitedTriggerFiresOnce..., LimitOfTwo..., EachAssetHasItsOwnAllowance, AFizzledFiring..., HeadquartersLimitedTriggerFiresOnce...; the other five (unlimited, three reset tests, HQ retaliation) pin behavior a correct limit must keep. Unverified at runtime, since nothing compiles: that a Headquarters may attack (used in the HQ retaliation test, from the task text), and that the fizzle test's mid-resolution removal (`removeFromBattlefield` in the chooser, after the target is picked) fizzles the clause. Left out: Animoceps Rager card tests (T-0055); an asset leaving and returning in the same turn (task: not tested); the doc.go refresh (not testable). No helpers requested.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - 62fd1c7 adds `max_per_turn_test.go` (10 `TestFR_TRN_001_*` tests, local helpers `limited` and `hitters`) and changes no existing test.
+  - Rules content checks out against `FR-TRN-001` line 225 (limits reset every turn, both players') and `FR-REP-004` Stage 5. Each lead decision is pinned: per asset, counts firings even when the clause fizzles, `MaxPerTurn` 0 is unlimited, and Headquarters fire the hook.
+  - The two points the test author could not run both hold: a Headquarters may attack, and test 8's removal inside the chooser works.
+  - **Reviewer check** (a throwaway prototype: `MaxPerTurn` on `Trigger`, a `[asset, trigger, turn]` count on `Game`, checked in `fireHook`; not committed): all 10 pass, and `go test ./...` passes.
+  - **Mutations each fail tests:**
+    - limit ignored: 5;
+    - never resets: 4;
+    - resets once per round (both players' turns share one allowance): 3.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
