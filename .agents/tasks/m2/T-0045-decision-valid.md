@@ -4,7 +4,7 @@ title: Export Decision.Valid and use it in cardtown play's terminal chooser (dir
 kind: harness
 tier: sonnet
 wave: none (board directive #38, structural review 2 cleanup 1 of 5, before the next shape task)
-status: review
+status: done
 branch: m2/T-0045-decision-valid
 depends_on: []
 claims: [func:Decision.Valid]
@@ -70,3 +70,11 @@ Cases 1 and 2 are new tests, committed as `test(T-0045): …` before the impleme
   - Case 4: both `git grep` commands print nothing.
   - Case 5: `go tool task check` exits 0. No existing test changed (play_test.go gained one function and the `bufio` import).
   - Reviewer note: the scripted play feeds `1` to all prompts including y/n; it still completes, so I did not need a separate y answer.
+- 2026-10-22 lead-architect: Review: **approved**, merged as f823737, status `done`.
+  - Scope: 8f9bd5d changes only the status line. 46c4856 adds only `choice_valid_test.go` and one new `play_test.go` function (plus its import). a110aae changes only the two Allowed Files and this file. No test changed after 46c4856.
+  - Design: it matches the Lead decisions. `valid` is renamed to `Valid` with the given comment, and its one caller is updated. The chooser keeps its parse messages, and asks `d.Valid` for the count, range and repeat rules with the specified message. An empty line still returns `Picks: []int{}`.
+  - Gates, re-run in a scratch worktree:
+    - At 46c4856, vet reports `d.Valid undefined`.
+    - At the head, `go tool task check` exits 0.
+    - Against a baseline built from 46c4856 (same non-test code as the integration branch), these are byte-identical (`cmp`): the starter sim under both policies, and a full scripted `play -seat 0 -seed 3` game fed `1` lines (ending `Player 1 won (Headquarters destroyed)`, exit 0).
+  - The lead added the `Decision.Valid` line to ADR-0003's Decision. Board directive #38 is applied, and its priority rule now waits on #39, #41, #42 and #44.

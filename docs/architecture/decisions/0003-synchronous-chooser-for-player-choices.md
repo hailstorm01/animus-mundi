@@ -17,6 +17,7 @@ Use a synchronous `Chooser`, one per seat in `Config`. The kernel builds an expo
 
 - The kernel applies the `FR-MOD-001` fast path itself, so a `Chooser` is never asked a question with one legal answer that inspects no hidden cards.
 - A nil `Chooser`, a "timeout" answer or an invalid answer gets the `FR-MOD-001` §6 fallback. An invalid answer is also logged, and playouts fail on it.
+- What counts as valid is one exported rule, `Decision.Valid(picks)`. A client that collects answers checks with it before returning, so it accepts exactly what the kernel accepts (added 2026-10-22, board directive #38, T-0045).
 - `LegalActions` offers a declaration only if at least one legal completion of its choices exists, so a `Chooser` is never trapped in a declaration it cannot finish.
 - Existing Attack fields (`Target`, `Secondary`) stay on `Action`. New declarations take their choices through the `Chooser`.
 
