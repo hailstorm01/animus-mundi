@@ -78,6 +78,19 @@ func printUsage() {
 	fmt.Println("Run 'cardtown <command> -h' for command-specific flags and options.")
 }
 
+// flagAliases maps alternative spellings to the flag name the commands define.
+// Every other flag name is only lowercased.
+var flagAliases = map[string]string{
+	"reporoot":       "repo-root",
+	"dryrun":         "dry-run",
+	"updateexisting": "update-existing",
+	"showbodies":     "show-bodies",
+	"tddfile":        "tdd-file",
+	"commitmessage":  "msg",
+	"commit-message": "msg",
+	"maxturns":       "max-turns",
+}
+
 func normalizeArgs(args []string) []string {
 	var normalized []string
 	for _, a := range args {
@@ -85,63 +98,8 @@ func normalizeArgs(args []string) []string {
 			parts := strings.SplitN(a, "=", 2)
 			flagName := strings.TrimLeft(parts[0], "-")
 			lower := strings.ToLower(flagName)
-			switch lower {
-			case "all":
-				lower = "all"
-			case "frd":
-				lower = "frd"
-			case "tdd":
-				lower = "tdd"
-			case "cards":
-				lower = "cards"
-			case "sheets":
-				lower = "sheets"
-			case "syntax":
-				lower = "syntax"
-			case "fences":
-				lower = "fences"
-			case "staged":
-				lower = "staged"
-			case "files":
-				lower = "files"
-			case "reporoot", "repo-root":
-				lower = "repo-root"
-			case "dryrun", "dry-run":
-				lower = "dry-run"
-			case "publish":
-				lower = "publish"
-			case "updateexisting", "update-existing":
-				lower = "update-existing"
-			case "showbodies", "show-bodies":
-				lower = "show-bodies"
-			case "tddfile", "tdd-file":
-				lower = "tdd-file"
-			case "source":
-				lower = "source"
-			case "msg", "commitmessage", "commit-message":
-				lower = "msg"
-			case "push":
-				lower = "push"
-			case "section":
-				lower = "section"
-			case "rules":
-				lower = "rules"
-			case "deck":
-				lower = "deck"
-			case "games":
-				lower = "games"
-			case "seed":
-				lower = "seed"
-			case "p0":
-				lower = "p0"
-			case "p1":
-				lower = "p1"
-			case "seat":
-				lower = "seat"
-			case "policy":
-				lower = "policy"
-			case "maxturns", "max-turns":
-				lower = "max-turns"
+			if alias, ok := flagAliases[lower]; ok {
+				lower = alias
 			}
 			newFlag := "--" + lower
 			if len(parts) == 2 {
