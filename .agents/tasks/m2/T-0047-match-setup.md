@@ -4,7 +4,7 @@ title: One match-setup scheme, sim.MatchDecks, sim.SeatSeed and sim.DefaultEndBi
 kind: harness
 tier: sonnet, high effort (user, 2026-10-22)
 wave: none (board directive #41, structural review 2 cleanup 3 of 5, before the next shape task)
-status: ready
+status: in-progress
 branch: m2/T-0047-match-setup
 depends_on: [T-0046]
 claims: [func:sim.MatchDecks, func:sim.SeatSeed, const:sim.DefaultEndBias]
