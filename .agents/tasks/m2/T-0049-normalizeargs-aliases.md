@@ -94,7 +94,6 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #44. It is a harness task, tier flash, and the first one the lead dispatches headless with `agy -p` (Runbook D3, `9dc7737`). Case 1 is a characterization test, so it passes before the change (lead decision 3). T-0048 is done, so the task is `ready` on branch `m2/T-0049-normalizeargs-aliases`.
-<<<<<<< HEAD
 - 2026-10-22 lead-architect: The first headless dispatch (`agy -p`, Runbook D3) **stopped on a denied command**.
   - `agy` 1.4.5 isn't on the session's PATH, so the lead ran it as `%LOCALAPPDATA%\agy\bin\agy.exe`.
   - It exited 0 with `status: SUCCESS`, but `denied_actions: [RunCommand]` after 1 turn (16.9 s); `cli.log` says "soft-denying tool confirmation RunCommand at step 12". Conversation `88b4ff19-2415-4ac1-8efa-48667ff9ca44`.
@@ -105,7 +104,6 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
   - `denied_actions: [RunCommand]` at step 18, after 1 turn (28.2 s). Conversation `7fb20797-27d4-4022-9d2d-b2f8c5cc3858`.
   - None of the seven commands was chained. The one with no allow rule is the read-only `git branch --list m2/T-0049-normalizeargs-aliases`; the only `git branch` rule allows `--show-current`.
   - Nothing reached the branch, and the status is still `ready`. Reported to the user.
-=======
 - 2026-10-22 kernel-engineer: Implemented T-0049.
   - Characterization test `cmd/cardtown/args_test.go` (`TestNormalizeArgs`) written with all 19 table cases and all 35 old switch names uppercase with `=v`. Ran against old code: PASS (`go test -v ./cmd/cardtown`). Committed first as `9f9bc4c`.
   - Replaced 28-case switch in `cmd/cardtown/main.go` with `flagAliases` map (8 alias pairs) directly above `normalizeArgs`.
@@ -115,8 +113,7 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
     - Case 3: `git grep -n -c 'case "' -- cmd/cardtown/main.go` returned 9 (only the 9 command dispatch cases in `main()`, 0 in `normalizeArgs`).
     - Case 4: `go tool task check` passed completely (fmt-check, vet, all tests across all packages, and full lint --all).
   - Committed implementation as `a031d6a`.
->>>>>>> m2/T-0049-normalizeargs-aliases
-- 2026-10-22 lead-architect: Review: **approved**, merged as 15f200e, status `done`. This was the **first headless flash run to complete**: run 3, conversation `66d44b11-2a98-4da3-b6a9-0263c441193f`, 407.9 s, no `denied_actions`.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 8c38251, status `done`. That merge commit is misnamed "T-0049 done (15f200e)" and left this file's log conflict unresolved; the next commit resolves it. This was the **first headless flash run to complete**: run 3, conversation `66d44b11-2a98-4da3-b6a9-0263c441193f`, 407.9 s, no `denied_actions`.
   - Scope:
     - 2f43efe and 9a52065 change only this file.
     - 9f9bc4c adds only `args_test.go`: the 19 specified pairs plus an empty-slice case, and the loop over the old switch's 35 names.
