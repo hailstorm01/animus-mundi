@@ -67,9 +67,16 @@ type SimStats struct {
 type SimOptions struct {
 	DeckNames  [2]string                                   // recorded in each match-start
 	Observer   func(game int, seed uint64) engine.Observer // optional; one observer per game, game counts from 1
-	Policy     func(seed uint64) Policy                    // nil means RandomPolicy(seed, 0.1), today's behavior
+	Policy     func(seed uint64) Policy                    // nil means RandomPolicy(seed, DefaultEndBias), today's behavior
 	NoMonitors bool                                        // true runs without rule monitors; nothing else changes
 }
+
+// SeatSeed is the seed of seat's chooser and policy in the game with seed:
+// seed*2+1 for seat 0 and seed*2+2 for seat 1.
+func SeatSeed(seed uint64, seat engine.PlayerID) uint64 { return seed*2 + 1 + uint64(seat) }
+
+// DefaultEndBias is RandomPolicy's chance of ending the turn when other actions remain.
+const DefaultEndBias = 0.1
 
 // fanout passes every call to its observers in order.
 type fanout []engine.Observer
@@ -101,7 +108,7 @@ func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int
 	for i := range uint64(games) {
 		s := seed + i
 		cfg := engine.Config{Seed: s, Decks: decks, DeckNames: opt.DeckNames,
-			Choosers: [2]engine.Chooser{engine.RandomChooser(s*2 + 1), engine.RandomChooser(s*2 + 2)}}
+			Choosers: [2]engine.Chooser{engine.RandomChooser(SeatSeed(s, 0)), engine.RandomChooser(SeatSeed(s, 1))}}
 		var obs fanout
 		if opt.Observer != nil {
 			obs = append(obs, opt.Observer(int(i)+1, s))
@@ -124,9 +131,9 @@ func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int
 		}
 		pol := opt.Policy
 		if pol == nil {
-			pol = func(seed uint64) Policy { return RandomPolicy(seed, 0.1) }
+			pol = func(seed uint64) Policy { return RandomPolicy(seed, DefaultEndBias) }
 		}
-		res, err := Playout(g, [2]Policy{pol(s*2 + 1), pol(s*2 + 2)}, maxTurns)
+		res, err := Playout(g, [2]Policy{pol(SeatSeed(s, 0)), pol(SeatSeed(s, 1))}, maxTurns)
 		if mon != nil {
 			if v := mon.Violation(); v != nil {
 				return st, v

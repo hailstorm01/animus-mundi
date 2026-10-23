@@ -56,21 +56,10 @@ func runSim(args []string) {
 		fmt.Printf("[ERROR] loading cards: %v\n", err)
 		os.Exit(1)
 	}
-	var decks [2]engine.DeckList
-	if *deck != "" {
-		decksDir := filepath.Join(repoRoot, "data", "decks")
-		decks, err = sim.SimDecks(cards, decksDir, *deck, [2]string{*p0, *p1})
-		if err != nil {
-			fmt.Printf("[ERROR] %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		for i, faction := range []string{*p0, *p1} {
-			if decks[i], err = sim.FactionDeck(cards, faction); err != nil {
-				fmt.Printf("[ERROR] %v\n", err)
-				os.Exit(1)
-			}
-		}
+	decks, deckNames, err := sim.MatchDecks(repoRoot, cards, *deck, [2]string{*p0, *p1})
+	if err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
+		os.Exit(1)
 	}
 
 	var out *os.File
@@ -80,16 +69,9 @@ func runSim(args []string) {
 			os.Exit(1)
 		}
 	}
-	opt := sim.SimOptions{NoMonitors: !*monitors}
+	opt := sim.SimOptions{DeckNames: deckNames, NoMonitors: !*monitors}
 	if *policy == "progress" {
 		opt.Policy = sim.ProgressPolicy
-	}
-	if *deck != "" {
-		for i, f := range []string{*p0, *p1} {
-			opt.DeckNames[i] = sim.DecklistName(f, *deck)
-		}
-	} else {
-		opt.DeckNames = [2]string{sim.StressName(*p0), sim.StressName(*p1)}
 	}
 	var played []*eventCollector // one per game, only when -log or -events asks for events
 	if *logGame || out != nil {

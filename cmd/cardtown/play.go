@@ -59,39 +59,16 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 		return 1
 	}
 
-	var decks [2]engine.DeckList
-	if *deck != "" {
-		decksDir := filepath.Join(repoRoot, "data", "decks")
-		decks, err = sim.SimDecks(cards, decksDir, *deck, [2]string{*p0, *p1})
-		if err != nil {
-			fmt.Fprintf(out, "[ERROR] %v\n", err)
-			return 1
-		}
-	} else {
-		for i, faction := range []string{*p0, *p1} {
-			if decks[i], err = sim.FactionDeck(cards, faction); err != nil {
-				fmt.Fprintf(out, "[ERROR] %v\n", err)
-				return 1
-			}
-		}
-	}
-
-	var deckNames [2]string
-	if *deck != "" {
-		for i, f := range []string{*p0, *p1} {
-			deckNames[i] = sim.DecklistName(f, *deck)
-		}
-	} else {
-		deckNames = [2]string{sim.StressName(*p0), sim.StressName(*p1)}
+	decks, deckNames, err := sim.MatchDecks(repoRoot, cards, *deck, [2]string{*p0, *p1})
+	if err != nil {
+		fmt.Fprintf(out, "[ERROR] %v\n", err)
+		return 1
 	}
 
 	humanSeat := engine.PlayerID(*seat)
 	botSeat := humanSeat.Opponent()
 
-	botSeed := *seed*2 + 1
-	if botSeat == 1 {
-		botSeed = *seed*2 + 2
-	}
+	botSeed := sim.SeatSeed(*seed, botSeat)
 
 	scanner := bufio.NewScanner(in)
 
@@ -127,7 +104,7 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 	if *policy == "progress" {
 		botPolicy = sim.ProgressPolicy(botSeed)
 	} else {
-		botPolicy = sim.RandomPolicy(botSeed, 0.1)
+		botPolicy = sim.RandomPolicy(botSeed, sim.DefaultEndBias)
 	}
 
 	seen := 0

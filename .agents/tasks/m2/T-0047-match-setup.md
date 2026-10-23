@@ -4,7 +4,7 @@ title: One match-setup scheme, sim.MatchDecks, sim.SeatSeed and sim.DefaultEndBi
 kind: harness
 tier: sonnet, high effort (user, 2026-10-22)
 wave: none (board directive #41, structural review 2 cleanup 3 of 5, before the next shape task)
-status: ready
+status: review
 branch: m2/T-0047-match-setup
 depends_on: [T-0046]
 claims: [func:sim.MatchDecks, func:sim.SeatSeed, const:sim.DefaultEndBias]
@@ -86,3 +86,11 @@ Case 1 is new tests in a new `pkg/sim/match_test.go`, committed as `test(T-0047)
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #41. Harness, tier sonnet. **The user asked for Sonnet at high effort** for this task, so the lead dispatches `kernel-engineer` with effort high. T-0046 is done, so the task is `ready` on branch `m2/T-0047-match-setup`.
+- 2026-10-22 kernel-engineer: Implemented in scratch worktree on `m2/T-0047-match-setup`. Commits: `0386429` status in-progress, `c2b26b5` test(T-0047) (case 1, failed to compile before the implementation: `undefined: MatchDecks`, `undefined: SeatSeed`), then the feat commit. Status is now `review`.
+  - **Reuse search:** `SimDecks`, `FactionDeck`, `DecklistName`, `StressName` and `RandomPolicy` already existed in `pkg/sim`; `MatchDecks` only composes them. The test file reuses `deckNames` from `pkg/sim/decknames_test.go`. No engine shape added.
+  - **Diff:** `pkg/sim/decks.go` adds `MatchDecks` (errors unwrapped; names zero on error). `pkg/sim/sim.go` adds `SeatSeed` and `DefaultEndBias`, and `SimulateWith` uses them for both choosers and policies; the `SimOptions.Policy` comment names `DefaultEndBias`. `cmd/cardtown/sim.go` and `play.go` replace the deck-choice and naming blocks with one `sim.MatchDecks` call (`opt.DeckNames` / `deckNames`), and `play.go` uses `sim.SeatSeed(*seed, botSeat)` and `sim.RandomPolicy(botSeed, sim.DefaultEndBias)`. The `sim.DecklistName(*p0, *deck)` summary lines are untouched. No existing test changed.
+  - **Case 1:** `go test ./pkg/sim -run MatchSetup -v`: 1a, 1b, 1c, 1d pass.
+  - **Case 2:** baseline binary built from `ac4ef56` (`go build -o ct47-base.exe ./cmd/cardtown`) before any edit; new binary built from the feat tree. Both run from the same worktree directory; `play` fed 5000 `1` lines. stdout+stderr and exit code compared with `cmp`; all identical: `sim -deck starter -p0 ANIMUS -p1 PATH -policy random` (rc 0, `[PASS]` line), `-policy progress` (rc 0, `[PASS]`), bare `sim` (rc 0, `[PASS]`), `-games 1 -seed 7 -log` (rc 0, 382 lines, `[PASS]`), `play ... -seat 0 -seed 3` (rc 0, ends `Result: Player 1 won (Headquarters destroyed)`, 10526 lines), `play ... -seat 1 -seed 3 -policy random` (rc 0, ends `Result: Player 0 won (Headquarters destroyed)`, 2035 lines), `sim -deck nonexistent ...` and `play -deck nonexistent ...` (rc 1, the one `[ERROR] reading decklist ...animus-nonexistent.txt` line). `sim -games 10 -events <file>`: stdout and rc identical, and the `.jsonl` files (4213 lines) are identical after removing `"revision":…,"modified":…`; raw files differ only in those two fields (the commit hash and `modified`).
+  - **Case 3:** `git grep -n -E '\*2 ?\+ ?[12]\b' -- pkg/sim cmd` matches `SeatSeed` (sim.go:75-76) and the tests' own literal copies (`cmd/cardtown/play_test.go:145`, `pkg/sim/policy_test.go:18,29`), which decision 4 leaves alone. The `0.1` grep (non-test) matches only `sim.go:79`, the `DefaultEndBias` declaration. `git grep -E 'sim\.(SimDecks|FactionDeck|StressName)\(' -- cmd` finds only `cmd/cardtown/play_test.go:138` (a test); no non-test hits.
+  - **Case 4:** `go tool task check` exits 0 (gofmt, vet, all tests, `cardtown lint --all`).
+  - **For the reviewer:** `SeatSeed` is `seed*2 + 1 + uint64(seat)`, which equals the old `botSeed` branch for seats 0 and 1.
