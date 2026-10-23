@@ -4,7 +4,7 @@ title: One hidden-information oracle for the leak tests, in pkg/view/viewtest (d
 kind: harness
 tier: flash
 wave: none (board directive #39, structural review 2 cleanup 2 of 5, before the next shape task)
-status: ready
+status: in-progress
 branch: m2/T-0046-viewtest-oracle
 depends_on: [T-0045]
 claims: [pkg:view/viewtest, func:viewtest.PublicNames, func:viewtest.HiddenNames]
