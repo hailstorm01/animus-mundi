@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
@@ -114,3 +114,10 @@ Devilhorn Captain (`cards_path_captain_test.go`, real card):
   - Sim summary before: `P1 16/50 executable`, `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`.
   - Sim summary after: `P1 19/50 executable`, `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%` (matches the reviewer's prototype).
   - Reviewer: the `matchesFilter` doc comment was extended to mention Zone.
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as b077bc9, status `done`.
+  - Scope: 91c8b22 changes only the four Allowed Files, the requested `moveTo` in `scenario_test.go`, and this file. No test changed after `test(T-0052)` d25ae47. `doc.go` is untouched (decision 5).
+  - Fences: `Filter.Zone` sits in `ability`, the check in `matchesFilter` reuses `deployedTo`, and the Captain is card data only.
+  - Rules fidelity: the zone check is part of `matchesFilter`, so it applies on placement, at re-verification and to `SubjectAll` steps, not only to the tested cases.
+  - Gates, re-run on a preview of the merge: the T-0052 tests pass, and `go tool task check` and `go tool task sim` exit 0. The starter sim matches the pre-check (Path 19/50, P0 46.0%, P1 54.0%) with no monitor violation.
+  - Nit, not blocking: the extended `matchesFilter` doc comment has one over-long line.
+  - Directive #46 applied. Starter-deck cards not yet executable: 28, plus both Headquarters. Still owed: the stale `doc.go` "Not built yet" list (decision 5) goes into the next shape task that touches `engine`.
