@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
