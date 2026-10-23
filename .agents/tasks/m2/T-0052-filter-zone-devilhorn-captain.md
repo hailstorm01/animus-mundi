@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
@@ -100,3 +100,10 @@ Devilhorn Captain (`cards_path_captain_test.go`, real card):
 - 2026-10-23 lead-architect: Wrote the task, `queued` behind T-0051 (serial mode). Split from the Brigands card task because Devilhorn Captain needs the new zone criterion.
 - 2026-10-23 lead-architect: Moved to `tests`. Checked every waiting directive's trigger first (#6, #7, #8, #15 and #20 have not fired). Folded in directive #46 (decision 4) and added the test guidance. Took `doc.go` out of Allowed Files to keep to four non-test files (decision 5). Starter-deck cards not yet executable: 29, plus both Headquarters; expected after: 28.
 - 2026-10-23 rules-test-author: Wrote 26 tests in three new files (listed under Tests; commit d25ae47). The package does not compile today: `ability.Filter` has no `Zone` field (expected, lead decision 1), and `scene.moveTo` is a requested helper. With the zone file set aside, the 4 `SVY-R13` tests pass, as do the Captain's Resistant, zero-power and face-down tests (they only assert that nothing fires); the other 10 Captain tests fail on behavior until the card is built. Left out: "same zone as this source" (lead decision 2) and Animoceps Shambler. `cardtown lint rules` passes.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - d25ae47 adds three files and changes no existing test: `zone_filter_test.go` (9), `unbowed_lethal_test.go` (4, directive #46) and `cards_path_captain_test.go` (13).
+  - Rules content checks out against `FR-TGT-001` (zone, conjunction, untargeted "all"), `FR-TGT-003`, `FR-KWD-002a` and `FR-KWD-002h`. Directive #46 is pinned through what players can observe: one order question for the dying asset's Unbowed and death trigger, APNAP order shown by an empty-deck loss, and a self-heal that fizzles. `LethalUnbowedOfTheNonActivePlayerResolvesBeforeTheActivePlayersDeathTrigger` tells `SVY-R13` apart from the old "before the asset is destroyed" wording.
+  - `wantOptions` ignores order, and `s.card` returns a copy, so the Resistant test's mutation stays local.
+  - The requested `moveTo` is setup only: `s.g.removeFromBattlefield(a)` then `s.g.placeOnBattlefield(a, z)` keeps the zone lists consistent.
+  - **Reviewer check** (a throwaway prototype of decisions 1 and 3 plus `moveTo`, not committed): all 26 pass and so does `go test ./...`. Removing the zone check fails 12. The starter sim exits 0 with no monitor violation: Path rises to 19/50, and the summary line becomes `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%`.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
