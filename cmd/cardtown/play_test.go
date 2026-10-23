@@ -10,6 +10,7 @@ import (
 
 	"animus-mundi/pkg/engine"
 	"animus-mundi/pkg/sim"
+	"animus-mundi/pkg/view/viewtest"
 )
 
 // Tests for T-0037: cardtown play (Acceptance Cases 1 to 4).
@@ -183,45 +184,12 @@ func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 
 	botPolicy := sim.ProgressPolicy(botSeed)
 
-	publicNames := func(g *engine.Game) map[string]bool {
-		pub := map[string]bool{}
-		for _, p := range g.Players {
-			for _, inst := range p.Discard {
-				pub[inst.Card.Name] = true
-			}
-		}
-		for _, a := range g.Assets() {
-			if !a.FaceDown {
-				pub[a.Inst.Card.Name] = true
-			}
-		}
-		for _, it := range g.Stack {
-			if (it.Kind == engine.StackDeploy || it.Kind == engine.StackAbility) && it.Inst != nil {
-				pub[it.Inst.Card.Name] = true
-			}
-		}
-		return pub
-	}
-
-	hiddenNames := func(g *engine.Game, q engine.PlayerID) map[string]bool {
-		hid := map[string]bool{}
-		for _, inst := range append(slices.Clone(g.Players[q].Hand), g.Players[q].Deck...) {
-			hid[inst.Card.Name] = true
-		}
-		for _, a := range g.Assets() {
-			if a.FaceDown && (a.Controller == q || a.Inst.Owner == q) {
-				hid[a.Inst.Card.Name] = true
-			}
-		}
-		return hid
-	}
-
 	screenIdx := 1 // screens[0] is text before first screen, if any
 	// checkText fails for any hidden bot card name in text that is not public
 	// in the current game state.
 	checkText := func(text, part string) {
-		pub := publicNames(g)
-		for name := range hiddenNames(g, botSeat) {
+		pub := viewtest.PublicNames(g)
+		for name := range viewtest.HiddenNames(g, botSeat) {
 			if pub[name] {
 				continue
 			}
