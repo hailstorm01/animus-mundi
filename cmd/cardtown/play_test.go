@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"path/filepath"
 	"slices"
@@ -261,4 +262,34 @@ func TestPlay_Case4_NoHiddenInformation(t *testing.T) {
 		}
 	}
 	checkText(prevTail, "final tail")
+}
+
+// TestTerminalChooserUsesKernelValid is T-0045 Acceptance Case 2: the chooser accepts what Decision.Valid accepts.
+func TestTerminalChooserUsesKernelValid(t *testing.T) {
+	opts := []engine.Option{{Label: "a"}, {Label: "b"}, {Label: "c"}}
+	t.Run("min 2 no repeats", func(t *testing.T) {
+		d := engine.Decision{Kind: engine.DecideTarget, Prompt: "Pick", Options: opts, Min: 2, Max: 2}
+		var out bytes.Buffer
+		scanner := bufio.NewScanner(strings.NewReader("1\n1 1\n1 2\n"))
+		a := terminalChooser(scanner, &out)(nil, d)
+		if !slices.Equal(a.Picks, []int{0, 1}) {
+			t.Errorf("picks = %v, want [0 1]", a.Picks)
+		}
+		const msg = "Invalid choice: pick 2 to 2 option(s), no repeats"
+		if n := strings.Count(out.String(), msg); n != 2 {
+			t.Errorf("%q appears %d times, want 2; output:\n%s", msg, n, out.String())
+		}
+	})
+	t.Run("min 0 empty line", func(t *testing.T) {
+		d := engine.Decision{Kind: engine.DecideTarget, Prompt: "Pick", Options: opts, Min: 0, Max: 2}
+		var out bytes.Buffer
+		scanner := bufio.NewScanner(strings.NewReader("\n"))
+		a := terminalChooser(scanner, &out)(nil, d)
+		if len(a.Picks) != 0 {
+			t.Errorf("picks = %v, want none", a.Picks)
+		}
+		if strings.Contains(out.String(), "Invalid") {
+			t.Errorf("unexpected Invalid line in output:\n%s", out.String())
+		}
+	})
 }
