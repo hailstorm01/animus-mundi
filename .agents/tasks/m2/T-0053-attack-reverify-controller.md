@@ -4,7 +4,7 @@ title: Re-verify an attack's defender against the attacker's current controller 
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0053-attack-reverify
 depends_on: [T-0037]
 claims: [func:resolveAttack defender check]
@@ -64,3 +64,10 @@ Expected today: the first two fail (the defender check compares with the declari
 - `TestFR_KWD_002o_SecondaryChangesSidesDissipates`: combat happens, cleave dissipates. Passes today.
 - `TestFR_TGT_003_TargetThatGainsWardBeforeResolutionIsIllegal`: chosen-target trigger plus an optional trigger whose answer grants Ward after the target is chosen. Passes today.
 - 2026-10-23 rules-test-author: Wrote 5 tests in `pkg/engine/attack_reverify_test.go` (the four named plus the swap case, which FR-CBT-002 Step 3 determines: "opponent of the attacker's current controller"). Mid-stack changes follow lead decision 5 (optional `HookAttacks` draw trigger, test chooser mutates when the "you may" is asked); the helper is local to the test file. Today: AttackerChangesSides and CombatantsSwapSides fail; DefenderChangesSides passes (contrary to the Tests note, a flipped defender equals the declaring player, so the old check fizzles it); the other two pass. Helpers requested: none. Left out: attacker changes sides then leaves the battlefield (last-known controller path), since forcing a death inside the Step 2 chooser would pin setup details, not the rule. `go vet` and `cardtown lint rules` pass.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - 574f441 adds `attack_reverify_test.go` (five tests, the local `midStack` chooser and the `sides` board) and changes no existing test.
+  - Rules content checks out against FRD 01 v3.8 `FR-CBT-002` Step 3 (`SVY-R8`), `KIM-B06` as extended, `FR-KWD-002o`, `FR-TGT-003` and `FR-KWD-002h`. The added `CombatantsSwapSidesStillResolves` is right: after a swap the defender is still opposing to the attacker's current controller.
+  - The test author's correction stands: `DefenderChangesSidesFizzles` passes today, because the flipped defender equals the declaring player. It stays as a guard. Failing today: `AttackerChangesSidesFizzles` and `CombatantsSwapSidesStillResolves`.
+  - Accepted omission: no test pins the last-known-controller branch (attacker changes sides, then leaves). Lead decision 1 still requires it, and the code review checks it in the diff.
+  - **Reviewer check** (a throwaway fix following decision 1, not committed): all five pass, `go test ./...` passes, and the starter sim is byte-identical to the baseline.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
