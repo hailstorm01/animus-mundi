@@ -100,3 +100,7 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
   - The conversation's command lines were `Get-ChildItem .agents/tasks`, `Get-ChildItem .agents/tasks/m2` and `git status; git worktree list`. The last is a chained line, which the whole-line allow-list cannot match.
   - Nothing reached the branch: no commits, and the status is still `ready`.
   - Per D3, the lead doesn't re-dispatch; it is reported to the user.
+- 2026-10-22 lead-architect: Run 2, at the user's request, after `4d60230` (one command per call) **stopped on a different denied command**.
+  - `denied_actions: [RunCommand]` at step 18, after 1 turn (28.2 s). Conversation `7fb20797-27d4-4022-9d2d-b2f8c5cc3858`.
+  - None of the seven commands was chained. The one with no allow rule is the read-only `git branch --list m2/T-0049-normalizeargs-aliases`; the only `git branch` rule allows `--show-current`.
+  - Nothing reached the branch, and the status is still `ready`. Reported to the user.
