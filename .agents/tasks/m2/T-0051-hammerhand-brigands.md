@@ -4,7 +4,7 @@ title: Make Hammerhand Brigands executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: review
 branch: m2/T-0051-hammerhand-brigands
 depends_on: [T-0050]
 claims: [card:Hammerhand Brigands]
@@ -55,20 +55,57 @@ requirements: []
 - No question is ever asked.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written in `pkg/engine/cards_path_test.go` as `TestCard_HammerhandBrigands_<Behavior>`.
+Written in `pkg/engine/cards_path_test.go`. Run with `go test ./pkg/engine -run TestCard_HammerhandBrigands`:
+- `TestCard_HammerhandBrigands_EntersReservesAsTwoOneForOneRequisitionAndDoesNothing`
+- `..._LethalCombatDamageAsDefenderScratchesFromDiscard` (also: no question asked, empty stack, invariants)
+- `..._LethalRetaliationAsAttackerScratchesFromDiscard`
+- `..._ArmorAbsorbingAllDamageStillScratches`
+- `..._SaboteurDamageToAlliedBrigandsInReservesScratches` (real Saboteur, Brigands in Reserves)
+- `..._OpposingGuerrillasDamageScratchesForTheBrigandsController` (real Guerrillas deployed by the opponent)
+- `..._TwoBrigandsHitByOneAllAssetsEffectScratchTwice` (synthetic all-assets 1-damage deploy trigger)
+- `..._OneBrigandsHitByTwoSeparateInstancesScratchesTwice` (Armor keeps it alive)
+- `..._ScratchGoesToTheControllerNotTheOwner` (`putControlled`, survives on Armor)
+- `..._ZeroPowerAttackerDoesNotScratch`
+- `..._DamageReducedToZeroByResistantDoesNotScratch`
+- `..._DamageToAnotherAssetDoesNotScratch`
+- `..._FaceDownCopyFiresNothingWhenDamaged` (FR-ZON-004)
+
+Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-executable card) and the eight firing tests (no Scratch happens). The four negative tests (zero power, Resistant, other asset, face-down copy) pass today and guard against over-firing.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author. Existing helpers include `deployPath`, `colossusCycle`, `wantOptions`, `scriptPlan`, `pick`, `wantDealt` and, in `unbowed_test.go`, `putControlled` and `wantScratches`.
+- None requested. `putBrigands(p, zone, armor)` is a local helper defined in `cards_path_test.go`. Existing helpers used include `deployPath`, `colossusCycle`, `wantOptions`, `scriptPlan`, `pick`, `wantDealt` and, in `unbowed_test.go`, `putControlled` and `wantScratches`.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_HammerhandBrigands'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes, `TestProgress_Case4_Coverage` included
-- [ ] `go tool task sim` runs clean: every invariant holds and the rule monitors report no violation. Path's executable count rises by 3, from 13/50 to 16/50. Report the before and after summary lines in the Log.
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_HammerhandBrigands'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes, `TestProgress_Case4_Coverage` included
+- [x] `go tool task sim` runs clean: every invariant holds and the rule monitors report no violation. Path's executable count rises by 3, from 13/50 to 16/50. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B card task 1), with status `tests` for `rules-test-author`. Devilhorn Captain was split out to T-0052 because it needs a new `Filter` zone criterion. Starter-deck cards not yet executable before this task: 30, plus both Headquarters. Expected after: 29.
+- 2026-10-23 rules-test-author: Wrote 13 `TestCard_HammerhandBrigands_*` tests in `cards_path_test.go` (list under Tests). No helpers requested. Left out: no real Craterfall Ancient (not executable; a synthetic all-assets damage source stands in); no test pins the order of the Unbowed trigger against death triggers in one sweep (open question noted in `unbowed_test.go`); no `TestFR_*` tests since `requirements` is empty. Status set to `tests-review`.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - a1aedf6 adds 13 `TestCard_HammerhandBrigands_*` tests and the local `putBrigands` helper, and changes no existing test.
+  - Rules content checks out against `FR-KWD-002a` (lethal damage resolves from discard, controller at the time of the damage), `FR-REP-004` Stage 5 (Armor-only absorption counts; 0 power and Resistant to 0 do not; once per instance) and `FR-ZON-004` (face-down copy).
+  - Correction to the test author's note: Craterfall Ancient has been executable since T-0031. The synthetic all-assets source is still acceptable, because it isolates the one-trigger-per-asset behavior.
+  - **Reviewer check** (the throwaway definition from the pre-check, not committed): all 13 pass, and so does `go test ./...`.
+  - **Mutations each fail tests:** `HookKilled` instead of `HookDamaged`: 3; `SubjectOpponents`: 8; Scratch 2: 8.
+  - Next: the lead dispatches the flash engineer through `agy` (D3).
+- 2026-10-23 kernel-engineer: Implementation handoff (status `review`):
+  - Diff shows:
+    - `pkg/engine/cards/path.go`: Added ability definition for "Hammerhand Brigands" using existing `ability.HookDamaged` and `ability.OpScratch` with amount 1.
+    - `pkg/engine/cards/cards.go`: Removed "Hammerhand Brigands" from `NotYetExecutable`.
+  - Reused shapes:
+    - `HookDamaged` from T-0050 for Unbowed damage trigger hook.
+    - `OpScratch` with default subject `SubjectController` (0) and `ability.Value{N: 1}`.
+  - Commands and results:
+    - `go test ./pkg/engine -run TestCard_HammerhandBrigands`: all 13 tests PASS.
+    - `go test ./pkg/engine/... -run 'TestDefs_MatchRulesText|TestStarterSet_Executable'`: PASS.
+    - `go tool task check`: PASS (fmt-check, vet, all tests, linter dispatch clean).
+    - `go tool task sim`: clean run, 200 games, all invariants hold, no monitor violations. Path executable count rose from 13/50 to 16/50.
+      - Before: `P0 wins 88.0%  P1 wins 12.0%  draws 0.0%  first player wins 50.0%`, 35.5 turns (13/50 executable)
+      - After: `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`, 34.2 turns (16/50 executable)

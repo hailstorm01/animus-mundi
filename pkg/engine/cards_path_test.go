@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"animus-mundi/pkg/engine/ability"
 )
 
 // Card tests for Path cards. Each is written from the card's CSV rules text in
@@ -1130,4 +1132,227 @@ func TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive(t *tes
 		t.Fatalf("precondition: the Hunt is destroyed by the Hitter")
 	}
 	s.wantDamage(e, 7)
+}
+
+// --- Hammerhand Brigands ---
+// "Unbowed: Scratch 1."  Unit, 1 Requisition, Reserves, 2/1. Unbowed fires when
+// the asset takes damage (FR-KWD-002a, FR-REP-004 Stage 5): Armor absorbed plus
+// Health committed is more than 0. Its Scratch does not act on the dead asset,
+// so a destroyed Brigands still resolves it (FR-KWD-002a second bullet).
+
+// putBrigands places the real card in zone z for player p with the given
+// current Armor (0 for none).
+func (s *scene) putBrigands(p PlayerID, z Zone, armor int) *Asset {
+	s.t.Helper()
+	a := s.put(p, z, s.card("Hammerhand Brigands"))
+	a.Armor = armor
+	return a
+}
+
+// Control: a 2/1 that enters Reserves for 1 Requisition and does nothing on deploy.
+func TestCard_HammerhandBrigands_EntersReservesAsTwoOneForOneRequisitionAndDoesNothing(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	s.script(1)
+	c := deployPath(s, "Hammerhand Brigands", 1)
+	a := assetOf(s.g, c)
+	if a == nil || a.Zone != ZoneReserves {
+		t.Fatalf("Hammerhand Brigands is on the battlefield in Reserves after deploying")
+	}
+	if p := a.Printed(); p.Power != 2 || p.Health != 1 {
+		t.Errorf("Hammerhand Brigands is a 2/1: got %d/%d", p.Power, p.Health)
+	}
+	if s.g.Players[0].Req != 0 {
+		t.Errorf("Hammerhand Brigands costs 1 Requisition: %d left", s.g.Players[0].Req)
+	}
+	s.wantScratches(0, 0, "Unbowed is not a deploy trigger: nothing happens on deploy")
+	if n := len(s.asked(0)) + len(s.asked(1)); n != 0 {
+		t.Errorf("no question is ever asked: asked %d times", n)
+	}
+}
+
+// Covers: FR-ZON-004
+func TestCard_HammerhandBrigands_LethalCombatDamageAsDefenderScratchesFromDiscard(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	s.script(1)
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	def := s.putBrigands(1, ZoneMainTheater, 0)
+	inst := def.Inst
+	s.do(s.attack(att, def))
+	if s.alive(def) || !inZone(s.g.Players[1].Discard, inst) {
+		t.Fatalf("precondition: the 2/1 Brigands is destroyed into its owner's Discard")
+	}
+	s.wantScratches(1, 1, "lethal damage still fires Unbowed and Scratch 1 resolves in full from the discard pile (FR-KWD-002a)")
+	s.wantScratches(0, 0, "the Scratch goes to the Brigands' controller, not the opponent (FR-TRG-001)")
+	if n := len(s.asked(0)) + len(s.asked(1)); n != 0 {
+		t.Errorf("no question is ever asked: asked %d times", n)
+	}
+	if len(s.g.Stack) != 0 {
+		t.Errorf("the stack is empty once the trigger resolves: %d items", len(s.g.Stack))
+	}
+	if err := s.g.CheckInvariants(); err != nil {
+		t.Errorf("state after the Scratch: %v", err)
+	}
+}
+
+// Covers: FR-ZON-004, FR-CBT-002
+func TestCard_HammerhandBrigands_LethalRetaliationAsAttackerScratchesFromDiscard(t *testing.T) {
+	s := newScene(t)
+	att := s.putBrigands(0, ZoneMainTheater, 0)
+	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{}))
+	inst := att.Inst
+	s.do(s.attack(att, def))
+	if s.alive(att) || !inZone(s.g.Players[0].Discard, inst) {
+		t.Fatalf("precondition: the attacking Brigands takes 2 retaliation on 1 Health and is destroyed")
+	}
+	s.wantScratches(0, 1, "retaliation is damage taken: Unbowed fires for the attacker and Scratches 1 (FR-REP-004 Stage 5)")
+	s.wantScratches(1, 0, "the defender's controller does not Scratch")
+}
+
+// Covers: FR-REP-004
+func TestCard_HammerhandBrigands_ArmorAbsorbingAllDamageStillScratches(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	def := s.putBrigands(1, ZoneMainTheater, 3)
+	s.do(s.attack(att, def))
+	if !s.alive(def) {
+		t.Fatalf("precondition: Armor 3 absorbs all 2 damage and the Brigands survives")
+	}
+	s.wantDamage(def, 0)
+	s.wantScratches(1, 1, "damage absorbed entirely by Armor still counts as taken (FR-REP-004 Stage 5)")
+}
+
+// Covers: FR-TGT-001, FR-REP-004
+func TestCard_HammerhandBrigands_SaboteurDamageToAlliedBrigandsInReservesScratches(t *testing.T) {
+	s := newScene(t)
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	b := s.putBrigands(0, ZoneReserves, 0)
+	inst := b.Inst
+	s.scriptRefs(0, nil, e1, b)
+	deploySaboteur(s)
+	if s.alive(b) || !inZone(s.g.Players[0].Discard, inst) {
+		t.Fatalf("precondition: Saboteur's 1 damage destroys the allied 2/1 Brigands in Reserves")
+	}
+	s.wantScratches(0, 1, "non-combat damage to a Brigands in Reserves fires Unbowed for its controller (FR-KWD-002a)")
+	s.wantScratches(1, 0, "the opponent does not Scratch")
+}
+
+// Covers: FR-TGT-001, FR-REP-004
+func TestCard_HammerhandBrigands_OpposingGuerrillasDamageScratchesForTheBrigandsController(t *testing.T) {
+	s := newScene(t)
+	b := s.putBrigands(1, ZoneMainTheater, 0)
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	s.scriptRefs(0, nil, b)
+	deployGuerrillas(s, ZoneMainTheater)
+	if s.alive(b) {
+		t.Fatalf("precondition: 2 damage destroys the 2/1 Brigands")
+	}
+	s.wantScratches(1, 1, "the opponent's deploy damage fires the Brigands' Unbowed for its controller (FR-KWD-002a)")
+	s.wantScratches(0, 0, "the deploying player does not Scratch")
+}
+
+// Covers: FR-REP-004, FR-TRG-004
+func TestCard_HammerhandBrigands_TwoBrigandsHitByOneAllAssetsEffectScratchTwice(t *testing.T) {
+	s := newScene(t)
+	s.putBrigands(1, ZoneMainTheater, 0)
+	s.putBrigands(1, ZoneReserves, 0)
+	s.deployFromHand(0, trigUnit("Cataclysm", targetTrigger(nil, allDamage(1, ability.Filter{}))))
+	s.wantScratches(1, 2, "each Brigands took damage in the one effect, so each fires its own Unbowed: 2 Scratches (FR-KWD-002a)")
+	s.wantScratches(0, 0, "player 0 has no Unbowed asset")
+	if len(s.g.Stack) != 0 {
+		t.Errorf("the stack is empty once both triggers resolve: %d items", len(s.g.Stack))
+	}
+}
+
+// Covers: FR-REP-004
+func TestCard_HammerhandBrigands_OneBrigandsHitByTwoSeparateInstancesScratchesTwice(t *testing.T) {
+	s := newScene(t)
+	a1 := s.put(0, ZoneMainTheater, unit("Hitter One", 1, 9, Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Hitter Two", 1, 9, Keywords{}))
+	def := s.putBrigands(1, ZoneMainTheater, 5)
+	s.do(s.attack(a1, def))
+	s.wantScratches(1, 1, "the first damage instance fires Unbowed once")
+	s.do(s.attack(a2, def))
+	if !s.alive(def) {
+		t.Fatalf("precondition: Armor keeps the Brigands alive through both hits")
+	}
+	s.wantScratches(1, 2, "a second, separate damage instance fires Unbowed again (FR-KWD-002a)")
+}
+
+// Covers: FR-ZON-004
+func TestCard_HammerhandBrigands_ScratchGoesToTheControllerNotTheOwner(t *testing.T) {
+	s := newScene(t)
+	s.endTurn() // player 1 is active
+	att := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	// Owned by player 1, controlled by player 0, with Armor so it survives.
+	def := s.putControlled(1, 0, s.card("Hammerhand Brigands"))
+	def.Armor = 2
+	s.do(s.attack(att, def))
+	if !s.alive(def) {
+		t.Fatalf("precondition: Armor 2 absorbs the 1 damage and the captured Brigands survives")
+	}
+	s.wantScratches(0, 1, "the trigger belongs to the asset's controller at the time of the damage, player 0 (FR-ZON-004)")
+	s.wantScratches(1, 0, "the card's owner is not the trigger's controller")
+}
+
+// Covers: FR-REP-004
+func TestCard_HammerhandBrigands_ZeroPowerAttackerDoesNotScratch(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, Keywords{}))
+	def := s.putBrigands(1, ZoneMainTheater, 0)
+	s.do(s.attack(att, def))
+	s.wantDamage(def, 0)
+	s.wantScratches(1, 0, "0 damage commits and absorbs nothing, so nothing is taken (FR-REP-004 Stage 5)")
+}
+
+// Covers: FR-REP-004, FR-KWD-002b
+func TestCard_HammerhandBrigands_DamageReducedToZeroByResistantDoesNotScratch(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	c := s.card("Hammerhand Brigands")
+	c.Keywords.Resistant = 2
+	def := s.put(1, ZoneMainTheater, c)
+	s.do(s.attack(att, def))
+	s.wantDamage(def, 0)
+	s.wantScratches(1, 0, "2 damage less Resistant 2 is 0 at Stage 2, so no damage is taken (FR-REP-004 Stage 5)")
+}
+
+func TestCard_HammerhandBrigands_DamageToAnotherAssetDoesNotScratch(t *testing.T) {
+	s := newScene(t)
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
+	s.putBrigands(1, ZoneMainTheater, 0)
+	s.do(s.attack(att, def))
+	s.wantScratches(1, 0, "Unbowed fires for damage to the Brigands itself only (FR-KWD-002a)")
+}
+
+// Covers: FR-ZON-004
+func TestCard_HammerhandBrigands_FaceDownCopyFiresNothingWhenDamaged(t *testing.T) {
+	s := newScene(t)
+	p := s.g.Players[0]
+	top := s.onTop(0, s.card("Hammerhand Brigands"))
+	s.script(0)
+	s.do(Action{Kind: ActScratch, Player: 0, Asset: p.HQ.ID})
+	var sc *Asset
+	for _, a := range p.Reserves {
+		if a.Inst == top[0] {
+			sc = a
+		}
+	}
+	if sc == nil || !sc.FaceDown {
+		t.Fatalf("precondition: the Brigands on top of the deck became a face-down Scratch Company")
+	}
+	// Ready it over a round, march it to the Main Theater, then have the opponent kill it.
+	s.endTurn()
+	s.endTurn()
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sc.ID})
+	s.endTurn()
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	s.do(s.attack(hit, sc))
+	if s.alive(sc) {
+		t.Fatalf("precondition: the face-down Scratch Company is destroyed")
+	}
+	s.wantScratches(0, 0, "a face-down Scratch Company has no printed abilities, so Unbowed does not fire (FR-ZON-004)")
 }
