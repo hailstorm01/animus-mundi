@@ -1,4 +1,4 @@
-# Game Rules - Functional Requirements Document (Master FRD v3.9)
+# Game Rules - Functional Requirements Document (Master FRD v3.10)
 **Authoritative Game Rules, Card Taxonomy, Zone Topology, Turn Structure & Keyword Dictionary**
 
 ---
@@ -13,6 +13,9 @@ To maintain strict separation of concerns across the specification suite:
 3. **Card Compiler (`03_Card_Compiler_FRD.md`)**: Translates authoring CSVs and rules text into compiled `blueprints.json` AST payloads.
 4. **Client-Engine Protocol & Networking (`04_Client_Engine_Protocol_Networking_FRD.md`)**: Defines the WebSocket/Protobuf wire protocol, session handshakes, fog-of-war serialization, and `.rec` replay format.
 5. **Headless Game Engine (`05_Headless_Game_Engine_FRD.md`)**: Specifies *how* the deterministic Go match kernel models entities in memory (`FR-ENT-001`–`FR-ENT-003`, `FR-SNP-101`) and executes the rules of `01` using the AST components of `02`.
+
+### Revision Summary (v3.9 -> v3.10): Lethal Unbowed Is Placed After the Death Sweep (2026-10-23)
+1. **Lethal Unbowed Is Placed After the Death Sweep (`SVY-R13`; `FR-KWD-002a`, `FR-TRG-004`)**: damage from any source, combat or non-combat, triggers Unbowed, even if the asset is destroyed by it. The trigger is buffered like any other and placed after the death sweep, in the same APNAP window (`FR-TRG-003`) as any death triggers from the same event. This replaces the earlier wording that the trigger was placed "before the asset is destroyed", which conflicted with `FR-TRG-004`. What resolves or fizzles from the discard pile is unchanged.
 
 ### Revision Summary (v3.8 -> v3.9): Optional Triggers, Source Power and Distinct "Up To" Targets (2026-10-21)
 Rulings made by the user on 2026-10-21 for *Craterfall Ancient* and *Necropolis Hunt*, already pinned by the kernel's scenario tests:
@@ -502,7 +505,7 @@ Every declared combat attack resolves on the LIFO Resolution Stack (`FR-QUE-001`
 
 ## APPENDIX A: KEYWORD MECHANICS DICTIONARY
 
-- **FR-KWD-002a: Unbowed**: Triggered ability (`"Unbowed: [Effect]."`). Triggers whenever this asset takes actual damage (`(armorAbsorbed + healthDamageCommitted) > 0` in `FR-REP-004`). If incoming damage is reduced to `0` in Stage 2 (**Resistant**), Unbowed does not trigger. If an asset with Unbowed takes lethal damage, its Unbowed ability still triggers and enqueues onto the Resolution Stack before the asset is destroyed. When that Unbowed trigger resolves after the asset has been destroyed:
+- **FR-KWD-002a: Unbowed**: Triggered ability (`"Unbowed: [Effect]."`). Triggers whenever this asset takes actual damage (`(armorAbsorbed + healthDamageCommitted) > 0` in `FR-REP-004`). If incoming damage is reduced to `0` in Stage 2 (**Resistant**), Unbowed does not trigger. If an asset with Unbowed takes lethal damage, its Unbowed ability still triggers, even if the asset is destroyed. Like any trigger, it is placed after the death sweep (`FR-TRG-004`), together with any death triggers from the same event (`FR-TRG-003`). When that Unbowed trigger resolves after the asset has been destroyed:
   - Effect clauses that do **not** mutate the destroyed asset itself (e.g., *Hammerhand Brigands* `Scratch 1`, *Devilhorn Captain* `Deal 1 damage to chosen asset in the Main Theater`, *Chainbreaker Irregulars* `Draw a card, then discard a card`) resolve completely from the discard pile.
   - Effect clauses that attempt to heal or modify the destroyed asset itself (e.g., *Macabre Dancers* `Heal 2`, *Allshan, Chainbreaker Revenant* `This unit gains 2 armor`) fizzle because the asset is no longer on the battlefield (`FR-TGT-003`, `FR-ZON-004`).
 - **FR-KWD-002b: Resistant N**: Static damage replacement ability (`FR-REP-004` Stage 2). Reduces each discrete instance of incoming combat or non-combat damage dealt to this asset by $N$ (to a minimum of `0` for positive $N$). If $N$ is negative (`Resistant -1`), it amplifies each incoming damage instance by $|N|$ (even amplifying `0` raw damage to $|N|$).
