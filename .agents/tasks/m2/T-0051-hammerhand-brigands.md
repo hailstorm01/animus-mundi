@@ -4,7 +4,7 @@ title: Make Hammerhand Brigands executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0051-hammerhand-brigands
 depends_on: [T-0050]
 claims: [card:Hammerhand Brigands]
@@ -62,7 +62,7 @@ Written in `pkg/engine/cards_path_test.go`. Run with `go test ./pkg/engine -run 
 - `..._ArmorAbsorbingAllDamageStillScratches`
 - `..._SaboteurDamageToAlliedBrigandsInReservesScratches` (real Saboteur, Brigands in Reserves)
 - `..._OpposingGuerrillasDamageScratchesForTheBrigandsController` (real Guerrillas deployed by the opponent)
-- `..._TwoBrigandsHitByOneAllAssetsEffectScratchTwice` (synthetic all-assets 1-damage deploy trigger; Craterfall Ancient is not executable yet)
+- `..._TwoBrigandsHitByOneAllAssetsEffectScratchTwice` (synthetic all-assets 1-damage deploy trigger)
 - `..._OneBrigandsHitByTwoSeparateInstancesScratchesTwice` (Armor keeps it alive)
 - `..._ScratchGoesToTheControllerNotTheOwner` (`putControlled`, survives on Armor)
 - `..._ZeroPowerAttackerDoesNotScratch`
@@ -88,3 +88,10 @@ Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-execut
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B card task 1), with status `tests` for `rules-test-author`. Devilhorn Captain was split out to T-0052 because it needs a new `Filter` zone criterion. Starter-deck cards not yet executable before this task: 30, plus both Headquarters. Expected after: 29.
 - 2026-10-23 rules-test-author: Wrote 13 `TestCard_HammerhandBrigands_*` tests in `cards_path_test.go` (list under Tests). No helpers requested. Left out: no real Craterfall Ancient (not executable; a synthetic all-assets damage source stands in); no test pins the order of the Unbowed trigger against death triggers in one sweep (open question noted in `unbowed_test.go`); no `TestFR_*` tests since `requirements` is empty. Status set to `tests-review`.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - a1aedf6 adds 13 `TestCard_HammerhandBrigands_*` tests and the local `putBrigands` helper, and changes no existing test.
+  - Rules content checks out against `FR-KWD-002a` (lethal damage resolves from discard, controller at the time of the damage), `FR-REP-004` Stage 5 (Armor-only absorption counts; 0 power and Resistant to 0 do not; once per instance) and `FR-ZON-004` (face-down copy).
+  - Correction to the test author's note: Craterfall Ancient has been executable since T-0031. The synthetic all-assets source is still acceptable, because it isolates the one-trigger-per-asset behavior.
+  - **Reviewer check** (the throwaway definition from the pre-check, not committed): all 13 pass, and so does `go test ./...`.
+  - **Mutations each fail tests:** `HookKilled` instead of `HookDamaged`: 3; `SubjectOpponents`: 8; Scratch 2: 8.
+  - Next: the lead dispatches the flash engineer through `agy` (D3).
