@@ -110,6 +110,8 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0051 | Make Hammerhand Brigands executable (wave B card, flash) | done |
 | T-0052 | A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devilhorn Captain (wave B shape 2, sonnet) | done |
 | T-0053 | Re-verify an attack's defender against the attacker's current controller (SVY-R8, directive #29, shape, sonnet) | done |
+| T-0054 | A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rager (wave B shape 3, sonnet) | tests |
+| T-0055 | Make Animoceps Rager executable, the first Headquarters ability (wave B card, flash) | queued |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
