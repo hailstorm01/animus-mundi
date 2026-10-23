@@ -4,7 +4,7 @@ title: Re-verify an attack's defender against the attacker's current controller 
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0053-attack-reverify
 depends_on: [T-0037]
 claims: [func:resolveAttack defender check]
