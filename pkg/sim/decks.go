@@ -44,3 +44,30 @@ func SimDecks(cards map[string]*engine.Card, decksDir, name string, factions [2]
 	}
 	return decks, nil
 }
+
+// MatchDecks returns the two seats' decks and their recorded names: with deck,
+// the validated decklists data/decks/<faction>-<deck>.txt named by DecklistName;
+// without it, each faction's stress deck named by StressName.
+func MatchDecks(repoRoot string, cards map[string]*engine.Card, deck string, factions [2]string) ([2]engine.DeckList, [2]string, error) {
+	var names [2]string
+	if deck != "" {
+		decks, err := SimDecks(cards, filepath.Join(repoRoot, "data", "decks"), deck, factions)
+		if err != nil {
+			return decks, names, err
+		}
+		for i, f := range factions {
+			names[i] = DecklistName(f, deck)
+		}
+		return decks, names, nil
+	}
+	var decks [2]engine.DeckList
+	for i, f := range factions {
+		d, err := FactionDeck(cards, f)
+		if err != nil {
+			return decks, [2]string{}, err
+		}
+		decks[i] = d
+		names[i] = StressName(f)
+	}
+	return decks, names, nil
+}
