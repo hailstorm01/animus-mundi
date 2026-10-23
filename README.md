@@ -29,13 +29,15 @@ cardtown sim -deck starter -p0 ANIMUS -p1 PATH -games 500      # playouts on rea
 cardtown sim -deck starter -p0 ANIMUS -p1 PATH -log -games 1 -seed 7   # one game, readable events
 cardtown sim -deck starter -p0 ANIMUS -p1 PATH -events out.jsonl      # every game's events as JSON Lines
 cardtown replay -events out.jsonl -game 3 -at 120              # rebuild game 3 and print its state at event 120
+cardtown play -deck starter -p0 ANIMUS -p1 PATH                # play a match against the bot (go tool task play)
 cardtown lint --all                                            # every linter
 ```
 
 - **`sim`** plays matches between two seat policies: `-policy progress` (the default) or `random`. Without `-deck` it builds stress decks from each faction's executable cards. Every game is checked for termination, engine invariants and **rule monitors**. A monitor checks one FRD 01 rule against every event and prints a coverage table of how often each rule was exercised. The same seed always gives byte-identical output.
 - **`-events`** writes the structured event stream: a match-start record (seed, decks, Headquarters, mulligans, engine build), every event and player decision, a full snapshot at each turn start, and a match-end record. Match metrics will be built as queries over these files.
 - **`replay`** rebuilds a recorded game deterministically to any event. It refuses a file recorded at a different git revision, warns when either side has uncommitted changes, and reports the first event where the replay diverges from the record.
-- **`lint`** checks FRD cross-references, rules traceability (`TestFR_*` tests against FRD 01 requirements), TDDs, card CSVs, rules-text terminology and engine fences (no card names in engine code).
+- **`play`** is a text-mode match against a sim policy. The screen and the event log come only from one seat's view (`pkg/view`), so the human never sees the bot's hand, its deck or a face-down card. Actions and decision options are numbered picks; `q` quits. Cards the kernel cannot run yet are marked `[not executable yet]`.
+- **`lint`** checks FRD cross-references, rules traceability (`TestFR_*` tests against FRD 01 requirements), TDDs, card CSVs, rules-text terminology and package fences (no card names in package code, and import direction between packages).
 - `hook`, `audit`, `tdd` and `whats-up` support the docs workflow. Run `cardtown <command> -h` for flags.
 
 ## How the Rules Are Built

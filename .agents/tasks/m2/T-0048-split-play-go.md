@@ -4,7 +4,7 @@ title: Split cmd/cardtown/play.go into the loop, the screen and input (directive
 kind: harness
 tier: flash
 wave: none (board directive #42, structural review 2 cleanup 4 of 5, before the next shape task)
-status: in-progress
+status: review
 branch: m2/T-0048-split-play-go
 depends_on: [T-0047]
 claims: [file:cmd/cardtown/play.go, file:cmd/cardtown/play_screen.go, file:cmd/cardtown/play_input.go]
@@ -69,9 +69,30 @@ This is a pure move: the size rule is met by cases 1–3, as in T-0035.
 - `README.md` (the three README edits only)
 
 ## Done When
-- [ ] Cases 1–5 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Cases 1–5 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #42. It is a harness task, tier flash, a pure move like T-0035. The README edits fold in two pieces of drift: the CLI section lacked `play`, and still called the fence "engine fences" after T-0038 widened it. T-0047 is done, so the task is `ready` on branch `m2/T-0048-split-play-go`.
   - Next: **the user runs `@kernel-engineer T-0048` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-22 kernel-engineer: Pure move done. Baseline CLI `cardtown-base.exe` built from `rework/executable-rules` (9dc7737) before edits. Status set to `in-progress` in bc93ba9.
+  - Split: `cmd/cardtown/play.go` retains only `runPlay` (flags, setup, loop). Screen functions (`printScreen`, `formatAsset`, `actionLabel`) moved to `cmd/cardtown/play_screen.go`. Input prompt and chooser (`errQuit`, `promptAction`, `terminalChooser`) moved to `cmd/cardtown/play_input.go`. File headers and imports added per target layout; unused imports (`strconv`, `strings`) removed from `play.go`.
+  - README: added `cardtown play` command to CLI code block and bullet list; updated `lint` bullet from `engine fences` to `package fences`.
+  - Case 1 (Declarations): sorted output of `git grep -h -E '^(func|type|var|const) ' -- 'cmd/cardtown/*.go' ':!cmd/cardtown/*_test.go'` is identical before and after edit (22 declarations, Compare-Object empty).
+  - Case 2 (Placement): `git grep -n -E '^(func|var) ' -- cmd/cardtown/play.go cmd/cardtown/play_screen.go cmd/cardtown/play_input.go` matches target layout exactly:
+    - `cmd/cardtown/play.go:18:func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {`
+    - `cmd/cardtown/play_input.go:16:var errQuit = errors.New("quit")`
+    - `cmd/cardtown/play_input.go:18:func promptAction(scanner *bufio.Scanner, out io.Writer, legal []engine.Action) engine.Action {`
+    - `cmd/cardtown/play_input.go:41:func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {`
+    - `cmd/cardtown/play_screen.go:14:func printScreen(out io.Writer, v view.View, newLogs []string) {`
+    - `cmd/cardtown/play_screen.go:93:func formatAsset(a view.AssetView) string {`
+    - `cmd/cardtown/play_screen.go:112:func actionLabel(v view.View, a engine.Action) string {`
+  - Case 3 (Only moves): `git diff` shows only moved declaration blocks, the new headers, package lines, import blocks, and blank lines.
+  - Case 4 (Tests unchanged): `cmd/cardtown/play_test.go` has zero diff; `go test -v ./cmd/cardtown` passes.
+  - Case 5 (Outputs unchanged): byte-identical stdout+stderr (`cmp` exit code 0) and identical exit codes between baseline and new binary for:
+    - `cardtown play -deck starter -p0 ANIMUS -p1 PATH -seat 0 -seed 3` fed 5000 `1` lines (exit code 0).
+    - `cardtown play -deck starter -p0 ANIMUS -p1 PATH -seat 1 -seed 3 -policy random` fed 5000 `1` lines (exit code 0).
+    - `cardtown play -h` (exit code 0).
+    - `cardtown` with no arguments (exit code 1).
+  - Case 6: `go tool task check` passes cleanly (fmt-check, vet, all tests across all packages, and cardtown lint --all with zero errors/warnings).
+  - Status set to `review`.
