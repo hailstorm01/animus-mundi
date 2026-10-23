@@ -4,7 +4,7 @@ title: Re-verify an attack's defender against the attacker's current controller 
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0053-attack-reverify
 depends_on: [T-0037]
 claims: [func:resolveAttack defender check]
@@ -76,3 +76,9 @@ Expected today: the first two fail (the defender check compares with the declari
   - `go tool task check`: exit 0. `go tool task sim`: exit 0.
   - Baseline `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (9ae7b97 plus status commit) vs after the change: `cmp` byte-identical.
   - Reviewer: the last-known-controller branch has no test (accepted omission). The check uses `g.Asset(...) != nil` (on the battlefield), not `inCombatZone`.
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as d5a2430, status `done`.
+  - Scope: 3e4ec8b changes only `combat.go` and this file; `attack_reverify_test.go` is unchanged since 574f441.
+  - Rules fidelity: the defender check uses the attacker's current controller, else its last-known controller (decision 1, checked in the diff since no test pins that branch). The directive #29 comment is gone.
+  - Gates, re-run on a preview of the merge: the T-0053 tests pass; `go tool task check` and `go tool task sim` exit 0; the starter sim is byte-identical to the integration branch before the merge, with no monitor violation.
+  - Minor, not blocking: the fizzle event's message still says "the defender is gone" when the defender changed sides. Reword it when a control-changing card first lands.
+  - Directive #29 applied. Next: T-0052.
