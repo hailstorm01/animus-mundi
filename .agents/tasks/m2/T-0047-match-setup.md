@@ -4,7 +4,7 @@ title: One match-setup scheme, sim.MatchDecks, sim.SeatSeed and sim.DefaultEndBi
 kind: harness
 tier: sonnet, high effort (user, 2026-10-22)
 wave: none (board directive #41, structural review 2 cleanup 3 of 5, before the next shape task)
-status: review
+status: done
 branch: m2/T-0047-match-setup
 depends_on: [T-0046]
 claims: [func:sim.MatchDecks, func:sim.SeatSeed, const:sim.DefaultEndBias]
@@ -94,3 +94,11 @@ Case 1 is new tests in a new `pkg/sim/match_test.go`, committed as `test(T-0047)
   - **Case 3:** `git grep -n -E '\*2 ?\+ ?[12]\b' -- pkg/sim cmd` matches `SeatSeed` (sim.go:75-76) and the tests' own literal copies (`cmd/cardtown/play_test.go:145`, `pkg/sim/policy_test.go:18,29`), which decision 4 leaves alone. The `0.1` grep (non-test) matches only `sim.go:79`, the `DefaultEndBias` declaration. `git grep -E 'sim\.(SimDecks|FactionDeck|StressName)\(' -- cmd` finds only `cmd/cardtown/play_test.go:138` (a test); no non-test hits.
   - **Case 4:** `go tool task check` exits 0 (gofmt, vet, all tests, `cardtown lint --all`).
   - **For the reviewer:** `SeatSeed` is `seed*2 + 1 + uint64(seat)`, which equals the old `botSeed` branch for seats 0 and 1.
+- 2026-10-22 lead-architect: Review: **approved**, merged as cb46eb0, status `done`.
+  - Scope: 0386429 changes only the status line, and c2b26b5 adds only `match_test.go`. 9f98029 changes only the four Allowed Files and this file, and no test changed after c2b26b5.
+  - Design: it matches the Lead decisions. `MatchDecks` replaces both commands' deck blocks, with unwrapped errors. `SeatSeed` and `DefaultEndBias` replace every non-test literal. The seed-scheme matches left in `play_test.go` and `policy_test.go` are tests' own copies, which decision 4 keeps.
+  - Gates, re-run in a scratch worktree:
+    - At c2b26b5, vet fails on the undefined names.
+    - At the head, `go tool task check` exits 0.
+    - Against a baseline built from c2b26b5 (same non-test code as the integration branch), stdout+stderr and exit code are byte-identical (`cmp`) for: the starter sim under both policies, bare sim, `-games 1 -seed 7 -log`, `play` with the bot at seat 1 (progress) and at seat 0 (random), a stress-deck `play` that exercises `MatchDecks`'s other branch, and `sim -deck nonexistent` (exit 1).
+  - Board directive #41 is complete.
