@@ -224,3 +224,4 @@ After merge, the lead asks the user to play one match by hand (Deliverable 5's d
   - `play.go` is unchanged since round 2. Case 5's grep finds nothing, and `go tool task check` exits 0 in a scratch worktree.
   - Board directive #24 is complete. Case (a) is held by `play.go` (case 5) and case (b) by T-0036. The design note's Hidden information item already points at the view.
   - Deliverable 5's done-when needs the user: one match played by hand (`go tool task play`).
+- 2026-10-22 lead-architect: **Deliverable 5 is done.** The user played a match by hand with `go tool task play` (Animus vs Path starter decks) and reported "shockingly smooth run". At the time, 30 of the 44 distinct starter-deck cards were still on `cards.NotYetExecutable` (board directive #14 (e)). The user asked for a structural review before card work resumes.
