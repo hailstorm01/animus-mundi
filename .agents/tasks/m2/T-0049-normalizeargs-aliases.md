@@ -94,3 +94,9 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #44. It is a harness task, tier flash, and the first one the lead dispatches headless with `agy -p` (Runbook D3, `9dc7737`). Case 1 is a characterization test, so it passes before the change (lead decision 3). T-0048 is done, so the task is `ready` on branch `m2/T-0049-normalizeargs-aliases`.
+- 2026-10-22 lead-architect: The first headless dispatch (`agy -p`, Runbook D3) **stopped on a denied command**.
+  - `agy` 1.4.5 isn't on the session's PATH, so the lead ran it as `%LOCALAPPDATA%\agy\bin\agy.exe`.
+  - It exited 0 with `status: SUCCESS`, but `denied_actions: [RunCommand]` after 1 turn (16.9 s); `cli.log` says "soft-denying tool confirmation RunCommand at step 12". Conversation `88b4ff19-2415-4ac1-8efa-48667ff9ca44`.
+  - The conversation's command lines were `Get-ChildItem .agents/tasks`, `Get-ChildItem .agents/tasks/m2` and `git status; git worktree list`. The last is a chained line, which the whole-line allow-list cannot match.
+  - Nothing reached the branch: no commits, and the status is still `ready`.
+  - Per D3, the lead doesn't re-dispatch; it is reported to the user.
