@@ -298,7 +298,16 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 2. Create `.agents/tasks/<milestone>/BOARD.md` with four things: the integration branch, the mode (`serial` or `parallel`), a `Directives for the Lead` table (`# | Directive | Source | Status`) where the user and reviews leave instructions, and one line per task (`id | title | status`). Task files remain the source of truth; the board is an index.
 
 #### D2. Writing tasks (avoid duplicate work)
-0. **Directives first:** read the `Directives for the Lead` table in `BOARD.md`. Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit. A directive with status `waiting: <trigger>` is applied only when its trigger happens. Check the waiting ones whenever the mode or milestone changes. If a directive conflicts with the design note or FRD 01, stop and ask the user.
+0. **Directives first:** at the start of every build-loop prompt, read the `Directives for the Lead` table in `BOARD.md` on the integration branch. Use a fresh read, not one from an earlier prompt.
+   - Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit.
+   - A `waiting: <trigger>` directive is applied only once its trigger has happened. Check every waiting trigger against the repository on each prompt:
+     - for a ruling or rules change, `grep` FRD 01, the survey or the matrix for the named ID, or `git log` of those files;
+     - for a task, its task file's `status`;
+     - for a mode or milestone, the top of `BOARD.md`.
+
+     When a trigger has happened, set the directive to `open` and handle it in this prompt. If a trigger names nothing you can check, ask the user to restate it and leave it `waiting`.
+   - **Re-read before committing a task.** Right before you commit a new or rewritten task file, read `BOARD.md` again. A directive added or changed since your first read counts like any other open directive. Apply it in this task if it belongs there. Otherwise name it in the task's Log as going into the next one.
+   - If a directive conflicts with the design note or FRD 01, stop and ask the user.
 1. Take work in the order of the design note's `Deliverables` list (M2: `docs/architecture/m2-ability-model.md`). Use the survey's waves only to order the work inside a wave deliverable. Write a task only when everything it `depends_on` is `done`, or explicitly queued ahead of it.
 2. **Kinds and tiers:**
    - `shape` tasks add machinery: a hook, an effect primitive, a condition, a targeting mode, a layer or a replacement step. They use tier `sonnet`.
@@ -355,7 +364,7 @@ Finds code in the wrong place before more code lands on top of it. Directives #2
    - **Duplication:** the same logic or scheme in more than one place.
    - **Drift:** code the Boundaries table doesn't account for.
 3. **Report and stop:** a numbered table `# | Where | Finding | Evidence | Proposed fix | Cost`. Evidence is `file:line` or command output. Shape each fix as a pure move where possible. Order the findings by what the next deliverables would build on, and flag any that need a decision record. Ask the user which numbers to accept. Change nothing yet.
-4. **Record approved findings:** for each number the user approves, add a row to `BOARD.md`'s `Directives for the Lead` table, numbered after the last row. Use source `lead-architect structural review, approved by user, <date>` and status `open` (or `waiting: <trigger>`). The row holds the finding, the fix and its acceptance cases. For a pure move, those are the same declarations, the same test names and byte-identical `cardtown sim` output. If a fix adds a package, update the design note's Boundaries too. Commit on the integration branch as `chore(tasks): directives #<a>–#<b> from structural review`. Rejected findings are not recorded. Ones the user defers go under the design note's Open Questions.
+4. **Record approved findings:** for each number the user approves, add a row to `BOARD.md`'s `Directives for the Lead` table, numbered after the last row. Use source `lead-architect structural review, approved by user, <date>` and status `open` (or `waiting: <trigger>`). Write a `waiting:` trigger so it can be checked from the repo: name the ruling ID and file, the task id, or the mode. The row holds the finding, the fix and its acceptance cases. For a pure move, those are the same declarations, the same test names and byte-identical `cardtown sim` output. If a fix adds a package, update the design note's Boundaries too. Commit on the integration branch as `chore(tasks): directives #<a>–#<b> from structural review`. Rejected findings are not recorded. Ones the user defers go under the design note's Open Questions.
 5. **Stop.** D2 writes the tasks on the next build prompt, like any other directive ("No unattended chains").
 
 ---
