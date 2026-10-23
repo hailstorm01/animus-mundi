@@ -4,7 +4,7 @@ title: normalizeArgs as a small alias map (directive #44, harness, flash)
 kind: harness
 tier: flash
 wave: none (board directive #44, structural review 2 cleanup 5 of 5, before the next shape task)
-status: ready
+status: in-progress
 branch: m2/T-0049-normalizeargs-aliases
 depends_on: [T-0048]
 claims: [func:normalizeArgs, var:flagAliases]
