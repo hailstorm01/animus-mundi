@@ -26,6 +26,7 @@ A `Filter` can restrict its matches to one battlefield zone (`FR-TGT-001`'s Zone
 2. Only fixed zones. "Same zone as this source" is a separate shape that waits for the same-zone auras and Hammerhand Bivouac (directive #14 defers them).
 3. The Captain's definition: a `HookDamaged` trigger with one target `{Filter: {Zone: ZoneMainTheater}}` (either side, units and structures; Headquarters are never in the Main Theater) and a `DealDamage` 1 step on `SubjectTarget` slot 0.
 4. Update the stale "Not built yet" list in `pkg/engine/doc.go`: Unbowed landed with T-0050.
+5. **Board directive #46 (user ruling `SVY-R13`), folded in here:** `rules-test-author` adds a `TestFR_KWD_002a_*` (or `TestFR_TRG_004_*`) test pinning that a lethally damaged asset's Unbowed trigger is placed after the death sweep, in one APNAP window with the death triggers from the same event, using synthetic cards (a dying asset with both an Unbowed and a death trigger). The kernel already behaves this way (T-0050), so the test should pass when written. Add `FR-KWD-002a` and `FR-TRG-004` to `requirements:` when the task moves to `tests`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
 To be written when the task moves to `tests`.
