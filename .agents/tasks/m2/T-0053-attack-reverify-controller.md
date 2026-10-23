@@ -4,7 +4,7 @@ title: Re-verify an attack's defender against the attacker's current controller 
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0053-attack-reverify
 depends_on: [T-0037]
 claims: [func:resolveAttack defender check]
@@ -43,7 +43,7 @@ Named by directive #29; rules-test-author may add closely related cases:
 Expected today: the first two fail (the defender check compares with the declaring player); the last two pass.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author.
+- None. The tests use `pkg/engine/attack_reverify_test.go`'s own `(*scene).midStack` (a test-file chooser wrapper), plus existing helpers. Decision 5's reusable form is not needed.
 
 ## Allowed Files
 - `pkg/engine/combat.go`
@@ -56,3 +56,23 @@ Expected today: the first two fail (the defender check compares with the declari
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task for directive #29, whose trigger fired on 2026-10-21 and was missed. It runs before the queued T-0052 because directives come first (Runbook D2.0). Status `tests` for `rules-test-author`. Starter-deck cards not yet executable: 29, plus both Headquarters (unchanged by this task).
+
+### Tests written (rules-test-author, `pkg/engine/attack_reverify_test.go`)
+- `TestFR_CBT_002_DefenderChangesSidesFizzles`: Berserk attacker; the defender's control passes to the attacker's controller. No combat, retaliation or cleave damage. **Passes today** (the old check compares with the declaring player, so a flipped defender also fizzles).
+- `TestFR_CBT_002_AttackerChangesSidesFizzles`: Berserk attacker passes to the defender's controller. Same outcome. **Fails today** (attacker damage 2, defender damage 3).
+- `TestFR_CBT_002_CombatantsSwapSidesStillResolves` (added): both combatants swap controllers, so they are still opposing and combat happens (attacker power 3, retaliation 2). **Fails today** (defender damage 0, want 3).
+- `TestFR_KWD_002o_SecondaryChangesSidesDissipates`: combat happens, cleave dissipates. Passes today.
+- `TestFR_TGT_003_TargetThatGainsWardBeforeResolutionIsIllegal`: chosen-target trigger plus an optional trigger whose answer grants Ward after the target is chosen. Passes today.
+- 2026-10-23 rules-test-author: Wrote 5 tests in `pkg/engine/attack_reverify_test.go` (the four named plus the swap case, which FR-CBT-002 Step 3 determines: "opponent of the attacker's current controller"). Mid-stack changes follow lead decision 5 (optional `HookAttacks` draw trigger, test chooser mutates when the "you may" is asked); the helper is local to the test file. Today: AttackerChangesSides and CombatantsSwapSides fail; DefenderChangesSides passes (contrary to the Tests note, a flipped defender equals the declaring player, so the old check fizzles it); the other two pass. Helpers requested: none. Left out: attacker changes sides then leaves the battlefield (last-known controller path), since forcing a death inside the Step 2 chooser would pin setup details, not the rule. `go vet` and `cardtown lint rules` pass.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - 574f441 adds `attack_reverify_test.go` (five tests, the local `midStack` chooser and the `sides` board) and changes no existing test.
+  - Rules content checks out against FRD 01 v3.8 `FR-CBT-002` Step 3 (`SVY-R8`), `KIM-B06` as extended, `FR-KWD-002o`, `FR-TGT-003` and `FR-KWD-002h`. The added `CombatantsSwapSidesStillResolves` is right: after a swap the defender is still opposing to the attacker's current controller.
+  - The test author's correction stands: `DefenderChangesSidesFizzles` passes today, because the flipped defender equals the declaring player. It stays as a guard. Failing today: `AttackerChangesSidesFizzles` and `CombatantsSwapSidesStillResolves`.
+  - Accepted omission: no test pins the last-known-controller branch (attacker changes sides, then leaves). Lead decision 1 still requires it, and the code review checks it in the diff.
+  - **Reviewer check** (a throwaway fix following decision 1, not committed): all five pass, `go test ./...` passes, and the starter sim is byte-identical to the baseline.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decision 1 in `resolveAttack` (`pkg/engine/combat.go` only). The defender check now compares `def.Controller` with the attacker's current controller (`g.Asset(it.Source).Controller`), else `g.LastKnown(it.Source).Controller` if the attacker left, else the declaring player as a fallback if no last-known record exists. Removed the directive #29 comment; `grep -n "SVY-R8\|directive #29" pkg/engine/combat.go` finds nothing. Reuse: `g.Asset`, `g.LastKnown`; no new shapes. The attacker-side fizzle and `cleave` paths are unchanged.
+  - `go test ./pkg/engine -run 'TestFR_CBT_002|TestFR_KWD_002o|TestFR_TGT_003'`: ok.
+  - `go tool task check`: exit 0. `go tool task sim`: exit 0.
+  - Baseline `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (9ae7b97 plus status commit) vs after the change: `cmp` byte-identical.
+  - Reviewer: the last-known-controller branch has no test (accepted omission). The check uses `g.Asset(...) != nil` (on the battlefield), not `inCombatZone`.
