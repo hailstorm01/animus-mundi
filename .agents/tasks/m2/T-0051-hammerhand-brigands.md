@@ -4,7 +4,7 @@ title: Make Hammerhand Brigands executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0051-hammerhand-brigands
 depends_on: [T-0050]
 claims: [card:Hammerhand Brigands]
@@ -55,10 +55,25 @@ requirements: []
 - No question is ever asked.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written in `pkg/engine/cards_path_test.go` as `TestCard_HammerhandBrigands_<Behavior>`.
+Written in `pkg/engine/cards_path_test.go`. Run with `go test ./pkg/engine -run TestCard_HammerhandBrigands`:
+- `TestCard_HammerhandBrigands_EntersReservesAsTwoOneForOneRequisitionAndDoesNothing`
+- `..._LethalCombatDamageAsDefenderScratchesFromDiscard` (also: no question asked, empty stack, invariants)
+- `..._LethalRetaliationAsAttackerScratchesFromDiscard`
+- `..._ArmorAbsorbingAllDamageStillScratches`
+- `..._SaboteurDamageToAlliedBrigandsInReservesScratches` (real Saboteur, Brigands in Reserves)
+- `..._OpposingGuerrillasDamageScratchesForTheBrigandsController` (real Guerrillas deployed by the opponent)
+- `..._TwoBrigandsHitByOneAllAssetsEffectScratchTwice` (synthetic all-assets 1-damage deploy trigger; Craterfall Ancient is not executable yet)
+- `..._OneBrigandsHitByTwoSeparateInstancesScratchesTwice` (Armor keeps it alive)
+- `..._ScratchGoesToTheControllerNotTheOwner` (`putControlled`, survives on Armor)
+- `..._ZeroPowerAttackerDoesNotScratch`
+- `..._DamageReducedToZeroByResistantDoesNotScratch`
+- `..._DamageToAnotherAssetDoesNotScratch`
+- `..._FaceDownCopyFiresNothingWhenDamaged` (FR-ZON-004)
+
+Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-executable card) and the eight firing tests (no Scratch happens). The four negative tests (zero power, Resistant, other asset, face-down copy) pass today and guard against over-firing.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author. Existing helpers include `deployPath`, `colossusCycle`, `wantOptions`, `scriptPlan`, `pick`, `wantDealt` and, in `unbowed_test.go`, `putControlled` and `wantScratches`.
+- None requested. `putBrigands(p, zone, armor)` is a local helper defined in `cards_path_test.go`. Existing helpers used include `deployPath`, `colossusCycle`, `wantOptions`, `scriptPlan`, `pick`, `wantDealt` and, in `unbowed_test.go`, `putControlled` and `wantScratches`.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -72,3 +87,4 @@ To be written in `pkg/engine/cards_path_test.go` as `TestCard_HammerhandBrigands
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B card task 1), with status `tests` for `rules-test-author`. Devilhorn Captain was split out to T-0052 because it needs a new `Filter` zone criterion. Starter-deck cards not yet executable before this task: 30, plus both Headquarters. Expected after: 29.
+- 2026-10-23 rules-test-author: Wrote 13 `TestCard_HammerhandBrigands_*` tests in `cards_path_test.go` (list under Tests). No helpers requested. Left out: no real Craterfall Ancient (not executable; a synthetic all-assets damage source stands in); no test pins the order of the Unbowed trigger against death triggers in one sweep (open question noted in `unbowed_test.go`); no `TestFR_*` tests since `requirements` is empty. Status set to `tests-review`.
