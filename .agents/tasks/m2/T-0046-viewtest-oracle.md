@@ -4,7 +4,7 @@ title: One hidden-information oracle for the leak tests, in pkg/view/viewtest (d
 kind: harness
 tier: flash
 wave: none (board directive #39, structural review 2 cleanup 2 of 5, before the next shape task)
-status: in-progress
+status: review
 branch: m2/T-0046-viewtest-oracle
 depends_on: [T-0045]
 claims: [pkg:view/viewtest, func:viewtest.PublicNames, func:viewtest.HiddenNames]
@@ -50,10 +50,31 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
 - Tests: `pkg/view/view_test.go` and `cmd/cardtown/play_test.go` (lead decision 2's edits only, in the `test(T-0046)` commit)
 
 ## Done When
-- [ ] Lead decision 2's edits are committed as `test(T-0046): …` before the package exists
-- [ ] Cases 1–4 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Lead decision 2's edits are committed as `test(T-0046): …` before the package exists
+- [x] Cases 1–4 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #39. It is a harness task, tier flash, as the directive sets. T-0045 is done, so the task is `ready` on branch `m2/T-0046-viewtest-oracle`. Board directive #38's priority rule puts it before the next shape task.
   - Next: **the user runs `@kernel-engineer T-0046` in the Antigravity agent (Gemini Flash)**.
+- 2026-10-22 kernel-engineer: Implemented directive #39 (T-0046).
+  - Committed lead decision 2 test changes in `pkg/view/view_test.go` and `cmd/cardtown/play_test.go` as `test(T-0046): view_test and play_test use viewtest oracle` (fa06b95), removing the duplicate helper functions and closures, and calling `viewtest.PublicNames` and `viewtest.HiddenNames`. Verified that tests failed before implementation (`package animus-mundi/pkg/view/viewtest is not in std`).
+  - Added `pkg/view/viewtest/viewtest.go` exporting `PublicNames(g *engine.Game) map[string]bool` and `HiddenNames(g *engine.Game, seat engine.PlayerID) map[string]bool` with package doc comment, verbatim bodies from `view_test.go`, and parameter `q` renamed to `seat`.
+  - Added `"pkg/view/viewtest": {"pkg/engine"}` to `allowedImports` in `pkg/toolchain/linter/fences/fences.go`.
+  - Reused: bodies of `publicNames` and `hiddenNames` from `pkg/view/view_test.go`.
+  - Committed implementation as `feat(view): one hidden-information oracle in pkg/view/viewtest (T-0046)` (af6a842).
+  - Verified acceptance cases:
+    1. `go test -list . ./pkg/view ./cmd/cardtown` lists the identical 6 tests in `pkg/view` and 6 tests in `cmd/cardtown` before and after; all tests pass (`go test ./pkg/view ./cmd/cardtown`: ok in both packages).
+    2. `git grep -n -E 'func publicNames|publicNames :=|func hiddenNames|hiddenNames :=' -- pkg cmd` found 0 matches. `go doc ./pkg/view/viewtest` prints package doc, `func HiddenNames(g *engine.Game, seat engine.PlayerID) map[string]bool`, and `func PublicNames(g *engine.Game) map[string]bool`.
+    3. Oracle leak detection verified: temporarily printed bot's hand in `cmd/cardtown/play.go` after `printScreen`: `TestPlay_Case4_NoHiddenInformation` failed with:
+       ```
+       --- FAIL: TestPlay_Case4_NoHiddenInformation (0.04s)
+           play_test.go:197: turn 1: head leaks hidden card "Macabre Dancers" of bot seat
+           play_test.go:197: turn 1: head leaks hidden card "Chainbreaker Phalanx" of bot seat
+           play_test.go:197: turn 1: head leaks hidden card "Devilhorn Sanction" of bot seat
+       ```
+       Reverted temporary leak via `git checkout cmd/cardtown/play.go`.
+    4. `go run ./cmd/cardtown lint fences` passed (`[PASS] Package code is free of card names, invalid markers and disallowed imports.`) with table entry present.
+    5. `go tool task check` passed cleanly (fmt-check, vet, test, build, lint all passed).
+  - Status moved to `review`.
+  - Next: lead-architect review.
