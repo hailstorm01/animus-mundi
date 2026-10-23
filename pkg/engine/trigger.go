@@ -27,6 +27,10 @@ func (g *Game) fireDeploy(a *Asset) { g.fireHook(a, ability.HookDeploy) }
 // face-down asset fires nothing (FR-ZON-004).
 func (g *Game) fireKilled(a *Asset) { g.fireHook(a, ability.HookKilled) }
 
+// fireDamaged buffers a's own damage-taken triggers (Unbowed). dealDamage calls it
+// when a took damage, so the controller is a's controller now, kept if a then dies.
+func (g *Game) fireDamaged(a *Asset) { g.fireHook(a, ability.HookDamaged) }
+
 // fireHook buffers a's own triggers for hook in printed order. A face-down
 // asset has no printed abilities.
 func (g *Game) fireHook(a *Asset, hook ability.Hook) {

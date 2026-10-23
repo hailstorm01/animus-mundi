@@ -4,7 +4,7 @@ title: Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for 
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0050-unbowed-hook
 depends_on: [T-0045, T-0046, T-0047, T-0048, T-0049]
 claims: [hook:damaged, func:fireDamaged, convention:step<Op>]
@@ -67,10 +67,47 @@ This matters when a dying asset also has a death trigger, or another asset dies 
 No starter card can show it yet. Hammerhand Brigands and Devilhorn Captain have no death trigger. So this task keeps the `FR-TRG-004` reading (decision 4), and the question goes to the user.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-<!-- rules-test-author fills this in: TestFR_KWD_002a_* and any TestFR_REP_004_* cases, from FRD 01 and the matrix rows above. Use test-local definitions, not real card names, since no Unbowed card is executable yet. Cover at least: fires on Health damage; fires on Armor-only absorption; not when Resistant reduces it to 0; fires when Stalwart caps it to 1; fires for both combatants in combat and on a Berserk secondary; fires on lethal damage and then resolves from discard (a non-self step resolves; a self Heal/Armor step fizzles; the controller is the last-known controller); two separate damage instances fire twice. Do not pin the Open Question's ordering. -->
+All in `pkg/engine/unbowed_test.go`, with test-local ability definitions (`bowed`, `unbowed`, `healSelf`, `armorSelf`, `putControlled`, `wantScratches`). Outcomes are observed through face-down Scratch Companies, Damage, Armor, discard and recorded Decisions.
+
+Fires or not (FR-KWD-002a, FR-REP-004 Stage 5):
+- `TestFR_KWD_002a_UnbowedFiresWhenHealthDamageIsCommitted`
+- `TestFR_REP_004_UnbowedFiresWhenArmorAbsorbsAllTheDamage` (Unb x Arm)
+- `TestFR_REP_004_UnbowedDoesNotFireWhenResistantReducesDamageToZero` (Unb x Res)
+- `TestFR_REP_004_UnbowedStillFiresWhenResistantLeavesSomeDamage`
+- `TestFR_REP_004_UnbowedFiresWhenStalwartCapsDamageToOne` (Unb x Stw)
+- `TestFR_REP_004_UnbowedDoesNotFireOnAZeroPowerAttack`
+- `TestFR_REP_004_UnbowedFiresWhenNegativeResistantAmplifiesZeroToOne`
+- `TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires`
+- `TestFR_KWD_002a_NonCombatDamageFiresUnbowedOnce`
+- `TestFR_REP_004_NonCombatDamageReducedToZeroDoesNotFireUnbowed`
+- `TestFR_KWD_002a_TwoSeparateDamageInstancesFireTwice`
+
+Combat and Berserk (FR-CBT-002, FR-KWD-002o):
+- `TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed`
+- `TestFR_KWD_002a_BerserkCleaveDamageFiresTheSecondarysUnbowed` (Unb x Bsk)
+- `TestFR_KWD_002a_BerserkCleaveReducedToZeroDoesNotFireUnbowed`
+- `TestFR_KWD_002a_RetaliationOnABerserkAttackerFiresItsUnbowed` (Unb x Bsk)
+
+Survivor and lethal damage (FR-ZON-004, FR-TGT-003, FR-TGT-001):
+- `TestFR_KWD_002a_SurvivorHealsItselfAfterTheDamageIsCommitted`
+- `TestFR_KWD_002a_SurvivorGainsArmorFromItsOwnUnbowed`
+- `TestFR_KWD_002a_LethalDamageStillFiresAndANonSelfStepResolves` (Unb x Scr)
+- `TestFR_KWD_002a_LethalDamageSelfHealFizzlesButSiblingStepsResolve` (Unb x Heal)
+- `TestFR_KWD_002a_LethalDamageSelfArmorFizzlesButSiblingStepsResolve`
+- `TestFR_KWD_002a_LethalDamageChosenTargetStepResolvesFromDiscard`
+- `TestFR_KWD_002a_LethalDamageTriggerBelongsToTheLastKnownController`
+
+Placement (FR-TRG-003, FR-TRG-004):
+- `TestFR_TRG_003_UnbowedTriggersFollowApnapNonActivePlayerResolvesFirst`
+- `TestFR_TRG_004_UnbowedTriggerResolvesAfterTheDamageIsCommitted`
+- `TestFR_TRG_004_UnbowedDamageCascadesIntoAnotherUnbowed`
+
+Deliberately not tested: the order of a dying asset's Unbowed trigger relative to death triggers from the same sweep (Open Question). No test gives a dying asset both an Unbowed and a death trigger.
+
+Note for the engineer: the self-heal and self-armor tests use `ability.SubjectSelf` with `OpHeal` and `OpAddArmor`. If `SubjectSelf` is not yet accepted for those ops, supporting it is part of making these tests pass (T-0009 already uses that subject for relocation).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-<!-- rules-test-author lists any setup helpers here. -->
+- None. The tests define their own local helpers in `unbowed_test.go`. The file compiles only once `ability.HookDamaged` exists (the engineer adds it).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go` (`HookDamaged`)
@@ -89,3 +126,29 @@ No starter card can show it yet. Hammerhand Brigands and Devilhorn Captain have 
   - Scope: the hook only. The two Unbowed starter-deck cards it unlocks, Hammerhand Brigands and Devilhorn Captain, follow as a flash card task. Chainbreaker Irregulars also needs `DISCARD_CARD`, and Animoceps Rager also needs the once-per-turn limit.
   - The placement-timing question between `FR-KWD-002a` and `FR-TRG-004` is raised with the user, and kept out of the tests.
   - Status `tests` on branch `m2/T-0050-unbowed-hook`. Next: the lead dispatches `rules-test-author` (Sonnet).
+- 2026-10-22 rules-test-author: Wrote 25 failing tests in `pkg/engine/unbowed_test.go` (listed under Tests).
+  - Helpers requested: none (local helpers only). The file fails to compile until `ability.HookDamaged` exists, as expected.
+  - Left out on purpose: the Open Question ordering (Unbowed versus death triggers in one sweep).
+  - Also not covered: a Headquarters "is dealt damage" trigger (belongs to the Animoceps Rager shape).
+  - `cardtown lint rules`: PASS, every `TestFR_*` traces to an active requirement.
+  - Status `tests-review`. Next: the lead reviews the tests.
+- 2026-10-22 lead-architect: Tests review (D4): **approved**, status `ready`.
+  - Each of the 25 tests checked against its FRD 01 citation and the matrix rows. The expected outcomes match:
+    - the Stage 5 threshold, including Armor-only absorption and negative Resistant amplifying 0 to 1;
+    - Resistant to 0, and the Stalwart cap still firing;
+    - Berserk cleave and retaliation;
+    - once per damage instance, not per point;
+    - a survivor's self-Heal and self-Armor applying after the damage;
+    - lethal damage resolving from discard, where the self-step fizzles, the sibling step runs, a chosen target is picked by the last-known controller, and the controller is distinct from the owner;
+    - APNAP, with the non-active player's trigger resolving first;
+    - the cascade.
+  - The 0-power attack case is legal under FRD 01 "Zero-Power Attacks" (line 469).
+  - Nothing pins the Open Question: no test gives a dying asset both an Unbowed and a death trigger.
+  - Local `scene` methods in the test file follow the precedent of six other engine test files.
+  - Note for the engineer, as the test author flagged: `SubjectSelf` on `OpHeal`/`OpAddArmor` may need support. That falls under decision 2, inside Allowed Files.
+- 2026-10-22 kernel-engineer: Implemented, status `review`. Two code commits after the `in-progress` commit.
+  - Commit 1, `refactor(engine): step<Op> functions for effect ops (T-0050)`, only `effects.go`: `resolveAbility` keeps the second-stage verification and a dispatching `switch`. New methods `stepDealDamage`, `stepHeal`, `stepAddArmor`, `stepScratch`, `stepDraw`, `stepRelocate` (wrapping `relocateSelf`), plus a small `stepPlayers` helper for the `who` computation. Bodies moved unchanged. Baseline CLI built from the branch's starting code; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` output `cmp`-identical before and after. Every test except `unbowed_test.go` (needs `HookDamaged`) passed at that commit (`go test ./pkg/engine` with that file set aside, `go vet`).
+  - Commit 2, the hook: `ability.HookDamaged` (`ability.go`); `fireDamaged` (`trigger.go`) calls the existing `fireHook`; `dealDamage` (`damage.go`) calls it on the target when `r.Taken()`, after logging; `stepAssets` (`effects.go`) gains `SubjectSelf`, returning the source if still on the battlefield, else nothing (fizzle).
+  - Reused: `DamageResult.Taken()`, `fireHook` and the pending buffer (controller captured at fire time, so a destroyed source's trigger keeps its last-known controller), `chooseTargets`/`itemSource`/`LastKnown`, the APNAP flush. No new placement logic (decision 4).
+  - Verification: `go test ./pkg/engine -run 'TestFR_KWD_002a|TestFR_REP_004'` passes (26 PASS lines incl. subtests/older tests); `go tool task check` exit 0; `go tool task sim` exit 0; starter sim output still byte-identical to the baseline (no card uses the hook yet).
+  - Reviewer: look at `SubjectSelf` in `stepAssets` (it is not restricted by hook, unlike `relocateSelf`); Open Question left untouched.
