@@ -103,7 +103,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0045 | Export Decision.Valid and use it in cardtown play's terminal chooser (directive #38, harness, sonnet) | done |
 | T-0046 | One hidden-information oracle for the leak tests, in pkg/view/viewtest (directive #39, harness, flash) | done |
 | T-0047 | One match-setup scheme, sim.MatchDecks, sim.SeatSeed and sim.DefaultEndBias (directive #41, harness, sonnet high) | done |
-| T-0048 | Split cmd/cardtown/play.go into the loop, the screen and input (directive #42, harness, flash, pure move) | ready |
+| T-0048 | Split cmd/cardtown/play.go into the loop, the screen and input (directive #42, harness, flash, pure move) | done |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |

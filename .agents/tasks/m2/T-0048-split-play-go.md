@@ -4,7 +4,7 @@ title: Split cmd/cardtown/play.go into the loop, the screen and input (directive
 kind: harness
 tier: flash
 wave: none (board directive #42, structural review 2 cleanup 4 of 5, before the next shape task)
-status: review
+status: done
 branch: m2/T-0048-split-play-go
 depends_on: [T-0047]
 claims: [file:cmd/cardtown/play.go, file:cmd/cardtown/play_screen.go, file:cmd/cardtown/play_input.go]
@@ -96,3 +96,12 @@ This is a pure move: the size rule is met by cases 1–3, as in T-0035.
     - `cardtown` with no arguments (exit code 1).
   - Case 6: `go tool task check` passes cleanly (fmt-check, vet, all tests across all packages, and cardtown lint --all with zero errors/warnings).
   - Status set to `review`.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 60f857e, status `done`.
+  - Scope: bc93ba9 changes only the status line. caa4d6f changes only the three Allowed Go files, `README.md` and this file. `play_test.go` has no diff.
+  - Only moves:
+    - A multiset comparison of removed against added lines in `cmd/cardtown/` leaves no removed line unaccounted for. The only new lines are the two specified headers, two `package main` lines, the import blocks and blank lines.
+    - The placement grep matches the target layout.
+    - The sorted non-test declarations of `cmd/cardtown` (24) are identical.
+    - The README has the three edits as written.
+  - Gates, re-run in a scratch worktree: `go tool task check` exits 0. Against a baseline built from 60f1ee4, these are byte-identical with stdout+stderr and exit codes (`cmp`): `play` at seat 0 (progress) and at seat 1 (random) fed `1` lines, `play -h`, and the usage text.
+  - Board directive #42 is complete.
