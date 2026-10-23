@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
@@ -47,10 +47,42 @@ A `Filter` can restrict its matches to one battlefield zone (`FR-TGT-001`'s Zone
 - A sole legal target is not asked. A timeout picks a legal target (`FR-MOD-001`).
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by rules-test-author.
+Files: `pkg/engine/zone_filter_test.go`, `pkg/engine/unbowed_lethal_test.go`, `pkg/engine/cards_path_captain_test.go`. The package does not compile until `ability.Filter` has a `Zone ability.Zone` field (lead decision 1) and `scene.moveTo` exists.
+
+Zone criterion (`zone_filter_test.go`, synthetic cards):
+- `TestFR_TGT_001_MainTheaterZoneOffersOnlyMainTheaterAssetsOfEitherSide`
+- `TestFR_TGT_001_ZoneCombinesWithAllegianceAndKindsAsAConjunction`
+- `TestFR_TGT_001_ReservesZoneOffersOnlyReservesAssets`
+- `TestFR_TGT_001_NoZoneCriterionStillMeansAnyBattlefieldZone`
+- `TestFR_TGT_003_NoAssetInTheMainTheaterAsksNothingAndOtherClausesRun`
+- `TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal` (uses `midStack` and `moveTo`)
+- `TestFR_TGT_003_TargetDestroyedBeforeResolutionTakesNoDamageAndNothingIsRedirected`
+- `TestFR_TGT_001_AllAssetsInTheMainTheaterHitsExactlyThoseAssets`
+- `TestFR_TGT_001_AllOpposingAssetsInTheMainTheaterCombinesZoneWithAllegiance`
+
+Directive #46 / `SVY-R13` (`unbowed_lethal_test.go`, synthetic; these pass today):
+- `TestFR_KWD_002a_LethalUnbowedAndDeathTriggerShareOneOrderingWindow` (one `DecideOrder` of 2 options for the dead asset's controller)
+- `TestFR_TRG_003_LethalUnbowedOfTheNonActivePlayerResolvesBeforeTheActivePlayersDeathTrigger`
+- `TestFR_TRG_003_ActivePlayersLethalUnbowedResolvesAfterTheNonActivePlayersDeathTrigger`
+- `TestFR_KWD_002a_LethalUnbowedSelfHealFizzlesAndTheAssetIsDestroyedAnyway`
+
+Devilhorn Captain (`cards_path_captain_test.go`, real card):
+- `TestCard_DevilhornCaptain_EntersReservesAsTwoThreeForTwoRequisitionAndDoesNothing`
+- `TestCard_DevilhornCaptain_DamagedOffersEveryMainTheaterAssetOfEitherSideButNotOpposingWard`
+- `TestCard_DevilhornCaptain_CanDamageAnAlliedStructureInTheMainTheater`
+- `TestCard_DevilhornCaptain_AlliedWardUnitInTheMainTheaterIsAnOption`
+- `TestCard_DevilhornCaptain_FiresInReservesAndStillOffersOnlyMainTheaterAssets`
+- `TestCard_DevilhornCaptain_CanChooseItselfAndItsOwnDamageFiresUnbowedAgain`
+- `TestCard_DevilhornCaptain_LethalDamageResolvesFromDiscardAndTheDeadCaptainIsNotAnOption`
+- `TestCard_DevilhornCaptain_LethalDamageIsChosenByTheLastKnownController`
+- `TestCard_DevilhornCaptain_SoleLegalTargetIsNotAsked`
+- `TestCard_DevilhornCaptain_TimeoutDamagesExactlyOneLegalTarget`
+- `TestCard_DevilhornCaptain_DamageReducedToZeroByResistantDoesNotFire` (passes once compiling even before the card is built: the unexecutable card has no ability)
+- `TestCard_DevilhornCaptain_ZeroPowerAttackerDoesNotFireIt` (same)
+- `TestCard_DevilhornCaptain_FaceDownCopyFiresNothingWhenDamaged` (same)
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author.
+- `func (s *scene) moveTo(a *Asset, z Zone)` (used by `TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal`): moves a battlefield asset to zone `z` (Main Theater or Reserves), keeping the player's zone lists and `a.Zone` consistent so `CheckInvariants` still holds. It sets state and asserts nothing.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -67,3 +99,18 @@ To be written by rules-test-author.
 ## Log
 - 2026-10-23 lead-architect: Wrote the task, `queued` behind T-0051 (serial mode). Split from the Brigands card task because Devilhorn Captain needs the new zone criterion.
 - 2026-10-23 lead-architect: Moved to `tests`. Checked every waiting directive's trigger first (#6, #7, #8, #15 and #20 have not fired). Folded in directive #46 (decision 4) and added the test guidance. Took `doc.go` out of Allowed Files to keep to four non-test files (decision 5). Starter-deck cards not yet executable: 29, plus both Headquarters; expected after: 28.
+- 2026-10-23 rules-test-author: Wrote 26 tests in three new files (listed under Tests; commit d25ae47). The package does not compile today: `ability.Filter` has no `Zone` field (expected, lead decision 1), and `scene.moveTo` is a requested helper. With the zone file set aside, the 4 `SVY-R13` tests pass, as do the Captain's Resistant, zero-power and face-down tests (they only assert that nothing fires); the other 10 Captain tests fail on behavior until the card is built. Left out: "same zone as this source" (lead decision 2) and Animoceps Shambler. `cardtown lint rules` passes.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - d25ae47 adds three files and changes no existing test: `zone_filter_test.go` (9), `unbowed_lethal_test.go` (4, directive #46) and `cards_path_captain_test.go` (13).
+  - Rules content checks out against `FR-TGT-001` (zone, conjunction, untargeted "all"), `FR-TGT-003`, `FR-KWD-002a` and `FR-KWD-002h`. Directive #46 is pinned through what players can observe: one order question for the dying asset's Unbowed and death trigger, APNAP order shown by an empty-deck loss, and a self-heal that fizzles. `LethalUnbowedOfTheNonActivePlayerResolvesBeforeTheActivePlayersDeathTrigger` tells `SVY-R13` apart from the old "before the asset is destroyed" wording.
+  - `wantOptions` ignores order, and `s.card` returns a copy, so the Resistant test's mutation stays local.
+  - The requested `moveTo` is setup only: `s.g.removeFromBattlefield(a)` then `s.g.placeOnBattlefield(a, z)` keeps the zone lists consistent.
+  - **Reviewer check** (a throwaway prototype of decisions 1 and 3 plus `moveTo`, not committed): all 26 pass and so does `go test ./...`. Removing the zone check fails 12. The starter sim exits 0 with no monitor violation: Path rises to 19/50, and the summary line becomes `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%`.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decisions 1 and 3; `doc.go` untouched (decision 5).
+  - Diff: `ability.Filter.Zone ability.Zone` (doc comment in the neighbouring style); `matchesFilter` calls `deployedTo(a, f.Zone)` (reused, `ZoneAny` returns true so existing definitions are unchanged); `pathDefs["Devilhorn Captain"]` = `HookDamaged` trigger, one target `{Zone: ZoneMainTheater}`, `OpDealDamage` 1 on `SubjectTarget` slot 0; name removed from `NotYetExecutable`; `scene.moveTo` in `scenario_test.go` (`removeFromBattlefield` then `placeOnBattlefield`, no assertions). No tests edited.
+  - Reuse search: `deployedTo` (trigger.go), `ability.Zone`, `matchesFilter`, `HookDamaged`, `OpDealDamage`; no new shape beyond the Filter field.
+  - Commands: `go test ./pkg/engine -run 'TestFR_TGT_00|TestFR_KWD_002a|TestFR_TRG_00|TestCard_DevilhornCaptain'` ok; `go tool task check` exit 0 (gofmt, vet, all tests, `cardtown lint --all`); `go tool task sim` clean, no monitor violation.
+  - Sim summary before: `P1 16/50 executable`, `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`.
+  - Sim summary after: `P1 19/50 executable`, `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%` (matches the reviewer's prototype).
+  - Reviewer: the `matchesFilter` doc comment was extended to mention Zone.

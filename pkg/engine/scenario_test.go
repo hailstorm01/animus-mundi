@@ -116,6 +116,13 @@ func (s *scene) cleave(att, def, sec *Asset) Action {
 
 func (s *scene) endTurn() { s.do(Action{Kind: ActEndTurn, Player: s.g.Active}) }
 
+// moveTo moves battlefield asset a to zone z (Main Theater or Reserves),
+// keeping the zone lists consistent. It sets state and asserts nothing.
+func (s *scene) moveTo(a *Asset, z Zone) {
+	s.g.removeFromBattlefield(a)
+	s.g.placeOnBattlefield(a, z)
+}
+
 func (s *scene) alive(a *Asset) bool { return s.g.Asset(a.ID) != nil }
 
 func (s *scene) wantDamage(a *Asset, want int) {
