@@ -4,7 +4,7 @@ title: Re-verify an attack's defender against the attacker's current controller 
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0053-attack-reverify
 depends_on: [T-0037]
 claims: [func:resolveAttack defender check]
@@ -71,3 +71,8 @@ Expected today: the first two fail (the defender check compares with the declari
   - Accepted omission: no test pins the last-known-controller branch (attacker changes sides, then leaves). Lead decision 1 still requires it, and the code review checks it in the diff.
   - **Reviewer check** (a throwaway fix following decision 1, not committed): all five pass, `go test ./...` passes, and the starter sim is byte-identical to the baseline.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decision 1 in `resolveAttack` (`pkg/engine/combat.go` only). The defender check now compares `def.Controller` with the attacker's current controller (`g.Asset(it.Source).Controller`), else `g.LastKnown(it.Source).Controller` if the attacker left, else the declaring player as a fallback if no last-known record exists. Removed the directive #29 comment; `grep -n "SVY-R8\|directive #29" pkg/engine/combat.go` finds nothing. Reuse: `g.Asset`, `g.LastKnown`; no new shapes. The attacker-side fizzle and `cleave` paths are unchanged.
+  - `go test ./pkg/engine -run 'TestFR_CBT_002|TestFR_KWD_002o|TestFR_TGT_003'`: ok.
+  - `go tool task check`: exit 0. `go tool task sim`: exit 0.
+  - Baseline `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (9ae7b97 plus status commit) vs after the change: `cmp` byte-identical.
+  - Reviewer: the last-known-controller branch has no test (accepted omission). The check uses `g.Asset(...) != nil` (on the battlefield), not `inCombatZone`.
