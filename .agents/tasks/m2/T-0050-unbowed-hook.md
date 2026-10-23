@@ -4,7 +4,7 @@ title: Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for 
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0050-unbowed-hook
 depends_on: [T-0045, T-0046, T-0047, T-0048, T-0049]
 claims: [hook:damaged, func:fireDamaged, convention:step<Op>]
