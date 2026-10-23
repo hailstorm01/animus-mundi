@@ -4,7 +4,7 @@ title: normalizeArgs as a small alias map (directive #44, harness, flash)
 kind: harness
 tier: flash
 wave: none (board directive #44, structural review 2 cleanup 5 of 5, before the next shape task)
-status: in-progress
+status: review
 branch: m2/T-0049-normalizeargs-aliases
 depends_on: [T-0048]
 claims: [func:normalizeArgs, var:flagAliases]
@@ -88,9 +88,18 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
 - Tests: new `cmd/cardtown/args_test.go`
 
 ## Done When
-- [ ] Case 1's test is committed first, and passed against the old code (recorded)
-- [ ] Cases 2–3 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Case 1's test is committed first, and passed against the old code (recorded)
+- [x] Cases 2–3 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #44. It is a harness task, tier flash, and the first one the lead dispatches headless with `agy -p` (Runbook D3, `9dc7737`). Case 1 is a characterization test, so it passes before the change (lead decision 3). T-0048 is done, so the task is `ready` on branch `m2/T-0049-normalizeargs-aliases`.
+- 2026-10-22 kernel-engineer: Implemented T-0049.
+  - Characterization test `cmd/cardtown/args_test.go` (`TestNormalizeArgs`) written with all 19 table cases and all 35 old switch names uppercase with `=v`. Ran against old code: PASS (`go test -v ./cmd/cardtown`). Committed first as `9f9bc4c`.
+  - Replaced 28-case switch in `cmd/cardtown/main.go` with `flagAliases` map (8 alias pairs) directly above `normalizeArgs`.
+  - Verification:
+    - Case 1: `go test -v ./cmd/cardtown` passed all cases.
+    - Case 2: Compared baseline CLI against new CLI for all 7 invocations; exit codes, stdout, and stderr were byte-identical across all of them (`cardtown`, `sim -h`, `replay -h`, `play -h`, `tdd slice -h`, `lint --all`, `sim -deck starter -p0 ANIMUS -p1 PATH -maxTurns=400`).
+    - Case 3: `git grep -n -c 'case "' -- cmd/cardtown/main.go` returned 9 (only the 9 command dispatch cases in `main()`, 0 in `normalizeArgs`).
+    - Case 4: `go tool task check` passed completely (fmt-check, vet, all tests across all packages, and full lint --all).
+  - Committed implementation as `a031d6a`.
