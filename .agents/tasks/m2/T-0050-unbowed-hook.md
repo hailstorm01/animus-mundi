@@ -4,7 +4,7 @@ title: Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for 
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0050-unbowed-hook
 depends_on: [T-0045, T-0046, T-0047, T-0048, T-0049]
 claims: [hook:damaged, func:fireDamaged, convention:step<Op>]
@@ -132,3 +132,17 @@ Note for the engineer: the self-heal and self-armor tests use `ability.SubjectSe
   - Also not covered: a Headquarters "is dealt damage" trigger (belongs to the Animoceps Rager shape).
   - `cardtown lint rules`: PASS, every `TestFR_*` traces to an active requirement.
   - Status `tests-review`. Next: the lead reviews the tests.
+- 2026-10-22 lead-architect: Tests review (D4): **approved**, status `ready`.
+  - Each of the 25 tests checked against its FRD 01 citation and the matrix rows. The expected outcomes match:
+    - the Stage 5 threshold, including Armor-only absorption and negative Resistant amplifying 0 to 1;
+    - Resistant to 0, and the Stalwart cap still firing;
+    - Berserk cleave and retaliation;
+    - once per damage instance, not per point;
+    - a survivor's self-Heal and self-Armor applying after the damage;
+    - lethal damage resolving from discard, where the self-step fizzles, the sibling step runs, a chosen target is picked by the last-known controller, and the controller is distinct from the owner;
+    - APNAP, with the non-active player's trigger resolving first;
+    - the cascade.
+  - The 0-power attack case is legal under FRD 01 "Zero-Power Attacks" (line 469).
+  - Nothing pins the Open Question: no test gives a dying asset both an Unbowed and a death trigger.
+  - Local `scene` methods in the test file follow the precedent of six other engine test files.
+  - Note for the engineer, as the test author flagged: `SubjectSelf` on `OpHeal`/`OpAddArmor` may need support. That falls under decision 2, inside Allowed Files.
