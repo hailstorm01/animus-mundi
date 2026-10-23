@@ -39,6 +39,7 @@ var allowedImports = map[string][]string{
 	"pkg/sim":            {"pkg/engine"},
 	"pkg/eventlog":       {"pkg/engine"},
 	"pkg/view":           {"pkg/engine", "pkg/eventlog"},
+	"pkg/view/viewtest":  {"pkg/engine"},
 }
 
 // Report holds fence violations found in package code.
