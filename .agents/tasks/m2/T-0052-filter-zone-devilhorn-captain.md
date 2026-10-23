@@ -4,7 +4,7 @@ title: A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devi
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0052-filter-zone
 depends_on: [T-0050]
 claims: [filter:Zone, card:Devilhorn Captain]
@@ -47,10 +47,42 @@ A `Filter` can restrict its matches to one battlefield zone (`FR-TGT-001`'s Zone
 - A sole legal target is not asked. A timeout picks a legal target (`FR-MOD-001`).
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by rules-test-author.
+Files: `pkg/engine/zone_filter_test.go`, `pkg/engine/unbowed_lethal_test.go`, `pkg/engine/cards_path_captain_test.go`. The package does not compile until `ability.Filter` has a `Zone ability.Zone` field (lead decision 1) and `scene.moveTo` exists.
+
+Zone criterion (`zone_filter_test.go`, synthetic cards):
+- `TestFR_TGT_001_MainTheaterZoneOffersOnlyMainTheaterAssetsOfEitherSide`
+- `TestFR_TGT_001_ZoneCombinesWithAllegianceAndKindsAsAConjunction`
+- `TestFR_TGT_001_ReservesZoneOffersOnlyReservesAssets`
+- `TestFR_TGT_001_NoZoneCriterionStillMeansAnyBattlefieldZone`
+- `TestFR_TGT_003_NoAssetInTheMainTheaterAsksNothingAndOtherClausesRun`
+- `TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal` (uses `midStack` and `moveTo`)
+- `TestFR_TGT_003_TargetDestroyedBeforeResolutionTakesNoDamageAndNothingIsRedirected`
+- `TestFR_TGT_001_AllAssetsInTheMainTheaterHitsExactlyThoseAssets`
+- `TestFR_TGT_001_AllOpposingAssetsInTheMainTheaterCombinesZoneWithAllegiance`
+
+Directive #46 / `SVY-R13` (`unbowed_lethal_test.go`, synthetic; these pass today):
+- `TestFR_KWD_002a_LethalUnbowedAndDeathTriggerShareOneOrderingWindow` (one `DecideOrder` of 2 options for the dead asset's controller)
+- `TestFR_TRG_003_LethalUnbowedOfTheNonActivePlayerResolvesBeforeTheActivePlayersDeathTrigger`
+- `TestFR_TRG_003_ActivePlayersLethalUnbowedResolvesAfterTheNonActivePlayersDeathTrigger`
+- `TestFR_KWD_002a_LethalUnbowedSelfHealFizzlesAndTheAssetIsDestroyedAnyway`
+
+Devilhorn Captain (`cards_path_captain_test.go`, real card):
+- `TestCard_DevilhornCaptain_EntersReservesAsTwoThreeForTwoRequisitionAndDoesNothing`
+- `TestCard_DevilhornCaptain_DamagedOffersEveryMainTheaterAssetOfEitherSideButNotOpposingWard`
+- `TestCard_DevilhornCaptain_CanDamageAnAlliedStructureInTheMainTheater`
+- `TestCard_DevilhornCaptain_AlliedWardUnitInTheMainTheaterIsAnOption`
+- `TestCard_DevilhornCaptain_FiresInReservesAndStillOffersOnlyMainTheaterAssets`
+- `TestCard_DevilhornCaptain_CanChooseItselfAndItsOwnDamageFiresUnbowedAgain`
+- `TestCard_DevilhornCaptain_LethalDamageResolvesFromDiscardAndTheDeadCaptainIsNotAnOption`
+- `TestCard_DevilhornCaptain_LethalDamageIsChosenByTheLastKnownController`
+- `TestCard_DevilhornCaptain_SoleLegalTargetIsNotAsked`
+- `TestCard_DevilhornCaptain_TimeoutDamagesExactlyOneLegalTarget`
+- `TestCard_DevilhornCaptain_DamageReducedToZeroByResistantDoesNotFire` (passes once compiling even before the card is built: the unexecutable card has no ability)
+- `TestCard_DevilhornCaptain_ZeroPowerAttackerDoesNotFireIt` (same)
+- `TestCard_DevilhornCaptain_FaceDownCopyFiresNothingWhenDamaged` (same)
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author.
+- `func (s *scene) moveTo(a *Asset, z Zone)` (used by `TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal`): moves a battlefield asset to zone `z` (Main Theater or Reserves), keeping the player's zone lists and `a.Zone` consistent so `CheckInvariants` still holds. It sets state and asserts nothing.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -67,3 +99,4 @@ To be written by rules-test-author.
 ## Log
 - 2026-10-23 lead-architect: Wrote the task, `queued` behind T-0051 (serial mode). Split from the Brigands card task because Devilhorn Captain needs the new zone criterion.
 - 2026-10-23 lead-architect: Moved to `tests`. Checked every waiting directive's trigger first (#6, #7, #8, #15 and #20 have not fired). Folded in directive #46 (decision 4) and added the test guidance. Took `doc.go` out of Allowed Files to keep to four non-test files (decision 5). Starter-deck cards not yet executable: 29, plus both Headquarters; expected after: 28.
+- 2026-10-23 rules-test-author: Wrote 26 tests in three new files (listed under Tests; commit d25ae47). The package does not compile today: `ability.Filter` has no `Zone` field (expected, lead decision 1), and `scene.moveTo` is a requested helper. With the zone file set aside, the 4 `SVY-R13` tests pass, as do the Captain's Resistant, zero-power and face-down tests (they only assert that nothing fires); the other 10 Captain tests fail on behavior until the card is built. Left out: "same zone as this source" (lead decision 2) and Animoceps Shambler. `cardtown lint rules` passes.
