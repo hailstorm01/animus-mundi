@@ -4,7 +4,7 @@ title: Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for 
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0050-unbowed-hook
 depends_on: [T-0045, T-0046, T-0047, T-0048, T-0049]
 claims: [hook:damaged, func:fireDamaged, convention:step<Op>]
@@ -152,3 +152,19 @@ Note for the engineer: the self-heal and self-armor tests use `ability.SubjectSe
   - Reused: `DamageResult.Taken()`, `fireHook` and the pending buffer (controller captured at fire time, so a destroyed source's trigger keeps its last-known controller), `chooseTargets`/`itemSource`/`LastKnown`, the APNAP flush. No new placement logic (decision 4).
   - Verification: `go test ./pkg/engine -run 'TestFR_KWD_002a|TestFR_REP_004'` passes (26 PASS lines incl. subtests/older tests); `go tool task check` exit 0; `go tool task sim` exit 0; starter sim output still byte-identical to the baseline (no card uses the hook yet).
   - Reviewer: look at `SubjectSelf` in `stepAssets` (it is not restricted by hook, unlike `relocateSelf`); Open Question left untouched.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 1ca11e9, status `done`.
+  - Scope:
+    - 91499ad changes only this file.
+    - 7b15223 changes only `effects.go`.
+    - 1300753 changes only `ability.go`, `damage.go`, `trigger.go`, `effects.go` and this file.
+    - `unbowed_test.go` is unchanged since 0eef686.
+  - The refactor (directive #40) is a pure move. The bodies are verbatim, and `stepPlayers` merges the identical player-subject code of Scratch and Draw. At 7b15223, with the new test file set aside, every `engine` and `sim` test passes.
+  - Rules fidelity: `dealDamage` fires `HookDamaged` on any target, combat or not, once per instance, whenever `Taken()`. That is the general Stage 5 rule, not the tested cases only.
+  - `SubjectSelf` in `stepAssets` is the source if it is still on the battlefield, else nothing, so self-steps fizzle (`FR-TGT-003`). It changes no existing card: the only current `SubjectSelf` steps are relocate ops, which go to `stepRelocate`.
+  - Gates, re-run in a scratch worktree:
+    - 29 `--- PASS` lines for the Unbowed and related runs;
+    - `go tool task check` and `go tool task sim` exit 0;
+    - against a baseline built from 92dc9a0, the starter sim is byte-identical under both policies.
+  - Decision 4 and the Open Question are untouched.
+  - The lead recorded the `step<Op>` convention in the design note's "Changes in `engine`" (directive #40), and corrected that section's stale Fences line.
+  - Next: a flash card task for Hammerhand Brigands and Devilhorn Captain.
