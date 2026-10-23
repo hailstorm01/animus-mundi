@@ -4,7 +4,7 @@ title: Split cmd/cardtown/play.go into the loop, the screen and input (directive
 kind: harness
 tier: flash
 wave: none (board directive #42, structural review 2 cleanup 4 of 5, before the next shape task)
-status: ready
+status: in-progress
 branch: m2/T-0048-split-play-go
 depends_on: [T-0047]
 claims: [file:cmd/cardtown/play.go, file:cmd/cardtown/play_screen.go, file:cmd/cardtown/play_input.go]
