@@ -315,7 +315,12 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 - **Tests:** set `status: tests` and run the `rules-test-author` subagent (Sonnet) with the task id. Harness tasks skip this step and go straight to `ready`.
 - **Code:**
   - Tier `sonnet`: run the `kernel-engineer` subagent (Sonnet).
-  - Tier `flash`: tell the user to run `@kernel-engineer T-NNNN` in the Antigravity agent on Gemini Flash, then wait for the task file to reach `review` or `blocked`.
+  - Tier `flash`: run the engineer headless through the Antigravity CLI, from the repository root, as a background command:
+    ```powershell
+    agy -p "@kernel-engineer T-NNNN" --model gemini-3.8-flash-high --project animus-mundi --output-format json
+    ```
+    Use `gemini-3.8-flash-high` unless the task or a directive names another Flash level. When the command exits, check its JSON: `denied_actions` must be empty, because `status` says `SUCCESS` even when a tool was refused. Then read the task file. At `review` or `blocked`, go on to D5 or D6. Otherwise (a denied action, a non-zero exit, or the task still `in-progress`), stop and report to the user with the `conversation_id`. Do not re-dispatch. Tool permissions come from the `permissions` block in `~/.gemini/antigravity-cli/settings.json`; never pass `--dangerously-skip-permissions`.
+    If `agy` is missing or will not start, tell the user to run `@kernel-engineer T-NNNN` in the Antigravity agent on Gemini Flash, then wait for the task file to reach `review` or `blocked`.
 
 #### D4. Reviewing tests (`tests-review`)
 Check each test against the FRD 01 text and rulings it cites. Wrong expected outcome, missing named edge case, an assertion on implementation details, or a guessed ruling → set `status: tests` and add numbered notes. Otherwise set `status: ready` and dispatch the code.

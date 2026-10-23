@@ -7,7 +7,7 @@ One file per task, under `.agents/tasks/<milestone>/`. The task file is the only
 | `lead-architect` (Runbook D: queue owner and reviewer) | Opus, always | Claude Code, main session |
 | `rules-test-author` | Sonnet | Claude Code (subagent `rules-test-author`) |
 | `kernel-engineer`, tier `sonnet` | Sonnet | Claude Code (subagent `kernel-engineer`) |
-| `kernel-engineer`, tier `flash` | Gemini Flash | Antigravity agent: `@kernel-engineer T-NNNN` |
+| `kernel-engineer`, tier `flash` | Gemini 3.8 Flash (High) | Antigravity CLI, started by the lead: `agy -p "@kernel-engineer T-NNNN"` (Runbook D3) |
 
 ## Lifecycle
 
