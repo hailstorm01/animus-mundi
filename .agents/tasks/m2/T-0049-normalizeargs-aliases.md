@@ -4,7 +4,7 @@ title: normalizeArgs as a small alias map (directive #44, harness, flash)
 kind: harness
 tier: flash
 wave: none (board directive #44, structural review 2 cleanup 5 of 5, before the next shape task)
-status: ready
+status: done
 branch: m2/T-0049-normalizeargs-aliases
 depends_on: [T-0048]
 claims: [func:normalizeArgs, var:flagAliases]
@@ -88,12 +88,13 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
 - Tests: new `cmd/cardtown/args_test.go`
 
 ## Done When
-- [ ] Case 1's test is committed first, and passed against the old code (recorded)
-- [ ] Cases 2–3 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes
+- [x] Case 1's test is committed first, and passed against the old code (recorded)
+- [x] Cases 2–3 hold, with their commands and results in the Log
+- [x] `go tool task check` passes
 
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #44. It is a harness task, tier flash, and the first one the lead dispatches headless with `agy -p` (Runbook D3, `9dc7737`). Case 1 is a characterization test, so it passes before the change (lead decision 3). T-0048 is done, so the task is `ready` on branch `m2/T-0049-normalizeargs-aliases`.
+<<<<<<< HEAD
 - 2026-10-22 lead-architect: The first headless dispatch (`agy -p`, Runbook D3) **stopped on a denied command**.
   - `agy` 1.4.5 isn't on the session's PATH, so the lead ran it as `%LOCALAPPDATA%\agy\bin\agy.exe`.
   - It exited 0 with `status: SUCCESS`, but `denied_actions: [RunCommand]` after 1 turn (16.9 s); `cli.log` says "soft-denying tool confirmation RunCommand at step 12". Conversation `88b4ff19-2415-4ac1-8efa-48667ff9ca44`.
@@ -104,3 +105,25 @@ About 25 of its `switch` cases map a name to itself and do nothing. After this t
   - `denied_actions: [RunCommand]` at step 18, after 1 turn (28.2 s). Conversation `7fb20797-27d4-4022-9d2d-b2f8c5cc3858`.
   - None of the seven commands was chained. The one with no allow rule is the read-only `git branch --list m2/T-0049-normalizeargs-aliases`; the only `git branch` rule allows `--show-current`.
   - Nothing reached the branch, and the status is still `ready`. Reported to the user.
+=======
+- 2026-10-22 kernel-engineer: Implemented T-0049.
+  - Characterization test `cmd/cardtown/args_test.go` (`TestNormalizeArgs`) written with all 19 table cases and all 35 old switch names uppercase with `=v`. Ran against old code: PASS (`go test -v ./cmd/cardtown`). Committed first as `9f9bc4c`.
+  - Replaced 28-case switch in `cmd/cardtown/main.go` with `flagAliases` map (8 alias pairs) directly above `normalizeArgs`.
+  - Verification:
+    - Case 1: `go test -v ./cmd/cardtown` passed all cases.
+    - Case 2: Compared baseline CLI against new CLI for all 7 invocations; exit codes, stdout, and stderr were byte-identical across all of them (`cardtown`, `sim -h`, `replay -h`, `play -h`, `tdd slice -h`, `lint --all`, `sim -deck starter -p0 ANIMUS -p1 PATH -maxTurns=400`).
+    - Case 3: `git grep -n -c 'case "' -- cmd/cardtown/main.go` returned 9 (only the 9 command dispatch cases in `main()`, 0 in `normalizeArgs`).
+    - Case 4: `go tool task check` passed completely (fmt-check, vet, all tests across all packages, and full lint --all).
+  - Committed implementation as `a031d6a`.
+>>>>>>> m2/T-0049-normalizeargs-aliases
+- 2026-10-22 lead-architect: Review: **approved**, merged as 15f200e, status `done`. This was the **first headless flash run to complete**: run 3, conversation `66d44b11-2a98-4da3-b6a9-0263c441193f`, 407.9 s, no `denied_actions`.
+  - Scope:
+    - 2f43efe and 9a52065 change only this file.
+    - 9f9bc4c adds only `args_test.go`: the 19 specified pairs plus an empty-slice case, and the loop over the old switch's 35 names.
+    - a031d6a changes only `main.go`, adding `flagAliases` exactly as specified and removing the switch.
+  - Gates, re-run in a scratch worktree:
+    - The characterization test passes against the old code (at 9f9bc4c) and the new.
+    - `go tool task check` exits 0.
+    - `case "` occurs 9 times in `main.go`, all in `main()`.
+    - Against a baseline built from 9f9bc4c, these are byte-identical with stdout+stderr and exit codes (`cmp`): the usage text, `sim -h`, `replay -h`, `play -h`, `tdd slice -h`, `lint --all`, `sim … -maxTurns=400`, and the lead's extra `sim … -MaxTurns=1` (exit 1).
+  - Board directive #44 is complete. With it, the structural-review-2 tasks (#38, #39, #41, #42, #44) are all done, and #38's priority rule is satisfied.
