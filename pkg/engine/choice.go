@@ -42,8 +42,8 @@ type Answer struct {
 // Chooser answers decisions for one seat.
 type Chooser func(g *Game, d Decision) Answer
 
-// valid reports whether picks is a valid answer to d.
-func (d Decision) valid(picks []int) bool {
+// Valid reports whether picks is a legal answer to d: Min to Max picks, each an index into Options, with no repeats unless Repeats (FR-MOD-001). The kernel applies the same rule to every Chooser answer.
+func (d Decision) Valid(picks []int) bool {
 	if len(picks) < d.Min || len(picks) > d.Max {
 		return false
 	}
@@ -110,7 +110,7 @@ func (g *Game) choose(d Decision) []int {
 	if ch != nil {
 		a := ch(g, d)
 		if !a.Timeout {
-			if d.valid(a.Picks) {
+			if d.Valid(a.Picks) {
 				g.emitDecision(d, a.Picks, "answer")
 				return a.Picks
 			}

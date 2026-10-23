@@ -416,48 +416,27 @@ func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {
 			if line == "q" {
 				panic(errQuit)
 			}
-			if line == "" {
-				if d.Min == 0 {
-					return engine.Answer{Picks: []int{}}
-				}
-				fmt.Fprintln(out, "Invalid input: selection required")
-				continue
-			}
-
-			parts := strings.Fields(line)
-			var picks []int
-			valid := true
-			for _, p := range parts {
+			picks := []int{}
+			parsed := true
+			for _, p := range strings.Fields(line) {
 				idx, err := strconv.Atoi(p)
 				if err != nil || idx < 1 || idx > len(d.Options) {
 					fmt.Fprintf(out, "Invalid choice %q: must be a number between 1 and %d\n", p, len(d.Options))
-					valid = false
+					parsed = false
 					break
 				}
 				picks = append(picks, idx-1)
 			}
-			if !valid {
+			if !parsed {
 				continue
 			}
 
-			if !d.Repeats {
-				seen := map[int]bool{}
-				hasDup := false
-				for _, p := range picks {
-					if seen[p] {
-						hasDup = true
-						break
-					}
-					seen[p] = true
+			if !d.Valid(picks) {
+				suffix := ""
+				if !d.Repeats {
+					suffix = ", no repeats"
 				}
-				if hasDup {
-					fmt.Fprintln(out, "Invalid choice: duplicate selections not allowed")
-					continue
-				}
-			}
-
-			if len(picks) < d.Min || len(picks) > d.Max {
-				fmt.Fprintf(out, "Invalid choice: selected %d options, want between %d and %d\n", len(picks), d.Min, d.Max)
+				fmt.Fprintf(out, "Invalid choice: pick %d to %d option(s)%s\n", d.Min, d.Max, suffix)
 				continue
 			}
 

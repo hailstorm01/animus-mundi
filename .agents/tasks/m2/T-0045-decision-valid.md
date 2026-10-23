@@ -4,7 +4,7 @@ title: Export Decision.Valid and use it in cardtown play's terminal chooser (dir
 kind: harness
 tier: sonnet
 wave: none (board directive #38, structural review 2 cleanup 1 of 5, before the next shape task)
-status: in-progress
+status: review
 branch: m2/T-0045-decision-valid
 depends_on: []
 claims: [func:Decision.Valid]
@@ -62,3 +62,11 @@ Cases 1 and 2 are new tests, committed as `test(T-0045): …` before the impleme
 ## Log
 - 2026-10-22 lead-architect: Wrote the task from board directive #38. No starter-deck card can be built from `done` shapes: all 30 remaining cards are in waves B–G. So, under the user's ordering (#38: the cleanup goes before the next shape task, and cards first where possible), the cleanup starts now. It is a harness task, tier sonnet, as the directive sets. The task is `ready` on branch `m2/T-0045-decision-valid`.
   - Next: the lead dispatches the `kernel-engineer` subagent (Sonnet).
+- 2026-10-22 kernel-engineer: Implemented. Commits: 8f9bd5d (in-progress), 46c4856 (tests for cases 1 and 2), then the feat commit.
+  - Reuse search: `Decision.valid` was the only existing rule; renamed to `Valid` (body unchanged, doc comment per Lead decision 1), one caller in `choose` updated. No new shape.
+  - `terminalChooser` (play.go): the empty-line special case, the duplicate check and the count check are removed. Input parsing, `q`, the out-of-range message and the `y`/`n` branch are unchanged. Picks now start as `[]int{}`, so an empty line goes through `d.Valid`; false prints `Invalid choice: pick <Min> to <Max> option(s)` plus `, no repeats` when `!d.Repeats`.
+  - Case 1/2 failed before implementation: `go vet` reported `d.Valid undefined`; `go test ./cmd/cardtown -run TerminalChooserUses` failed on the old messages.
+  - Case 3: baseline built from 851b9e6 before any edit (`ct45-base.exe`). `sim -deck starter -p0 ANIMUS -p1 PATH -policy progress` and `-policy random`: exit 0 on both, `cmp` identical. `play -deck starter -p0 ANIMUS -p1 PATH -seat 0 -seed 3 < 2000 lines of "1"`: both exit 0, 441692 bytes, `cmp` identical, 0 "Invalid" lines, reaches `Result: Player 1 won`.
+  - Case 4: both `git grep` commands print nothing.
+  - Case 5: `go tool task check` exits 0. No existing test changed (play_test.go gained one function and the `bufio` import).
+  - Reviewer note: the scripted play feeds `1` to all prompts including y/n; it still completes, so I did not need a separate y answer.
