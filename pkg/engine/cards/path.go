@@ -62,6 +62,22 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Hammerhand Brigands": {
+		Text: []string{"Unbowed: Scratch 1."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDamaged,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:     ability.OpScratch,
+							Amount: ability.Value{N: 1},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Ironclad Colossus": {
 		Text: []string{"Whenever this unit deploys or attacks, chosen unit gains 2 armor."},
 		Triggers: []ability.Trigger{
