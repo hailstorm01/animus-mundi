@@ -4,7 +4,7 @@ title: One hidden-information oracle for the leak tests, in pkg/view/viewtest (d
 kind: harness
 tier: flash
 wave: none (board directive #39, structural review 2 cleanup 2 of 5, before the next shape task)
-status: review
+status: done
 branch: m2/T-0046-viewtest-oracle
 depends_on: [T-0045]
 claims: [pkg:view/viewtest, func:viewtest.PublicNames, func:viewtest.HiddenNames]
@@ -78,3 +78,14 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
     5. `go tool task check` passed cleanly (fmt-check, vet, test, build, lint all passed).
   - Status moved to `review`.
   - Next: lead-architect review.
+- 2026-10-22 lead-architect: Review: **approved**, merged as 445e615, status `done`.
+  - Scope:
+    - c0e53f8 and 18cabfd change only this file.
+    - fa06b95 changes only the two test files: the helpers and closures are deleted, the calls swapped and the import added, exactly as lead decision 2 specified.
+    - af6a842 adds `viewtest.go` and the one `fences.go` row.
+  - `PublicNames` and `HiddenNames` are verbatim against `view_test.go`'s originals (diffed), with `q` renamed to `seat`.
+  - Gates, re-run in a scratch worktree:
+    - At fa06b95, vet fails on the missing package.
+    - At the head, `go tool task check` exits 0, and the 12 tests in `pkg/view` and `cmd/cardtown` pass.
+    - The lead's leak mutation (the bot's hand printed after each screen) gives 2927 `head leaks` failures, the same count as before the change, so the oracle catches what it caught before.
+  - Board directive #39 is complete.
