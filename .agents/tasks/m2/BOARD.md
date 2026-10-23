@@ -107,7 +107,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0048 | Split cmd/cardtown/play.go into the loop, the screen and input (directive #42, harness, flash, pure move) | done |
 | T-0049 | normalizeArgs as a small alias map (directive #44, harness, flash) | done |
 | T-0050 | Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for effect ops (wave B shape 1, sonnet) | done |
-| T-0051 | Make Hammerhand Brigands executable (wave B card, flash) | tests |
+| T-0051 | Make Hammerhand Brigands executable (wave B card, flash) | done |
 | T-0052 | A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devilhorn Captain (wave B shape 2, sonnet) | queued |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |

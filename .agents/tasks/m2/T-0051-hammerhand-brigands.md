@@ -4,7 +4,7 @@ title: Make Hammerhand Brigands executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0051-hammerhand-brigands
 depends_on: [T-0050]
 claims: [card:Hammerhand Brigands]
@@ -109,3 +109,10 @@ Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-execut
     - `go tool task sim`: clean run, 200 games, all invariants hold, no monitor violations. Path executable count rose from 13/50 to 16/50.
       - Before: `P0 wins 88.0%  P1 wins 12.0%  draws 0.0%  first player wins 50.0%`, 35.5 turns (13/50 executable)
       - After: `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`, 34.2 turns (16/50 executable)
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as d83e15e, status `done`.
+  - Scope: 5f87dd1 touches only `cards/path.go` and `cards/cards.go`, and its definition is exactly the one verified at test review. No test changed after `test(T-0051)` a1aedf6. The other branch commits touch only this file.
+  - Fences: card data only, no new shape.
+  - Gates, re-run by the reviewer on a preview of the merge with 9d1d8e4 (SVY-R13, rules text only): the 13 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass; `go tool task check` and `go tool task sim` exit 0. The starter sim matches the pre-check (Path 16/50, P0 63.0%, P1 36.5%, draws 0.5%) with no monitor violation.
+  - The Flash run (conversation f57461fc-c858-408d-b44b-adefd15186fe) reported `SUCCESS` and no denied actions.
+  - SVY-R13 (9d1d8e4) answers T-0050's Open Question the way the kernel already behaves: lethal Unbowed is placed after the death sweep. Nothing in this task depends on it.
+  - Starter-deck cards not yet executable: 29, plus both Headquarters. Next: T-0052 (Filter zone criterion with Devilhorn Captain, sonnet).
