@@ -19,7 +19,7 @@ Six packages. The rules core imports one way only: `engine` → `cards` → `abi
 | Package | Holds | Card names? | Changed by |
 | :--- | :--- | :--- | :--- |
 | `pkg/engine/ability` | The shape vocabulary: plain data types and enums with no game logic. Its `go doc` output is the M2 write-up. | No (fenced) | `shape` tasks |
-| `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go`, `path.go` and `headquarters.go`. `cards.go` holds the `Defs` map and the `NotYetExecutable` allowlist. | Yes (only place) | `card` tasks |
+| `pkg/engine/cards` | One `ability.Def` per card, keyed by card name, in `animus.go` and `path.go`, and in `headquarters.go` once Headquarters abilities land (board directive #45). `cards.go` holds the `Defs` map and the `NotYetExecutable` allowlist. | Yes (only place) | `card` tasks |
 | `pkg/engine` | The interpreter: events, trigger collection, stack, choices, layers, replacements. | No (fenced) | `shape` tasks |
 | `pkg/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`, and the rule monitors (`Monitors`, `Violation`, `Coverage`, `ReplayCommand`). `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
 | `pkg/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
@@ -96,6 +96,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 4. **Hidden information:** in M2 a `Chooser` can read the whole `Game`. `cardtown play` (T-0037) draws the human's screen from `view.PlayerView` and `view.LogLines` (T-0036), which show one seat only what it may see. That boundary is a first draft for M4/M5: the fog-of-war boundary itself is M5 work (FRD 04 rewrite).
 5. **Partitioned inspections** (`FR-MOD-001` §4, Devilhorn Scouting Party) are one `Decision` with a per-card destination and a bottom order. The Wave F task fixes the answer encoding.
 6. **Trigger-order timeout: provisionally answered 2026-10-19.** `FR-MOD-001` §6 has no fallback for a player ordering their own simultaneous triggers (`FR-TRG-003`). The user accepted the lead's recommendation for now: they go on the stack in the order the kernel collected them (battlefield order, then each card's own trigger order). It is not yet in FRD 01. `pm-frd-drafter` adds it to `FR-MOD-001` §6, or the user overrides it.
+7. **A seat cannot end a match (M4/M5 gap, board directive #43).** A `Chooser` can answer or time out, but it cannot concede or abandon. `cardtown play` quits by panicking through the engine's call stack, and `runPlay` recovers only that value. That works for one terminal, not for a networked client. When the M4/M5 client boundary is designed, it needs a way for a seat to concede or leave, together with the asynchronous choosers that board directive #24 left out of M2.
 
 ## Starter Decks
 
