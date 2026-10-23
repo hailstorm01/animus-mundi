@@ -13,6 +13,7 @@ import (
 	"animus-mundi/pkg/eventlog"
 	"animus-mundi/pkg/sim"
 	"animus-mundi/pkg/view"
+	"animus-mundi/pkg/view/viewtest"
 )
 
 // Tests for T-0036: PlayerView and LogLines (board directive #24, FR-ZON-005).
@@ -499,43 +500,6 @@ func (w *leakWatcher) Settled(engine.Snapshot) {
 	}
 }
 
-// publicNames are the card names publicly visible now: both discard piles,
-// face-up battlefield assets (HQs included) and the cards on the stack.
-func publicNames(g *engine.Game) map[string]bool {
-	pub := map[string]bool{}
-	for _, p := range g.Players {
-		for _, inst := range p.Discard {
-			pub[inst.Card.Name] = true
-		}
-	}
-	for _, a := range g.Assets() {
-		if !a.FaceDown {
-			pub[a.Inst.Card.Name] = true
-		}
-	}
-	for _, it := range g.Stack {
-		if (it.Kind == engine.StackDeploy || it.Kind == engine.StackAbility) && it.Inst != nil {
-			pub[it.Inst.Card.Name] = true
-		}
-	}
-	return pub
-}
-
-// hiddenNames are the names seat q hides now: its hand, its deck and the real
-// names of its face-down assets.
-func hiddenNames(g *engine.Game, q engine.PlayerID) map[string]bool {
-	hid := map[string]bool{}
-	for _, inst := range append(slices.Clone(g.Players[q].Hand), g.Players[q].Deck...) {
-		hid[inst.Card.Name] = true
-	}
-	for _, a := range g.Assets() {
-		if a.FaceDown && (a.Controller == q || a.Inst.Owner == q) {
-			hid[a.Inst.Card.Name] = true
-		}
-	}
-	return hid
-}
-
 // jsonName is name as it appears inside a JSON string.
 func jsonName(name string) string {
 	b, _ := json.Marshal(name)
@@ -545,7 +509,7 @@ func jsonName(name string) string {
 func (w *leakWatcher) check() {
 	w.points++
 	g := w.g
-	pub := publicNames(g)
+	pub := viewtest.PublicNames(g)
 	newEvents := w.events[w.checked:]
 	w.checked = len(w.events)
 	for seat := range engine.PlayerID(2) {
@@ -558,7 +522,7 @@ func (w *leakWatcher) check() {
 			continue // one report per match
 		}
 		js := mustJSON(w.t, view.PlayerView(g, seat))
-		for name := range hiddenNames(g, seat.Opponent()) {
+		for name := range viewtest.HiddenNames(g, seat.Opponent()) {
 			if pub[name] {
 				continue
 			}
