@@ -4,7 +4,7 @@ title: Make Hammerhand Brigands executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0051-hammerhand-brigands
 depends_on: [T-0050]
 claims: [card:Hammerhand Brigands]
@@ -80,10 +80,10 @@ Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-execut
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_HammerhandBrigands'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes, `TestProgress_Case4_Coverage` included
-- [ ] `go tool task sim` runs clean: every invariant holds and the rule monitors report no violation. Path's executable count rises by 3, from 13/50 to 16/50. Report the before and after summary lines in the Log.
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_HammerhandBrigands'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes, `TestProgress_Case4_Coverage` included
+- [x] `go tool task sim` runs clean: every invariant holds and the rule monitors report no violation. Path's executable count rises by 3, from 13/50 to 16/50. Report the before and after summary lines in the Log.
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B card task 1), with status `tests` for `rules-test-author`. Devilhorn Captain was split out to T-0052 because it needs a new `Filter` zone criterion. Starter-deck cards not yet executable before this task: 30, plus both Headquarters. Expected after: 29.
@@ -95,3 +95,17 @@ Failing today: the enters-Reserves test (Deploy is rejected for a not-yet-execut
   - **Reviewer check** (the throwaway definition from the pre-check, not committed): all 13 pass, and so does `go test ./...`.
   - **Mutations each fail tests:** `HookKilled` instead of `HookDamaged`: 3; `SubjectOpponents`: 8; Scratch 2: 8.
   - Next: the lead dispatches the flash engineer through `agy` (D3).
+- 2026-10-23 kernel-engineer: Implementation handoff (status `review`):
+  - Diff shows:
+    - `pkg/engine/cards/path.go`: Added ability definition for "Hammerhand Brigands" using existing `ability.HookDamaged` and `ability.OpScratch` with amount 1.
+    - `pkg/engine/cards/cards.go`: Removed "Hammerhand Brigands" from `NotYetExecutable`.
+  - Reused shapes:
+    - `HookDamaged` from T-0050 for Unbowed damage trigger hook.
+    - `OpScratch` with default subject `SubjectController` (0) and `ability.Value{N: 1}`.
+  - Commands and results:
+    - `go test ./pkg/engine -run TestCard_HammerhandBrigands`: all 13 tests PASS.
+    - `go test ./pkg/engine/... -run 'TestDefs_MatchRulesText|TestStarterSet_Executable'`: PASS.
+    - `go tool task check`: PASS (fmt-check, vet, all tests, linter dispatch clean).
+    - `go tool task sim`: clean run, 200 games, all invariants hold, no monitor violations. Path executable count rose from 13/50 to 16/50.
+      - Before: `P0 wins 88.0%  P1 wins 12.0%  draws 0.0%  first player wins 50.0%`, 35.5 turns (13/50 executable)
+      - After: `P0 wins 63.0%  P1 wins 36.5%  draws 0.5%  first player wins 56.0%`, 34.2 turns (16/50 executable)
