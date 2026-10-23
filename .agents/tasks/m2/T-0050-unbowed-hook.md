@@ -4,7 +4,7 @@ title: Damage-taken hook for Unbowed (FR-KWD-002a), with step<Op> functions for 
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0050-unbowed-hook
 depends_on: [T-0045, T-0046, T-0047, T-0048, T-0049]
 claims: [hook:damaged, func:fireDamaged, convention:step<Op>]
@@ -146,3 +146,9 @@ Note for the engineer: the self-heal and self-armor tests use `ability.SubjectSe
   - Nothing pins the Open Question: no test gives a dying asset both an Unbowed and a death trigger.
   - Local `scene` methods in the test file follow the precedent of six other engine test files.
   - Note for the engineer, as the test author flagged: `SubjectSelf` on `OpHeal`/`OpAddArmor` may need support. That falls under decision 2, inside Allowed Files.
+- 2026-10-22 kernel-engineer: Implemented, status `review`. Two code commits after the `in-progress` commit.
+  - Commit 1, `refactor(engine): step<Op> functions for effect ops (T-0050)`, only `effects.go`: `resolveAbility` keeps the second-stage verification and a dispatching `switch`. New methods `stepDealDamage`, `stepHeal`, `stepAddArmor`, `stepScratch`, `stepDraw`, `stepRelocate` (wrapping `relocateSelf`), plus a small `stepPlayers` helper for the `who` computation. Bodies moved unchanged. Baseline CLI built from the branch's starting code; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` output `cmp`-identical before and after. Every test except `unbowed_test.go` (needs `HookDamaged`) passed at that commit (`go test ./pkg/engine` with that file set aside, `go vet`).
+  - Commit 2, the hook: `ability.HookDamaged` (`ability.go`); `fireDamaged` (`trigger.go`) calls the existing `fireHook`; `dealDamage` (`damage.go`) calls it on the target when `r.Taken()`, after logging; `stepAssets` (`effects.go`) gains `SubjectSelf`, returning the source if still on the battlefield, else nothing (fizzle).
+  - Reused: `DamageResult.Taken()`, `fireHook` and the pending buffer (controller captured at fire time, so a destroyed source's trigger keeps its last-known controller), `chooseTargets`/`itemSource`/`LastKnown`, the APNAP flush. No new placement logic (decision 4).
+  - Verification: `go test ./pkg/engine -run 'TestFR_KWD_002a|TestFR_REP_004'` passes (26 PASS lines incl. subtests/older tests); `go tool task check` exit 0; `go tool task sim` exit 0; starter sim output still byte-identical to the baseline (no card uses the hook yet).
+  - Reviewer: look at `SubjectSelf` in `stepAssets` (it is not restricted by hook, unlike `relocateSelf`); Open Question left untouched.

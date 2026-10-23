@@ -119,7 +119,8 @@ func (g *Game) itemSource(it *StackItem) *Asset {
 
 // stepAssets returns the assets an asset step acts on: the entities chosen for
 // its slot that are still legal, in pick order, or for SubjectAll every
-// battlefield asset matching st.Filter now, oldest first. "All" is not a
+// battlefield asset matching st.Filter now, oldest first, or for SubjectSelf the
+// source if it is still on the battlefield. "All" is not a
 // target, so Ward excludes nothing and nothing is asked (FR-TGT-002,
 // FR-KWD-002h, SVY-R3).
 func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen [][]*Asset) []*Asset {
@@ -127,6 +128,12 @@ func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen [][]*Asset) []*
 	case ability.SubjectTarget:
 		if st.Target >= 0 && st.Target < len(chosen) {
 			return chosen[st.Target]
+		}
+	case ability.SubjectSelf:
+		// The source itself, if it is still on the battlefield; once it has
+		// left, the step fizzles (FR-TGT-003).
+		if a := g.Asset(it.Source); a != nil {
+			return []*Asset{a}
 		}
 	case ability.SubjectAll:
 		var out []*Asset
