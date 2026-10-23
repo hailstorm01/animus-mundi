@@ -4,7 +4,7 @@ title: A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rag
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0054-max-per-turn
 depends_on: [T-0050, T-0052]
 claims: [trigger:MaxPerTurn]
@@ -94,3 +94,9 @@ None. The test file defines its own `limited(n, trig)` and `(*scene).hitters(n)`
   - **Diff:** `ability.Trigger.MaxPerTurn int` with a doc comment (0 = no limit); `Game.firings map[firingKey]int` and `firingKey{asset, trigger, turn}` in `state.go` (created lazily, not in snapshots or events); in `fireHook`, a trigger with `MaxPerTurn > 0` is skipped when its `[asset ID, trigger index, Game.Turn]` count has reached the limit, else the count is incremented as it is buffered (counts firings, so a fizzled clause still uses the allowance). Asset IDs are per visit to the battlefield (FR-ZON-004), so a returning card starts fresh. `doc.go`: HookDamaged, zone targets, `MaxPerTurn` and Unbowed added to "What runs now"; Unbowed removed from "Not built yet", which now says Headquarters abilities stay unbuilt "until T-0055".
   - **Commands:** the 10-test Done When regex: 10 PASS. `go tool task check`: passes (gofmt, vet, all tests, cardtown lint --all). `go tool task sim`: runs clean. `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` on a detached worktree of 667ed90 (the branch start) vs this tree: `cmp` byte-identical (1746 bytes).
   - **Reviewer:** the check ordering in `fireHook` runs after the Turn and deploy-zone gates, so a trigger skipped by those never spends allowance.
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as 2685f7b, status `done`.
+  - Scope: 4da4228 changes only the four Allowed Files and this file. `max_per_turn_test.go` is unchanged since 62fd1c7. There is no separate `in-progress` commit, which is a process slip but changes nothing.
+  - Rules fidelity: the limit is checked in `fireHook` after the existing gates and counts firings per asset, trigger and `Game.Turn` (decisions 1–5), for every hook, not only the tested ones.
+  - Gates, re-run on a preview of the merge: the 10 tests pass; `go tool task check` and `go tool task sim` exit 0; the starter sim is byte-identical to the integration branch before the merge.
+  - Nits, carried into T-0055: `doc.go` now says "Headquarters abilities (until T-0055)", and two of its lines are wider than the rest. T-0055 makes Headquarters abilities real, so it updates that paragraph, removes the task reference and rewraps it. `doc.go` is added to T-0055's Allowed Files.
+  - Starter-deck cards not yet executable: 28, plus both Headquarters (unchanged). Next: T-0055 (Animoceps Rager, flash).

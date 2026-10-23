@@ -37,6 +37,7 @@ To be written by rules-test-author.
 - `pkg/engine/cards/headquarters.go` (new)
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 - `cmd/cardtown/sim.go`
+- `pkg/engine/doc.go` (Headquarters abilities move to the "Built" list; remove "(until T-0055)" and rewrap the paragraph to the surrounding width)
 
 ## Done When
 - [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsRager'`
