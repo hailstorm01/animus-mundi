@@ -4,7 +4,7 @@ title: Export Decision.Valid and use it in cardtown play's terminal chooser (dir
 kind: harness
 tier: sonnet
 wave: none (board directive #38, structural review 2 cleanup 1 of 5, before the next shape task)
-status: ready
+status: in-progress
 branch: m2/T-0045-decision-valid
 depends_on: []
 claims: [func:Decision.Valid]
