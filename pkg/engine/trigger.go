@@ -48,6 +48,16 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		if hook == ability.HookDeploy && !deployedTo(a, t.ToZone) {
 			continue
 		}
+		if t.MaxPerTurn > 0 {
+			k := firingKey{asset: a.ID, trigger: i, turn: g.Turn}
+			if g.firings[k] >= t.MaxPerTurn {
+				continue
+			}
+			if g.firings == nil {
+				g.firings = map[firingKey]int{}
+			}
+			g.firings[k]++
+		}
 		g.pending = append(g.pending, pendingTrigger{
 			source: a.ID, inst: a.Inst, controller: a.Controller, trig: t,
 			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1),

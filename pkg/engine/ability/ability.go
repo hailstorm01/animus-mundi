@@ -37,6 +37,10 @@ type Trigger struct {
 	ToZone   Zone // HookDeploy only: fires only if the asset was deployed into this zone
 	Optional bool // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
 	Effect   Effect
+
+	// MaxPerTurn limits how often this trigger fires each turn, per asset (FR-TRN-001);
+	// 0 means no limit. A firing whose clauses later fizzle still counts.
+	MaxPerTurn int
 }
 
 // Zone names a battlefield zone a shape refers to.

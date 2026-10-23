@@ -4,7 +4,7 @@ title: A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rag
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0054-max-per-turn
 depends_on: [T-0050, T-0052]
 claims: [trigger:MaxPerTurn]
@@ -48,10 +48,22 @@ This task also refreshes the stale "Not built yet" list in `pkg/engine/doc.go`, 
 Not tested: an asset that leaves the battlefield and returns in the same turn. It is a new asset (`FR-ZON-004`), so it would start with a fresh allowance, but no starter card can show it.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by rules-test-author.
+Tests are in `pkg/engine/max_per_turn_test.go`. Done When regex:
+`go test ./pkg/engine -run 'TestFR_TRN_001_(LimitedTriggerFiresOnceForTwoDamageInstancesInOneTurn|UnlimitedTriggerStillFiresEveryTime|LimitOfTwoAllowsTwoFiringsAndNotAThird|EachAssetHasItsOwnAllowance|LimitResetsOnTheControllersNextTurn|LimitResetsOnTheOpponentsNextTurn|OneFiringOnTheOpponentsTurnAndOneOnTheControllersNext|AFizzledFiringStillUsesTheTurnsAllowance|HeadquartersLimitedTriggerFiresOnceWhenAttackedTwice|HeadquartersFiresAgainFromItsOwnAttacksRetaliationNextTurn)$'`
+
+- `TestFR_TRN_001_LimitedTriggerFiresOnceForTwoDamageInstancesInOneTurn`: MaxPerTurn 1, two attackers, one Scratch.
+- `TestFR_TRN_001_UnlimitedTriggerStillFiresEveryTime`: MaxPerTurn 0, two Scratches (existing behavior).
+- `TestFR_TRN_001_LimitOfTwoAllowsTwoFiringsAndNotAThird`: MaxPerTurn 2, three attackers, two Scratches.
+- `TestFR_TRN_001_EachAssetHasItsOwnAllowance`: two assets printing the limited trigger, each hit twice, one Scratch each (2 total).
+- `TestFR_TRN_001_LimitResetsOnTheControllersNextTurn`: fires turn 1, two end-turns, fires again.
+- `TestFR_TRN_001_LimitResetsOnTheOpponentsNextTurn`: fires on its controller's turn (retaliation), then again on the opponent's turn.
+- `TestFR_TRN_001_OneFiringOnTheOpponentsTurnAndOneOnTheControllersNext`: damaged on the opponent's turn, then on its controller's next turn: one each.
+- `TestFR_TRN_001_AFizzledFiringStillUsesTheTurnsAllowance`: chosen target removed before resolution; a second damage in the same turn does not fire (the spare target takes no damage).
+- `TestFR_TRN_001_HeadquartersLimitedTriggerFiresOnceWhenAttackedTwice`: synthetic Headquarters (ability set on the HQ card), two attackers, one Scratch.
+- `TestFR_TRN_001_HeadquartersFiresAgainFromItsOwnAttacksRetaliationNextTurn`: Headquarters hit on turn 1, then attacks on its own turn and takes retaliation: fires again.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- To be filled in by rules-test-author.
+None. The test file defines its own `limited(n, trig)` and `(*scene).hitters(n)`; it reuses `bowed`, `unbowed`, `wantScratches`, `scratchN`, `tgt`, `dmgTo`.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -66,3 +78,19 @@ To be written by rules-test-author.
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task (wave B shape 3), with status `tests` for `rules-test-author`. Checked every waiting directive's trigger first: none has fired (#8: no `deck.go` change; #15: this is a limit, not a turn hook; #20: wave B). Animoceps Rager was picked over Infested Apostle, Chainbreaker Irregulars and Animoceps Shambler because those three each need a ruling (design note Open Question 8). The card task T-0055 follows. Starter-deck cards not yet executable: 28, plus both Headquarters.
+- 2026-10-23 rules-test-author: Wrote 10 tests in `pkg/engine/max_per_turn_test.go` (listed under Tests). The package does not compile until `ability.Trigger` has `MaxPerTurn int` (`go vet` reports only `trig.MaxPerTurn undefined`); that is expected. `cardtown lint rules` passes. Once it compiles, the tests that fail against an engine ignoring the limit are: LimitedTriggerFiresOnce..., LimitOfTwo..., EachAssetHasItsOwnAllowance, AFizzledFiring..., HeadquartersLimitedTriggerFiresOnce...; the other five (unlimited, three reset tests, HQ retaliation) pin behavior a correct limit must keep. Unverified at runtime, since nothing compiles: that a Headquarters may attack (used in the HQ retaliation test, from the task text), and that the fizzle test's mid-resolution removal (`removeFromBattlefield` in the chooser, after the target is picked) fizzles the clause. Left out: Animoceps Rager card tests (T-0055); an asset leaving and returning in the same turn (task: not tested); the doc.go refresh (not testable). No helpers requested.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - 62fd1c7 adds `max_per_turn_test.go` (10 `TestFR_TRN_001_*` tests, local helpers `limited` and `hitters`) and changes no existing test.
+  - Rules content checks out against `FR-TRN-001` line 225 (limits reset every turn, both players') and `FR-REP-004` Stage 5. Each lead decision is pinned: per asset, counts firings even when the clause fizzles, `MaxPerTurn` 0 is unlimited, and Headquarters fire the hook.
+  - The two points the test author could not run both hold: a Headquarters may attack, and test 8's removal inside the chooser works.
+  - **Reviewer check** (a throwaway prototype: `MaxPerTurn` on `Trigger`, a `[asset, trigger, turn]` count on `Game`, checked in `fireHook`; not committed): all 10 pass, and `go test ./...` passes.
+  - **Mutations each fail tests:**
+    - limit ignored: 5;
+    - never resets: 4;
+    - resets once per round (both players' turns share one allowance): 3.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented lead decisions 1-6; status `review`.
+  - **Reuse:** the gate sits in `fireHook` (`trigger.go`) beside the existing `TurnYours` and deploy-zone gates; no second firing path. `Game.Turn` supplies the turn key. No existing equivalent counter was found in `pkg/engine`.
+  - **Diff:** `ability.Trigger.MaxPerTurn int` with a doc comment (0 = no limit); `Game.firings map[firingKey]int` and `firingKey{asset, trigger, turn}` in `state.go` (created lazily, not in snapshots or events); in `fireHook`, a trigger with `MaxPerTurn > 0` is skipped when its `[asset ID, trigger index, Game.Turn]` count has reached the limit, else the count is incremented as it is buffered (counts firings, so a fizzled clause still uses the allowance). Asset IDs are per visit to the battlefield (FR-ZON-004), so a returning card starts fresh. `doc.go`: HookDamaged, zone targets, `MaxPerTurn` and Unbowed added to "What runs now"; Unbowed removed from "Not built yet", which now says Headquarters abilities stay unbuilt "until T-0055".
+  - **Commands:** the 10-test Done When regex: 10 PASS. `go tool task check`: passes (gofmt, vet, all tests, cardtown lint --all). `go tool task sim`: runs clean. `go run ./cmd/cardtown sim -deck starter -p0 ANIMUS -p1 PATH` on a detached worktree of 667ed90 (the branch start) vs this tree: `cmp` byte-identical (1746 bytes).
+  - **Reviewer:** the check ordering in `fireHook` runs after the Turn and deploy-zone gates, so a trigger skipped by those never spends allowance.
