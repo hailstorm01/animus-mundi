@@ -4,7 +4,7 @@ title: No random fallbacks - a timed-out target picks the first legal options in
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0056-fixed-order-fallback
 depends_on: [T-0054]
 claims: [fallback:DecideTarget, helper:fixed-order]
@@ -101,3 +101,10 @@ None expected. Request one here if a test needs it.
     - Main Theater by ID: 1;
     - Reserves before Headquarters: 4.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented; status `review`. Diff touches `choice.go`, `state.go`, `targeting.go` only; no test edited, no helper added.
+  - `state.go`: new `(*Game).fixedOrderPositions(p)` maps each battlefield asset ID to its fixed-order position for choosing player p: p's HQ, `Reserves`, then Main Theater assets p controls (slice order), then the same for the other seats. One function, as Lead decision 4 asks, for the later untargeted picks to reuse.
+  - `choice.go`: new `(*Game).fixedOrderPicks(d)`; `fallbackPicks` for `DecideTarget` calls it instead of `randomPicks`. It stable-sorts option indexes by position (non-asset `Ref`s last, in listed order) and takes the first `d.Min`; `Min` 0 returns nil. It draws nothing from `g.rng`. `randomPicks` and `RandomChooser` are unchanged. Comment on `DecideTarget` reworded.
+  - `targeting.go`: `chooseTargets` doc comment no longer says random. Option listing is unchanged (oldest first).
+  - Reuse search: no existing fixed-order helper in `pkg/engine`; `Game.Assets`/`assetsByID` give the wrong order for this, so a position map was added. `sort` is a new import in `choice.go`.
+  - Commands: `go test ./pkg/engine -run 'TestFR_MOD_001_Target|TestFR_TGT_001_TimeoutOnTwoOptions|TestCard_.*_Timeout'` ok; `go tool task check` exit 0; `go tool task sim` exit 0; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (3c73668) vs after: `cmp` exit 0, byte-identical.
+  - Reviewer: a `Repeats` target decision would cycle through the ordered options; none exists today.

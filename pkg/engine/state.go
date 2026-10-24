@@ -210,6 +210,38 @@ func (g *Game) Assets() []*Asset {
 	return append(out, g.Theater...)
 }
 
+// fixedOrderPositions maps each battlefield asset ID to its position in the
+// FR-MOD-001 §6 fixed order for choosing player p (SVY-R16): p's assets before the
+// opponent's; within a player the Headquarters, then Reserves, then the Main Theater
+// assets they control, each zone in arrival order.
+func (g *Game) fixedOrderPositions(p PlayerID) map[int]int {
+	pos := map[int]int{}
+	add := func(a *Asset) { pos[a.ID] = len(pos) }
+	seat := func(id PlayerID) {
+		pl := g.Players[id]
+		if pl.HQ != nil {
+			add(pl.HQ)
+		}
+		for _, a := range pl.Reserves {
+			add(a)
+		}
+		for _, a := range g.Theater {
+			if a.Controller == id {
+				add(a)
+			}
+		}
+	}
+	if int(p) >= 0 && int(p) < len(g.Players) {
+		seat(p)
+	}
+	for i := range g.Players {
+		if PlayerID(i) != p {
+			seat(PlayerID(i))
+		}
+	}
+	return pos
+}
+
 // Asset finds a battlefield asset by ID, or nil if it is no longer there.
 func (g *Game) Asset(id int) *Asset {
 	for _, a := range g.Assets() {
