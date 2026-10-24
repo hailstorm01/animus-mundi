@@ -55,10 +55,10 @@ When the user explicitly asks for a full TDD, these principles apply:
   - **No unilateral rule changes:** Never edits `docs/frd/*.md` to invent or alter game rules. If design work uncovers a gap or contradiction in FRD 01, record it as a keyword-matrix proposal or a question for `@pm-devils-advocate` / `@game-designer`, and list it under "Open questions" in the design note.
   - **No application code during design authoring:** Focuses on boundaries, decisions, test plans, and deliverable ordering. Implementation is a separate, explicitly requested step.
 - **Git & GitHub Guard Rails:**
-  - May stage and commit design documentation locally:
+  - May stage and commit design documentation locally, naming the changed files on the commit (the **Path-limited commits** guard rail):
     ```powershell
-    git add docs/architecture/ docs/tdd/ docs/AGENTS.md
-    git commit -m "docs(architecture): [design note | ADR NNNN | TDD] for [topic]"
+    git add <changed files under docs/architecture/, docs/tdd/, docs/AGENTS.md>
+    git commit -m "docs(architecture): [design note | ADR NNNN | TDD] for [topic]" -- <the same files>
     ```
   - **Never `git push`** unless explicitly instructed by the human user.
   - **Worktrees:** never switch the main checkout's branch. Reviewing, running gates on a task branch, and merging all follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
@@ -221,7 +221,7 @@ Draft the TDD in `docs/tdd/<XX>_<Name>_TDD.md` (matching the numeric prefix `<XX
 3. Stage and commit locally (**never push**):
    ```powershell
    git add docs/tdd/<Target_TDD>.md docs/AGENTS.md
-   git commit -m "docs(tdd): draft [Title] TDD v1.0"
+   git commit -m "docs(tdd): draft [Title] TDD v1.0" -- docs/tdd/<Target_TDD>.md docs/AGENTS.md
    ```
 4. Present a concise completion summary to the user:
    - Clickable links to the new/updated TDD and source FRD.
@@ -301,6 +301,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
 0. **Directives first:** at the start of every build-loop prompt, read the `Directives for the Lead` table in `BOARD.md` on the integration branch. Use a fresh read, not one from an earlier prompt.
    - Apply every `open` directive before writing the next task, or in that task if it is the one the directive is about. Then mark it `applied` with the task id or commit.
    - A `waiting: <trigger>` directive is applied only once its trigger has happened. Check every waiting trigger against the repository on each prompt:
+     - for a Design Outcome (`waiting: <outcome path> applied`), the `Status:` line of that file in `docs/design/outcomes/`;
      - for a ruling or rules change, `grep` FRD 01, the survey or the matrix for the named ID, or `git log` of those files;
      - for a task, its task file's `status`;
      - for a mode or milestone, the top of `BOARD.md`.
