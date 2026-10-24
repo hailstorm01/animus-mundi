@@ -4,7 +4,7 @@ title: One place exhausts an asset, (g *Game) exhaust (directive #49, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #49, structural review 3 finding 1, before T-0055)
-status: ready
+status: in-progress
 branch: m2/T-0058-one-exhaust
 depends_on: [T-0057]
 claims: [helper:engine.exhaust]
