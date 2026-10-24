@@ -299,7 +299,7 @@ func TestFR_TGT_001_TimeoutOnTwoOptionsDamagesExactlyOneOfThem(t *testing.T) {
 		t.Fatalf("two options are asked once: %d", n)
 	}
 	if (a.Damage == 2) == (b.Damage == 2) || a.Damage+b.Damage != 2 {
-		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage A=%d B=%d, want exactly one with 2", a.Damage, b.Damage)
+		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): damage A=%d B=%d, want exactly one with 2", a.Damage, b.Damage)
 	}
 }
 

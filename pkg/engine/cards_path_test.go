@@ -310,7 +310,7 @@ func TestCard_Saboteur_TimeoutOnOpposingChoiceDamagesExactlyOneLegalUnit(t *test
 		t.Fatalf("the opposing clause asks once and the allied clause (only the Saboteur) is automatic: asked %d times", n)
 	}
 	if (e1.Damage == 2) == (e2.Damage == 2) || e1.Damage+e2.Damage != 2 {
-		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage A=%d B=%d, want exactly one with 2", e1.Damage, e2.Damage)
+		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): damage A=%d B=%d, want exactly one with 2", e1.Damage, e2.Damage)
 	}
 	s.wantDamage(sc, 0)
 	s.wantDamage(assetOf(s.g, c), 1)
@@ -448,7 +448,7 @@ func TestCard_ChainbreakerSappers_TimeoutDamagesExactlyOneLegalTarget(t *testing
 		t.Fatalf("two Headquarters are two options: asked %d times, want 1", n)
 	}
 	if (h0.Damage == 1) == (h1.Damage == 1) || h0.Damage+h1.Damage != 1 {
-		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): HQ damage %d and %d, want exactly one with 1", h0.Damage, h1.Damage)
+		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): HQ damage %d and %d, want exactly one with 1", h0.Damage, h1.Damage)
 	}
 }
 
@@ -653,7 +653,7 @@ func TestCard_DevilhornGuerrillas_TimeoutDamagesExactlyOneLegalUnit(t *testing.T
 		t.Fatalf("asked %d times, want 1", n)
 	}
 	if (e1.Damage == 2) == (e2.Damage == 2) || e1.Damage+e2.Damage != 2 {
-		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage A=%d B=%d, want exactly one with 2", e1.Damage, e2.Damage)
+		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): damage A=%d B=%d, want exactly one with 2", e1.Damage, e2.Damage)
 	}
 	s.wantDamage(st, 0)
 	s.wantDamage(assetOf(s.g, c), 0)
@@ -1063,7 +1063,7 @@ func TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget(t *testing.T) {
 		t.Fatalf("one death question: asked %d times", n)
 	}
 	if (u.Damage == 5) == (w.Damage == 5) || u.Damage+w.Damage != 5 {
-		t.Errorf("a timeout picks one random legal target (FR-MOD-001 sec. 6): damage %d and %d, want exactly one with 5", u.Damage, w.Damage)
+		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): damage %d and %d, want exactly one with 5", u.Damage, w.Damage)
 	}
 }
 

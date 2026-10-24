@@ -12,7 +12,7 @@ import (
 // chooseTargets asks p's controller to choose each of its Effect.Targets, in
 // slot order, when the trigger is placed on the stack (FR-TGT-001). Only legal
 // entities are offered. A single-entity slot is not asked about with one
-// option, and a timeout picks a random legal one. An "up to N" slot is always
+// option, and a timeout picks the first legal one in fixed order (SVY-R16). An "up to N" slot is always
 // asked (Min 0 != Max), its picks are distinct and a timeout picks none
 // (SVY-R11). A slot with no legal entity stays empty and asks nothing:
 // deploying never requires a target (FR-TGT-003).

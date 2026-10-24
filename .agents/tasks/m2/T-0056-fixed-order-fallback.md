@@ -4,7 +4,7 @@ title: No random fallbacks - a timed-out target picks the first legal options in
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0056-fixed-order-fallback
 depends_on: [T-0054]
 claims: [fallback:DecideTarget, helper:fixed-order]
@@ -45,14 +45,14 @@ Use a synthetic trigger with one chosen-target `DealDamage`, answered with a tim
 - **No randomness drawn:** two scenes with the same seed. In one, a target fallback fires. Afterwards both draw the same next value from the game's random source, such as a shuffle of identical decks. Optional; drop it if it can only be written against internals.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-New tests in `pkg/engine/fallback_order_test.go`. Names may be refined; record the final regex here.
+New tests in `pkg/engine/fallback_order_test.go`. Final regex: `TestFR_MOD_001_Target(Timeout|NoChooser|Fallback)|TestFR_TGT_001_TimeoutOnTwoOptions|TestCard_.*_Timeout`. New tests are the `TestFR_MOD_001_TargetTimeout*` and `TestFR_MOD_001_TargetNoChooserAndInvalidAnswerPickLikeATimeout` ones (the older `TargetFallback*` ones are the edited choice_test.go tests).
 - `TestFR_MOD_001_TargetTimeoutPicksOwnAssetBeforeOpponents`
 - `TestFR_MOD_001_TargetTimeoutPicksHeadquartersThenReservesThenMainTheater`
 - `TestFR_MOD_001_TargetTimeoutOrdersAZoneByArrivalNotByID`
 - `TestFR_MOD_001_TargetTimeoutOrderIsRelativeToTheChoosingPlayer`
 - `TestFR_MOD_001_TargetTimeoutOrdersOpponentsAssetsTheSameWay`
 - `TestFR_MOD_001_TargetNoChooserAndInvalidAnswerPickLikeATimeout`
-- `TestFR_MOD_001_TargetFallbackDrawsNoRandomness` (optional, see above)
+- `TestFR_MOD_001_TargetFallbackDrawsNoRandomness` was NOT written (see Log).
 
 **Authorized edits to existing tests** (in the `test(T-0056)` commit only):
 - `pkg/engine/choice_test.go`:
@@ -85,3 +85,26 @@ None expected. Request one here if a test needs it.
   - The trigger of directive #48 has happened: FRD 01 v3.12, the Scratch Company CSV row, and the outcome `Status: applied`. Its task, T-0057, is written and stays `queued`.
   - The other waiting triggers have not fired. #8: no `deck.go` change. #15: no turn hook. #20: this is wave B.
   - Starter-deck cards not yet executable: 28, plus both Headquarters.
+- 2026-10-23 rules-test-author: Wrote tests on branch `m2/T-0056-fixed-order-fallback`, status `tests-review`.
+  - New, in `fallback_order_test.go` (all fail today, as intended): `TestFR_MOD_001_TargetTimeoutPicksOwnAssetBeforeOpponents`, `...TargetTimeoutPicksHeadquartersThenReservesThenMainTheater` (2 subtests), `...TargetTimeoutOrdersAZoneByArrivalNotByID`, `...TargetTimeoutOrderIsRelativeToTheChoosingPlayer` (2 subtests), `...TargetTimeoutOrdersOpponentsAssetsTheSameWay` (2 subtests), `...TargetNoChooserAndInvalidAnswerPickLikeATimeout` (timeout, no chooser, out of range, negative, too many).
+  - Authorized edits done: `choice_test.go` (replaced `TargetFallbackIsRandomNotFixed` with `TargetFallbackPicksFirstInFixedOrder`, deleted `TargetFallbackDeterministicForSameSeed`, tightened the two other fallback tests to `[0 1]` and `[0]`; no import became unused); message rewording in `targeting_test.go`, `cards_path_test.go` (4 tests) and the comment in `optional_upto_test.go`.
+  - Helpers requested: none. The file adds its own test-only helpers `(*scene).fallbackTrigger` and `wantOnlyDamaged`.
+  - Left out: `TargetFallbackDrawsNoRandomness`, because observing the game's random source needs `g.rng` (internal). The exact-picks tests already pin a deterministic result.
+  - Design notes: the trigger's source unit enters the controller's Reserves, so tests choose filters (structures, `Opposing`) so it is not an unintended option. "Chooser is not the active player" is a direct `g.choose` call with asset-ID `Ref`s, because a deploy needs the active player. `go vet` is clean; `cardtown lint rules` passes. Not run: full `task check` and `task sim` (the engineer's gates).
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - d555760 adds `fallback_order_test.go` (6 tests, 12 cases) and makes exactly the authorized edits. A deleted test and a replaced one, two tests tightened to exact picks, and five messages reworded with their assertions unchanged.
+  - Rules content checks out against `FR-MOD-001` §6 (FRD 01 line 356): own assets first, Headquarters, then Reserves, then Main Theater, each zone by arrival, relative to the choosing player. Dropping `TargetFallbackDrawsNoRandomness` is accepted, as the task allowed.
+  - **Reviewer check** (a throwaway prototype, not committed: `fallbackPicks` ranks options by a position map built from `d.Player`'s HQ, `Reserves` and `g.Theater`, then the opponent's; options not on the battlefield sort last in listed order): the regex passes, and `go test ./...` passes. So no existing test relied on a seed's random pick.
+  - **Mutations each fail tests:**
+    - seat 0's assets first, not the chooser's: 3;
+    - listed (ID) order: 15;
+    - Main Theater by ID: 1;
+    - Reserves before Headquarters: 4.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer: Implemented; status `review`. Diff touches `choice.go`, `state.go`, `targeting.go` only; no test edited, no helper added.
+  - `state.go`: new `(*Game).fixedOrderPositions(p)` maps each battlefield asset ID to its fixed-order position for choosing player p: p's HQ, `Reserves`, then Main Theater assets p controls (slice order), then the same for the other seats. One function, as Lead decision 4 asks, for the later untargeted picks to reuse.
+  - `choice.go`: new `(*Game).fixedOrderPicks(d)`; `fallbackPicks` for `DecideTarget` calls it instead of `randomPicks`. It stable-sorts option indexes by position (non-asset `Ref`s last, in listed order) and takes the first `d.Min`; `Min` 0 returns nil. It draws nothing from `g.rng`. `randomPicks` and `RandomChooser` are unchanged. Comment on `DecideTarget` reworded.
+  - `targeting.go`: `chooseTargets` doc comment no longer says random. Option listing is unchanged (oldest first).
+  - Reuse search: no existing fixed-order helper in `pkg/engine`; `Game.Assets`/`assetsByID` give the wrong order for this, so a position map was added. `sort` is a new import in `choice.go`.
+  - Commands: `go test ./pkg/engine -run 'TestFR_MOD_001_Target|TestFR_TGT_001_TimeoutOnTwoOptions|TestCard_.*_Timeout'` ok; `go tool task check` exit 0; `go tool task sim` exit 0; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (3c73668) vs after: `cmp` exit 0, byte-identical.
+  - Reviewer: a `Repeats` target decision would cycle through the ordered options; none exists today.

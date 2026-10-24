@@ -1,12 +1,15 @@
 package engine
 
-import "math/rand/v2"
+import (
+	"math/rand/v2"
+	"sort"
+)
 
 // DecisionKind says what a Decision asks, and so which FR-MOD-001 §6 fallback applies.
 type DecisionKind int
 
 const (
-	DecideTarget   DecisionKind = iota // mandatory targets: fallback picks random legal options
+	DecideTarget   DecisionKind = iota // mandatory targets: fallback picks the first legal options in fixed order (SVY-R16)
 	DecideMode                         // "Choose N" modes: fallback picks the first listed options
 	DecideOptional                     // "you may": fallback declines (no picks)
 	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
@@ -127,7 +130,7 @@ func (g *Game) choose(d Decision) []int {
 func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
 	case DecideTarget:
-		return randomPicks(g.rng, d, d.Min)
+		return g.fixedOrderPicks(d)
 	case DecideOrder:
 		picks := make([]int, d.Min)
 		for i := range picks {
@@ -146,6 +149,35 @@ func (g *Game) fallbackPicks(d Decision) []int {
 		return picks
 	}
 	return nil
+}
+
+// fixedOrderPicks returns the indexes of the first d.Min options in the FR-MOD-001
+// §6 fixed order (SVY-R16), in that order. It draws nothing from g.rng.
+func (g *Game) fixedOrderPicks(d Decision) []int {
+	if d.Min == 0 {
+		return nil
+	}
+	pos := g.fixedOrderPositions(d.Player)
+	idx := make([]int, len(d.Options))
+	for i := range idx {
+		idx[i] = i
+	}
+	rank := func(i int) int {
+		if r, ok := pos[d.Options[i].Ref]; ok {
+			return r
+		}
+		return len(pos) // not a battlefield asset: after all that are
+	}
+	sort.SliceStable(idx, func(a, b int) bool { return rank(idx[a]) < rank(idx[b]) })
+	picks := make([]int, d.Min)
+	for i := range picks {
+		if d.Repeats {
+			picks[i] = idx[i%len(idx)]
+		} else {
+			picks[i] = idx[i]
+		}
+	}
+	return picks
 }
 
 // randomPicks returns n uniformly random picks for d: distinct unless d.Repeats.
