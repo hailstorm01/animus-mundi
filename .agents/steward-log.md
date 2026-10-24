@@ -16,7 +16,10 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 
 | Date | Persona | Change | Commit |
 | :--- | :--- | :--- | :--- |
-| 2026-10-23 | `lead-architect` | D2.0: re-read the Directives table on every build-loop prompt; check each `waiting:` trigger against the repo (FRD/survey/matrix grep or `git log`, task status, `BOARD.md` header); re-read `BOARD.md` right before committing a task. E4: write `waiting:` triggers in checkable form. Cause: #29 sat `waiting` for two days after `0cadda1` recorded SVY-R8; #46 landed 55 s before T-0051 was committed. User approved the wording. | the commit adding this row |
+| 2026-10-23 | `lead-architect` | D2.0: re-read the Directives table on every build-loop prompt; check each `waiting:` trigger against the repo (FRD/survey/matrix grep or `git log`, task status, `BOARD.md` header); re-read `BOARD.md` right before committing a task. E4: write `waiting:` triggers in checkable form. Cause: #29 sat `waiting` for two days after `0cadda1` recorded SVY-R8; #46 landed 55 s before T-0051 was committed. User approved the wording. | `258b70b` |
+| 2026-10-23 | `game-designer`, `pm-frd-drafter`, `lead-architect`, routing | Design Outcomes become committed files in `docs/design/outcomes/`. The designer writes the file and the directive row in one path-limited commit, with a fuller template (ruling map, per-ruling decisions and wording, superseded wording, explicit Card text). The drafter reads only from a committed path and sets the `Status:` line on applying. Both are permission changes the user approved. The lead checks `waiting: <outcome path> applied` against that line. The Open Question 8 outcome was backfilled. Cause: that report lived only in chat, the drafter could not find it, and the user had to round-trip. | `a453a23`, `c2f3c1a`, `a219a59`, `cad66ae`, `b581594` |
+| 2026-10-23 | `lead-architect`, `pm-frd-drafter`, `pm-lead`, `pm-devils-advocate` | Commit examples are path-limited (`git commit -m … -- <paths>`), per AGENTS.md. | `cad66ae`, `a219a59`, `fc6489d` |
+| 2026-10-23 | `workflow-steward` | Runbook B step 2 also checks that the receiver can get its input from a committed file, not chat. | the commit adding this row |
 
 ## Boundary Exceptions
 
