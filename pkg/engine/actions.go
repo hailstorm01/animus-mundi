@@ -79,7 +79,7 @@ func (g *Game) Apply(a Action) error {
 		inst := handCard(p, a.Card)
 		p.Req -= inst.Card.ReqCost
 		p.Tac -= inst.Card.TacCost
-		p.Hand = remove(p.Hand, inst)
+		g.takeCard(inst)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
 	case ActMarch:
 		as := g.Asset(a.Asset)

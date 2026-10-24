@@ -159,13 +159,10 @@ func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
 	if !slices.Contains(owner.Discard, it.Inst) {
 		return
 	}
-	owner.Discard = remove(owner.Discard, it.Inst)
-	switch {
-	case st.Op == ability.OpReturnToHand:
-		owner.Hand = append(owner.Hand, it.Inst)
-	case st.Bottom:
-		owner.Deck = append(owner.Deck, it.Inst)
-	default:
-		owner.Deck = append([]*Instance{it.Inst}, owner.Deck...)
+	g.takeCard(it.Inst)
+	if st.Op == ability.OpReturnToHand {
+		g.putCard(it.Inst, ZoneHand, false)
+	} else {
+		g.putCard(it.Inst, ZoneDeck, st.Bottom)
 	}
 }

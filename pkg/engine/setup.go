@@ -75,7 +75,7 @@ func NewGame(cfg Config) (*Game, error) {
 		var aside []*Instance
 		for _, id := range cfg.Mulligan(p.ID, append([]*Instance(nil), p.Hand...)) {
 			if inst := handCard(p, id); inst != nil {
-				p.Hand = remove(p.Hand, inst)
+				g.takeCard(inst)
 				aside = append(aside, inst)
 				setAside[p.ID] = append(setAside[p.ID], inst.Card.Name)
 				setAsideInsts[p.ID] = append(setAsideInsts[p.ID], inst.ID)
@@ -84,7 +84,9 @@ func NewGame(cfg Config) (*Game, error) {
 		for range aside {
 			g.moveTopToHand(p)
 		}
-		p.Deck = append(p.Deck, aside...)
+		for _, inst := range aside {
+			g.putCard(inst, ZoneDeck, true)
+		}
 		g.shuffle(p)
 	}
 
