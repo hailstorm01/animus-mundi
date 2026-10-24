@@ -23,7 +23,7 @@ Looks after the persona system the way `lead-architect` looks after the engine. 
 The steward may edit these freely, on the user's request:
 - Persona skills: `.agents/skills/*/SKILL.md`, including new personas the user asks for.
 - Routing and guard rails: `.agents/rules/AGENTS.md`.
-- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E).
+- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E, and for pre-existing duplicates a task review finds, D5).
 - Claude Code subagent wrappers: `.claude/agents/*`.
 - The persona and doc map in `docs/AGENTS.md`, the top-level `README.md`, and `Taskfile.yml`.
 - Its own log: `.agents/steward-log.md`.
@@ -54,7 +54,7 @@ Everything else belongs to another persona: FRDs, the matrix, the survey, design
 4. Summarize what the persona will now do differently, and any permission change the user agreed to.
 
 ### C. Record a directive for the lead
-Write the row the user dictates, numbered after the last one, with source `User, <date>`, and status `open` or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
+Write the row the user dictates, numbered after the last one, with source `User, <date>`, and status `open`, `open: before <task>` (blocking, lead-architect D2.0) or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
 
 ### D. Reconcile branches and worktrees (only on request)
 1. Survey: `git worktree list`, the status of each worktree, `git branch -vv`, and commits on any branch not yet in the integration branch.
