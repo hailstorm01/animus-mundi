@@ -4,7 +4,7 @@ title: No random fallbacks - a timed-out target picks the first legal options in
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0056-fixed-order-fallback
 depends_on: [T-0054]
 claims: [fallback:DecideTarget, helper:fixed-order]
