@@ -4,7 +4,7 @@ title: The Scratch Company face prints Deploys Exhausted, and a scratch is a uni
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0057-scratch-face-deploys-exhausted
 depends_on: [T-0056]
 claims: [face:Scratch Company, file:pkg/engine/zones.go#scratch]
@@ -66,3 +66,9 @@ None expected.
   - Reuse: `Printed()`, `fireDeploy`, the `resolveDeploy` idiom. No new shapes or helpers; no tests edited.
   - Results: the four listed tests pass (`TestFR_ZON_005_ScratchFacePrintsDeploysExhausted`, `TestFR_ZON_005_ScratchCompanyEntersExhausted`, `TestScratchFace_Characteristics`, `TestView_Case2_FaceDown`). `go tool task check` exit 0. `go tool task sim` exit 0. `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` output before (branch start 59373f8) and after: `cmp` byte-identical.
   - Reviewer: the `fireDeploy` call in `scratch` is untested by design; check it in code.
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as 281743b, status `done`.
+  - Scope: 7cf2895 changes only `card.go` and `zones.go`, plus this file. Decision 4 was skipped, which is allowed. No test has changed since 877d4ab.
+  - Rules fidelity: `scratch` takes `Exhausted` from `Printed().Keywords.DeploysExhausted`, the same rule as `resolveDeploy`. It calls `fireDeploy` after the `scratch` event (`KIM-S05`). That call is a no-op in M2, because the face has no abilities. It was checked in the diff, since no test can see it.
+  - Gates, re-run on a preview of the merge: the four tests pass, `go tool task check` and `go tool task sim` exit 0, and the starter sim is byte-identical to the integration branch.
+  - Directive #48 part 3 (removal decided on entry) waits for Layer 3. Part 4's roughly 12 "no printed abilities" messages are reworded when next touched.
+  - Starter-deck cards not yet executable: 28, plus both Headquarters (unchanged). Next: T-0055 (Animoceps Rager, flash).
