@@ -4,7 +4,7 @@ title: One place moves a card between deck, hand and discard, takeCard and putCa
 kind: harness
 tier: sonnet
 wave: none (board directive #52, structural review 3 finding 4, before T-0055)
-status: ready
+status: in-progress
 branch: m2/T-0059-one-card-mover
 depends_on: [T-0058]
 claims: [helper:engine.takeCard, helper:engine.putCard]
