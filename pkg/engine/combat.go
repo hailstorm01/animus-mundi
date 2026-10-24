@@ -7,7 +7,7 @@ import "animus-mundi/pkg/engine/ability"
 // declareAttack is Steps 1 and 2 of combat (FR-CBT-002).
 func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
-	att.Exhausted = true
+	g.exhaust(att)
 	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target, Secondary: a.Secondary})
 	g.logEvent(Event{Kind: "attack", Player: int(a.Player), Source: att.ID, Target: a.Target},
 		"%s attacks %s", att, g.Asset(a.Target))
