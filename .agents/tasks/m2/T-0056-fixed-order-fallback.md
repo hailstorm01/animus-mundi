@@ -4,7 +4,7 @@ title: No random fallbacks - a timed-out target picks the first legal options in
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0056-fixed-order-fallback
 depends_on: [T-0054]
 claims: [fallback:DecideTarget, helper:fixed-order]
@@ -91,3 +91,13 @@ None expected. Request one here if a test needs it.
   - Helpers requested: none. The file adds its own test-only helpers `(*scene).fallbackTrigger` and `wantOnlyDamaged`.
   - Left out: `TargetFallbackDrawsNoRandomness`, because observing the game's random source needs `g.rng` (internal). The exact-picks tests already pin a deterministic result.
   - Design notes: the trigger's source unit enters the controller's Reserves, so tests choose filters (structures, `Opposing`) so it is not an unintended option. "Chooser is not the active player" is a direct `g.choose` call with asset-ID `Ref`s, because a deploy needs the active player. `go vet` is clean; `cardtown lint rules` passes. Not run: full `task check` and `task sim` (the engineer's gates).
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - d555760 adds `fallback_order_test.go` (6 tests, 12 cases) and makes exactly the authorized edits. A deleted test and a replaced one, two tests tightened to exact picks, and five messages reworded with their assertions unchanged.
+  - Rules content checks out against `FR-MOD-001` §6 (FRD 01 line 356): own assets first, Headquarters, then Reserves, then Main Theater, each zone by arrival, relative to the choosing player. Dropping `TargetFallbackDrawsNoRandomness` is accepted, as the task allowed.
+  - **Reviewer check** (a throwaway prototype, not committed: `fallbackPicks` ranks options by a position map built from `d.Player`'s HQ, `Reserves` and `g.Theater`, then the opponent's; options not on the battlefield sort last in listed order): the regex passes, and `go test ./...` passes. So no existing test relied on a seed's random pick.
+  - **Mutations each fail tests:**
+    - seat 0's assets first, not the chooser's: 3;
+    - listed (ID) order: 15;
+    - Main Theater by ID: 1;
+    - Reserves before Headquarters: 4.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
