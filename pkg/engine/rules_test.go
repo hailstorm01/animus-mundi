@@ -110,6 +110,17 @@ func TestFR_ZON_005_ScratchCompanyEntersExhausted(t *testing.T) {
 	}
 }
 
+// FR-ZON-005, FR-KWD-002l, KIM-S01 (revised), directive #48.
+func TestFR_ZON_005_ScratchFacePrintsDeploysExhausted(t *testing.T) {
+	if got, want := ScratchFace().Keywords, (Keywords{DeploysExhausted: true}); got != want {
+		t.Errorf("Scratch Company face keywords = %+v, want exactly Deploys Exhausted (FR-ZON-005)", got)
+	}
+	fd := &Asset{FaceDown: true}
+	if !fd.Printed().Keywords.DeploysExhausted {
+		t.Errorf("a face-down asset's Printed() lacks Deploys Exhausted, want the Scratch Company face (FR-ZON-005, FR-KWD-002l)")
+	}
+}
+
 func TestFR_ZON_004_MarchPreservesDamageAndArmor(t *testing.T) {
 	s := newScene(t)
 	u := s.put(0, ZoneReserves, unit("Walker", 2, 5, Keywords{Armor: 2}))
