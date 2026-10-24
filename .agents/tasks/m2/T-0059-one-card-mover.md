@@ -4,7 +4,7 @@ title: One place moves a card between deck, hand and discard, takeCard and putCa
 kind: harness
 tier: sonnet
 wave: none (board directive #52, structural review 3 finding 4, before T-0055)
-status: in-progress
+status: review
 branch: m2/T-0059-one-card-mover
 depends_on: [T-0058]
 claims: [helper:engine.takeCard, helper:engine.putCard]
@@ -96,3 +96,16 @@ Five non-test files, one over the size rule. As with T-0035 and T-0048, a pure m
 ## Log
 - 2026-10-24 lead-architect: Wrote the task from board directive #52, the second of the four directives before T-0055 (#49 done in T-0058; #53 and #54 follow). Harness, tier sonnet, as the directive says. It is a pure move, so it skips `tests` and is `ready` on branch `m2/T-0059-one-card-mover`. The directive let the engineer pick the signature; the lead fixed it as two helpers instead, so the review has one shape to check. Checked the six sites against `main` c4240cd; the directive's line references still hold. Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (no wave C shape task), #50 (no task claims the exhaust hook), #51 (no "if you do" task) and #55 (#53's task not written). None has fired. Starter-deck cards not yet executable: 28, plus both Headquarters.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-24 kernel-engineer (sonnet): Implemented. Status `review`.
+  - Reuse search: `remove` (zones.go) is reused by `takeCard`; no existing pile-move helper existed.
+  - Baseline: built `cardtown` from `main` (8373028) before any edit; saved starter sim and stress sim stdout+stderr and exit codes.
+  - Commits: `41607be` test(T-0059) first (compile failure: `putCard` undefined), then the implementation commit.
+  - Changed: `zones.go` gains `takeCard` and `putCard` after `scratch` (imports `fmt`, `slices`); `moveTopToHand`, `scratch`, the death sweep, `ActDeploy`, `relocateSelf` (guard `slices.Contains(owner.Discard, …)` kept) and the mulligan call them. Mulligan: `takeCard` per set-aside card, draws, then `putCard(inst, ZoneDeck, true)` per card in `aside` order. All six sites converted; none left as is. Header line of zones.go unchanged (still accurate).
+  - Case 1-7: `TestPutCard_DeckTop`, `_DeckBottom`, `_HandAndDiscardAddAtEnd` (both `bottom` values), `_OwnersPileWhenOtherPlayerActive`, `TestTakeCard_FromEachPile`, `_InNoPile`, `TestPutCard_PanicsOnOtherZones` (Stack and Reserves). All pass.
+  - Case 8: `git diff main -- '*_test.go' --stat` lists only `pkg/engine/zones_test.go`; `go test ./...` passes (via `go tool task check`).
+  - Case 9: `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` baseline vs new: `cmp` identical on output and exit code (0).
+  - Case 10: `cardtown sim` (no `-deck`): `cmp` identical, exit code 0.
+  - Case 11: `git grep -n -E '\.(Hand|Discard|Deck)(\[[^]]*\])? *(=|\+=)[^=]' -- 'pkg/engine/*.go' ':!pkg/engine/*_test.go'` prints: setup.go:47 (initial deck build); snapshot.go:118-120 (three clones); zones.go:11 (shuffle swap); zones.go:76,78,81,83 (inside `putCard`). `takeCard` writes via `*pile = remove(…)`, which the regex does not match.
+  - Case 12: `git diff main --stat` lists actions.go, damage.go, effects.go, setup.go, zones.go, zones_test.go and this task file only.
+  - Case 13: `go tool task check` exit 0; `go tool task sim` exit 0.
+  - Review: `takeCard` searches deck, hand, discard in that order with `slices.Contains` then `remove`; the death sweep's unused `owner` variable is gone.
