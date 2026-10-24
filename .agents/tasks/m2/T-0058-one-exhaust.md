@@ -4,7 +4,7 @@ title: One place exhausts an asset, (g *Game) exhaust (directive #49, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #49, structural review 3 finding 1, before T-0055)
-status: in-progress
+status: review
 branch: m2/T-0058-one-exhaust
 depends_on: [T-0057]
 claims: [helper:engine.exhaust]
@@ -61,10 +61,21 @@ No new tests: a pure move. Before any edit, build a baseline CLI from `main` and
 - `pkg/engine/combat.go` (the write in `declareAttack`)
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-24 lead-architect: Wrote the task from board directive #49, the first of the four directives the user put before T-0055 (#49, #52, #53, #54, in that order). Harness, tier flash, pure move, so it skips `tests` and is `ready` on branch `m2/T-0058-one-exhaust` (cut from `main` at this commit). Checked the directive's line references against `main` 9a38051; they still hold. Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` behavior change), #15 (no turn hook), #20 (no wave C shape task), #50 (no task claims the exhaust hook; this one claims only the helper), #51 (no "if you do" task) and #55 (#53's task not written). None has fired. Starter-deck cards not yet executable: 28, plus both Headquarters.
   - Next: `agy` is not installed in the lead's environment, so **the user runs `@kernel-engineer T-0058` in the Antigravity agent (Gemini Flash)** (D3 fallback).
+- 2026-10-24 kernel-engineer: Pure move done. Baseline CLI `cardtown-baseline.exe` built from `main` (4a132c8) before edits and baseline starter/stress outputs captured. Status set to `in-progress` in 94484b5.
+  - Reused / checked: Searched `pkg/engine` for `exhaust(` before implementing; none existed. Confirmed only four writes existed for `.Exhausted = true` (Generate, March, Scratch, Attack).
+  - Implemented: Added `(g *Game) exhaust(a *Asset)` in `pkg/engine/actions.go` immediately after `Apply`. Replaced `as.Exhausted = true` in Generate and March with `g.exhaust(as)`, replaced `p.HQ.Exhausted = true` in Scratch with `g.exhaust(p.HQ)`, and replaced `att.Exhausted = true` in `declareAttack` (`pkg/engine/combat.go`) with `g.exhaust(att)`.
+  - Case 1 (Existing tests unchanged): `git diff main -- '*_test.go'` is empty; `go test ./...` passed (exit code 0).
+  - Case 2 (Starter sim byte-identical): `fc.exe /b` between baseline and new binary `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` reported `FC: no differences encountered` (exit code 0).
+  - Case 3 (Stress sim byte-identical): `fc.exe /b` between baseline and new binary `cardtown sim` reported `FC: no differences encountered` (exit code 0).
+  - Case 4 (One write): `git grep -n '\.Exhausted = true' -- 'pkg/engine/*.go' ':!pkg/engine/*_test.go'` returned exactly 1 line: `pkg/engine/actions.go:106:	a.Exhausted = true`.
+  - Case 5 (Four calls): `git grep -n "g.exhaust(" -- 'pkg/engine/*.go' ':!pkg/engine/*_test.go'` returned exactly 4 lines (`actions.go:65`, `actions.go:86`, `actions.go:91`, `combat.go:10`).
+  - Case 6 (Only these edits): `git diff main --stat` lists only `pkg/engine/actions.go`, `pkg/engine/combat.go` and this task file.
+  - Case 7 (Gates): `go tool task check` (fmt-check, vet, all tests, cardtown lint --all) passed cleanly; `go tool task sim` passed cleanly on starter decks.
+  - Status set to `review`.

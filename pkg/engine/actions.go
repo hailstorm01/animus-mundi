@@ -62,7 +62,7 @@ func (g *Game) Apply(a Action) error {
 	switch a.Kind {
 	case ActGenerate:
 		as := g.Asset(a.Asset)
-		as.Exhausted = true
+		g.exhaust(as)
 		yield := as.Printed().TacYield
 		if a.Resource == Requisition {
 			yield = as.Printed().ReqYield
@@ -83,12 +83,12 @@ func (g *Game) Apply(a Action) error {
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
 	case ActMarch:
 		as := g.Asset(a.Asset)
-		as.Exhausted = true
+		g.exhaust(as)
 		g.push(&StackItem{Kind: StackMarch, Controller: a.Player, Source: as.ID, Zone: as.Zone})
 	case ActAttack:
 		g.declareAttack(a)
 	case ActScratch:
-		p.HQ.Exhausted = true
+		g.exhaust(p.HQ)
 		g.push(&StackItem{Kind: StackScratch, Controller: a.Player, Source: p.HQ.ID})
 	case ActEndTurn:
 		g.endTurn()
@@ -98,6 +98,12 @@ func (g *Game) Apply(a Action) error {
 	g.resolveStack()
 	g.settled()
 	return nil
+}
+
+// exhaust is the one place a Readied asset becomes Exhausted, for any reason
+// (SVY-R17). Entering the battlefield Exhausted is not an exhaust.
+func (g *Game) exhaust(a *Asset) {
+	a.Exhausted = true
 }
 
 // check returns nil if a is legal right now.
