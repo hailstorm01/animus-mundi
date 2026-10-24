@@ -86,6 +86,8 @@ var scratchFace = &Card{
 	Subtypes: []string{"Infantry", "Scratch Company"},
 	Power:    1, Health: 1, ReqYield: 1, TacYield: 1,
 	DeployZones: []Zone{ZoneReserves},
+	// The face prints Deploys Exhausted (FR-ZON-005, FR-KWD-002l, KIM-S01).
+	Keywords: Keywords{DeploysExhausted: true},
 }
 
 // ScratchFace returns a copy of the face-down Scratch Company characteristics (FR-ZON-005).

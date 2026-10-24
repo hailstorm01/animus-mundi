@@ -4,7 +4,7 @@ title: The Scratch Company face prints Deploys Exhausted, and a scratch is a uni
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0057-scratch-face-deploys-exhausted
 depends_on: [T-0056]
 claims: [face:Scratch Company, file:pkg/engine/zones.go#scratch]
@@ -60,3 +60,9 @@ None expected.
     - Adding lead decision 2 as well (`Exhausted` from the keyword, plus `fireDeploy`) changes nothing a test sees. The starter sim stays byte-identical to the integration branch.
     - So decision 2 is checked in code review, not by a test, as the task says.
   - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer (sonnet): Implemented lead decisions 1 and 2; decision 4 skipped (the monitor's Exhausted check for scratches is unchanged and still correct).
+  - `pkg/engine/card.go`: `scratchFace` gains `Keywords: Keywords{DeploysExhausted: true}`.
+  - `pkg/engine/zones.go` `scratch`: drops the hard-coded `Exhausted: true`; sets `a.Exhausted = a.Printed().Keywords.DeploysExhausted` (as `resolveDeploy` does), and calls `g.fireDeploy(a)` after the observer event. Event kind stays `scratch`.
+  - Reuse: `Printed()`, `fireDeploy`, the `resolveDeploy` idiom. No new shapes or helpers; no tests edited.
+  - Results: the four listed tests pass (`TestFR_ZON_005_ScratchFacePrintsDeploysExhausted`, `TestFR_ZON_005_ScratchCompanyEntersExhausted`, `TestScratchFace_Characteristics`, `TestView_Case2_FaceDown`). `go tool task check` exit 0. `go tool task sim` exit 0. `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` output before (branch start 59373f8) and after: `cmp` byte-identical.
+  - Reviewer: the `fireDeploy` call in `scratch` is untested by design; check it in code.

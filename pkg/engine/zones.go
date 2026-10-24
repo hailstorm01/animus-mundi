@@ -36,10 +36,12 @@ func (g *Game) scratch(pid PlayerID, n int) {
 		}
 		inst := p.Deck[0]
 		p.Deck = p.Deck[1:]
-		// A new Scratch Company always enters Exhausted (FR-ZON-005).
-		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true, Exhausted: true}
+		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true}
+		// The face prints Deploys Exhausted, so it enters Exhausted (FR-ZON-005, FR-KWD-002l).
+		a.Exhausted = a.Printed().Keywords.DeploysExhausted
 		g.placeOnBattlefield(a, ZoneReserves)
 		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
+		g.fireDeploy(a) // a scratch is a unit deploying (KIM-S05)
 	}
 }
 
