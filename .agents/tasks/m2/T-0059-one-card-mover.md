@@ -4,7 +4,7 @@ title: One place moves a card between deck, hand and discard, takeCard and putCa
 kind: harness
 tier: sonnet
 wave: none (board directive #52, structural review 3 finding 4, before T-0055)
-status: review
+status: done
 branch: m2/T-0059-one-card-mover
 depends_on: [T-0058]
 claims: [helper:engine.takeCard, helper:engine.putCard]
@@ -88,10 +88,10 @@ Five non-test files, one over the size rule. As with T-0035 and T-0048, a pure m
 - new test file: `pkg/engine/zones_test.go`
 
 ## Done When
-- [ ] Cases 1–7 are tests in `zones_test.go`, committed before the implementation, and pass
-- [ ] Cases 8–12 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 are tests in `zones_test.go`, committed before the implementation, and pass
+- [x] Cases 8–12 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-24 lead-architect: Wrote the task from board directive #52, the second of the four directives before T-0055 (#49 done in T-0058; #53 and #54 follow). Harness, tier sonnet, as the directive says. It is a pure move, so it skips `tests` and is `ready` on branch `m2/T-0059-one-card-mover`. The directive let the engineer pick the signature; the lead fixed it as two helpers instead, so the review has one shape to check. Checked the six sites against `main` c4240cd; the directive's line references still hold. Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (no wave C shape task), #50 (no task claims the exhaust hook), #51 (no "if you do" task) and #55 (#53's task not written). None has fired. Starter-deck cards not yet executable: 28, plus both Headquarters.
@@ -109,3 +109,8 @@ Five non-test files, one over the size rule. As with T-0035 and T-0048, a pure m
   - Case 12: `git diff main --stat` lists actions.go, damage.go, effects.go, setup.go, zones.go, zones_test.go and this task file only.
   - Case 13: `go tool task check` exit 0; `go tool task sim` exit 0.
   - Review: `takeCard` searches deck, hand, discard in that order with `slices.Contains` then `remove`; the death sweep's unused `owner` variable is gone.
+- 2026-10-24 lead-architect: Code review (D5): **approved**, merged as 1b5a006, status `done`. Directive #52 applied.
+  - Scope: ff00535 changes only the five Allowed Files. 41607be adds only `zones_test.go`, and no test has changed since. Each of the six sites makes one call in place of its old edit. `relocateSelf`'s if/else has the same three outcomes as the old switch and keeps the discard guard. The mulligan's set-aside cards stay out of every pile until the replacements are drawn (`FR-SET-002`).
+  - Tests: the seven helper tests cover cases 1–7. At 41607be alone they fail to compile (`putCard` undefined), as they should. The local `loose` scene helper is setup only.
+  - Gates, re-run by the reviewer in a scratch worktree of the task branch: the baseline (`main` 8373028) and new CLIs give byte-identical starter and stress sim output (`cmp`), both exit 0. Case 11's grep prints exactly the expected lines. `takeCard`'s own write (`*pile = remove(…)`) is inside the helper but outside the regex, as the engineer noted. `go tool task check` and `go tool task sim` exit 0, all invariants hold, and no monitor reported a violation.
+  - Starter-deck cards not yet executable: 28, plus both Headquarters (unchanged). Next: directive #53 (a stack item carries an effect, not a whole trigger; harness, flash), then #54, then T-0055.
