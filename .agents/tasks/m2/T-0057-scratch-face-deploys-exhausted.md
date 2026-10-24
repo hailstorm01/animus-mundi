@@ -4,7 +4,7 @@ title: The Scratch Company face prints Deploys Exhausted, and a scratch is a uni
 kind: shape
 tier: sonnet
 wave: B
-status: queued
+status: tests
 branch: m2/T-0057-scratch-face-deploys-exhausted
 depends_on: [T-0056]
 claims: [face:Scratch Company, file:pkg/engine/zones.go#scratch]
@@ -49,3 +49,4 @@ None expected.
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task from board directive #48, once its trigger had happened (FRD 01 v3.12 and the CSV row, b3a178b; the outcome's `Status: applied`). Status `queued` behind T-0056 (serial mode). Part 5 was applied to the design note with T-0056's commit.
+- 2026-10-23 lead-architect: Status `tests`, for `rules-test-author`. T-0056 is `done` (7f42665). Waiting triggers checked: #6 and #7 (parallel mode), #8 (no `deck.go` change), #15 (no turn hook) and #20 (wave B) have not fired. Starter-deck cards not yet executable: 28, plus both Headquarters.
