@@ -4,7 +4,7 @@ title: One place exhausts an asset, (g *Game) exhaust (directive #49, harness, f
 kind: harness
 tier: flash
 wave: none (board directive #49, structural review 3 finding 1, before T-0055)
-status: review
+status: done
 branch: m2/T-0058-one-exhaust
 depends_on: [T-0057]
 claims: [helper:engine.exhaust]
@@ -79,3 +79,7 @@ No new tests: a pure move. Before any edit, build a baseline CLI from `main` and
   - Case 6 (Only these edits): `git diff main --stat` lists only `pkg/engine/actions.go`, `pkg/engine/combat.go` and this task file.
   - Case 7 (Gates): `go tool task check` (fmt-check, vet, all tests, cardtown lint --all) passed cleanly; `go tool task sim` passed cleanly on starter decks.
   - Status set to `review`.
+- 2026-10-24 lead-architect: Code review (D5): **approved**, merged as 9aa402c, status `done`. Directive #49 applied.
+  - Scope: cd17b92 changes only `actions.go` and `combat.go`, plus this file. No test file changed. The helper is the lead's text verbatim. Each of the four writes became `g.exhaust(<same asset>)` in place, so nothing around it moved.
+  - Gates, re-run by the reviewer in a scratch worktree of the task branch: the baseline (`main` 4a132c8) and new CLIs give byte-identical starter and stress sim output (`cmp`), both exit 0. Case 4 finds the one write at `actions.go:106`; case 5 finds the four calls. `go tool task check` and `go tool task sim` exit 0, all invariants hold, and no monitor reported a violation.
+  - Starter-deck cards not yet executable: 28, plus both Headquarters (unchanged). Next: directive #52 (one function moves a card between deck, hand and discard; harness, sonnet), then #53 and #54, then T-0055.
