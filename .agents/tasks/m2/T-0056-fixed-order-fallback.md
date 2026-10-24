@@ -4,7 +4,7 @@ title: No random fallbacks - a timed-out target picks the first legal options in
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0056-fixed-order-fallback
 depends_on: [T-0054]
 claims: [fallback:DecideTarget, helper:fixed-order]
@@ -108,3 +108,12 @@ None expected. Request one here if a test needs it.
   - Reuse search: no existing fixed-order helper in `pkg/engine`; `Game.Assets`/`assetsByID` give the wrong order for this, so a position map was added. `sort` is a new import in `choice.go`.
   - Commands: `go test ./pkg/engine -run 'TestFR_MOD_001_Target|TestFR_TGT_001_TimeoutOnTwoOptions|TestCard_.*_Timeout'` ok; `go tool task check` exit 0; `go tool task sim` exit 0; `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` built from the branch start (3c73668) vs after: `cmp` exit 0, byte-identical.
   - Reviewer: a `Repeats` target decision would cycle through the ordered options; none exists today.
+- 2026-10-23 lead-architect: Code review (D5): **approved**, merged as 7f42665, status `done`.
+  - Scope: f4c57d0 changes only the three Allowed Files and this file. No test has changed since d555760.
+  - Fences and reuse: no card names. `fixedOrderPositions` (`state.go`) is the one fixed-order helper that untargeted picks will reuse (lead decision 4). `randomPicks` and `RandomChooser` are unchanged.
+  - Rules fidelity: every `DecideTarget` fallback ranks battlefield `Ref`s relative to `d.Player`, not only the tested layouts. Non-asset `Ref`s go last in listed order. `Min` 0 gives no picks (`SVY-R11`).
+  - Gates, re-run on a preview of the merge: the regex passes, and `go tool task check` and `go tool task sim` exit 0. The starter sim is byte-identical to the integration branch before the merge (1746 bytes), so no sim seat ever times out.
+  - Nits, not blocking, for the next task that touches these files:
+    - the `chooseTargets` doc comment in `targeting.go` has one line wider than the rest, so rewrap it;
+    - `choice.go` imports `sort` where the package otherwise uses `slices`.
+  - Starter-deck cards not yet executable: 28, plus both Headquarters (unchanged). Next: T-0057 (directive #48), then T-0055.
