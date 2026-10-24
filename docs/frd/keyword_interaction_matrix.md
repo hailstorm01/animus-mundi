@@ -33,12 +33,12 @@ Abbreviations: Unb = Unbowed (`FR-KWD-002a`), Res = Resistant N (`FR-KWD-002b`),
 | **Ver**  |   |   |   |   |   |   |   |   | · | · | · | · | · | · | · |
 | **Grd**  |   |   |   |   |   |   |   |   |   | · | · | D | · | · | D |
 | **Arm**  |   |   |   |   |   |   |   |   |   |   | D | · | · | · | D |
-| **DEx**  |   |   |   |   |   |   |   |   |   |   |   | · | · | D | · |
+| **DEx**  |   |   |   |   |   |   |   |   |   |   |   | · | D | D | · |
 | **Scr**  |   |   |   |   |   |   |   |   |   |   |   |   | · | D | · |
 | **Rgp**  |   |   |   |   |   |   |   |   |   |   |   |   |   | · | · |
 | **Bsk**  |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ? B07 |
 
-**Tally (120 cells):** 32 defined, 1 undefined, 87 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. All keyword-vs-core-rules items are ruled. The two remaining open items are unreachable with current cards. Closed items are listed under Rulings.
+**Tally (120 cells):** 33 defined, 1 undefined, 86 no interaction. One defined cell (Unb × Cor) also carries an inferred sub-case, KIM-C01. All keyword-vs-core-rules items are ruled. The two remaining open items are unreachable with current cards. Closed items are listed under Rulings.
 
 ## Open Items (need a ruling)
 
@@ -59,7 +59,9 @@ Closed items, with the designer ruling, where it lives in FRD 01, and the scenar
 | KIM-B02 | An **Ethereal** asset may be the secondary; Ethereal restricts only attacks. | `FR-KWD-002o` | `TestFR_KWD_002o_SecondaryMayBeEthereal` |
 | KIM-B03 | **Guardian** forces the primary target only; the secondary may be any other legal target. The primary is excluded from secondary eligibility. | `FR-KWD-002o`, `FR-CBT-002` | `TestFR_KWD_002o_GuardianDoesNotRestrictSecondary`, `TestFR_KWD_002o_SecondaryExcludesPrimary` |
 | KIM-B04 | Printed Berserk always has N. *Tempest Surge* and *Redline Infusion* read **Berserk 2** for now. | Card data | `TestLoadCardsFromRepositoryData` |
-| KIM-S01 | A new face-down Scratch Company enters **Exhausted**. | `FR-ZON-005`, `FR-SET-004`, `FR-KWD-002m` | `TestFR_ZON_005_ScratchCompanyEntersExhausted` |
+| KIM-S01 | A new face-down Scratch Company enters **Exhausted** because its face prints **Deploys Exhausted** (`FR-KWD-002l`). Revised 2026-10-23: formerly a separate game rule. | `FR-ZON-005`, `FR-KWD-002l`, `FR-SET-004`, `FR-KWD-002m` | `TestFR_ZON_005_ScratchCompanyEntersExhausted` |
+| KIM-S05 | A scratch is a unit deploying: abilities that watch for a unit deploying see it. It is not the Deploy action: no cost and no deploy item on the stack. (2026-10-23) | `FR-ZON-005`, `FR-KWD-002m` | None yet: no M2 card watches another unit deploying. The first such card names the test. |
+| KIM-S06 | Whether an asset has Deploys Exhausted is decided as it enters, counting effects already in force that would grant or remove it on the battlefield. An effect that removes it from Scratch Companies, or that makes them deploy Readied (applied on top of Deploys Exhausted), lets them enter Readied; such a card is costed as a mid-to-late-game finisher. (2026-10-23) | `FR-KWD-002l`, `FR-LAY-001` (Layer 3) | None yet: no M2 card grants or removes keywords. |
 | KIM-S02 | HQ defeat is checked at the next state-based death sweep (the next time no item is resolving). Both HQs at ≤ 0 at the same sweep is a Match Draw. | `FR-CBT-003` | `TestFR_CBT_003_HeadquartersDefeatIsCheckedAtTheDeathSweep`, `TestFR_CBT_003_BothHeadquartersLethalAtOneSweepIsMatchDraw` |
 | KIM-B05 | The Berserk secondary is **mandatory** whenever a legal secondary target exists. | `FR-KWD-002o`, `FR-CBT-002` | `TestFR_KWD_002o_SecondaryIsMandatoryWhenALegalOneExists`, `TestFR_KWD_002o_NoSecondaryRequiredWithoutALegalTarget` |
 | KIM-J01 | Once an attack is on the stack with its target, later eligibility changes (a Guardian arriving, the defender gaining Ethereal) neither redirect nor fizzle it, much as granting "unblockable" after blockers are declared doesn't unblock a creature in MTG. | `FR-CBT-002` | `TestFR_CBT_002_CommittedAttackIgnoresLaterGuardianAndEthereal` |
@@ -102,5 +104,6 @@ Each `D` cell above, with where FRD 01 settles it. A test marker means a `pkg/en
 - **Grd × DEx:** Guardian has no readiness condition; an Exhausted Guardian still forces attacks onto it (`FR-CBT-001`). Worth confirming against prototype habit.
 - **Arm × Arm:** Armor stacks additively and never expires (`FR-LAY-002`).
 - **Arm × Bsk:** Armor absorbs Berserk cleave (`FR-REP-004` Stage 4).
+- **DEx × Scr:** every face-down Scratch Company prints Deploys Exhausted, so a scratch enters Exhausted (`FR-ZON-005`, `FR-KWD-002l`, ruling KIM-S01). An effect already in force that removes it, or makes Scratch Companies deploy Readied, lets them enter Readied (ruling KIM-S06). Test: `TestFR_ZON_005_ScratchCompanyEntersExhausted`.
 - **DEx × Rgp:** Regroup readies any exhausted allied asset, including one that just deployed exhausted (`FR-KWD-002n`).
 - **Scr × Rgp:** "Regroup all Scratch Company units in your Reserves" readies them all (`FR-KWD-002n`).

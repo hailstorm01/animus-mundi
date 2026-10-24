@@ -1,2 +1,2 @@
 "name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","needsRework"
-"Scratch Company","UNIT","NEUTRAL","Infantry, Scratch Company","0","0","RESERVES","--","1","1","1","1","COMMON","false"
+"Scratch Company","UNIT","NEUTRAL","Infantry, Scratch Company","0","0","RESERVES","Deploys Exhausted","1","1","1","1","COMMON","false"
