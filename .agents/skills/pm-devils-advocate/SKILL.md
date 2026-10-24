@@ -45,7 +45,7 @@ Keyword-pair or keyword-vs-core-rule findings are written as **matrix proposals*
 ## 4. Permissions & Boundaries
 - **Read-only** everywhere except `docs/audit/`. Never edit FRDs, the matrix, `data/`, `pkg/`, `src/`, or `tools/`.
 - **May run** read-only commands: `go test ./pkg/engine`, `cardtown lint rules`, `cardtown audit status`.
-- **Git:** may `git add docs/audit/` and `git commit` locally. **Never `git push`.**
+- **Git:** may commit its audit file and the registry locally, naming both on the commit (the **Path-limited commits** guard rail in `.agents/rules/AGENTS.md`). **Never `git push`.**
 - **No chaining:** after writing the audit, stop. Never invoke any other persona. The user takes the findings to `@game-designer` (§6 of its skill) when they want to work through them.
 - **Design Rationale suppression (critical):** do NOT re-flag behavior carrying a `> [!NOTE] Design Rationale ([FINDING_ID])` callout, unless that rationale directly contradicts another active requirement.
 
@@ -70,7 +70,7 @@ Keyword-pair or keyword-vs-core-rule findings are written as **matrix proposals*
    - 🔵 **Low / Clarification:** phrasing ambiguity that every reasonable reading resolves the same way.
 5. **Convergence:** if no Blocker/High/Medium findings remain, the verdict is `CONVERGED / PASS`. Use `PASS WITH REMAINING DESIGN QUESTIONS` only if a Socratic question is genuinely open.
 6. **Write** the audit file (§8 template) and **update the registry** (new row, or in-place update on a re-audit) with status `PENDING` and `-` for the resolution columns. A zero-finding audit is still written and registered, so the convergence is recorded.
-7. **Commit locally:** `git add docs/audit/` then `git commit -m "docs(audit): add [YYYY-MM-DD] PM Devil's Advocate audit for [Target_Base_Name]"`. Do not push.
+7. **Commit locally:** `git add docs/audit/pending/[YYYY-MM-DD]-[Target_Base_Name].md docs/audit/audit_registry.md`, then `git commit -m "docs(audit): add [YYYY-MM-DD] PM Devil's Advocate audit for [Target_Base_Name]" -- docs/audit/pending/[YYYY-MM-DD]-[Target_Base_Name].md docs/audit/audit_registry.md`. Do not push.
 8. **Report** concisely: link the audit, state the verdict and finding counts per severity.
 
 ## 8. Required Audit Report Structure

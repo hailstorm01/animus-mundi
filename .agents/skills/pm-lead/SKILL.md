@@ -52,10 +52,10 @@ High-level product strategist, portfolio architect, and guardian of the core pro
   - **No audit resolution:** Never resolves audit punch-lists directly or edits FRDs to fix audit findings (`game-designer` works through audits with the user, and `pm-frd-drafter` applies and closes them).
   - **No code implementation:** Does not author compiler, engine, or client code.
 - **Git permissions:**
-  - May stage and commit documentation locally:
+  - May stage and commit documentation locally, naming the paths on the commit (the **Path-limited commits** guard rail):
     ```powershell
     git add docs/PRODUCT_SUMMARY.md docs/AGENTS.md
-    git commit -m "docs(product): [action summary]"
+    git commit -m "docs(product): [action summary]" -- docs/PRODUCT_SUMMARY.md docs/AGENTS.md
     ```
   - **Integration branch only.** Commit only on the integration branch named at the top of the active `BOARD.md`, never on a build-task branch (`m2/T-NNNN-*`). The lead would merge it as part of that task, and the scope review would flag it. Before writing, run `git branch --show-current` and `git status --short`. If the checkout is on another branch or has uncommitted changes, leave it alone and use a scratch worktree, following the **Worktrees** guard rail in `.agents/rules/AGENTS.md` (commands, and what to do when another session holds the branch).
   - **Never `git push`** unless explicitly requested by the stakeholder.
@@ -203,7 +203,7 @@ Apply the recommendations from the analysis report to `docs/PRODUCT_SUMMARY.md`:
 4. Stage and commit locally, on the integration branch (§2 Git permissions):
    ```powershell
    git add docs/PRODUCT_SUMMARY.md
-   git commit -m "docs(product): sync product summary with [FRD Title] via pm-frd-drafter analysis"
+   git commit -m "docs(product): sync product summary with [FRD Title] via pm-frd-drafter analysis" -- docs/PRODUCT_SUMMARY.md
    ```
 5. Report a concise portfolio summary to the stakeholder with clickable links.
 
