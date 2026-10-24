@@ -20,8 +20,8 @@ func TestScratchFace_Characteristics(t *testing.T) {
 	if want := []string{"Infantry", "Scratch Company"}; !slices.Equal(c.Subtypes, want) {
 		t.Errorf("subtypes = %v, want %v", c.Subtypes, want)
 	}
-	if c.Keywords != (engine.Keywords{}) {
-		t.Errorf("keywords = %+v, want none", c.Keywords)
+	if c.Keywords != (engine.Keywords{DeploysExhausted: true}) {
+		t.Errorf("keywords = %+v, want exactly Deploys Exhausted", c.Keywords)
 	}
 }
 

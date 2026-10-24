@@ -328,9 +328,9 @@ func TestView_Case2_FaceDown(t *testing.T) {
 		if got == nil {
 			t.Fatalf("seat %d: face-down asset %d missing from the theater %+v", seat, fd.ID, v.Theater)
 		}
-		if got.Card != "Scratch Company" || !got.FaceDown || got.Power != 1 || got.MaxHealth != 1 || len(got.Keywords) != 0 ||
+		if got.Card != "Scratch Company" || !got.FaceDown || got.Power != 1 || got.MaxHealth != 1 || !slices.Equal(got.Keywords, []string{"Deploys Exhausted"}) ||
 			got.Controller != 0 || got.Owner != 0 {
-			t.Errorf("seat %d sees the face-down asset as %+v, want a 1/1 Scratch Company with no keywords", seat, *got)
+			t.Errorf("seat %d sees the face-down asset as %+v, want a 1/1 Scratch Company with exactly Deploys Exhausted", seat, *got)
 		}
 		if strings.Contains(js, "Alpha Hidden Gem") {
 			t.Errorf("seat %d's view names the face-down card", seat)

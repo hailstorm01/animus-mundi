@@ -4,7 +4,7 @@ title: The Scratch Company face prints Deploys Exhausted, and a scratch is a uni
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0057-scratch-face-deploys-exhausted
 depends_on: [T-0056]
 claims: [face:Scratch Company, file:pkg/engine/zones.go#scratch]
@@ -32,6 +32,7 @@ The face-down Scratch Company face prints **Deploys Exhausted** (FRD 01 v3.12, t
 - New: `TestFR_ZON_005_ScratchFacePrintsDeploysExhausted`: `ScratchFace().Keywords` is exactly Deploys Exhausted, and a face-down asset's `Printed()` has it.
 - Unchanged and still passing: `TestFR_ZON_005_ScratchCompanyEntersExhausted`.
 - **Authorized edits** (in the `test(T-0057)` commit only): `TestScratchFace_Characteristics` (`pkg/sim/scratchface_test.go`) and the face-down assertion in `pkg/view/view_test.go` (about line 331). Each now expects exactly Deploys Exhausted instead of no keywords.
+- Final Done When regex: `^TestFR_ZON_005_(ScratchFacePrintsDeploysExhausted|ScratchCompanyEntersExhausted)$`, plus the two edited tests `TestScratchFace_Characteristics` and `TestView_Case2_FaceDown`.
 - Not tested in this task: that a scratch fires the deploy hook. Nothing observes it in M2. The first card that watches another unit deploying names the settling test.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
@@ -50,3 +51,18 @@ None expected.
 ## Log
 - 2026-10-23 lead-architect: Wrote the task from board directive #48, once its trigger had happened (FRD 01 v3.12 and the CSV row, b3a178b; the outcome's `Status: applied`). Status `queued` behind T-0056 (serial mode). Part 5 was applied to the design note with T-0056's commit.
 - 2026-10-23 lead-architect: Status `tests`, for `rules-test-author`. T-0056 is `done` (7f42665). Waiting triggers checked: #6 and #7 (parallel mode), #8 (no `deck.go` change), #15 (no turn hook) and #20 (wave B) have not fired. Starter-deck cards not yet executable: 28, plus both Headquarters.
+- 2026-10-23 rules-test-author: Tests written on m2/T-0057-scratch-face-deploys-exhausted. New `TestFR_ZON_005_ScratchFacePrintsDeploysExhausted` (pkg/engine/rules_test.go): face keywords are exactly Deploys Exhausted, and a face-down asset's Printed() has it. Authorized edits: `TestScratchFace_Characteristics` (pkg/sim) and the face-down assertion in `TestView_Case2_FaceDown` (pkg/view) now expect exactly Deploys Exhausted. All three fail now, as intended. `cardtown lint rules` passes; vet and gofmt clean. Helpers requested: none. Left out: the deploy-hook-on-scratch test, as the task directs.
+- 2026-10-23 lead-architect: Test review (D4): **approved**, status `ready`.
+  - 877d4ab adds `TestFR_ZON_005_ScratchFacePrintsDeploysExhausted` (`rules_test.go`) and makes exactly the two authorized edits: `TestScratchFace_Characteristics` and the face-down assertion in `TestView_Case2_FaceDown`.
+  - The tests match `FR-ZON-005`, `FR-KWD-002l` and `KIM-S01` (revised).
+  - **Reviewer check** (a throwaway prototype, not committed):
+    - With the face keyword added, all three tests pass and `go test ./...` passes. No other test expected no keywords.
+    - Adding lead decision 2 as well (`Exhausted` from the keyword, plus `fireDeploy`) changes nothing a test sees. The starter sim stays byte-identical to the integration branch.
+    - So decision 2 is checked in code review, not by a test, as the task says.
+  - Next: the lead dispatches `kernel-engineer` (Sonnet).
+- 2026-10-23 kernel-engineer (sonnet): Implemented lead decisions 1 and 2; decision 4 skipped (the monitor's Exhausted check for scratches is unchanged and still correct).
+  - `pkg/engine/card.go`: `scratchFace` gains `Keywords: Keywords{DeploysExhausted: true}`.
+  - `pkg/engine/zones.go` `scratch`: drops the hard-coded `Exhausted: true`; sets `a.Exhausted = a.Printed().Keywords.DeploysExhausted` (as `resolveDeploy` does), and calls `g.fireDeploy(a)` after the observer event. Event kind stays `scratch`.
+  - Reuse: `Printed()`, `fireDeploy`, the `resolveDeploy` idiom. No new shapes or helpers; no tests edited.
+  - Results: the four listed tests pass (`TestFR_ZON_005_ScratchFacePrintsDeploysExhausted`, `TestFR_ZON_005_ScratchCompanyEntersExhausted`, `TestScratchFace_Characteristics`, `TestView_Case2_FaceDown`). `go tool task check` exit 0. `go tool task sim` exit 0. `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` output before (branch start 59373f8) and after: `cmp` byte-identical.
+  - Reviewer: the `fireDeploy` call in `scratch` is untested by design; check it in code.
