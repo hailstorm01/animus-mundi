@@ -92,8 +92,7 @@ func (g *Game) deathSweep() {
 	for i, a := range dying {
 		g.fireKilled(a)
 		g.leaveBattlefield(a, known[i])
-		owner := g.Players[a.Inst.Owner]
-		owner.Discard = append(owner.Discard, a.Inst)
+		g.putCard(a.Inst, ZoneDiscard, false)
 		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
 	}
 	for _, p := range g.Players {

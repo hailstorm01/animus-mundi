@@ -2,14 +2,20 @@
 
 package engine
 
+import (
+	"fmt"
+	"slices"
+)
+
 func (g *Game) shuffle(p *Player) {
 	g.rng.Shuffle(len(p.Deck), func(i, j int) { p.Deck[i], p.Deck[j] = p.Deck[j], p.Deck[i] })
 }
 
 func (g *Game) moveTopToHand(p *Player) {
 	if len(p.Deck) > 0 {
-		p.Hand = append(p.Hand, p.Deck[0])
-		p.Deck = p.Deck[1:]
+		inst := p.Deck[0]
+		g.takeCard(inst)
+		g.putCard(inst, ZoneHand, false)
 	}
 }
 
@@ -35,13 +41,48 @@ func (g *Game) scratch(pid PlayerID, n int) {
 			return // not a draw: no Empty Deck Loss
 		}
 		inst := p.Deck[0]
-		p.Deck = p.Deck[1:]
+		g.takeCard(inst)
 		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true}
 		// The face prints Deploys Exhausted, so it enters Exhausted (FR-ZON-005, FR-KWD-002l).
 		a.Exhausted = a.Printed().Keywords.DeploysExhausted
 		g.placeOnBattlefield(a, ZoneReserves)
 		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
 		g.fireDeploy(a) // a scratch is a unit deploying (KIM-S05)
+	}
+}
+
+// takeCard removes inst from whichever of its owner's piles (deck, hand or
+// discard) holds it, and reports whether one did. A card on the battlefield,
+// on the stack or set aside is in no pile.
+func (g *Game) takeCard(inst *Instance) bool {
+	p := g.Players[inst.Owner]
+	for _, pile := range []*[]*Instance{&p.Deck, &p.Hand, &p.Discard} {
+		if slices.Contains(*pile, inst) {
+			*pile = remove(*pile, inst)
+			return true
+		}
+	}
+	return false
+}
+
+// putCard puts inst into its owner's pile to, which is ZoneDeck, ZoneHand or
+// ZoneDiscard. On the deck, bottom chooses the bottom over the top (index 0).
+// Hand and discard always add at the end.
+func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
+	p := g.Players[inst.Owner]
+	switch to {
+	case ZoneDeck:
+		if bottom {
+			p.Deck = append(p.Deck, inst)
+		} else {
+			p.Deck = append([]*Instance{inst}, p.Deck...)
+		}
+	case ZoneHand:
+		p.Hand = append(p.Hand, inst)
+	case ZoneDiscard:
+		p.Discard = append(p.Discard, inst)
+	default:
+		panic(fmt.Sprintf("engine: putCard to zone %v, which is not a pile", to))
 	}
 }
 
