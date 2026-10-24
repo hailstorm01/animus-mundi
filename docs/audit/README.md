@@ -18,9 +18,10 @@ pm-devils-advocate ──► docs/audit/pending/[date]-[doc].md (PENDING, commit
 game-designer ── per item: Rule | Prototype ruling | Dismiss (Design Rationale) | Defer (matrix) | Wording only
         │
         ▼  one Design Outcome Report for the whole audit
+docs/design/outcomes/[date]-[slug].md (approved by you, committed with the directive)
         ├──► board directive ──► lead-architect build loop writes the TestFR_* settling tests
-        ▼
-pm-frd-drafter ── FRD 01 text, callouts, matrix rows
+        ▼  (you run the drafter prompt, which names this file)
+pm-frd-drafter ── FRD 01 text, callouts, matrix rows; sets the outcome's Status to applied
         │
         ▼
 cardtown audit resolve ──► lint, purge pending file, commit, mark RESOLVED in audit_registry.md

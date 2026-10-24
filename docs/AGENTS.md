@@ -10,6 +10,7 @@ This directory houses the specifications, decision records and card balance data
   - `frd/04_Client_Engine_Protocol_Networking_FRD.md`: rewritten at the start of M5.
   - `frd/05_Headless_Game_Engine_FRD.md`: design reference while extending `pkg/engine`.
 - **M2 Starter Set Ability Survey:** `design/m2_starter_set_ability_survey.md`, which maps every Animus and Path card onto FRD 02's ability model and lists the M2 build waves, FRD 02 gaps and open ruling questions.
+- **Design Outcomes:** `design/outcomes/<YYYY-MM-DD>-<slug>.md`, one per `game-designer` discussion or worked DA audit. Each records the user's decisions, the FRD 01 and register wording for `pm-frd-drafter`, and the board directive. The body is frozen once approved. `pm-frd-drafter` sets the `Status:` line when it applies the outcome.
 - **Technical Design Documents:** `tdd/*.md`. `tdd/03_Card_Compiler_TDD.md` is parked with FRD 03; do not slice it into issues before M3.
 - **Design Notes:** `architecture/<milestone>-<topic>.md`, one per milestone topic. `architecture/m2-ability-model.md` fixes the ability shape types, where card definitions live, and the M2 deliverable order.
 - **Architecture Decision Records:** `architecture/decisions/*.md`, one page per technical decision, written when the code that needs it is built.
