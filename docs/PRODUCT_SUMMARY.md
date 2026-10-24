@@ -188,8 +188,8 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
 
 **Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card plus the starter Headquarters (Animoceps Rager, Eternal Watchman) is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
 
-### 3.3 M2 Accomplished So Far (pm-lead reconciliation, 2026-10-23)
-54 of the 55 build tasks written so far are merged into `rework/executable-rules`: 15 shape, 9 card and 30 harness tasks (T-0001 to T-0054). T-0055 (*Animoceps Rager*) is queued. Board directive #47 (wave B rulings `SVY-R14`–`SVY-R17`) still has to reach the kernel. **`main` was last merged on 2026-10-21**, through T-0036 and FRD 01 v3.8. Everything later is only on `rework/executable-rules`.
+### 3.3 M2 Accomplished So Far (pm-lead reconciliation, 2026-10-24)
+56 of the 57 build tasks written so far are merged into `main`: 17 shape, 9 card and 30 harness tasks (T-0001 to T-0054, T-0056 and T-0057). T-0055 (*Animoceps Rager*) is queued behind board directives #49, #52, #53 and #54, the structural review 3 fixes the user put first. Board directive #47 (wave B rulings `SVY-R14`–`SVY-R17`) is partly in the kernel: T-0056 built the fixed-order timeout fallback (`SVY-R16`), and its other parts are named tests for the tasks that build Infested Apostle and Arkha, Shifting Impossibility and Animoceps Shambler.
 
 | # | Design-note deliverable | Status | Tasks |
 | :---: | :--- | :---: | :--- |
@@ -206,7 +206,7 @@ Tasks outside the deliverables list:
 - **Tooling:** the hook's stale-binary rebuild (T-0005), refreshed engine docs (T-0016), structured events and the observer (T-0020, T-0021), `ProgressPolicy` (T-0022), `cardtown replay` (T-0023), the move of sim code out of the engine (T-0024), and the rule monitors (T-0025, T-0026).
 - **Structural review 1** (board directives #30–#37): every package under `pkg/` fenced with an import table, `sim`, `eventlog` and `view` moved to the top of `pkg/`, and file splits and shared readers (T-0038 to T-0044).
 - **Structural review 2** (#38–#44): `Decision.Valid` for clients, one hidden-information oracle, one match-setup scheme, a split `play.go` and an alias map for CLI flags (T-0045 to T-0049).
-- **Rulings:** attack re-verification against the attacker's current controller (`SVY-R8`, T-0053).
+- **Rulings:** attack re-verification against the attacker's current controller (`SVY-R8`, T-0053), a timed-out target that picks the first legal options in fixed order (`SVY-R16`, T-0056), and a Scratch Company face that prints Deploys Exhausted, so a scratch is a unit deploying (directive #48, T-0057).
 
 **Machinery now in the kernel:**
 - **Hooks:** deploy, killed, attacks, and damage taken (Unbowed). Gates on turn owner and deploy zone, and a once-per-turn limit (`Trigger.MaxPerTurn`).
