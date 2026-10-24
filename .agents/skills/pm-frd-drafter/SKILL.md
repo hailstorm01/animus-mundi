@@ -37,10 +37,10 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 ## 2. Permissions & Boundaries
 
 - **May write:** `docs/frd/` (new FRD drafts and major structural revisions), `docs/PRODUCT_SUMMARY.md` (roadmap milestones and spec indexes), `docs/AGENTS.md` (master doc architecture list).
-- **Also, only when applying a user-approved `game-designer` Design Outcome Report (§2.1):** the ruling table and card rows of the milestone's ability survey (`docs/design/`), and the rules-text cell of the reworded cards in `data/cards/*.csv`. Never stats, names or other columns. When the report names an audit to close, also `docs/audit/`, only through `cardtown audit resolve`.
+- **Also, only when applying a user-approved `game-designer` Design Outcome Report (§2.1):** the ruling table and card rows of the milestone's ability survey (`docs/design/`), and the rules-text cell of the reworded cards in `data/cards/*.csv`. Never stats, names or other columns. The `Status:` line of the outcome file in `docs/design/outcomes/`, and nothing else in that file. When the report names an audit to close, also `docs/audit/`, only through `cardtown audit resolve`.
 - **Read-only everywhere else:** `src/`, `data/cards/`, `tools/` (reads existing master FRDs, CSV balance sheets, schemas, and roadmap documents to preserve cross-system harmony).
 - **Outputs:** Authored FRD files in `docs/frd/`, and structured **FRD State Analysis Reports** emitted in chat to requesting personas (such as `pm-lead`) or human stakeholders.
-- **Git:** May `git add docs/` (and, for a Design Outcome, the edited `data/cards/*.csv`) and `git commit` locally, only on the integration branch named in the active build board, never on a task branch (`m2/T-NNNN-*`). If the checkout is elsewhere or has uncommitted changes, use a scratch worktree of the integration branch (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`). **Never `git push`.**
+- **Git:** May commit the `docs/` files it changed (and, for a Design Outcome, the edited `data/cards/*.csv`) locally, naming them on the commit (`git commit -m "<message>" -- <path> ...`, the **Path-limited commits** guard rail), only on the integration branch named in the active build board, never on a task branch (`m2/T-NNNN-*`). If the checkout is elsewhere or has uncommitted changes, use a scratch worktree of the integration branch (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`). **Never `git push`.**
 - **Quality gate:** Must execute and pass `cardtown lint frd` before committing any FRD. Zero dangling references (`FR-XXX-YYY`) permitted.
 - **Guard Rails & Handoff:**
   - Never start autonomous review or reconciliation loops. Never trigger `@pm-lead` or `@pm-devils-advocate` automatically.
@@ -49,13 +49,14 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 
 ### 2.1 Applying a Design Outcome from `game-designer`
 
-When the user runs `@pm-frd-drafter apply Design Outcome "<title>"`, apply that report's `pm-frd-drafter` section, and nothing else:
-1. Confirm the report records a **user decision** with a date. Never apply a recommendation.
-2. FRD 01: make the wording change, bump the version, and add a revision-summary entry citing the ruling ID. If an earlier revision summary states the old rule, mark it superseded there.
-3. Update the ruling register row (survey §4 or matrix) and any survey card rows the report names.
+When the user runs `@pm-frd-drafter apply Design Outcome docs/design/outcomes/<file>.md`, apply that file's `pm-frd-drafter` section, and nothing else:
+0. **Read the outcome from its file.** If the prompt names no path, or the file is not committed on the integration branch, stop and ask for it. Never work from pasted chat text alone. If its `Status` line is already `applied`, stop and say so.
+1. Confirm that every ruling ID in the file's `Rulings:` line has its own dated **user decision** line. Never apply a recommendation. If one is missing, stop and say which.
+2. FRD 01: make each wording change, bump the version, and add a revision-summary entry citing the ruling IDs. Change or mark superseded every place the file's **Superseded wording** list names, including earlier revision summaries.
+3. Update every ruling register row (survey §4 or matrix) and every survey card row the file names.
 4. Replace the rules text of each reworded card exactly as given, then run `cardtown lint sheets` and `cardtown lint syntax`.
 5. Run `cardtown lint frd` and `cardtown lint fences`. A changed register status can invalidate an `OPEN(...)` marker.
-6. Commit as `rules: <summary> (<ruling ID>)` per the Git rule above, and report the commit. The `lead-architect` directive is the designer's write, not yours.
+6. Set the outcome file's `Status:` line to `applied: FRD 01 v<N>, <date>`. Commit it together with the rules changes as `rules: <summary> (<ruling IDs>)`, per the Git rule above, and report the commit. A commit cannot name its own hash, so the Status line names the FRD version; `git log -- <outcome file>` finds the commit. The `lead-architect` directive is the designer's write, not yours.
 7. **Audit to close** (a report from game-designer §6): check that every finding, redundancy row and Socratic question in the pending audit has an entry in the report. If any is missing, stop and say which. Otherwise run `cardtown audit resolve "<YYYY-MM-DD-Doc>.md" -source "Agentic (game-designer + pm-frd-drafter)"` (`-dry-run` first). It lints FRD 01, removes the pending file, commits, and marks the registry row `RESOLVED`. Report both commits. Never pass `-push`.
 
 ---
@@ -107,10 +108,10 @@ When the user runs `@pm-frd-drafter apply Design Outcome "<title>"`, apply that 
 ### Step 6: Index Update & Local Commit
 1. Update `docs/PRODUCT_SUMMARY.md` to link the new FRD under its milestone and in the Section 4.1 specification status table.
 2. Update `docs/AGENTS.md` under Master Documentation Architecture.
-3. Stage and commit locally:
+3. Stage and commit locally, naming the paths on the commit:
    ```powershell
    git add docs/frd/<Target_FRD>.md docs/PRODUCT_SUMMARY.md docs/AGENTS.md
-   git commit -m "docs(frd): draft [FRD Title] FRD v1.0"
+   git commit -m "docs(frd): draft [FRD Title] FRD v1.0" -- docs/frd/<Target_FRD>.md docs/PRODUCT_SUMMARY.md docs/AGENTS.md
    ```
 4. Report completion to the user:
    - Provide clickable links to the new or revised FRD and updated roadmap.
