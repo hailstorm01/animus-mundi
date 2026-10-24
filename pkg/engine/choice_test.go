@@ -228,8 +228,8 @@ func TestFR_MOD_001_TargetFallbackOnTimeoutPicksLegalDistinctTargets(t *testing.
 	s.script(0, Answer{Timeout: true})
 	d := Decision{Player: 0, Kind: DecideTarget, Prompt: "two targets", Options: opts(5), Min: 2, Max: 2}
 	got := s.g.choose(d)
-	if !validPicks(d, got) || len(got) != 2 {
-		t.Errorf("a timed-out mandatory target choice selects 2 distinct legal targets: got %v", got)
+	if !validPicks(d, got) || !reflect.DeepEqual(got, []int{0, 1}) {
+		t.Errorf("a timed-out mandatory target choice selects the first 2 legal targets in fixed order (FR-MOD-001 sec. 6, SVY-R16): got %v, want [0 1]", got)
 	}
 }
 
@@ -237,40 +237,25 @@ func TestFR_MOD_001_TargetFallbackWithNoChooserPicksLegalTarget(t *testing.T) {
 	s := newScene(t)
 	d := Decision{Player: 1, Kind: DecideTarget, Prompt: "one target", Options: opts(4), Min: 1, Max: 1}
 	got := s.g.choose(d)
-	if !validPicks(d, got) || len(got) != 1 {
-		t.Errorf("with no chooser a mandatory target is a random legal target: got %v", got)
+	if !validPicks(d, got) || !reflect.DeepEqual(got, []int{0}) {
+		t.Errorf("with no chooser a mandatory target is the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): got %v, want [0]", got)
 	}
 }
 
-func TestFR_MOD_001_TargetFallbackDeterministicForSameSeed(t *testing.T) {
-	run := func() [][]int {
-		s := newScene(t) // same game seed every time
-		d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: opts(6), Min: 2, Max: 2}
-		var out [][]int
-		for i := 0; i < 10; i++ {
-			out = append(out, s.g.choose(d))
+func TestFR_MOD_001_TargetFallbackPicksFirstInFixedOrder(t *testing.T) {
+	// Covers: SVY-R16
+	for _, tc := range []struct {
+		min  int
+		want []int
+	}{{1, []int{0}}, {2, []int{0, 1}}} {
+		s := newScene(t)
+		d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: opts(6), Min: tc.min, Max: tc.min}
+		for i := 0; i < 20; i++ {
+			got := s.g.choose(d)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("Min %d: a mandatory target fallback is the first %d options in fixed order, the same every time (FR-MOD-001 sec. 6, SVY-R16): call %d got %v, want %v", tc.min, tc.min, i, got, tc.want)
+			}
 		}
-		return out
-	}
-	a, b := run(), run()
-	if !reflect.DeepEqual(a, b) {
-		t.Errorf("the random target fallback is deterministic for a game seed:\n%v\n%v", a, b)
-	}
-}
-
-func TestFR_MOD_001_TargetFallbackIsRandomNotFixed(t *testing.T) {
-	s := newScene(t)
-	d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: opts(6), Min: 1, Max: 1}
-	seen := map[string]bool{}
-	for i := 0; i < 60; i++ {
-		got := s.g.choose(d)
-		if !validPicks(d, got) {
-			t.Fatalf("fallback target must be a legal option: got %v", got)
-		}
-		seen[fmt.Sprint(got)] = true
-	}
-	if len(seen) < 2 {
-		t.Errorf("a mandatory multi-option target fallback is random, but 60 draws gave only %v", seen)
 	}
 }
 

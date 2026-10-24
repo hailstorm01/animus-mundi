@@ -469,7 +469,7 @@ func TestFR_TGT_002_UpToNoLegalOptionAsksNothingAndDoesNothing(t *testing.T) {
 
 func TestFR_MOD_001_UpToTimeoutAndNoChooserPickNone(t *testing.T) {
 	// Covers: SVY-R11
-	// A mandatory single target's timeout picks a random legal target; an
+	// A mandatory single target's timeout picks the first legal target in fixed order; an
 	// "up to" timeout picks Min = 0 of them.
 	for _, tc := range []struct {
 		name    string
