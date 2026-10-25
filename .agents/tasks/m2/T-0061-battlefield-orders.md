@@ -4,7 +4,7 @@ title: One place for the battlefield orders, in state.go (directive #54, harness
 kind: harness
 tier: flash
 wave: none (board directive #54, structural review 3 finding 6, before T-0055)
-status: in-progress
+status: review
 branch: m2/T-0061-battlefield-orders
 depends_on: [T-0060]
 claims: [helper:engine.assetsByID (move), doc:engine battlefield orders]
@@ -111,11 +111,25 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/choice.go` (the sort in `fixedOrderPicks`, imports)
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task from board directive #54, the last of the four directives the user put before T-0055 (#49, #52 and #53 are applied). Harness, tier flash, pure move, so it skips `tests` and is `ready` on branch `m2/T-0061-battlefield-orders` (cut from `main` at this commit). Checked the directive's line references against `main` c0fc883: `Assets` is at `state.go:199` (the directive said 200), `fixedOrderPositions` at 217, `TheaterOf` at 256 (directive: 255), `assetsByID` at `targeting.go:96`. All the same code. Every command under Acceptance Cases and Done When fits the headless allowlist (D2, flash commands). Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` behavior change), #15 (no turn hook), #20 (no wave C shape task), #50 (no task claims the exhaust hook) and #51 (no "if you do" task). None has fired.
   - Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
+- 2026-10-25 kernel-engineer: Implemented directive #54 pure move:
+  - In `pkg/engine/state.go`: added lead's battlefield orders documentation comment block directly above `Assets()`; moved `assetsByID()` unchanged from `targeting.go` to sit between `Assets()` and `fixedOrderPositions()`; updated `fixedOrderPositions()` to iterate over `g.TheaterOf(id)` instead of open-coding the filter; updated imports to add `"slices"`.
+  - In `pkg/engine/targeting.go`: cut `assetsByID()`; rewrapped `chooseTargets` comment to lead's exact wrapping; dropped `"slices"` from imports.
+  - In `pkg/engine/choice.go`: replaced `sort.SliceStable` with `slices.SortStableFunc` in `fixedOrderPicks`; replaced `"sort"` with `"slices"` in imports.
+  - Reused `TheaterOf(id)` in `fixedOrderPositions`.
+  - Verified acceptance cases:
+    1. Existing tests unchanged: `git -C <worktree> diff main -- '*_test.go'` printed nothing; `go -C <worktree> test ./...` passed.
+    2. Sims byte-identical: `go -C <worktree> tool task sim-compare` output `[PASS] starter and stress sims match main byte for byte, exit codes included`.
+    3. Three orders, one file: `git -C <worktree> grep -nE 'func \(g \*Game\) (Assets|assetsByID|fixedOrderPositions)\(' -- pkg/engine` returned exactly 3 lines in `pkg/engine/state.go` (lines 218, 232, 242).
+    4. TheaterOf reused: `git -C <worktree> grep -n 'range g.Theater {' -- pkg/engine/state.go` returned only line 281 in `TheaterOf`.
+    5. No `sort` left in choice.go: `git -C <worktree> grep -n 'sort' -- pkg/engine/choice.go` returned nothing (exit code 1).
+    6. Only these edits: `git -C <worktree> diff main --stat` returned only `pkg/engine/state.go`, `pkg/engine/targeting.go`, `pkg/engine/choice.go`, and `.agents/tasks/m2/T-0061-battlefield-orders.md`.
+    7. `go -C <worktree> tool task check` and `go -C <worktree> tool task sim` passed clean.
+  - Next: lead-architect review.

@@ -4,7 +4,6 @@ package engine
 
 import (
 	"fmt"
-	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
@@ -12,10 +11,10 @@ import (
 // chooseTargets asks p's controller to choose each of its Effect.Targets, in
 // slot order, when the trigger is placed on the stack (FR-TGT-001). Only legal
 // entities are offered. A single-entity slot is not asked about with one
-// option, and a timeout picks the first legal one in fixed order (SVY-R16). An "up to N" slot is always
-// asked (Min 0 != Max), its picks are distinct and a timeout picks none
-// (SVY-R11). A slot with no legal entity stays empty and asks nothing:
-// deploying never requires a target (FR-TGT-003).
+// option, and a timeout picks the first legal one in fixed order (SVY-R16).
+// An "up to N" slot is always asked (Min 0 != Max), its picks are distinct
+// and a timeout picks none (SVY-R11). A slot with no legal entity stays empty
+// and asks nothing: deploying never requires a target (FR-TGT-003).
 func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	targets := p.trig.Effect.Targets
 	if len(targets) == 0 {
@@ -91,11 +90,4 @@ func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) 
 		}
 	}
 	return !(f.NonScratch && a.Printed().HasSubtype("Scratch Company"))
-}
-
-// assetsByID returns every battlefield asset, oldest (lowest ID) first.
-func (g *Game) assetsByID() []*Asset {
-	assets := g.Assets()
-	slices.SortFunc(assets, func(x, y *Asset) int { return x.ID - y.ID })
-	return assets
 }
