@@ -4,7 +4,7 @@ title: An exhaust hook, fired from (g *Game) exhaust on every change from Readie
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0063-exhaust-hook
 depends_on: [T-0062]
 claims: [hook:exhaust]
@@ -56,3 +56,10 @@ None. The test file defines its own `exhaustTrigger`, `exhaustWatcher` and `logI
 - 2026-10-25 lead-architect: T-0062 is `done` (7bfeb38), so `resolveStack` now flushes first. Re-checked against `main` 7bfeb38: `exhaust` (`actions.go:104-106`) only sets the field; `fireDeploy`, `fireKilled` and `fireDamaged` wrap `fireHook` (`trigger.go:23-36`); `HookDamaged` is the last hook constant (`ability.go:22`). No change to the plan. Waiting triggers checked: #6, #7, #8, #15, #20 and #51. None has fired.
   - Next: status `tests`; dispatch `rules-test-author`.
 - 2026-10-25 rules-test-author: Wrote 15 tests in `pkg/engine/exhaust_hook_test.go` (listed under Tests); no helpers requested. The file does not compile until `ability.HookExhausted` exists. With a throwaway `HookExhausted` and `g.fireHook(a, HookExhausted)` in `exhaust` (reverted, not committed) all 15 pass. Left out: cost and effect exhausts (not executable yet), exhaust-versus-attack trigger ordering (FRD 01 silent). Status `tests-review`.
+- 2026-10-25 lead-architect: Tests review (D4): **approved**, status `ready`. The 15 tests in a1d3905 match FRD 01 and `SVY-R17`.
+  - **Coverage:** every Readied-to-Exhausted action fires (Generate either resource, March, Attack, and a Headquarters' Deploy Scratch Company and Generate). Entering Exhausted doesn't fire (the named directive #47 test). Readying doesn't fire, and neither does another asset, allied or opposing, exhausting (self hook). There is no limit across turns.
+  - **Placement:** asserted by event order in the exported `Game.Log`. `march` is logged when the March resolves and `generate` at the generation, so the order checks the rule, not an implementation detail.
+  - **Left out, rightly:** the order between an exhaust trigger and an attack trigger on one source (no deck card has both), costs and effect-caused exhausts (not executable).
+  - Re-checked on the branch: `go vet ./pkg/engine` fails only on `undefined: ability.HookExhausted`, as the file header says.
+  - **Process note:** the author reports it temporarily added the constant and a `fireHook` call to non-test engine files to run its tests, then reverted them. Its skill forbids reading or editing non-test engine files (independent oracle). Nothing was committed and the branch is clean. The tests' expectations follow the ruling text, so they stand. The breach is reported to the user.
+  - Next: dispatch `kernel-engineer` (tier sonnet).
