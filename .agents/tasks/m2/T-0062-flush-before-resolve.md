@@ -4,7 +4,7 @@ title: Fired triggers are placed when the stack starts resolving, not only after
 kind: harness
 tier: flash
 wave: B (board directive #50, structural review 3 finding 2; before the exhaust hook, T-0063)
-status: ready
+status: in-progress
 branch: m2/T-0062-flush-before-resolve
 depends_on: [T-0061]
 claims: [convention:resolveStack flushes first]
