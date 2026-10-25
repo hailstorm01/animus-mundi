@@ -4,7 +4,7 @@ title: A stack item carries an effect, not a whole trigger (directive #53, harne
 kind: harness
 tier: flash
 wave: none (board directive #53, structural review 3 finding 5, before T-0055)
-status: ready
+status: in-progress
 branch: m2/T-0060-stack-item-effect
 depends_on: [T-0059]
 claims: [field:engine.StackItem.Effect, field:engine.StackItem.Tracked]
