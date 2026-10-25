@@ -10,6 +10,32 @@ func init() {
 
 // animusDefs holds ability definitions for Animus cards.
 var animusDefs = map[string]*ability.Def{
+	"Animoceps Shambler": {
+		Text: []string{"Whenever this unit exhausts, chosen allied asset in the Main Theater heals 1."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookExhausted,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Zone:       ability.ZoneMainTheater,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpHeal,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Craterfall Ancient": {
 		Text: []string{
 			"Whenever this unit attacks, you may deal damage equal to its power to each of up to 2 other chosen assets.",
