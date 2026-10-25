@@ -104,6 +104,7 @@ func (g *Game) Apply(a Action) error {
 // (SVY-R17). Entering the battlefield Exhausted is not an exhaust.
 func (g *Game) exhaust(a *Asset) {
 	a.Exhausted = true
+	g.fireExhausted(a)
 }
 
 // check returns nil if a is legal right now.
