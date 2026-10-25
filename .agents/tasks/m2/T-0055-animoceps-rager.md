@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
@@ -68,7 +68,7 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
 - `pkg/engine/doc.go` (Headquarters abilities move to the "Built" list; remove "(until T-0055)" and rewrap the paragraph to the surrounding width)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsRager'`
+- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsRager|TestCard_EternalWatchman'`
 - [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
 - [ ] `go tool task check` passes
 - [ ] `go tool task sim` runs clean; report the before and after summary lines in the Log
@@ -78,3 +78,5 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
 - 2026-10-25 lead-architect: All four directives the user put before this task (#49, #52, #53, #54) are applied (T-0058 to T-0061), and T-0054 is `done`. Re-checked the task against `main` c86efd6, since it was written before those moves. `ability.HookDamaged`, `Trigger.MaxPerTurn` and `ability.OpScratch` exist. Definitions attach to a Headquarters by card name like any other card (`cardload.go`). The HQ asset carries a card instance (`setup.go:44`), and `dealDamage` fires `HookDamaged` on it (`damage.go:60`). `cards.NotYetExecutable` still lists the Rager. `cmd/cardtown/sim.go:154, 156` still print "HQ abilities are ignored", and `doc.go:34-35` still says "(until T-0055)". No change to Goal, Allowed Files or Done When. Wrote the test guidance above. A Headquarters can attack (`FR-CAP-001`), so retaliation onto the Rager is a case. The Armor/Resistant threshold is left out as an unruled, unreachable default (survey §4). Waiting triggers checked: #6, #7, #8, #15, #20, #50 and #51. None has fired. Directive #14 (deck cards first) is satisfied: the Rager is the Animus starter HQ.
   - Next: status `tests`; dispatch `rules-test-author`.
 - 2026-10-25 rules-test-author: Wrote the 10 tests above, none skipped. Left out as the guidance says: Armor/Resistant reducing damage to zero (unruled), lethal damage to the Rager (unobservable). `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
+- 2026-10-25 lead-architect: Tests review (D4): **approved**, status `ready`. Each expected outcome matches the card text and FRD 01. The Scratch goes to the Rager's controller, with no turn gate. The limit is once per turn and resets at every turn start, either player's (`FR-TRN-001`). The damage moment is Stage 5 (`FR-REP-004`). A Headquarters may attack, so it takes retaliation (`FR-CAP-001`). There are no guessed rulings: the Armor/Resistant threshold and lethal damage are left out, as the guidance says. No assertion on engine internals beyond exported state. Re-ran on the branch: the 7 firing and limit tests fail with "Scratch Companies = 0", and their damage assertions pass, so setup is sound. The 3 non-firing tests pass. `hqScene` and `wantSettled` live in the test file and only set state or check it, which is allowed. Done When's test pattern now includes `TestCard_EternalWatchman`.
+  - Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
