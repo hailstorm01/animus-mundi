@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: review
+status: changes
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
@@ -99,3 +99,9 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
         `Headquarters executable now (Supported()): P0 (Animoceps Rager) true, P1 (Eternal Watchman) false`
         `P0 wins 68.0%  P1 wins 30.0%  draws 2.0%  first player wins 44.5%`
   - **Reviewer:** In `cmd/cardtown/sim.go`, Headquarters executable status is reported across both deck and stress sim modes directly following the deck/cycling report.
+- 2026-10-25 lead-architect: Code review (D5), round 1: **changes**, one note. Everything else holds. Scope is only the Allowed Files. The tests are unchanged since 82dc36a. The definition matches the card text and the task's spec. The sim line reports both seats. Re-run by the reviewer on the merge result with `main` c041c4b: the 10 card tests, `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass. `go tool task check` and `go tool task sim` exit 0, all invariants hold, and no monitor reported a violation. The before and after summary lines match the Log (Animus wins 46.0% → 68.0%).
+  1. `pkg/engine/doc.go`: the new "Built" item `//   - Headquarters abilities.` overstates what is built. Only triggered abilities on a Headquarters run, through the same self hooks as any other asset. Eternal Watchman's ability ("Whenever this Headquarters attacks and kills…") needs a combat-kill hook that doesn't exist yet, and the Watchman still loads as unsupported. Replace that line with exactly:
+     ```go
+     //   - Triggered abilities on a Headquarters, through the same self hooks.
+     ```
+     Keep the "Not built yet" paragraph as you rewrapped it. Change nothing else. Re-run `go -C <worktree> tool task check`, log the result, and set `review`.
