@@ -120,7 +120,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0052 | A zone criterion on Filter ("in the Main Theater", FR-TGT-001), with Devilhorn Captain (wave B shape 2, sonnet) | done |
 | T-0053 | Re-verify an attack's defender against the attacker's current controller (SVY-R8, directive #29, shape, sonnet) | done |
 | T-0054 | A once-per-turn limit on triggers (Trigger.MaxPerTurn), for Animoceps Rager (wave B shape 3, sonnet) | done |
-| T-0055 | Make Animoceps Rager executable, the first Headquarters ability (wave B card, flash) | tests |
+| T-0055 | Make Animoceps Rager executable, the first Headquarters ability (wave B card, flash) | ready |
 | T-0056 | No random fallbacks: a timed-out target picks the first legal options in fixed order (SVY-R16, directive #47, shape, sonnet) | done |
 | T-0057 | The Scratch Company face prints Deploys Exhausted, and a scratch is a unit deploying (directive #48, shape, sonnet) | done |
 | T-0058 | One place exhausts an asset, (g *Game) exhaust (directive #49, harness, flash, pure move) | done |
