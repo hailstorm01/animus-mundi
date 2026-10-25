@@ -1204,3 +1204,304 @@ func TestCard_CraterfallAncient_AttackThenLethalRetaliationFiresBothTriggers(t *
 		t.Errorf("one 'you may' and one target question, none for the death: %v", kindsOf(s.asked(0)))
 	}
 }
+
+// --- Animoceps Shambler ---
+// "Whenever this unit exhausts, chosen allied asset in the Main Theater heals
+// 1."  Unit, 2 Requisition, Reserves, 2/2, yields 1R 2T (T-0064).
+//
+// FR-CAP-001 and SVY-R17: every change from Readied to Exhausted fires it
+// (March, Attack, Generate). A March's or Attack's trigger is placed on top of
+// the action and resolves before it; a Generate's trigger is placed after the
+// generation completes and resolves before the player acts again. SVY-R3: the
+// target is chosen when the trigger is placed, and FR-TGT-003 checks it again
+// when the trigger resolves. SVY-R16: a timeout picks the first legal option
+// in fixed order. Heal is FR-KWD-002d.
+
+const shambler = "Animoceps Shambler"
+
+// putShambler puts a Readied real Animoceps Shambler for p into zone z with
+// the given damage. It sets state and asserts nothing.
+func putShambler(s *scene, p PlayerID, z Zone, damage int) *Asset {
+	a := s.put(p, z, s.card(shambler))
+	a.Damage = damage
+	return a
+}
+
+// putDamaged puts a Readied vanilla unit for p into zone z with the given
+// damage. It sets state and asserts nothing.
+func putDamaged(s *scene, p PlayerID, z Zone, name string, health, damage int) *Asset {
+	a := s.put(p, z, unit(name, 0, health, Keywords{}))
+	a.Damage = damage
+	return a
+}
+
+// firstTargetDecision is the log position of the first recorded target
+// decision (answered, fast-pathed or timed out), or -1.
+func firstTargetDecision(g *Game) int {
+	for i, e := range g.Log {
+		if e.Kind == "decision" && e.Decision != nil && e.Decision.Kind == "Target" {
+			return i
+		}
+	}
+	return -1
+}
+
+func TestCard_AnimocepsShambler_DeploysToReservesReadiedAsTwoTwoAndAsksNothing(t *testing.T) {
+	s := newScene(t)
+	s.script(0)
+	inst := s.give(0, s.card(shambler))
+	s.g.Players[0].Req = 2
+	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
+	a := assetOf(s.g, inst.Card)
+	if a == nil || a.Zone != ZoneReserves {
+		t.Fatalf("the Shambler is on the battlefield in Reserves after deploying, got %v", a)
+	}
+	if p := a.Printed(); p.Power != 2 || p.Health != 2 || p.ReqYield != 1 || p.TacYield != 2 {
+		t.Errorf("the Shambler is a 2/2 yielding 1R 2T: got %d/%d, %dR %dT", p.Power, p.Health, p.ReqYield, p.TacYield)
+	}
+	if s.g.Players[0].Req != 0 {
+		t.Errorf("the Shambler costs 2 Requisition: %d left", s.g.Players[0].Req)
+	}
+	if a.Exhausted {
+		t.Errorf("the Shambler enters Readied (FR-CAP-001)")
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("deploying is not exhausting, so the trigger does not fire: asked %d times (SVY-R17)", n)
+	}
+}
+
+// Covers: FR-CAP-001, FR-QUE-001, FR-TGT-003
+func TestCard_AnimocepsShambler_MarchTriggerResolvesBeforeTheMarch(t *testing.T) {
+	// The Shambler marches from the Main Theater back to Reserves and is the
+	// only allied asset in the Main Theater, so it is chosen. Its trigger sits
+	// on top of the March and resolves first, while the Shambler is still in
+	// the Main Theater, so it heals. Had the March resolved first, the
+	// Shambler would be in Reserves and the heal would fizzle (FR-TGT-003).
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 1)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sh.ID})
+	if sh.Zone != ZoneReserves {
+		t.Fatalf("precondition: the March still resolves after the trigger: Shambler in %s, want Reserves", sh.Zone)
+	}
+	if sh.Damage != 0 {
+		t.Errorf("a March's exhaust trigger is placed on top of the March and resolves first, while its target is still in the Main Theater, so the Shambler heals 1 (SVY-R17): damage %d, want 0", sh.Damage)
+	}
+	s.wantSettled("a March with the Shambler's trigger")
+}
+
+// Covers: FR-CAP-001, FR-QUE-001
+func TestCard_AnimocepsShambler_GenerateTriggerResolvesBeforeTheNextAction(t *testing.T) {
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
+	tac := s.g.Players[0].Tac
+	s.scriptRefs(0, nil, ally)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	if got, want := s.g.Players[0].Tac, tac+2; got != want {
+		t.Errorf("the Shambler in the Main Theater generates its Tactics Yield of 2: Tactics %d, want %d (FR-CAP-001)", got, want)
+	}
+	gen, dec := logIndex(s.g, "generate"), firstTargetDecision(s.g)
+	if gen < 0 || dec < 0 {
+		t.Fatalf("expected a generate event and a target decision in the log, got generate at %d, decision at %d", gen, dec)
+	}
+	if dec < gen {
+		t.Errorf("a Generate's exhaust trigger is placed, and its target chosen, after the generation completes (SVY-R17, SVY-R3): decision event %d came before generate event %d", dec, gen)
+	}
+	if ally.Damage != 0 {
+		t.Errorf("the trigger has resolved by the time the Generate returns, before the player acts again (SVY-R17): ally damage %d, want 0", ally.Damage)
+	}
+	s.wantSettled("a Generate with the Shambler's trigger")
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: ally.ID})
+	s.wantDamage(ally, 0)
+}
+
+// Covers: FR-TGT-001
+func TestCard_AnimocepsShambler_MarchingFromReservesCannotChooseItself(t *testing.T) {
+	// SVY-R3: the target is chosen when the trigger is placed. The Shambler is
+	// still in Reserves then, so it is not an asset in the Main Theater.
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneReserves, 1)
+	a1 := putDamaged(s, 0, ZoneMainTheater, "Ally One", 5, 1)
+	a2 := putDamaged(s, 0, ZoneMainTheater, "Ally Two", 5, 1)
+	s.scriptRefs(0, nil, a2)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sh.ID})
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one target question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "chosen allied asset in the Main Theater, placed while the Shambler is in Reserves: the two allies, not the Shambler (SVY-R3)", a1, a2)
+	s.wantDamage(a2, 0)
+	s.wantDamage(a1, 1)
+	s.wantDamage(sh, 1)
+	if sh.Zone != ZoneMainTheater {
+		t.Errorf("the March resolves after the trigger: Shambler in %s, want the Main Theater", sh.Zone)
+	}
+}
+
+// Covers: FR-TGT-001, FR-CBT-002
+func TestCard_AnimocepsShambler_AttackingFromTheMainTheaterMayChooseItself(t *testing.T) {
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 1)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
+	def := s.put(1, ZoneMainTheater, unit("Defender", 0, 9, Keywords{}))
+	s.scriptRefs(0, nil, sh)
+	s.do(s.attack(sh, def))
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one target question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "an attacking Shambler is an allied asset in the Main Theater, so it is offered with the ally (FR-TGT-001)", sh, ally)
+	s.wantDamage(sh, 0)
+	s.wantDamage(ally, 1)
+	s.wantDamage(def, 2)
+}
+
+// Covers: FR-TGT-001, FR-KWD-002h
+func TestCard_AnimocepsShambler_OffersOnlyAlliedAssetsInTheMainTheater(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	s.put(0, ZoneReserves, unit("Ally In Reserves", 1, 5, Keywords{}))
+	scratchMT := s.putScratch(0)
+	s.moveTo(scratchMT, ZoneMainTheater)
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
+	s.scriptRefs(0, nil, b.u0)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("one target question: asked %d times", len(asked))
+	}
+	wantOptions(t, asked[0], "chosen allied asset in the Main Theater: allied units, structures and Scratch Companies there (the Shambler and an allied Ward unit included); no Reserves asset, no Headquarters, no opposing asset",
+		sh, b.u0, b.s0, scratchMT, allyWard)
+}
+
+// Covers: FR-TGT-003
+func TestCard_AnimocepsShambler_NoLegalTargetAsksNothingAndHealsNothing(t *testing.T) {
+	// Marching from Reserves with no other allied asset in the Main Theater:
+	// only damaged assets that are not legal targets exist.
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneReserves, 1)
+	res := putDamaged(s, 0, ZoneReserves, "Ally In Reserves", 5, 1)
+	enemy := putDamaged(s, 1, ZoneMainTheater, "Enemy", 5, 1)
+	s.g.Players[0].HQ.Damage = 1
+	s.script(0)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sh.ID})
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("with no legal target nothing is asked: asked %d times (FR-TGT-003)", n)
+	}
+	s.wantDamage(sh, 1)
+	s.wantDamage(res, 1)
+	s.wantDamage(enemy, 1)
+	s.wantDamage(s.g.Players[0].HQ, 1)
+	if sh.Zone != ZoneMainTheater {
+		t.Errorf("the March still resolves: Shambler in %s, want the Main Theater", sh.Zone)
+	}
+	s.wantSettled("a March whose trigger has no legal target")
+}
+
+// Covers: FR-KWD-002d
+func TestCard_AnimocepsShambler_HealsExactlyOne(t *testing.T) {
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 9, 3)
+	s.scriptRefs(0, nil, ally)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	s.wantDamage(ally, 2)
+}
+
+// Covers: FR-KWD-002d
+func TestCard_AnimocepsShambler_HealingAnUndamagedAssetChangesNothing(t *testing.T) {
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 0)
+	s.scriptRefs(0, nil, ally)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("healing an undamaged asset leaves no damage anywhere: total %d (FR-KWD-002d)", got)
+	}
+	if !s.alive(ally) || !s.alive(sh) {
+		t.Errorf("both assets are still on the battlefield")
+	}
+}
+
+// Covers: FR-CBT-002, FR-KWD-002d
+func TestCard_AnimocepsShambler_AttackHealResolvesBeforeCombatDamage(t *testing.T) {
+	// The 2/2 Shambler has 1 damage and is the only allied asset in the Main
+	// Theater, so it heals itself to full at Step 2, then takes 1 retaliation
+	// and survives with 1 damage. Healed after combat, it would have died.
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 1)
+	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 9, Keywords{}))
+	s.do(s.attack(sh, def))
+	if !s.alive(sh) {
+		t.Fatalf("the Step 2 heal resolves before combat damage, so the Shambler survives 1 retaliation (SVY-R17, FR-CBT-002)")
+	}
+	s.wantDamage(sh, 1)
+	s.wantDamage(def, 2)
+}
+
+// Covers: FR-MOD-001
+func TestCard_AnimocepsShambler_TimeoutHealsTheFirstAlliedAssetToEnterTheMainTheater(t *testing.T) {
+	// SVY-R16: own assets first; Headquarters, then Reserves, then the Main
+	// Theater, each zone in entry order. Only Main Theater assets are legal,
+	// so the first one to enter it is healed.
+	s := newScene(t)
+	s.g.Players[0].HQ.Damage = 1
+	res := putDamaged(s, 0, ZoneReserves, "Ally In Reserves", 5, 1)
+	first := putDamaged(s, 0, ZoneMainTheater, "First", 5, 1)
+	sh := putShambler(s, 0, ZoneMainTheater, 1)
+	last := putDamaged(s, 0, ZoneMainTheater, "Last", 5, 1)
+	s.script(0, Answer{Timeout: true})
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	s.wantDamage(first, 0)
+	s.wantDamage(sh, 1)
+	s.wantDamage(last, 1)
+	s.wantDamage(res, 1)
+	s.wantDamage(s.g.Players[0].HQ, 1)
+}
+
+// Covers: FR-CAP-001
+func TestCard_AnimocepsShambler_HealsAgainOnEachExhaust(t *testing.T) {
+	// Generate Requisition in Reserves on one turn, March on the next: two
+	// exhausts, two heals. The ally is the only legal target both times.
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneReserves, 0)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 9, 3)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Requisition})
+	s.wantDamage(ally, 2)
+	s.endTurn()
+	s.endTurn()
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: sh.ID})
+	s.wantDamage(ally, 1)
+}
+
+// Covers: FR-CBT-002
+func TestCard_AnimocepsShambler_DefendingDoesNotHeal(t *testing.T) {
+	// Being attacked does not exhaust the Shambler, so nothing fires.
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
+	s.endTurn()
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	s.script(0)
+	s.do(s.attack(hitter, sh))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("only the Shambler exhausting fires its trigger: asked %d times while defending", n)
+	}
+	s.wantDamage(ally, 1)
+	s.wantDamage(sh, 1)
+}
+
+// Covers: FR-ZON-005
+func TestCard_AnimocepsShambler_FaceDownCopyExhaustingHealsNothing(t *testing.T) {
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	sh.FaceDown = true
+	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
+	s.script(0)
+	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("a face-down Scratch Company has no printed abilities: asked %d times (FR-ZON-005)", n)
+	}
+	s.wantDamage(ally, 1)
+}

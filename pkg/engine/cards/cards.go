@@ -16,7 +16,6 @@ var NotYetExecutable = []string{
 	"Ambush Tactics",
 	"Ancestral Monument",
 	"Animoceps Node",
-	"Animoceps Shambler",
 	"Animoceps Spore Cloud",
 	"Animoceps Spores",
 	"Animoceps Stalk",
