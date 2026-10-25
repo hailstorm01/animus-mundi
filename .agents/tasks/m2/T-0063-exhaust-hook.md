@@ -4,7 +4,7 @@ title: An exhaust hook, fired from (g *Game) exhaust on every change from Readie
 kind: shape
 tier: sonnet
 wave: B
-status: queued
+status: tests
 branch: m2/T-0063-exhaust-hook
 depends_on: [T-0062]
 claims: [hook:exhaust]
@@ -50,3 +50,5 @@ To be written by rules-test-author, with synthetic cards only (the Shambler is T
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task, `queued` behind T-0062 (directive #50 part 1). Split from directive #50 by the size rule; see T-0062's Log.
+- 2026-10-25 lead-architect: T-0062 is `done` (7bfeb38), so `resolveStack` now flushes first. Re-checked against `main` 7bfeb38: `exhaust` (`actions.go:104-106`) only sets the field; `fireDeploy`, `fireKilled` and `fireDamaged` wrap `fireHook` (`trigger.go:23-36`); `HookDamaged` is the last hook constant (`ability.go:22`). No change to the plan. Waiting triggers checked: #6, #7, #8, #15, #20 and #51. None has fired.
+  - Next: status `tests`; dispatch `rules-test-author`.
