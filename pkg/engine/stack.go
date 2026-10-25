@@ -13,7 +13,7 @@ const (
 	StackAttack
 	StackScratch
 	StackAggressive
-	StackAbility // a triggered ability: runs Trigger's steps for Controller
+	StackAbility // a triggered ability: runs Effect's steps for Controller
 )
 
 // StackItem is one entry on the shared LIFO Resolution Stack (FR-QUE-001).
@@ -29,8 +29,9 @@ type StackItem struct {
 	Secondary int // StackAttack: Berserk secondary target, 0 if none
 	Amount    int // StackAggressive: N
 
-	Trigger ability.Trigger // StackAbility: the ability resolving (Source is its source asset)
-	Chosen  [][]int         // StackAbility: asset IDs chosen for each Trigger.Effect.Targets slot, in pick order; empty if none
+	Effect  ability.Effect // StackAbility: the effect resolving (Source is its source asset)
+	Chosen  [][]int        // StackAbility: asset IDs chosen for each Effect.Targets slot, in pick order; empty if none
+	Tracked bool           // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
 }
 
 // push puts item on the stack and records where it went: the one place event

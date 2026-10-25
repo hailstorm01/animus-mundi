@@ -128,7 +128,8 @@ func (g *Game) flushTriggers() {
 			if p.trig.Optional && !g.accepts(p) {
 				continue
 			}
-			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst, Trigger: p.trig,
+			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst,
+				Effect: p.trig.Effect, Tracked: p.trig.Hook == ability.HookKilled,
 				Chosen: g.chooseTargets(p)})
 		}
 	}
