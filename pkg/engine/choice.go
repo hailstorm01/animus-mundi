@@ -2,7 +2,7 @@ package engine
 
 import (
 	"math/rand/v2"
-	"sort"
+	"slices"
 )
 
 // DecisionKind says what a Decision asks, and so which FR-MOD-001 §6 fallback applies.
@@ -168,7 +168,7 @@ func (g *Game) fixedOrderPicks(d Decision) []int {
 		}
 		return len(pos) // not a battlefield asset: after all that are
 	}
-	sort.SliceStable(idx, func(a, b int) bool { return rank(idx[a]) < rank(idx[b]) })
+	slices.SortStableFunc(idx, func(a, b int) int { return rank(a) - rank(b) })
 	picks := make([]int, d.Min)
 	for i := range picks {
 		if d.Repeats {

@@ -5,6 +5,7 @@ package engine
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 )
 
 // PlayerID identifies a seat. Players are 0 and 1.
@@ -196,6 +197,23 @@ func (g *Game) newID() int {
 	return g.nextID
 }
 
+// Battlefield orders. The battlefield is listed in exactly three orders, and
+// each rule that walks it uses one of them. New code picks one of these three
+// rather than adding a fourth.
+//
+// Assets: the Headquarters, then every player's Reserves, then the Main
+// Theater, each zone in arrival order. The death sweep and trigger collection
+// use it, so simultaneous triggers are collected in source order (SVY-R7,
+// FR-TRG-003). Uses where order doesn't matter (lookups, readying, invariants,
+// legal actions) also use it.
+//
+// assetsByID: oldest (lowest ID) first. Decision option lists and "all" steps
+// use it (SVY-R11).
+//
+// fixedOrderPositions: the choosing player's assets before the opponent's;
+// within a player the Headquarters, then Reserves, then the Main Theater, each
+// in arrival order. Timeout fallbacks use it (SVY-R16, FR-MOD-001 §6).
+
 // Assets returns every asset on the battlefield, HQs first.
 func (g *Game) Assets() []*Asset {
 	var out []*Asset
@@ -208,6 +226,13 @@ func (g *Game) Assets() []*Asset {
 		out = append(out, p.Reserves...)
 	}
 	return append(out, g.Theater...)
+}
+
+// assetsByID returns every battlefield asset, oldest (lowest ID) first.
+func (g *Game) assetsByID() []*Asset {
+	assets := g.Assets()
+	slices.SortFunc(assets, func(x, y *Asset) int { return x.ID - y.ID })
+	return assets
 }
 
 // fixedOrderPositions maps each battlefield asset ID to its position in the
@@ -225,10 +250,8 @@ func (g *Game) fixedOrderPositions(p PlayerID) map[int]int {
 		for _, a := range pl.Reserves {
 			add(a)
 		}
-		for _, a := range g.Theater {
-			if a.Controller == id {
-				add(a)
-			}
+		for _, a := range g.TheaterOf(id) {
+			add(a)
 		}
 	}
 	if int(p) >= 0 && int(p) < len(g.Players) {
