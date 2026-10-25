@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
@@ -68,10 +68,10 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
 - `pkg/engine/doc.go` (Headquarters abilities move to the "Built" list; remove "(until T-0055)" and rewrap the paragraph to the surrounding width)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsRager|TestCard_EternalWatchman'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
-- [ ] `go tool task sim` runs clean; report the before and after summary lines in the Log
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsRager|TestCard_EternalWatchman'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes
+- [x] `go tool task sim` runs clean; report the before and after summary lines in the Log
 
 ## Log
 - 2026-10-23 lead-architect: Wrote the task, `queued` behind T-0054.
@@ -80,3 +80,22 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
 - 2026-10-25 rules-test-author: Wrote the 10 tests above, none skipped. Left out as the guidance says: Armor/Resistant reducing damage to zero (unruled), lethal damage to the Rager (unobservable). `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
 - 2026-10-25 lead-architect: Tests review (D4): **approved**, status `ready`. Each expected outcome matches the card text and FRD 01. The Scratch goes to the Rager's controller, with no turn gate. The limit is once per turn and resets at every turn start, either player's (`FR-TRN-001`). The damage moment is Stage 5 (`FR-REP-004`). A Headquarters may attack, so it takes retaliation (`FR-CAP-001`). There are no guessed rulings: the Armor/Resistant threshold and lethal damage are left out, as the guidance says. No assertion on engine internals beyond exported state. Re-ran on the branch: the 7 firing and limit tests fail with "Scratch Companies = 0", and their damage assertions pass, so setup is sound. The 3 non-firing tests pass. `hqScene` and `wantSettled` live in the test file and only set state or check it, which is allowed. Done When's test pattern now includes `TestCard_EternalWatchman`.
   - Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
+- 2026-10-25 kernel-engineer: Implemented Animoceps Rager; status `review`.
+  - **Reuse:** reused `ability.HookDamaged`, `ability.OpScratch` and `Trigger.MaxPerTurn` (all existing shapes); registered in `headquartersDefs` map in new `pkg/engine/cards/headquarters.go` mirroring `pathDefs` and `animusDefs`.
+  - **Diff:** created `pkg/engine/cards/headquarters.go` with definition for `Animoceps Rager` (one trigger: `HookDamaged`, `MaxPerTurn: 1`; one step: `OpScratch`, amount 1); removed `Animoceps Rager` from `cards.NotYetExecutable`; updated `cmd/cardtown/sim.go` to report whether each seat's Headquarters is executable (`Supported()`), removing obsolete "HQ abilities are ignored" lines; updated `pkg/engine/doc.go` to add Headquarters abilities to the "Built" list and remove "(until T-0055)" from "Not built yet".
+  - **Commands:**
+    - `go test ./pkg/engine -run 'TestCard_AnimocepsRager|TestCard_EternalWatchman'`: PASS (10/10 tests pass).
+    - `go test ./pkg/engine -run 'TestDefs_MatchRulesText|TestStarterSet_Executable'`: PASS.
+    - `go tool task check`: PASS (gofmt, vet, test, cardtown lint --all).
+    - `go tool task sim`: clean.
+      - Before:
+        `P0 (data/decks/animus-starter.txt): 23/50 main cards executable now (Supported())`
+        `P1 (data/decks/path-starter.txt): 19/50 main cards executable now (Supported())`
+        `HQ abilities are ignored.`
+        `P0 wins 46.0%  P1 wins 54.0%  draws 0.0%  first player wins 57.0%`
+      - After:
+        `P0 (data/decks/animus-starter.txt): 23/50 main cards executable now (Supported())`
+        `P1 (data/decks/path-starter.txt): 19/50 main cards executable now (Supported())`
+        `Headquarters executable now (Supported()): P0 (Animoceps Rager) true, P1 (Eternal Watchman) false`
+        `P0 wins 68.0%  P1 wins 30.0%  draws 2.0%  first player wins 44.5%`
+  - **Reviewer:** In `cmd/cardtown/sim.go`, Headquarters executable status is reported across both deck and stress sim modes directly following the deck/cycling report.
