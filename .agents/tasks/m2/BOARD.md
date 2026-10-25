@@ -128,7 +128,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0060 | A stack item carries an effect, not a whole trigger (directive #53, harness, flash, pure move) | done |
 | T-0061 | One place for the battlefield orders, in state.go (directive #54, harness, flash, pure move) | done |
 | T-0062 | Fired triggers are placed when the stack starts resolving, not only after an item (directive #50 part 1, harness, flash, pure move) | done |
-| T-0063 | An exhaust hook, fired from (g *Game) exhaust on every change from Readied to Exhausted (SVY-R17, directive #50 part 2, wave B shape, sonnet) | tests |
+| T-0063 | An exhaust hook, fired from (g *Game) exhaust on every change from Readied to Exhausted (SVY-R17, directive #50 part 2, wave B shape, sonnet) | ready |
 | T-0064 | Make Animoceps Shambler executable (wave B card, flash) | queued |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
