@@ -151,10 +151,10 @@ func runSim(args []string) {
 		}
 		fmt.Printf("  P0 (%s): %d/%d main cards executable now (Supported())\n", sim.DecklistName(*p0, *deck), countSupported(decks[0].Main), len(decks[0].Main))
 		fmt.Printf("  P1 (%s): %d/%d main cards executable now (Supported())\n", sim.DecklistName(*p1, *deck), countSupported(decks[1].Main), len(decks[1].Main))
-		fmt.Println("  HQ abilities are ignored.")
 	} else {
-		fmt.Println("  Decks cycle each faction's kernel-executable cards; HQ abilities are ignored.")
+		fmt.Println("  Decks cycle each faction's kernel-executable cards.")
 	}
+	fmt.Printf("  Headquarters executable now (Supported()): P0 (%s) %t, P1 (%s) %t\n", decks[0].HQ.Name, decks[0].HQ.Supported(), decks[1].HQ.Name, decks[1].HQ.Supported())
 	fmt.Printf("  P0 wins %.1f%%  P1 wins %.1f%%  draws %.1f%%  first player wins %.1f%%\n", pct(st.Wins[0]), pct(st.Wins[1]), pct(st.Draws), pct(st.FirstPlayerWin))
 	fmt.Printf("  Average match length: %.1f turns\n", float64(st.TotalTurns)/float64(st.Games))
 	fmt.Println("  End reasons:")

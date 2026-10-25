@@ -29,12 +29,13 @@
 //     FR-ZON-004) and SubjectOpponents.
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
+//   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Maneuvers, activated and continuous abilities, Headquarters abilities
-//     (until T-0055), Cornered, Heal N, Regroup N, replacement effects beyond
-//     the damage pipeline, and match clocks. Cards whose text needs any of these
-//     load with Card.Unsupported set and cannot be deployed.
+//   - Maneuvers, activated and continuous abilities, Cornered, Heal N,
+//     Regroup N, replacement effects beyond the damage pipeline, and match
+//     clocks. Cards whose text needs any of these load with Card.Unsupported set
+//     and cannot be deployed.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
 // Files:
