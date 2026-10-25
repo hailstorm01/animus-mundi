@@ -4,7 +4,7 @@ title: Make Animoceps Shambler executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0064-animoceps-shambler
 depends_on: [T-0063]
 claims: [card:Animoceps Shambler]
@@ -27,13 +27,24 @@ requirements: []
 - `Text` holds the printed rules text, one entry.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by rules-test-author in `pkg/engine/cards_animus_test.go` (or a new file if that is the pattern). Guidance; the author names the rest and lists them here.
-- **Named (directive #47 part 4):** `TestCard_AnimocepsShambler_MarchTriggerResolvesBeforeTheMarch` and `TestCard_AnimocepsShambler_GenerateTriggerResolvesBeforeTheNextAction`.
-- Its target is locked on placement, so a Shambler marching from Reserves cannot choose itself: it is still in Reserves when the target is chosen. A Shambler attacking from the Main Theater may choose itself.
-- Only allied assets in the Main Theater are offered: not Reserves, not the Headquarters, not enemy assets.
-- No legal target: nothing is asked and nothing happens.
-- Heal 1 removes 1 damage from the chosen asset, and does nothing to an undamaged one.
-- An attack's trigger resolves before combat damage. A Shambler in the Main Theater with 1 damage attacks a defender with power 1 and chooses itself. It heals to full before the retaliation, so it survives with 1 damage. If the heal came after combat it would have died.
+Written in `pkg/engine/cards_animus_test.go` (8f4b916):
+- `TestCard_AnimocepsShambler_DeploysToReservesReadiedAsTwoTwoAndAsksNothing`: deploys to Reserves for 2R as a 2/2 yielding 1R 2T, Readied, and deploying does not fire the exhaust trigger (`FR-CAP-001`, `SVY-R17`).
+- **Named (directive #47 part 4):** `TestCard_AnimocepsShambler_MarchTriggerResolvesBeforeTheMarch`: a damaged Shambler marching from the Main Theater to Reserves heals itself while still in the Main Theater before the March moves it (`FR-CAP-001`, `FR-QUE-001`, `FR-TGT-003`, `SVY-R17`).
+- **Named (directive #47 part 4):** `TestCard_AnimocepsShambler_GenerateTriggerResolvesBeforeTheNextAction`: generating Tactics in the Main Theater yields 2T, places the trigger and chooses its target after the generation event, and heals the chosen ally before the next action (`FR-CAP-001`, `FR-QUE-001`, `SVY-R17`, `SVY-R3`).
+- `TestCard_AnimocepsShambler_MarchingFromReservesCannotChooseItself`: target is locked on placement while the Shambler is still in Reserves, so only Main Theater allies are offered (`FR-TGT-001`, `SVY-R3`).
+- `TestCard_AnimocepsShambler_AttackingFromTheMainTheaterMayChooseItself`: an attacking Shambler in the Main Theater is offered alongside other Main Theater allies (`FR-TGT-001`, `FR-CBT-002`).
+- `TestCard_AnimocepsShambler_OffersOnlyAlliedAssetsInTheMainTheater`: offers allied units, structures, Scratch Companies and Warded allies in the Main Theater; excludes Reserves, Headquarters and opposing assets (`FR-TGT-001`, `FR-KWD-002h`).
+- `TestCard_AnimocepsShambler_NoLegalTargetAsksNothingAndHealsNothing`: with no allied asset in the Main Theater, nothing is asked, nothing heals, and the March still resolves (`FR-TGT-003`).
+- `TestCard_AnimocepsShambler_HealsExactlyOne`: removes 1 damage from a chosen ally with 3 damage (`FR-KWD-002d`).
+- `TestCard_AnimocepsShambler_HealingAnUndamagedAssetChangesNothing`: targeting an undamaged ally leaves 0 damage and both assets alive (`FR-KWD-002d`).
+- `TestCard_AnimocepsShambler_AttackHealResolvesBeforeCombatDamage`: a 2/2 Shambler with 1 damage attacks a 1-power defender, heals to full at Step 2 before combat damage, and survives with 1 damage (`FR-CBT-002`, `FR-KWD-002d`, `SVY-R17`).
+- `TestCard_AnimocepsShambler_TimeoutHealsTheFirstAlliedAssetToEnterTheMainTheater`: timeout selects the first allied asset in the Main Theater in entry order (`FR-MOD-001` §6, `SVY-R16`).
+- `TestCard_AnimocepsShambler_HealsAgainOnEachExhaust`: fires on Generate in one turn and again on March in a later turn (`FR-CAP-001`).
+- `TestCard_AnimocepsShambler_DefendingDoesNotHeal`: being attacked does not exhaust the defender, so nothing fires (`FR-CBT-002`).
+- `TestCard_AnimocepsShambler_FaceDownCopyExhaustingHealsNothing`: a face-down copy exhausting does not fire the printed trigger (`FR-ZON-005`).
+
+## Helpers Needed
+None. The test file defines local `putShambler`, `putDamaged` and `firstTargetDecision` helpers and reuses existing scenario helpers.
 
 ## Allowed Files
 - `pkg/engine/cards/animus.go`
@@ -49,3 +60,6 @@ To be written by rules-test-author in `pkg/engine/cards_animus_test.go` (or a ne
 - 2026-10-25 lead-architect: Wrote the task, `queued` behind T-0063 (the exhaust hook).
 - 2026-10-25 lead-architect: T-0063 is `done` (3a9e549). Re-checked against `main` 3a9e549: `ability.HookExhausted`, `Filter.Allegiance`/`Filter.Zone` (`ability.go:69-75`, zero `Kinds` means any asset) and `OpHeal` exist, so the card needs no new shape. Spelled out the target filter in the Definition. Waiting triggers checked: #6, #7, #8, #15, #20 and #51. None has fired. Directive #14: the Shambler is a deck card (3 copies, Animus starter).
   - Next: status `tests`; dispatch `rules-test-author`.
+- 2026-10-25 rules-test-author (run on Opus in Antigravity at the user's choice): Wrote 14 `TestCard_AnimocepsShambler_*` tests in `pkg/engine/cards_animus_test.go` (8f4b916), listed under Tests, including both directive #47 part 4 names. Sources: FR-CAP-001 / SVY-R17 (placement), FR-TGT-001 / SVY-R3 (locked targets), FR-TGT-003 (re-verification), FR-MOD-001 §6 / SVY-R16 (timeout order), FR-KWD-002d (Heal), FR-CBT-002 Step 2, FR-ZON-005. Helpers requested: none. `go vet ./pkg/engine` clean; `cardtown lint rules` PASS; 10 of the 14 fail as expected until the card is executable (deploy is rejected, the trigger does not fire); 4 negative cases (no legal target, undamaged, defending, face-down) pass already.
+  - Left out: a target leaving the Main Theater between placement and resolution (no starter-set way to move it mid-stack from this trigger; the generic re-verification is covered by the targeting shape tests); an opposing Shambler (nothing in M2 exhausts an asset on the opponent's turn); healing above maximum health (Heal 1 on a damaged asset cannot overshoot; covered generically in `heal_armor_test.go`).
+  - Next: status `tests-review`; lead reviews the tests.
