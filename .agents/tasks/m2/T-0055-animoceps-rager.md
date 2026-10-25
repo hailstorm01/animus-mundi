@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: changes
+status: review
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
@@ -105,3 +105,7 @@ None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string
      //   - Triggered abilities on a Headquarters, through the same self hooks.
      ```
      Keep the "Not built yet" paragraph as you rewrapped it. Change nothing else. Re-run `go -C <worktree> tool task check`, log the result, and set `review`.
+- 2026-10-25 kernel-engineer: Review round 1 answered; status `review`.
+  - **Note 1 (doc.go):** replaced `//   - Headquarters abilities.` with `//   - Triggered abilities on a Headquarters, through the same self hooks.`, keeping the rewrapped "Not built yet" paragraph unchanged.
+  - **Verification:** `go tool task check` PASSED (gofmt, vet, test, all linters clean).
+  - Next: lead-architect review.

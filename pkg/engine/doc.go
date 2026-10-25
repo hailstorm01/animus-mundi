@@ -29,7 +29,7 @@
 //     FR-ZON-004) and SubjectOpponents.
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
-//   - Headquarters abilities.
+//   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
 //   - Maneuvers, activated and continuous abilities, Cornered, Heal N,
