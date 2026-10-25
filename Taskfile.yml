@@ -69,6 +69,37 @@ tasks:
     cmds:
       - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH -events {{.CLI_ARGS}}'
 
+  sim-compare:
+    desc: 'Pure-move check: the starter and stress sims print the same bytes and exit codes as a base ref (default main), e.g. `go tool task sim-compare -- main`'
+    vars:
+      REF: '{{.CLI_ARGS | default "main"}}'
+      DIR: bin/sim-compare
+    cmds:
+      # Each side runs from its own checkout: cardtown reads data/ from the
+      # working directory. Outputs stay in bin/sim-compare for the Log.
+      - rm -rf {{.DIR}}
+      - git worktree prune
+      - git worktree add --detach {{.DIR}}/base {{.REF}}
+      - defer: git worktree remove --force {{.DIR}}/base
+      - go -C {{.DIR}}/base build -o ../base{{exeExt}} ./cmd/cardtown
+      - go build -o {{.DIR}}/new{{exeExt}} ./cmd/cardtown
+      - |
+        out=$(pwd)/{{.DIR}}
+        for side in base new; do
+          if [ $side = base ]; then cd {{.DIR}}/base; fi
+          "$out/$side{{exeExt}}" sim -deck starter -p0 ANIMUS -p1 PATH > "$out/$side-starter.txt" 2>&1
+          echo "exit $?" >> "$out/$side-starter.txt"
+          "$out/$side{{exeExt}}" sim > "$out/$side-stress.txt" 2>&1
+          echo "exit $?" >> "$out/$side-stress.txt"
+          cd "$out/../.."
+        done
+        fail=0
+        for sim in starter stress; do
+          git -c core.autocrlf=false diff --no-index --exit-code "$out/base-$sim.txt" "$out/new-$sim.txt" || fail=1
+        done
+        if [ $fail = 0 ]; then echo "[PASS] starter and stress sims match {{.REF}} byte for byte, exit codes included"; fi
+        exit $fail
+
   play:
     desc: Play an interactive match against the bot (cardtown play)
     deps: [build]

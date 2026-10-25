@@ -82,6 +82,7 @@ One or two sentences: what runs when this is done.
 - [ ] The listed tests pass: `go test ./pkg/engine -run '<regex>'`
 - [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 - [ ] <once the task touches gameplay> `go tool task sim` runs clean on the starter decks
+- [ ] <pure moves> `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
 - [ ] <card tasks> the card loads with no unsupported lines
 
 ## Log
