@@ -4,7 +4,7 @@ title: One place for the battlefield orders, in state.go (directive #54, harness
 kind: harness
 tier: flash
 wave: none (board directive #54, structural review 3 finding 6, before T-0055)
-status: ready
+status: in-progress
 branch: m2/T-0061-battlefield-orders
 depends_on: [T-0060]
 claims: [helper:engine.assetsByID (move), doc:engine battlefield orders]
