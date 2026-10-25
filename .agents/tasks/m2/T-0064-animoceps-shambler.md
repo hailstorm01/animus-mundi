@@ -4,7 +4,7 @@ title: Make Animoceps Shambler executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0064-animoceps-shambler
 depends_on: [T-0063]
 claims: [card:Animoceps Shambler]
@@ -51,10 +51,10 @@ None. The test file defines local `putShambler`, `putDamaged` and `firstTargetDe
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsShambler'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
-- [ ] `go tool task sim` runs clean; report the before and after summary lines in the Log
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AnimocepsShambler'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes
+- [x] `go tool task sim` runs clean; report the before and after summary lines in the Log
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task, `queued` behind T-0063 (the exhaust hook).
@@ -67,3 +67,7 @@ None. The test file defines local `putShambler`, `putDamaged` and `firstTargetDe
   - **Coverage:** both named directive #47 part 4 tests (`_MarchTriggerResolvesBeforeTheMarch`, `_GenerateTriggerResolvesBeforeTheNextAction`), locked targets on placement (`_MarchingFromReservesCannotChooseItself`, `_AttackingFromTheMainTheaterMayChooseItself`), filter for allied assets in the Main Theater (`_OffersOnlyAlliedAssetsInTheMainTheater`, `_NoLegalTargetAsksNothingAndHealsNothing`), Heal 1 behavior and Step 2 timing (`_HealsExactlyOne`, `_HealingAnUndamagedAssetChangesNothing`, `_AttackHealResolvesBeforeCombatDamage`), fixed-order timeout (`_TimeoutHealsTheFirstAlliedAssetToEnterTheMainTheater`), repeated exhausts across turns (`_HealsAgainOnEachExhaust`), defending (`_DefendingDoesNotHeal`), face-down (`_FaceDownCopyExhaustingHealsNothing`), and printed characteristics/deployment (`_DeploysToReservesReadiedAsTwoTwoAndAsksNothing`).
   - **Independent oracle:** verified `rules-test-author` subagent transcript (`94551256-5fdc-488b-a863-c198c57e7eed`); it never read or edited any non-test file in `pkg/engine/`.
   - Next: dispatch `kernel-engineer` (tier `flash`).
+- 2026-10-25 kernel-engineer (tier flash): Implemented Animoceps Shambler in `pkg/engine/cards/animus.go` with trigger `HookExhausted`, target filter `{Allegiance: AllegianceAllied, Zone: ZoneMainTheater}`, and step `OpHeal` amount 1 targeting slot 0. Removed "Animoceps Shambler" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Reused existing shapes `ability.HookExhausted` (T-0063), `ability.Filter` (`AllegianceAllied`, `ZoneMainTheater`), and `ability.OpHeal` (T-0019). No new shapes added. Commands: `go test ./pkg/engine -run TestCard_AnimocepsShambler` PASS (14 tests); `go test ./pkg/engine -run 'TestDefs_MatchRulesText|TestStarterSet_Executable'` PASS; `go tool task check` PASS (fmt-check, vet, all tests, linter --all); `go tool task sim` PASS (200 matches, all invariants held). Sim summary comparison:
+  - Before (main b5008f8): `P0 (data/decks/animus-starter.txt): 23/50 main cards executable now (Supported())`, `P0 wins 68.0%  P1 wins 30.0%  draws 2.0%  first player wins 44.5%`, `Average match length: 29.0 turns`.
+  - After (b90913f): `P0 (data/decks/animus-starter.txt): 26/50 main cards executable now (Supported())`, `P0 wins 79.5%  P1 wins 19.0%  draws 1.5%  first player wins 45.0%`, `Average match length: 27.8 turns`.
+  - Next: status `review`.
