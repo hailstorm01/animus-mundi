@@ -4,7 +4,7 @@ title: Make Animoceps Shambler executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0064-animoceps-shambler
 depends_on: [T-0063]
 claims: [card:Animoceps Shambler]
