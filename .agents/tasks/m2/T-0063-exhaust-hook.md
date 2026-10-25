@@ -4,7 +4,7 @@ title: An exhaust hook, fired from (g *Game) exhaust on every change from Readie
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0063-exhaust-hook
 depends_on: [T-0062]
 claims: [hook:exhaust]
@@ -29,13 +29,16 @@ A printed trigger can fire when its own asset exhausts: `ability.HookExhausted`,
 - `doc.go`: add `HookExhausted` to the self hooks list in "Built".
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by rules-test-author, with synthetic cards only (the Shambler is T-0064), in a new `pkg/engine/exhaust_hook_test.go`. The lead's guidance on what to cover follows; the author names the tests and lists them here.
-- **Named (directive #47 part 4):** `TestFR_CAP_001_EnteringExhaustedIsNotAnExhaust`. A synthetic Deploys Exhausted unit with an exhaust trigger is deployed, and nothing fires.
-- **Every exhaust fires:** an exhaust-trigger watcher fires once when it Generates, once when it Marches, and once when it Attacks. A synthetic Headquarters with an exhaust trigger fires when it Scratches.
-- **Placement (`SVY-R17`):** a March's trigger resolves before the March does: the watcher is still in its origin zone when its trigger resolves. An Attack's trigger resolves before combat damage. A Generate's trigger resolves before the next action, and after `Apply` returns the stack and buffer are empty and the invariants hold.
-- **No other change fires it:** readying at turn start doesn't. Another asset exhausting doesn't (self hook only).
-- **No limit:** the watcher fires on each exhaust across turns.
-- Use an observable step, as the T-0054 tests did with Scratch 1 and `wantScratches`.
+Written in `pkg/engine/exhaust_hook_test.go`, with synthetic cards only (the Shambler is T-0064). The file does not compile until `ability.HookExhausted` exists. The watcher is a unit whose exhaust trigger Scratches 1, observed with `wantScratches` and by event order in the log.
+- **Named (directive #47 part 4):** `TestFR_CAP_001_EnteringExhaustedIsNotAnExhaust`: a Deploys Exhausted unit with an exhaust trigger is deployed, and nothing fires.
+- **Every exhaust fires:** `TestFR_CAP_001_ExhaustTriggerFiresWhenItsAssetGeneratesRequisition`, `...GeneratesTactics`, `...Marches`, `...Attacks`, `...WhenAHeadquartersDeploysScratchCompany`, `TestFR_CAP_001_HeadquartersExhaustTriggerFiresOnceWhenItGenerates`.
+- **Placement (SVY-R17):** `TestFR_CAP_001_MarchExhaustTriggerResolvesBeforeTheMarch`, `TestFR_CAP_001_AttackExhaustTriggerResolvesBeforeCombatDamage`, `TestFR_CAP_001_GenerateExhaustTriggerResolvesAfterTheGenerationBeforeTheNextAction` (after `Apply` the stack is empty and the invariants hold), `TestFR_CAP_001_GenerateTriggerResolvesSoALaterMarchIsLegal`.
+- **No other change fires it:** `TestFR_CAP_001_ReadyingAtTurnStartDoesNotFireTheExhaustTrigger`, `TestFR_TRG_002_AnotherAssetExhaustingDoesNotFireTheExhaustTrigger`, `TestFR_TRG_002_AnOpposingAssetExhaustingDoesNotFireTheExhaustTrigger`.
+- **No limit:** `TestFR_TRG_002_ExhaustTriggerFiresOnEachExhaustAcrossTurns`.
+- **Left out:** exhaust or additional costs and effect-caused exhausts (no engine support yet: `FR-ACT-001`, `FR-TRN-003a` are not executable); ordering between an exhaust trigger and an attack trigger on one attacker (FRD 01 does not fix it).
+
+## Helpers Needed
+None. The test file defines its own `exhaustTrigger`, `exhaustWatcher` and `logIndex`, and reuses existing helpers.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go` (`HookExhausted`)
@@ -44,7 +47,7 @@ To be written by rules-test-author, with synthetic cards only (the Shambler is T
 - `pkg/engine/doc.go` (the hooks list)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run '<the author's pattern>'`
+- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_CAP_001_(EnteringExhaustedIsNotAnExhaust|ExhaustTrigger|HeadquartersExhaustTrigger|MarchExhaustTrigger|AttackExhaustTrigger|GenerateExhaustTrigger|GenerateTrigger|ReadyingAtTurnStart)|TestFR_TRG_002_(AnotherAsset|AnOpposingAsset|ExhaustTriggerFiresOnEach)'`
 - [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 - [ ] `go tool task sim` runs clean on the starter decks. No starter card has an exhaust trigger yet, so the sim should be unchanged; check with `go tool task sim-compare` and record the result.
 
@@ -52,3 +55,4 @@ To be written by rules-test-author, with synthetic cards only (the Shambler is T
 - 2026-10-25 lead-architect: Wrote the task, `queued` behind T-0062 (directive #50 part 1). Split from directive #50 by the size rule; see T-0062's Log.
 - 2026-10-25 lead-architect: T-0062 is `done` (7bfeb38), so `resolveStack` now flushes first. Re-checked against `main` 7bfeb38: `exhaust` (`actions.go:104-106`) only sets the field; `fireDeploy`, `fireKilled` and `fireDamaged` wrap `fireHook` (`trigger.go:23-36`); `HookDamaged` is the last hook constant (`ability.go:22`). No change to the plan. Waiting triggers checked: #6, #7, #8, #15, #20 and #51. None has fired.
   - Next: status `tests`; dispatch `rules-test-author`.
+- 2026-10-25 rules-test-author: Wrote 15 tests in `pkg/engine/exhaust_hook_test.go` (listed under Tests); no helpers requested. The file does not compile until `ability.HookExhausted` exists. With a throwaway `HookExhausted` and `g.fireHook(a, HookExhausted)` in `exhaust` (reverted, not committed) all 15 pass. Left out: cost and effect exhausts (not executable yet), exhaust-versus-attack trigger ordering (FRD 01 silent). Status `tests-review`.
