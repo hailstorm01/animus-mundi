@@ -4,7 +4,7 @@ title: Make Animoceps Shambler executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0064-animoceps-shambler
 depends_on: [T-0063]
 claims: [card:Animoceps Shambler]
@@ -63,3 +63,7 @@ None. The test file defines local `putShambler`, `putDamaged` and `firstTargetDe
 - 2026-10-25 rules-test-author (run on Opus in Antigravity at the user's choice): Wrote 14 `TestCard_AnimocepsShambler_*` tests in `pkg/engine/cards_animus_test.go` (8f4b916), listed under Tests, including both directive #47 part 4 names. Sources: FR-CAP-001 / SVY-R17 (placement), FR-TGT-001 / SVY-R3 (locked targets), FR-TGT-003 (re-verification), FR-MOD-001 §6 / SVY-R16 (timeout order), FR-KWD-002d (Heal), FR-CBT-002 Step 2, FR-ZON-005. Helpers requested: none. `go vet ./pkg/engine` clean; `cardtown lint rules` PASS; 10 of the 14 fail as expected until the card is executable (deploy is rejected, the trigger does not fire); 4 negative cases (no legal target, undamaged, defending, face-down) pass already.
   - Left out: a target leaving the Main Theater between placement and resolution (no starter-set way to move it mid-stack from this trigger; the generic re-verification is covered by the targeting shape tests); an opposing Shambler (nothing in M2 exhausts an asset on the opponent's turn); healing above maximum health (Heal 1 on a damaged asset cannot overshoot; covered generically in `heal_armor_test.go`).
   - Next: status `tests-review`; lead reviews the tests.
+- 2026-10-25 lead-architect (run on Gemini Pro High at the user's choice after Opus 429 quota): Tests review (D4): **approved**, status `ready`. All 14 tests in 8f4b916 match FRD 01, `SVY-R17`, `SVY-R3`, `SVY-R16` and the printed card text (`data/cards/*.csv`).
+  - **Coverage:** both named directive #47 part 4 tests (`_MarchTriggerResolvesBeforeTheMarch`, `_GenerateTriggerResolvesBeforeTheNextAction`), locked targets on placement (`_MarchingFromReservesCannotChooseItself`, `_AttackingFromTheMainTheaterMayChooseItself`), filter for allied assets in the Main Theater (`_OffersOnlyAlliedAssetsInTheMainTheater`, `_NoLegalTargetAsksNothingAndHealsNothing`), Heal 1 behavior and Step 2 timing (`_HealsExactlyOne`, `_HealingAnUndamagedAssetChangesNothing`, `_AttackHealResolvesBeforeCombatDamage`), fixed-order timeout (`_TimeoutHealsTheFirstAlliedAssetToEnterTheMainTheater`), repeated exhausts across turns (`_HealsAgainOnEachExhaust`), defending (`_DefendingDoesNotHeal`), face-down (`_FaceDownCopyExhaustingHealsNothing`), and printed characteristics/deployment (`_DeploysToReservesReadiedAsTwoTwoAndAsksNothing`).
+  - **Independent oracle:** verified `rules-test-author` subagent transcript (`94551256-5fdc-488b-a863-c198c57e7eed`); it never read or edited any non-test file in `pkg/engine/`.
+  - Next: dispatch `kernel-engineer` (tier `flash`).
