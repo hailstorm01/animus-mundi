@@ -4,7 +4,7 @@ title: Make Animoceps Shambler executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: tests
 branch: m2/T-0064-animoceps-shambler
 depends_on: [T-0063]
 claims: [card:Animoceps Shambler]
@@ -22,7 +22,7 @@ requirements: []
 - Rulings: `SVY-R17` (placement), `SVY-R3` (targets locked on placement), `SVY-R16` (timeout picks the first legal option in fixed order).
 
 ### Definition (the engineer adds it to `animusDefs`)
-- One trigger: `Hook: ability.HookExhausted`, one target slot: an allied asset in the Main Theater, any kind.
+- One trigger: `Hook: ability.HookExhausted`, one target slot with `Filter{Allegiance: ability.AllegianceAllied, Zone: ability.ZoneMainTheater}` (zero `Kinds`: any asset).
 - One step: `Op: ability.OpHeal`, `Amount: ability.Value{N: 1}`, `Subject: ability.SubjectTarget`, slot 0.
 - `Text` holds the printed rules text, one entry.
 
@@ -47,3 +47,5 @@ To be written by rules-test-author in `pkg/engine/cards_animus_test.go` (or a ne
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task, `queued` behind T-0063 (the exhaust hook).
+- 2026-10-25 lead-architect: T-0063 is `done` (3a9e549). Re-checked against `main` 3a9e549: `ability.HookExhausted`, `Filter.Allegiance`/`Filter.Zone` (`ability.go:69-75`, zero `Kinds` means any asset) and `OpHeal` exist, so the card needs no new shape. Spelled out the target filter in the Definition. Waiting triggers checked: #6, #7, #8, #15, #20 and #51. None has fired. Directive #14: the Shambler is a deck card (3 copies, Animus starter).
+  - Next: status `tests`; dispatch `rules-test-author`.
