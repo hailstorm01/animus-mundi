@@ -4,7 +4,7 @@ title: A stack item carries an effect, not a whole trigger (directive #53, harne
 kind: harness
 tier: flash
 wave: none (board directive #53, structural review 3 finding 5, before T-0055)
-status: in-progress
+status: review
 branch: m2/T-0060-stack-item-effect
 depends_on: [T-0059]
 claims: [field:engine.StackItem.Effect, field:engine.StackItem.Tracked]
@@ -63,10 +63,19 @@ No new tests: a pure move. Before any edit, build a baseline CLI from `main` (`g
 - `pkg/engine/effects.go` (the three reads and `relocateSelf`'s comment)
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task from board directive #53, the third of the four directives the user put before T-0055 (#49 and #52 are applied; #54 comes next). Harness, tier flash, pure move, so it skips `tests` and is `ready` on branch `m2/T-0060-stack-item-effect` (cut from `main` at this commit). Checked the directive's line references against `main` f4c7ac3: `stack.go:32` and `effects.go:20, 25, 155` still hold. Lead decision: `relocateSelf`'s guard becomes a `Tracked` flag set on placement, not the discard-pile check alone, which would change `FR-ZON-004` for non-death self-relocations (see "Why a flag"). Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` behavior change), #15 (no turn hook), #20 (no wave C shape task), #50 (no task claims the exhaust hook), #51 (no "if you do" task) and #55 (this task is not `done`; the lead rewords the design note's Stack line in the merge commit). None has fired.
   - Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
+- 2026-10-25 kernel-engineer: Implemented directive #53 pure move. Replaced StackItem.Trigger ability.Trigger with Effect ability.Effect and Tracked bool in pkg/engine/stack.go, updated flushTriggers in pkg/engine/trigger.go to initialize Effect: p.trig.Effect and Tracked: p.trig.Hook == ability.HookKilled, and updated resolveAbility and relocateSelf in pkg/engine/effects.go to read it.Effect and !it.Tracked. Verified acceptance cases:
+  1. Existing tests unchanged: `git diff main -- '*_test.go'` empty; `go test ./...` passed.
+  2. Starter sim byte-identical: `cardtown sim -deck starter -p0 ANIMUS -p1 PATH` baseline vs new compared with `fc.exe /b` -> FC: no differences encountered.
+  3. Stress sim byte-identical: `cardtown sim` baseline vs new compared with `fc.exe /b` -> FC: no differences encountered.
+  4. No trigger on the item: `git grep -nE '\bit\.Trigger\b' -- 'pkg/engine/*.go' ':!pkg/engine/*_test.go'` returned nothing; `git grep -n 'ability.Trigger' -- pkg/engine/stack.go` returned nothing.
+  5. One place sets the new fields: `git grep -nE 'Tracked:|Effect: p\.trig' -- 'pkg/engine/*.go' ':!pkg/engine/*_test.go'` returned only `pkg/engine/trigger.go:132`.
+  6. Only these edits: `git diff main --stat` lists only `pkg/engine/stack.go`, `pkg/engine/trigger.go`, `pkg/engine/effects.go` and this task file.
+  7. `go tool task check` and `go tool task sim` passed clean.
+  - Next: lead-architect review.

@@ -17,12 +17,12 @@ func (g *Game) resolveAbility(it *StackItem) {
 	chosen := make([][]*Asset, len(it.Chosen))
 	for i, ids := range it.Chosen {
 		for _, id := range ids {
-			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Trigger.Effect.Targets[i].Filter, a) {
+			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Effect.Targets[i].Filter, a) {
 				chosen[i] = append(chosen[i], a)
 			}
 		}
 	}
-	for _, st := range it.Trigger.Effect.Steps {
+	for _, st := range it.Effect.Steps {
 		switch st.Op {
 		case ability.OpDealDamage:
 			g.stepDealDamage(it, st, chosen)
@@ -150,9 +150,9 @@ func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen [][]*Asset) []*
 // relocateSelf moves a death trigger's own card from its owner's discard pile
 // to the owner's hand or deck. It tracks the exact instance: if that instance
 // is no longer in the discard pile, it does nothing (FR-ZON-004). Only defined
-// for SubjectSelf on a HookKilled trigger.
+// for SubjectSelf on a Tracked item.
 func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
-	if st.Subject != ability.SubjectSelf || it.Trigger.Hook != ability.HookKilled || it.Inst == nil {
+	if st.Subject != ability.SubjectSelf || !it.Tracked || it.Inst == nil {
 		return
 	}
 	owner := g.Players[it.Inst.Owner]
