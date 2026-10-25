@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
@@ -51,6 +51,16 @@ To be written by rules-test-author in a new `pkg/engine/cards_headquarters_test.
 
 **Pre-check by the lead (for D4):** the tests cite the card text and `FR-TRN-001` and `FR-REP-004` (Stage 5, damage dealt), not `FR-KWD-002a` as if the Rager had Unbowed. The firing tests fail today, because the card loads as unsupported and nothing fires. The "not firing" tests may pass today.
 
+### Tests written (`pkg/engine/cards_headquarters_test.go`)
+Firing: `TestCard_AnimocepsRager_CombatDamageScratchesOneForItsController`, `..._EffectDamageScratchesOne` (real Chainbreaker Sappers), `..._RetaliationDamageScratchesOneOnItsOwnTurn`.
+Once each turn: `..._TwoAttacksInOneTurnScratchOnlyOnce`, `..._AttackThenSappersInOneTurnScratchOnlyOnce`, `..._LimitResetsAtTheStartOfEveryTurn` (turns 1, 2, 3: opponent's, own, opponent's).
+Not firing: `..._DamageToAnotherAssetDoesNotScratch`, `..._DamageToTheOtherHeadquartersDoesNotScratchForIt`, `..._DamageToOpposingRagerDoesNotScratchForTheAttacker`, `TestCard_EternalWatchman_DamageDoesNotScratchForAnyone`.
+The firing tests also check the stack is empty and `CheckInvariants` holds.
+Today the seven firing and limit tests fail (the card is unsupported, nothing fires); the four not-firing tests pass.
+
+## Helpers Needed
+None. The file defines two small helpers of its own, `hqScene(t, hq0, hq1 string)` (a match with real Headquarters cards in the seats, state only) and `(*scene).wantSettled(why)` (stack empty and invariants hold).
+
 ## Allowed Files
 - `pkg/engine/cards/headquarters.go` (new)
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
@@ -67,3 +77,4 @@ To be written by rules-test-author in a new `pkg/engine/cards_headquarters_test.
 - 2026-10-23 lead-architect: Wrote the task, `queued` behind T-0054.
 - 2026-10-25 lead-architect: All four directives the user put before this task (#49, #52, #53, #54) are applied (T-0058 to T-0061), and T-0054 is `done`. Re-checked the task against `main` c86efd6, since it was written before those moves. `ability.HookDamaged`, `Trigger.MaxPerTurn` and `ability.OpScratch` exist. Definitions attach to a Headquarters by card name like any other card (`cardload.go`). The HQ asset carries a card instance (`setup.go:44`), and `dealDamage` fires `HookDamaged` on it (`damage.go:60`). `cards.NotYetExecutable` still lists the Rager. `cmd/cardtown/sim.go:154, 156` still print "HQ abilities are ignored", and `doc.go:34-35` still says "(until T-0055)". No change to Goal, Allowed Files or Done When. Wrote the test guidance above. A Headquarters can attack (`FR-CAP-001`), so retaliation onto the Rager is a case. The Armor/Resistant threshold is left out as an unruled, unreachable default (survey §4). Waiting triggers checked: #6, #7, #8, #15, #20, #50 and #51. None has fired. Directive #14 (deck cards first) is satisfied: the Rager is the Animus starter HQ.
   - Next: status `tests`; dispatch `rules-test-author`.
+- 2026-10-25 rules-test-author: Wrote the 10 tests above, none skipped. Left out as the guidance says: Armor/Resistant reducing damage to zero (unruled), lethal damage to the Rager (unobservable). `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
