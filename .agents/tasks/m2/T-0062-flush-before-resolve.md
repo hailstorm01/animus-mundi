@@ -4,7 +4,7 @@ title: Fired triggers are placed when the stack starts resolving, not only after
 kind: harness
 tier: flash
 wave: B (board directive #50, structural review 3 finding 2; before the exhaust hook, T-0063)
-status: in-progress
+status: review
 branch: m2/T-0062-flush-before-resolve
 depends_on: [T-0061]
 claims: [convention:resolveStack flushes first]
@@ -62,11 +62,27 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/combat.go` (`declareAttack`'s flush and comment)
 
 ## Done When
-- [ ] Cases 1–4 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–4 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-25 lead-architect: Wrote the task from board directive #50, whose trigger fired this prompt: T-0063 claims the exhaust hook. The directive asks one task to move the flush, then add the hook. Together with the Shambler card that is six non-test files, so under the size rule (D2.4) the work is split into this pure move, the exhaust-hook shape (T-0063, `queued`) and the Shambler card (T-0064, `queued`), in the directive's order. Next in wave B: the exhaust hook was chosen ahead of the Cornered gate. Cornered's only deck card, Allshan, also needs a power step (`MODIFY_STAT`), so it would be two shapes for one deck card, against one shape for three Shambler copies. Checked the line references against `main` adb055b. Every command under Acceptance Cases and Done When fits the headless allowlist. Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` behavior change), #15 (no turn hook), #20 (no wave C shape task) and #51 (no "if you do" task). None has fired. #50 has, and is now `open`.
   - Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
+- 2026-10-25 kernel-engineer: Implemented directive #50 part 1 pure move; status `review`.
+  - **Reuse:** Reused existing `g.flushTriggers()` helper. Moved invocation from `declareAttack` to the entry of `resolveStack`.
+  - **Diff:**
+    - `pkg/engine/stack.go`: Updated `resolveStack` doc comment and added `g.flushTriggers()` as first statement before loop.
+    - `pkg/engine/combat.go`: Deleted `g.flushTriggers()` from `declareAttack` and updated comment on Step 2.
+  - **Commands:**
+    - Case 1: `git -C <worktree> diff main -- '*_test.go'`: no output (clean). `go -C <worktree> test ./...`: PASS (exit code 0).
+    - Case 2: `go -C <worktree> tool task sim-compare`: PASS (`[PASS] starter and stress sims match main byte for byte, exit codes included`).
+    - Case 3: `git -C <worktree> grep -n 'g.flushTriggers()' -- pkg/engine/stack.go pkg/engine/combat.go`:
+      `pkg/engine/stack.go:72:	g.flushTriggers()`
+      `pkg/engine/stack.go:78:		g.flushTriggers()`
+      (exactly two occurrences, both in `stack.go`).
+    - Case 4: `git -C <worktree> diff main --stat`: only `.agents/tasks/m2/T-0062-flush-before-resolve.md`, `pkg/engine/combat.go`, `pkg/engine/stack.go`.
+    - Case 5: `go -C <worktree> tool task check`: PASS (`LINTER SUMMARY: All executed checks PASSED!`).
+    - Case 5: `go -C <worktree> tool task sim`: PASS (200 games, clean invariants, HQ destroyed 196, simultaneous 4).
+  - **Reviewer:** Pure move verified by `sim-compare` against `main` commit 59eb670.

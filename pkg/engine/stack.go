@@ -63,9 +63,13 @@ func (g *Game) push(item *StackItem) {
 	g.logEvent(e, "player %d places %s on the stack", item.Controller, what)
 }
 
-// resolveStack resolves top-down until the stack is empty, sweeping for
-// deaths after each item (FR-QUE-001, FR-LAY-002, FR-TRG-004).
+// resolveStack places any triggers the action fired, then resolves top-down
+// until the stack is empty, sweeping for deaths after each item (FR-QUE-001,
+// FR-LAY-002, FR-TRG-004). Placing first puts a March's or an Attack's
+// triggers on top of it, and resolves a Generate's before the next action
+// (SVY-R17).
 func (g *Game) resolveStack() {
+	g.flushTriggers()
 	for len(g.Stack) > 0 && !g.Outcome.Over {
 		top := g.Stack[len(g.Stack)-1]
 		g.Stack = g.Stack[:len(g.Stack)-1]

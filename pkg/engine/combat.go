@@ -11,9 +11,9 @@ func (g *Game) declareAttack(a Action) {
 	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target, Secondary: a.Secondary})
 	g.logEvent(Event{Kind: "attack", Player: int(a.Player), Source: att.ID, Target: a.Target},
 		"%s attacks %s", att, g.Asset(a.Target))
-	// Step 2: attack triggers enqueue on top of the Attack action.
+	// Step 2: attack triggers enqueue on top of the Attack action; Apply's
+	// resolveStack places them before anything resolves.
 	g.fireAttacks(att)
-	g.flushTriggers()
 }
 
 func canDeclareAttack(a *Asset) bool {
