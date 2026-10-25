@@ -4,7 +4,7 @@ title: An exhaust hook, fired from (g *Game) exhaust on every change from Readie
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0063-exhaust-hook
 depends_on: [T-0062]
 claims: [hook:exhaust]
@@ -63,3 +63,4 @@ None. The test file defines its own `exhaustTrigger`, `exhaustWatcher` and `logI
   - Re-checked on the branch: `go vet ./pkg/engine` fails only on `undefined: ability.HookExhausted`, as the file header says.
   - **Process note:** the author reports it temporarily added the constant and a `fireHook` call to non-test engine files to run its tests, then reverted them. Its skill forbids reading or editing non-test engine files (independent oracle). Nothing was committed and the branch is clean. The tests' expectations follow the ruling text, so they stand. The breach is reported to the user.
   - Next: dispatch `kernel-engineer` (tier sonnet).
+- 2026-10-25 kernel-engineer: Added `ability.HookExhausted`, `fireExhausted` (trigger.go), the call in `exhaust` after setting `Exhausted`, and `HookExhausted` in the doc.go hooks list. Reuse: `fireHook` and the existing `fire*` wrapper shape; no new mechanism. gofmt realigned the hook constant block comments in ability.go (whitespace only). Commands: the listed `go test ./pkg/engine -run ...` ok (15 tests); `go tool task check` PASS; `go tool task sim-compare` PASS (starter and stress sims byte-identical to main). Status `review`.
