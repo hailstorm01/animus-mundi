@@ -4,7 +4,7 @@ title: Make Animoceps Rager executable, the first Headquarters ability (wave B c
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0055-animoceps-rager
 depends_on: [T-0054]
 claims: [card:Animoceps Rager, file:pkg/engine/cards/headquarters.go]
