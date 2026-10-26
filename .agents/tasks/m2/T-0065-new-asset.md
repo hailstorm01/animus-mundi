@@ -4,7 +4,7 @@ title: One place builds an asset entering the battlefield, (g *Game) newAsset (d
 kind: harness
 tier: flash
 wave: none (board directive #56, FRD 01 review finding 4, before the next Deliverables task)
-status: ready
+status: in-progress
 branch: m2/T-0065-new-asset
 depends_on: []
 claims: [helper:engine.newAsset]
