@@ -4,7 +4,7 @@ title: Simultaneous triggers fall back to source position, not step order (direc
 kind: shape
 tier: sonnet
 wave: none (board directive #57, FRD 01 review finding 1)
-status: tests
+status: tests-review
 branch: m2/T-0066-trigger-source-order
 depends_on: [T-0065]
 claims: [order:simultaneous-trigger-fallback, field:engine.Asset.arrived]
@@ -78,3 +78,11 @@ None expected. The test file defines its own synthetic cards and reuses `scene.p
 
 ## Log
 - 2026-10-26 lead-architect: written from directive #57, after T-0065 (`newAsset`). Prototyped in a throwaway worktree to check the blast radius: all existing tests and both sims unchanged. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-26 rules-test-author: tests written in `pkg/engine/trigger_order_test.go` (all fail now, each on the order assertion; setup preconditions pass). Placement is read from the match log's `place` events (the order FR-MOD-001 sec. 6 defines; the first placed resolves last), using a Scratch trigger on each Unbowed unit. Tests:
+  - `TestFR_TRG_003_AllStepTriggersFallBackToSourcePositionNotAge`
+  - `TestFR_TRG_003_MarchingIsAnArrival` (uses a real `ActMarch`)
+  - `TestFR_TRG_003_MultiTargetTriggersFallBackToSourcePositionNotPickOrder` (own chooser picks older then newer; order question times out)
+  - `TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition` (a plain unit ahead of the dying one also dies; survivor older and in the Main Theater)
+  - `TestFR_TRG_003_OrderDecisionListsTriggersInSourceOrder` (options checked by label, pick [1,0] then checked by placement)
+  - Helpers requested: none. The file defines `pingedBowed`, `allySweeper`, `placedOrder`, `wantPlaced`, `olderInTheaterNewerInReserves`.
+  - Left out: `TestFR_TRG_003_OneSourcesKeywordTriggerStaysAheadOfItsPrintedTriggers`. Every trigger hook is a self hook, so no existing shape fires a second allied source's trigger in the Aggressive attacker's Step 2 window; keyword-before-printed within one source is already pinned by `TestFR_CBT_002_AggressiveAndAttackTriggerAreOrderedTogether`. Also left out as the task says: cross-player order and exhaust triggers.
