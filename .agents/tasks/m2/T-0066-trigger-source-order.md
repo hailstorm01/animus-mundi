@@ -4,7 +4,7 @@ title: Simultaneous triggers fall back to source position, not step order (direc
 kind: shape
 tier: sonnet
 wave: none (board directive #57, FRD 01 review finding 1)
-status: review
+status: done
 branch: m2/T-0066-trigger-source-order
 depends_on: [T-0065]
 claims: [order:simultaneous-trigger-fallback, field:engine.Asset.arrived]
@@ -92,3 +92,11 @@ None expected. The test file defines its own synthetic cards and reuses `scene.p
 - 2026-10-26 rules-test-author (round 1 fixes): note 1: the comment on `TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition` no longer claims an index shift is tested; it points to the new test. Note 2: added `TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone` (PlainA, PlainB, Survivor, Dying all in Reserves). It passes on main today, as its comment says; the other five still fail on the order assertion. No helpers requested.
 - 2026-10-26 lead-architect (tests-review, round 2): **Approved, `ready`.** Both notes applied as written (`4109e98`). Re-run on the task branch: the five order tests fail on their order assertions, `SweepRemovalsDoNotReorderTriggersInOneZone` passes (a guard, as intended), and no other engine test fails. No earlier test is modified. The Done When test regex now names `SweepRemovals` in place of the omitted keyword case. Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
 - 2026-10-26 kernel-engineer (sonnet): implemented as the Shape section specifies. Diff: `state.go` (`Asset.arrived`, `Game.arrivals`, battlefield-orders comment replaced with the exact text), `zones.go` (`placeOnBattlefield` bumps `g.arrivals` and sets `a.arrived`), `trigger.go` (`sourcePos`, `posOf`, `compare` via `cmp.Compare`/`cmp.Or`, `pendingTrigger.pos` set in `fireHook` and the Aggressive trigger in `fireAttacks`, stable sort of each player's `mine` in `flushTriggers`, doc sentence added). Reuse: no existing ordering helper in `pkg/engine` to reuse; no helpers added to `scenario_test.go`. Results: `go tool task check` passes; the six listed tests (five order tests plus `SweepRemovals`) pass; `go tool task sim` runs clean; `go tool task sim-compare` passes byte for byte; `git diff main -- '*_test.go'` shows only `trigger_order_test.go`. Review note: `posOf` ranks Headquarters 0 via the default case; the Shape's flush sort relies on that.
+- 2026-10-26 lead-architect (review): **Approved.** Verified against `git diff main...m2/T-0066-trigger-source-order`, not the Log.
+  - **Scope:** only `state.go`, `trigger.go` and `zones.go` changed, plus the approved test file, which is unchanged since `cb3efe1`.
+  - **Fences:** no card names, nothing outside `engine`.
+  - **Reuse:** one sort, at the one flush; the position is recorded at the two places triggers are buffered.
+  - **Rules fidelity:** general, not tied to the tested cases. The death sweep fires before it removes each asset, so every recorded position is on the battlefield.
+  - **Nit (no change needed):** `posOf` gives rank 0 to anything outside Reserves and the Main Theater, not only the Headquarters. No trigger fires from off the battlefield today. If an off-battlefield hook is ever added ("enters discard"), make the Headquarters case explicit there.
+  - **Gates re-run in a review worktree:** the six listed tests pass, `go tool task check` PASS, `go tool task sim-compare` [PASS] (byte-identical), `go tool task sim` clean with all invariants holding.
+  - Merged with `--no-ff`; directive #57 applied.
