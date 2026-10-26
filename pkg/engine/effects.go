@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"fmt"
 	"slices"
 
 	"animus-mundi/pkg/engine/ability"
@@ -34,6 +35,8 @@ func (g *Game) resolveAbility(it *StackItem) {
 			g.stepScratch(it, st, chosen)
 		case ability.OpDraw:
 			g.stepDraw(it, st, chosen)
+		case ability.OpDiscard:
+			g.stepDiscard(it, st, chosen)
 		case ability.OpReturnToHand, ability.OpPutOnDeck:
 			g.stepRelocate(it, st, chosen)
 		}
@@ -85,6 +88,38 @@ func (g *Game) stepScratch(it *StackItem, st ability.Step, _ [][]*Asset) {
 func (g *Game) stepDraw(it *StackItem, st ability.Step, _ [][]*Asset) {
 	for _, pid := range stepPlayers(it, st) {
 		g.draw(pid, g.value(it, st.Amount))
+	}
+}
+
+// stepDiscard has each step player discard cards of their choice from their own
+// hand. Choosing from your own hand is not an inspection, so a hand of exactly
+// that many cards is discarded without asking (FR-MOD-001 §1, §6; SVY-R16).
+func (g *Game) stepDiscard(it *StackItem, st ability.Step, _ [][]*Asset) {
+	n := g.value(it, st.Amount)
+	for _, pid := range stepPlayers(it, st) {
+		hand := g.Players[pid].Hand
+		n := min(n, len(hand))
+		if n <= 0 {
+			continue
+		}
+		d := Decision{Player: pid, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n}
+		if n > 1 {
+			d.Prompt = fmt.Sprintf("Discard %d cards", n)
+		}
+		for _, inst := range hand {
+			d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})
+		}
+		// The options are fixed before any card moves, so take the cards first.
+		var picked []*Instance
+		for _, i := range g.choose(d) {
+			picked = append(picked, hand[i])
+		}
+		for _, inst := range picked {
+			g.takeCard(inst)
+			g.putCard(inst, ZoneDiscard, false)
+			g.logEvent(Event{Kind: "discard", Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
+				"player %d discards %s", pid, inst.Card.Name)
+		}
 	}
 }
 

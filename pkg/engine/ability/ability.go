@@ -103,6 +103,7 @@ const (
 	OpDealDamage                 // Amount non-combat damage to the Subject (FR-REP-004)
 	OpHeal                       // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
 	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
+	OpDiscard                    // its controller discards Amount cards of their choice from their own hand (FR-MOD-001 §1, §6; SVY-R16)
 )
 
 // Subject is what a step acts on.

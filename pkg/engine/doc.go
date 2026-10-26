@@ -22,9 +22,10 @@
 //     when it is placed and again when it resolves (FR-TGT-001, FR-TGT-003). A
 //     trigger may be limited to N firings each turn per asset (Trigger.MaxPerTurn,
 //     FR-TRN-001), and Unbowed (FR-KWD-002a) fires on damage taken.
-//   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001).
-//   - Steps OpScratch, OpDraw, OpReturnToHand, OpPutOnDeck, OpDealDamage,
-//     OpHeal and OpAddArmor, with "all" steps, source-power values, the
+//   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
+//     choosing from your own hand (DecideHand, SVY-R16).
+//   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
+//     OpDealDamage, OpHeal and OpAddArmor, with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents.
 //   - Ward on targets, and last-known effective state for effects whose
