@@ -136,7 +136,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0064 | Make Animoceps Shambler executable (wave B card, flash) | done |
 | T-0065 | One place builds an asset entering the battlefield, (g *Game) newAsset (directive #56, harness, flash, pure move) | done |
 | T-0066 | Simultaneous triggers fall back to source position, not step order (directive #57, shape, sonnet) | done |
-| T-0067 | A discard step that picks from your own hand, with the most-recently-added timeout (SVY-R16, wave B shape, sonnet) | ready |
+| T-0067 | A discard step that picks from your own hand, with the most-recently-added timeout (SVY-R16, wave B shape, sonnet) | done |
 | T-0068 | Make Chainbreaker Irregulars executable (wave B card, flash) | queued |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
