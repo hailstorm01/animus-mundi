@@ -4,7 +4,7 @@ title: A discard step that picks from your own hand, with the most-recently-adde
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0067-discard-from-hand
 depends_on: []
 claims: [primitive:DISCARD_CARD, decision:hand]
@@ -63,3 +63,4 @@ None expected. `give`, `onTop`, `script` and `asked` already exist in `scenario_
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 1): wrote the task. It is the next wave B deck card's shape (directive #14 (a): Irregulars is in the Path starter deck), and it is split from its card task T-0068 because the two together would have five non-test files. Directives checked: none open applies. #59 (1) is about piles, and the ruling says your hand is not one. #8, #15, #51 and #58 are not triggered. Claims don't overlap any open task, since none is open. No existing equivalent: `pkg/engine` has no discard step and no decision about hand cards. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-26 rules-test-author: wrote `pkg/engine/discard_test.go` with the eight required tests: TestFR_MOD_001_DiscardAsksTheControllerForACardFromTheirHand, ..._DiscardFromAOneCardHandIsAutomatic, ..._DiscardFromAnEmptyHandDoesNothing, ..._DiscardTimeoutDiscardsTheCardMostRecentlyAdded, ..._InvalidDiscardAnswerFallsBackToTheCardMostRecentlyAdded, ..._DrawThenDiscardTimeoutDiscardsTheCardJustDrawn, ..._DrawThenDiscardFromAnEmptyHandDiscardsTheDrawnCardAutomatically, ..._DiscardEmitsADiscardEvent. Helpers requested: none (the file defines its own `discardScene`, `runDiscardSource`, `discardN`). Left out: discarding more than the hand holds and an opponent discarding, as the task said. Tests do not compile until `ability.OpDiscard` and `DecideHand` exist.
