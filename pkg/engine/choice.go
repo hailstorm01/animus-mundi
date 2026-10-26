@@ -13,10 +13,11 @@ const (
 	DecideMode                         // "Choose N" modes: fallback picks the first listed options
 	DecideOptional                     // "you may": fallback declines (no picks)
 	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
+	DecideHand                         // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
 )
 
 func (k DecisionKind) String() string {
-	return [...]string{"Target", "Mode", "Optional", "Order"}[k]
+	return [...]string{"Target", "Mode", "Optional", "Order", "Hand"}[k]
 }
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -137,6 +138,8 @@ func (g *Game) fallbackPicks(d Decision) []int {
 			picks[i] = i
 		}
 		return picks
+	case DecideHand:
+		return g.handPicks(d)
 	case DecideMode:
 		picks := make([]int, d.Min)
 		for i := range picks {
@@ -149,6 +152,29 @@ func (g *Game) fallbackPicks(d Decision) []int {
 		return picks
 	}
 	return nil
+}
+
+// handPicks returns the indexes of the d.Min options whose cards come latest in
+// the deciding player's hand, most recent first (FR-MOD-001 §6, SVY-R16). It
+// draws nothing from g.rng.
+func (g *Game) handPicks(d Decision) []int {
+	hand := g.Players[d.Player].Hand
+	pos := make(map[int]int, len(hand))
+	for i, inst := range hand {
+		pos[inst.ID] = i
+	}
+	idx := make([]int, len(d.Options))
+	for i := range idx {
+		idx[i] = i
+	}
+	rank := func(i int) int {
+		if r, ok := pos[d.Options[i].Ref]; ok {
+			return r
+		}
+		return -1 // not in hand: after all that are
+	}
+	slices.SortStableFunc(idx, func(a, b int) int { return rank(b) - rank(a) })
+	return idx[:min(d.Min, len(idx))]
 }
 
 // fixedOrderPicks returns the indexes of the first d.Min options in the FR-MOD-001
