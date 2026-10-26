@@ -4,7 +4,7 @@ title: Simultaneous triggers fall back to source position, not step order (direc
 kind: shape
 tier: sonnet
 wave: none (board directive #57, FRD 01 review finding 1)
-status: ready
+status: in-progress
 branch: m2/T-0066-trigger-source-order
 depends_on: [T-0065]
 claims: [order:simultaneous-trigger-fallback, field:engine.Asset.arrived]
