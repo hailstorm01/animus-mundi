@@ -152,9 +152,10 @@ func TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition(t *testing.T
 	// One sweep: the survivor's Unbowed is buffered when it takes damage, the
 	// dying unit's death trigger after the sweep, so buffer order is survivor then
 	// dying. The dying unit stood in Reserves and the survivor (older) in the
-	// Main Theater, so source order is dying then survivor. An unrelated unit
-	// ahead of the dying one in Reserves also dies, so zone indexes shift while
-	// the sweep removes assets (SVY-R13, directive #46: one window).
+	// Main Theater, so source order is dying then survivor (Reserves before the
+	// Main Theater; SVY-R13, directive #46: one window). The two units are in
+	// different zones, so the sweep's index shifts are not tested here; see
+	// TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone.
 	s := newScene(t)
 	survivor := s.put(0, ZoneMainTheater, pingedBowed("Survivor"))
 	plain := s.put(0, ZoneReserves, unit("Plain", 1, 1, Keywords{}))
@@ -197,4 +198,25 @@ func TestFR_TRG_003_OrderDecisionListsTriggersInSourceOrder(t *testing.T) {
 	}
 	wantPlaced(t, s, "pick [1, 0] places the second listed trigger (the Main Theater unit's) first",
 		[]*Asset{older, newer}, older, newer)
+}
+
+func TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone(t *testing.T) {
+	// Covers: FR-MOD-001, SVY-R7, SVY-R13
+	// This passes on main today, because buffer order already matches source
+	// order here. It guards the rule against a fallback that reads zone positions
+	// as the sweep removes assets. All four units are in Reserves, in this order:
+	// PlainA, PlainB (both die), Survivor, Dying (dies). Survivor entered Reserves
+	// before Dying, so its trigger is placed first. After the two Plain units
+	// leave, Dying would stand ahead of where Survivor stood when its Unbowed fired.
+	s := newScene(t)
+	plainA := s.put(0, ZoneReserves, unit("PlainA", 1, 1, Keywords{}))
+	plainB := s.put(0, ZoneReserves, unit("PlainB", 1, 1, Keywords{}))
+	survivor := s.put(0, ZoneReserves, pingedBowed("Survivor"))
+	dying := s.put(0, ZoneReserves, mortal("Dying", 1, 1, killedTrigger(scratchN(1))))
+	s.deployFromHand(0, allySweeper())
+	if s.alive(plainA) || s.alive(plainB) || s.alive(dying) || !s.alive(survivor) {
+		t.Fatalf("setup: PlainA, PlainB and Dying die, Survivor lives (plainA alive=%v, plainB alive=%v, dying alive=%v, survivor alive=%v)", s.alive(plainA), s.alive(plainB), s.alive(dying), s.alive(survivor))
+	}
+	wantPlaced(t, s, "within one zone, the unit that entered Reserves first is placed first, however the sweep shifts positions",
+		[]*Asset{survivor, dying}, survivor, dying)
 }
