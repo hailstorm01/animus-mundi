@@ -124,6 +124,8 @@ func (g *Game) newAsset(inst *Instance, controller PlayerID, faceDown bool) *Ass
 
 // placeOnBattlefield puts a into zone under its controller.
 func (g *Game) placeOnBattlefield(a *Asset, zone Zone) {
+	g.arrivals++
+	a.arrived = g.arrivals
 	a.Zone = zone
 	switch zone {
 	case ZoneMainTheater:

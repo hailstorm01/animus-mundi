@@ -3,7 +3,9 @@
 package engine
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
@@ -14,8 +16,29 @@ type pendingTrigger struct {
 	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	controller PlayerID
 	label      string
+	pos        sourcePos // where the source stood when it fired
 	trig       ability.Trigger
 	item       *StackItem // a ready-made stack item (keyword trigger); used instead of trig when set
+}
+
+// sourcePos is where a trigger's source stood when it fired: its zone's rank
+// (Headquarters 0, Reserves 1, Main Theater 2) and its arrival number. A
+// player's simultaneous triggers fall back to this order (SVY-R7, FR-MOD-001 §6).
+type sourcePos struct{ zone, arrived int }
+
+func posOf(a *Asset) sourcePos {
+	rank := 0
+	switch a.Zone {
+	case ZoneReserves:
+		rank = 1
+	case ZoneMainTheater:
+		rank = 2
+	}
+	return sourcePos{zone: rank, arrived: a.arrived}
+}
+
+func (p sourcePos) compare(q sourcePos) int {
+	return cmp.Or(cmp.Compare(p.zone, q.zone), cmp.Compare(p.arrived, q.arrived))
 }
 
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
@@ -63,7 +86,7 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		}
 		g.pending = append(g.pending, pendingTrigger{
 			source: a.ID, inst: a.Inst, controller: a.Controller, trig: t,
-			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1),
+			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), pos: posOf(a),
 		})
 	}
 }
@@ -86,8 +109,8 @@ func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
 		g.pending = append(g.pending, pendingTrigger{
 			source: a.ID, inst: a.Inst, controller: a.Controller,
-			label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n),
-			item:  &StackItem{Kind: StackAggressive, Controller: a.Controller, Source: a.ID, Amount: n},
+			label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), pos: posOf(a),
+			item: &StackItem{Kind: StackAggressive, Controller: a.Controller, Source: a.ID, Amount: n},
 		})
 	}
 	g.fireHook(a, ability.HookAttacks)
@@ -97,7 +120,8 @@ func (g *Game) fireAttacks(a *Asset) {
 // first, then the non-active player's on top (FR-TRG-003). Each player orders
 // their own triggers; a single trigger is not asked about. An optional trigger
 // is asked about in its turn to be placed, before its targets; declined, it is
-// not placed (SVY-R9). A match that ended discards the buffer.
+// not placed (SVY-R9). Each player's triggers are listed, and by default placed,
+// in source order (sourcePos). A match that ended discards the buffer.
 func (g *Game) flushTriggers() {
 	buf := g.pending
 	g.pending = nil
@@ -111,6 +135,7 @@ func (g *Game) flushTriggers() {
 				mine = append(mine, p)
 			}
 		}
+		slices.SortStableFunc(mine, func(x, y pendingTrigger) int { return x.pos.compare(y.pos) })
 		order := make([]int, len(mine))
 		for i := range order {
 			order[i] = i

@@ -75,6 +75,8 @@ type Asset struct {
 
 	// TempPower is the Layer 5 "until end of turn" power modifier.
 	TempPower int
+
+	arrived int // arrival number: when it entered its current battlefield zone, counted across the match (SVY-R7)
 }
 
 // Printed returns the Layer 1 characteristics: the card face, or the 1/1/1/1
@@ -132,6 +134,7 @@ type Game struct {
 
 	rng      *rand.Rand
 	nextID   int
+	arrivals int
 	choosers [2]Chooser // per-seat answerers of Decisions; nil always times out
 	obs      Observer   // optional read-only observer of events and settled states
 
@@ -202,10 +205,11 @@ func (g *Game) newID() int {
 // rather than adding a fourth.
 //
 // Assets: the Headquarters, then every player's Reserves, then the Main
-// Theater, each zone in arrival order. The death sweep and trigger collection
-// use it, so simultaneous triggers are collected in source order (SVY-R7,
-// FR-TRG-003). Uses where order doesn't matter (lookups, readying, invariants,
-// legal actions) also use it.
+// Theater, each zone in arrival order. The death sweep uses it. Simultaneous
+// triggers are placed in the same order, by where each source stood when it
+// fired (sourcePos in trigger.go), so a step that visits assets in another
+// order doesn't change it (SVY-R7, FR-TRG-003). Uses where order doesn't
+// matter (lookups, readying, invariants, legal actions) also use it.
 //
 // assetsByID: oldest (lowest ID) first. Decision option lists and "all" steps
 // use it (SVY-R11).
