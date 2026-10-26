@@ -4,7 +4,7 @@ title: One place builds an asset entering the battlefield, (g *Game) newAsset (d
 kind: harness
 tier: flash
 wave: none (board directive #56, FRD 01 review finding 4, before the next Deliverables task)
-status: review
+status: done
 branch: m2/T-0065-new-asset
 depends_on: []
 claims: [helper:engine.newAsset]
@@ -118,3 +118,4 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     4. Three callers: `git grep -n "g.newAsset(" -- pkg/engine` returned exactly three lines (setup.go, stack.go, zones.go).
     5. Stat check: `git diff main --stat` lists only setup.go, stack.go, zones.go, and this task file.
     6. Gates: `go tool task check` and `go tool task sim` passed cleanly.
+- 2026-10-26 lead-architect (review): **Approved.** Verified against `git diff main...m2/T-0065-new-asset`, not the Log. Scope: only `setup.go`, `stack.go`, `zones.go` and this file changed, and no test changed (`git diff main -- '*_test.go'` is empty). The four edits match the spec exactly, including the Headquarters ID order in `setup.go`. Fences: no card names, nothing new outside `engine`. Reuse: `&Asset{` now appears once in non-test code (`zones.go:118`). Gates re-run in a review worktree: `go tool task sim-compare` [PASS] (byte-identical, exit codes included), `go tool task check` PASS, `go tool task sim` clean. Merged with `--no-ff`; directive #56 applied. Next: directive #57 (trigger fallback by source position), which builds on `newAsset`.
