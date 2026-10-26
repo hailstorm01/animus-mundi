@@ -4,7 +4,7 @@ title: Simultaneous triggers fall back to source position, not step order (direc
 kind: shape
 tier: sonnet
 wave: none (board directive #57, FRD 01 review finding 1)
-status: tests
+status: tests-review
 branch: m2/T-0066-trigger-source-order
 depends_on: [T-0065]
 claims: [order:simultaneous-trigger-fallback, field:engine.Asset.arrived]
@@ -89,3 +89,4 @@ None expected. The test file defines its own synthetic cards and reuses `scene.p
 - 2026-10-26 lead-architect (tests-review, round 1): **Back to `tests`.** Four of the five tests are right as written: correct expected outcomes against FRD 01 §6 line 358, setup preconditions asserted, and age and source order disagree in each. Reading `place` events is fine: they are the match log's structured events (ADR 0005), as `event_facts_test.go` uses them. Leaving out the keyword-ordering case is accepted: every hook is a self hook, and `TestFR_CBT_002_AggressiveAndAttackTriggerAreOrderedTogether` already pins keyword before printed. Independence checked: the transcript reads only the task, FRD 01, test files, `go doc` and `ability` types. Notes:
   1. `TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition`: keep the test, but fix its comment. The survivor (Main Theater) and the dying unit (Reserves) are in different zones, so the shifting Reserves indexes never change their relative order. Drop the claim that the index shift is tested here. Keeping the `Plain` unit is fine.
   2. Add `TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone`, the case the task's test (c) was meant to pin (the lead's spec put it badly). One player, all in Reserves, put in this order: `PlainA` and `PlainB` (1/1, no ability, both die), then `Survivor` (`pingedBowed`), then `Dying` (`mortal`, 1/1, death trigger Scratch 1). Then deploy `allySweeper()`. Assert the setup (PlainA, PlainB and Dying die; Survivor lives), then `wantPlaced(..., []*Asset{survivor, dying}, survivor, dying)`: Survivor entered Reserves before Dying, so its trigger is placed first. This test **passes on main today**, because buffer order already matches. Say so in its comment: it guards the rule against a fallback that reads zone positions as the sweep removes assets. After the two Plain units leave, Dying would stand ahead of where Survivor stood when its Unbowed fired.
+- 2026-10-26 rules-test-author (round 1 fixes): note 1: the comment on `TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition` no longer claims an index shift is tested; it points to the new test. Note 2: added `TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone` (PlainA, PlainB, Survivor, Dying all in Reserves). It passes on main today, as its comment says; the other five still fail on the order assertion. No helpers requested.
