@@ -105,11 +105,7 @@ func (g *Game) resolve(it *StackItem) {
 
 func (g *Game) resolveDeploy(it *StackItem) {
 	c := it.Inst.Card
-	a := &Asset{ID: g.newID(), Inst: it.Inst, Controller: it.Controller}
-	// Deploys Exhausted replaces entering Readied (FR-KWD-002l).
-	a.Exhausted = c.Keywords.DeploysExhausted
-	// Armor N initializes the Armor pool on entry (FR-LAY-002, FR-KWD-002k).
-	a.Armor = c.Keywords.Armor
+	a := g.newAsset(it.Inst, it.Controller, false)
 	g.placeOnBattlefield(a, it.Zone)
 	g.logEvent(Event{Kind: "deploy", Player: int(it.Controller), Card: c.Name, Inst: it.Inst.ID, Source: a.ID, Zone: it.Zone.String()},
 		"player %d deploys %s to %s", it.Controller, a, it.Zone)

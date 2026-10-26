@@ -4,7 +4,7 @@ title: One place builds an asset entering the battlefield, (g *Game) newAsset (d
 kind: harness
 tier: flash
 wave: none (board directive #56, FRD 01 review finding 4, before the next Deliverables task)
-status: ready
+status: done
 branch: m2/T-0065-new-asset
 depends_on: []
 claims: [helper:engine.newAsset]
@@ -100,10 +100,22 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/setup.go` (Headquarters setup uses it)
 
 ## Done When
-- [ ] Cases 1–5 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–5 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-26 lead-architect: written from directive #56, with Headquarters setup added as a third caller (see Inputs). Harness pure move, so it goes straight to `ready`. Dispatching to `kernel-engineer` (flash) through `agy`. Next on the board: directive #57 (open), which builds on `newAsset`.
+- 2026-10-26 kernel-engineer: implemented directive #56 / finding 4 pure move.
+  - Added `(g *Game) newAsset(inst *Instance, controller PlayerID, faceDown bool) *Asset` in `pkg/engine/zones.go`.
+  - Replaced inline asset constructions in `scratch` (`pkg/engine/zones.go`), `resolveDeploy` (`pkg/engine/stack.go`), and `NewGame` HQ setup (`pkg/engine/setup.go`) with calls to `newAsset`.
+  - In `setup.go`, `inst` is allocated without ID, `newAsset` allocates asset ID, then `inst.ID = g.newID()` preserves original ID allocation sequence.
+  - Acceptance cases:
+    1. Tests unchanged: `git diff main -- '*_test.go'` printed nothing; `go test ./...` passed.
+    2. Sims byte-identical: `go tool task sim-compare` passed with `[PASS] starter and stress sims match main byte for byte, exit codes included`.
+    3. One asset construction: `git grep -n "&Asset{" -- pkg/engine ":!*_test.go"` returned exactly one line in `pkg/engine/zones.go` inside `newAsset`.
+    4. Three callers: `git grep -n "g.newAsset(" -- pkg/engine` returned exactly three lines (setup.go, stack.go, zones.go).
+    5. Stat check: `git diff main --stat` lists only setup.go, stack.go, zones.go, and this task file.
+    6. Gates: `go tool task check` and `go tool task sim` passed cleanly.
+- 2026-10-26 lead-architect (review): **Approved.** Verified against `git diff main...m2/T-0065-new-asset`, not the Log. Scope: only `setup.go`, `stack.go`, `zones.go` and this file changed, and no test changed (`git diff main -- '*_test.go'` is empty). The four edits match the spec exactly, including the Headquarters ID order in `setup.go`. Fences: no card names, nothing new outside `engine`. Reuse: `&Asset{` now appears once in non-test code (`zones.go:118`). Gates re-run in a review worktree: `go tool task sim-compare` [PASS] (byte-identical, exit codes included), `go tool task check` PASS, `go tool task sim` clean. Merged with `--no-ff`; directive #56 applied. Next: directive #57 (trigger fallback by source position), which builds on `newAsset`.

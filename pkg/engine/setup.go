@@ -41,7 +41,10 @@ func NewGame(cfg Config) (*Game, error) {
 		}
 		p := &Player{ID: pid}
 		g.Players[i] = p
-		hq := &Asset{ID: g.newID(), Inst: &Instance{ID: g.newID(), Card: deck.HQ, Owner: pid}, Controller: pid}
+		// The asset takes its ID before its instance does, so every ID stays as it was.
+		inst := &Instance{Card: deck.HQ, Owner: pid}
+		hq := g.newAsset(inst, pid, false)
+		inst.ID = g.newID()
 		g.placeOnBattlefield(hq, ZoneHeadquarters)
 		for _, c := range deck.Main {
 			p.Deck = append(p.Deck, &Instance{ID: g.newID(), Card: c, Owner: pid})
