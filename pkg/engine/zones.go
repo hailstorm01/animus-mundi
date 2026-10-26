@@ -42,9 +42,7 @@ func (g *Game) scratch(pid PlayerID, n int) {
 		}
 		inst := p.Deck[0]
 		g.takeCard(inst)
-		a := &Asset{ID: g.newID(), Inst: inst, Controller: pid, FaceDown: true}
-		// The face prints Deploys Exhausted, so it enters Exhausted (FR-ZON-005, FR-KWD-002l).
-		a.Exhausted = a.Printed().Keywords.DeploysExhausted
+		a := g.newAsset(inst, pid, true)
 		g.placeOnBattlefield(a, ZoneReserves)
 		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
 		g.fireDeploy(a) // a scratch is a unit deploying (KIM-S05)
@@ -109,6 +107,19 @@ func (g *Game) removeFromBattlefield(a *Asset) {
 	case ZoneHeadquarters:
 		g.Players[a.Controller].HQ = nil
 	}
+}
+
+// newAsset builds the asset inst becomes as it enters the battlefield under
+// controller, with a new ID. Every way onto the battlefield builds its asset
+// here. The entry state comes from the printed keywords: Deploys Exhausted
+// replaces entering Readied (FR-KWD-002l; the Scratch Company face prints it,
+// FR-ZON-005), and Armor N fills the Armor pool (FR-LAY-002, FR-KWD-002k).
+func (g *Game) newAsset(inst *Instance, controller PlayerID, faceDown bool) *Asset {
+	a := &Asset{ID: g.newID(), Inst: inst, Controller: controller, FaceDown: faceDown}
+	kw := a.Printed().Keywords
+	a.Exhausted = kw.DeploysExhausted
+	a.Armor = kw.Armor
+	return a
 }
 
 // placeOnBattlefield puts a into zone under its controller.
