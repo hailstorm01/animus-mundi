@@ -119,3 +119,8 @@ tasks:
     deps: [build]
     cmds:
       - '{{.BIN}} hook install'
+
+  wave-run:
+    desc: 'Build one wave unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File .agents/scripts/wave-run.ps1 {{.CLI_ARGS}}

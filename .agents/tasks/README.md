@@ -37,6 +37,8 @@ queued → tests → tests-review → ready → in-progress → review → done
 
 **One at a time (current mode):** at most one task is in `tests`, `in-progress` or `changes`. Parallel work, with one git worktree per task, starts only when the lead says so in the milestone's `BOARD.md`.
 
+**Wave runs:** `go tool task wave-run -- -Wave <X>` builds one wave unattended. It runs one fresh lead session per task, merges into an `autoloop/<milestone>-wave-<x>` branch, and logs every task as a row in `<milestone>/runs/`. It stops on wave completion, on its task, spend or time budget, or on the first thing that needs the user (`lead-architect` D7). Nothing reaches the integration branch until the user merges the run branch.
+
 **Worktrees:** no persona switches the main checkout's branch. Task-branch work happens in a scratch worktree that is removed at handoff (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`).
 
 ## Task File Template (`.agents/tasks/m2/T-NNNN-<slug>.md`)

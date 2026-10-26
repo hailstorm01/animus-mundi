@@ -48,7 +48,7 @@ When the user explicitly asks for a full TDD, these principles apply:
   - `docs/tdd/` (full Technical Design Documents, only in Runbook B).
   - `docs/AGENTS.md` (updating the documentation map when new documents are created).
   - `.agents/tasks/` (task files and each milestone's `BOARD.md`, Runbook D only). In Runbook E, it may also add rows to `BOARD.md`'s `Directives for the Lead` table, but only for findings the user approved by number.
-  - Merges of approved task branches into the integration branch (Runbook D only). Never edits code or tests on a task branch; it returns review notes instead.
+  - Merges of approved task branches into the integration branch (Runbook D only), or into a wave run's `autoloop/` branch (D7), plus merges of the integration branch into that run branch. Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
   - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `docs/audit/`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
 - **Explicit Non-Responsibilities:**
@@ -82,6 +82,7 @@ Invoke `lead-architect` (`@lead-architect`) when:
 4. **Runbook D — Build Loop: Task Queue & Review (always on Opus):**
    - The user asks to plan, start, continue or review build tasks (`@lead-architect next`, `@lead-architect review T-NNNN`).
    - A task file reaches `tests-review`, `review` or `blocked`.
+   - A wave run's runner starts a session with `@lead-architect next (wave run: …)` (D7).
 5. **Architecture & Deliverable Readiness Check:**
    - The user asks whether a milestone is ready to build, or wants TDD-to-FRD staleness and coverage metrics.
 6. **Runbook E — Structural Review:**
@@ -291,7 +292,7 @@ Present a clean handoff table to the user containing:
 
 Owns the queue so that no two tasks build the same thing, and reviews everything `rules-test-author` and `kernel-engineer` produce. Task format and lifecycle: `.agents/tasks/README.md`. Runs in the main Claude Code session on Opus. If the session is on any other model, say so and stop.
 
-**One task per prompt.** Follow the "No unattended chains" guard rail in `.agents/rules/AGENTS.md`. Each human prompt moves one task until it is `done` or `blocked`, or needs the user. Then stop and report: what merged, the task's final status, and what `next` would pick up. Never dispatch another task without a new prompt. Other tasks of the same deliverable may be written, but stay `queued`.
+**One task per prompt.** Follow the "No unattended chains" guard rail in `.agents/rules/AGENTS.md`. Each human prompt moves one task until it is `done` or `blocked`, or needs the user. Then stop and report: what merged, the task's final status, and what `next` would pick up. Never dispatch another task without a new prompt. Other tasks of the same deliverable may be written, but stay `queued`. A wave run (D7) follows the same rule: the runner sends the new prompt, as a fresh session.
 
 #### D1. Before the first task of a milestone
 1. The milestone needs a design note from Runbook A that fixes the shapes' Go types and where card definitions live (M2: `docs/architecture/m2-ability-model.md`). No shape or card task is written before it exists. Harness tasks that don't depend on it may run first.
@@ -360,6 +361,32 @@ Review `git diff <integration-branch>...<task-branch>`:
 - **Missing shape:** write the shape task, add it to `depends_on`, and requeue.
 - **Rules question:** surface it to the user in the survey's question format (the question, the cards affected, and a recommendation), and add it to the survey or the matrix. Never answer it yourself.
 - **Too big:** split the task.
+
+#### D7. Wave runs (unattended, on an `autoloop/` branch)
+The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (script: `.agents/scripts/wave-run.ps1`). The runner creates `autoloop/<milestone>-wave-<x>` from the integration branch if it doesn't exist. Then, for each task, it opens a fresh headless Opus session with the prompt `@lead-architect next (wave run: wave <X>, run branch <branch>, run file <path>)`. That session is one ordinary build-loop prompt, D1–D6, with these changes:
+
+1. **The run branch stands in for the integration branch everywhere:** reading `BOARD.md` and directives (D2.0), basing and merging task branches, `go tool task sim-compare -- <run branch>` in pure-move tasks and reviews, and the gates in D5. Never commit to, merge into, or move the integration branch. Leave the `Integration branch` line of `BOARD.md` as it is.
+2. **Sync first:** if the integration branch has commits the run branch lacks (directives the user added mid-run), merge it into the run branch with `--no-ff` in a scratch worktree. On a conflict, abort the merge and stop (step 6).
+3. **Run file:** `.agents/tasks/<milestone>/runs/<run branch with / replaced by ->.md`, committed on the run branch. If it doesn't exist, create it first with this header. The cards are the wave's survey row, spelled as in `pkg/engine/cards/cards.go`, separated by `;`:
+   ```markdown
+   # Wave Run: <milestone> wave <X>
+
+   - **Run branch:** `<branch>`, from `<integration branch>` at `<sha>`
+   - **Started:** <date>
+   - **Cards:** <name>; <name>; ...
+
+   | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
+   | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+   ```
+4. **Branches before dispatch:** create the task's branch from the run branch (`git branch <task branch> <run branch>`) before you dispatch anyone to it. Neither subagent knows about run branches.
+5. **Waiting on Flash:** a headless session ends with its turn, so a background command's exit notice never arrives. Start `agy` in the background, then wait for it inside the session (Monitor on its output, or repeated foreground waits under ten minutes each) until it exits. Then continue with D3.
+6. **One row per session.** At the end, add exactly one row to the run file and commit it on the run branch, together with the board update when there is one (path-limited). The last cell is the runner's signal:
+   - `CONTINUE`: the task is `done` and merged, and nothing below applies.
+   - `WAVE-COMPLETE`: none of the header's cards is in `NotYetExecutable`, no task is open (anything other than `queued` or `done`), no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass on the run branch. Check this at the start of the session too, and write the row without starting a task if it already holds.
+   - `STOP: <reason>`: anything that would make a normal prompt stop and wait for the user. That includes a `blocked` task, a rules question (D6), a directive that conflicts with the design note or FRD 01, a placement that needs a new package (D2.3), a structural review worth suggesting (§3), a mode change, a Flash run that `agy` didn't finish, a task D5 would split or block after escalation, failing gates on the run branch after a merge, a sync conflict (step 2), a refused command you could not work around, or a next task that falls outside this wave and is not a directive that D2.0 says to apply first.
+7. **Stop the session after its row.** Report as in any build-loop prompt. The runner decides whether to continue.
+
+When the run ends, the user reviews `git log <integration branch>..<run branch>` and the run file. Only the user merges the run branch into the integration branch, or asks `workflow-steward` to (its Runbook D).
 
 ### Runbook E: Structural Review (on request, Opus)
 
