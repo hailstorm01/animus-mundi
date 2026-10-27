@@ -4,7 +4,7 @@ title: Make Infested Apostle executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0073-infested-apostle
 depends_on: [T-0072, T-0075, T-0076]
 claims: [card:Infested Apostle]
@@ -62,3 +62,4 @@ None expected.
 - 2026-10-27 lead-architect (wave run B, session 10, carried over): T-0072 and T-0075 were `done`, and no directive was open or triggered (#58 and #59 do not fire: the kill pick is on the battlefield, not a pile, and nothing is exhausted). Status `tests`; `rules-test-author` wrote `pkg/engine/cards_animus_apostle_test.go` (five tests, all failing as expected); the lead approved them (e127feb).
 - 2026-10-27 lead-architect (wave run B, session 12): T-0076 is `done` (029b7bf). Synced `main` into the run branch (9e1cedb), moved the branch to it, and carried over the test commit as 1ac6470 (test file only). No directive is open or triggered. Status `tests`: `rules-test-author` makes the change named under Tests.
 - 2026-10-27 rules-test-author (wave run B, session 12): Rework after T-0076. Changed the kill pick's expected kind to `DecidePick` in `TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked` (line 43, third kind) and `TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage` (line 102, second kind). Nothing else changed: `scriptPlan` answers `DecideTarget` and `DecidePick` from one shared queue (the same pattern as `if_you_do_test.go`, `Optional, Target, Pick`), and `_MayKillItself` answers by kind (anything but `DecideOptional` is a pick) so it needs no edit; `_DamageResolvesBefore...` and `_DecliningAsksNothing...` assert no kinds. Helpers requested: none. Five tests, all failing only with "needs rules the kernel does not implement yet"; `go vet` and `gofmt` are clean.
+- 2026-10-27 lead-architect (wave run B, session 12): Test rework approved (a8f1ce5): exactly the two kinds named under Tests changed; the timeout test's opposing target has one option and is auto-answered, so `[DecideOptional, DecidePick]` is right. Status `ready`; dispatching Flash.
