@@ -4,7 +4,7 @@ title: Make Allshan, Chainbreaker Revenant executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0070-allshan-chainbreaker-revenant
 depends_on: [T-0069]
 claims: [card:Allshan, Chainbreaker Revenant]
