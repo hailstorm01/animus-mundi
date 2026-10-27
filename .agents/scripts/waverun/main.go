@@ -133,8 +133,15 @@ func main() {
 		}
 
 		before := len(runRows(r.runText()))
-		prompt := fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s)", *wave, r.branch, r.runFile)
-		logPath := filepath.Join(r.logDir, fmt.Sprintf("%s-%d.json", time.Now().Format("20060102-150405"), n))
+		session := fmt.Sprintf("%s-%d", time.Now().Format("20060102-150405"), n)
+		// A headless session has no scratch folder of its own. Left to choose,
+		// the lead put its worktrees under /tmp, which is C:\tmp here.
+		scratch := filepath.Join(r.logDir, session)
+		if err := os.MkdirAll(scratch, 0o755); err != nil {
+			r.stop(fmt.Sprintf("could not create the scratch folder: %v", err), 1)
+		}
+		prompt := fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s, scratch %s)", *wave, r.branch, r.runFile, filepath.ToSlash(scratch))
+		logPath := filepath.Join(r.logDir, session+".json")
 		fmt.Printf("[%d/%d] %s lead session on %s (log: %s)\n", n, *tasks, time.Now().Format("15:04"), r.branch, logPath)
 
 		// The result JSON's duration_ms covers only a session's last segment
@@ -146,6 +153,10 @@ func main() {
 		took := time.Since(began).Round(time.Second)
 		if err := os.WriteFile(logPath, out, 0o644); err != nil {
 			fmt.Printf("   could not write the session log: %v\n", err)
+		}
+		// Remove fails on a folder that isn't empty, which is left for the user.
+		if os.Remove(scratch) != nil {
+			fmt.Printf("   scratch folder not empty, left in place: %s\n", scratch)
 		}
 
 		var res result
