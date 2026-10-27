@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -92,3 +92,13 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
   - Test-local helpers (`ppScript`, `ppPick` and others) live in the test file. The timeout test reorders the pile with `takeCard` and `putCard`, as the task allows.
   - Left out, as the task lists: a target in a pile, opposing or both piles, mixed asset and pile decisions.
 
+- 2026-10-27 lead-architect (tests-review, round 1): **Approved, `ready`.** I checked the tests against FRD 01 `FR-TGT-001` (Zone, line 322; untargeted selections and "you may X", lines 329-330), `FR-MOD-001` §1 and §6 (line 359) and `SVY-R14`, `SVY-R16`.
+  - **Expected outcomes are right:**
+    - The options are exactly the unit cards in your own discard pile, bottom first, asked as a `DecidePick`. A structure card, the opponent's unit card and a battlefield unit are left out.
+    - A unit card killed earlier in the same resolution is offered.
+    - `PutOnDeck` with `Bottom` makes the card the deck's last, and `ReturnToHand` puts it in hand. The card not picked stays.
+    - With no match nothing is asked, no decision event is emitted, and the next step still runs.
+    - One match is not asked. The timeout picks the top card B from A, C, B, which is neither the oldest nor the first option (directive #59 (1)).
+    - Y runs after a done pile pick and is skipped after an "up to" timeout.
+  - **Within scope:** the helpers are local to the file or already exist (`iyd*`, `dmgTo`, `inDiscardPile`, `inHand`, `faceDownCount`), plus the requested `inDiscard`. No earlier test is modified.
+  - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
