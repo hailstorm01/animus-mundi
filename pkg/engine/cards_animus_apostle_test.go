@@ -40,7 +40,7 @@ func TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked(t *testin
 	s.scriptPlan(0, nil, []Answer{yes}, pick(v2), pick(ally))
 	deployApostle(s)
 	asks := s.asked(0)
-	want := []DecisionKind{DecideOptional, DecideTarget, DecideTarget}
+	want := []DecisionKind{DecideOptional, DecideTarget, DecidePick}
 	if got := kindsOf(asks); !slices.Equal(got, want) {
 		t.Fatalf("'you may' and the opposing target are asked on placement, the kill pick as the trigger resolves: got %v, want %v (SVY-R9, SVY-R3, SVY-R14)", got, want)
 	}
@@ -99,7 +99,7 @@ func TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage(t *testing.T) {
 	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, timeoutPick)
 	inst := deployApostle(s)
-	if got := kindsOf(s.asked(0)); !slices.Equal(got, []DecisionKind{DecideOptional, DecideTarget}) {
+	if got := kindsOf(s.asked(0)); !slices.Equal(got, []DecisionKind{DecideOptional, DecidePick}) {
 		t.Fatalf("'you may' then the kill pick are asked: got %v (SVY-R14)", got)
 	}
 	if !s.alive(ally) || inDiscard(s.g.Players[0], inst) || len(s.g.Players[0].Discard) != 0 {
