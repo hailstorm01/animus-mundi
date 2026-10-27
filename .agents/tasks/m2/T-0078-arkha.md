@@ -4,9 +4,9 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: blocked
+status: queued
 branch: m2/T-0078-arkha
-depends_on: [T-0077]
+depends_on: [T-0077, T-0079]
 claims: [card:Arkha, Sun's Fury]
 cards: [Arkha, Sun's Fury]
 requirements: []
@@ -81,3 +81,7 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
       `view_test.go:537: seed 13, settled point 61 (turn 11): seat 0's log names "Hammerhand Brigands", hidden by player 1: 122 T11 main decision: player 1, Pick, "Arkha, Sun's Fury: pick up to 1": picked [Hammerhand Brigands] (answer)`
     - `TestView_Case4_NoLeak` checks that a seat's new log lines do not name cards hidden in the opponent's hand or deck, unless they are currently in `PublicNames(g)` (discard piles, face-up battlefield assets, or stack). When Arkha's trigger resolves, Player 1 picks a unit card from their discard pile to put on the bottom of their deck. The decision event `decision: player 1, Pick, "Arkha, Sun's Fury: pick up to 1": picked [...]` is emitted while the card is in the discard pile, but the card is immediately moved to the deck by `OpPutOnDeck`. At the subsequent settled point (point 61), the card is in Player 1's deck and no longer in `PublicNames(g)`, so `TestView_Case4_NoLeak` treats the event log line as a leak of a card in the opponent's deck.
     - Resolving this failure requires updating `pkg/view/view_test.go` (or `pkg/view/viewtest` / `pkg/view`), which are outside `Allowed Files` for T-0078. Status set to `blocked`.
+- 2026-10-27 lead-architect (wave run B, session 14, D6): **Requeued, `queued` behind T-0079.** `agy` conversation `cdea209f-bdf6-4bb9-bb89-eac6390e88f0` finished with no denied action.
+  - The block is a fault in the leak oracle, not in this task. The picked card was in the public discard pile when the `decision` line was written (FRD 01 line 176, `SVY-R14`). `TestView_Case4_NoLeak` checks the line only at the next settled point, when the card is already on the bottom of the deck. T-0079 makes the check also accept a name that was public at the line's own event.
+  - 4123001 matches the Definition: the trigger, its target slot, both steps and `Text` in `path.go`, and the name removed from `NotYetExecutable`. Only the two Allowed Files changed, and the tests are unchanged since 10b30dc.
+  - Next, once T-0079 is `done`: merge the run branch into this branch (T-0079 changes only `pkg/view/view_test.go`), set `review`, and review 4123001 at D5 with every gate re-run. The approved tests stand, so no new test round is needed.
