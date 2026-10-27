@@ -3,6 +3,8 @@
 #   go tool task <name>     (or `task <name>` if Task is installed)
 #   go tool task            lists every task
 # Pass extra flags after `--`, e.g. `go tool task sim -- -games 50`.
+# `./...` skips dot-directories, so fmt, vet and test name the wave runner
+# (.agents/scripts/waverun) on their own.
 version: '3'
 
 vars:
@@ -23,24 +25,24 @@ tasks:
   test:
     desc: Run every Go test
     cmds:
-      - go test ./... {{.CLI_ARGS}}
+      - go test ./... ./.agents/scripts/waverun {{.CLI_ARGS}}
 
   vet:
     desc: Run go vet
     cmds:
-      - go vet ./...
+      - go vet ./... ./.agents/scripts/waverun
 
   fmt:
     desc: Format Go source in place
     cmds:
-      - gofmt -w pkg cmd
+      - gofmt -w pkg cmd .agents/scripts
 
   fmt-check:
     desc: Fail if any Go source needs gofmt
     cmds:
       - |
-        if [ -n "$(gofmt -l pkg cmd)" ]; then
-          gofmt -l pkg cmd
+        if [ -n "$(gofmt -l pkg cmd .agents/scripts)" ]; then
+          gofmt -l pkg cmd .agents/scripts
           echo "gofmt: the files above need formatting (run: go tool task fmt)"
           exit 1
         fi
@@ -123,4 +125,4 @@ tasks:
   wave-run:
     desc: 'Build one wave unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`'
     cmds:
-      - powershell -NoProfile -ExecutionPolicy Bypass -File .agents/scripts/wave-run.ps1 {{.CLI_ARGS}}
+      - go run ./.agents/scripts/waverun {{.CLI_ARGS}}

@@ -364,7 +364,7 @@ Review `git diff <integration-branch>...<task-branch>`:
 - **Too big:** split the task.
 
 #### D7. Wave runs (unattended, on an `autoloop/` branch)
-The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (script: `.agents/scripts/wave-run.ps1`). The runner creates `autoloop/<milestone>-wave-<x>` from the integration branch if it doesn't exist. Then, for each task, it opens a fresh headless Opus session with the prompt `@lead-architect next (wave run: wave <X>, run branch <branch>, run file <path>)`. That session is one ordinary build-loop prompt, D1–D6, with these changes:
+The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (Go program: `.agents/scripts/waverun`). The runner creates `autoloop/<milestone>-wave-<x>` from the integration branch if it doesn't exist. Then, for each task, it opens a fresh headless Opus session with the prompt `@lead-architect next (wave run: wave <X>, run branch <branch>, run file <path>)`. That session is one ordinary build-loop prompt, D1–D6, with these changes:
 
 1. **The run branch stands in for the integration branch everywhere:** reading `BOARD.md` and directives (D2.0), basing and merging task branches, `go tool task sim-compare -- <run branch>` in pure-move tasks and reviews, and the gates in D5. Never commit to, merge into, or move the integration branch. Leave the `Integration branch` line of `BOARD.md` as it is.
 2. **Sync first:** if the integration branch has commits the run branch lacks (directives the user added mid-run), merge it into the run branch with `--no-ff` in a scratch worktree. On a conflict, abort the merge and stop (step 6).
