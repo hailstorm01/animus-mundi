@@ -83,6 +83,16 @@ func (s *scene) onTop(p PlayerID, cards ...*Card) []*Instance {
 	return insts
 }
 
+// inDiscard puts new instances of cards on top of p's discard pile, in order.
+func (s *scene) inDiscard(p PlayerID, cards ...*Card) []*Instance {
+	insts := make([]*Instance, len(cards))
+	for i, c := range cards {
+		insts[i] = &Instance{ID: s.g.newID(), Card: c, Owner: p}
+		s.g.putCard(insts[i], ZoneDiscard, false)
+	}
+	return insts
+}
+
 // give puts a card into p's hand.
 func (s *scene) give(p PlayerID, c *Card) *Instance {
 	inst := &Instance{ID: s.g.newID(), Card: c, Owner: p}

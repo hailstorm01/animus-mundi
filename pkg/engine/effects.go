@@ -190,13 +190,41 @@ func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 	return total
 }
 
-// stepRelocate moves the trigger's own card out of discard (see relocateSelf).
-// It returns 1 if the card moved, else 0.
+// stepRelocate moves each card of stepCards to its owner's hand or deck (the
+// bottom if st.Bottom), and returns how many moved.
 func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
-	if g.relocateSelf(r.it, st) {
-		return 1
+	n := 0
+	for _, inst := range g.stepCards(r, st) {
+		if !g.takeCard(inst) {
+			continue
+		}
+		if st.Op == ability.OpReturnToHand {
+			g.putCard(inst, ZoneHand, false)
+		} else {
+			g.putCard(inst, ZoneDeck, st.Bottom)
+		}
+		n++
 	}
-	return 0
+	return n
+}
+
+// stepCards returns the cards a card step acts on. SubjectSelf is a death
+// trigger's own card: a Tracked item whose exact instance is still in its
+// owner's discard pile (FR-ZON-004). SubjectPick with ZoneDiscard is the
+// cards picked from discard piles, in pick order. Anything else has none.
+func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
+	switch st.Subject {
+	case ability.SubjectSelf:
+		it := r.it
+		if it.Tracked && it.Inst != nil && slices.Contains(g.Players[it.Inst.Owner].Discard, it.Inst) {
+			return []*Instance{it.Inst}
+		}
+	case ability.SubjectPick:
+		if st.Filter.Zone == ability.ZoneDiscard {
+			return g.pickCards(r, st)
+		}
+	}
+	return nil
 }
 
 // value reads v for it as its step resolves (SVY-R10). Source power is the
@@ -252,7 +280,9 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 		}
 		return out
 	case ability.SubjectPick:
-		return g.pickAssets(r, st)
+		if st.Filter.Zone != ability.ZoneDiscard {
+			return g.pickAssets(r, st)
+		}
 	}
 	return nil
 }
@@ -264,12 +294,7 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 // asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
 // asked, and a timeout picks none. With no match nothing is asked.
 func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
-	name := cardName(r.it.Inst)
-	prompt := name + ": pick one"
-	if st.UpTo > 0 {
-		prompt = fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
-	}
-	d, opts := g.assetDecision(r.it.Controller, DecidePick, prompt, st.UpTo, func(a *Asset) bool {
+	d, opts := g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
 		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
 	})
 	if len(opts) == 0 {
@@ -282,23 +307,28 @@ func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
 	return out
 }
 
-// relocateSelf moves a death trigger's own card from its owner's discard pile
-// to the owner's hand or deck. It tracks the exact instance: if that instance
-// is no longer in the discard pile, it does nothing (FR-ZON-004). Only defined
-// for SubjectSelf on a Tracked item. It reports whether the card moved.
-func (g *Game) relocateSelf(it *StackItem, st ability.Step) bool {
-	if st.Subject != ability.SubjectSelf || !it.Tracked || it.Inst == nil {
-		return false
+// pickPrompt is the prompt of an untargeted pick step.
+func pickPrompt(it *StackItem, st ability.Step) string {
+	name := cardName(it.Inst)
+	if st.UpTo > 0 {
+		return fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
 	}
-	owner := g.Players[it.Inst.Owner]
-	if !slices.Contains(owner.Discard, it.Inst) {
-		return false
+	return name + ": pick one"
+}
+
+// pickCards is the untargeted pick over discard piles: the item's controller
+// picks from every card matching st.Filter now, as pickAssets does for assets
+// (SVY-R3, SVY-R14). The options are fixed before any card moves.
+func (g *Game) pickCards(r *resolution, st ability.Step) []*Instance {
+	d, opts := g.pileDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(inst *Instance) bool {
+		return g.matchesCard(r.it.Controller, r.it.Inst, st.Filter, inst)
+	})
+	if len(opts) == 0 {
+		return nil
 	}
-	g.takeCard(it.Inst)
-	if st.Op == ability.OpReturnToHand {
-		g.putCard(it.Inst, ZoneHand, false)
-	} else {
-		g.putCard(it.Inst, ZoneDeck, st.Bottom)
+	var out []*Instance
+	for _, k := range g.choose(d) {
+		out = append(out, opts[k])
 	}
-	return true
+	return out
 }

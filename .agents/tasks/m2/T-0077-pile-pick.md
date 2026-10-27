@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -102,3 +102,8 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
     - Y runs after a done pile pick and is skipped after an "up to" timeout.
   - **Within scope:** the helpers are local to the file or already exist (`iyd*`, `dmgTo`, `inDiscardPile`, `inHand`, `faceDownCount`), plus the requested `inDiscard`. No earlier test is modified.
   - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-27 kernel-engineer (sonnet): Implemented; `status: review`.
+  - Diff: `ability.ZoneDiscard` and the `Filter.Zone` comment; `targeting.go`: `kindOf` (one type-to-kind mapping, used by `matchesFilter` and the new `matchesCard`), `pickBounds` (used by `assetDecision` and `pileDecision`), `pileDecision`, `matchesCard`, and `matchesFilter` returns false for `ZoneDiscard` (done there, not in `deployedTo`, because `trigger.go` is not an allowed file); `effects.go`: `stepCards`, `stepRelocate` moves each card and counts them, `relocateSelf` removed (folded in), `pickCards` plus a shared `pickPrompt` (same prompts as before), `stepAssets` skips `pickAssets` for a `ZoneDiscard` pick; `state.go`: `fixedOrderPositions` ranks pile cards after assets, p's pile top-down then the opponent's, comment updated. Helper `inDiscard` added to `scenario_test.go`.
+  - Reuse: `assetDecision`/`pickAssets` shape, `takeCard`/`putCard`, `choose`; no existing pile equivalent. `choice.go` unchanged.
+  - Commands: `go test ./pkg/engine` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
+  - Reviewer: the `ZoneDiscard` rejection location in `matchesFilter`.
