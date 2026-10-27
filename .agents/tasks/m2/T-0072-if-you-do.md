@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -126,3 +126,14 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
   1. `destroy(a, known)` replaced by `destroyAll(as []*Asset)` in `damage.go`: takes every `effectiveState` first, then per asset `fireKilled`, `leaveBattlefield`, `putCard`, `destroy` event. `deathSweep` reads its Headquarters loss check from `dying`, then calls `destroyAll(dying)`. `stepKill` filters out Headquarters, calls `destroyAll` on the rest and returns `len`.
   2. Added `assetDecision(p, prompt, upTo, ok)` in `targeting.go` returning the decision and matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both use it; each keeps its own prompt and empty-options handling (`chooseTargets` still skips an empty up-to slot).
   - Commands: Done When test pattern 15 PASS; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS. No test edited.
+- 2026-10-26 lead-architect (review, round 2): **Approved**, merged into `autoloop/m2-wave-b` with `--no-ff`, status `done`. Directive #51 part 2 and #20 (a) are applied.
+  - **Scope:** I checked `git diff 4996242 m2/T-0072-if-you-do`. e1fb07d changes only `damage.go`, `effects.go` and `targeting.go`, and `targeting.go` was allowed for note 2. No test file changed since eeb5388.
+  - **Note 1:** done. `destroyAll` takes every state before any asset leaves. `deathSweep` calls it after its Headquarters check, and `stepKill` passes the non-Headquarters assets.
+  - **Note 2:** done. `chooseTargets` and `pickAssets` both build their decision with `assetDecision`, and each keeps its own prompt and empty-options handling.
+  - **Fences:** no card names, and nothing new outside package `engine` and `ability`.
+  - **Rules fidelity:** the gate, the counts and the pick are general, and nothing branches on test inputs.
+  - **Gates, re-run by the reviewer in a review worktree:**
+    - the 15 Done When tests pass;
+    - `go tool task check` exits 0;
+    - `go tool task sim-compare -- autoloop/m2-wave-b` prints `[PASS]`, byte for byte.
+  - Next: T-0073 (Infested Apostle).
