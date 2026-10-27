@@ -9,38 +9,46 @@ import (
 	"animus-mundi/pkg/engine/ability"
 )
 
+// resolution is one resolving ability as its steps see it: the stack item and,
+// for each target slot, the chosen entities still legal after the second
+// verification stage, in pick order (board directive #51).
+type resolution struct {
+	it     *StackItem
+	chosen [][]*Asset
+}
+
 // resolveAbility runs a triggered ability's steps in order. It resolves even if
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
 	// Second verification stage (FR-TGT-003), entity by entity: one that is
 	// gone or no longer legal is dropped, and the slot keeps the rest (partial
 	// invalidation).
-	chosen := make([][]*Asset, len(it.Chosen))
+	r := &resolution{it: it, chosen: make([][]*Asset, len(it.Chosen))}
 	for i, ids := range it.Chosen {
 		for _, id := range ids {
 			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Effect.Targets[i].Filter, a) {
-				chosen[i] = append(chosen[i], a)
+				r.chosen[i] = append(r.chosen[i], a)
 			}
 		}
 	}
 	for _, st := range it.Effect.Steps {
 		switch st.Op {
 		case ability.OpDealDamage:
-			g.stepDealDamage(it, st, chosen)
+			g.stepDealDamage(r, st)
 		case ability.OpHeal:
-			g.stepHeal(it, st, chosen)
+			g.stepHeal(r, st)
 		case ability.OpAddArmor:
-			g.stepAddArmor(it, st, chosen)
+			g.stepAddArmor(r, st)
 		case ability.OpScratch:
-			g.stepScratch(it, st, chosen)
+			g.stepScratch(r, st)
 		case ability.OpDraw:
-			g.stepDraw(it, st, chosen)
+			g.stepDraw(r, st)
 		case ability.OpDiscard:
-			g.stepDiscard(it, st, chosen)
+			g.stepDiscard(r, st)
 		case ability.OpModifyStat:
-			g.stepModifyStat(it, st, chosen)
+			g.stepModifyStat(r, st)
 		case ability.OpReturnToHand, ability.OpPutOnDeck:
-			g.stepRelocate(it, st, chosen)
+			g.stepRelocate(r, st)
 		}
 	}
 }
@@ -56,57 +64,57 @@ func stepPlayers(it *StackItem, st ability.Step) []PlayerID {
 
 // stepDealDamage deals one instance per asset, all before the item's death
 // sweep, so the deaths they cause are simultaneous (FR-REP-004, FR-LAY-002).
-func (g *Game) stepDealDamage(it *StackItem, st ability.Step, chosen [][]*Asset) {
-	n, src := g.value(it, st.Amount), g.itemSource(it)
-	for _, a := range g.stepAssets(it, st, chosen) {
+func (g *Game) stepDealDamage(r *resolution, st ability.Step) {
+	n, src := g.value(r.it, st.Amount), g.itemSource(r.it)
+	for _, a := range g.stepAssets(r, st) {
 		g.dealDamage(src, a, n, false)
 	}
 }
 
 // stepHeal removes damage from each asset the step acts on.
-func (g *Game) stepHeal(it *StackItem, st ability.Step, chosen [][]*Asset) {
-	n := g.value(it, st.Amount)
-	for _, a := range g.stepAssets(it, st, chosen) {
+func (g *Game) stepHeal(r *resolution, st ability.Step) {
+	n := g.value(r.it, st.Amount)
+	for _, a := range g.stepAssets(r, st) {
 		a.Damage = max(0, a.Damage-n)
 	}
 }
 
 // stepAddArmor gives each asset the step acts on Armor.
-func (g *Game) stepAddArmor(it *StackItem, st ability.Step, chosen [][]*Asset) {
-	n := g.value(it, st.Amount)
-	for _, a := range g.stepAssets(it, st, chosen) {
+func (g *Game) stepAddArmor(r *resolution, st ability.Step) {
+	n := g.value(r.it, st.Amount)
+	for _, a := range g.stepAssets(r, st) {
 		a.Armor += n
 	}
 }
 
 // stepScratch has each step player scratch.
-func (g *Game) stepScratch(it *StackItem, st ability.Step, _ [][]*Asset) {
-	for _, pid := range stepPlayers(it, st) {
-		g.scratch(pid, g.value(it, st.Amount))
+func (g *Game) stepScratch(r *resolution, st ability.Step) {
+	for _, pid := range stepPlayers(r.it, st) {
+		g.scratch(pid, g.value(r.it, st.Amount))
 	}
 }
 
 // stepDraw has each step player draw.
-func (g *Game) stepDraw(it *StackItem, st ability.Step, _ [][]*Asset) {
-	for _, pid := range stepPlayers(it, st) {
-		g.draw(pid, g.value(it, st.Amount))
+func (g *Game) stepDraw(r *resolution, st ability.Step) {
+	for _, pid := range stepPlayers(r.it, st) {
+		g.draw(pid, g.value(r.it, st.Amount))
 	}
 }
 
 // stepModifyStat gives each Subject +Amount power until end of turn: the Layer 5
 // TempPower, cleared in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
-func (g *Game) stepModifyStat(it *StackItem, st ability.Step, chosen [][]*Asset) {
-	for _, a := range g.stepAssets(it, st, chosen) {
-		a.TempPower += g.value(it, st.Amount)
+func (g *Game) stepModifyStat(r *resolution, st ability.Step) {
+	for _, a := range g.stepAssets(r, st) {
+		a.TempPower += g.value(r.it, st.Amount)
 	}
 }
 
 // stepDiscard has each step player discard cards of their choice from their own
 // hand. Choosing from your own hand is not an inspection, so a hand of exactly
 // that many cards is discarded without asking (FR-MOD-001 §1, §6; SVY-R16).
-func (g *Game) stepDiscard(it *StackItem, st ability.Step, _ [][]*Asset) {
-	n := g.value(it, st.Amount)
-	for _, pid := range stepPlayers(it, st) {
+func (g *Game) stepDiscard(r *resolution, st ability.Step) {
+	n := g.value(r.it, st.Amount)
+	for _, pid := range stepPlayers(r.it, st) {
 		hand := g.Players[pid].Hand
 		n := min(n, len(hand))
 		if n <= 0 {
@@ -134,7 +142,7 @@ func (g *Game) stepDiscard(it *StackItem, st ability.Step, _ [][]*Asset) {
 }
 
 // stepRelocate moves the trigger's own card out of discard (see relocateSelf).
-func (g *Game) stepRelocate(it *StackItem, st ability.Step, _ [][]*Asset) { g.relocateSelf(it, st) }
+func (g *Game) stepRelocate(r *resolution, st ability.Step) { g.relocateSelf(r.it, st) }
 
 // value reads v for it as its step resolves (SVY-R10). Source power is the
 // source's effective power if it is on the battlefield, else the effective
@@ -168,22 +176,22 @@ func (g *Game) itemSource(it *StackItem) *Asset {
 // source if it is still on the battlefield. "All" is not a
 // target, so Ward excludes nothing and nothing is asked (FR-TGT-002,
 // FR-KWD-002h, SVY-R3).
-func (g *Game) stepAssets(it *StackItem, st ability.Step, chosen [][]*Asset) []*Asset {
+func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 	switch st.Subject {
 	case ability.SubjectTarget:
-		if st.Target >= 0 && st.Target < len(chosen) {
-			return chosen[st.Target]
+		if st.Target >= 0 && st.Target < len(r.chosen) {
+			return r.chosen[st.Target]
 		}
 	case ability.SubjectSelf:
 		// The source itself, if it is still on the battlefield; once it has
 		// left, the step fizzles (FR-TGT-003).
-		if a := g.Asset(it.Source); a != nil {
+		if a := g.Asset(r.it.Source); a != nil {
 			return []*Asset{a}
 		}
 	case ability.SubjectAll:
 		var out []*Asset
 		for _, a := range g.assetsByID() {
-			if g.matchesFilter(it.Controller, it.Source, st.Filter, a) {
+			if g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a) {
 				out = append(out, a)
 			}
 		}
