@@ -4,7 +4,7 @@ title: A Cornered gate on triggers, and a step that gives power until end of tur
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: changes
 branch: m2/T-0069-cornered-gate-modify-power
 depends_on: []
 claims: [gate:Cornered (triggers), primitive:MODIFY_STAT (power, until end of turn)]
@@ -59,7 +59,7 @@ None expected. `put`, `putScratch`, `moveTo`, `attack`, `endTurn`, `script` and 
 - `pkg/engine/doc.go` (the gates, steps and "Not built yet" lines)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_KWD_002e_Cornered|TestFR_LAY_003_(PlacedCornered|ModifyStat)|TestFR_LAY_001_(ModifyStat|NegativeModifyStat)|TestFR_TGT_003_ModifyStat'`
+- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_KWD_002e_(A)?Cornered|TestFR_LAY_003_(PlacedCornered|ModifyStat)|TestFR_LAY_001_(ModifyStat|NegativeModifyStat)|TestFR_TGT_003_ModifyStat'`
 - [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 - [ ] `go tool task sim` runs clean on the starter decks
 - [ ] No card uses either shape yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
@@ -79,3 +79,12 @@ None expected. `put`, `putScratch`, `moveTo`, `attack`, `endTurn`, `script` and 
 
   The setup differences the author logged keep each case's meaning. `DecideOrder` picks `[0, 1]` put the first listed trigger on the stack first, so it resolves last (`SVY-R7`). Every helper used exists (`striker`, `attackTrigger`, `limited`, `unbowed`, `bowed`, `placedOrder`, `tgt`, `dmgTo`, `scratchN`, `wantScratches`). No earlier test is modified. The file fails only because `Trigger.Cornered` and `OpModifyStat` don't exist yet. Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
 - 2026-10-26 kernel-engineer (sonnet): implemented. Diff: `ability.Trigger.Cornered` and `ability.OpModifyStat` (ability.go); `(g *Game) cornered` (counts `g.Theater` assets by controller; HQs and Reserves are not in it) and the gate in `fireHook`, placed before the `MaxPerTurn` counter (trigger.go); `stepModifyStat` plus its `resolveAbility` case, adding `g.value(it, st.Amount)` to `TempPower` via `stepAssets` (effects.go); doc.go steps/gates/"Not built yet" lines. Reuse: no existing Cornered check or power-step found; `TempPower`, `Power` clamp and `endTurn` expiry reused unchanged, no stack.go change. Ran: the listed `go test -run` filter (ok), `go tool task check` (all pass), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-b` (PASS, byte for byte). No tests or helpers edited.
+- 2026-10-26 lead-architect (review, round 1): **Changes requested.** Checked against `git diff autoloop/m2-wave-b...m2/T-0069-cornered-gate-modify-power`, not against this Log.
+  - **Scope:** only the four Allowed Files changed, plus this file. `cornered_test.go` is unchanged since `12a4f3b`, and no other test changed.
+  - **Fences:** no card names. `OpModifyStat` is appended after `OpDiscard`. `Cornered` is a new field, so existing values don't move.
+  - **Rules fidelity:** right. The gate is checked once, in `fireHook`, before the `MaxPerTurn` counter, and is never checked again. The count uses the trigger's controller.
+  - **Gates, re-run in a review worktree:** all 11 tests pass; `go tool task check` exit 0; `go tool task sim` exit 0; `go tool task sim-compare -- autoloop/m2-wave-b` [PASS], byte for byte.
+  - **Lead fix:** the `Done When` regex missed `TestFR_KWD_002e_ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn`. It now reads `TestFR_KWD_002e_(A)?Cornered`. The test passes.
+
+  Notes:
+  1. **Reuse (D5.3):** `cornered` repeats `(g *Game) TheaterOf(p)` (`state.go:283`, "the Main Theater assets controlled by p"), which `combat.go` and `state.go` already use. Write it as `return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))` and keep the doc comment. Nothing else changes. Re-run the listed tests, `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-b`.
