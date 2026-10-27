@@ -6,7 +6,7 @@ tier: flash
 wave: B
 status: queued
 branch: m2/T-0073-infested-apostle
-depends_on: [T-0072]
+depends_on: [T-0072, T-0075]
 claims: [card:Infested Apostle]
 cards: [Infested Apostle]
 requirements: []

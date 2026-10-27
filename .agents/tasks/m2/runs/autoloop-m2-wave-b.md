@@ -4,6 +4,7 @@
 - **Started:** 2026-10-26
 - **Cards:** Hammerhand Brigands; Devilhorn Captain; Chainbreaker Irregulars; Allshan, Chainbreaker Revenant; Animoceps Rager; Animoceps Shambler; Eternal Watchman; Infested Apostle; Arkha, Sun's Fury; Rogue Fleshshaper
 - **Deferred:** Hammerhand Bivouac (#14 (b): turn-start hook, non-deck); Blind Defile (#14 (b): opposing-unit-attacks hook, non-deck); Drifting Concept (#14 (b): `RevealHand`, non-deck)
+- **Kept:** Rogue Fleshshaper (non-deck; its modal shape is also needed by Ambush Tactics, a deck card, #14 (b), (c))
 
 | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
