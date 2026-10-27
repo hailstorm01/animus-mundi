@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: tests
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
@@ -61,3 +61,7 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
 - 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_path_arkha_test.go` with the five listed tests: PutsAUnitCardOnTheBottomAndDamagesTheOpposingHeadquarters, OnlyUnitCardsInYourDiscardPileAreOffered, NoUnitCardMeansNoDamage, TimeoutAtThePickDealsNoDamage, DecliningDoesNothing. They fail now because the card is not yet executable. No helpers requested.
   - Deviation from the task text: the Headquarters target is not asserted as a question. There is exactly one opposing Headquarters, so FR-MOD-001 chooses it without asking (as in the Infested Apostle tests). The tests expect asked kinds `[Optional, Pick]`.
   - Arkha attacks an opposing 0/20 dummy so all Headquarters damage comes from the trigger. The timeout test relies on the `UpTo: 1` pick selecting none on a timeout (FR-MOD-001 sec. 6, SVY-R16).
+- 2026-10-27 lead-architect (tests-review, round 1): **Changes, back to `tests`.** I checked the tests against `SVY-R14` (FRD 01 line 330), `SVY-R16` and `FR-MOD-001` §1 and §6 (lines 350, 359), and the CSV line.
+  - **Right:** the asked kinds `[Optional, Pick]` (one opposing Headquarters is chosen by the single-option fast path, §1, so the deviation from the task text is correct); the picked card on the bottom of the deck and the other one left in the pile; only your own unit cards offered; no unit card asks no pick and deals nothing; an "up to" timeout selects none, so nothing moves and nothing is dealt (§6); declining asks nothing more.
+  - **Note:**
+    1. **Wrong expected damage in `TestCard_ArkhasSunsFury_DecliningDoesNothing`.** `s.wantDamage(a.dummy, 6)` expects 6, but Arkha's printed power is 8 (`data/cards/units-and-structures-path.csv` line 30, `power` column; checked by loading the card in a scratch test: power 8, the dummy takes 8). Expect 8, or read it from `a.arkha.Printed().Power`. Change nothing else.
