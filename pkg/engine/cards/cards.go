@@ -45,7 +45,6 @@ var NotYetExecutable = []string{
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
 	"Improvised Orders",
-	"Infested Apostle",
 	"Macabre Dancers",
 	"Melodic Pummeler",
 	"Mutation Swell",
