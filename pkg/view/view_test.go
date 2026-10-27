@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/ability"
 	"animus-mundi/pkg/eventlog"
 	"animus-mundi/pkg/sim"
 	"animus-mundi/pkg/view"
@@ -665,5 +666,24 @@ func TestView_Case5_LogLines(t *testing.T) {
 	}
 	if turnStarts < 4 {
 		t.Errorf("only %d turn-start lines checked", turnStarts)
+	}
+}
+
+// T-0074: an Aggressive trigger is an Ability item with a Keyword.
+func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
+	s := newContentScene(t)
+	s.g.Stack = []*engine.StackItem{
+		{Kind: engine.StackAbility, Controller: 0, Source: s.lancer.ID, Inst: s.lancer.Inst, Keyword: ability.KeywordAggressive},
+		{Kind: engine.StackAbility, Controller: 0, Source: s.sentry.ID, Inst: s.sentry.Inst},
+	}
+	v := view.PlayerView(s.g, 0)
+	if len(v.Stack) != 2 {
+		t.Fatalf("stack = %+v", v.Stack)
+	}
+	if it := v.Stack[0]; it.Kind != "Ability" || it.Keyword != "Aggressive" || it.Card != "Alpha Lancer" {
+		t.Errorf("Aggressive item = %+v", it)
+	}
+	if it := v.Stack[1]; it.Kind != "Ability" || it.Keyword != "" {
+		t.Errorf("printed item = %+v", it)
 	}
 }
