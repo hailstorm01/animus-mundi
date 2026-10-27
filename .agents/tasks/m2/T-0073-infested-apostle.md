@@ -4,7 +4,7 @@ title: Make Infested Apostle executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: tests
 branch: m2/T-0073-infested-apostle
 depends_on: [T-0072, T-0075, T-0076]
 claims: [card:Infested Apostle]
@@ -33,12 +33,13 @@ requirements: []
 - Remove "Infested Apostle" from `cards.NotYetExecutable`.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by `rules-test-author` in `pkg/engine/cards_animus_apostle_test.go`, from the CSV text, when this task reaches `tests`. At least the four directive #47 tests:
+Written in `pkg/engine/cards_animus_apostle_test.go` (session 10, approved; carried over in session 12). The four directive #47 tests and the decline test:
 - `TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked`: "you may" and the opposing target are asked on placement, the kill pick on resolution; the killed ally goes to discard and the target takes 2 damage.
 - `TestCard_InfestedApostle_MayKillItself`: picking the Apostle kills it, and its damage still lands.
 - `TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage`: a timeout at the pick kills nothing and deals nothing.
 - `TestCard_InfestedApostle_DamageResolvesBeforeKilledUnitsDeathTriggers`: a killed ally with a death trigger (for example a real Animus card with one) has it placed and resolved after the 2 damage.
 - Also: declining "you may" asks nothing more and does nothing.
+- **Change (session 12, after T-0076):** the kill pick is now a `DecidePick`, not a `DecideTarget`. In `TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked` (line 43) the third expected kind becomes `DecidePick`, and in `TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage` (line 102) the second does. Nothing else changes.
 
 ## Helpers Needed
 None expected.
@@ -58,3 +59,5 @@ None expected.
 - 2026-10-27 lead-architect (wave run B, session 11): Back to `queued` behind T-0076 (D6, missing shape). Session 10's Flash run (`agy` conversation `096cd558-…`) got the definition working, but `go tool task sim` failed in the targeting monitor (game 3, seed 3, event 377): the kill pick asked a `DecideTarget`, so the monitor wanted the placement of an item after it. T-0076 gives picks their own kind, `DecidePick`.
   - State of `m2/T-0073-infested-apostle`: `e127feb` (approved tests), `7baee6f` (`ready`), `ae58054` (`in-progress`). The run's uncommitted definition was in its `scratch/t0073` worktree, which is gone (`git worktree list` shows none), so nothing of it survives. The definition above is unchanged.
   - When T-0076 is `done`: recreate the branch from the run branch, carry over the test commit, and set `status: tests`. `rules-test-author` changes the kill pick's expected kind from `DecideTarget` to `DecidePick` in `TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked` (line 43, the third kind) and `TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage` (line 102, the second kind). The pick is answered through `scriptPlan`'s target queue, which T-0076 extends to picks, so nothing else changes.
+- 2026-10-27 lead-architect (wave run B, session 10, carried over): T-0072 and T-0075 were `done`, and no directive was open or triggered (#58 and #59 do not fire: the kill pick is on the battlefield, not a pile, and nothing is exhausted). Status `tests`; `rules-test-author` wrote `pkg/engine/cards_animus_apostle_test.go` (five tests, all failing as expected); the lead approved them (e127feb).
+- 2026-10-27 lead-architect (wave run B, session 12): T-0076 is `done` (029b7bf). Synced `main` into the run branch (9e1cedb), moved the branch to it, and carried over the test commit as 1ac6470 (test file only). No directive is open or triggered. Status `tests`: `rules-test-author` makes the change named under Tests.
