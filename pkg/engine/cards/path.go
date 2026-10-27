@@ -8,12 +8,14 @@ func init() {
 	}
 }
 
+func cornered(t ability.Trigger) ability.Trigger { t.Cornered = true; return t }
+
 // pathDefs holds ability definitions for Path cards.
 var pathDefs = map[string]*ability.Def{
 	"Allshan, Chainbreaker Revenant": {
 		Text: []string{
 			"Unbowed: This unit gains 2 armor.",
-			"Cornered: Whenever this unit attacks, it gets +3 power until end of turn.",
+			"Cornered: Aggressive 3.",
 		},
 		Triggers: []ability.Trigger{
 			{
@@ -28,19 +30,7 @@ var pathDefs = map[string]*ability.Def{
 					},
 				},
 			},
-			{
-				Hook:     ability.HookAttacks,
-				Cornered: true,
-				Effect: ability.Effect{
-					Steps: []ability.Step{
-						{
-							Op:      ability.OpModifyStat,
-							Subject: ability.SubjectSelf,
-							Amount:  ability.Value{N: 3},
-						},
-					},
-				},
-			},
+			cornered(ability.Aggressive(3)),
 		},
 	},
 	"Chainbreaker Irregulars": {

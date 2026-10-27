@@ -4,7 +4,7 @@ title: Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flas
 kind: card
 tier: flash
 wave: B (board directive #60 (2), blocking before T-0073)
-status: in-progress
+status: review
 branch: m2/T-0075-allshan-cornered-aggressive
 depends_on: [T-0074]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -39,11 +39,11 @@ Written by `rules-test-author`, in `pkg/engine/cards_path_allshan_test.go` (new 
 - `pkg/engine/cards/path.go`
 
 ## Done When
-- [ ] The T-0070 tests and the new test pass: `go test ./pkg/engine -run 'Allshan'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b` passes, or the Log names every changed line (only the place wording of Allshan's Cornered trigger may differ)
-- [ ] the card loads with no unsupported lines
+- [x] The T-0070 tests and the new test pass: `go test ./pkg/engine -run 'Allshan'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b` passes, or the Log names every changed line (only the place wording of Allshan's Cornered trigger may differ)
+- [x] the card loads with no unsupported lines
 
 ## Log
 - 2026-10-26, lead-architect (wave B run, session 7): written with T-0074 from directive #60 (2). Stays `queued` until T-0074 is `done`. T-0073 now also depends on it, because #60 blocks T-0073.
@@ -51,3 +51,4 @@ Written by `rules-test-author`, in `pkg/engine/cards_path_allshan_test.go` (new 
 - 2026-10-26, rules-test-author: wrote `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger` (subtests cornered / not cornered; also checks source and +3 TempPower) in `pkg/engine/cards_path_allshan_test.go`. Helpers requested: none (reuses `recordPlaced`). Left out: a printed-text check (no test-visible surface for card Text; the CSV/lint covers it). Verified red before implementation: the cornered subtest fails (no Aggressive-keyword item is placed, the old hand-written trigger is a plain ability item); not cornered passes. `cardtown lint rules` passes.
 - 2026-10-26, lead-architect (wave B run, session 8): tests approved. `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger` checks the Cornered case (one `StackAbility` item marked `KeywordAggressive`, sourced from Allshan, +3 power) and the not-Cornered case (none), per `FR-KWD-002e`/`FR-KWD-002f`; the T-0070 tests are unchanged. Status `ready`; dispatching the flash engineer.
 - 2026-10-26, lead-architect (wave B run, session 8): the Flash run (`agy`, conversation `bea5448f-2608-45eb-8db1-0e328bb6cb5b`) exited 0 with `status: SUCCESS` but one denied action: at step 14 the engineer ran `git branch -a`, which is off the allow-list (its skill names `git rev-parse --verify <branch>` instead). Before that it had searched the main checkout (on `main`) for the task file with `Get-ChildItem`. This task file exists only on the run branch and this task branch, so it found nothing. It made no commits and left no worktree. Status stays `ready`. Not re-dispatched (D3); the run stops for the user.
+- 2026-10-27, kernel-engineer (flash): Allshan's second rules-text line in data/cards/units-and-structures-path.csv updated to "Cornered: Aggressive 3.". In pkg/engine/cards/path.go, added unexported cornered helper and defined Allshan with cornered(ability.Aggressive(3)) and matching Text slice. Reused ability.Aggressive(3) from T-0074 and Trigger.Cornered. Ran: go test ./pkg/engine -run 'Allshan' (PASS); go tool task check (PASS); go tool task sim (PASS, 200 games clean); go tool task sim-compare -- autoloop/m2-wave-b (PASS, starter and stress sims match autoloop/m2-wave-b byte for byte). Reviewer: confirm Allshan triggers StackAbility with KeywordAggressive only while Cornered; card text matches CSV without unsupported lines.
