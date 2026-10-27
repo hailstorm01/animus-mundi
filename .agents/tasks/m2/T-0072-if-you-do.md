@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: done
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -78,6 +78,7 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
 - `pkg/engine/effects.go` (`resolution.done`, the gate, step counts, `stepKill`, the pick in `stepAssets`)
 - `pkg/engine/damage.go` (`destroy`, called by `deathSweep`)
 - `pkg/engine/doc.go` (the "What runs now" lines)
+- `pkg/engine/targeting.go` (review round 1, note 2 only: the shared asset-decision builder)
 
 ## Done When
 - [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_001_UntargetedPick|MOD_001_(SinglePick|UpToPick)|LAY_002_Kill|TRG_005_IfYouDo|TRG_004_DeathTriggersOfAnXKill)'`
@@ -93,3 +94,46 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
   - Waiting triggers checked against `autoloop/m2-wave-b` ee50aaf: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #58 (no exhaust by a cost or an effect) and #59 (no pile pick, no repeated targets). None has fired.
   - No existing equivalent: `ability` has no kill op, no picked subject and no step gate. `deathSweep`'s destroy body is the one other copy of a destroy, and the task moves it into `destroy`.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-26 rules-test-author: Wrote `pkg/engine/if_you_do_test.go`, status `tests-review`. Helpers requested: none (all helpers are file-local `iyd*`/`scene.iyd*` in the test file).
+  - Tests: `TestFR_TGT_001_UntargetedPickIsMadeOnResolutionFromWhatMatchesThen`, `..._UntargetedPickIgnoresWard`, `..._UntargetedPickMayPickTheSource`, `..._UntargetedPickWithNoMatchDoesNothing`; `TestFR_MOD_001_SinglePickWithOneMatchIsNotAsked`, `..._SinglePickTimeoutPicksFirstInFixedOrder`, `..._UpToPickTimeoutPicksNone`; `TestFR_LAY_002_KillDestroysAtOnceDuringResolution`, `..._KilledScratchCompanyGoesFaceUpToItsOwnersDiscard`, `..._KillSkipsAHeadquarters`; `TestFR_TRG_005_IfYouDoRunsYWhenXWasDone`, `..._SkipsYWhenXPickedNothing`, `..._SkipsYWhenNothingMatchesX`, `..._FollowsADiscardCount`; `TestFR_TRG_004_DeathTriggersOfAnXKillArePlacedAfterTheTriggerFinishes`.
+  - `go vet` fails only on the missing `OpKill`, `SubjectPick`, `Step.UpTo`, `Step.IfDone`. `cardtown lint rules` passes.
+  - The first test removes an ally with a `SubjectTarget` kill step before the pick, to show the pick sees only what matches at resolution.
+  - Prompt text of the pick decision is not asserted (implementation detail). Left out per the task: a non-adjacent `IfDone`, a replaced kill (SVY-R15), Arkha's pile pick.
+- 2026-10-26 lead-architect (tests-review, round 1): **Approved, `ready`.** I checked the tests against FRD 01 `FR-TGT-001` (lines 326-327, `SVY-R3`, `SVY-R14`), `FR-MOD-001` §1 and §6 (line 356, `SVY-R16`), `FR-LAY-002` (line 425), `FR-ZON-002` (line 186) and `FR-TRG-004`.
+  - **Expected outcomes are right:**
+    - "You may" and Y's target are asked on placement, and the pick when X resolves, from what matches then.
+    - Ward is ignored.
+    - The source may pick itself, and Y's damage still names it.
+    - A one-match single pick isn't asked. Its timeout picks Reserves before the Main Theater, which is the fixed order and the opposite of the oldest-first option order.
+    - An "up to" pick is always asked, and its timeout picks none.
+    - With no match, only that clause does nothing.
+    - A kill destroys inline, before a later "all" step. A Scratch Company goes face-up to its owner's discard pile, and a Headquarters is skipped.
+    - Y runs only after a done X, including after a discard count. The killed unit's death trigger resolves after Y.
+  - **Within scope:** every helper is local to the file or already exists. No earlier test is modified. The file fails only on the four missing identifiers.
+  - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-26 kernel-engineer (sonnet): Implemented; status `review`. Status commit `in-progress` made first.
+  - Changed: `ability.go` (`OpKill`, `SubjectPick`, `Step.UpTo`, `Step.IfDone`, with the lead's comments); `damage.go` (new `destroy(a, known)` holding the per-asset body, `deathSweep` calls it); `effects.go` (`resolution.done`, IfDone gate in `resolveAbility`, new `runStep` dispatcher, every `step<Op>` returns a count, `stepKill`, `pickAssets` called from `stepAssets`, `relocateSelf` returns bool, `deckDrop` helper counting deck-size change for Draw/Scratch); `doc.go` lines. `scenario_test.go`, `choice.go`, `zones.go` untouched.
+  - Reuse: `DecideTarget` and `choose` fallback (no new kind), `assetsByID`, `matchesFilter`, `cardName`, `effectiveState`, `leaveBattlefield`/`putCard`. No other kill or pick existed.
+  - Commands: `go test ./pkg/engine -run '<Done When pattern>' -v` 15 PASS; `go tool task check` passed (fmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS byte for byte.
+  - Reviewer: `pickAssets` UpTo 0 keeps Min=Max=1 so a lone option takes the `soleAnswer` fast path. `stepKill` takes `effectiveState(a)` per asset just before each destroy, so in an "all" kill later assets' state is read after earlier deaths' departure; pinned by no test.
+- 2026-10-26 lead-architect (review, round 1): **Changes requested.** I verified against `git diff autoloop/m2-wave-b...m2/T-0072-if-you-do`.
+  - **What passed:** only the Allowed Files changed, and `if_you_do_test.go` is unchanged since eeb5388. No card names. The gate, the step counts, `SubjectPick` on `DecideTarget`, the Headquarters skip and `relocateSelf`'s `bool` match the Shape.
+  - **Notes:**
+    1. **A kill of several assets is one simultaneous destruction.** `stepKill` takes each asset's `effectiveState` just before destroying it, so later assets are read after earlier ones have left. `deathSweep` takes every dying asset's state before any of them leaves (`FR-ZON-004`, directive #13), and the two must not differ. Replace `destroy(a, known)` with one `(g *Game) destroyAll(as []*Asset)`. It takes every state first, then for each asset in order runs `fireKilled`, `leaveBattlefield`, `putCard` into discard and the `destroy` event. `deathSweep` calls `destroyAll(dying)`, and its Headquarters loss check still reads `dying` before the call. `stepKill` drops Headquarters from the step's assets, calls `destroyAll` on the rest, and returns how many it passed. This is a pure move for `deathSweep`, so `sim-compare` must stay `[PASS]`.
+    2. **One builder for decisions over battlefield assets (duplication, D5.3).** `pickAssets` repeats `chooseTargets`' scheme ([targeting.go:24-39](../../../pkg/engine/targeting.go)): options are battlefield assets oldest first (`assetsByID`, `SVY-R11`), with `Label` `a.String()` and `Ref` `a.ID`. Exactly one is `Min = Max = 1`, and "up to N" is `Min 0, Max min(N, len)`. A change to that rule would need two edits. Add one helper in `targeting.go`, for example `(g *Game) assetDecision(p PlayerID, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset)`, which returns the decision and the matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both build their decision with it. Each keeps its own prompt text and its own empty-options handling. `targeting.go` is added to Allowed Files for this note only. Every existing test must pass unchanged, and `sim-compare` must stay `[PASS]`.
+  - Gates to re-run: the Done When list, including `go tool task sim-compare -- autoloop/m2-wave-b`.
+- 2026-10-26 kernel-engineer (sonnet): Round 1 notes answered; status `review`.
+  1. `destroy(a, known)` replaced by `destroyAll(as []*Asset)` in `damage.go`: takes every `effectiveState` first, then per asset `fireKilled`, `leaveBattlefield`, `putCard`, `destroy` event. `deathSweep` reads its Headquarters loss check from `dying`, then calls `destroyAll(dying)`. `stepKill` filters out Headquarters, calls `destroyAll` on the rest and returns `len`.
+  2. Added `assetDecision(p, prompt, upTo, ok)` in `targeting.go` returning the decision and matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both use it; each keeps its own prompt and empty-options handling (`chooseTargets` still skips an empty up-to slot).
+  - Commands: Done When test pattern 15 PASS; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS. No test edited.
+- 2026-10-26 lead-architect (review, round 2): **Approved**, merged into `autoloop/m2-wave-b` with `--no-ff`, status `done`. Directive #51 part 2 and #20 (a) are applied.
+  - **Scope:** I checked `git diff 4996242 m2/T-0072-if-you-do`. e1fb07d changes only `damage.go`, `effects.go` and `targeting.go`, and `targeting.go` was allowed for note 2. No test file changed since eeb5388.
+  - **Note 1:** done. `destroyAll` takes every state before any asset leaves. `deathSweep` calls it after its Headquarters check, and `stepKill` passes the non-Headquarters assets.
+  - **Note 2:** done. `chooseTargets` and `pickAssets` both build their decision with `assetDecision`, and each keeps its own prompt and empty-options handling.
+  - **Fences:** no card names, and nothing new outside package `engine` and `ability`.
+  - **Rules fidelity:** the gate, the counts and the pick are general, and nothing branches on test inputs.
+  - **Gates, re-run by the reviewer in a review worktree:**
+    - the 15 Done When tests pass;
+    - `go tool task check` exits 0;
+    - `go tool task sim-compare -- autoloop/m2-wave-b` prints `[PASS]`, byte for byte.
+  - Next: T-0073 (Infested Apostle).

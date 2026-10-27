@@ -11,10 +11,12 @@ import (
 
 // resolution is one resolving ability as its steps see it: the stack item and,
 // for each target slot, the chosen entities still legal after the second
-// verification stage, in pick order (board directive #51).
+// verification stage, in pick order (board directive #51), and how many things
+// each step did so far, one entry per step (IfDone, SVY-R14).
 type resolution struct {
 	it     *StackItem
 	chosen [][]*Asset
+	done   []int
 }
 
 // resolveAbility runs a triggered ability's steps in order. It resolves even if
@@ -31,26 +33,39 @@ func (g *Game) resolveAbility(it *StackItem) {
 			}
 		}
 	}
-	for _, st := range it.Effect.Steps {
-		switch st.Op {
-		case ability.OpDealDamage:
-			g.stepDealDamage(r, st)
-		case ability.OpHeal:
-			g.stepHeal(r, st)
-		case ability.OpAddArmor:
-			g.stepAddArmor(r, st)
-		case ability.OpScratch:
-			g.stepScratch(r, st)
-		case ability.OpDraw:
-			g.stepDraw(r, st)
-		case ability.OpDiscard:
-			g.stepDiscard(r, st)
-		case ability.OpModifyStat:
-			g.stepModifyStat(r, st)
-		case ability.OpReturnToHand, ability.OpPutOnDeck:
-			g.stepRelocate(r, st)
+	for i, st := range it.Effect.Steps {
+		n := 0
+		// "If you do": skipped, and counted as 0, unless the step just before it did something.
+		if !st.IfDone || (i > 0 && r.done[i-1] > 0) {
+			n = g.runStep(r, st)
 		}
+		r.done = append(r.done, n)
 	}
+}
+
+// runStep runs one step and returns how many things it did.
+func (g *Game) runStep(r *resolution, st ability.Step) int {
+	switch st.Op {
+	case ability.OpDealDamage:
+		return g.stepDealDamage(r, st)
+	case ability.OpHeal:
+		return g.stepHeal(r, st)
+	case ability.OpAddArmor:
+		return g.stepAddArmor(r, st)
+	case ability.OpScratch:
+		return g.stepScratch(r, st)
+	case ability.OpDraw:
+		return g.stepDraw(r, st)
+	case ability.OpDiscard:
+		return g.stepDiscard(r, st)
+	case ability.OpModifyStat:
+		return g.stepModifyStat(r, st)
+	case ability.OpKill:
+		return g.stepKill(r, st)
+	case ability.OpReturnToHand, ability.OpPutOnDeck:
+		return g.stepRelocate(r, st)
+	}
+	return 0
 }
 
 // stepPlayers returns the players a player step acts on: the opponent for
@@ -64,56 +79,88 @@ func stepPlayers(it *StackItem, st ability.Step) []PlayerID {
 
 // stepDealDamage deals one instance per asset, all before the item's death
 // sweep, so the deaths they cause are simultaneous (FR-REP-004, FR-LAY-002).
-func (g *Game) stepDealDamage(r *resolution, st ability.Step) {
+// Like every step it returns how many things it did: here, the assets it hit.
+func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
 	n, src := g.value(r.it, st.Amount), g.itemSource(r.it)
-	for _, a := range g.stepAssets(r, st) {
+	as := g.stepAssets(r, st)
+	for _, a := range as {
 		g.dealDamage(src, a, n, false)
 	}
+	return len(as)
 }
 
 // stepHeal removes damage from each asset the step acts on.
-func (g *Game) stepHeal(r *resolution, st ability.Step) {
+func (g *Game) stepHeal(r *resolution, st ability.Step) int {
 	n := g.value(r.it, st.Amount)
-	for _, a := range g.stepAssets(r, st) {
+	as := g.stepAssets(r, st)
+	for _, a := range as {
 		a.Damage = max(0, a.Damage-n)
 	}
+	return len(as)
 }
 
 // stepAddArmor gives each asset the step acts on Armor.
-func (g *Game) stepAddArmor(r *resolution, st ability.Step) {
+func (g *Game) stepAddArmor(r *resolution, st ability.Step) int {
 	n := g.value(r.it, st.Amount)
-	for _, a := range g.stepAssets(r, st) {
+	as := g.stepAssets(r, st)
+	for _, a := range as {
 		a.Armor += n
 	}
+	return len(as)
 }
 
-// stepScratch has each step player scratch.
-func (g *Game) stepScratch(r *resolution, st ability.Step) {
-	for _, pid := range stepPlayers(r.it, st) {
-		g.scratch(pid, g.value(r.it, st.Amount))
-	}
+// stepScratch has each step player scratch. It returns the cards that left the
+// step players' decks.
+func (g *Game) stepScratch(r *resolution, st ability.Step) int {
+	return g.deckDrop(r, st, g.scratch)
 }
 
-// stepDraw has each step player draw.
-func (g *Game) stepDraw(r *resolution, st ability.Step) {
+// stepDraw has each step player draw. It returns the cards that left the step
+// players' decks: a draw from an empty deck counts nothing.
+func (g *Game) stepDraw(r *resolution, st ability.Step) int {
+	return g.deckDrop(r, st, g.draw)
+}
+
+// deckDrop runs take for each step player and returns how many cards left their decks.
+func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)) int {
+	total := 0
 	for _, pid := range stepPlayers(r.it, st) {
-		g.draw(pid, g.value(r.it, st.Amount))
+		before := len(g.Players[pid].Deck)
+		take(pid, g.value(r.it, st.Amount))
+		total += before - len(g.Players[pid].Deck)
 	}
+	return total
 }
 
 // stepModifyStat gives each Subject +Amount power until end of turn: the Layer 5
 // TempPower, cleared in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
-func (g *Game) stepModifyStat(r *resolution, st ability.Step) {
-	for _, a := range g.stepAssets(r, st) {
+func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
+	as := g.stepAssets(r, st)
+	for _, a := range as {
 		a.TempPower += g.value(r.it, st.Amount)
 	}
+	return len(as)
+}
+
+// stepKill destroys each asset the step acts on at once, inline (FR-LAY-002,
+// FR-ZON-002), not at the death sweep. A Headquarters is skipped: the match-loss
+// check lives in deathSweep and no M2 card kills one. It returns the assets killed.
+func (g *Game) stepKill(r *resolution, st ability.Step) int {
+	var dying []*Asset
+	for _, a := range g.stepAssets(r, st) {
+		if a.Printed().Type != TypeHeadquarters {
+			dying = append(dying, a)
+		}
+	}
+	g.destroyAll(dying)
+	return len(dying)
 }
 
 // stepDiscard has each step player discard cards of their choice from their own
 // hand. Choosing from your own hand is not an inspection, so a hand of exactly
 // that many cards is discarded without asking (FR-MOD-001 §1, §6; SVY-R16).
-func (g *Game) stepDiscard(r *resolution, st ability.Step) {
-	n := g.value(r.it, st.Amount)
+func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
+	n, total := g.value(r.it, st.Amount), 0
 	for _, pid := range stepPlayers(r.it, st) {
 		hand := g.Players[pid].Hand
 		n := min(n, len(hand))
@@ -137,12 +184,20 @@ func (g *Game) stepDiscard(r *resolution, st ability.Step) {
 			g.putCard(inst, ZoneDiscard, false)
 			g.logEvent(Event{Kind: "discard", Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
 				"player %d discards %s", pid, inst.Card.Name)
+			total++
 		}
 	}
+	return total
 }
 
 // stepRelocate moves the trigger's own card out of discard (see relocateSelf).
-func (g *Game) stepRelocate(r *resolution, st ability.Step) { g.relocateSelf(r.it, st) }
+// It returns 1 if the card moved, else 0.
+func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
+	if g.relocateSelf(r.it, st) {
+		return 1
+	}
+	return 0
+}
 
 // value reads v for it as its step resolves (SVY-R10). Source power is the
 // source's effective power if it is on the battlefield, else the effective
@@ -196,21 +251,48 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 			}
 		}
 		return out
+	case ability.SubjectPick:
+		return g.pickAssets(r, st)
 	}
 	return nil
+}
+
+// pickAssets is the untargeted pick: the item's controller picks from every
+// battlefield asset matching st.Filter now, oldest first. It is not a target, so
+// Ward excludes nothing (SVY-R3, SVY-R14). It uses DecideTarget, so the FR-MOD-001
+// section 6 fallback applies: UpTo 0 picks exactly one (a single option is not
+// asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
+// asked, and a timeout picks none. With no match nothing is asked.
+func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
+	name := cardName(r.it.Inst)
+	prompt := name + ": pick one"
+	if st.UpTo > 0 {
+		prompt = fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
+	}
+	d, opts := g.assetDecision(r.it.Controller, prompt, st.UpTo, func(a *Asset) bool {
+		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
+	})
+	if len(opts) == 0 {
+		return nil
+	}
+	var out []*Asset
+	for _, k := range g.choose(d) {
+		out = append(out, opts[k])
+	}
+	return out
 }
 
 // relocateSelf moves a death trigger's own card from its owner's discard pile
 // to the owner's hand or deck. It tracks the exact instance: if that instance
 // is no longer in the discard pile, it does nothing (FR-ZON-004). Only defined
-// for SubjectSelf on a Tracked item.
-func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
+// for SubjectSelf on a Tracked item. It reports whether the card moved.
+func (g *Game) relocateSelf(it *StackItem, st ability.Step) bool {
 	if st.Subject != ability.SubjectSelf || !it.Tracked || it.Inst == nil {
-		return
+		return false
 	}
 	owner := g.Players[it.Inst.Owner]
 	if !slices.Contains(owner.Discard, it.Inst) {
-		return
+		return false
 	}
 	g.takeCard(it.Inst)
 	if st.Op == ability.OpReturnToHand {
@@ -218,4 +300,5 @@ func (g *Game) relocateSelf(it *StackItem, st ability.Step) {
 	} else {
 		g.putCard(it.Inst, ZoneDeck, st.Bottom)
 	}
+	return true
 }
