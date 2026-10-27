@@ -4,7 +4,7 @@ title: Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flas
 kind: card
 tier: flash
 wave: B (board directive #60 (2), blocking before T-0073)
-status: queued
+status: tests
 branch: m2/T-0075-allshan-cornered-aggressive
 depends_on: [T-0074]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -47,3 +47,4 @@ To be written by `rules-test-author` when this task reaches `tests`, in `pkg/eng
 
 ## Log
 - 2026-10-26, lead-architect (wave B run, session 7): written with T-0074 from directive #60 (2). Stays `queued` until T-0074 is `done`. T-0073 now also depends on it, because #60 blocks T-0073.
+- 2026-10-26, lead-architect (wave B run, session 8): T-0074 is `done` (125b9ab), so directive #60 (2) applies here. Branch created from `autoloop/m2-wave-b` at d5a7d39. Status `tests`; dispatched `rules-test-author`.
