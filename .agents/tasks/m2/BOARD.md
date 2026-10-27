@@ -145,7 +145,8 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0072 | "You may X. If you do, Y": an untargeted pick on resolution, a kill step, and steps that report what they did (SVY-R14, directive #51 part 2, wave B shape, sonnet) | done |
 | T-0074 | Aggressive is an ability stack item, marked as coming from the keyword (directive #60 part 1, harness, sonnet) | done |
 | T-0075 | Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flash) | done |
-| T-0073 | Make Infested Apostle executable (wave B card, flash) | in-progress |
+| T-0073 | Make Infested Apostle executable (wave B card, flash) | queued |
+| T-0076 | An untargeted pick is its own decision kind, DecidePick, not a Target (SVY-R3, SVY-R14, directive #20 (a), wave B shape, sonnet) | tests |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |

@@ -6,7 +6,7 @@ tier: flash
 wave: B
 status: queued
 branch: m2/T-0073-infested-apostle
-depends_on: [T-0072, T-0075]
+depends_on: [T-0072, T-0075, T-0076]
 claims: [card:Infested Apostle]
 cards: [Infested Apostle]
 requirements: []
@@ -55,3 +55,6 @@ None expected.
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 6): Wrote the task, `queued` behind T-0072 (its shapes). Split from T-0072 by the size rule (D2.4).
+- 2026-10-27 lead-architect (wave run B, session 11): Back to `queued` behind T-0076 (D6, missing shape). Session 10's Flash run (`agy` conversation `096cd558-…`) got the definition working, but `go tool task sim` failed in the targeting monitor (game 3, seed 3, event 377): the kill pick asked a `DecideTarget`, so the monitor wanted the placement of an item after it. T-0076 gives picks their own kind, `DecidePick`.
+  - State of `m2/T-0073-infested-apostle`: `e127feb` (approved tests), `7baee6f` (`ready`), `ae58054` (`in-progress`). The run's uncommitted definition was in its `scratch/t0073` worktree, which is gone (`git worktree list` shows none), so nothing of it survives. The definition above is unchanged.
+  - When T-0076 is `done`: recreate the branch from the run branch, carry over the test commit, and set `status: tests`. `rules-test-author` changes the kill pick's expected kind from `DecideTarget` to `DecidePick` in `TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked` (line 43, the third kind) and `TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage` (line 102, the second kind). The pick is answered through `scriptPlan`'s target queue, which T-0076 extends to picks, so nothing else changes.
