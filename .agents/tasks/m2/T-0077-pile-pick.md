@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: changes
+status: review
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -112,3 +112,4 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
   - **Note:**
     1. **One check of a filter's card-level criteria (duplication, D5.3).** `matchesCard` repeats three of `matchesFilter`'s checks, differing only in which player and card they read: the `Allegiance` switch (an asset's controller, a card's owner), `Kinds` through `kindOf`, and `NonScratch` by the Scratch Company subtype. A change to any of those rules would need two edits. Move them into one helper in `targeting.go`, for example `matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool`, where `side` is the player the entity belongs to. `matchesFilter` calls it with `a.Controller` and `a.Printed()`, after its `Other` and zone checks. `matchesCard` calls it with `inst.Owner` and `inst.Card`, after its own. Every test must pass unchanged, and `go tool task sim-compare -- autoloop/m2-wave-b` must stay `[PASS]`.
   - Gates to re-run: the Done When list, including the targeted `-run` pattern, and `sim-compare`.
+- 2026-10-27 kernel-engineer (sonnet): Round 1 note 1 answered; `status: review`. Added `matchesPrinted(ctl, f, side, c)` in `targeting.go` (Allegiance by `side`, Kinds via `kindOf`, NonScratch). `matchesFilter` calls it with `a.Controller` and `a.Printed()` after its `Other` and zone checks; `matchesCard` with `inst.Owner` and `inst.Card` after its own. Only `targeting.go` changed; no test edited. Gates: targeted `-run` pattern 9 tests pass; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS.

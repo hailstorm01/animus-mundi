@@ -110,20 +110,7 @@ func (g *Game) matchesCard(ctl PlayerID, src *Instance, f ability.Filter, inst *
 	if f.Zone != ability.ZoneDiscard || (f.Other && inst == src) {
 		return false
 	}
-	switch f.Allegiance {
-	case ability.AllegianceAllied:
-		if inst.Owner != ctl {
-			return false
-		}
-	case ability.AllegianceOpposing:
-		if inst.Owner == ctl {
-			return false
-		}
-	}
-	if f.Kinds != 0 && f.Kinds&kindOf(inst.Card.Type) == 0 {
-		return false
-	}
-	return !(f.NonScratch && inst.Card.HasSubtype("Scratch Company"))
+	return matchesPrinted(ctl, f, inst.Owner, inst.Card)
 }
 
 // legalTarget reports whether battlefield asset a meets every criterion of f
@@ -134,6 +121,26 @@ func (g *Game) legalTarget(ctl PlayerID, src int, f ability.Filter, a *Asset) bo
 		return false
 	}
 	return g.matchesFilter(ctl, src, f, a)
+}
+
+// matchesPrinted is the card-level part of a filter, shared by assets and
+// cards in piles: Allegiance by side, the player the entity belongs to (relative
+// to ctl), then Kinds and NonScratch by the card's printed characteristics.
+func matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool {
+	switch f.Allegiance {
+	case ability.AllegianceAllied:
+		if side != ctl {
+			return false
+		}
+	case ability.AllegianceOpposing:
+		if side == ctl {
+			return false
+		}
+	}
+	if f.Kinds != 0 && f.Kinds&kindOf(c.Type) == 0 {
+		return false
+	}
+	return !(f.NonScratch && c.HasSubtype("Scratch Company"))
 }
 
 // matchesFilter reports whether battlefield asset a meets every criterion of f
@@ -147,20 +154,5 @@ func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) 
 	if f.Zone == ability.ZoneDiscard || !deployedTo(a, f.Zone) {
 		return false
 	}
-	switch f.Allegiance {
-	case ability.AllegianceAllied:
-		if a.Controller != ctl {
-			return false
-		}
-	case ability.AllegianceOpposing:
-		if a.Controller == ctl {
-			return false
-		}
-	}
-	if f.Kinds != 0 {
-		if f.Kinds&kindOf(a.Printed().Type) == 0 {
-			return false
-		}
-	}
-	return !(f.NonScratch && a.Printed().HasSubtype("Scratch Company"))
+	return matchesPrinted(ctl, f, a.Controller, a.Printed())
 }
