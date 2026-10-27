@@ -4,7 +4,7 @@ title: Make Allshan, Chainbreaker Revenant executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0070-allshan-chainbreaker-revenant
 depends_on: [T-0069]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -69,3 +69,4 @@ None expected.
       - Before: P1 (data/decks/path-starter.txt): 23/50 main cards executable now (Supported()); P0 wins 63.0%  P1 wins 33.0%  draws 4.0%  first player wins 49.0%; Average match length: 27.1 turns
       - After: P1 (data/decks/path-starter.txt): 24/50 main cards executable now (Supported()); P0 wins 57.5%  P1 wins 39.0%  draws 3.5%  first player wins 51.5%; Average match length: 27.2 turns
   - Status `review`.
+- 2026-10-26 lead-architect (wave run B, session 4): review, approved in round 1. Scope: only `pkg/engine/cards/path.go` and `pkg/engine/cards/cards.go` changed, and the test file is untouched since `971c2f4`. Fences: data only, no new shape; the definition matches the task's (`HookDamaged` → `OpAddArmor` 2; `HookAttacks` with `Cornered` → `OpModifyStat` 3; `SubjectSelf`). Re-ran in a review worktree: the card tests plus `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass, `go tool task check` passes, and `go tool task sim` is clean (P0 57.5% / P1 39.0% / draws 3.5%, was 63.0% / 33.0% / 4.0%; P1 24/50 executable). The flash run's JSON had no `denied_actions`. Merged into `autoloop/m2-wave-b`; status `done`.
