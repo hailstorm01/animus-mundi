@@ -216,7 +216,10 @@ func (g *Game) newID() int {
 //
 // fixedOrderPositions: the choosing player's assets before the opponent's;
 // within a player the Headquarters, then Reserves, then the Main Theater, each
-// in arrival order. Timeout fallbacks use it (SVY-R16, FR-MOD-001 §6).
+// in arrival order. Then the cards in discard piles, after every battlefield
+// asset: the choosing player's pile from the top down, then the opponent's, from
+// the top down (the top of a pile is its last card). Timeout fallbacks use it
+// (SVY-R16, FR-MOD-001 §6, directive #59 (1)).
 
 // Assets returns every asset on the battlefield, HQs first.
 func (g *Game) Assets() []*Asset {
@@ -242,7 +245,8 @@ func (g *Game) assetsByID() []*Asset {
 // fixedOrderPositions maps each battlefield asset ID to its position in the
 // FR-MOD-001 §6 fixed order for choosing player p (SVY-R16): p's assets before the
 // opponent's; within a player the Headquarters, then Reserves, then the Main Theater
-// assets they control, each zone in arrival order.
+// assets they control, each zone in arrival order. Cards in discard piles
+// follow, p's pile from the top down, then the opponent's, from the top down.
 func (g *Game) fixedOrderPositions(p PlayerID) map[int]int {
 	pos := map[int]int{}
 	add := func(a *Asset) { pos[a.ID] = len(pos) }
@@ -264,6 +268,15 @@ func (g *Game) fixedOrderPositions(p PlayerID) map[int]int {
 	for i := range g.Players {
 		if PlayerID(i) != p {
 			seat(PlayerID(i))
+		}
+	}
+	for _, id := range []PlayerID{p, p.Opponent()} {
+		if int(id) < 0 || int(id) >= len(g.Players) {
+			continue
+		}
+		pile := g.Players[id].Discard
+		for i := len(pile) - 1; i >= 0; i-- {
+			pos[pile[i].ID] = len(pos)
 		}
 	}
 	return pos

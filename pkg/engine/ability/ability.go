@@ -77,6 +77,7 @@ const (
 	ZoneAny Zone = iota // the zero value: no zone condition
 	ZoneReserves
 	ZoneMainTheater
+	ZoneDiscard // a discard pile, not the battlefield: the entities are cards in it (FR-TGT-001 Zone). Filter.Allegiance names whose pile: allied is the controller's
 )
 
 // Effect is what a resolving ability does: its steps, in order.
@@ -97,7 +98,7 @@ type Filter struct {
 	Kinds      Kinds      // zero means any asset
 	NonScratch bool       // excludes Scratch Company units
 	Other      bool       // excludes the ability's own source asset ("other")
-	Zone       Zone       // ZoneAny (zero) means any battlefield zone; else only assets in that zone
+	Zone       Zone       // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
 }
 
 // Allegiance is whose side an entity is on, relative to the ability's controller.

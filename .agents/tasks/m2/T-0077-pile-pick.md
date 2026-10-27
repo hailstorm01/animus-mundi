@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: review
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -87,3 +87,29 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
   - No existing equivalent: `ability` has no pile zone, and no step moves a card other than its own source. Two schemes would be copied by a naive build, and the Shape gives each one home: the bounds rule (`pickBounds`) and the type-to-kind mapping. `stepDiscard`'s hand options look like the pile options but are a different rule (`DecideHand`, most recent first), so they stay.
   - Size: four non-test files. `doc.go` needs no change, and `choice.go` none, because the top-down order lives in `fixedOrderPositions`.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/pile_pick_test.go` (commit `test(T-0077)`), 9 tests: `TestFR_TGT_001_PilePickOffersMatchingCardsInYourDiscardPile`, `TestFR_TGT_001_PilePickIsMadeOnResolutionFromWhatMatchesThen`, `TestFR_TGT_001_PilePickPutsTheCardOnTheBottomOfItsOwnersDeck`, `TestFR_TGT_001_PilePickCanReturnTheCardToHand`, `TestFR_TGT_001_PilePickWithNoMatchDoesNothing`, `TestFR_MOD_001_SinglePilePickWithOneMatchIsNotAsked`, `TestFR_MOD_001_PilePickTimeoutPicksTheTopCard`, `TestFR_TRG_005_IfYouDoRunsYAfterAPilePick`, `TestFR_TRG_005_IfYouDoSkipsYWhenThePilePickPicksNothing`.
+  - Helper requested: `inDiscard` (see Helpers Needed). `go vet` fails only on it and on `ability.ZoneDiscard`. `cardtown lint rules` passes.
+  - Test-local helpers (`ppScript`, `ppPick` and others) live in the test file. The timeout test reorders the pile with `takeCard` and `putCard`, as the task allows.
+  - Left out, as the task lists: a target in a pile, opposing or both piles, mixed asset and pile decisions.
+
+- 2026-10-27 lead-architect (tests-review, round 1): **Approved, `ready`.** I checked the tests against FRD 01 `FR-TGT-001` (Zone, line 322; untargeted selections and "you may X", lines 329-330), `FR-MOD-001` §1 and §6 (line 359) and `SVY-R14`, `SVY-R16`.
+  - **Expected outcomes are right:**
+    - The options are exactly the unit cards in your own discard pile, bottom first, asked as a `DecidePick`. A structure card, the opponent's unit card and a battlefield unit are left out.
+    - A unit card killed earlier in the same resolution is offered.
+    - `PutOnDeck` with `Bottom` makes the card the deck's last, and `ReturnToHand` puts it in hand. The card not picked stays.
+    - With no match nothing is asked, no decision event is emitted, and the next step still runs.
+    - One match is not asked. The timeout picks the top card B from A, C, B, which is neither the oldest nor the first option (directive #59 (1)).
+    - Y runs after a done pile pick and is skipped after an "up to" timeout.
+  - **Within scope:** the helpers are local to the file or already exist (`iyd*`, `dmgTo`, `inDiscardPile`, `inHand`, `faceDownCount`), plus the requested `inDiscard`. No earlier test is modified.
+  - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-27 kernel-engineer (sonnet): Implemented; `status: review`.
+  - Diff: `ability.ZoneDiscard` and the `Filter.Zone` comment; `targeting.go`: `kindOf` (one type-to-kind mapping, used by `matchesFilter` and the new `matchesCard`), `pickBounds` (used by `assetDecision` and `pileDecision`), `pileDecision`, `matchesCard`, and `matchesFilter` returns false for `ZoneDiscard` (done there, not in `deployedTo`, because `trigger.go` is not an allowed file); `effects.go`: `stepCards`, `stepRelocate` moves each card and counts them, `relocateSelf` removed (folded in), `pickCards` plus a shared `pickPrompt` (same prompts as before), `stepAssets` skips `pickAssets` for a `ZoneDiscard` pick; `state.go`: `fixedOrderPositions` ranks pile cards after assets, p's pile top-down then the opponent's, comment updated. Helper `inDiscard` added to `scenario_test.go`.
+  - Reuse: `assetDecision`/`pickAssets` shape, `takeCard`/`putCard`, `choose`; no existing pile equivalent. `choice.go` unchanged.
+  - Commands: `go test ./pkg/engine` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
+  - Reviewer: the `ZoneDiscard` rejection location in `matchesFilter`.
+- 2026-10-27 lead-architect (review, round 1): **Changes requested.** I verified against `git diff autoloop/m2-wave-b...m2/T-0077-pile-pick`.
+  - **What passed:** only the Allowed Files changed, plus `inDiscard` in `scenario_test.go`. `pile_pick_test.go` is unchanged since d0b853c. No card names. `ZoneDiscard`, `pickBounds`, `kindOf`, `pileDecision`, `stepCards`, the folded `relocateSelf` and the top-down `fixedOrderPositions` match the Shape. Putting the `ZoneDiscard` rejection in `matchesFilter` is what the Shape asked for, so it is not a deviation.
+  - **Note:**
+    1. **One check of a filter's card-level criteria (duplication, D5.3).** `matchesCard` repeats three of `matchesFilter`'s checks, differing only in which player and card they read: the `Allegiance` switch (an asset's controller, a card's owner), `Kinds` through `kindOf`, and `NonScratch` by the Scratch Company subtype. A change to any of those rules would need two edits. Move them into one helper in `targeting.go`, for example `matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool`, where `side` is the player the entity belongs to. `matchesFilter` calls it with `a.Controller` and `a.Printed()`, after its `Other` and zone checks. `matchesCard` calls it with `inst.Owner` and `inst.Card`, after its own. Every test must pass unchanged, and `go tool task sim-compare -- autoloop/m2-wave-b` must stay `[PASS]`.
+  - Gates to re-run: the Done When list, including the targeted `-run` pattern, and `sim-compare`.
+- 2026-10-27 kernel-engineer (sonnet): Round 1 note 1 answered; `status: review`. Added `matchesPrinted(ctl, f, side, c)` in `targeting.go` (Allegiance by `side`, Kinds via `kindOf`, NonScratch). `matchesFilter` calls it with `a.Controller` and `a.Printed()` after its `Other` and zone checks; `matchesCard` with `inst.Owner` and `inst.Card` after its own. Only `targeting.go` changed; no test edited. Gates: targeted `-run` pattern 9 tests pass; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS.
