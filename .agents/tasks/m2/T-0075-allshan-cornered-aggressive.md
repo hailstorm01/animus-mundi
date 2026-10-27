@@ -4,7 +4,7 @@ title: Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flas
 kind: card
 tier: flash
 wave: B (board directive #60 (2), blocking before T-0073)
-status: ready
+status: in-progress
 branch: m2/T-0075-allshan-cornered-aggressive
 depends_on: [T-0074]
 claims: [card:Allshan, Chainbreaker Revenant]
