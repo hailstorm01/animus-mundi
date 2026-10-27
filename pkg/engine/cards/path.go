@@ -33,6 +33,45 @@ var pathDefs = map[string]*ability.Def{
 			cornered(ability.Aggressive(3)),
 		},
 	},
+	"Arkha, Sun's Fury": {
+		Text: []string{"Whenever this unit attacks, you may put a unit card from your discard pile on the bottom of your deck. If you do, deal 3 damage to chosen opposing Headquarters."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:     ability.HookAttacks,
+				Optional: true,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindHeadquarters,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpPutOnDeck,
+							Bottom:  true,
+							Subject: ability.SubjectPick,
+							UpTo:    1,
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+								Zone:       ability.ZoneDiscard,
+							},
+						},
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 3},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+							IfDone:  true,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Irregulars": {
 		Text: []string{"Unbowed: Draw a card, then discard a card."},
 		Triggers: []ability.Trigger{

@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: in-progress
+status: blocked
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
@@ -67,3 +67,17 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
     1. **Wrong expected damage in `TestCard_ArkhasSunsFury_DecliningDoesNothing`.** `s.wantDamage(a.dummy, 6)` expects 6, but Arkha's printed power is 8 (`data/cards/units-and-structures-path.csv` line 30, `power` column; checked by loading the card in a scratch test: power 8, the dummy takes 8). Expect 8, or read it from `a.arkha.Printed().Power`. Change nothing else.
 - 2026-10-27 rules-test-author (round 1 fix): Note 1 done. `DecliningDoesNothing` now expects the dummy's damage to equal `a.arkha.Printed().Power` (8) instead of 6. Nothing else changed.
 - 2026-10-27 lead-architect (tests-review, round 2): **Approved, `ready`.** Note 1 is done: 10b30dc changes only the dummy's expected damage, now `a.arkha.Printed().Power` (8). No other test changed since 7a9602d. Next: dispatch `kernel-engineer` (tier `flash`) headless.
+- 2026-10-27 kernel-engineer: BLOCKED on `go tool task check` (TestView_Case4_NoLeak).
+  - Implementation: added ability definition for "Arkha, Sun's Fury" to `pathDefs` in `pkg/engine/cards/path.go` (Trigger: HookAttacks, Optional: true, Targets: slot 0 Filter{Allegiance: AllegianceOpposing, Kinds: KindHeadquarters}, Step 1: OpPutOnDeck, Bottom: true, SubjectPick, UpTo: 1, Filter{Allegiance: AllegianceAllied, Kinds: KindUnit, Zone: ZoneDiscard}, Step 2: OpDealDamage, Amount: Value{N: 3}, SubjectTarget: slot 0, IfDone: true; Text: printed CSV line). Removed "Arkha, Sun's Fury" from `NotYetExecutable` in `pkg/engine/cards/cards.go` while keeping alphabetical sort order.
+  - Reused: HookAttacks, Trigger.Optional, Effect.Targets, Filter (AllegianceOpposing, KindHeadquarters), OpPutOnDeck, Bottom, SubjectPick, UpTo, Filter (AllegianceAllied, KindUnit, ZoneDiscard), OpDealDamage, SubjectTarget, IfDone. No new shapes or engine logic added.
+  - Verification:
+    - `go test ./pkg/engine -run 'TestCard_ArkhasSunsFury'` PASS (5/5 tests pass).
+    - `go test ./pkg/engine -run 'TestStarterSet_Executable'` PASS.
+    - `go test ./pkg/engine` PASS (all engine unit tests pass).
+    - `cardtown lint --all` PASS (clean).
+    - `go tool task sim` PASS (200 games ANIMUS vs PATH starter playout clean, all invariants hold, Path executable cards 24/50 -> 25/50).
+  - Block cause:
+    - `go tool task check` runs `go test ./...` which fails at `pkg/view/view_test.go:537` (`TestView_Case4_NoLeak`):
+      `view_test.go:537: seed 13, settled point 61 (turn 11): seat 0's log names "Hammerhand Brigands", hidden by player 1: 122 T11 main decision: player 1, Pick, "Arkha, Sun's Fury: pick up to 1": picked [Hammerhand Brigands] (answer)`
+    - `TestView_Case4_NoLeak` checks that a seat's new log lines do not name cards hidden in the opponent's hand or deck, unless they are currently in `PublicNames(g)` (discard piles, face-up battlefield assets, or stack). When Arkha's trigger resolves, Player 1 picks a unit card from their discard pile to put on the bottom of their deck. The decision event `decision: player 1, Pick, "Arkha, Sun's Fury: pick up to 1": picked [...]` is emitted while the card is in the discard pile, but the card is immediately moved to the deck by `OpPutOnDeck`. At the subsequent settled point (point 61), the card is in Player 1's deck and no longer in `PublicNames(g)`, so `TestView_Case4_NoLeak` treats the event log line as a leak of a card in the opponent's deck.
+    - Resolving this failure requires updating `pkg/view/view_test.go` (or `pkg/view/viewtest` / `pkg/view`), which are outside `Allowed Files` for T-0078. Status set to `blocked`.

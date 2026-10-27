@@ -18,7 +18,6 @@ var NotYetExecutable = []string{
 	"Animoceps Spore Cloud",
 	"Animoceps Spores",
 	"Animoceps Stalk",
-	"Arkha, Sun's Fury",
 	"Blind Defile",
 	"Blindside",
 	"Boneyard Amalgam",
