@@ -4,7 +4,7 @@ title: Make Chainbreaker Irregulars executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0068-chainbreaker-irregulars
 depends_on: [T-0067]
 claims: [card:Chainbreaker Irregulars]
@@ -53,3 +53,4 @@ None. The tests use only existing helpers (`newScene`, `give`, `onTop`, `put`, `
 - 2026-10-26 lead-architect (wave run B, session 1): written with T-0067 and left `queued` until T-0067 is `done`.
 - 2026-10-26 lead-architect (wave run B, session 2): synced `main` into the run branch (1a3ef25). No `open: before` directive; #51, #58 and #59 don't apply (no "if you do", exhaust or pile claims). Status `tests`; branch created from `autoloop/m2-wave-b`; dispatched `rules-test-author`.
 - 2026-10-26 rules-test-author: wrote 8 `TestCard_ChainbreakerIrregulars_*` tests (listed under Tests). No helpers requested. `go vet` is clean, the tests fail as expected (card not yet executable), and `cardtown lint rules` passes. Left out: an empty-deck draw (FRD 01 reviewed scope does not settle it here) and an Armor-absorbs-all case (already pinned for Unbowed generally by `TestFR_REP_004_UnbowedFiresWhenArmorAbsorbsAllTheDamage`).
+- 2026-10-26 lead-architect (tests-review): approved. The eight tests match `FR-KWD-002a` (which names this card's lethal case), `SVY-R13` and `SVY-R16`. Seven fail before code for the right reason (not executable, no Unbowed); `OnlyTheControllersHandAndDeckAreUsed` is a control and passes already. The empty-deck draw is `OpDraw`'s behavior, not this card's, so leaving it out is right. Status `ready`; dispatching `kernel-engineer` on Flash.
