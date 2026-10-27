@@ -17,14 +17,15 @@ func TestFR_TGT_001_UntargetedPickAsksAPickDecision(t *testing.T) {
 	a := s.put(0, ZoneMainTheater, unit("A", 0, 5, Keywords{}))
 	b := s.put(0, ZoneMainTheater, unit("B", 0, 5, Keywords{}))
 	s.put(0, ZoneMainTheater, unit("C", 0, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	v1 := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, Keywords{}))
 	targets := []ability.Target{{Filter: iydEnemy}, {Filter: iydAlly}}
 	kill1 := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget, Target: 1}
-	s.scriptPlan(0, nil, nil, pick(a), pick(b))
+	s.scriptPlan(0, nil, nil, pick(v1), pick(a), pick(b))
 	s.iydDeploy(iydTrigger(false, targets, kill1, iydPick(iydAlly, 0)))
-	want := []DecisionKind{DecideTarget, DecidePick}
+	want := []DecisionKind{DecideTarget, DecideTarget, DecidePick}
 	if got := kindsOf(s.asked(0)); !slices.Equal(got, want) {
-		t.Fatalf("the chosen target is asked as a Target on placement and the untargeted pick as a Pick on resolution: got %v, want %v (SVY-R3)", got, want)
+		t.Fatalf("the chosen targets are asked as Targets on placement and the untargeted pick as a Pick on resolution: got %v, want %v (SVY-R3)", got, want)
 	}
 	var logged []string
 	for _, e := range eventsOfKind(s.g.Log, "decision") {
@@ -32,7 +33,7 @@ func TestFR_TGT_001_UntargetedPickAsksAPickDecision(t *testing.T) {
 			logged = append(logged, e.Decision.Kind)
 		}
 	}
-	if wantLog := []string{"Target", "Pick"}; !slices.Equal(logged, wantLog) {
+	if wantLog := []string{"Target", "Target", "Pick"}; !slices.Equal(logged, wantLog) {
 		t.Errorf("the decision events record the target as \"Target\" and the pick as \"Pick\": got %v, want %v (SVY-R3)", logged, wantLog)
 	}
 }
