@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -93,3 +93,8 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
   - Waiting triggers checked against `autoloop/m2-wave-b` ee50aaf: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #58 (no exhaust by a cost or an effect) and #59 (no pile pick, no repeated targets). None has fired.
   - No existing equivalent: `ability` has no kill op, no picked subject and no step gate. `deathSweep`'s destroy body is the one other copy of a destroy, and the task moves it into `destroy`.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-26 rules-test-author: Wrote `pkg/engine/if_you_do_test.go`, status `tests-review`. Helpers requested: none (all helpers are file-local `iyd*`/`scene.iyd*` in the test file).
+  - Tests: `TestFR_TGT_001_UntargetedPickIsMadeOnResolutionFromWhatMatchesThen`, `..._UntargetedPickIgnoresWard`, `..._UntargetedPickMayPickTheSource`, `..._UntargetedPickWithNoMatchDoesNothing`; `TestFR_MOD_001_SinglePickWithOneMatchIsNotAsked`, `..._SinglePickTimeoutPicksFirstInFixedOrder`, `..._UpToPickTimeoutPicksNone`; `TestFR_LAY_002_KillDestroysAtOnceDuringResolution`, `..._KilledScratchCompanyGoesFaceUpToItsOwnersDiscard`, `..._KillSkipsAHeadquarters`; `TestFR_TRG_005_IfYouDoRunsYWhenXWasDone`, `..._SkipsYWhenXPickedNothing`, `..._SkipsYWhenNothingMatchesX`, `..._FollowsADiscardCount`; `TestFR_TRG_004_DeathTriggersOfAnXKillArePlacedAfterTheTriggerFinishes`.
+  - `go vet` fails only on the missing `OpKill`, `SubjectPick`, `Step.UpTo`, `Step.IfDone`. `cardtown lint rules` passes.
+  - The first test removes an ally with a `SubjectTarget` kill step before the pick, to show the pick sees only what matches at resolution.
+  - Prompt text of the pick decision is not asserted (implementation detail). Left out per the task: a non-adjacent `IfDone`, a replaced kill (SVY-R15), Arkha's pile pick.
