@@ -4,7 +4,7 @@ title: An untargeted pick is its own decision kind, DecidePick, not a Target (SV
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0076-pick-decision
 depends_on: [T-0072]
 claims: [decision:pick]
@@ -66,3 +66,4 @@ None expected.
   - Reuse: `fixedOrderPicks` and `assetDecision` are shared, not copied. The new kind adds one name and one `case` label.
   - Directives checked against `autoloop/m2-wave-b` 8d7ac9a (after syncing `main`, e76423d): no `open: before` row. Waiting triggers not fired: #6 and #7 (mode `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape), #58 (no exhaust by a cost or an effect), #59 (this pick is from the battlefield, not a pile; no repeated targets).
   - Claims overlap no open task (T-0073, the only one not `done`, claims only its card and goes back to `queued`).
+- 2026-10-27 rules-test-author: Wrote the tests (commit 653df34), status tests-review. New in `pkg/engine/pick_decision_test.go`: `TestFR_TGT_001_UntargetedPickAsksAPickDecision`, `TestFR_MOD_001_PickDecisionKindIsNamedPick`, `TestFR_MOD_001_PickDecisionTimeoutMinOneTakesFirstOption`, `TestFR_MOD_001_PickDecisionTimeoutMinZeroTakesNone`. Authorized edits: `if_you_do_test.go` want is `{DecideOptional, DecideTarget, DecidePick}`; `scriptPlan` handles `case DecideTarget, DecidePick:` and its comments say so. Helpers requested: none. Left out: none. The package fails to compile only on `DecidePick`. `cardtown lint rules` passes.
