@@ -4,7 +4,7 @@ title: Make Chainbreaker Irregulars executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0068-chainbreaker-irregulars
 depends_on: [T-0067]
 claims: [card:Chainbreaker Irregulars]
@@ -58,3 +58,4 @@ None. The tests use only existing helpers (`newScene`, `give`, `onTop`, `put`, `
   - Before (643b2cc): `P0 (data/decks/animus-starter.txt): 26/50 main cards executable now (Supported())`, `P1 (data/decks/path-starter.txt): 19/50 main cards executable now (Supported())`, `P0 wins 79.5%  P1 wins 19.0%  draws 1.5%  first player wins 45.0%`, `Average match length: 27.8 turns`, `[PASS] Every match terminated with all invariants holding.`
   - After: `P0 (data/decks/animus-starter.txt): 26/50 main cards executable now (Supported())`, `P1 (data/decks/path-starter.txt): 23/50 main cards executable now (Supported())`, `P0 wins 63.0%  P1 wins 33.0%  draws 4.0%  first player wins 49.0%`, `Average match length: 27.1 turns`, `[PASS] Every match terminated with all invariants holding.`
   - Next: status `review`.
+- 2026-10-26 lead-architect (review): approved, round 1, no changes. Verified against the diff: only `path.go` and `cards.go` changed, the definition is plain data (`HookDamaged`, `OpDraw` 1 then `OpDiscard` 1, printed text), and the test file is unchanged since `06bb3a8`. No card name in engine code, no new shape. agy run `739c874c-a4e5-46bc-87fd-022311901082`: `SUCCESS`, exit 0, no denied actions. Re-ran in a review worktree: `go tool task check` passes; `go tool task sim` clean, P1 23/50 executable, P0 63.0% / P1 33.0% / draws 4.0%, all invariants held. 27 deck cards still on `NotYetExecutable`. Merged into `autoloop/m2-wave-b`; status `done`.
