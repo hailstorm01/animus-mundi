@@ -4,7 +4,7 @@ title: Make Infested Apostle executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0073-infested-apostle
 depends_on: [T-0072, T-0075, T-0076]
 claims: [card:Infested Apostle]
