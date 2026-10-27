@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: changes
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -107,3 +107,8 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
   - Reuse: `assetDecision`/`pickAssets` shape, `takeCard`/`putCard`, `choose`; no existing pile equivalent. `choice.go` unchanged.
   - Commands: `go test ./pkg/engine` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
   - Reviewer: the `ZoneDiscard` rejection location in `matchesFilter`.
+- 2026-10-27 lead-architect (review, round 1): **Changes requested.** I verified against `git diff autoloop/m2-wave-b...m2/T-0077-pile-pick`.
+  - **What passed:** only the Allowed Files changed, plus `inDiscard` in `scenario_test.go`. `pile_pick_test.go` is unchanged since d0b853c. No card names. `ZoneDiscard`, `pickBounds`, `kindOf`, `pileDecision`, `stepCards`, the folded `relocateSelf` and the top-down `fixedOrderPositions` match the Shape. Putting the `ZoneDiscard` rejection in `matchesFilter` is what the Shape asked for, so it is not a deviation.
+  - **Note:**
+    1. **One check of a filter's card-level criteria (duplication, D5.3).** `matchesCard` repeats three of `matchesFilter`'s checks, differing only in which player and card they read: the `Allegiance` switch (an asset's controller, a card's owner), `Kinds` through `kindOf`, and `NonScratch` by the Scratch Company subtype. A change to any of those rules would need two edits. Move them into one helper in `targeting.go`, for example `matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool`, where `side` is the player the entity belongs to. `matchesFilter` calls it with `a.Controller` and `a.Printed()`, after its `Other` and zone checks. `matchesCard` calls it with `inst.Owner` and `inst.Card`, after its own. Every test must pass unchanged, and `go tool task sim-compare -- autoloop/m2-wave-b` must stay `[PASS]`.
+  - Gates to re-run: the Done When list, including the targeted `-run` pattern, and `sim-compare`.
