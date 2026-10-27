@@ -1,6 +1,10 @@
 package engine
 
-import "testing"
+import (
+	"testing"
+
+	"animus-mundi/pkg/engine/ability"
+)
 
 // Card tests for Allshan, Chainbreaker Revenant (T-0070), written from the CSV
 // rules text in data/cards/units-and-structures-path.csv: Unit, 5 Requisition,
@@ -106,4 +110,48 @@ func TestCard_AllshanChainbreakerRevenant_NotCorneredAttackGainsNothing(t *testi
 	if al.TempPower != 0 {
 		t.Errorf("Cornered needs the opponent to control strictly more Main Theater assets: TempPower %d, want 0", al.TempPower)
 	}
+}
+
+// T-0075 (directive #60 part 2): the second line reads "Cornered: Aggressive 3."; the attack
+// places the keyword trigger as a StackAbility item marked Aggressive, only while Cornered.
+// Covers: FR-KWD-002e, FR-KWD-002f
+func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
+	count := func(items []StackItem) int {
+		n := 0
+		for _, it := range items {
+			if it.Kind == StackAbility && it.Keyword == ability.KeywordAggressive {
+				n++
+			}
+		}
+		return n
+	}
+	t.Run("cornered", func(t *testing.T) {
+		s := newScene(t)
+		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+		items := recordPlaced(s)
+		s.do(s.attack(al, def))
+		if n := count(*items); n != 1 {
+			t.Fatalf("Cornered: Aggressive 3 places one Aggressive StackAbility item on attack: got %d in %+v", n, *items)
+		}
+		for _, it := range *items {
+			if it.Keyword == ability.KeywordAggressive && it.Source != al.ID {
+				t.Errorf("the Aggressive item's source is Allshan: %+v", it)
+			}
+		}
+		if al.TempPower != 3 {
+			t.Errorf("Aggressive 3 gives +3 power until end of turn: TempPower %d, want 3", al.TempPower)
+		}
+	})
+	t.Run("not cornered", func(t *testing.T) {
+		s := newScene(t)
+		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		items := recordPlaced(s)
+		s.do(s.attack(al, def))
+		if n := count(*items); n != 0 {
+			t.Errorf("not Cornered, no Aggressive item is placed: got %d in %+v", n, *items)
+		}
+	})
 }
