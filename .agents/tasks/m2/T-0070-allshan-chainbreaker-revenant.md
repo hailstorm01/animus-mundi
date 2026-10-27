@@ -4,7 +4,7 @@ title: Make Allshan, Chainbreaker Revenant executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0070-allshan-chainbreaker-revenant
 depends_on: [T-0069]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -48,13 +48,24 @@ None expected.
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AllshanChainbreakerRevenant'`
-- [ ] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
-- [ ] `go tool task check` passes
-- [ ] `go tool task sim` runs clean; report the before and after summary lines in the Log
+- [x] The card's tests pass: `go test ./pkg/engine -run 'TestCard_AllshanChainbreakerRevenant'`
+- [x] `TestDefs_MatchRulesText` and `TestStarterSet_Executable` pass unchanged
+- [x] `go tool task check` passes
+- [x] `go tool task sim` runs clean; report the before and after summary lines in the Log
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 3): written with T-0069 and left `queued` until T-0069 is `done`.
 - 2026-10-26 lead-architect (wave run B, session 4): T-0069 is `done`. No directive is open before this task, and none of the `waiting` triggers fired (a card task with no new shape). Branch created from `autoloop/m2-wave-b`; status `tests`, dispatched to `rules-test-author`.
 - 2026-10-26 rules-test-author (wave run B): wrote `pkg/engine/cards_path_allshan_test.go`: `TestCard_AllshanChainbreakerRevenant_EntersReservesAsFiveSixForFiveRequisitionAndDoesNothing`, `_UnbowedGainsTwoArmorWhenItSurvivesDamage`, `_UnbowedArmorAbsorbsLaterDamage`, `_UnbowedDoesNotFireWhenNoDamageIsDealt`, `_CorneredAttackDealsEightAndPowerResetsAtEndOfTurn`, `_NotCorneredAttackGainsNothing`. Helpers requested: none. Left out: lethal-damage Unbowed (SVY-R13) since a destroyed asset's Armor is unobservable. No `TestFR_*` added, so `cardtown lint rules` was not needed (binary not on PATH). `go vet` clean; the deploy, Unbowed and Cornered-attack tests fail now (card not executable) and the two negative controls pass.
 - 2026-10-26 lead-architect (wave run B, session 4): tests approved. Checked against `FR-KWD-002e` (strictly more Main Theater assets; equal counts are not Cornered), `FR-KWD-002k` and `FR-REP-004` Stage 4 (Armor stacks, absorbs 1-for-1, and absorbed damage still counts for Unbowed), and `FR-KWD-002a` (no damage, no trigger). Leaving out lethal Unbowed (`SVY-R13`) is accepted: nothing about a destroyed asset's Armor is observable. Status `ready`; dispatching the flash engineer.
+- 2026-10-26 kernel-engineer (wave run B, flash): implemented Allshan, Chainbreaker Revenant.
+  - Diff: added ability definition to `pathDefs` in `pkg/engine/cards/path.go` with Unbowed (`HookDamaged` -> `OpAddArmor` 2) and Cornered attack (`HookAttacks`, `Cornered: true` -> `OpModifyStat` +3 power); removed `Allshan, Chainbreaker Revenant` from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
+  - Reused: `ability.HookDamaged`, `ability.OpAddArmor`, `ability.SubjectSelf`, `ability.HookAttacks`, `Cornered` gate (T-0069), `ability.OpModifyStat` (T-0069).
+  - Commands & verification:
+    - `go test ./pkg/engine -run 'TestCard_AllshanChainbreakerRevenant'`: PASS (all 6 tests pass)
+    - `go test ./pkg/engine -run 'TestDefs_MatchRulesText|TestStarterSet_Executable'`: PASS
+    - `go tool task check`: PASS (fmt-check, vet, all package tests, full linter suite)
+    - `go tool task sim`: PASS
+      - Before: P1 (data/decks/path-starter.txt): 23/50 main cards executable now (Supported()); P0 wins 63.0%  P1 wins 33.0%  draws 4.0%  first player wins 49.0%; Average match length: 27.1 turns
+      - After: P1 (data/decks/path-starter.txt): 24/50 main cards executable now (Supported()); P0 wins 57.5%  P1 wins 39.0%  draws 3.5%  first player wins 51.5%; Average match length: 27.2 turns
+  - Status `review`.
