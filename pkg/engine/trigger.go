@@ -74,6 +74,11 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		if hook == ability.HookDeploy && !deployedTo(a, t.ToZone) {
 			continue
 		}
+		// Cornered is an enqueue gate: checked here, when the event happens,
+		// and before the MaxPerTurn counter (FR-KWD-002e, FR-LAY-003).
+		if t.Cornered && !g.cornered(a.Controller) {
+			continue
+		}
 		if t.MaxPerTurn > 0 {
 			k := firingKey{asset: a.ID, trigger: i, turn: g.Turn}
 			if g.firings[k] >= t.MaxPerTurn {
@@ -89,6 +94,13 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), pos: posOf(a),
 		})
 	}
+}
+
+// cornered reports whether p is Cornered: the opponent controls strictly more
+// battlefield assets (units and structures) in the Main Theater than p does.
+// Headquarters are never in the Main Theater (FR-KWD-002e).
+func (g *Game) cornered(p PlayerID) bool {
+	return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))
 }
 
 // deployedTo reports whether a is in zone z now, which for a deploy trigger is

@@ -25,15 +25,15 @@
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
 //     choosing from your own hand (DecideHand, SVY-R16).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
-//     OpDealDamage, OpHeal and OpAddArmor, with "all" steps, source-power values, the
-//     deploy-zone gate, the TurnYours gate, SubjectSelf (tracked in discard,
+//     OpDealDamage, OpHeal, OpAddArmor and OpModifyStat, with "all" steps, source-power values, the
+//     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents.
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Maneuvers, activated and continuous abilities, Cornered, Heal N,
+//   - Maneuvers, activated and continuous abilities, continuous Cornered, Heal N,
 //     Regroup N, replacement effects beyond the damage pipeline, and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
 //     and cannot be deployed.

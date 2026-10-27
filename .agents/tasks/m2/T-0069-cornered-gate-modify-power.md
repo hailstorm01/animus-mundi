@@ -4,7 +4,7 @@ title: A Cornered gate on triggers, and a step that gives power until end of tur
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: done
 branch: m2/T-0069-cornered-gate-modify-power
 depends_on: []
 claims: [gate:Cornered (triggers), primitive:MODIFY_STAT (power, until end of turn)]
@@ -59,10 +59,40 @@ None expected. `put`, `putScratch`, `moveTo`, `attack`, `endTurn`, `script` and 
 - `pkg/engine/doc.go` (the gates, steps and "Not built yet" lines)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_KWD_002e_Cornered|TestFR_LAY_003_(PlacedCornered|ModifyStat)|TestFR_LAY_001_(ModifyStat|NegativeModifyStat)|TestFR_TGT_003_ModifyStat'`
+- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_KWD_002e_(A)?Cornered|TestFR_LAY_003_(PlacedCornered|ModifyStat)|TestFR_LAY_001_(ModifyStat|NegativeModifyStat)|TestFR_TGT_003_ModifyStat'`
 - [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 - [ ] `go tool task sim` runs clean on the starter decks
 - [ ] No card uses either shape yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 3): wrote the task. Run branch in sync with `main`; no `open: before` directive. The wave B deck cards still not executable are Allshan, Chainbreaker Revenant; Eternal Watchman; Infested Apostle; and Arkha, Sun's Fury (directive #14 (a)). Allshan is first in survey order. Directives checked: #15 is not triggered, because a power modifier can't make an asset lethal when it expires in 4c (only Max Health modifiers can). #51 (no "if you do"), #58 (no exhaust), #59 (no pile pick) and #8 (no `deck.go`) don't apply. #20 waits for a wave C shape task, and this is wave B. Claims don't overlap any open task, since none is open. There's no existing equivalent: `pkg/engine` has no Cornered check, and the only "+N power until end of turn" is the Aggressive keyword item, which is not an effect step. The card task, T-0070, is written and `queued`. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-26 rules-test-author: wrote `pkg/engine/cornered_test.go`, 11 tests, one per required case: `TestFR_KWD_002e_CorneredTriggerFiresWhenTheOpponentHasMoreInTheMainTheater`, `..._CorneredTriggerDoesNotFireOnEqualCounts`, `..._CorneredCountsOnlyMainTheaterAssets`, `..._CorneredCountsStructuresAndScratchCompanyUnits`, `..._ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn`, `TestFR_LAY_003_PlacedCorneredTriggerResolvesAfterTheCountsChange`, `TestFR_LAY_003_ModifyStatPowerExpiresAtEndOfTurn`, `TestFR_LAY_001_ModifyStatGivesPowerThatCountsInCombatDamage`, `..._ModifyStatStacksWithAggressive`, `..._NegativeModifyStatClampsPowerAtZero`, `TestFR_TGT_003_ModifyStatOnSelfFizzlesWhenTheSourceHasLeft`. Helpers requested: none (the file defines its own `cornered`, `modifyPower`, `modifyTarget`, `targetedAttack`, `wall`, and reuses `limited`, `striker`, `attackTrigger`, `placedOrder` from other test files). `go vet` fails only on the missing `Trigger.Cornered`; `cardtown lint rules` passes. Notes: (1) the Scratch Company case moves `putScratch`'s Reserves unit into the Main Theater with `moveTo`, because `putScratch` places it in Reserves. (2) The gate-before-limit case moves the opponent's ally out of the Main Theater (2 v 2 becomes 2 v 1) rather than moving an attacker in; same count change. (3) The FR-LAY-003 and fizzle cases order triggers with scripted `DecideOrder` picks `[0, 1]` (first pick is placed first and resolves last). Left out as the task says: continuous Cornered, other durations/stats.
+- 2026-10-26 lead-architect (tests-review, round 1): **Approved, `ready`.** Checked against `FR-KWD-002e` (line 533), `FR-LAY-003` (lines 429-433), `FR-LAY-001` and `FR-TRN-001` 4c. The expected outcomes are right:
+  - strictly more is required, and equal counts don't fire;
+  - only the Main Theater counts, so Reserves, Headquarters and a Scratch Company unit in Reserves are ignored;
+  - a structure and a face-down Scratch Company unit in the Main Theater both count;
+  - the Cornered player is the trigger's controller, not the active player (the max-per-turn case gates player 1 during player 0's turn).
+
+  Two tests would catch the plausible wrong builds:
+  - `PlacedCorneredTriggerResolvesAfterTheCountsChange` fails if the gate is checked again at resolution.
+  - `ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn` fails if the counter runs before the gate.
+
+  The setup differences the author logged keep each case's meaning. `DecideOrder` picks `[0, 1]` put the first listed trigger on the stack first, so it resolves last (`SVY-R7`). Every helper used exists (`striker`, `attackTrigger`, `limited`, `unbowed`, `bowed`, `placedOrder`, `tgt`, `dmgTo`, `scratchN`, `wantScratches`). No earlier test is modified. The file fails only because `Trigger.Cornered` and `OpModifyStat` don't exist yet. Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-26 kernel-engineer (sonnet): implemented. Diff: `ability.Trigger.Cornered` and `ability.OpModifyStat` (ability.go); `(g *Game) cornered` (counts `g.Theater` assets by controller; HQs and Reserves are not in it) and the gate in `fireHook`, placed before the `MaxPerTurn` counter (trigger.go); `stepModifyStat` plus its `resolveAbility` case, adding `g.value(it, st.Amount)` to `TempPower` via `stepAssets` (effects.go); doc.go steps/gates/"Not built yet" lines. Reuse: no existing Cornered check or power-step found; `TempPower`, `Power` clamp and `endTurn` expiry reused unchanged, no stack.go change. Ran: the listed `go test -run` filter (ok), `go tool task check` (all pass), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-b` (PASS, byte for byte). No tests or helpers edited.
+- 2026-10-26 lead-architect (review, round 1): **Changes requested.** Checked against `git diff autoloop/m2-wave-b...m2/T-0069-cornered-gate-modify-power`, not against this Log.
+  - **Scope:** only the four Allowed Files changed, plus this file. `cornered_test.go` is unchanged since `12a4f3b`, and no other test changed.
+  - **Fences:** no card names. `OpModifyStat` is appended after `OpDiscard`. `Cornered` is a new field, so existing values don't move.
+  - **Rules fidelity:** right. The gate is checked once, in `fireHook`, before the `MaxPerTurn` counter, and is never checked again. The count uses the trigger's controller.
+  - **Gates, re-run in a review worktree:** all 11 tests pass; `go tool task check` exit 0; `go tool task sim` exit 0; `go tool task sim-compare -- autoloop/m2-wave-b` [PASS], byte for byte.
+  - **Lead fix:** the `Done When` regex missed `TestFR_KWD_002e_ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn`. It now reads `TestFR_KWD_002e_(A)?Cornered`. The test passes.
+
+  Notes:
+  1. **Reuse (D5.3):** `cornered` repeats `(g *Game) TheaterOf(p)` (`state.go:283`, "the Main Theater assets controlled by p"), which `combat.go` and `state.go` already use. Write it as `return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))` and keep the doc comment. Nothing else changes. Re-run the listed tests, `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-b`.
+- 2026-10-26 kernel-engineer (sonnet, round 1 fixes): answered the review note. 1. `cornered` in `trigger.go` is now `return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))`, with its doc comment kept; the diff is that one function (1 line added, 9 removed) and nothing else. Ran: the listed `go test -run` filter (ok), `go tool task check` (all stages passed, lint summary PASSED), `go tool task sim-compare -- autoloop/m2-wave-b` ([PASS], byte for byte).
+- 2026-10-26 lead-architect (review, round 2): **Approved.** The only change since round 1 is `bb6c327`: `cornered` is now `len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))`, and note 1 is resolved. No test has changed since `12a4f3b`. Gates re-run in a review worktree:
+  - all 11 listed tests pass;
+  - `go tool task check` exit 0;
+  - `go tool task sim` exit 0, clean: ANIMUS vs PATH over 200 games, P0 63.0% / P1 33.0% / draws 4.0%, P1 23/50 executable, all invariants hold;
+  - `go tool task sim-compare -- autoloop/m2-wave-b` [PASS], byte for byte.
+
+  27 deck cards are still on `NotYetExecutable`. Merged with `--no-ff` into the run branch `autoloop/m2-wave-b`. Next: T-0070 (Allshan, Chainbreaker Revenant).
