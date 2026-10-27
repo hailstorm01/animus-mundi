@@ -4,7 +4,7 @@ title: Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flas
 kind: card
 tier: flash
 wave: B (board directive #60 (2), blocking before T-0073)
-status: tests
+status: tests-review
 branch: m2/T-0075-allshan-cornered-aggressive
 depends_on: [T-0074]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -28,7 +28,7 @@ requirements: [FR-KWD-002e, FR-KWD-002f]
 - "Cornered: Aggressive 3." does not match the keyword-line pattern in `cardload.go` (it has a prefix and a period), so it stays a rules-text line that `Text` must equal. `cardload.go` does not change.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written by `rules-test-author` when this task reaches `tests`, in `pkg/engine/cards_path_allshan_test.go` (new test functions only; the T-0070 tests stay unchanged):
+Written by `rules-test-author`, in `pkg/engine/cards_path_allshan_test.go` (new test functions only; the T-0070 tests stay unchanged):
 - `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger`: while Cornered, Allshan's attack places a `StackAbility` item with `Keyword: ability.KeywordAggressive`; not Cornered, none is placed.
 
 ## Helpers Needed
@@ -48,3 +48,4 @@ To be written by `rules-test-author` when this task reaches `tests`, in `pkg/eng
 ## Log
 - 2026-10-26, lead-architect (wave B run, session 7): written with T-0074 from directive #60 (2). Stays `queued` until T-0074 is `done`. T-0073 now also depends on it, because #60 blocks T-0073.
 - 2026-10-26, lead-architect (wave B run, session 8): T-0074 is `done` (125b9ab), so directive #60 (2) applies here. Branch created from `autoloop/m2-wave-b` at d5a7d39. Status `tests`; dispatched `rules-test-author`.
+- 2026-10-26, rules-test-author: wrote `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger` (subtests cornered / not cornered; also checks source and +3 TempPower) in `pkg/engine/cards_path_allshan_test.go`. Helpers requested: none (reuses `recordPlaced`). Left out: a printed-text check (no test-visible surface for card Text; the CSV/lint covers it). Verified red before implementation: the cornered subtest fails (no Aggressive-keyword item is placed, the old hand-written trigger is a plain ability item); not cornered passes. `cardtown lint rules` passes.
