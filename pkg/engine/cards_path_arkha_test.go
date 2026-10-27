@@ -177,7 +177,7 @@ func TestCard_ArkhasSunsFury_DecliningDoesNothing(t *testing.T) {
 	if s.g.Asset(a.arkha.ID) == nil || s.g.Asset(a.dummy.ID) == nil {
 		t.Fatalf("both assets are still on the battlefield")
 	}
-	s.wantDamage(a.dummy, 6)
+	s.wantDamage(a.dummy, a.arkha.Printed().Power)
 	if !a.arkha.Exhausted {
 		t.Errorf("the attack went on: Arkha is Exhausted")
 	}
