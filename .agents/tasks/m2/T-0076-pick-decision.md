@@ -4,7 +4,7 @@ title: An untargeted pick is its own decision kind, DecidePick, not a Target (SV
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0076-pick-decision
 depends_on: [T-0072]
 claims: [decision:pick]
@@ -74,3 +74,4 @@ None expected.
   2. Change nothing else. The fix goes in a new `test(T-0076)` commit (a rework of this task's own test).
 - 2026-10-27 rules-test-author: Applied review note 1 (commit 2bc7003). `TestFR_TGT_001_UntargetedPickAsksAPickDecision` now has a second opposing unit, scripts its enemy-target pick first in the tgts queue, and wants asked `[DecideTarget, DecideTarget, DecidePick]` and logged `["Target", "Target", "Pick"]` with no filter on How. Nothing else changed. `go test ./pkg/engine -run 'TestFR_TGT_001_Untargeted|TestFR_MOD_001_|TestFR_TRG_005_IfYouDo'` passes on the branch with 3a350a4. Status tests-review.
 - 2026-10-27 lead-architect: Test rework approved (2bc7003): two opposing units, the enemy target scripted first, three asked and three logged decisions, as note 1 asked. `ready`. The implementation (3a350a4) needs no change for it; `kernel-engineer` re-runs Done When and hands off to `review`.
+- 2026-10-27 kernel-engineer: Re-run after the test rework (2bc7003). Implementation (3a350a4) unchanged. Results: the listed `go test ./pkg/engine -run ...` ok; `go tool task check` exit 0; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte-identical). Status review.
