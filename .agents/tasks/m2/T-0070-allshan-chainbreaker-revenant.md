@@ -4,7 +4,7 @@ title: Make Allshan, Chainbreaker Revenant executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: tests
 branch: m2/T-0070-allshan-chainbreaker-revenant
 depends_on: [T-0069]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -55,3 +55,4 @@ None expected.
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 3): written with T-0069 and left `queued` until T-0069 is `done`.
+- 2026-10-26 lead-architect (wave run B, session 4): T-0069 is `done`. No directive is open before this task, and none of the `waiting` triggers fired (a card task with no new shape). Branch created from `autoloop/m2-wave-b`; status `tests`, dispatched to `rules-test-author`.
