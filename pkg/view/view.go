@@ -78,20 +78,20 @@ type AssetView struct {
 
 // StackView is one Resolution Stack item.
 type StackView struct {
-	Kind       string // "Deploy", "March", "Attack", "Scratch", "Aggressive" or "Ability"
+	Kind       string // "Deploy", "March", "Attack", "Scratch" or "Ability"
 	Controller int
-	Source     int     // asset ID: marching unit, attacker, scratching HQ, ability or Aggressive source
+	Source     int     // asset ID: marching unit, attacker, scratching HQ, or ability source
 	Card       string  // Deploy: the card on the stack; Ability: its source card
 	Zone       string  // Deploy: the declared zone; March: the origin zone
 	Target     int     // Attack: the primary defender (asset ID)
 	Secondary  int     // Attack: the Berserk secondary target, 0 if none
-	Amount     int     // Aggressive: N
+	Keyword    string  // Ability: the keyword its trigger came from ("Aggressive"); empty for a printed ability
 	Chosen     [][]int // Ability: the chosen asset IDs per target slot
 }
 
 var stackKinds = map[engine.StackKind]string{
 	engine.StackDeploy: "Deploy", engine.StackMarch: "March", engine.StackAttack: "Attack",
-	engine.StackScratch: "Scratch", engine.StackAggressive: "Aggressive", engine.StackAbility: "Ability",
+	engine.StackScratch: "Scratch", engine.StackAbility: "Ability",
 }
 
 // PlayerView is seat's view of g now.
@@ -168,9 +168,8 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 		s.Zone = it.Zone.String()
 	case engine.StackAttack:
 		s.Target, s.Secondary = it.Target, it.Secondary
-	case engine.StackAggressive:
-		s.Amount = it.Amount
 	case engine.StackAbility:
+		s.Keyword = it.Keyword.String()
 		// A face-down asset has no abilities today; if one ever has, its
 		// item still names only the Scratch face.
 		if a := g.Asset(it.Source); a != nil && a.FaceDown {

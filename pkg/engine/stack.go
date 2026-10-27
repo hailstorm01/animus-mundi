@@ -12,7 +12,6 @@ const (
 	StackMarch
 	StackAttack
 	StackScratch
-	StackAggressive
 	StackAbility // a triggered ability: runs Effect's steps for Controller
 )
 
@@ -24,14 +23,14 @@ type StackItem struct {
 	Inst *Instance // StackDeploy: the card on the stack
 	Zone Zone      // StackDeploy: declared zone; StackMarch: origin zone
 
-	Source    int // asset ID: marching unit, attacker, scratching HQ, Aggressive source
+	Source    int // asset ID: marching unit, attacker, scratching HQ
 	Target    int // StackAttack: primary defender
 	Secondary int // StackAttack: Berserk secondary target, 0 if none
-	Amount    int // StackAggressive: N
 
-	Effect  ability.Effect // StackAbility: the effect resolving (Source is its source asset)
-	Chosen  [][]int        // StackAbility: asset IDs chosen for each Effect.Targets slot, in pick order; empty if none
-	Tracked bool           // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
+	Effect  ability.Effect  // StackAbility: the effect resolving (Source is its source asset)
+	Chosen  [][]int         // StackAbility: asset IDs chosen for each Effect.Targets slot, in pick order; empty if none
+	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
+	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
 }
 
 // push puts item on the stack and records where it went: the one place event
@@ -51,14 +50,15 @@ func (g *Game) push(item *StackItem) {
 		what = "Attack"
 	case StackScratch:
 		what = "Scratch"
-	case StackAggressive:
-		what = "Aggressive trigger"
 	case StackAbility:
 		e.Card, e.Inst = cardName(item.Inst), 0
 		if item.Inst != nil {
 			e.Inst = item.Inst.ID
 		}
 		what = "ability of " + e.Card
+		if item.Keyword != ability.KeywordNone {
+			what = item.Keyword.String() + " trigger of " + e.Card
+		}
 	}
 	g.logEvent(e, "player %d places %s on the stack", item.Controller, what)
 }
@@ -92,14 +92,6 @@ func (g *Game) resolve(it *StackItem) {
 		g.scratch(it.Controller, 1)
 	case StackAbility:
 		g.resolveAbility(it)
-	case StackAggressive:
-		// "it gets +N power until end of turn" (FR-KWD-002f). Fizzles if the
-		// attacker already left the battlefield.
-		if a := g.Asset(it.Source); a != nil {
-			a.TempPower += it.Amount
-			g.logEvent(Event{Kind: "trigger", Player: -1, Source: a.ID},
-				"%s Aggressive %d: +%d power until end of turn", a, it.Amount, it.Amount)
-		}
 	}
 }
 
