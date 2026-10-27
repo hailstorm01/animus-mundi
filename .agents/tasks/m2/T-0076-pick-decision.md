@@ -4,7 +4,7 @@ title: An untargeted pick is its own decision kind, DecidePick, not a Target (SV
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0076-pick-decision
 depends_on: [T-0072]
 claims: [decision:pick]
@@ -75,3 +75,9 @@ None expected.
 - 2026-10-27 rules-test-author: Applied review note 1 (commit 2bc7003). `TestFR_TGT_001_UntargetedPickAsksAPickDecision` now has a second opposing unit, scripts its enemy-target pick first in the tgts queue, and wants asked `[DecideTarget, DecideTarget, DecidePick]` and logged `["Target", "Target", "Pick"]` with no filter on How. Nothing else changed. `go test ./pkg/engine -run 'TestFR_TGT_001_Untargeted|TestFR_MOD_001_|TestFR_TRG_005_IfYouDo'` passes on the branch with 3a350a4. Status tests-review.
 - 2026-10-27 lead-architect: Test rework approved (2bc7003): two opposing units, the enemy target scripted first, three asked and three logged decisions, as note 1 asked. `ready`. The implementation (3a350a4) needs no change for it; `kernel-engineer` re-runs Done When and hands off to `review`.
 - 2026-10-27 kernel-engineer: Re-run after the test rework (2bc7003). Implementation (3a350a4) unchanged. Results: the listed `go test ./pkg/engine -run ...` ok; `go tool task check` exit 0; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte-identical). Status review.
+- 2026-10-27 lead-architect: Approved and merged into `autoloop/m2-wave-b` (029b7bf). Review:
+  - Scope: only the four Allowed Files, plus the two authorized test edits in the first `test(T-0076)` commit (653df34). The one later test change (2bc7003) is this task's own new test, reworked under review note 1 after the first engineer run, in its own `test(T-0076)` commit; no test was changed in a code commit.
+  - Fences and reuse: no card name; `DecidePick` shares `fixedOrderPicks` in one `case`, and `assetDecision` serves both callers through a kind parameter. No duplicate.
+  - Rules: a pick is now told apart from a target in the decision itself (`SVY-R3`, directive #20 (a)); options, fast path and §6 timeouts are unchanged, as the shape required.
+  - Gates, re-run in a review worktree of 9c08ffa: `go tool task check` exit 0; `go tool task sim` clean (200 games, P0 57.5% / P1 39.0% / draws 3.5%, unchanged); `go tool task sim-compare -- autoloop/m2-wave-b` PASS. The merge tree's `pkg/` equals the reviewed tree (the run branch had no commits past the task's base).
+  - Review rounds: tests 2 (note 1 was my miss at the first test review), code 1 (no code change).
