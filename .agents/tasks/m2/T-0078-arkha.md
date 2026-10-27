@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
