@@ -31,13 +31,38 @@ const (
 	TurnYours                  // only during the trigger controller's own turn
 )
 
+// Keyword names the keyword a trigger comes from, for a keyword that is a
+// triggered ability. The zero value is a printed ability.
+type Keyword int
+
+const (
+	KeywordNone       Keyword = iota // the zero value: a printed ability
+	KeywordAggressive                // "Aggressive N" (FR-KWD-002f)
+)
+
+// String returns the keyword's printed name, or "" for KeywordNone.
+func (k Keyword) String() string {
+	if k == KeywordAggressive {
+		return "Aggressive"
+	}
+	return ""
+}
+
+// Aggressive is the trigger the keyword "Aggressive N" means: whenever this
+// unit attacks, it gets +N power until end of turn (FR-KWD-002f).
+func Aggressive(n int) Trigger {
+	return Trigger{Hook: HookAttacks, Keyword: KeywordAggressive,
+		Effect: Effect{Steps: []Step{{Op: OpModifyStat, Subject: SubjectSelf, Amount: Value{N: n}}}}}
+}
+
 // Trigger is one printed triggered ability.
 type Trigger struct {
 	Hook     Hook
 	Turn     TurnOwner
-	ToZone   Zone // HookDeploy only: fires only if the asset was deployed into this zone
-	Cornered bool // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
-	Optional bool // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
+	ToZone   Zone    // HookDeploy only: fires only if the asset was deployed into this zone
+	Cornered bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
+	Optional bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
+	Keyword  Keyword // the keyword this trigger comes from; zero for a printed ability
 	Effect   Effect
 
 	// MaxPerTurn limits how often this trigger fires each turn, per asset (FR-TRN-001);

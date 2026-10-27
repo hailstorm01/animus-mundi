@@ -18,7 +18,6 @@ type pendingTrigger struct {
 	label      string
 	pos        sourcePos // where the source stood when it fired
 	trig       ability.Trigger
-	item       *StackItem // a ready-made stack item (keyword trigger); used instead of trig when set
 }
 
 // sourcePos is where a trigger's source stood when it fired: its zone's rank
@@ -115,14 +114,15 @@ func deployedTo(a *Asset, z ability.Zone) bool {
 	return true
 }
 
-// fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger, if
-// any, then its printed attack triggers (FR-CBT-002).
+// fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger (an
+// ability.Aggressive trigger, read now, not at card load), if any, then its
+// printed attack triggers (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
 		g.pending = append(g.pending, pendingTrigger{
 			source: a.ID, inst: a.Inst, controller: a.Controller,
+			trig:  ability.Aggressive(n),
 			label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), pos: posOf(a),
-			item: &StackItem{Kind: StackAggressive, Controller: a.Controller, Source: a.ID, Amount: n},
 		})
 	}
 	g.fireHook(a, ability.HookAttacks)
@@ -161,15 +161,11 @@ func (g *Game) flushTriggers() {
 		}
 		for _, i := range order {
 			p := mine[i]
-			if p.item != nil {
-				g.push(p.item)
-				continue
-			}
 			if p.trig.Optional && !g.accepts(p) {
 				continue
 			}
 			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst,
-				Effect: p.trig.Effect, Tracked: p.trig.Hook == ability.HookKilled,
+				Effect: p.trig.Effect, Tracked: p.trig.Hook == ability.HookKilled, Keyword: p.trig.Keyword,
 				Chosen: g.chooseTargets(p)})
 		}
 	}
