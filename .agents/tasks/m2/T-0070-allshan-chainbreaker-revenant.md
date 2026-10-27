@@ -4,7 +4,7 @@ title: Make Allshan, Chainbreaker Revenant executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0070-allshan-chainbreaker-revenant
 depends_on: [T-0069]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -57,3 +57,4 @@ None expected.
 - 2026-10-26 lead-architect (wave run B, session 3): written with T-0069 and left `queued` until T-0069 is `done`.
 - 2026-10-26 lead-architect (wave run B, session 4): T-0069 is `done`. No directive is open before this task, and none of the `waiting` triggers fired (a card task with no new shape). Branch created from `autoloop/m2-wave-b`; status `tests`, dispatched to `rules-test-author`.
 - 2026-10-26 rules-test-author (wave run B): wrote `pkg/engine/cards_path_allshan_test.go`: `TestCard_AllshanChainbreakerRevenant_EntersReservesAsFiveSixForFiveRequisitionAndDoesNothing`, `_UnbowedGainsTwoArmorWhenItSurvivesDamage`, `_UnbowedArmorAbsorbsLaterDamage`, `_UnbowedDoesNotFireWhenNoDamageIsDealt`, `_CorneredAttackDealsEightAndPowerResetsAtEndOfTurn`, `_NotCorneredAttackGainsNothing`. Helpers requested: none. Left out: lethal-damage Unbowed (SVY-R13) since a destroyed asset's Armor is unobservable. No `TestFR_*` added, so `cardtown lint rules` was not needed (binary not on PATH). `go vet` clean; the deploy, Unbowed and Cornered-attack tests fail now (card not executable) and the two negative controls pass.
+- 2026-10-26 lead-architect (wave run B, session 4): tests approved. Checked against `FR-KWD-002e` (strictly more Main Theater assets; equal counts are not Cornered), `FR-KWD-002k` and `FR-REP-004` Stage 4 (Armor stacks, absorbs 1-for-1, and absorbed damage still counts for Unbowed), and `FR-KWD-002a` (no damage, no trigger). Leaving out lethal Unbowed (`SVY-R13`) is accepted: nothing about a destroyed asset's Armor is observable. Status `ready`; dispatching the flash engineer.
