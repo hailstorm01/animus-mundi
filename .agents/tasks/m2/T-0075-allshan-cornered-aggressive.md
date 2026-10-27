@@ -4,7 +4,7 @@ title: Allshan reads "Cornered: Aggressive 3." (directive #60 part 2, card, flas
 kind: card
 tier: flash
 wave: B (board directive #60 (2), blocking before T-0073)
-status: tests-review
+status: ready
 branch: m2/T-0075-allshan-cornered-aggressive
 depends_on: [T-0074]
 claims: [card:Allshan, Chainbreaker Revenant]
@@ -49,3 +49,4 @@ Written by `rules-test-author`, in `pkg/engine/cards_path_allshan_test.go` (new 
 - 2026-10-26, lead-architect (wave B run, session 7): written with T-0074 from directive #60 (2). Stays `queued` until T-0074 is `done`. T-0073 now also depends on it, because #60 blocks T-0073.
 - 2026-10-26, lead-architect (wave B run, session 8): T-0074 is `done` (125b9ab), so directive #60 (2) applies here. Branch created from `autoloop/m2-wave-b` at d5a7d39. Status `tests`; dispatched `rules-test-author`.
 - 2026-10-26, rules-test-author: wrote `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger` (subtests cornered / not cornered; also checks source and +3 TempPower) in `pkg/engine/cards_path_allshan_test.go`. Helpers requested: none (reuses `recordPlaced`). Left out: a printed-text check (no test-visible surface for card Text; the CSV/lint covers it). Verified red before implementation: the cornered subtest fails (no Aggressive-keyword item is placed, the old hand-written trigger is a plain ability item); not cornered passes. `cardtown lint rules` passes.
+- 2026-10-26, lead-architect (wave B run, session 8): tests approved. `TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger` checks the Cornered case (one `StackAbility` item marked `KeywordAggressive`, sourced from Allshan, +3 power) and the not-Cornered case (none), per `FR-KWD-002e`/`FR-KWD-002f`; the T-0070 tests are unchanged. Status `ready`; dispatching the flash engineer.
