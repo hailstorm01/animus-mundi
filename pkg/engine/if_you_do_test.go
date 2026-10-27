@@ -74,7 +74,7 @@ func TestFR_TGT_001_UntargetedPickIsMadeOnResolutionFromWhatMatchesThen(t *testi
 	s.scriptPlan(0, nil, []Answer{yes}, pick(a), pick(b))
 	s.iydDeploy(iydTrigger(true, targets, kill1, iydPick(iydAlly, 0), iydIfDone(dmgTo(2, 0))))
 	asks := s.asked(0)
-	want := []DecisionKind{DecideOptional, DecideTarget, DecideTarget}
+	want := []DecisionKind{DecideOptional, DecideTarget, DecidePick}
 	if got := kindsOf(asks); !slices.Equal(got, want) {
 		t.Fatalf("'you may' and the chosen target are asked on placement, the pick later as X resolves: got %v, want %v (SVY-R14)", got, want)
 	}

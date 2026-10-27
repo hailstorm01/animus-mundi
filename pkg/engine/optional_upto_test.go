@@ -58,8 +58,8 @@ var (
 	no           = Answer{Picks: []int{}}
 )
 
-// tpick is a scripted answer to one DecideTarget: the assets to pick, by asset,
-// or a timeout. The same asset listed twice is a repeated pick.
+// tpick is a scripted answer to one DecideTarget or DecidePick: the assets to
+// pick, by asset, or a timeout. The same asset listed twice is a repeated pick.
 type tpick struct {
 	assets  []*Asset
 	timeout bool
@@ -70,9 +70,10 @@ func pick(assets ...*Asset) tpick { return tpick{assets: assets} }
 var timeoutPick = tpick{timeout: true}
 
 // scriptPlan installs a chooser for seat p that answers every DecideOrder with
-// order, the DecideOptionals in turn with opts and the DecideTargets in turn
-// with tgts (by asset). It records every Decision and reports a decision asked
-// past the end of its plan.
+// order, the DecideOptionals in turn with opts and the DecideTargets and
+// DecidePicks in turn with tgts (by asset), targets and picks sharing the one
+// queue in the order they are asked. It records every Decision and reports a
+// decision asked past the end of its plan.
 func (s *scene) scriptPlan(p PlayerID, order []int, opts []Answer, tgts ...tpick) {
 	if s.asks == nil {
 		s.asks = map[PlayerID][]Decision{}
@@ -91,7 +92,7 @@ func (s *scene) scriptPlan(p PlayerID, order []int, opts []Answer, tgts ...tpick
 			}
 			nOpt++
 			return opts[nOpt-1]
-		case DecideTarget:
+		case DecideTarget, DecidePick:
 			if nTgt >= len(tgts) {
 				s.t.Errorf("player %d is asked a further target question past the end of its plan: %q", p, d.Prompt)
 				return Answer{Timeout: true}
