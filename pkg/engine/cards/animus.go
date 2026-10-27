@@ -137,6 +137,43 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Infested Apostle": {
+		Text: []string{"When this unit deploys, you may kill an allied unit. If you do, deal 2 damage to chosen opposing unit."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:     ability.HookDeploy,
+				Optional: true,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindUnit,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpKill,
+							Subject: ability.SubjectPick,
+							UpTo:    1,
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+							},
+						},
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+							IfDone:  true,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Portent Scrivener": {
 		Text: []string{"When this unit is killed on your turn, draw a card."},
 		Triggers: []ability.Trigger{
