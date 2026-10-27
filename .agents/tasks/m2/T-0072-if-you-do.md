@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: changes
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -78,6 +78,7 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
 - `pkg/engine/effects.go` (`resolution.done`, the gate, step counts, `stepKill`, the pick in `stepAssets`)
 - `pkg/engine/damage.go` (`destroy`, called by `deathSweep`)
 - `pkg/engine/doc.go` (the "What runs now" lines)
+- `pkg/engine/targeting.go` (review round 1, note 2 only: the shared asset-decision builder)
 
 ## Done When
 - [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_001_UntargetedPick|MOD_001_(SinglePick|UpToPick)|LAY_002_Kill|TRG_005_IfYouDo|TRG_004_DeathTriggersOfAnXKill)'`
@@ -115,3 +116,9 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
   - Reuse: `DecideTarget` and `choose` fallback (no new kind), `assetsByID`, `matchesFilter`, `cardName`, `effectiveState`, `leaveBattlefield`/`putCard`. No other kill or pick existed.
   - Commands: `go test ./pkg/engine -run '<Done When pattern>' -v` 15 PASS; `go tool task check` passed (fmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS byte for byte.
   - Reviewer: `pickAssets` UpTo 0 keeps Min=Max=1 so a lone option takes the `soleAnswer` fast path. `stepKill` takes `effectiveState(a)` per asset just before each destroy, so in an "all" kill later assets' state is read after earlier deaths' departure; pinned by no test.
+- 2026-10-26 lead-architect (review, round 1): **Changes requested.** I verified against `git diff autoloop/m2-wave-b...m2/T-0072-if-you-do`.
+  - **What passed:** only the Allowed Files changed, and `if_you_do_test.go` is unchanged since eeb5388. No card names. The gate, the step counts, `SubjectPick` on `DecideTarget`, the Headquarters skip and `relocateSelf`'s `bool` match the Shape.
+  - **Notes:**
+    1. **A kill of several assets is one simultaneous destruction.** `stepKill` takes each asset's `effectiveState` just before destroying it, so later assets are read after earlier ones have left. `deathSweep` takes every dying asset's state before any of them leaves (`FR-ZON-004`, directive #13), and the two must not differ. Replace `destroy(a, known)` with one `(g *Game) destroyAll(as []*Asset)`. It takes every state first, then for each asset in order runs `fireKilled`, `leaveBattlefield`, `putCard` into discard and the `destroy` event. `deathSweep` calls `destroyAll(dying)`, and its Headquarters loss check still reads `dying` before the call. `stepKill` drops Headquarters from the step's assets, calls `destroyAll` on the rest, and returns how many it passed. This is a pure move for `deathSweep`, so `sim-compare` must stay `[PASS]`.
+    2. **One builder for decisions over battlefield assets (duplication, D5.3).** `pickAssets` repeats `chooseTargets`' scheme ([targeting.go:24-39](../../../pkg/engine/targeting.go)): options are battlefield assets oldest first (`assetsByID`, `SVY-R11`), with `Label` `a.String()` and `Ref` `a.ID`. Exactly one is `Min = Max = 1`, and "up to N" is `Min 0, Max min(N, len)`. A change to that rule would need two edits. Add one helper in `targeting.go`, for example `(g *Game) assetDecision(p PlayerID, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset)`, which returns the decision and the matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both build their decision with it. Each keeps its own prompt text and its own empty-options handling. `targeting.go` is added to Allowed Files for this note only. Every existing test must pass unchanged, and `sim-compare` must stay `[PASS]`.
+  - Gates to re-run: the Done When list, including `go tool task sim-compare -- autoloop/m2-wave-b`.
