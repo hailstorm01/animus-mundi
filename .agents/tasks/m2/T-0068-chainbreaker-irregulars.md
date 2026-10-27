@@ -4,7 +4,7 @@ title: Make Chainbreaker Irregulars executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0068-chainbreaker-irregulars
 depends_on: [T-0067]
 claims: [card:Chainbreaker Irregulars]
