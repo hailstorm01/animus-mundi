@@ -368,7 +368,7 @@ The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (script
 
 1. **The run branch stands in for the integration branch everywhere:** reading `BOARD.md` and directives (D2.0), basing and merging task branches, `go tool task sim-compare -- <run branch>` in pure-move tasks and reviews, and the gates in D5. Never commit to, merge into, or move the integration branch. Leave the `Integration branch` line of `BOARD.md` as it is.
 2. **Sync first:** if the integration branch has commits the run branch lacks (directives the user added mid-run), merge it into the run branch with `--no-ff` in a scratch worktree. On a conflict, abort the merge and stop (step 6).
-3. **Run file:** `.agents/tasks/<milestone>/runs/<run branch with / replaced by ->.md`, committed on the run branch. If it doesn't exist, create it first with this header. `Cards` lists the wave's survey-row cards that this run can build. `Deferred` lists the rest of the row, each with the directive that holds it back (for example #14 (b): non-deck cards wait for the playtest checkpoint). Spell names as in `pkg/engine/cards/cards.go` and separate them with `;`. When a directive changes the scope mid-run, or the header has no `Deferred` line, rewrite both lines in that session's commit. The runner checks only `Cards`:
+3. **Run file:** `.agents/tasks/<milestone>/runs/<run branch with / replaced by ->.md`, committed on the run branch. If it doesn't exist, create it first with this header. `Cards` lists the wave's survey-row cards that this run can build. `Deferred` lists the rest of the row, each with the directive that holds it back (for example #14 (b): non-deck cards wait for the playtest checkpoint). `Kept` gives the reason for each non-deck card left in `Cards`, so later sessions don't decide it again (session 1 of wave B called Rogue Fleshshaper deferred; session 2 kept it, because Ambush Tactics, a deck card, needs its modal shape, #14 (b), (c)). Keep reasons off the `Cards` line, because the runner matches each name there exactly. Spell names as in `pkg/engine/cards/cards.go` and separate them with `;`. When a directive changes the scope mid-run, or the header lacks a `Deferred` or `Kept` line, rewrite all three lines in that session's commit. The runner checks only `Cards`:
    ```markdown
    # Wave Run: <milestone> wave <X>
 
@@ -376,6 +376,7 @@ The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (script
    - **Started:** <date>
    - **Cards:** <name>; <name>; ...
    - **Deferred:** <name> (#<directive>); ... (or `none`)
+   - **Kept:** <non-deck name in Cards> (<reason, with its directive>); ... (or `none`)
 
    | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
    | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
