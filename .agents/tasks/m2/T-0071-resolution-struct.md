@@ -4,7 +4,7 @@ title: Effect steps take one per-resolution struct (directive #51 part 1, harnes
 kind: harness
 tier: flash
 wave: B (board directive #51, structural review 3 finding 3; before the "if you do" shape for Infested Apostle and Arkha, SVY-R14)
-status: review
+status: done
 branch: m2/T-0071-resolution-struct
 depends_on: [T-0070]
 claims: [type:resolution, convention:step<Op>(r, st)]
@@ -128,3 +128,8 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - `go tool task check` passed (gofmt, `go vet`, all tests, `cardtown lint --all`).
     - `go tool task sim` passed clean (200 matches, all invariants held).
   - Status moved to `review`.
+- 2026-10-26 lead-architect: Code review (D5): **approved**, merged into `autoloop/m2-wave-b` with `--no-ff` (46197aa), status `done`. Directive #51 part 1 applied. Part 2 goes with the "if you do" shape task.
+  - Dispatch: one headless `agy` run (conversation `954fe37c-…`). Its JSON has no `denied_actions`, and `transcript_full.jsonl` has no `permission check failed` step.
+  - Scope: e45e34a changes only `effects.go`, plus this file. No test file changed. The diff is the lead's text verbatim: the struct, the `resolveAbility` body and the nine signatures. `stepPlayers`, `value`, `itemSource` and `relocateSelf` are unchanged.
+  - Gates, re-run by the reviewer: cases 1, 3 and 4 in the review worktree print what the Log reports. `go tool task sim-compare -- autoloop/m2-wave-b` prints `[PASS]`. On the merge result, `go tool task check` and `go tool task sim` exit 0: 200 games, P0 57.5% / P1 39.0% / draws 3.5% (unchanged), all invariants hold, and no monitor reported a violation.
+  - Deck cards on `NotYetExecutable`: 26 (unchanged). Next: write the "if you do" shape task (#51 part 2, `SVY-R14`, `KILL`, an untargeted pick on resolution) and send it to `tests`.
