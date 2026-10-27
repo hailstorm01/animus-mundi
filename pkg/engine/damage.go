@@ -62,14 +62,23 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	return r
 }
 
-// destroy puts a into its owner's discard pile: it fires the killed hook, leaves
-// the battlefield with the known last-known state, and logs the destroy event.
-// A lone departure (OpKill) passes the state it has just taken (FR-ZON-004).
-func (g *Game) destroy(a *Asset, known EffectiveState) {
-	g.fireKilled(a)
-	g.leaveBattlefield(a, known)
-	g.putCard(a.Inst, ZoneDiscard, false)
-	g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
+// destroyAll destroys the assets as one simultaneous event. Every asset's
+// last-known effective state is taken immediately prior to departure, before any
+// of them leaves, so the departure of one cannot change what another is recorded
+// with (FR-ZON-004, board directive #13). Then, for each in order: the killed
+// hook fires, it leaves the battlefield, goes to its owner's discard pile, and
+// the destroy event is logged.
+func (g *Game) destroyAll(as []*Asset) {
+	known := make([]EffectiveState, len(as))
+	for i, a := range as {
+		known[i] = g.effectiveState(a)
+	}
+	for i, a := range as {
+		g.fireKilled(a)
+		g.leaveBattlefield(a, known[i])
+		g.putCard(a.Inst, ZoneDiscard, false)
+		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
+	}
 }
 
 // deathSweep destroys every lethal asset simultaneously, then applies the
@@ -92,16 +101,7 @@ func (g *Game) deathSweep() {
 			loses[a.Controller], reasons[a.Controller] = true, "Headquarters destroyed"
 		}
 	}
-	// Every dying asset's last-known effective state is taken immediately prior
-	// to departure, before any of them leaves, so the departure of one cannot
-	// change what another is recorded with (FR-ZON-004, board directive #13).
-	known := make([]EffectiveState, len(dying))
-	for i, a := range dying {
-		known[i] = g.effectiveState(a)
-	}
-	for i, a := range dying {
-		g.destroy(a, known[i])
-	}
+	g.destroyAll(dying)
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
 			p.DrewFromEmpty = false

@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: changes
+status: review
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -122,3 +122,7 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
     1. **A kill of several assets is one simultaneous destruction.** `stepKill` takes each asset's `effectiveState` just before destroying it, so later assets are read after earlier ones have left. `deathSweep` takes every dying asset's state before any of them leaves (`FR-ZON-004`, directive #13), and the two must not differ. Replace `destroy(a, known)` with one `(g *Game) destroyAll(as []*Asset)`. It takes every state first, then for each asset in order runs `fireKilled`, `leaveBattlefield`, `putCard` into discard and the `destroy` event. `deathSweep` calls `destroyAll(dying)`, and its Headquarters loss check still reads `dying` before the call. `stepKill` drops Headquarters from the step's assets, calls `destroyAll` on the rest, and returns how many it passed. This is a pure move for `deathSweep`, so `sim-compare` must stay `[PASS]`.
     2. **One builder for decisions over battlefield assets (duplication, D5.3).** `pickAssets` repeats `chooseTargets`' scheme ([targeting.go:24-39](../../../pkg/engine/targeting.go)): options are battlefield assets oldest first (`assetsByID`, `SVY-R11`), with `Label` `a.String()` and `Ref` `a.ID`. Exactly one is `Min = Max = 1`, and "up to N" is `Min 0, Max min(N, len)`. A change to that rule would need two edits. Add one helper in `targeting.go`, for example `(g *Game) assetDecision(p PlayerID, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset)`, which returns the decision and the matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both build their decision with it. Each keeps its own prompt text and its own empty-options handling. `targeting.go` is added to Allowed Files for this note only. Every existing test must pass unchanged, and `sim-compare` must stay `[PASS]`.
   - Gates to re-run: the Done When list, including `go tool task sim-compare -- autoloop/m2-wave-b`.
+- 2026-10-26 kernel-engineer (sonnet): Round 1 notes answered; status `review`.
+  1. `destroy(a, known)` replaced by `destroyAll(as []*Asset)` in `damage.go`: takes every `effectiveState` first, then per asset `fireKilled`, `leaveBattlefield`, `putCard`, `destroy` event. `deathSweep` reads its Headquarters loss check from `dying`, then calls `destroyAll(dying)`. `stepKill` filters out Headquarters, calls `destroyAll` on the rest and returns `len`.
+  2. Added `assetDecision(p, prompt, upTo, ok)` in `targeting.go` returning the decision and matching assets in option order. `chooseTargets` (with `legalTarget`) and `pickAssets` (with `matchesFilter`) both use it; each keeps its own prompt and empty-options handling (`chooseTargets` still skips an empty up-to slot).
+  - Commands: Done When test pattern 15 PASS; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS. No test edited.

@@ -22,26 +22,42 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	}
 	chosen := make([][]int, len(targets))
 	for i, t := range targets {
-		d := Decision{Player: p.controller, Kind: DecideTarget, Min: 1, Max: 1,
-			Prompt: fmt.Sprintf("%s: choose target %d", p.label, i+1)}
-		// Options are listed oldest asset first (by ID), not by zone.
-		for _, a := range g.assetsByID() {
-			if g.legalTarget(p.controller, p.source, t.Filter, a) {
-				d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
-			}
-		}
+		prompt := fmt.Sprintf("%s: choose target %d", p.label, i+1)
 		if t.UpTo > 0 {
-			if len(d.Options) == 0 {
-				continue
-			}
-			d.Prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
-			d.Min, d.Max = 0, min(t.UpTo, len(d.Options))
+			prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
+		}
+		d, _ := g.assetDecision(p.controller, prompt, t.UpTo, func(a *Asset) bool {
+			return g.legalTarget(p.controller, p.source, t.Filter, a)
+		})
+		if t.UpTo > 0 && len(d.Options) == 0 {
+			continue
 		}
 		for _, k := range g.choose(d) {
 			chosen[i] = append(chosen[i], d.Options[k].Ref)
 		}
 	}
 	return chosen
+}
+
+// assetDecision builds a DecideTarget decision for player p over the battlefield
+// assets for which ok holds, and returns it with those assets in option order.
+// Options are listed oldest asset first (by ID), not by zone (SVY-R11). With
+// upTo 0 exactly one is picked (Min = Max = 1); with upTo N up to N distinct
+// assets are, possibly none (Min 0, Max min(N, len)). Callers handle an empty
+// option list themselves.
+func (g *Game) assetDecision(p PlayerID, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset) {
+	d := Decision{Player: p, Kind: DecideTarget, Prompt: prompt, Min: 1, Max: 1}
+	var as []*Asset
+	for _, a := range g.assetsByID() {
+		if ok(a) {
+			as = append(as, a)
+			d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
+		}
+	}
+	if upTo > 0 {
+		d.Min, d.Max = 0, min(upTo, len(as))
+	}
+	return d, as
 }
 
 // legalTarget reports whether battlefield asset a meets every criterion of f

@@ -146,15 +146,14 @@ func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 // FR-ZON-002), not at the death sweep. A Headquarters is skipped: the match-loss
 // check lives in deathSweep and no M2 card kills one. It returns the assets killed.
 func (g *Game) stepKill(r *resolution, st ability.Step) int {
-	n := 0
+	var dying []*Asset
 	for _, a := range g.stepAssets(r, st) {
-		if a.Printed().Type == TypeHeadquarters {
-			continue
+		if a.Printed().Type != TypeHeadquarters {
+			dying = append(dying, a)
 		}
-		g.destroy(a, g.effectiveState(a))
-		n++
 	}
-	return n
+	g.destroyAll(dying)
+	return len(dying)
 }
 
 // stepDiscard has each step player discard cards of their choice from their own
@@ -266,20 +265,15 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 // asked, and a timeout picks none. With no match nothing is asked.
 func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
 	name := cardName(r.it.Inst)
-	d := Decision{Player: r.it.Controller, Kind: DecideTarget, Min: 1, Max: 1, Prompt: name + ": pick one"}
-	var opts []*Asset
-	for _, a := range g.assetsByID() {
-		if g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a) {
-			opts = append(opts, a)
-			d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
-		}
+	prompt := name + ": pick one"
+	if st.UpTo > 0 {
+		prompt = fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
 	}
+	d, opts := g.assetDecision(r.it.Controller, prompt, st.UpTo, func(a *Asset) bool {
+		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
+	})
 	if len(opts) == 0 {
 		return nil
-	}
-	if st.UpTo > 0 {
-		d.Prompt = fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
-		d.Min, d.Max = 0, min(st.UpTo, len(opts))
 	}
 	var out []*Asset
 	for _, k := range g.choose(d) {
