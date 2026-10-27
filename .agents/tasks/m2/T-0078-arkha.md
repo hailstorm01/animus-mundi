@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: tests
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
@@ -54,3 +54,7 @@ None expected. `inDiscard` comes with T-0077.
 
 ## Log
 - 2026-10-27 lead-architect (wave run B, session 13): Wrote the task, `queued` behind T-0077 (its pile pick). Split from T-0077 by the size rule (D2.4).
+- 2026-10-27 lead-architect (wave run B, session 14): Synced `main` into the run branch first (2312e28).
+  - Directives: no `open: before` directive is on the board. Waiting triggers checked against `autoloop/m2-wave-b` 2312e28: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired.
+  - Every shape the Definition names exists on the run branch: `ability.ZoneDiscard`, `OpPutOnDeck` with `Bottom`, `SubjectPick` with `UpTo`, `Step.IfDone`, `KindHeadquarters`, `AllegianceOpposing`. `inDiscard` is in the test helpers. No new shape, so this stays a card task.
+  - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
