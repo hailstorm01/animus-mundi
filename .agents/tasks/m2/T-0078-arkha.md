@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
@@ -65,3 +65,4 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
   - **Right:** the asked kinds `[Optional, Pick]` (one opposing Headquarters is chosen by the single-option fast path, §1, so the deviation from the task text is correct); the picked card on the bottom of the deck and the other one left in the pile; only your own unit cards offered; no unit card asks no pick and deals nothing; an "up to" timeout selects none, so nothing moves and nothing is dealt (§6); declining asks nothing more.
   - **Note:**
     1. **Wrong expected damage in `TestCard_ArkhasSunsFury_DecliningDoesNothing`.** `s.wantDamage(a.dummy, 6)` expects 6, but Arkha's printed power is 8 (`data/cards/units-and-structures-path.csv` line 30, `power` column; checked by loading the card in a scratch test: power 8, the dummy takes 8). Expect 8, or read it from `a.arkha.Printed().Power`. Change nothing else.
+- 2026-10-27 rules-test-author (round 1 fix): Note 1 done. `DecliningDoesNothing` now expects the dummy's damage to equal `a.arkha.Printed().Power` (8) instead of 6. Nothing else changed.
