@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -75,10 +75,10 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
 - `pkg/engine/state.go` (`fixedOrderPositions` and its comment)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_001_PilePick|MOD_001_(SinglePilePick|PilePickTimeout)|TRG_005_IfYouDo(RunsYAfterAPilePick|SkipsYWhenThePilePick))'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No card uses the new shapes yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_001_PilePick|MOD_001_(SinglePilePick|PilePickTimeout)|TRG_005_IfYouDo(RunsYAfterAPilePick|SkipsYWhenThePilePick))'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No card uses the new shapes yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
 
 ## Log
 - 2026-10-27 lead-architect (wave run B, session 13): Wrote the task. Wave B cards still on `NotYetExecutable`: Arkha, Sun's Fury and Eternal Watchman (deck cards, directive #14 (a)) and Rogue Fleshshaper (kept). Arkha's X is T-0072's pick, reaching into a pile, so it goes next. Eternal Watchman needs a combat-kill hook and a target in a pile, and builds on this task's card filter and pile decision. The Arkha card would make six non-test files, so it is split off as T-0078 (`queued`).
@@ -113,3 +113,14 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
     1. **One check of a filter's card-level criteria (duplication, D5.3).** `matchesCard` repeats three of `matchesFilter`'s checks, differing only in which player and card they read: the `Allegiance` switch (an asset's controller, a card's owner), `Kinds` through `kindOf`, and `NonScratch` by the Scratch Company subtype. A change to any of those rules would need two edits. Move them into one helper in `targeting.go`, for example `matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool`, where `side` is the player the entity belongs to. `matchesFilter` calls it with `a.Controller` and `a.Printed()`, after its `Other` and zone checks. `matchesCard` calls it with `inst.Owner` and `inst.Card`, after its own. Every test must pass unchanged, and `go tool task sim-compare -- autoloop/m2-wave-b` must stay `[PASS]`.
   - Gates to re-run: the Done When list, including the targeted `-run` pattern, and `sim-compare`.
 - 2026-10-27 kernel-engineer (sonnet): Round 1 note 1 answered; `status: review`. Added `matchesPrinted(ctl, f, side, c)` in `targeting.go` (Allegiance by `side`, Kinds via `kindOf`, NonScratch). `matchesFilter` calls it with `a.Controller` and `a.Printed()` after its `Other` and zone checks; `matchesCard` with `inst.Owner` and `inst.Card` after its own. Only `targeting.go` changed; no test edited. Gates: targeted `-run` pattern 9 tests pass; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS.
+- 2026-10-27 lead-architect (review, round 2): **Approved**, merged into `autoloop/m2-wave-b` with `--no-ff` (f6da866), status `done`. Directive #59 (1) is applied.
+  - **Scope:** 0b9b7f6 changes only `targeting.go` and this file. `pile_pick_test.go` is unchanged since d0b853c.
+  - **Note 1:** done. `matchesPrinted` holds the Allegiance, Kinds and NonScratch checks, and `matchesFilter` and `matchesCard` both call it after their own `Other` and zone checks.
+  - **Fences:** no card names, and nothing new outside package `engine` and `ability`.
+  - **Rules fidelity:** the pick, the card steps and the top-down order are general, and nothing branches on test inputs.
+  - **Gates, re-run by the reviewer in a review worktree:**
+    - the 9 Done When tests pass;
+    - `go tool task check` exits 0;
+    - `go tool task sim` runs clean (P0 70.5% / P1 28.5% / draws 1.0%, unchanged);
+    - `go tool task sim-compare -- autoloop/m2-wave-b` prints `[PASS]`, byte for byte.
+  - Next: T-0078 (Arkha, Sun's Fury).
