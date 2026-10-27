@@ -4,7 +4,7 @@ title: Aggressive is an ability stack item, marked as coming from the keyword (d
 kind: harness
 tier: sonnet
 wave: B (board directive #60 (1), blocking before T-0073)
-status: ready
+status: in-progress
 branch: m2/T-0074-aggressive-ability-item
 depends_on: [T-0072]
 claims: [type:ability.Keyword, field:ability.Trigger.Keyword, func:ability.Aggressive, field:StackItem.Keyword, removes:StackAggressive, removes:StackItem.Amount, removes:pendingTrigger.item, removes:view.StackView.Amount]
