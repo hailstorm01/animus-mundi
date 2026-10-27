@@ -100,15 +100,7 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 // battlefield assets (units and structures) in the Main Theater than p does.
 // Headquarters are never in the Main Theater (FR-KWD-002e).
 func (g *Game) cornered(p PlayerID) bool {
-	var mine, theirs int
-	for _, a := range g.Theater {
-		if a.Controller == p {
-			mine++
-		} else {
-			theirs++
-		}
-	}
-	return theirs > mine
+	return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))
 }
 
 // deployedTo reports whether a is in zone z now, which for a deploy trigger is

@@ -4,7 +4,7 @@ title: A Cornered gate on triggers, and a step that gives power until end of tur
 kind: shape
 tier: sonnet
 wave: B
-status: changes
+status: review
 branch: m2/T-0069-cornered-gate-modify-power
 depends_on: []
 claims: [gate:Cornered (triggers), primitive:MODIFY_STAT (power, until end of turn)]
@@ -88,3 +88,4 @@ None expected. `put`, `putScratch`, `moveTo`, `attack`, `endTurn`, `script` and 
 
   Notes:
   1. **Reuse (D5.3):** `cornered` repeats `(g *Game) TheaterOf(p)` (`state.go:283`, "the Main Theater assets controlled by p"), which `combat.go` and `state.go` already use. Write it as `return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))` and keep the doc comment. Nothing else changes. Re-run the listed tests, `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-b`.
+- 2026-10-26 kernel-engineer (sonnet, round 1 fixes): answered the review note. 1. `cornered` in `trigger.go` is now `return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))`, with its doc comment kept; the diff is that one function (1 line added, 9 removed) and nothing else. Ran: the listed `go test -run` filter (ok), `go tool task check` (all stages passed, lint summary PASSED), `go tool task sim-compare -- autoloop/m2-wave-b` ([PASS], byte for byte).
