@@ -139,7 +139,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0067 | A discard step that picks from your own hand, with the most-recently-added timeout (SVY-R16, wave B shape, sonnet) | done |
 | T-0068 | Make Chainbreaker Irregulars executable (wave B card, flash) | done |
 | T-0069 | A Cornered gate on triggers, and a step that gives power until end of turn (FR-KWD-002e, FR-LAY-003, wave B shape, sonnet) | done |
-| T-0070 | Make Allshan, Chainbreaker Revenant executable (wave B card, flash) | tests |
+| T-0070 | Make Allshan, Chainbreaker Revenant executable (wave B card, flash) | done |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
