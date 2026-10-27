@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
