@@ -24,7 +24,7 @@ Cornered: Resistant 1.","3","6","1","2","RARE","false"
 "Chainbreaker Phalanx","UNIT","PATH","Infantry, Chainbreaker","4","0","RESERVES","Whenever this unit moves to the Main Theater, you may move chosen allied unit from your Reserves to the Main Theater. That unit gains 2 armor.","4","5","1","2","RARE","false"
 "Devilhorn Guerrillas","UNIT","PATH","Infantry, Devilhorn","4","0","MAIN_THEATER, RESERVES","When this unit deploys, if it was deployed to the Main Theater, deal 2 damage to chosen opposing unit.","3","5","2","0","UNCOMMON","false"
 "Allshan, Chainbreaker Revenant","UNIT","PATH","Specialist","5","0","RESERVES","Unbowed: This unit gains 2 armor.
-Cornered: Whenever this unit attacks, it gets +3 power until end of turn.","5","6","0","0","MYTHIC","false"
+Cornered: Aggressive 3.","5","6","0","0","MYTHIC","false"
 "Hammerhand Brigade","UNIT","PATH","Infantry, Hammerhand","5","0","MAIN_THEATER","Armor 2","5","6","1","2","RARE","false"
 "Ruin Partisans","UNIT","PATH","Infantry, Reaver","5","0","RESERVES","T2, exhaust, kill this unit: Return chosen unit card from your discard pile to your hand.","4","7","1","2","UNCOMMON","false"
 "Arkha, Sun's Fury","UNIT","PATH","Officer, Devilhorn","6","0","MAIN_THEATER","Whenever this unit attacks, you may put a unit card from your discard pile on the bottom of your deck. If you do, deal 3 damage to chosen opposing Headquarters.","8","7","1","2","MYTHIC","false"
