@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0078-arkha
 depends_on: [T-0077]
 claims: [card:Arkha, Sun's Fury]
@@ -40,7 +40,7 @@ To be written in `pkg/engine/cards_path_arkha_test.go`, from the CSV text:
 - `TestCard_ArkhasSunsFury_DecliningDoesNothing`: declining "you may" asks nothing more and does nothing, and the attack goes on.
 
 ## Helpers Needed
-None expected. `inDiscard` comes with T-0077.
+None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Originally: none expected. `inDiscard` comes with T-0077.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go` (the definition)
@@ -58,3 +58,6 @@ None expected. `inDiscard` comes with T-0077.
   - Directives: no `open: before` directive is on the board. Waiting triggers checked against `autoloop/m2-wave-b` 2312e28: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired.
   - Every shape the Definition names exists on the run branch: `ability.ZoneDiscard`, `OpPutOnDeck` with `Bottom`, `SubjectPick` with `UpTo`, `Step.IfDone`, `KindHeadquarters`, `AllegianceOpposing`. `inDiscard` is in the test helpers. No new shape, so this stays a card task.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_path_arkha_test.go` with the five listed tests: PutsAUnitCardOnTheBottomAndDamagesTheOpposingHeadquarters, OnlyUnitCardsInYourDiscardPileAreOffered, NoUnitCardMeansNoDamage, TimeoutAtThePickDealsNoDamage, DecliningDoesNothing. They fail now because the card is not yet executable. No helpers requested.
+  - Deviation from the task text: the Headquarters target is not asserted as a question. There is exactly one opposing Headquarters, so FR-MOD-001 chooses it without asking (as in the Infested Apostle tests). The tests expect asked kinds `[Optional, Pick]`.
+  - Arkha attacks an opposing 0/20 dummy so all Headquarters damage comes from the trigger. The timeout test relies on the `UpTo: 1` pick selecting none on a timeout (FR-MOD-001 sec. 6, SVY-R16).
