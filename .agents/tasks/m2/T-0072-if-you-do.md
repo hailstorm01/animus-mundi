@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
