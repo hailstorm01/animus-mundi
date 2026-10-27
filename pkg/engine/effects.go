@@ -37,6 +37,8 @@ func (g *Game) resolveAbility(it *StackItem) {
 			g.stepDraw(it, st, chosen)
 		case ability.OpDiscard:
 			g.stepDiscard(it, st, chosen)
+		case ability.OpModifyStat:
+			g.stepModifyStat(it, st, chosen)
 		case ability.OpReturnToHand, ability.OpPutOnDeck:
 			g.stepRelocate(it, st, chosen)
 		}
@@ -88,6 +90,14 @@ func (g *Game) stepScratch(it *StackItem, st ability.Step, _ [][]*Asset) {
 func (g *Game) stepDraw(it *StackItem, st ability.Step, _ [][]*Asset) {
 	for _, pid := range stepPlayers(it, st) {
 		g.draw(pid, g.value(it, st.Amount))
+	}
+}
+
+// stepModifyStat gives each Subject +Amount power until end of turn: the Layer 5
+// TempPower, cleared in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
+func (g *Game) stepModifyStat(it *StackItem, st ability.Step, chosen [][]*Asset) {
+	for _, a := range g.stepAssets(it, st, chosen) {
+		a.TempPower += g.value(it, st.Amount)
 	}
 }
 

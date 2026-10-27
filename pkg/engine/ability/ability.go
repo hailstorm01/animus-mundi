@@ -36,6 +36,7 @@ type Trigger struct {
 	Hook     Hook
 	Turn     TurnOwner
 	ToZone   Zone // HookDeploy only: fires only if the asset was deployed into this zone
+	Cornered bool // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
 	Optional bool // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
 	Effect   Effect
 
@@ -104,6 +105,7 @@ const (
 	OpHeal                       // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
 	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
 	OpDiscard                    // its controller discards Amount cards of their choice from their own hand (FR-MOD-001 §1, §6; SVY-R16)
+	OpModifyStat                 // the Subject gets +Amount power until end of turn (Layer 5, FR-LAY-001; expires in Sub-Phase 4c, FR-LAY-003). Other stats and durations come later
 )
 
 // Subject is what a step acts on.

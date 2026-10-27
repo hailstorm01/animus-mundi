@@ -4,7 +4,7 @@ title: A Cornered gate on triggers, and a step that gives power until end of tur
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0069-cornered-gate-modify-power
 depends_on: []
 claims: [gate:Cornered (triggers), primitive:MODIFY_STAT (power, until end of turn)]
@@ -78,3 +78,4 @@ None expected. `put`, `putScratch`, `moveTo`, `attack`, `endTurn`, `script` and 
   - `ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn` fails if the counter runs before the gate.
 
   The setup differences the author logged keep each case's meaning. `DecideOrder` picks `[0, 1]` put the first listed trigger on the stack first, so it resolves last (`SVY-R7`). Every helper used exists (`striker`, `attackTrigger`, `limited`, `unbowed`, `bowed`, `placedOrder`, `tgt`, `dmgTo`, `scratchN`, `wantScratches`). No earlier test is modified. The file fails only because `Trigger.Cornered` and `OpModifyStat` don't exist yet. Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-26 kernel-engineer (sonnet): implemented. Diff: `ability.Trigger.Cornered` and `ability.OpModifyStat` (ability.go); `(g *Game) cornered` (counts `g.Theater` assets by controller; HQs and Reserves are not in it) and the gate in `fireHook`, placed before the `MaxPerTurn` counter (trigger.go); `stepModifyStat` plus its `resolveAbility` case, adding `g.value(it, st.Amount)` to `TempPower` via `stepAssets` (effects.go); doc.go steps/gates/"Not built yet" lines. Reuse: no existing Cornered check or power-step found; `TempPower`, `Power` clamp and `endTurn` expiry reused unchanged, no stack.go change. Ran: the listed `go test -run` filter (ok), `go tool task check` (all pass), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-b` (PASS, byte for byte). No tests or helpers edited.
