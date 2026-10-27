@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -110,3 +110,8 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
     - Y runs only after a done X, including after a discard count. The killed unit's death trigger resolves after Y.
   - **Within scope:** every helper is local to the file or already exists. No earlier test is modified. The file fails only on the four missing identifiers.
   - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
+- 2026-10-26 kernel-engineer (sonnet): Implemented; status `review`. Status commit `in-progress` made first.
+  - Changed: `ability.go` (`OpKill`, `SubjectPick`, `Step.UpTo`, `Step.IfDone`, with the lead's comments); `damage.go` (new `destroy(a, known)` holding the per-asset body, `deathSweep` calls it); `effects.go` (`resolution.done`, IfDone gate in `resolveAbility`, new `runStep` dispatcher, every `step<Op>` returns a count, `stepKill`, `pickAssets` called from `stepAssets`, `relocateSelf` returns bool, `deckDrop` helper counting deck-size change for Draw/Scratch); `doc.go` lines. `scenario_test.go`, `choice.go`, `zones.go` untouched.
+  - Reuse: `DecideTarget` and `choose` fallback (no new kind), `assetsByID`, `matchesFilter`, `cardName`, `effectiveState`, `leaveBattlefield`/`putCard`. No other kill or pick existed.
+  - Commands: `go test ./pkg/engine -run '<Done When pattern>' -v` 15 PASS; `go tool task check` passed (fmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS byte for byte.
+  - Reviewer: `pickAssets` UpTo 0 keeps Min=Max=1 so a lone option takes the `soleAnswer` fast path. `stepKill` takes `effectiveState(a)` per asset just before each destroy, so in an "all" kill later assets' state is read after earlier deaths' departure; pinned by no test.

@@ -106,6 +106,7 @@ const (
 	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
 	OpDiscard                    // its controller discards Amount cards of their choice from their own hand (FR-MOD-001 §1, §6; SVY-R16)
 	OpModifyStat                 // the Subject gets +Amount power until end of turn (Layer 5, FR-LAY-001; expires in Sub-Phase 4c, FR-LAY-003). Other stats and durations come later
+	OpKill                       // destroy the Subject at once, into its owner's discard pile (FR-LAY-002, FR-ZON-002); a Headquarters is skipped (no M2 card kills one)
 )
 
 // Subject is what a step acts on.
@@ -117,6 +118,7 @@ const (
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
 	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
+	SubjectPick                      // battlefield assets matching Step.Filter, picked by the ability's controller as the step resolves: one, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
 )
 
 // Step applies one primitive.
@@ -126,7 +128,9 @@ type Step struct {
 	Subject Subject
 	Bottom  bool   // OpPutOnDeck: the bottom of the deck instead of the top
 	Target  int    // SubjectTarget: index into Effect.Targets
-	Filter  Filter // SubjectAll: which assets
+	Filter  Filter // SubjectAll, SubjectPick: which assets
+	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct assets, possibly none
+	IfDone  bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 }
 
 // ValueSource is where a Value's number comes from.

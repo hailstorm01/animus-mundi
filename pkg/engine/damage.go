@@ -62,6 +62,16 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 	return r
 }
 
+// destroy puts a into its owner's discard pile: it fires the killed hook, leaves
+// the battlefield with the known last-known state, and logs the destroy event.
+// A lone departure (OpKill) passes the state it has just taken (FR-ZON-004).
+func (g *Game) destroy(a *Asset, known EffectiveState) {
+	g.fireKilled(a)
+	g.leaveBattlefield(a, known)
+	g.putCard(a.Inst, ZoneDiscard, false)
+	g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
+}
+
 // deathSweep destroys every lethal asset simultaneously, then applies the
 // match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003,
 // FR-WIN-001). It runs only when nothing is resolving, so an HQ damaged
@@ -90,10 +100,7 @@ func (g *Game) deathSweep() {
 		known[i] = g.effectiveState(a)
 	}
 	for i, a := range dying {
-		g.fireKilled(a)
-		g.leaveBattlefield(a, known[i])
-		g.putCard(a.Inst, ZoneDiscard, false)
-		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
+		g.destroy(a, known[i])
 	}
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
