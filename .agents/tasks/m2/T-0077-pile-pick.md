@@ -4,7 +4,7 @@ title: An untargeted pick from your discard pile, which moves the picked card, w
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0077-pile-pick
 depends_on: [T-0072, T-0076]
 claims: [filter:zone-discard, subject:pick-from-pile, convention:card-steps, fallback:pile-top-down]
@@ -87,3 +87,8 @@ To be written in `pkg/engine/pile_pick_test.go`, with synthetic cards only (Arkh
   - No existing equivalent: `ability` has no pile zone, and no step moves a card other than its own source. Two schemes would be copied by a naive build, and the Shape gives each one home: the bounds rule (`pickBounds`) and the type-to-kind mapping. `stepDiscard`'s hand options look like the pile options but are a different rule (`DecideHand`, most recent first), so they stay.
   - Size: four non-test files. `doc.go` needs no change, and `choice.go` none, because the top-down order lives in `fixedOrderPositions`.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/pile_pick_test.go` (commit `test(T-0077)`), 9 tests: `TestFR_TGT_001_PilePickOffersMatchingCardsInYourDiscardPile`, `TestFR_TGT_001_PilePickIsMadeOnResolutionFromWhatMatchesThen`, `TestFR_TGT_001_PilePickPutsTheCardOnTheBottomOfItsOwnersDeck`, `TestFR_TGT_001_PilePickCanReturnTheCardToHand`, `TestFR_TGT_001_PilePickWithNoMatchDoesNothing`, `TestFR_MOD_001_SinglePilePickWithOneMatchIsNotAsked`, `TestFR_MOD_001_PilePickTimeoutPicksTheTopCard`, `TestFR_TRG_005_IfYouDoRunsYAfterAPilePick`, `TestFR_TRG_005_IfYouDoSkipsYWhenThePilePickPicksNothing`.
+  - Helper requested: `inDiscard` (see Helpers Needed). `go vet` fails only on it and on `ability.ZoneDiscard`. `cardtown lint rules` passes.
+  - Test-local helpers (`ppScript`, `ppPick` and others) live in the test file. The timeout test reorders the pile with `takeCard` and `putCard`, as the task allows.
+  - Left out, as the task lists: a target in a pile, opposing or both piles, mixed asset and pile decisions.
+
