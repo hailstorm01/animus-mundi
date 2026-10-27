@@ -28,8 +28,8 @@
 //     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat and OpKill (inline destruction), with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. SubjectPick is an untargeted pick made as the
-//     step resolves (SVY-R3), and a step with IfDone runs only if the step before it did
-//     something ("if you do", SVY-R14).
+//     step resolves (SVY-R3), asked as a DecidePick and not a target, and a step with IfDone
+//     runs only if the step before it did something ("if you do", SVY-R14).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Triggered abilities on a Headquarters, through the same self hooks.
