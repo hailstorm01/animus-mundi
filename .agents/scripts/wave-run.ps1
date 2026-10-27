@@ -64,6 +64,8 @@ function Get-RunText {
     @(git show "${branch}:$runFile")
 }
 
+# Callers wrap these in @(): PowerShell unrolls a one-item array into a bare
+# string, and indexing that string returns its characters.
 function Get-RunRows { @(Get-RunText | Where-Object { $_ -match '^\|\s*\d+\s*\|' }) }
 
 function Get-Signal([string]$row) {
@@ -122,7 +124,7 @@ $cliArgs += @('--disallowedTools', 'Bash(git push *),PowerShell(git push *)')
 
 if ($DryRun) {
     Write-Host "Run branch: $branch (exists: $(Test-BranchExists $branch))"
-    Write-Host "Run file:   $runFile ($((Get-RunRows).Count) rows)"
+    Write-Host "Run file:   $runFile ($(@(Get-RunRows).Count) rows)"
     Write-Host "Claude:     $exe"
     Write-Host "Session:    claude -p `"@lead-architect next (wave run: ...)`" $($cliArgs -join ' ')"
     exit 0
@@ -138,7 +140,7 @@ New-Item -ItemType Directory -Force $logDir | Out-Null
 for ($n = 1; $n -le $Tasks; $n++) {
     if (((Get-Date) - $started).TotalHours -ge $MaxHours) { Stop-Run "time budget of $MaxHours h used up" }
 
-    $before = (Get-RunRows).Count
+    $before = @(Get-RunRows).Count
     $prompt = "@lead-architect next (wave run: wave $Wave, run branch $branch, run file $runFile)"
     $log = Join-Path $logDir ('{0:yyyyMMdd-HHmmss}-{1}.json' -f (Get-Date), $n)
     Write-Host "[$n/$Tasks] $(Get-Date -Format HH:mm) lead session on $branch (log: $log)"
@@ -156,7 +158,7 @@ for ($n = 1; $n -le $Tasks; $n++) {
         Stop-Run "session $n had refused tool calls"
     }
 
-    $rows = Get-RunRows
+    $rows = @(Get-RunRows)
     if ($rows.Count -ne $before + 1) { Stop-Run "session $n added $($rows.Count - $before) run rows, expected 1" }
     $row = $rows[$rows.Count - 1]
     Write-Host "   $row"
@@ -164,7 +166,7 @@ for ($n = 1; $n -le $Tasks; $n++) {
     $signal = Get-Signal $row
     if ($signal -eq 'CONTINUE') { continue }
     if ($signal -eq 'WAVE-COMPLETE') {
-        $pending = Get-PendingCards
+        $pending = @(Get-PendingCards)
         if ($pending.Count -gt 0) { Stop-Run "lead says complete, but still not executable: $($pending -join '; ')" }
         Write-Host '   Verifying gates on the run branch...'
         if (-not (Test-Gates)) { Stop-Run 'lead says complete, but check or sim fails on the run branch' }
