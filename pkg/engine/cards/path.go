@@ -10,6 +10,39 @@ func init() {
 
 // pathDefs holds ability definitions for Path cards.
 var pathDefs = map[string]*ability.Def{
+	"Allshan, Chainbreaker Revenant": {
+		Text: []string{
+			"Unbowed: This unit gains 2 armor.",
+			"Cornered: Whenever this unit attacks, it gets +3 power until end of turn.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDamaged,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpAddArmor,
+							Subject: ability.SubjectSelf,
+							Amount:  ability.Value{N: 2},
+						},
+					},
+				},
+			},
+			{
+				Hook:     ability.HookAttacks,
+				Cornered: true,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpModifyStat,
+							Subject: ability.SubjectSelf,
+							Amount:  ability.Value{N: 3},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Irregulars": {
 		Text: []string{"Unbowed: Draw a card, then discard a card."},
 		Triggers: []ability.Trigger{
