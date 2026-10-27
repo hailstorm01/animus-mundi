@@ -4,7 +4,7 @@ title: "You may X. If you do, Y": an untargeted pick on resolution, a kill step,
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0072-if-you-do
 depends_on: [T-0071]
 claims: [primitive:KILL, subject:pick, gate:if-done, convention:step-counts]
@@ -98,3 +98,15 @@ None expected. `put`, `putScratch`, `give`, `script`, `asked`, `alive` and `endT
   - `go vet` fails only on the missing `OpKill`, `SubjectPick`, `Step.UpTo`, `Step.IfDone`. `cardtown lint rules` passes.
   - The first test removes an ally with a `SubjectTarget` kill step before the pick, to show the pick sees only what matches at resolution.
   - Prompt text of the pick decision is not asserted (implementation detail). Left out per the task: a non-adjacent `IfDone`, a replaced kill (SVY-R15), Arkha's pile pick.
+- 2026-10-26 lead-architect (tests-review, round 1): **Approved, `ready`.** I checked the tests against FRD 01 `FR-TGT-001` (lines 326-327, `SVY-R3`, `SVY-R14`), `FR-MOD-001` §1 and §6 (line 356, `SVY-R16`), `FR-LAY-002` (line 425), `FR-ZON-002` (line 186) and `FR-TRG-004`.
+  - **Expected outcomes are right:**
+    - "You may" and Y's target are asked on placement, and the pick when X resolves, from what matches then.
+    - Ward is ignored.
+    - The source may pick itself, and Y's damage still names it.
+    - A one-match single pick isn't asked. Its timeout picks Reserves before the Main Theater, which is the fixed order and the opposite of the oldest-first option order.
+    - An "up to" pick is always asked, and its timeout picks none.
+    - With no match, only that clause does nothing.
+    - A kill destroys inline, before a later "all" step. A Scratch Company goes face-up to its owner's discard pile, and a Headquarters is skipped.
+    - Y runs only after a done X, including after a discard count. The killed unit's death trigger resolves after Y.
+  - **Within scope:** every helper is local to the file or already exists. No earlier test is modified. The file fails only on the four missing identifiers.
+  - Next: dispatch `kernel-engineer` (tier `sonnet`). The Shape section's lead decisions are binding.
