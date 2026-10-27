@@ -4,7 +4,7 @@ title: Effect steps take one per-resolution struct (directive #51 part 1, harnes
 kind: harness
 tier: flash
 wave: B (board directive #51, structural review 3 finding 3; before the "if you do" shape for Infested Apostle and Arkha, SVY-R14)
-status: in-progress
+status: review
 branch: m2/T-0071-resolution-struct
 depends_on: [T-0070]
 claims: [type:resolution, convention:step<Op>(r, st)]
@@ -100,13 +100,31 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/effects.go`
 
 ## Done When
-- [ ] Cases 1–5 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–5 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 5): Wrote the task. Wave B's deck cards still to build are Infested Apostle (4 in the Animus list), Arkha, Sun's Fury (1 in Path) and Eternal Watchman (the Path HQ). Directive #14 (a) puts deck cards first. The Apostle and Arkha share one new shape, "you may X. If you do, Y" (`SVY-R14`), which fires directive #51. #51 asks for a pure move first, then steps that return counts. As with #50 (T-0062, then T-0063), the size rule (D2.4) splits it. This pure move goes first. The "if you do" shape follows: the step counts, an untargeted pick on resolution, `KILL`, and the gate on an earlier step's count. Then the Apostle card. Arkha's discard-pile pick fires #59 (1) and comes after that. Eternal Watchman needs a combat-kill hook and a target in the discard pile, so it waits until the pile-pick convention is in.
   - Line references checked against `autoloop/m2-wave-b` 1d9fded. Every command under Acceptance Cases and Done When fits the headless allowlist in `~/.gemini/antigravity-cli/settings.json`.
   - Waiting triggers checked: #6 and #7 (mode is `serial`), #8 (no `deck.go` behavior change), #15 (no turn hook), #20 (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (no pile pick, no repeated targets). None has fired. #51 has, and is now `open`.
   - Harness task, so it skips `tests` and goes straight to `ready`. Next: dispatch `kernel-engineer` on Gemini Flash through `agy` (D3).
+- 2026-10-26 kernel-engineer (Gemini Flash): Implemented T-0071.
+  - What changed:
+    - Added `type resolution struct { it *StackItem; chosen [][]*Asset }` right above `resolveAbility` in `pkg/engine/effects.go`.
+    - `resolveAbility` constructs `r := &resolution{it: it, chosen: make([][]*Asset, len(it.Chosen))}` and passes `(r, st)` to each `step<Op>` call.
+    - Updated signatures and bodies of `stepDealDamage`, `stepHeal`, `stepAddArmor`, `stepScratch`, `stepDraw`, `stepModifyStat`, `stepDiscard`, `stepRelocate`, and `stepAssets` to take `(r *resolution, st ability.Step)`.
+    - Internal accesses in step functions changed from `it` / `chosen` to `r.it` / `r.chosen` and `g.stepAssets(r, st)`.
+    - `stepRelocate`'s body became `{ g.relocateSelf(r.it, st) }`.
+  - Reuse:
+    - Bundled existing parameters `it` and `chosen` into the single per-resolution struct `resolution`. No new shape added.
+  - Verification results:
+    - Case 1: `git diff autoloop/m2-wave-b -- '*_test.go'` returned no output (tests unchanged). `go test ./...` passed across all packages.
+    - Case 2: `go tool task sim-compare -- autoloop/m2-wave-b` printed `[PASS] starter and stress sims match autoloop/m2-wave-b byte for byte, exit codes included`.
+    - Case 3: `git grep -n "chosen \[\]\[\]\*Asset" -- pkg/engine` printed exactly one line: `pkg/engine/effects.go:17:	chosen [][]*Asset`.
+    - Case 4: `git grep -n "func (g \*Game) step" -- pkg/engine/effects.go` printed exactly nine lines, all containing `(r *resolution, st ability.Step)`.
+    - Case 5: `git diff autoloop/m2-wave-b --stat` showed only `pkg/engine/effects.go` and `.agents/tasks/m2/T-0071-resolution-struct.md`.
+    - `go tool task check` passed (gofmt, `go vet`, all tests, `cardtown lint --all`).
+    - `go tool task sim` passed clean (200 matches, all invariants held).
+  - Status moved to `review`.
