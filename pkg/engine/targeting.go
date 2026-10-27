@@ -26,7 +26,7 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 		if t.UpTo > 0 {
 			prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
 		}
-		d, _ := g.assetDecision(p.controller, prompt, t.UpTo, func(a *Asset) bool {
+		d, _ := g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
 			return g.legalTarget(p.controller, p.source, t.Filter, a)
 		})
 		if t.UpTo > 0 && len(d.Options) == 0 {
@@ -39,14 +39,15 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	return chosen
 }
 
-// assetDecision builds a DecideTarget decision for player p over the battlefield
+// assetDecision builds a decision of the given kind (DecideTarget for targets,
+// DecidePick for untargeted picks) for player p over the battlefield
 // assets for which ok holds, and returns it with those assets in option order.
 // Options are listed oldest asset first (by ID), not by zone (SVY-R11). With
 // upTo 0 exactly one is picked (Min = Max = 1); with upTo N up to N distinct
 // assets are, possibly none (Min 0, Max min(N, len)). Callers handle an empty
 // option list themselves.
-func (g *Game) assetDecision(p PlayerID, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset) {
-	d := Decision{Player: p, Kind: DecideTarget, Prompt: prompt, Min: 1, Max: 1}
+func (g *Game) assetDecision(p PlayerID, kind DecisionKind, prompt string, upTo int, ok func(*Asset) bool) (Decision, []*Asset) {
+	d := Decision{Player: p, Kind: kind, Prompt: prompt, Min: 1, Max: 1}
 	var as []*Asset
 	for _, a := range g.assetsByID() {
 		if ok(a) {

@@ -14,10 +14,11 @@ const (
 	DecideOptional                     // "you may": fallback declines (no picks)
 	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
 	DecideHand                         // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
+	DecidePick                         // untargeted pick from the battlefield as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
 )
 
 func (k DecisionKind) String() string {
-	return [...]string{"Target", "Mode", "Optional", "Order", "Hand"}[k]
+	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick"}[k]
 }
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -130,7 +131,7 @@ func (g *Game) choose(d Decision) []int {
 // fallbackPicks is the FR-MOD-001 §6 answer for a missing, timed-out or invalid reply.
 func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
-	case DecideTarget:
+	case DecideTarget, DecidePick:
 		return g.fixedOrderPicks(d)
 	case DecideOrder:
 		picks := make([]int, d.Min)

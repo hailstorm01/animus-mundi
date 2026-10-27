@@ -259,8 +259,8 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 
 // pickAssets is the untargeted pick: the item's controller picks from every
 // battlefield asset matching st.Filter now, oldest first. It is not a target, so
-// Ward excludes nothing (SVY-R3, SVY-R14). It uses DecideTarget, so the FR-MOD-001
-// section 6 fallback applies: UpTo 0 picks exactly one (a single option is not
+// Ward excludes nothing (SVY-R3, SVY-R14). It asks a DecidePick, which has the
+// same FR-MOD-001 section 6 fallback as a target: UpTo 0 picks exactly one (a single option is not
 // asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
 // asked, and a timeout picks none. With no match nothing is asked.
 func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
@@ -269,7 +269,7 @@ func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
 	if st.UpTo > 0 {
 		prompt = fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
 	}
-	d, opts := g.assetDecision(r.it.Controller, prompt, st.UpTo, func(a *Asset) bool {
+	d, opts := g.assetDecision(r.it.Controller, DecidePick, prompt, st.UpTo, func(a *Asset) bool {
 		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
 	})
 	if len(opts) == 0 {
