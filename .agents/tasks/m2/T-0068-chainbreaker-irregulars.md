@@ -4,7 +4,7 @@ title: Make Chainbreaker Irregulars executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0068-chainbreaker-irregulars
 depends_on: [T-0067]
 claims: [card:Chainbreaker Irregulars]
@@ -26,10 +26,18 @@ requirements: []
 - `Text` holds the printed rules text, one entry.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-To be written once T-0067 is `done`.
+All in `pkg/engine/cards_path_irregulars_test.go`; Irregulars sits in player 1's Main Theater and player 0 attacks it.
+- `TestCard_ChainbreakerIrregulars_EntersReservesAsTwoFiveForThreeRequisitionAndDoesNothing`: 2/5, 3 Requisition, Reserves, nothing drawn or asked on deploy.
+- `..._DamageDrawsThenDiscardsTheCardTheControllerPicks`: one `DecideHand` to the controller over 3 options (drawn card included); the pick is discarded; the opponent is not asked.
+- `..._MayDiscardTheCardJustDrawn`: the drawn card is a legal pick.
+- `..._TimeoutDiscardsTheCardJustDrawn` (SVY-R16, FR-MOD-001).
+- `..._EmptyHandDiscardsTheDrawnCardWithoutAsking` (SVY-R16 fast path).
+- `..._LethalDamageStillDrawsAndDiscardsAfterTheDeathSweep` (SVY-R13).
+- `..._EachSeparateDamageInstanceFiresAgain`: two attackers, two draws and two discards.
+- `..._OnlyTheControllersHandAndDeckAreUsed`.
 
 ## Helpers Needed
-None expected.
+None. The tests use only existing helpers (`newScene`, `give`, `onTop`, `put`, `script`, `vanilla`, `deployPath`, `assetOf`, `inZone`).
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -44,3 +52,4 @@ None expected.
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 1): written with T-0067 and left `queued` until T-0067 is `done`.
 - 2026-10-26 lead-architect (wave run B, session 2): synced `main` into the run branch (1a3ef25). No `open: before` directive; #51, #58 and #59 don't apply (no "if you do", exhaust or pile claims). Status `tests`; branch created from `autoloop/m2-wave-b`; dispatched `rules-test-author`.
+- 2026-10-26 rules-test-author: wrote 8 `TestCard_ChainbreakerIrregulars_*` tests (listed under Tests). No helpers requested. `go vet` is clean, the tests fail as expected (card not yet executable), and `cardtown lint rules` passes. Left out: an empty-deck draw (FRD 01 reviewed scope does not settle it here) and an Armor-absorbs-all case (already pinned for Unbowed generally by `TestFR_REP_004_UnbowedFiresWhenArmorAbsorbsAllTheDamage`).
