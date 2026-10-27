@@ -4,7 +4,7 @@ title: Effect steps take one per-resolution struct (directive #51 part 1, harnes
 kind: harness
 tier: flash
 wave: B (board directive #51, structural review 3 finding 3; before the "if you do" shape for Infested Apostle and Arkha, SVY-R14)
-status: ready
+status: in-progress
 branch: m2/T-0071-resolution-struct
 depends_on: [T-0070]
 claims: [type:resolution, convention:step<Op>(r, st)]
