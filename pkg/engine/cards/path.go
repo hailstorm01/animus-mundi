@@ -10,6 +10,26 @@ func init() {
 
 // pathDefs holds ability definitions for Path cards.
 var pathDefs = map[string]*ability.Def{
+	"Chainbreaker Irregulars": {
+		Text: []string{"Unbowed: Draw a card, then discard a card."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDamaged,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:     ability.OpDraw,
+							Amount: ability.Value{N: 1},
+						},
+						{
+							Op:     ability.OpDiscard,
+							Amount: ability.Value{N: 1},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Sappers": {
 		Text: []string{"When this unit deploys, deal 1 damage to chosen structure or Headquarters."},
 		Triggers: []ability.Trigger{

@@ -26,7 +26,6 @@ var NotYetExecutable = []string{
 	"Boneyard Scavenger",
 	"Brigand Highlander",
 	"Broken Horn Armorer",
-	"Chainbreaker Irregulars",
 	"Chainbreaker Phalanx",
 	"Chainbreaker's Tenacity",
 	"Cliff of Portents",
