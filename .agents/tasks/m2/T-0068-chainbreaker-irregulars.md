@@ -4,7 +4,7 @@ title: Make Chainbreaker Irregulars executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: tests
 branch: m2/T-0068-chainbreaker-irregulars
 depends_on: [T-0067]
 claims: [card:Chainbreaker Irregulars]
@@ -43,3 +43,4 @@ None expected.
 
 ## Log
 - 2026-10-26 lead-architect (wave run B, session 1): written with T-0067 and left `queued` until T-0067 is `done`.
+- 2026-10-26 lead-architect (wave run B, session 2): synced `main` into the run branch (1a3ef25). No `open: before` directive; #51, #58 and #59 don't apply (no "if you do", exhaust or pile claims). Status `tests`; branch created from `autoloop/m2-wave-b`; dispatched `rules-test-author`.

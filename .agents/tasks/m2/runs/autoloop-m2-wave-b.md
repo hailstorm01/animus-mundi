@@ -2,7 +2,8 @@
 
 - **Run branch:** `autoloop/m2-wave-b`, from `main` at `4d0abf0`
 - **Started:** 2026-10-26
-- **Cards:** Hammerhand Brigands; Devilhorn Captain; Chainbreaker Irregulars; Allshan, Chainbreaker Revenant; Animoceps Rager; Animoceps Shambler; Hammerhand Bivouac; Eternal Watchman; Blind Defile; Infested Apostle; Arkha, Sun's Fury; Drifting Concept; Rogue Fleshshaper
+- **Cards:** Hammerhand Brigands; Devilhorn Captain; Chainbreaker Irregulars; Allshan, Chainbreaker Revenant; Animoceps Rager; Animoceps Shambler; Eternal Watchman; Infested Apostle; Arkha, Sun's Fury; Rogue Fleshshaper
+- **Deferred:** Hammerhand Bivouac (#14 (b): turn-start hook, non-deck); Blind Defile (#14 (b): opposing-unit-attacks hook, non-deck); Drifting Concept (#14 (b): `RevealHand`, non-deck)
 
 | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
