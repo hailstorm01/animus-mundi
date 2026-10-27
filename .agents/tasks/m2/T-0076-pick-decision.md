@@ -4,7 +4,7 @@ title: An untargeted pick is its own decision kind, DecidePick, not a Target (SV
 kind: shape
 tier: sonnet
 wave: B
-status: queued
+status: tests
 branch: m2/T-0076-pick-decision
 depends_on: [T-0072]
 claims: [decision:pick]
