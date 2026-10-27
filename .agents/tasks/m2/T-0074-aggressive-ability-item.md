@@ -4,7 +4,7 @@ title: Aggressive is an ability stack item, marked as coming from the keyword (d
 kind: harness
 tier: sonnet
 wave: B (board directive #60 (1), blocking before T-0073)
-status: review
+status: done
 branch: m2/T-0074-aggressive-ability-item
 depends_on: [T-0072]
 claims: [type:ability.Keyword, field:ability.Trigger.Keyword, func:ability.Aggressive, field:StackItem.Keyword, removes:StackAggressive, removes:StackItem.Amount, removes:pendingTrigger.item, removes:view.StackView.Amount]
@@ -99,12 +99,13 @@ Put the engine tests in a new `pkg/engine/aggressive_item_test.go` and the view 
 - Tests: new `pkg/engine/aggressive_item_test.go`; a new test function in `pkg/view/view_test.go`; setup-only helpers in `pkg/engine/scenario_test.go`
 
 ## Done When
-- [ ] The new tests pass: `go test ./pkg/engine -run 'Aggressive'` and `go test ./pkg/view`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b` passes, or the Log explains every changed line (case 9)
-- [ ] `git grep -n StackAggressive -- pkg cmd` prints nothing
+- [x] The new tests pass: `go test ./pkg/engine -run 'Aggressive'` and `go test ./pkg/view`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b` passes, or the Log explains every changed line (case 9)
+- [x] `git grep -n StackAggressive -- pkg cmd` prints nothing
 
 ## Log
 - 2026-10-26, lead-architect (wave B run, session 7): written from directive #60 (1), which blocks T-0073. Synced `main` into the run branch first (ef23c3b: #60, SVY-R18). Harness, tier `sonnet` as the directive says: it changes the trigger pipeline every attack runs through. Four non-test files, within the size rule; the placement event shows the keyword in its `Detail` rather than a new `Event` field, which would have been a fifth file and has no reader yet. Searched for an existing equivalent: `stepModifyStat` is the one writer kept; `StackAggressive` is the one removed. No other keyword is a triggered ability today (Unbowed and Cornered are printed-ability prefixes, `Trigger.Cornered` and `HookDamaged`), so `Keyword` has one value. Harness task, so straight to `ready`.
 - 2026-10-26, kernel-engineer (sonnet): tests first in 912ba16 (`aggressive_item_test.go`, 7 tests: listed/placed first by default, reorderable, item and place Detail wording, constructor and `Keyword.String`, read-at-attack both ways, resolves and expires, fizzle; plus `TestView_AbilityItemShowsItsKeyword` in `view_test.go`); they did not compile before the implementation. Fizzle sub-case done with a printed self-damage trigger (`OpDealDamage`, `SubjectSelf`, 20) and picks `[0 1]`, no new shape or helper. No `scenario_test.go` change. Reuse: `stepModifyStat` stays the one writer of "+N power"; `recorder` from `events_test.go` for placed items. Implemented the four files exactly as the Edits section says (`ability.Keyword`, `Trigger.Keyword`, `ability.Aggressive`; `StackAggressive`, `StackItem.Amount`, `pendingTrigger.item`, `StackView.Amount` removed; `StackItem.Keyword`/`StackView.Keyword` added). Removed the old `"trigger"` event ("... Aggressive N: +N power ...") that Aggressive's resolve logged; sim output is unaffected. Ran: `go test ./pkg/engine ./pkg/view` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS byte for byte (starter and stress); `git grep -n StackAggressive -- pkg cmd` empty. Look at: the existing event_facts test still passes unchanged (Aggressive place event now carries Card/Inst of the attacker).
+- 2026-10-26, lead-architect (review, session 7): approved, round 1, no changes. Scope: only the four Allowed Files plus the new tests; no existing test edited, and no test touched after `test(T-0074)` (912ba16). Every acceptance case is covered; the fizzle case uses a printed self-damage trigger, no new shape. Fences: no card names, no new package. Reuse: `stepModifyStat` is now the only "+N power until end of turn" writer; `ability.Aggressive` is the only place Aggressive N's meaning is written. Re-ran in a review worktree: `go tool task check` passes; `go tool task sim` clean, 200 games, P0 57.5% / P1 39.0% / draws 3.5% (unchanged), no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-b` byte-identical (no starter or stress card prints Aggressive); `git grep -n StackAggressive -- pkg cmd` prints nothing. Nit, left for whoever next touches it: `ability.Trigger`'s doc comment still says "one printed triggered ability", though a keyword trigger is one too. Merged into `autoloop/m2-wave-b` as 125b9ab. Directive #60 (1) applied; (2) is T-0075, which goes next because #60 still blocks T-0073.
