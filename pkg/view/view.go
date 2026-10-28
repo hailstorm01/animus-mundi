@@ -188,12 +188,8 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 				continue
 			}
 			for _, id := range ids {
-				for _, pl := range g.Players {
-					for _, inst := range pl.Discard {
-						if inst.ID == id {
-							s.ChosenCards[i] = append(s.ChosenCards[i], inst.Card.Name)
-						}
-					}
+				if inst := g.DiscardCard(id); inst != nil {
+					s.ChosenCards[i] = append(s.ChosenCards[i], inst.Card.Name)
 				}
 			}
 		}

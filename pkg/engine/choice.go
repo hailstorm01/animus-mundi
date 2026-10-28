@@ -14,7 +14,7 @@ const (
 	DecideOptional                     // "you may": fallback declines (no picks)
 	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
 	DecideHand                         // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
-	DecidePick                         // untargeted pick from the battlefield as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
+	DecidePick                         // untargeted pick from the battlefield or a discard pile as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
 )
 
 func (k DecisionKind) String() string {

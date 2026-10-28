@@ -1,4 +1,4 @@
-// Triggers: the pending-trigger buffer, hook firing and the flush in APNAP order (FR-TRG-002 to FR-TRG-004).
+// Triggers: the pending-trigger buffer, hook firing and the flush in APNAP order (FR-TRG-002 to FR-TRG-004). Placing each one is placement.go's.
 
 package engine
 
@@ -12,12 +12,9 @@ import (
 
 // pendingTrigger is a fired trigger waiting in the buffer for the flush.
 type pendingTrigger struct {
-	source     int       // source asset ID
-	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
-	controller PlayerID
-	label      string
-	pos        sourcePos // where the source stood when it fired
-	trig       ability.Trigger
+	placement
+	pos  sourcePos // where the source stood when it fired
+	trig ability.Trigger
 }
 
 // sourcePos is where a trigger's source stood when it fired: its zone's rank
@@ -93,8 +90,9 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			g.firings[k]++
 		}
 		g.pending = append(g.pending, pendingTrigger{
-			source: a.ID, inst: a.Inst, controller: a.Controller, trig: t,
-			label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), pos: posOf(a),
+			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
+				label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1)},
+			trig: t, pos: posOf(a),
 		})
 	}
 }
@@ -124,9 +122,9 @@ func deployedTo(a *Asset, z ability.Zone) bool {
 func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
 		g.pending = append(g.pending, pendingTrigger{
-			source: a.ID, inst: a.Inst, controller: a.Controller,
-			trig:  ability.Aggressive(n),
-			label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), pos: posOf(a),
+			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
+				label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n)},
+			trig: ability.Aggressive(n), pos: posOf(a),
 		})
 	}
 	g.fireHook(a, ability.HookAttacks)
@@ -168,12 +166,10 @@ func (g *Game) flushTriggers() {
 			if p.trig.Optional && !g.accepts(p) {
 				continue
 			}
-			if len(p.trig.Effect.Modes) > 0 {
-				p.trig.Effect = g.chooseModes(p)
-			}
+			eff, chosen := g.chooseOnPlacement(p.placement, p.trig.Effect)
 			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst,
-				Effect: p.trig.Effect, Tracked: p.trig.Hook == ability.HookKilled, Keyword: p.trig.Keyword,
-				Chosen: g.chooseTargets(p)})
+				Effect: eff, Tracked: p.trig.Hook == ability.HookKilled, Keyword: p.trig.Keyword,
+				Chosen: chosen})
 		}
 	}
 }
@@ -186,57 +182,4 @@ func (g *Game) accepts(p pendingTrigger) bool {
 		Prompt:  fmt.Sprintf("%s: you may use it", p.label),
 		Options: []Option{{Label: "yes", Ref: p.source}}}
 	return len(g.choose(d)) == 1
-}
-
-// chooseModes asks p's controller which modes of a modal trigger to use, when
-// it is placed and before its targets (FR-MOD-001 §5, SVY-R3), and returns the
-// effect the item resolves: the chosen modes joined in printed order. A mode
-// is legal if each of its exactly-one target slots has a legal entity now; an
-// "up to N" slot never makes it illegal. Only legal modes are offered, so a
-// timeout takes the first listed legal ones (§6) and a single legal mode is
-// answered automatically (§1). With no legal mode nothing is asked and the
-// effect is empty. With fewer legal modes than ChooseN all of them are chosen.
-func (g *Game) chooseModes(p pendingTrigger) ability.Effect {
-	var legal []int
-	for k, m := range p.trig.Effect.Modes {
-		ok := true
-		for i, t := range m.Targets {
-			if t.UpTo == 0 && len(g.targetDecision(p, i, t).Options) == 0 {
-				ok = false
-				break
-			}
-		}
-		if ok {
-			legal = append(legal, k)
-		}
-	}
-	if len(legal) == 0 {
-		return ability.Effect{}
-	}
-	n := min(p.trig.Effect.ChooseN, len(legal))
-	prompt := fmt.Sprintf("%s: choose %d", p.label, p.trig.Effect.ChooseN)
-	if p.trig.Effect.ChooseN == 1 {
-		prompt = p.label + ": choose one"
-	}
-	d := Decision{Player: p.controller, Kind: DecideMode, Prompt: prompt, Min: n, Max: n}
-	for _, k := range legal {
-		d.Options = append(d.Options, Option{Label: fmt.Sprintf("mode %d", k+1), Ref: p.source})
-	}
-	picked := g.choose(d)
-	slices.Sort(picked)
-	// New slices throughout: a mode's own Targets and Steps belong to the
-	// card's definition and must never be appended to.
-	var joined ability.Effect
-	for _, j := range picked {
-		m := p.trig.Effect.Modes[legal[j]]
-		shift := len(joined.Targets)
-		joined.Targets = append(joined.Targets, m.Targets...)
-		for _, st := range m.Steps {
-			if st.Subject == ability.SubjectTarget {
-				st.Target += shift
-			}
-			joined.Steps = append(joined.Steps, st)
-		}
-	}
-	return joined
 }

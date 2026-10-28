@@ -49,6 +49,38 @@ func (g *Game) scratch(pid PlayerID, n int) {
 	}
 }
 
+// discardFromHand has player pid discard n cards of their choice from their
+// own hand, or the whole hand if it holds fewer, and returns the cards
+// discarded, in pick order. Choosing from your own hand is not an inspection,
+// so a hand of exactly that many cards is discarded without asking
+// (FR-MOD-001 §1, §6; SVY-R16). Every discard from hand goes through it.
+func (g *Game) discardFromHand(pid PlayerID, n int) []*Instance {
+	hand := g.Players[pid].Hand
+	n = min(n, len(hand))
+	if n <= 0 {
+		return nil
+	}
+	d := Decision{Player: pid, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n}
+	if n > 1 {
+		d.Prompt = fmt.Sprintf("Discard %d cards", n)
+	}
+	for _, inst := range hand {
+		d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})
+	}
+	// The options are fixed before any card moves, so take the cards first.
+	var picked []*Instance
+	for _, i := range g.choose(d) {
+		picked = append(picked, hand[i])
+	}
+	for _, inst := range picked {
+		g.takeCard(inst)
+		g.putCard(inst, ZoneDiscard, false)
+		g.logEvent(Event{Kind: "discard", Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
+			"player %d discards %s", pid, inst.Card.Name)
+	}
+	return picked
+}
+
 // takeCard removes inst from whichever of its owner's piles (deck, hand or
 // discard) holds it, and reports whether one did. A card on the battlefield,
 // on the stack or set aside is in no pile.
@@ -82,6 +114,21 @@ func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
 	default:
 		panic(fmt.Sprintf("engine: putCard to zone %v, which is not a pile", to))
 	}
+}
+
+// DiscardCard returns the card with instance ID id if it is in a discard pile,
+// else nil. It is the one lookup of a chosen pile card by ID: the engine
+// re-verifies a pile target with it (pileTarget, FR-TGT-003), and a client
+// uses it to show a chosen card that is still there.
+func (g *Game) DiscardCard(id int) *Instance {
+	for _, pl := range g.Players {
+		for _, inst := range pl.Discard {
+			if inst.ID == id {
+				return inst
+			}
+		}
+	}
+	return nil
 }
 
 // leaveBattlefield removes a from the battlefield to a non-battlefield zone,
