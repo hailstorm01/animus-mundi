@@ -1,4 +1,4 @@
-// Effects: running a resolved triggered ability's steps and their values (FR-TGT-003).
+// Effects: resolving a stack item's effect, its steps in order and their values (FR-TGT-003). Untargeted picks are targeting.go's.
 
 package engine
 
@@ -218,7 +218,7 @@ func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 
 // stepCards returns the cards a card step acts on. SubjectSelf is a death
 // trigger's own card: a Tracked item whose exact instance is still in its
-// owner's discard pile (FR-ZON-004). SubjectPick with ZoneDiscard is the
+// owner's discard pile (FR-ZON-004). SubjectPick with a pile filter is the
 // cards picked from discard piles, in pick order. SubjectTarget is the cards
 // chosen for its pile slot that are still legal. Anything else has none.
 func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
@@ -233,7 +233,7 @@ func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
 			return r.cards[st.Target]
 		}
 	case ability.SubjectPick:
-		if st.Filter.Zone == ability.ZoneDiscard {
+		if st.Filter.InPile() {
 			return g.pickCards(r, st)
 		}
 	}
@@ -293,55 +293,9 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 		}
 		return out
 	case ability.SubjectPick:
-		if st.Filter.Zone != ability.ZoneDiscard {
+		if !st.Filter.InPile() {
 			return g.pickAssets(r, st)
 		}
 	}
 	return nil
-}
-
-// pickAssets is the untargeted pick: the item's controller picks from every
-// battlefield asset matching st.Filter now, oldest first. It is not a target, so
-// Ward excludes nothing (SVY-R3, SVY-R14). It asks a DecidePick, which has the
-// same FR-MOD-001 section 6 fallback as a target: UpTo 0 picks exactly one (a single option is not
-// asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
-// asked, and a timeout picks none. With no match nothing is asked.
-func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
-	d, opts := g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
-		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
-	})
-	if len(opts) == 0 {
-		return nil
-	}
-	var out []*Asset
-	for _, k := range g.choose(d) {
-		out = append(out, opts[k])
-	}
-	return out
-}
-
-// pickPrompt is the prompt of an untargeted pick step.
-func pickPrompt(it *StackItem, st ability.Step) string {
-	name := cardName(it.Inst)
-	if st.UpTo > 0 {
-		return fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
-	}
-	return name + ": pick one"
-}
-
-// pickCards is the untargeted pick over discard piles: the item's controller
-// picks from every card matching st.Filter now, as pickAssets does for assets
-// (SVY-R3, SVY-R14). The options are fixed before any card moves.
-func (g *Game) pickCards(r *resolution, st ability.Step) []*Instance {
-	d, opts := g.pileDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(inst *Instance) bool {
-		return g.matchesCard(r.it.Controller, r.it.Inst, st.Filter, inst)
-	})
-	if len(opts) == 0 {
-		return nil
-	}
-	var out []*Instance
-	for _, k := range g.choose(d) {
-		out = append(out, opts[k])
-	}
-	return out
 }

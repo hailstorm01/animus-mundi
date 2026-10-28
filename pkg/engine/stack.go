@@ -37,7 +37,7 @@ type StackItem struct {
 // Chosen[i] holds card instance IDs, not asset IDs. It is false when i is out
 // of range of Effect.Targets.
 func (it *StackItem) PileSlot(i int) bool {
-	return i >= 0 && i < len(it.Effect.Targets) && it.Effect.Targets[i].Filter.Zone == ability.ZoneDiscard
+	return i >= 0 && i < len(it.Effect.Targets) && it.Effect.Targets[i].Filter.InPile()
 }
 
 // push puts item on the stack and records where it went: the one place event

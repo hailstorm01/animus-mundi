@@ -107,6 +107,11 @@ type Filter struct {
 	Zone       Zone       // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
 }
 
+// InPile reports whether f chooses cards in a discard pile rather than assets
+// on the battlefield (Zone is ZoneDiscard). Every target, pick and filter check
+// that tells the two apart asks this, not the zone.
+func (f Filter) InPile() bool { return f.Zone == ZoneDiscard }
+
 // Allegiance is whose side an entity is on, relative to the ability's controller.
 type Allegiance int
 
@@ -150,7 +155,7 @@ const (
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
 	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
-	SubjectPick                      // battlefield assets matching Step.Filter, picked by the ability's controller as the step resolves: one, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
+	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
 )
 
 // Step applies one primitive.
@@ -160,8 +165,8 @@ type Step struct {
 	Subject Subject
 	Bottom  bool   // OpPutOnDeck: the bottom of the deck instead of the top
 	Target  int    // SubjectTarget: index into Effect.Targets
-	Filter  Filter // SubjectAll, SubjectPick: which assets
-	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct assets, possibly none
+	Filter  Filter // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
+	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
 	IfDone  bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 }
 

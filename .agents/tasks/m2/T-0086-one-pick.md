@@ -4,7 +4,7 @@ title: One untargeted pick body, pickFrom, and one predicate for "this filter ch
 kind: harness
 tier: flash
 wave: B.1 (board directives #63 and #66, structural review 4 findings 2 and 5)
-status: ready
+status: review
 branch: m2/T-0086-one-pick
 depends_on: [T-0085]
 claims: [func:pickFrom, func:ability.Filter.InPile]
@@ -132,10 +132,22 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/targeting.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.1 run, session 2): wrote the task from board directives #63 and #66 (#66 goes in the task for #63). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash` as #63 gives. The edits are spelled out so the engineer copies them. They also take the T-0085 review nit, rewrapping `targetDecision`'s doc comment. `main` has no commits the run branch lacks, so no sync. Directives #64 and #65 (with #67) stay open for the next sessions; #61 stays `waiting`, because no task's `cards:` has a modal card. Next: `kernel-engineer` (Flash, headless).
+- 2026-10-28, kernel-engineer (T-0086): pure move implemented exactly as specified.
+  - Changes: Added `Filter.InPile() bool` to `pkg/engine/ability/ability.go`; updated doc comments on `SubjectPick`, `Step.Filter`, and `Step.UpTo` per directive #66; updated `DecidePick` comment in `pkg/engine/choice.go`; switched `PileSlot` in `pkg/engine/stack.go` to call `InPile()`; moved `pickAssets`, `pickPrompt`, and `pickCards` from `effects.go` to `targeting.go`, delegating pick choices to new generic helper `pickFrom[T any]`; replaced direct `ZoneDiscard` checks in `stepCards`, `stepAssets`, `targetDecision`, `matchesCard`, and `matchesFilter` with `InPile()`; rewrapped `targetDecision` doc comment.
+  - Reuse: Searched `pkg/engine` for existing `InPile` and `pickFrom`; neither existed. Reused `pickBounds` and decision builders (`assetDecision`, `pileDecision`).
+  - Acceptance Cases & Commands run:
+    1. Tests unchanged: `git -C W diff autoloop/m2-wave-b.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed.
+    2. Sim compare: `go -C W tool task sim-compare -- autoloop/m2-wave-b.1` -> `[PASS] starter and stress sims match autoloop/m2-wave-b.1 byte for byte, exit codes included`.
+    3. One pile predicate: `git -C W grep -n "Zone [!=]= ability.ZoneDiscard" -- pkg/engine` returned 0 matches; `git -C W grep -n "== ZoneDiscard" -- pkg/engine/ability` returned exactly one line (`pkg/engine/ability/ability.go:113:func (f Filter) InPile() bool { return f.Zone == ZoneDiscard }`).
+    4. One pick body: `git -C W grep -n "pickFrom" -- pkg/engine` returned 4 lines (doc comment, func signature, and the 2 calls in `pickAssets` and `pickCards`).
+    5. Picks live in targeting.go: `git -C W grep -n "func .*pick" -- pkg/engine/effects.go` returned 0 matches; `git -C W grep -n "func .*pick" -- pkg/engine/targeting.go` returned 5 lines (`pickBounds`, `pickAssets`, `pickPrompt`, `pickCards`, `pickFrom`).
+    6. Doc lines: `go -C W doc ./pkg/engine/ability Filter.InPile` and `go -C W doc -all ./pkg/engine/ability` showed the new comments.
+    7. Only these edits: `git -C W diff autoloop/m2-wave-b.1 --stat` listed only the 5 allowed engine files and this task file.
+    8. Gates: `go -C W tool task check` passed (gofmt, `go vet`, all tests, all linters clean); `go -C W tool task sim` passed (200/200 games, all invariants held).
