@@ -4,7 +4,7 @@ title: One place discards from hand, (g *Game) discardFromHand (directive #64, h
 kind: harness
 tier: flash
 wave: B.1 (board directive #64, structural review 4 finding 3)
-status: review
+status: done
 branch: m2/T-0087-discard-from-hand
 depends_on: [T-0086]
 claims: [func:discardFromHand]
@@ -118,3 +118,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - Case 6: `git diff autoloop/m2-wave-b.1 --stat` lists only `pkg/engine/zones.go`, `pkg/engine/effects.go`, and this task file.
     - Case 7 / Gates: `go tool task check` and `go tool task sim` passed cleanly.
   - Reviewer note: Clean pure move; exact logic preserved; sim compare byte-identical. Status -> review.
+- 2026-10-28, lead-architect (wave B.1 run, session 3, D5): **Approved, `done`.** Review of `git diff autoloop/m2-wave-b.1...m2/T-0087-discard-from-hand` (one code commit, eb777fe):
+  - Scope: only `zones.go`, `effects.go` and this task file changed. No test file changed.
+  - The edits match the task line for line. `discardFromHand` runs the old loop body's statements in the old order, and `stepDiscard` still takes `g.value` once before the loop, so every decision and random draw is the same. `effects.go` lost its now-unused `fmt` import.
+  - Fences and reuse: no card name and no new rule. The `discard` event and the `DecideHand` discard decision now each appear once in package `engine`'s non-test code (directive #64 case (c)). No new duplicate.
+  - Flash run: `agy` exited 0 with `status: SUCCESS` and no `denied_actions`. The engineer removed its worktree.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: no `*_test.go` diff; cases 3–5 print what they should (one `Kind: "discard"` and one `Kind: DecideHand`, both in `discardFromHand`; `discardFromHand` in two doc lines, its `func` line and one call); `go tool task sim-compare -- autoloop/m2-wave-b.1` `[PASS]`; `go tool task check` passes; `go tool task sim` runs clean (200 games, P0 63.5% / P1 34.5% / draws 2.0%, unchanged). The merge's tree is the task branch's, so the run branch passes the same gates.
