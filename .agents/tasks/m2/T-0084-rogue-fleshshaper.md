@@ -4,7 +4,7 @@ title: Make Rogue Fleshshaper executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0084-rogue-fleshshaper
 depends_on: [T-0083]
 claims: [card:Rogue Fleshshaper]
