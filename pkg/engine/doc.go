@@ -21,7 +21,9 @@
 //     may choose targets ("up to N", "other", a zone) that are verified
 //     when it is placed and again when it resolves (FR-TGT-001, FR-TGT-003). A
 //     trigger may be limited to N firings each turn per asset (Trigger.MaxPerTurn,
-//     FR-TRN-001), and Unbowed (FR-KWD-002a) fires on damage taken.
+//     FR-TRN-001), and Unbowed (FR-KWD-002a) fires on damage taken. A trigger
+//     may be modal ("choose N" modes, chosen on placement before its targets,
+//     FR-MOD-001 §5).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
 //     choosing from your own hand (DecideHand, SVY-R16).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,

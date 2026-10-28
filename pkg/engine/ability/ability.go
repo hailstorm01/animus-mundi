@@ -81,10 +81,15 @@ const (
 	ZoneDiscard // a discard pile, not the battlefield: the entities are cards in it (FR-TGT-001 Zone). Filter.Allegiance names whose pile: allied is the controller's
 )
 
-// Effect is what a resolving ability does: its steps, in order.
+// Effect is what a resolving ability does: its steps, in order. A modal effect
+// lists Modes instead: each mode is an Effect of its own, and ChooseN of them
+// are chosen when the ability is placed, before any target (FR-MOD-001 §5). An
+// effect with Modes has no Targets or Steps of its own.
 type Effect struct {
 	Targets []Target // "chosen" clauses, chosen when the ability is placed on the stack (FR-TGT-001)
 	Steps   []Step
+	Modes   []Effect // "choose N": the modes in printed order; an effect with Modes has no Targets or Steps of its own (FR-MOD-001 §5)
+	ChooseN int      // with Modes: how many different modes are chosen ("choose one" is 1, SVY-R6)
 }
 
 // Target is one "chosen" clause: exactly one entity, or with UpTo "up to N".

@@ -4,7 +4,7 @@ title: Modal triggers, "choose one" of their modes on placement, before targets 
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: done
 branch: m2/T-0083-modal-choice
 depends_on: [T-0006, T-0030, T-0081]
 claims: [effect:modes, decision:mode-on-placement]
@@ -69,13 +69,30 @@ To be written in `pkg/engine/modal_test.go`, with synthetic cards only (Rogue Fl
 - `pkg/engine/doc.go` (the "What runs now" line)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(MOD_001|TGT_003)'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No card uses modes yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(MOD_001|TGT_003)'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No card uses modes yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
 
 ## Log
 - 2026-10-27 lead-architect (wave run B, session 20): Wrote the task. The run branch has everything `main` has (`git log autoloop/m2-wave-b..main` is empty), and no `open: before` directive is on the board. Waiting triggers checked against `autoloop/m2-wave-b` a996ecc: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task; modes are a wave B shape), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired.
   - Wave B cards still on `NotYetExecutable`: only Rogue Fleshshaper (kept by the run header: Ambush Tactics, a deck card, needs the same modal shape, #14 (b), (c)). It needs this shape plus its definition. Together that is six non-test files, so it is split in two: this task, then the card task (`cards/path.go`, `cards/cards.go`), not written yet. Their claims don't overlap.
   - Reuse search: `DecideMode`, its fallback, its distinctness check and its fast path already exist and are reused unchanged. No `Modes` field or mode composition exists in `pkg/engine` or the `done` tasks. The design note already planned `Modes` with `ChooseN` on `Effect`.
   - Placement: the item carries the joined effect, so no stack, resolution, view or monitor code changes. The targeting monitor still sees each Target decision followed by its `place` event, because the mode is asked before the targets.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/modal_test.go` (commit 06f213d), 9 tests: `TestFR_MOD_001_ModalTriggerAsksForItsModeBeforeItsTargets`, `..._ModalTriggerResolvesOnlyTheChosenMode`, `..._TimedOutModeIsTheFirstListed`, `..._ModeWithoutALegalTargetIsNotOffered`, `..._UpToTargetDoesNotMakeAModeIllegal`, `..._ChooseTwoResolvesTwoDifferentModes`, `TestFR_TGT_003_ChosenModesTargetIsVerifiedAgainAtResolution`, `..._DeclinedModalTriggerAsksNoMode`, `..._ModalTriggerDoesNotChangeTheCardDefinition`. `go vet` fails only on the missing `Effect.Modes` / `ChooseN`; `cardtown lint rules` passes.
+  - Helpers requested in `scenario_test.go`: none. The test file defines its own local helpers (`scriptModal`, `newModalBoard`, `mode`, `modalTrigger`, `modeRecords`, `placeCount`, `totalArmor`, `labels`, `modeAnswer`).
+  - Left out, as the task says: no legal mode, and fewer legal modes than `ChooseN` (Open Question 11).
+  - Pinned beyond the prose, from the Shape section: prompt text `"<card name>: trigger 1: choose one"` / `"...: choose 2"`; an auto-answered single legal mode shows in the log as a Mode decision record with options `["mode 2"]` and How `"auto"`; mode targets are asked in printed order, not pick order; the Def test gives each mode's slices spare capacity and checks nothing was appended past their length.
+- 2026-10-27 lead-architect (wave run B, session 20, D4): **Tests approved, `ready`.** I checked the 9 tests in 06f213d against `FR-MOD-001` §1, §5, §6 and §7, `FR-TGT-001` (`SVY-R3`) and `FR-TGT-003`. Mode before targets and before the `place` event, only the chosen modes' targets and steps, the first listed mode on a timeout or with no chooser, the single legal mode answered automatically and chosen on a timeout, an empty "up to" slot leaving its mode legal, "choose two" with each mode acting on its own target, the second verification of a mode's target, a declined optional modal trigger asking no mode, and the `Def` left unchanged. Each follows from the cited text or the task's Shape (the legality reading is design note Open Question 11). The prompts, labels and printed-order target questions they pin are the Shape's. The test file's own helpers are setup only; every shared helper they call already exists.
+- 2026-10-27 kernel-engineer (sonnet): Implemented. Diff: `ability.Effect` gains `Modes` and `ChooseN` (doc comment updated); `targeting.go` gets `targetDecision(p, i, t)`, factored out of `chooseTargets` (the `pileDecision`/`assetDecision` choice and filter predicates now live only there); `trigger.go` gets `chooseModes` beside `accepts`, called in `flushTriggers` after `accepts` and before `chooseTargets`/`push`; `doc.go` line added.
+  - Reused: `DecideMode`, its fallback, distinctness check and `soleAnswer` (unchanged), `g.choose`, `pileDecision`/`assetDecision`. Mode legality = every exactly-one slot's `targetDecision(...).Options` is non-empty; "up to" slots are skipped. No legal mode returns an empty `Effect` (nothing asked); `n = min(ChooseN, legal)`. Options are labelled `mode <k>` with the printed 1-based position, `Ref` the source asset ID.
+  - Joining: the picked indexes are sorted (printed order), targets and steps are appended onto fresh slices, and each `SubjectTarget` step's `Target` is shifted by the target slots before its mode (the step is a copy, so the Def is untouched).
+  - Commands: `go test ./pkg/engine -run 'TestFR_(MOD_001|TGT_003)'` ok; `go tool task check` passed (gofmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
+  - Reviewer: the `Prompt` for ChooseN 1 is `<label>: choose one`, otherwise `<label>: choose <N>`, using the configured ChooseN even when fewer modes are legal.
+- 2026-10-27 lead-architect (wave run B, session 20, D5): **Approved.**
+  - **Scope:** `git diff autoloop/m2-wave-b...HEAD` changes only the four Allowed Files, this task file and the test file. `modal_test.go` is unchanged since 06f213d, and `scenario_test.go` is untouched.
+  - **Fences and reuse:** no card name in engine code. `targetDecision` is now the one place that picks `pileDecision` or `assetDecision` and applies the filters, and both `chooseTargets` and the mode legality check call it. The mode decision reuses `DecideMode`, its fallback, `Valid` and `soleAnswer` unchanged.
+  - **Rules fidelity:** modes are asked after `accepts` and before `chooseTargets`, so before the `place` event (`SVY-R3`, `SVY-R9`). Only legal modes are listed, in printed order, so §6's "first listed legal mode(s)" and §1's fast path come from the existing decision code. The joined effect starts from nil slices, so the `Def` is never appended to, and each `SubjectTarget` index is shifted by the slots before its mode. The item carries the joined effect, so the second verification (`FR-TGT-003`) is the existing one.
+  - **Note, not blocking:** `slices.Sort(picked)` sorts the slice `choose` returns, which is the chooser's own `Answer.Picks`. No chooser today reuses that slice (`emitDecision` clones it, and replay re-runs seeded choosers), and only `ChooseN` 2 or more reorders anything. The next task that touches `chooseModes` (Ambush Tactics, wave C) should sort a copy.
+  - **Gates, re-run by the reviewer in a review worktree (82b567d):** `go tool task check` exits 0. `go tool task sim` runs clean: P0 63.5% / P1 34.5% / draws 2.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare -- autoloop/m2-wave-b` passes byte for byte. The listed tests pass.
+  - Status `done`. Next: the Rogue Fleshshaper card task (`cards/path.go`, `cards/cards.go`, flash).
