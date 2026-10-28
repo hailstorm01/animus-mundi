@@ -4,7 +4,7 @@ title: Make Eternal Watchman executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0082-eternal-watchman
 depends_on: [T-0080, T-0081]
 claims: [card:Eternal Watchman]
@@ -77,3 +77,9 @@ To be written in a new file, `pkg/engine/cards_headquarters_watchman_test.go`, f
     - `go tool task check`: passes cleanly (gofmt, `go vet`, all package tests, and all cardtown linters pass).
     - `go tool task sim`: 200 starter deck games run clean; targeting monitors checked SVY-R3 and FR-TGT-001 1494 times with zero violations.
   - Status: review.
+- 2026-10-27 lead-architect (wave run B, session 19, D5): **Approved.**
+  - **Scope:** `git diff autoloop/m2-wave-b...HEAD` changes only the two Allowed Files, this task file and the new test file. The test file has not changed since 9fa40ea. The `agy` run (conversation `219cf8ec-63c8-4402-a02a-7af1ac6feadf`) exited 0 with no denied action.
+  - **Fences:** the definition is plain `ability` data; no engine code changed, and no new shape.
+  - **Reuse and fidelity:** the definition is exactly the task's Definition: `HookCombatKill`, not optional, one exactly-one slot over allied unit cards in a discard pile, and `OpReturnToHand` on that slot. It matches the printed line and `Text` holds it.
+  - **Gates, re-run by the reviewer in a review worktree (55e54e0):** `go test ./pkg/engine -run 'TestCard_EternalWatchman|TestStarterSet_Executable'` passes. `go tool task check` exits 0. `go tool task sim` runs clean: P0 63.5% / P1 34.5% / draws 2.0% (was 65.0% / 34.0% / 1.0%), both Headquarters executable, every invariant holds and the monitors found no violation.
+  - Status `done`.
