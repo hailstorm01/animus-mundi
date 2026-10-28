@@ -4,7 +4,7 @@ title: The view leak check accepts a name that was public when its event happene
 kind: harness
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0079-leak-check-at-event
 depends_on: [T-0077]
 claims: [test:TestView_Case4_NoLeak (leakWatcher)]
@@ -51,3 +51,9 @@ requirements: []
   - Case 4, mutation (b) `matchStart` prints the opponent's set-aside names: Case 4 FAILS (seed 1, settled point 1, "Chainbreaker Phalanx" in the match-start line). Reverted.
   - Case 4, mutation (a) as written (`LogLines` turn-start prints `eventlog.FormatEvent(e)`): Case 4 still PASSES, so it is not a catch. Reason: `FormatEvent` prints a turn-start as "turn N, player P is active" and never the snapshot (eventlog.go lines 23, 32-33), so that mutation prints the same text. Not a hole in the edit. A stronger variant, `FormatEvent(e)+fmt.Sprintf(" %+v", e.Snapshot)`, FAILS (seed 1, settled point 1, "Broken Horn Armorer" and others named in the turn-start line), so the turn-start path with `w.g` set is still guarded. Reverted. The lead may want to reword mutation (a) in the case list.
   - Commands: `go vet ./pkg/view` ok, `gofmt -l pkg/view` empty, `go test -count=1 ./pkg/view` and `go tool task check`: pass (check exit 0).
+- 2026-10-27 lead-architect (wave run B, session 15): Review round 1, approved, merged into `autoloop/m2-wave-b` (bea61cf).
+  - Scope, checked against `git diff autoloop/m2-wave-b...m2/T-0079-leak-check-at-event`: only `pkg/view/view_test.go` (the named edit, all in `test(T-0079)` bf4c425) and this file. No non-test file, no other test.
+  - The edit matches Case 1: `pubAt[i]` is the public set when event `i` was recorded, nil while `w.g` is nil, and `newPub[i]` lines up with `newLines[i]` because `view.LogLines` emits exactly one line per event (`pkg/view/log.go:21-34`). The view JSON check is untouched. The comment states the rule at the line's own event, not "public earlier in the match", which T-0036 rejected.
+  - Case 4 (a) as the lead wrote it was a non-mutation: `FormatEvent` never prints a turn-start's snapshot, so the line is unchanged. The engineer's stronger variant (append `%+v` of `e.Snapshot`) is the right check for this path. Re-run by the lead in the review worktree: Case 4 fails at seed 1, settled point 1 ("Broken Horn Armorer" in the turn-start line). Reverted.
+  - Gates re-run in a review worktree of 9091ec6: `go test -count=1 -v ./pkg/view -run TestView_Case4_NoLeak` passes (20 matches, 5556 settled points, as before); `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 70.5% / P1 28.5% / draws 1.0% (unchanged; the edit is test-only). The merge's tree is the reviewed tree, since the run branch had no commits after fda0383.
+  - Next: T-0078 (Arkha) resumes. Its branch `m2/T-0078-arkha` is based before this merge, so the next session brings the run branch into it before review.
