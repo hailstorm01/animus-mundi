@@ -24,20 +24,7 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	}
 	chosen := make([][]int, len(targets))
 	for i, t := range targets {
-		prompt := fmt.Sprintf("%s: choose target %d", p.label, i+1)
-		if t.UpTo > 0 {
-			prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
-		}
-		var d Decision
-		if t.Filter.Zone == ability.ZoneDiscard {
-			d, _ = g.pileDecision(p.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
-				return g.matchesCard(p.controller, p.inst, t.Filter, inst)
-			})
-		} else {
-			d, _ = g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
-				return g.legalTarget(p.controller, p.source, t.Filter, a)
-			})
-		}
+		d := g.targetDecision(p, i, t)
 		if t.UpTo > 0 && len(d.Options) == 0 {
 			continue
 		}
@@ -46,6 +33,28 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 		}
 	}
 	return chosen
+}
+
+// targetDecision builds the decision for target slot i (clause t) of p's
+// trigger: the legal entities of the slot, as pileDecision or assetDecision
+// list them. chooseTargets asks it, and the legality check of a modal trigger's
+// modes reads its Options (FR-MOD-001 §5), so both use the same filters.
+func (g *Game) targetDecision(p pendingTrigger, i int, t ability.Target) Decision {
+	prompt := fmt.Sprintf("%s: choose target %d", p.label, i+1)
+	if t.UpTo > 0 {
+		prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
+	}
+	var d Decision
+	if t.Filter.Zone == ability.ZoneDiscard {
+		d, _ = g.pileDecision(p.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
+			return g.matchesCard(p.controller, p.inst, t.Filter, inst)
+		})
+	} else {
+		d, _ = g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
+			return g.legalTarget(p.controller, p.source, t.Filter, a)
+		})
+	}
+	return d
 }
 
 // assetDecision builds a decision of the given kind (DecideTarget for targets,
