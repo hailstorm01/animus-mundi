@@ -4,7 +4,7 @@ title: Modal triggers, "choose one" of their modes on placement, before targets 
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0083-modal-choice
 depends_on: [T-0006, T-0030, T-0081]
 claims: [effect:modes, decision:mode-on-placement]
@@ -83,3 +83,4 @@ To be written in `pkg/engine/modal_test.go`, with synthetic cards only (Rogue Fl
   - Helpers requested in `scenario_test.go`: none. The test file defines its own local helpers (`scriptModal`, `newModalBoard`, `mode`, `modalTrigger`, `modeRecords`, `placeCount`, `totalArmor`, `labels`, `modeAnswer`).
   - Left out, as the task says: no legal mode, and fewer legal modes than `ChooseN` (Open Question 11).
   - Pinned beyond the prose, from the Shape section: prompt text `"<card name>: trigger 1: choose one"` / `"...: choose 2"`; an auto-answered single legal mode shows in the log as a Mode decision record with options `["mode 2"]` and How `"auto"`; mode targets are asked in printed order, not pick order; the Def test gives each mode's slices spare capacity and checks nothing was appended past their length.
+- 2026-10-27 lead-architect (wave run B, session 20, D4): **Tests approved, `ready`.** I checked the 9 tests in 06f213d against `FR-MOD-001` §1, §5, §6 and §7, `FR-TGT-001` (`SVY-R3`) and `FR-TGT-003`. Mode before targets and before the `place` event, only the chosen modes' targets and steps, the first listed mode on a timeout or with no chooser, the single legal mode answered automatically and chosen on a timeout, an empty "up to" slot leaving its mode legal, "choose two" with each mode acting on its own target, the second verification of a mode's target, a declined optional modal trigger asking no mode, and the `Def` left unchanged. Each follows from the cited text or the task's Shape (the legality reading is design note Open Question 11). The prompts, labels and printed-order target questions they pin are the Shape's. The test file's own helpers are setup only; every shared helper they call already exists.
