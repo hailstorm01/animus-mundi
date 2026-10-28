@@ -148,7 +148,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0073 | Make Infested Apostle executable (wave B card, flash) | done |
 | T-0076 | An untargeted pick is its own decision kind, DecidePick, not a Target (SVY-R3, SVY-R14, directive #20 (a), wave B shape, sonnet) | done |
 | T-0077 | An untargeted pick from your discard pile, which moves the picked card, with a top-down timeout (SVY-R14, SVY-R16, directive #59 (1), wave B shape, sonnet) | done |
-| T-0078 | Make Arkha, Sun's Fury executable (wave B card, flash) | queued |
+| T-0078 | Make Arkha, Sun's Fury executable (wave B card, flash) | done |
 | T-0079 | The view leak check accepts a name that was public when its event happened (harness, sonnet) | done |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |

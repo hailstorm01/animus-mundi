@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0078-arkha
 depends_on: [T-0077, T-0079]
 claims: [card:Arkha, Sun's Fury]
@@ -91,3 +91,5 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
   - **Fences and reuse:** the definition is plain `ability` data that matches the Definition: the trigger, its opposing-Headquarters slot, the bottom-of-deck pile pick and the `IfDone` damage step. It adds no shape. No existing helper builds an opposing-Headquarters slot, so there is nothing to reuse.
   - **Rules fidelity:** "you may" is answered on placement (`SVY-R9`) and the target is locked then (`SVY-R3`). The put is an `UpTo: 1` pick on resolution, and no pick means no damage (`SVY-R14`, `SVY-R16`).
   - **Gates, re-run by the reviewer in a review worktree (6d21110):** `go tool task check` exits 0, which includes the 5 card tests, `TestStarterSet_Executable` and `TestView_Case4_NoLeak`. `go tool task sim` runs clean: P0 65.0% / P1 34.0% / draws 1.0% (was 70.5% / 28.5% / 1.0%), every invariant holds and the monitors found no violation.
+  - Merged into `autoloop/m2-wave-b` as 2b6d3df; status `done`. Path executable cards 24/50 to 25/50; 24 deck cards still not executable.
+  - Next: Eternal Watchman (combat-kill hook) and Rogue Fleshshaper (modal choice) are the wave B cards left. Neither has a task yet.
