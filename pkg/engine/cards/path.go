@@ -255,6 +255,55 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Rogue Fleshshaper": {
+		Text: []string{
+			"When this unit deploys, choose one:",
+			"- Chosen asset heals 1.",
+			"- Deal 1 damage to chosen non-Scratch asset.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					ChooseN: 1,
+					Modes: []ability.Effect{
+						{
+							Targets: []ability.Target{
+								{
+									Filter: ability.Filter{},
+								},
+							},
+							Steps: []ability.Step{
+								{
+									Op:      ability.OpHeal,
+									Amount:  ability.Value{N: 1},
+									Subject: ability.SubjectTarget,
+									Target:  0,
+								},
+							},
+						},
+						{
+							Targets: []ability.Target{
+								{
+									Filter: ability.Filter{
+										NonScratch: true,
+									},
+								},
+							},
+							Steps: []ability.Step{
+								{
+									Op:      ability.OpDealDamage,
+									Amount:  ability.Value{N: 1},
+									Subject: ability.SubjectTarget,
+									Target:  0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Saboteur": {
 		Text: []string{"When this unit deploys, deal 2 damage to chosen opposing non-Scratch unit and 1 damage to chosen allied unit."},
 		Triggers: []ability.Trigger{
