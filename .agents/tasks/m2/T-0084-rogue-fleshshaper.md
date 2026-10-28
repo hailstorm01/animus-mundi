@@ -4,7 +4,7 @@ title: Make Rogue Fleshshaper executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0084-rogue-fleshshaper
 depends_on: [T-0083]
 claims: [card:Rogue Fleshshaper]
@@ -67,3 +67,6 @@ To be written in a new file, `pkg/engine/cards_path_fleshshaper_test.go`, from t
   - Every shape the Definition names exists on the run branch: `HookDeploy`, `Effect.Modes`/`ChooseN`, `Filter.NonScratch`, `OpHeal`, `OpDealDamage`, `SubjectTarget`. No new shape, so this is a card task.
   - `ChooseN` is 1, so T-0083's review note (`chooseModes` sorts the chooser's own picks slice) changes nothing here; it stays for Ambush Tactics.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_path_fleshshaper_test.go`, the seven tests named under Tests (`TestCard_RogueFleshshaper_DeployAsksForAModeThenItsTarget`, `_HealModeHealsTheChosenAsset`, `_HealModeOffersEveryAsset`, `_DamageModeDealsOneToTheChosenAsset`, `_DamageModeDoesNotOfferScratchCompany`, `_OpposingWardAssetIsNotOffered`, `_TimeoutChoosesTheHealMode`). `go vet ./pkg/engine` is clean, `cardtown lint rules` passes, and all seven fail now because the card is not yet executable.
+  - Helpers requested: none (used `deployPath`, `scriptModal`, `wantOptions`; the file adds its own `fleshBoard` scene builder).
+  - Left out: nothing. Not tested because FRD 01 does not need it: the no-legal-mode cases (Open Question 11).
