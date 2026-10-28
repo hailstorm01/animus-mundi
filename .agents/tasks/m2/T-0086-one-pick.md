@@ -4,7 +4,7 @@ title: One untargeted pick body, pickFrom, and one predicate for "this filter ch
 kind: harness
 tier: flash
 wave: B.1 (board directives #63 and #66, structural review 4 findings 2 and 5)
-status: review
+status: done
 branch: m2/T-0086-one-pick
 depends_on: [T-0085]
 claims: [func:pickFrom, func:ability.Filter.InPile]
@@ -151,3 +151,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     6. Doc lines: `go -C W doc ./pkg/engine/ability Filter.InPile` and `go -C W doc -all ./pkg/engine/ability` showed the new comments.
     7. Only these edits: `git -C W diff autoloop/m2-wave-b.1 --stat` listed only the 5 allowed engine files and this task file.
     8. Gates: `go -C W tool task check` passed (gofmt, `go vet`, all tests, all linters clean); `go -C W tool task sim` passed (200/200 games, all invariants held).
+- 2026-10-28, lead-architect (wave B.1 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.1` as b64ed0b. Review of `git diff autoloop/m2-wave-b.1...m2/T-0086-one-pick` (one code commit, d7f055c):
+  - Scope: only the five allowed files and this task file changed. No test file changed.
+  - The edits match the task line by line. `pickAssets`, `pickPrompt` and `pickCards` moved with their doc comments unchanged, and the two pick bodies now only build their decision and call `pickFrom`, which runs the old statements in the old order. All six zone comparisons call `Filter.InPile`. #66's four comments and the `effects.go` header say that picks cover discard piles. The `targetDecision` nit from T-0085 is rewrapped.
+  - Fences and reuse: no card name and no new rule. `chooseTargets`' loop maps answers to `Ref`s, not to entities, so it is not a copy of `pickFrom`. No new duplicate.
+  - Flash run: `agy` exited 0 with `status: SUCCESS` and no `denied_actions`; the engineer removed its worktree.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: no `*_test.go` diff; cases 3–5 print what they should (no zone comparison outside `InPile`; `pickFrom` in its doc line, its `func` line and two calls; no pick `func` left in `effects.go`); `go tool task sim-compare -- autoloop/m2-wave-b.1` `[PASS]`; `go tool task check` passes; `go tool task sim` runs clean (200 games, P0 63.5% / P1 34.5% / draws 2.0%, unchanged). The merge's tree is the task branch's, so the run branch passes the same gates.
