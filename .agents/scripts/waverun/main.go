@@ -287,10 +287,17 @@ func runRows(text []string) []string {
 	return rows
 }
 
-// signal returns a run row's last cell.
+// signal returns a run row's last cell. An escaped pipe (\|) is part of the
+// cell's text, as when a STOP reason quotes a piped command.
 func signal(row string) string {
-	cells := strings.Split(strings.Trim(strings.TrimSpace(row), "|"), "|")
-	return strings.TrimSpace(cells[len(cells)-1])
+	row = strings.TrimSuffix(strings.TrimSpace(row), "|")
+	i := len(row) - 1
+	for ; i >= 0; i-- {
+		if row[i] == '|' && (i == 0 || row[i-1] != '\\') {
+			break
+		}
+	}
+	return strings.TrimSpace(strings.ReplaceAll(row[i+1:], `\|`, "|"))
 }
 
 // cardsLine returns the names on the header's Cards line.

@@ -15,7 +15,8 @@ const runFile = "# Wave Run: m2 wave B\n" +
 	"| # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |\n" +
 	"| :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n" +
 	"| 1 | 2026-10-26 | T-0067 | done | `124cf3d` | tests 1 | none | clean | CONTINUE |\n" +
-	"| 2 | 2026-10-26 | T-0068 | ready | none | tests 1 | none | not run | STOP: Flash run did not finish |\r\n"
+	"| 2 | 2026-10-26 | T-0068 | ready | none | tests 1 | none | not run | STOP: Flash run did not finish |\r\n" +
+	"| 3 | 2026-10-28 | T-0088 | in-progress | none | code 0 | none | not run | STOP: denied `Get-Content a \\| Select-Object -First 1` |\n"
 
 const cardsSrc = `package cards
 
@@ -31,10 +32,10 @@ var other = []string{"Hammerhand Brigands"}
 
 func TestRunRowsAndSignal(t *testing.T) {
 	rows := runRows(lines(runFile))
-	if len(rows) != 2 {
-		t.Fatalf("got %d rows, want 2 (header and divider are not rows)", len(rows))
+	if len(rows) != 3 {
+		t.Fatalf("got %d rows, want 3 (header and divider are not rows)", len(rows))
 	}
-	for i, want := range []string{"CONTINUE", "STOP: Flash run did not finish"} {
+	for i, want := range []string{"CONTINUE", "STOP: Flash run did not finish", "STOP: denied `Get-Content a | Select-Object -First 1`"} {
 		if got := signal(rows[i]); got != want {
 			t.Errorf("row %d signal = %q, want %q", i+1, got, want)
 		}
