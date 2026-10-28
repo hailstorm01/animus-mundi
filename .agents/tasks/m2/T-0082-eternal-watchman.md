@@ -4,7 +4,7 @@ title: Make Eternal Watchman executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0082-eternal-watchman
 depends_on: [T-0080, T-0081]
 claims: [card:Eternal Watchman]
