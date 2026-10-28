@@ -4,7 +4,7 @@ title: A combat-kill hook, fired when an attacker's combat damage destroys its d
 kind: shape
 tier: sonnet
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0080-combat-kill-hook
 depends_on: [T-0010, T-0066]
 claims: [hook:combat-kill]
@@ -72,3 +72,4 @@ To be written in `pkg/engine/combat_kill_test.go`, with synthetic cards only (Et
   - The Watchman needs two new shapes, a combat-kill hook and a chosen target in a discard pile, plus its card definition. Together they make seven non-test files, so they are split three ways: this task (`hook:combat-kill`), then a shape task for a chosen target in a discard pile (`targeting.go`, `effects.go`, and the `Chosen` comments in `stack.go` and `pkg/view/view.go`), then the card task (`headquarters.go`, `cards.go`). Their claims don't overlap. The other two aren't written yet.
   - Placement: firing at the end of `resolveAttack` keeps the combat rule in `combat.go`, and `stack.go` stays unchanged. Searched `pkg/engine` and the `done` tasks for an existing combat-kill hook or kill record: none.
 - 2026-10-27 rules-test-author: Wrote `pkg/engine/combat_kill_test.go` (8 tests, synthetic cards, observed with `wantScratches`, and Draw 1 from empty decks plus `wantPlaced` for APNAP): `TestFR_CBT_002_CombatKillTriggerFiresWhenTheAttackerKillsTheDefender`, `...FiresWhenTheDefenderIsAStructure`, `...FiresFromAHeadquartersAttacker` (sets the HQ card's `Ability` in the scene), `...DoesNotFireWhenTheDefenderSurvives`, `...DoesNotFireForTheDefender`, `...DoesNotFireForABerserkSecondary`, `...DoesNotFireWhenTheAttackFizzles` (attack trigger damages the defender to death at Step 2), and `TestFR_TRG_003_CombatKillTriggerAndTheDefendersDeathTriggerAreAPNAP`. Helpers requested: none (the file defines `combatKillTrigger`). Left out, as the task says: an attacker that dies in the same sweep, and a Headquarters defender. `go vet` fails only on the missing `ability.HookCombatKill`; `cardtown lint rules` passes.
+- 2026-10-27 lead-architect (wave run B, session 17, D4): **Tests approved, `ready`.** I checked the 8 tests in 83d1258 against `FR-CBT-002` Step 3, `FR-KWD-002o` and `FR-TRG-003`. Each expected outcome follows from the cited text: kills of a unit, a structure and a Headquarters attacker's defender fire; a surviving defender, a retaliation kill, a cleave kill and a fizzled Attack don't; and the APNAP order shows in both placement and outcome. Every helper they use already exists (`striker`, `mortal`, `wantScratches`, `wantPlaced`, `s.cleave`). No test asserts on implementation details.
