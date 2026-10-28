@@ -4,7 +4,7 @@ title: A chosen target in a discard pile, chosen on placement and verified at re
 kind: shape
 tier: sonnet
 wave: B
-status: review
+status: done
 branch: m2/T-0081-pile-target
 depends_on: [T-0077]
 claims: [target:pile, view:pile-targets]
@@ -72,10 +72,10 @@ View test in `pkg/view/view_test.go` (a new test; no existing test changes):
 - `pkg/view/view.go` (`StackView.ChosenCards`, `stackView`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_00[13]_(PileTarget|AssetStepOnAPileSlot)|MOD_001_(SinglePileTarget|PileTargetTimeout))'` and `go test ./pkg/view -run TestView_PileTarget`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No card uses a pile target yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(TGT_00[13]_(PileTarget|AssetStepOnAPileSlot)|MOD_001_(SinglePileTarget|PileTargetTimeout))'` and `go test ./pkg/view -run TestView_PileTarget`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No card uses a pile target yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
 
 ## Log
 - 2026-10-27 lead-architect (wave run B, session 18): Wrote the task. The run branch has everything `main` has (merge base is `main` at 24a9ec9), and no `open: before` directive is on the board. Waiting triggers checked against `autoloop/m2-wave-b` 32e4966: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets: "up to N" targets stay distinct). None has fired. Directive #14 is open and followed: Eternal Watchman is a deck card (the Path Headquarters), so it goes before Rogue Fleshshaper.
@@ -92,3 +92,11 @@ View test in `pkg/view/view_test.go` (a new test; no existing test changes):
   - Reuse: `pileDecision`, `matchesCard`, `pickBounds`, `fixedOrderPositions`, `stepRelocate` unchanged. No helpers added, tests untouched.
   - Commands: the listed engine and view `-run` tests ok; `go tool task check` ok; `go tool task sim` ok; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
   - Reviewer note: in the view, `Chosen[i]` and `ChosenCards[i]` are non-nil empty slices when unused.
+- 2026-10-27 lead-architect (wave run B, session 18, D5): **Approved.**
+  - **Scope:** `git diff autoloop/m2-wave-b...HEAD` changes only the four Allowed Files, this task file and the two test files. Neither test file has changed since 148109a.
+  - **Fences and placement:** no card name in engine or view code. `pkg/view` still imports only `engine` and `eventlog`, because it reads the slot kind through `StackItem.PileSlot`.
+  - **Reuse:** the pile slot is built on `pileDecision`, `matchesCard` and `pickBounds`, and the loop that turns picks into `Ref`s is shared by both kinds of slot. The view's look-up of a chosen card in the discard piles looks like the loop in `pileTarget`, but it does a different job. It decides what is public to show, not whether a target is legal, so it isn't a duplicate under D2.0 and no directive is added.
+  - **Rules fidelity:** a pile slot is chosen on placement (`SVY-R3`), with the fast path, the fixed-order timeout and "up to N" taken unchanged from the asset path. At resolution each card is checked again through `pileTarget` (still in a discard pile, filter still met), and each entity is dropped on its own (`FR-TGT-003`, partial invalidation). Ward is not checked on cards, as the Shape says. An asset step on a pile slot finds `chosen` empty and does nothing.
+  - **View:** an instance ID never reaches `StackView`. `ChosenCards` lists only cards still in a pile, so every name it shows is public.
+  - **Gates, re-run by the reviewer in a review worktree (4d9e777):** the listed engine tests (10) and the view test pass. `go tool task check` exits 0. `go tool task sim` runs clean: P0 65.0% / P1 34.0% / draws 1.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare -- autoloop/m2-wave-b` passes byte for byte.
+  - Status `done`. Next: the Eternal Watchman card task (`HookCombatKill` with a pile target and `OpReturnToHand`).
