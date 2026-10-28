@@ -1,4 +1,4 @@
-// Targeting: choosing targets and checking them against filters (FR-TGT-001, FR-TGT-003).
+// Targeting: choosing targets on placement, untargeted picks on resolution, and checking entities against filters (FR-TGT-001, FR-TGT-003, SVY-R14).
 
 package engine
 
@@ -36,15 +36,16 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 }
 
 // targetDecision builds the decision for target slot i (clause t) of the
-// effect pl places: the legal entities of the slot, as pileDecision or assetDecision
-// list them. chooseTargets asks it, and legalModes reads its Options (FR-MOD-001 §5), so both use the same filters.
+// effect pl places: the legal entities of the slot, as pileDecision or
+// assetDecision list them. chooseTargets asks it, and legalModes reads its
+// Options (FR-MOD-001 §5), so both use the same filters.
 func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 	prompt := fmt.Sprintf("%s: choose target %d", pl.label, i+1)
 	if t.UpTo > 0 {
 		prompt = fmt.Sprintf("%s: choose up to %d for target %d", pl.label, t.UpTo, i+1)
 	}
 	var d Decision
-	if t.Filter.Zone == ability.ZoneDiscard {
+	if t.Filter.InPile() {
 		d, _ = g.pileDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
 			return g.matchesCard(pl.controller, pl.inst, t.Filter, inst)
 		})
@@ -106,6 +107,53 @@ func (g *Game) pileDecision(p PlayerID, kind DecisionKind, prompt string, upTo i
 	return d, cs
 }
 
+// pickAssets is the untargeted pick: the item's controller picks from every
+// battlefield asset matching st.Filter now, oldest first. It is not a target, so
+// Ward excludes nothing (SVY-R3, SVY-R14). It asks a DecidePick, which has the
+// same FR-MOD-001 section 6 fallback as a target: UpTo 0 picks exactly one (a single option is not
+// asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
+// asked, and a timeout picks none. With no match nothing is asked.
+func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
+	d, opts := g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
+		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
+	})
+	return pickFrom(g, d, opts)
+}
+
+// pickPrompt is the prompt of an untargeted pick step.
+func pickPrompt(it *StackItem, st ability.Step) string {
+	name := cardName(it.Inst)
+	if st.UpTo > 0 {
+		return fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
+	}
+	return name + ": pick one"
+}
+
+// pickCards is the untargeted pick over discard piles: the item's controller
+// picks from every card matching st.Filter now, as pickAssets does for assets
+// (SVY-R3, SVY-R14). The options are fixed before any card moves.
+func (g *Game) pickCards(r *resolution, st ability.Step) []*Instance {
+	d, opts := g.pileDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(inst *Instance) bool {
+		return g.matchesCard(r.it.Controller, r.it.Inst, st.Filter, inst)
+	})
+	return pickFrom(g, d, opts)
+}
+
+// pickFrom asks d and returns the options picked, in pick order: the body of
+// every untargeted pick, over assets or cards. opts are d's options, in order
+// (as assetDecision and pileDecision return them). With no option nothing is
+// asked.
+func pickFrom[T any](g *Game, d Decision, opts []T) []T {
+	if len(opts) == 0 {
+		return nil
+	}
+	var out []T
+	for _, k := range g.choose(d) {
+		out = append(out, opts[k])
+	}
+	return out
+}
+
 // pileTarget returns the card with instance ID id if it is still in a discard
 // pile and still meets the pile filter f (FR-TGT-003), else nil. A card goes
 // only to its owner's pile, so this is also "still in the zone the filter
@@ -140,9 +188,9 @@ func kindOf(t CardType) ability.Kinds {
 // matchesCard reports whether card inst, in a discard pile, meets every
 // criterion of the pile filter f for an ability controlled by ctl whose own
 // card is src: allegiance by the card's owner, Kinds and NonScratch by its
-// printed characteristics (FR-ZON-004), Other not src. Zone must be ZoneDiscard.
+// printed characteristics (FR-ZON-004), Other not src. f must be InPile.
 func (g *Game) matchesCard(ctl PlayerID, src *Instance, f ability.Filter, inst *Instance) bool {
-	if f.Zone != ability.ZoneDiscard || (f.Other && inst == src) {
+	if !f.InPile() || (f.Other && inst == src) {
 		return false
 	}
 	return matchesPrinted(ctl, f, inst.Owner, inst.Card)
@@ -186,7 +234,7 @@ func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) 
 	if f.Other && a.ID == src {
 		return false
 	}
-	if f.Zone == ability.ZoneDiscard || !deployedTo(a, f.Zone) {
+	if f.InPile() || !deployedTo(a, f.Zone) {
 		return false
 	}
 	return matchesPrinted(ctl, f, a.Controller, a.Printed())
