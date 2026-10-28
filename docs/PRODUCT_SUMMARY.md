@@ -62,12 +62,10 @@ animus-mundi/
 └── tools/
     ├── audit/                             # Audit records & registry
     ├── linter/
-    │   ├── card_standardization_audit.json# 167-card audit & review log
     │   └── pre-commit                     # Pre-commit hook template
     └── sheets/                            # Google Sheets synchronization tools
         ├── publish_card_sheets            # Freshness-checked export from local CSVs to Google Sheets
-        ├── import_card_sheets             # Interactive diff ingestion from Google Sheets to local CSVs
-        └── publish_audit                  # Card standardization audit Google Drive publisher
+        └── import_card_sheets             # Interactive diff ingestion from Google Sheets to local CSVs
 ```
 
 ### 2.1 The Five Master FRDs (Core Architectural Pillars)
@@ -122,7 +120,7 @@ Requirement counts below are linter-registered IDs (`cardtown lint frd`). Follow
 - **10 Clean RFC-4180 CSV Balance Sheets** in `data/cards/` covering 4 distinct factions (Animus, Concordia, Path, Soulless), Neutral/Common units, and Headquarters. **169 card rows** are present today.
 - **167 Cards Audited in the Standardization Pass**:
   - **127 Cards Standardized**: Rules text updated to adhere to MTG-style grammar and terminology.
-  - **52 Cards Flagged for Design Review (56 Documented Entries)**: The historical text diff and standardization register is archived in [`docs/Card_Standardization_Audit_Report.md`](Card_Standardization_Audit_Report.md) and `tools/linter/card_standardization_audit.json`, including the resolved `DA-DAT-003` mechanical triage rulings (*Animoceps Rager*, *Funeral Fungus*, *Rift*, *Mutation Swell*, *Steel Rain*, and the *Daggerspine Rangers* $\rightarrow$ *Spoil Forest Irregulars* IP rename).
+  - **52 Cards Flagged for Design Review (56 Documented Entries)**: These include the resolved `DA-DAT-003` mechanical triage rulings (*Animoceps Rager*, *Funeral Fungus*, *Rift*, *Mutation Swell*, *Steel Rain*, and the *Daggerspine Rangers* $\rightarrow$ *Spoil Forest Irregulars* IP rename).
   - **Live Review Status**: Ongoing per-card review and parity status are tracked through the CSV `needsRework` column (`FR-VAL-003`) and per-entry designer sign-off in `data/schemas/ast_overrides.json` (`FR-CMP-020`). The FRD-embedded Master Review Register has been retired.
 
 ### 2.3 Verification & Quality Assurance Tooling

@@ -19,12 +19,8 @@ Merges the per-faction card CSVs in `data/cards/` into two native Google Sheets 
 # Publish Card Sheets (or double-click tools\sheets\publish_card_sheets.cmd)
 powershell -ExecutionPolicy Bypass -File tools\sheets\publish_card_sheets.ps1
 
-# Publish Card Standardization Audit (or double-click tools\sheets\publish_audit.cmd)
-powershell -ExecutionPolicy Bypass -File tools\sheets\publish_audit.ps1
-
 # Preview what would be published, without contacting Google
 powershell -ExecutionPolicy Bypass -File tools\sheets\publish_card_sheets.ps1 -DryRun
-powershell -ExecutionPolicy Bypass -File tools\sheets\publish_audit.ps1 -DryRun
 
 # Force a fresh Google sign-in
 powershell -ExecutionPolicy Bypass -File tools\sheets\publish_card_sheets.ps1 -ReAuth
@@ -38,10 +34,6 @@ Run the card sheet linters (`cardtown lint sheets` and `cardtown lint syntax`, o
 | :--- | :--- | :--- | :--- |
 | `maneuvers` | Google Sheet | `Card sheets/` | `animus`, `concordia`, `path`, `soulless` |
 | `units-and-structures` | Google Sheet | `Card sheets/` | `animus`, `concordia`, `path`, `soulless`, `common`, `HQ` |
-| `Card Standardization Audit` | Google Sheet | `Card sheets/` | `Summary Dashboard`, `Flagged for Review`, `Master Audit Log`, per-faction tabs |
-| `Card Standardization Audit Report` | Google Doc | `Card sheets/` | Complete executive summary, metrics, Domain 7.1 decisions, and 52-card register |
-| `Card_Standardization_Audit_Report.md` | Markdown | `Card sheets/` & `docs/` | Formatted markdown audit report with tables and links |
-| `Card_Standardization_Audit_Report.html` | HTML | `Card sheets/` | Responsive standalone HTML report |
 
 
 ## One-time Google setup
