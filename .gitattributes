@@ -1,2 +1,5 @@
 # Go source is LF everywhere so gofmt checks are stable on Windows checkouts.
 *.go text eol=lf
+# Markdown too: agy's edit tool matches multi-line text with LF only, so a
+# CRLF task file in a fresh worktree cannot be edited past one line.
+*.md text eol=lf
