@@ -16,7 +16,7 @@
 //     keyed by card name in pkg/engine/cards. Engine code never names a card
 //     (cardtown lint fences).
 //   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks,
-//     HookDamaged, HookExhausted) run through a pending-trigger buffer, in APNAP order with cascades
+//     HookDamaged, HookExhausted, HookCombatKill) run through a pending-trigger buffer, in APNAP order with cascades
 //     (FR-TRG-002 to FR-TRG-004). A trigger may be optional, and its effects
 //     may choose targets ("up to N", "other", a zone) that are verified
 //     when it is placed and again when it resolves (FR-TGT-001, FR-TGT-003). A

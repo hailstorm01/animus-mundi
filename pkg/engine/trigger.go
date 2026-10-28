@@ -56,6 +56,10 @@ func (g *Game) fireDamaged(a *Asset) { g.fireHook(a, ability.HookDamaged) }
 // fireExhausted buffers a's own exhaust triggers. exhaust calls it after a becomes Exhausted.
 func (g *Game) fireExhausted(a *Asset) { g.fireHook(a, ability.HookExhausted) }
 
+// fireCombatKill buffers att's own combat-kill triggers. resolveAttack calls it after
+// the declared attacker's combat damage left the defender lethal.
+func (g *Game) fireCombatKill(att *Asset) { g.fireHook(att, ability.HookCombatKill) }
+
 // fireHook buffers a's own triggers for hook in printed order. A face-down
 // asset has no printed abilities.
 func (g *Game) fireHook(a *Asset, hook ability.Hook) {
