@@ -4,7 +4,7 @@ title: Modal triggers, "choose one" of their modes on placement, before targets 
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0083-modal-choice
 depends_on: [T-0006, T-0030, T-0081]
 claims: [effect:modes, decision:mode-on-placement]
@@ -79,3 +79,7 @@ To be written in `pkg/engine/modal_test.go`, with synthetic cards only (Rogue Fl
   - Wave B cards still on `NotYetExecutable`: only Rogue Fleshshaper (kept by the run header: Ambush Tactics, a deck card, needs the same modal shape, #14 (b), (c)). It needs this shape plus its definition. Together that is six non-test files, so it is split in two: this task, then the card task (`cards/path.go`, `cards/cards.go`), not written yet. Their claims don't overlap.
   - Reuse search: `DecideMode`, its fallback, its distinctness check and its fast path already exist and are reused unchanged. No `Modes` field or mode composition exists in `pkg/engine` or the `done` tasks. The design note already planned `Modes` with `ChooseN` on `Effect`.
   - Placement: the item carries the joined effect, so no stack, resolution, view or monitor code changes. The targeting monitor still sees each Target decision followed by its `place` event, because the mode is asked before the targets.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/modal_test.go` (commit 06f213d), 9 tests: `TestFR_MOD_001_ModalTriggerAsksForItsModeBeforeItsTargets`, `..._ModalTriggerResolvesOnlyTheChosenMode`, `..._TimedOutModeIsTheFirstListed`, `..._ModeWithoutALegalTargetIsNotOffered`, `..._UpToTargetDoesNotMakeAModeIllegal`, `..._ChooseTwoResolvesTwoDifferentModes`, `TestFR_TGT_003_ChosenModesTargetIsVerifiedAgainAtResolution`, `..._DeclinedModalTriggerAsksNoMode`, `..._ModalTriggerDoesNotChangeTheCardDefinition`. `go vet` fails only on the missing `Effect.Modes` / `ChooseN`; `cardtown lint rules` passes.
+  - Helpers requested in `scenario_test.go`: none. The test file defines its own local helpers (`scriptModal`, `newModalBoard`, `mode`, `modalTrigger`, `modeRecords`, `placeCount`, `totalArmor`, `labels`, `modeAnswer`).
+  - Left out, as the task says: no legal mode, and fewer legal modes than `ChooseN` (Open Question 11).
+  - Pinned beyond the prose, from the Shape section: prompt text `"<card name>: trigger 1: choose one"` / `"...: choose 2"`; an auto-answered single legal mode shows in the log as a Mode decision record with options `["mode 2"]` and How `"auto"`; mode targets are asked in printed order, not pick order; the Def test gives each mode's slices spare capacity and checks nothing was appended past their length.
