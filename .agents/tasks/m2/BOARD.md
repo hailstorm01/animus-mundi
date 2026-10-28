@@ -165,6 +165,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0085 | Placing an effect chooses its modes and targets from a placement, not a pending trigger (directive #62, harness, sonnet, pure move) | done |
 | T-0086 | One untargeted pick body, pickFrom, and one predicate for "this filter chooses cards in a pile", Filter.InPile (directives #63 and #66, harness, flash, pure move) | done |
 | T-0087 | One place discards from hand, (g *Game) discardFromHand (directive #64, harness, flash, pure move) | done |
+| T-0088 | The view asks the engine whether a chosen card is still in a pile, (g *Game) DiscardCard (directives #65 and #67, harness, flash, pure move) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
