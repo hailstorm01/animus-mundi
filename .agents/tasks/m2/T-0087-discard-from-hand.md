@@ -4,7 +4,7 @@ title: One place discards from hand, (g *Game) discardFromHand (directive #64, h
 kind: harness
 tier: flash
 wave: B.1 (board directive #64, structural review 4 finding 3)
-status: in-progress
+status: review
 branch: m2/T-0087-discard-from-hand
 depends_on: [T-0086]
 claims: [func:discardFromHand]
@@ -99,10 +99,22 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/effects.go`
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.1 run, session 3): wrote the task from board directive #64. Harness, so it skips `tests` and goes straight to `ready`. Tier `flash` as #64 gives. The edits are spelled out so the engineer copies them. `discardFromHand` goes in `zones.go` beside `draw` and `scratch`, the other per-player card steps, so the cost task in wave C finds it there. It returns the cards, not a count, as #64 asks; the cost task widens it to "up to N". `main` has no commits the run branch lacks, so no sync. Directive #65 (with #67) stays open for the next session; #61 stays `waiting`, because no task's `cards:` has a modal card. Next: `kernel-engineer` (Flash, headless).
+- 2026-10-28, kernel-engineer (T-0087):
+  - Changes: Moved discard loop body from `stepDiscard` in `pkg/engine/effects.go` into `(g *Game) discardFromHand(pid PlayerID, n int) []*Instance` in `pkg/engine/zones.go`. Removed unused `"fmt"` import from `pkg/engine/effects.go`. Updated `stepDiscard` to delegate to `discardFromHand` for each player and accumulate discarded card count.
+  - Reuse: `discardFromHand` placed beside `draw` and `scratch` in `zones.go`, reusing existing `takeCard`, `putCard`, `choose`, and `logEvent` mechanisms.
+  - Acceptance cases verified:
+    - Case 1: `git diff autoloop/m2-wave-b.1 -- "*_test.go"` produced 0 diffs. `go test ./...` passed.
+    - Case 2: `go tool task sim-compare -- autoloop/m2-wave-b.1` returned `[PASS] starter and stress sims match autoloop/m2-wave-b.1 byte for byte, exit codes included`.
+    - Case 3: `git grep -n 'Kind: \"discard\"' -- pkg/engine ':!*_test.go'` printed exactly 1 line: `pkg/engine/zones.go:78`.
+    - Case 4: `git grep -n 'Kind: DecideHand' -- pkg/engine ':!*_test.go'` printed exactly 1 line: `pkg/engine/zones.go:63`.
+    - Case 5: `git grep -n discardFromHand -- pkg/engine` printed 4 lines: 2 in `effects.go` (doc comment and 1 call site in `stepDiscard`) and 2 in `zones.go` (doc comment and func declaration).
+    - Case 6: `git diff autoloop/m2-wave-b.1 --stat` lists only `pkg/engine/zones.go`, `pkg/engine/effects.go`, and this task file.
+    - Case 7 / Gates: `go tool task check` and `go tool task sim` passed cleanly.
+  - Reviewer note: Clean pure move; exact logic preserved; sim compare byte-identical. Status -> review.
