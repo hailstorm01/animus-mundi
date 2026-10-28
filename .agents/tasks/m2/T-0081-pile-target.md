@@ -4,7 +4,7 @@ title: A chosen target in a discard pile, chosen on placement and verified at re
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0081-pile-target
 depends_on: [T-0077]
 claims: [target:pile, view:pile-targets]
@@ -88,3 +88,7 @@ View test in `pkg/view/view_test.go` (a new test; no existing test changes):
   - The engine package compiles today (the tests use no new API). Eight fail now. `...ThatLeftThePileIsIllegal` and `...WithNoMatchAsksNothing` pass before the build because nothing moves today, so they guard against regressions. "Left the pile" moves the card from an observer hook on the ability's `place` event, using `takeCard` and `putCard`.
   - Left out: the leave-and-return case (Open Question 10), as the task says. `PileSlot` is covered through the view test (items with no `Targets`) and the engine tests, not by a direct unit test.
 - 2026-10-27 lead-architect (wave run B, session 18, D4): **Tests approved, `ready`.** I checked the 10 engine tests and the view test in 148109a against `FR-TGT-001` (a card in a named non-battlefield zone, targets locked on placement), `FR-TGT-003` (a target that left its zone is illegal, partial invalidation, and the item still resolves) and `FR-MOD-001` §1 and §6 (the fast path, and a top-down timeout over a pile ordered A, C, B). Each expected outcome follows from the cited text. "Left the pile" also shows a later `IfDone` step skipped and the HQ damage from the slot beside it applied. The view test uses the view scene's 100000+ IDs, so its instance-ID search can't match an unrelated number. The two tests that pass today guard behavior the build must keep. No test asserts on implementation details beyond the named `Chosen` and `ChosenCards` fields.
+- 2026-10-27 kernel-engineer: Implemented; status `review`. Changed `stack.go` (`StackItem.PileSlot`, `Chosen` comment), `targeting.go` (`chooseTargets` picks `pileDecision`/`matchesCard` for a `ZoneDiscard` slot, sharing the Ref loop; new `pileTarget`), `effects.go` (`resolution.cards`, `resolveAbility` verifies via `pileTarget` or `Asset`/`legalTarget` by `PileSlot`; `stepCards` `SubjectTarget`), `view.go` (`StackView.ChosenCards`; `Chosen` empty for pile slots; names looked up in both discards).
+  - Reuse: `pileDecision`, `matchesCard`, `pickBounds`, `fixedOrderPositions`, `stepRelocate` unchanged. No helpers added, tests untouched.
+  - Commands: the listed engine and view `-run` tests ok; `go tool task check` ok; `go tool task sim` ok; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
+  - Reviewer note: in the view, `Chosen[i]` and `ChosenCards[i]` are non-nil empty slices when unused.

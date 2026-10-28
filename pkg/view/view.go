@@ -86,7 +86,9 @@ type StackView struct {
 	Target     int     // Attack: the primary defender (asset ID)
 	Secondary  int     // Attack: the Berserk secondary target, 0 if none
 	Keyword    string  // Ability: the keyword its trigger came from ("Aggressive"); empty for a printed ability
-	Chosen     [][]int // Ability: the chosen asset IDs per target slot
+	Chosen     [][]int // Ability: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
+	// ChosenCards: Ability: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
+	ChosenCards [][]string
 }
 
 var stackKinds = map[engine.StackKind]string{
@@ -178,8 +180,22 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 			s.Card = it.Inst.Card.Name
 		}
 		s.Chosen = make([][]int, len(it.Chosen))
+		s.ChosenCards = make([][]string, len(it.Chosen))
 		for i, ids := range it.Chosen {
-			s.Chosen[i] = append([]int{}, ids...)
+			s.Chosen[i], s.ChosenCards[i] = []int{}, []string{}
+			if !it.PileSlot(i) {
+				s.Chosen[i] = append(s.Chosen[i], ids...)
+				continue
+			}
+			for _, id := range ids {
+				for _, pl := range g.Players {
+					for _, inst := range pl.Discard {
+						if inst.ID == id {
+							s.ChosenCards[i] = append(s.ChosenCards[i], inst.Card.Name)
+						}
+					}
+				}
+			}
 		}
 	}
 	return s
