@@ -150,6 +150,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0077 | An untargeted pick from your discard pile, which moves the picked card, with a top-down timeout (SVY-R14, SVY-R16, directive #59 (1), wave B shape, sonnet) | done |
 | T-0078 | Make Arkha, Sun's Fury executable (wave B card, flash) | done |
 | T-0079 | The view leak check accepts a name that was public when its event happened (harness, sonnet) | done |
+| T-0080 | A combat-kill hook, fired when an attacker's combat damage destroys its defender (FR-CBT-002, wave B shape, sonnet) | tests |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
