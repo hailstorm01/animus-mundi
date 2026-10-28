@@ -36,7 +36,6 @@ var NotYetExecutable = []string{
 	"Drifting Concept",
 	"Eerie Remnant",
 	"Ensnaring Mist",
-	"Eternal Watchman",
 	"Feed the Despoiler",
 	"Forced Mutation",
 	"Fortify",

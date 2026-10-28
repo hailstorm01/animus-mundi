@@ -27,4 +27,30 @@ var headquartersDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Eternal Watchman": {
+		Text: []string{"Whenever this Headquarters attacks and kills an opposing unit or structure, return chosen unit card from your discard pile to your hand."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookCombatKill,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+								Zone:       ability.ZoneDiscard,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
