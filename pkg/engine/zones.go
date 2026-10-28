@@ -116,6 +116,21 @@ func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
 	}
 }
 
+// DiscardCard returns the card with instance ID id if it is in a discard pile,
+// else nil. It is the one lookup of a chosen pile card by ID: the engine
+// re-verifies a pile target with it (pileTarget, FR-TGT-003), and a client
+// uses it to show a chosen card that is still there.
+func (g *Game) DiscardCard(id int) *Instance {
+	for _, pl := range g.Players {
+		for _, inst := range pl.Discard {
+			if inst.ID == id {
+				return inst
+			}
+		}
+	}
+	return nil
+}
+
 // leaveBattlefield removes a from the battlefield to a non-battlefield zone,
 // keeping a last-known record with eff, a's effective characteristics taken
 // immediately prior to departure. A lone departure passes g.effectiveState(a);

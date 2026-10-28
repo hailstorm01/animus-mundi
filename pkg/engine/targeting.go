@@ -155,19 +155,12 @@ func pickFrom[T any](g *Game, d Decision, opts []T) []T {
 }
 
 // pileTarget returns the card with instance ID id if it is still in a discard
-// pile and still meets the pile filter f (FR-TGT-003), else nil. A card goes
-// only to its owner's pile, so this is also "still in the zone the filter
-// names". A card in a pile has no Ward, so only matchesCard is checked.
+// pile (DiscardCard) and still meets the pile filter f (FR-TGT-003), else nil.
+// A card goes only to its owner's pile, so this is also "still in the zone the
+// filter names". A card in a pile has no Ward, so only matchesCard is checked.
 func (g *Game) pileTarget(ctl PlayerID, src *Instance, f ability.Filter, id int) *Instance {
-	for _, pl := range g.Players {
-		for _, inst := range pl.Discard {
-			if inst.ID == id {
-				if g.matchesCard(ctl, src, f, inst) {
-					return inst
-				}
-				return nil
-			}
-		}
+	if inst := g.DiscardCard(id); inst != nil && g.matchesCard(ctl, src, f, inst) {
+		return inst
 	}
 	return nil
 }

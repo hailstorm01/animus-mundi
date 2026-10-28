@@ -195,6 +195,10 @@ func (g *Game) LastKnownEffective(id int) *EffectiveState {
 	return nil
 }
 
+// newID returns the next ID from the game's one counter. Asset IDs and card
+// instance IDs both come from it, so they never collide, and three things rely
+// on that: fixedOrderPositions keys asset IDs and instance IDs in one map, and
+// Option.Ref and StackItem.Chosen each hold either kind.
 func (g *Game) newID() int {
 	g.nextID++
 	return g.nextID

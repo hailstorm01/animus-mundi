@@ -4,7 +4,7 @@ title: The view asks the engine whether a chosen card is still in a pile, (g *Ga
 kind: harness
 tier: flash
 wave: B.1 (board directives #65 and #67, structural review 4 findings 4 and 6)
-status: ready
+status: review
 branch: m2/T-0088-discard-card
 depends_on: [T-0087]
 claims: [func:DiscardCard]
@@ -122,10 +122,25 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/view/view.go`
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.1 run, session 4): wrote the task from board directives #65 and #67, which #67 says go in one task. Harness, so it skips `tests` and goes straight to `ready`. Tier `flash` as #65 gives. The edits are spelled out so the engineer copies them. `DiscardCard` goes in `zones.go` beside the pile operations `takeCard` and `putCard`, and is exported because `pkg/view` calls it, like `Asset(id)`, its battlefield counterpart in `state.go`. Not changed, on purpose: `effects.go`'s tracked death-trigger check (`slices.Contains` on the tracked card's owner's pile) compares a pointer the item already holds, which is not a lookup by ID; `pileDecision`'s and `fixedOrderPositions`'s walks over the piles, and `PlayerView`'s pile listing, list piles rather than find a card. `main` has no commits the run branch lacks, so no sync. With #65 and #67 applied, no `open: before` directive is left in wave B.1; #61 stays `waiting`, because no task's `cards:` has a modal card. Next: `kernel-engineer` (Flash, headless).
+- 2026-10-28, kernel-engineer (Flash): verified implementation commit 2c29320 (feat(engine): move chosen pile card lookup to (g *Game) DiscardCard and document newID (T-0088)) and moved task to review.
+  - Edits verified in diff against d0f1b62:
+    - `pkg/engine/zones.go`: added `DiscardCard(id int) *Instance` after `putCard` to perform single pile card lookup by ID across player discard piles.
+    - `pkg/engine/targeting.go`: updated `pileTarget` to use `g.DiscardCard(id)` and re-verify filter match, removing duplicate player discard loops.
+    - `pkg/engine/state.go`: documented `newID()` explaining that asset IDs and card instance IDs share one counter and never collide.
+    - `pkg/view/view.go`: updated `stackView` to resolve chosen IDs with `g.DiscardCard(id)` instead of looping player discard piles.
+  - Commands and results:
+    - Case 1: `git diff autoloop/m2-wave-b.1 -- '*_test.go'` printed nothing; `go test ./...` passed across all packages.
+    - Case 2: `go tool task sim-compare -- autoloop/m2-wave-b.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-b.1 byte for byte, exit codes included`.
+    - Case 3: `git grep -n "range pl.Discard" -- pkg/engine pkg/view ":!*_test.go"` printed exactly one line: `pkg/engine/zones.go:125`.
+    - Case 4: `git grep -n "DiscardCard" -- pkg cmd` printed exactly five lines across `zones.go`, `targeting.go`, and `view.go`.
+    - Case 5: `git grep -n "come from it, so they never collide" -- pkg/engine/state.go` printed 1 line right above `newID`.
+    - Case 6: `git diff d0f1b62 --stat` confirmed only the allowed files and this task file were touched on the task branch.
+    - Case 7 / Gates: `go tool task check` (fmt, vet, all tests, cardtown lint --all) passed cleanly; `go tool task sim` passed (200 games, 0 invariant violations).
+  - Status -> review.
