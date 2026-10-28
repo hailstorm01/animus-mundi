@@ -8,8 +8,8 @@ import (
 	"animus-mundi/pkg/engine/ability"
 )
 
-// chooseTargets asks p's controller to choose each of its Effect.Targets, in
-// slot order, when the trigger is placed on the stack (FR-TGT-001). Only legal
+// chooseTargets asks pl's controller to choose each of e's Targets, in
+// slot order, when the effect is placed on the stack (FR-TGT-001). Only legal
 // entities are offered. A single-entity slot is not asked about with one
 // option, and a timeout picks the first legal one in fixed order (SVY-R16).
 // An "up to N" slot is always asked (Min 0 != Max), its picks are distinct
@@ -17,14 +17,14 @@ import (
 // and asks nothing: deploying never requires a target (FR-TGT-003). A slot
 // whose filter names ZoneDiscard chooses cards in discard piles, and its Refs
 // are card instance IDs.
-func (g *Game) chooseTargets(p pendingTrigger) [][]int {
-	targets := p.trig.Effect.Targets
+func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
+	targets := e.Targets
 	if len(targets) == 0 {
 		return nil
 	}
 	chosen := make([][]int, len(targets))
 	for i, t := range targets {
-		d := g.targetDecision(p, i, t)
+		d := g.targetDecision(pl, i, t)
 		if t.UpTo > 0 && len(d.Options) == 0 {
 			continue
 		}
@@ -35,23 +35,22 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	return chosen
 }
 
-// targetDecision builds the decision for target slot i (clause t) of p's
-// trigger: the legal entities of the slot, as pileDecision or assetDecision
-// list them. chooseTargets asks it, and the legality check of a modal trigger's
-// modes reads its Options (FR-MOD-001 §5), so both use the same filters.
-func (g *Game) targetDecision(p pendingTrigger, i int, t ability.Target) Decision {
-	prompt := fmt.Sprintf("%s: choose target %d", p.label, i+1)
+// targetDecision builds the decision for target slot i (clause t) of the
+// effect pl places: the legal entities of the slot, as pileDecision or assetDecision
+// list them. chooseTargets asks it, and legalModes reads its Options (FR-MOD-001 §5), so both use the same filters.
+func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
+	prompt := fmt.Sprintf("%s: choose target %d", pl.label, i+1)
 	if t.UpTo > 0 {
-		prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
+		prompt = fmt.Sprintf("%s: choose up to %d for target %d", pl.label, t.UpTo, i+1)
 	}
 	var d Decision
 	if t.Filter.Zone == ability.ZoneDiscard {
-		d, _ = g.pileDecision(p.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
-			return g.matchesCard(p.controller, p.inst, t.Filter, inst)
+		d, _ = g.pileDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
+			return g.matchesCard(pl.controller, pl.inst, t.Filter, inst)
 		})
 	} else {
-		d, _ = g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
-			return g.legalTarget(p.controller, p.source, t.Filter, a)
+		d, _ = g.assetDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
+			return g.legalTarget(pl.controller, pl.source, t.Filter, a)
 		})
 	}
 	return d

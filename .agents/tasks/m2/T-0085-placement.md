@@ -4,7 +4,7 @@ title: Placing an effect chooses its modes and targets from a placement, not a p
 kind: harness
 tier: sonnet
 wave: B.1 (board directive #62, structural review 4 finding 1; before wave C's Maneuvers, which place effects with no trigger)
-status: ready
+status: review
 branch: m2/T-0085-placement
 depends_on: [T-0084]
 claims: [type:placement, func:legalModes, func:chooseOnPlacement, file:pkg/engine/placement.go]
@@ -155,3 +155,11 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 
 ## Log
 - 2026-10-28, lead-architect (wave B.1 run, session 1): wrote the task from board directive #62, the first task of wave B.1. Harness, so it skips `tests` and goes straight to `ready`. Tier `sonnet` as the directive gives. Directives #63–#67 stay open for the next sessions, in board order (#63 with #66, #64, #65 with #67). Directive #61 stays `waiting`: no task's `cards:` has a modal card. Next: `kernel-engineer`.
+- 2026-10-28, kernel-engineer (wave B.1 run, session 1): implemented the edits as written. Added `pkg/engine/placement.go` (`placement`, `chooseOnPlacement`, `legalModes`, `chooseModes` moved with the listed changes). `trigger.go`: `pendingTrigger` embeds `placement`, both literals rebuilt with unchanged label expressions, `flushTriggers` calls `chooseOnPlacement`, `chooseModes` removed, header updated. `targeting.go`: `chooseTargets(pl, e)`, `targetDecision(pl, i, t)`, doc comments updated. Reuse: no new shape; the legality loop and mode join are the old code moved. Note: `git grep` ignores untracked files, so `placement.go` was `git add`ed before cases 3-5. Acceptance commands (W = worktree):
+  1. `git -C W diff autoloop/m2-wave-b.1 -- '*_test.go'` printed nothing; `go -C W test ./...` all ok.
+  2. `go -C W tool task sim-compare -- autoloop/m2-wave-b.1` printed `[PASS] starter and stress sims match ... byte for byte`.
+  3. `git -C W grep -n "pendingTrigger" -- pkg/engine/placement.go pkg/engine/targeting.go` printed only `placement.go:14` (the `placement` doc comment).
+  4. `git -C W grep -n "UpTo == 0" -- pkg/engine` printed only `placement.go:41`, in `legalModes`.
+  5. `git -C W grep -n "chooseModes(\|chooseTargets(" -- pkg/engine` printed: calls at `placement.go:28` and `:30` (inside `chooseOnPlacement`), `func` lines `placement.go:60` and `targeting.go:20`; `flushTriggers` (`trigger.go:169`) calls only `chooseOnPlacement`.
+  6. `git -C W diff autoloop/m2-wave-b.1 --stat` (committed state) lists only placement.go, trigger.go, targeting.go and this task file.
+  7. `go -C W tool task check` ended `All executed checks PASSED`; `go -C W tool task sim` ran clean.
