@@ -130,6 +130,11 @@ func (g *Game) resolveAttack(it *StackItem) {
 	// Berserk cleave is committed within Step 3, before the death sweep,
 	// whether or not either combatant dies (FR-KWD-002o).
 	g.cleave(it, att, def)
+	// Only the declared attacker fires, and only for the defender: retaliation
+	// and a cleave kill do not count (FR-CBT-002 Step 3).
+	if g.IsLethal(def) {
+		g.fireCombatKill(att)
+	}
 }
 
 // cleave deals Berserk N non-combat damage to the attack's secondary target if

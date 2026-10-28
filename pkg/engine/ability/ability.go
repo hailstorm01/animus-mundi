@@ -16,11 +16,12 @@ type Def struct {
 type Hook int
 
 const (
-	HookDeploy    Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
-	HookKilled                    // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
-	HookAttacks                   // this asset attacked (combat Step 2, FR-CBT-002)
-	HookDamaged                   // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
-	HookExhausted                 // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
+	HookDeploy     Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
+	HookKilled                     // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
+	HookAttacks                    // this asset attacked (combat Step 2, FR-CBT-002)
+	HookDamaged                    // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
+	HookExhausted                  // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
+	HookCombatKill                 // this asset attacked, and its combat damage left the defender lethal, so the death sweep after the Attack destroys it (FR-CBT-002 Step 3)
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.

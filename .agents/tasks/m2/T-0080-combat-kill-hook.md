@@ -4,7 +4,7 @@ title: A combat-kill hook, fired when an attacker's combat damage destroys its d
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: done
 branch: m2/T-0080-combat-kill-hook
 depends_on: [T-0010, T-0066]
 claims: [hook:combat-kill]
@@ -61,13 +61,22 @@ To be written in `pkg/engine/combat_kill_test.go`, with synthetic cards only (Et
 - `pkg/engine/doc.go` (the self-hooks list)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(CBT_002_CombatKill|TRG_003_CombatKill)'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No card uses the new hook yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_(CBT_002_CombatKill|TRG_003_CombatKill)'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No card uses the new hook yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-b` passes
 
 ## Log
 - 2026-10-27 lead-architect (wave run B, session 17): Wrote the task. The run branch has everything `main` has, and no `open: before` directive is on the board. Waiting triggers checked against `autoloop/m2-wave-b` 74af332: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired.
   - Wave B cards still on `NotYetExecutable`: Eternal Watchman (the Path Headquarters, a deck card, directive #14 (a)) and Rogue Fleshshaper (kept). The Watchman goes first.
   - The Watchman needs two new shapes, a combat-kill hook and a chosen target in a discard pile, plus its card definition. Together they make seven non-test files, so they are split three ways: this task (`hook:combat-kill`), then a shape task for a chosen target in a discard pile (`targeting.go`, `effects.go`, and the `Chosen` comments in `stack.go` and `pkg/view/view.go`), then the card task (`headquarters.go`, `cards.go`). Their claims don't overlap. The other two aren't written yet.
   - Placement: firing at the end of `resolveAttack` keeps the combat rule in `combat.go`, and `stack.go` stays unchanged. Searched `pkg/engine` and the `done` tasks for an existing combat-kill hook or kill record: none.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/combat_kill_test.go` (8 tests, synthetic cards, observed with `wantScratches`, and Draw 1 from empty decks plus `wantPlaced` for APNAP): `TestFR_CBT_002_CombatKillTriggerFiresWhenTheAttackerKillsTheDefender`, `...FiresWhenTheDefenderIsAStructure`, `...FiresFromAHeadquartersAttacker` (sets the HQ card's `Ability` in the scene), `...DoesNotFireWhenTheDefenderSurvives`, `...DoesNotFireForTheDefender`, `...DoesNotFireForABerserkSecondary`, `...DoesNotFireWhenTheAttackFizzles` (attack trigger damages the defender to death at Step 2), and `TestFR_TRG_003_CombatKillTriggerAndTheDefendersDeathTriggerAreAPNAP`. Helpers requested: none (the file defines `combatKillTrigger`). Left out, as the task says: an attacker that dies in the same sweep, and a Headquarters defender. `go vet` fails only on the missing `ability.HookCombatKill`; `cardtown lint rules` passes.
+- 2026-10-27 lead-architect (wave run B, session 17, D4): **Tests approved, `ready`.** I checked the 8 tests in 83d1258 against `FR-CBT-002` Step 3, `FR-KWD-002o` and `FR-TRG-003`. Each expected outcome follows from the cited text: kills of a unit, a structure and a Headquarters attacker's defender fire; a surviving defender, a retaliation kill, a cleave kill and a fizzled Attack don't; and the APNAP order shows in both placement and outcome. Every helper they use already exists (`striker`, `mortal`, `wantScratches`, `wantPlaced`, `s.cleave`). No test asserts on implementation details.
+- 2026-10-27 kernel-engineer: Implemented. Reuse search: no existing combat-kill hook or kill record in `pkg/engine`; used the `fireHook` wrapper pattern. Diff: `HookCombatKill` in `ability.go`; `fireCombatKill` in `trigger.go`; in `combat.go`, `if g.IsLethal(def) { g.fireCombatKill(att) }` after `cleave` at the end of the combat branch (fizzle branches return earlier, so they fire nothing); `doc.go` hooks list. Ran: `go test ./pkg/engine -run 'TestFR_(CBT_002_CombatKill|TRG_003_CombatKill)'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte). Reviewer: the lethal check follows cleave, so a cleave that somehow made the defender lethal would count; cleave targets a secondary only.
+- 2026-10-27 lead-architect (wave run B, session 17, D5): **Approved.**
+  - **Scope:** `git diff autoloop/m2-wave-b...HEAD` changes only the four Allowed Files, this task file and the test file. `combat_kill_test.go` is unchanged since 83d1258.
+  - **Fences and reuse:** no card name in engine code. `fireCombatKill` is one more `fireHook` wrapper, so the gates (`Turn`, `Cornered`, `MaxPerTurn`) and the source position come from the one place that has them.
+  - **Rules fidelity:** the check runs only in the combat branch, so both fizzles fire nothing. It reads the defender alone, so retaliation and cleave kills don't count. `IsLethal` is the predicate the sweep right after the item uses. Cleave runs first and never damages the defender (`sec.ID == def.ID` is excluded), so the engineer's ordering question doesn't change anything.
+  - **Gates, re-run by the reviewer in a review worktree (36249e0):** `go tool task check` exits 0. `go tool task sim` runs clean: P0 65.0% / P1 34.0% / draws 1.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare -- autoloop/m2-wave-b` passes byte for byte.
+  - Status `done`. Next: the shape task for a chosen target in a discard pile, then the Eternal Watchman card task.
