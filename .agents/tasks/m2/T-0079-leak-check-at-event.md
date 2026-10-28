@@ -4,7 +4,7 @@ title: The view leak check accepts a name that was public when its event happene
 kind: harness
 tier: sonnet
 wave: B
-status: queued
+status: ready
 branch: m2/T-0079-leak-check-at-event
 depends_on: [T-0077]
 claims: [test:TestView_Case4_NoLeak (leakWatcher)]
@@ -44,3 +44,4 @@ requirements: []
   - Lead decision: the T-0036 rule, read at the line's own event as well as at the next settled point. It is not a rules question. FRD 01 makes the discard pile public, and the picked card was in it when the line was written.
   - Harness, tier `sonnet` rather than `flash`: the edit changes a protected leak oracle, and Cases 3 and 4 need a cherry-pick and source mutations that the headless allow-list does not cover.
   - No existing equivalent: `viewtest` has no per-event view of public names, and `PublicNames` is reused as is. Claims don't overlap any open task.
+- 2026-10-27 lead-architect (wave run B, session 15): No `open: before` directive on the board, and `main` has nothing the run branch lacks. Waiting triggers checked against `autoloop/m2-wave-b` e9110fd: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired. Harness task, so it skips `tests`: status `ready`, branch made from the run branch, dispatching `kernel-engineer` (Sonnet).
