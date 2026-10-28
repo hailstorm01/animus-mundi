@@ -4,7 +4,7 @@ title: Modal triggers, "choose one" of their modes on placement, before targets 
 kind: shape
 tier: sonnet
 wave: B
-status: in-progress
+status: review
 branch: m2/T-0083-modal-choice
 depends_on: [T-0006, T-0030, T-0081]
 claims: [effect:modes, decision:mode-on-placement]
@@ -84,3 +84,9 @@ To be written in `pkg/engine/modal_test.go`, with synthetic cards only (Rogue Fl
   - Left out, as the task says: no legal mode, and fewer legal modes than `ChooseN` (Open Question 11).
   - Pinned beyond the prose, from the Shape section: prompt text `"<card name>: trigger 1: choose one"` / `"...: choose 2"`; an auto-answered single legal mode shows in the log as a Mode decision record with options `["mode 2"]` and How `"auto"`; mode targets are asked in printed order, not pick order; the Def test gives each mode's slices spare capacity and checks nothing was appended past their length.
 - 2026-10-27 lead-architect (wave run B, session 20, D4): **Tests approved, `ready`.** I checked the 9 tests in 06f213d against `FR-MOD-001` §1, §5, §6 and §7, `FR-TGT-001` (`SVY-R3`) and `FR-TGT-003`. Mode before targets and before the `place` event, only the chosen modes' targets and steps, the first listed mode on a timeout or with no chooser, the single legal mode answered automatically and chosen on a timeout, an empty "up to" slot leaving its mode legal, "choose two" with each mode acting on its own target, the second verification of a mode's target, a declined optional modal trigger asking no mode, and the `Def` left unchanged. Each follows from the cited text or the task's Shape (the legality reading is design note Open Question 11). The prompts, labels and printed-order target questions they pin are the Shape's. The test file's own helpers are setup only; every shared helper they call already exists.
+- 2026-10-27 kernel-engineer (sonnet): Implemented. Diff: `ability.Effect` gains `Modes` and `ChooseN` (doc comment updated); `targeting.go` gets `targetDecision(p, i, t)`, factored out of `chooseTargets` (the `pileDecision`/`assetDecision` choice and filter predicates now live only there); `trigger.go` gets `chooseModes` beside `accepts`, called in `flushTriggers` after `accepts` and before `chooseTargets`/`push`; `doc.go` line added.
+  - Reused: `DecideMode`, its fallback, distinctness check and `soleAnswer` (unchanged), `g.choose`, `pileDecision`/`assetDecision`. Mode legality = every exactly-one slot's `targetDecision(...).Options` is non-empty; "up to" slots are skipped. No legal mode returns an empty `Effect` (nothing asked); `n = min(ChooseN, legal)`. Options are labelled `mode <k>` with the printed 1-based position, `Ref` the source asset ID.
+  - Joining: the picked indexes are sorted (printed order), targets and steps are appended onto fresh slices, and each `SubjectTarget` step's `Target` is shifted by the target slots before its mode (the step is a copy, so the Def is untouched).
+  - Commands: `go test ./pkg/engine -run 'TestFR_(MOD_001|TGT_003)'` ok; `go tool task check` passed (gofmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-b` PASS (byte for byte).
+  - Reviewer: the `Prompt` for ChooseN 1 is `<label>: choose one`, otherwise `<label>: choose <N>`, using the configured ChooseN even when fewer modes are legal.
+
