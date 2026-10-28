@@ -4,7 +4,7 @@ title: Make Eternal Watchman executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0082-eternal-watchman
 depends_on: [T-0080, T-0081]
 claims: [card:Eternal Watchman]
@@ -66,3 +66,4 @@ To be written in a new file, `pkg/engine/cards_headquarters_watchman_test.go`, f
   - The sim's targeting monitor (`pkg/sim/monitor_targeting.go`) checks that a `Target` decision is followed by its item's `place` event, which a pile target does (`SVY-R3`), and flags only refs that are Ward assets. Instance and asset IDs share one counter, so a card ref can't match one.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
 - 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_headquarters_watchman_test.go` with the seven tests named in the Tests section: `TestCard_EternalWatchman_KillingAUnitReturnsTheChosenUnitCardToHand`, `..._KillingAStructureReturnsAUnitCard`, `..._OnlyYourUnitCardsAreOffered`, `..._ADefenderThatSurvivesReturnsNothing`, `..._ARetaliationKillReturnsNothing`, `..._NoUnitCardInYourPileReturnsNothing`, `..._TimeoutReturnsTheTopUnitCard`. They cover FR-CBT-002, FR-TRG-004, FR-TGT-001, FR-TGT-003, FR-MOD-001, SVY-R3, SVY-R16. No helpers requested. `go vet` and `cardtown lint rules` are clean. Five of the seven fail now because the Watchman has no trigger; the survive and retaliation tests pass vacuously until it exists. No cases left out. Status `tests-review`.
+- 2026-10-27 lead-architect (wave run B, session 19, D4): **Tests approved, `ready`.** I checked the seven tests in 9fa40ea against `FR-CBT-002` Step 3 (only the declared attacker's lethal combat damage, not retaliation), `FR-TRG-004` (placed after the sweep, so the killed Victim is in its owner's pile and not offered), `FR-TGT-001` and `SVY-R3` (a card in your discard pile, chosen before the `place` event), `FR-TGT-003` (no legal card: nothing asked, the trigger still placed and resolved) and `FR-MOD-001` §6 (a timeout over A, B, C takes C, the top card, not the first option). Each expected outcome follows from the cited text and the CSV line (3/20). Re-run on the task branch: five fail because the Watchman has no trigger yet; the survive and retaliation tests pass with their setup checks met (the defender survives; the Raider dies), so they guard the build. No test asserts on implementation details. Next: dispatch `kernel-engineer` (tier `flash`) headless.
