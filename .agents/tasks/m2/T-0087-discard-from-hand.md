@@ -4,7 +4,7 @@ title: One place discards from hand, (g *Game) discardFromHand (directive #64, h
 kind: harness
 tier: flash
 wave: B.1 (board directive #64, structural review 4 finding 3)
-status: ready
+status: in-progress
 branch: m2/T-0087-discard-from-hand
 depends_on: [T-0086]
 claims: [func:discardFromHand]
