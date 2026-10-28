@@ -481,19 +481,30 @@ func mulliganFirst(p engine.PlayerID, hand []*engine.Instance) []int {
 // leakWatcher collects a game's events and, at every settled point, checks
 // both seats' views, and each seat's log lines new since the last point, for
 // hidden names (Case 4 as amended: a line is checked once, at the first
-// settled point at or after its event).
+// settled point at or after its event). A log line never names a hidden card
+// that was not public when its event happened or at the first settled point
+// after it (T-0079: a pick from a public pile logs the card while it is
+// public, and the same step may then hide it).
 type leakWatcher struct {
 	t       *testing.T
 	seed    uint64
 	g       *engine.Game // nil during NewGame; the setup point is checked after it returns
 	events  []engine.Event
-	lines   [2][]string // each seat's LogLines so far, built one settled point at a time
-	checked int         // events already turned into lines
+	pubAt   []map[string]bool // public names when each event was recorded; nil while g is nil
+	lines   [2][]string       // each seat's LogLines so far, built one settled point at a time
+	checked int               // events already turned into lines
 	points  int
 	failed  bool
 }
 
-func (w *leakWatcher) Event(e engine.Event) { w.events = append(w.events, e) }
+func (w *leakWatcher) Event(e engine.Event) {
+	w.events = append(w.events, e)
+	var pub map[string]bool
+	if w.g != nil {
+		pub = viewtest.PublicNames(w.g)
+	}
+	w.pubAt = append(w.pubAt, pub)
+}
 
 func (w *leakWatcher) Settled(engine.Snapshot) {
 	if w.g != nil {
@@ -512,6 +523,7 @@ func (w *leakWatcher) check() {
 	g := w.g
 	pub := viewtest.PublicNames(g)
 	newEvents := w.events[w.checked:]
+	newPub := w.pubAt[w.checked:]
 	w.checked = len(w.events)
 	for seat := range engine.PlayerID(2) {
 		// The seat's LogLines so far are one line per event: the earlier lines
@@ -532,7 +544,10 @@ func (w *leakWatcher) check() {
 					w.seed, w.points, g.Turn, len(w.events), seat, name, seat.Opponent())
 				w.failed = true
 			}
-			for _, line := range newLines {
+			for i, line := range newLines {
+				if newPub[i][name] {
+					continue
+				}
 				if strings.Contains(line, name) {
 					w.t.Errorf("seed %d, settled point %d (turn %d): seat %d's log names %q, hidden by player %d: %s",
 						w.seed, w.points, g.Turn, seat, name, seat.Opponent(), line)

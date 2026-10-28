@@ -4,7 +4,7 @@ title: The view leak check accepts a name that was public when its event happene
 kind: harness
 tier: sonnet
 wave: B
-status: ready
+status: review
 branch: m2/T-0079-leak-check-at-event
 depends_on: [T-0077]
 claims: [test:TestView_Case4_NoLeak (leakWatcher)]
@@ -45,3 +45,9 @@ requirements: []
   - Harness, tier `sonnet` rather than `flash`: the edit changes a protected leak oracle, and Cases 3 and 4 need a cherry-pick and source mutations that the headless allow-list does not cover.
   - No existing equivalent: `viewtest` has no per-event view of public names, and `PublicNames` is reused as is. Claims don't overlap any open task.
 - 2026-10-27 lead-architect (wave run B, session 15): No `open: before` directive on the board, and `main` has nothing the run branch lacks. Waiting triggers checked against `autoloop/m2-wave-b` e9110fd: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired. Harness task, so it skips `tests`: status `ready`, branch made from the run branch, dispatching `kernel-engineer` (Sonnet).
+- 2026-10-27 kernel-engineer (wave run B): Case 1 landed in `test(T-0079)` bf4c425, the only change to `pkg/view/view_test.go` (`leakWatcher.pubAt` filled in `Event` from `viewtest.PublicNames(w.g)`, nil while `w.g` is nil; `check` skips a log-line name when `newPub[i][name]` holds; comment states the rule). Reused `PublicNames` as is; no non-test file changed.
+  - Case 2: before the edit `go test -count=1 -v ./pkg/view -run TestView_Case4_NoLeak` printed "20 matches, 5556 settled points checked for both seats"; after it, the same line, 5556 settled points. Pass.
+  - Case 3: throwaway detached worktree on bf4c425 with `git cherry-pick 4123001` (conflict only in `.agents/tasks/m2/T-0078-arkha.md`, dropped; code files `cards.go`, `path.go` applied). With the edit: pass, "20 matches, 5112 settled points". With `view_test.go` reverted to fda0383: FAIL, `view_test.go:537: seed 13, settled point 61 (turn 11): seat 0's log names "Hammerhand Brigands", hidden by player 1: 122 T11 main decision: ... picked [Hammerhand Brigands] (answer)`, 5112 points. Worktree removed; nothing from 4123001 is on this branch.
+  - Case 4, mutation (b) `matchStart` prints the opponent's set-aside names: Case 4 FAILS (seed 1, settled point 1, "Chainbreaker Phalanx" in the match-start line). Reverted.
+  - Case 4, mutation (a) as written (`LogLines` turn-start prints `eventlog.FormatEvent(e)`): Case 4 still PASSES, so it is not a catch. Reason: `FormatEvent` prints a turn-start as "turn N, player P is active" and never the snapshot (eventlog.go lines 23, 32-33), so that mutation prints the same text. Not a hole in the edit. A stronger variant, `FormatEvent(e)+fmt.Sprintf(" %+v", e.Snapshot)`, FAILS (seed 1, settled point 1, "Broken Horn Armorer" and others named in the turn-start line), so the turn-start path with `w.g` set is still guarded. Reverted. The lead may want to reword mutation (a) in the case list.
+  - Commands: `go vet ./pkg/view` ok, `gofmt -l pkg/view` empty, `go test -count=1 ./pkg/view` and `go tool task check`: pass (check exit 0).
