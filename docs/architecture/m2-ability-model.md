@@ -94,6 +94,12 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #65, with #67's doc line: `pkg/view` asks the engine for a chosen pile card.
 
    Every task is a pure move. Done when #62–#67 are `applied`, each task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
+6b. **Wave B.2, cleanup (harness), added 2026-10-28 from the user's code review (board directives #68–#71).** It goes after wave B.1 and before wave C. Like B.1 it has no survey row and no cards, so a wave run of it writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks, in board order:
+   - #68: Berserk leaves the kernel (the keyword, the secondary target, cleave, and their fields and readers), in four parts under the size rule. The user expects the keyword to be redesigned (survey `R12`), so it is not kept half-built. FRD 01's Berserk text waits for `R12`.
+   - #69: attack legality moves from `actions.go`'s `check` to `combat.go` (pure move).
+   - #70: the enum convention in `ability`'s package comment, and `ValueFixed` renamed to `ValueSourceFixed`.
+
+   #71 (a step on each player) and the costs question added to #61 are recorded with the wave but wait for their own triggers. Done when #68–#70 are `applied`, the starter sim is byte-identical to wave B.1's end through #68 and `go tool task sim-compare` passes for #69 and #70, and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
