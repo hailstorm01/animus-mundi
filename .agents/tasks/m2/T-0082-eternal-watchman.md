@@ -4,7 +4,7 @@ title: Make Eternal Watchman executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0082-eternal-watchman
 depends_on: [T-0080, T-0081]
 claims: [card:Eternal Watchman]
@@ -48,7 +48,7 @@ To be written in a new file, `pkg/engine/cards_headquarters_watchman_test.go`, f
 - **Existing tests:** every test in `cards_headquarters_test.go` passes unchanged, including `TestCard_EternalWatchman_DamageDoesNotScratchForAnyone`.
 
 ## Helpers Needed
-- None expected. If a test needs one, `rules-test-author` names it here.
+- None. The tests use existing helpers only (`hqScene`, `inDiscard`, `ptPlaceHook`, `ppRefs`, `inDiscardPile`, `inHand`); the new file adds its own `wmScene` and `wmAttack` helpers.
 
 ## Allowed Files
 - `pkg/engine/cards/headquarters.go` (the definition)
@@ -65,3 +65,4 @@ To be written in a new file, `pkg/engine/cards_headquarters_watchman_test.go`, f
   - Every shape the Definition names exists on the run branch: `HookCombatKill`, `ZoneDiscard` target slots, `OpReturnToHand` with `SubjectTarget`, `KindUnit`, `AllegianceAllied`. No new shape, so this is a card task.
   - The sim's targeting monitor (`pkg/sim/monitor_targeting.go`) checks that a `Target` decision is followed by its item's `place` event, which a pile target does (`SVY-R3`), and flags only refs that are Ward assets. Instance and asset IDs share one counter, so a card ref can't match one.
   - Claims don't overlap any open task, since none is open. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_headquarters_watchman_test.go` with the seven tests named in the Tests section: `TestCard_EternalWatchman_KillingAUnitReturnsTheChosenUnitCardToHand`, `..._KillingAStructureReturnsAUnitCard`, `..._OnlyYourUnitCardsAreOffered`, `..._ADefenderThatSurvivesReturnsNothing`, `..._ARetaliationKillReturnsNothing`, `..._NoUnitCardInYourPileReturnsNothing`, `..._TimeoutReturnsTheTopUnitCard`. They cover FR-CBT-002, FR-TRG-004, FR-TGT-001, FR-TGT-003, FR-MOD-001, SVY-R3, SVY-R16. No helpers requested. `go vet` and `cardtown lint rules` are clean. Five of the seven fail now because the Watchman has no trigger; the survive and retaliation tests pass vacuously until it exists. No cases left out. Status `tests-review`.
