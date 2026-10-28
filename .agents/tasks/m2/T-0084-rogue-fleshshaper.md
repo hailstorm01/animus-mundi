@@ -4,7 +4,7 @@ title: Make Rogue Fleshshaper executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: tests-review
+status: ready
 branch: m2/T-0084-rogue-fleshshaper
 depends_on: [T-0083]
 claims: [card:Rogue Fleshshaper]
@@ -70,3 +70,4 @@ To be written in a new file, `pkg/engine/cards_path_fleshshaper_test.go`, from t
 - 2026-10-27 rules-test-author: Wrote `pkg/engine/cards_path_fleshshaper_test.go`, the seven tests named under Tests (`TestCard_RogueFleshshaper_DeployAsksForAModeThenItsTarget`, `_HealModeHealsTheChosenAsset`, `_HealModeOffersEveryAsset`, `_DamageModeDealsOneToTheChosenAsset`, `_DamageModeDoesNotOfferScratchCompany`, `_OpposingWardAssetIsNotOffered`, `_TimeoutChoosesTheHealMode`). `go vet ./pkg/engine` is clean, `cardtown lint rules` passes, and all seven fail now because the card is not yet executable.
   - Helpers requested: none (used `deployPath`, `scriptModal`, `wantOptions`; the file adds its own `fleshBoard` scene builder).
   - Left out: nothing. Not tested because FRD 01 does not need it: the no-legal-mode cases (Open Question 11).
+- 2026-10-27 lead-architect (wave run B, session 21, D4): **Tests approved, `ready`.** I checked the seven tests in 7321808 against the CSV text, `FR-MOD-001` §1, §5 and §6, `FR-TGT-001` (`SVY-R3`), `FR-TGT-003` and `FR-KWD-002h`. The mode is asked before its target and both before the trigger's `place` event; mode 1 heals 1 from the chosen asset only; its options are every asset of either side, Scratch Company, both Headquarters and the Fleshshaper itself; mode 2 deals 1 to the chosen asset and kills a 1-health one; its options leave out Scratch Company of both sides; an opposing Ward unit is in neither mode's options and an allied one is in both; a timed-out mode choice is mode 1. Each follows from the cited text. `wantOptions` compares sorted IDs, so the option order is not pinned. Re-run on the task branch: all seven fail, because the card has no definition yet. No test asserts on implementation details. Next: dispatch `kernel-engineer` (tier `flash`) headless.
