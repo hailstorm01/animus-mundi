@@ -87,6 +87,13 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    Done when all four are merged, with `cardtown sim` output unchanged.
 5. **`cardtown play` (text mode):** a terminal `Chooser` and action menu against the random policy. Done when a human finishes a match with the cards executable so far. It goes early so physical-prototype comparison starts while waves land.
 6. **Waves B, C, D, E, F, G** in the survey's order (C–G may be reordered). Each is done when its survey rows pass and `cardtown sim` stays clean.
+6a. **Wave B.1, cleanup (harness), added 2026-10-28 from structural review 4 of wave B (board directives #62–#67).** It goes between waves B and C, because wave C's Maneuvers build on it. It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave B.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #62: placing modes and targets takes a `placement`, not a `pendingTrigger`, and mode legality is one function (`placement.go`).
+   - #63, with #66's doc lines: one generic untargeted pick and one "filter chooses cards in a pile" predicate.
+   - #64: one function discards from hand.
+   - #65, with #67's doc line: `pkg/view` asks the engine for a chosen pile card.
+
+   Every task is a pure move. Done when #62–#67 are `applied`, each task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
