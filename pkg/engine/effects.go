@@ -11,11 +11,13 @@ import (
 
 // resolution is one resolving ability as its steps see it: the stack item and,
 // for each target slot, the chosen entities still legal after the second
-// verification stage, in pick order (board directive #51), and how many things
+// verification stage, in pick order (board directive #51): chosen holds an
+// asset slot's assets, cards a pile slot's cards (the other is empty). Then how many things
 // each step did so far, one entry per step (IfDone, SVY-R14).
 type resolution struct {
 	it     *StackItem
 	chosen [][]*Asset
+	cards  [][]*Instance
 	done   []int
 }
 
@@ -25,9 +27,15 @@ func (g *Game) resolveAbility(it *StackItem) {
 	// Second verification stage (FR-TGT-003), entity by entity: one that is
 	// gone or no longer legal is dropped, and the slot keeps the rest (partial
 	// invalidation).
-	r := &resolution{it: it, chosen: make([][]*Asset, len(it.Chosen))}
+	r := &resolution{it: it, chosen: make([][]*Asset, len(it.Chosen)), cards: make([][]*Instance, len(it.Chosen))}
 	for i, ids := range it.Chosen {
 		for _, id := range ids {
+			if it.PileSlot(i) {
+				if c := g.pileTarget(it.Controller, it.Inst, it.Effect.Targets[i].Filter, id); c != nil {
+					r.cards[i] = append(r.cards[i], c)
+				}
+				continue
+			}
 			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Effect.Targets[i].Filter, a) {
 				r.chosen[i] = append(r.chosen[i], a)
 			}
@@ -211,13 +219,18 @@ func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 // stepCards returns the cards a card step acts on. SubjectSelf is a death
 // trigger's own card: a Tracked item whose exact instance is still in its
 // owner's discard pile (FR-ZON-004). SubjectPick with ZoneDiscard is the
-// cards picked from discard piles, in pick order. Anything else has none.
+// cards picked from discard piles, in pick order. SubjectTarget is the cards
+// chosen for its pile slot that are still legal. Anything else has none.
 func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
 	switch st.Subject {
 	case ability.SubjectSelf:
 		it := r.it
 		if it.Tracked && it.Inst != nil && slices.Contains(g.Players[it.Inst.Owner].Discard, it.Inst) {
 			return []*Instance{it.Inst}
+		}
+	case ability.SubjectTarget:
+		if st.Target >= 0 && st.Target < len(r.cards) {
+			return r.cards[st.Target]
 		}
 	case ability.SubjectPick:
 		if st.Filter.Zone == ability.ZoneDiscard {

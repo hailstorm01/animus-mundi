@@ -28,9 +28,16 @@ type StackItem struct {
 	Secondary int // StackAttack: Berserk secondary target, 0 if none
 
 	Effect  ability.Effect  // StackAbility: the effect resolving (Source is its source asset)
-	Chosen  [][]int         // StackAbility: asset IDs chosen for each Effect.Targets slot, in pick order; empty if none
+	Chosen  [][]int         // StackAbility: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
 	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
 	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
+}
+
+// PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so
+// Chosen[i] holds card instance IDs, not asset IDs. It is false when i is out
+// of range of Effect.Targets.
+func (it *StackItem) PileSlot(i int) bool {
+	return i >= 0 && i < len(it.Effect.Targets) && it.Effect.Targets[i].Filter.Zone == ability.ZoneDiscard
 }
 
 // push puts item on the stack and records where it went: the one place event

@@ -14,7 +14,9 @@ import (
 // option, and a timeout picks the first legal one in fixed order (SVY-R16).
 // An "up to N" slot is always asked (Min 0 != Max), its picks are distinct
 // and a timeout picks none (SVY-R11). A slot with no legal entity stays empty
-// and asks nothing: deploying never requires a target (FR-TGT-003).
+// and asks nothing: deploying never requires a target (FR-TGT-003). A slot
+// whose filter names ZoneDiscard chooses cards in discard piles, and its Refs
+// are card instance IDs.
 func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 	targets := p.trig.Effect.Targets
 	if len(targets) == 0 {
@@ -26,9 +28,16 @@ func (g *Game) chooseTargets(p pendingTrigger) [][]int {
 		if t.UpTo > 0 {
 			prompt = fmt.Sprintf("%s: choose up to %d for target %d", p.label, t.UpTo, i+1)
 		}
-		d, _ := g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
-			return g.legalTarget(p.controller, p.source, t.Filter, a)
-		})
+		var d Decision
+		if t.Filter.Zone == ability.ZoneDiscard {
+			d, _ = g.pileDecision(p.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
+				return g.matchesCard(p.controller, p.inst, t.Filter, inst)
+			})
+		} else {
+			d, _ = g.assetDecision(p.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
+				return g.legalTarget(p.controller, p.source, t.Filter, a)
+			})
+		}
 		if t.UpTo > 0 && len(d.Options) == 0 {
 			continue
 		}
@@ -87,6 +96,24 @@ func (g *Game) pileDecision(p PlayerID, kind DecisionKind, prompt string, upTo i
 	}
 	d.Min, d.Max = pickBounds(upTo, len(cs))
 	return d, cs
+}
+
+// pileTarget returns the card with instance ID id if it is still in a discard
+// pile and still meets the pile filter f (FR-TGT-003), else nil. A card goes
+// only to its owner's pile, so this is also "still in the zone the filter
+// names". A card in a pile has no Ward, so only matchesCard is checked.
+func (g *Game) pileTarget(ctl PlayerID, src *Instance, f ability.Filter, id int) *Instance {
+	for _, pl := range g.Players {
+		for _, inst := range pl.Discard {
+			if inst.ID == id {
+				if g.matchesCard(ctl, src, f, inst) {
+					return inst
+				}
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 // kindOf maps a printed card type to its filter kind.
