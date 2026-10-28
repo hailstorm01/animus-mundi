@@ -3,7 +3,6 @@
 package engine
 
 import (
-	"fmt"
 	"slices"
 
 	"animus-mundi/pkg/engine/ability"
@@ -164,36 +163,12 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 	return len(dying)
 }
 
-// stepDiscard has each step player discard cards of their choice from their own
-// hand. Choosing from your own hand is not an inspection, so a hand of exactly
-// that many cards is discarded without asking (FR-MOD-001 §1, §6; SVY-R16).
+// stepDiscard has each step player discard Amount cards of their choice from
+// their own hand (discardFromHand). It returns how many cards they discarded.
 func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 	n, total := g.value(r.it, st.Amount), 0
 	for _, pid := range stepPlayers(r.it, st) {
-		hand := g.Players[pid].Hand
-		n := min(n, len(hand))
-		if n <= 0 {
-			continue
-		}
-		d := Decision{Player: pid, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n}
-		if n > 1 {
-			d.Prompt = fmt.Sprintf("Discard %d cards", n)
-		}
-		for _, inst := range hand {
-			d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})
-		}
-		// The options are fixed before any card moves, so take the cards first.
-		var picked []*Instance
-		for _, i := range g.choose(d) {
-			picked = append(picked, hand[i])
-		}
-		for _, inst := range picked {
-			g.takeCard(inst)
-			g.putCard(inst, ZoneDiscard, false)
-			g.logEvent(Event{Kind: "discard", Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
-				"player %d discards %s", pid, inst.Card.Name)
-			total++
-		}
+		total += len(g.discardFromHand(pid, n))
 	}
 	return total
 }
