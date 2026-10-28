@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -700,5 +701,46 @@ func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
 	}
 	if it := v.Stack[1]; it.Kind != "Ability" || it.Keyword != "" {
 		t.Errorf("printed item = %+v", it)
+	}
+}
+
+// T-0081: a chosen card in a discard pile is shown by name, never by instance ID.
+func TestView_PileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
+	s := newScene(t)
+	src := s.put(0, engine.ZoneMainTheater, testUnit("Pile Source", 1, 1, engine.Keywords{}))
+	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, engine.Keywords{}))
+	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, engine.Keywords{}))
+	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, engine.Keywords{}))
+	s.g.Players[0].Discard = []*engine.Instance{inPile}
+	s.g.Stack = []*engine.StackItem{{
+		Kind: engine.StackAbility, Controller: 0, Source: src.ID, Inst: src.Inst,
+		Chosen: [][]int{{victim.ID}, {inPile.ID, gone.ID}},
+	}}
+	s.g.Stack[0].Effect.Targets = []ability.Target{
+		{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}},
+		{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}},
+	}
+	for seat := engine.PlayerID(0); seat < 2; seat++ {
+		v := view.PlayerView(s.g, seat)
+		if len(v.Stack) != 1 {
+			t.Fatalf("seat %d: stack = %+v", seat, v.Stack)
+		}
+		it := v.Stack[0]
+		if len(it.Chosen) != 2 || !slices.Equal(it.Chosen[0], []int{victim.ID}) || len(it.Chosen[1]) != 0 {
+			t.Errorf("seat %d: Chosen is the asset ID for the asset slot and empty for the pile slot: %v", seat, it.Chosen)
+		}
+		if len(it.ChosenCards) != 2 || len(it.ChosenCards[0]) != 0 ||
+			!slices.Equal(it.ChosenCards[1], []string{"Card In Pile"}) {
+			t.Errorf("seat %d: ChosenCards is empty for the asset slot and only the name of the card still in a pile for the pile slot: %v", seat, it.ChosenCards)
+		}
+		js := mustJSON(t, v)
+		for _, id := range []int{inPile.ID, gone.ID} {
+			if regexp.MustCompile(fmt.Sprintf(`\b%d\b`, id)).MatchString(js) {
+				t.Errorf("seat %d: the view carries a card instance ID %d, which is never shown", seat, id)
+			}
+		}
+		if strings.Contains(js, "Card Gone From Piles") {
+			t.Errorf("seat %d: a chosen card that left the piles is not named", seat)
+		}
 	}
 }
