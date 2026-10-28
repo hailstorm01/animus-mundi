@@ -4,7 +4,7 @@ title: Modal triggers, "choose one" of their modes on placement, before targets 
 kind: shape
 tier: sonnet
 wave: B
-status: ready
+status: in-progress
 branch: m2/T-0083-modal-choice
 depends_on: [T-0006, T-0030, T-0081]
 claims: [effect:modes, decision:mode-on-placement]
