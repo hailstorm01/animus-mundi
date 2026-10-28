@@ -4,7 +4,7 @@ title: Make Arkha, Sun's Fury executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: queued
+status: review
 branch: m2/T-0078-arkha
 depends_on: [T-0077, T-0079]
 claims: [card:Arkha, Sun's Fury]
@@ -85,3 +85,9 @@ None. (The test file defines its own `arkhaChooser` and `newArkhaScene`.) Origin
   - The block is a fault in the leak oracle, not in this task. The picked card was in the public discard pile when the `decision` line was written (FRD 01 line 176, `SVY-R14`). `TestView_Case4_NoLeak` checks the line only at the next settled point, when the card is already on the bottom of the deck. T-0079 makes the check also accept a name that was public at the line's own event.
   - 4123001 matches the Definition: the trigger, its target slot, both steps and `Text` in `path.go`, and the name removed from `NotYetExecutable`. Only the two Allowed Files changed, and the tests are unchanged since 10b30dc.
   - Next, once T-0079 is `done`: merge the run branch into this branch (T-0079 changes only `pkg/view/view_test.go`), set `review`, and review 4123001 at D5 with every gate re-run. The approved tests stand, so no new test round is needed.
+- 2026-10-27 lead-architect (wave run B, session 16, D5): **Approved.** T-0079 is `done` (bea61cf), so I merged the run branch into this branch (6d21110, no conflict) and set `review`. The approved tests stand, so there was no new test round.
+  - Directives: no `open: before` directive is on the board, and `main` has nothing the run branch lacks. Waiting triggers checked against `autoloop/m2-wave-b` 996f0c9: #6 and #7 (mode is `serial`), #8 (no `deck.go` change), #15 (no turn hook), #20 (b) (no wave C shape task), #58 (no exhaust by a cost or an effect) and #59 (2) (no repeated targets). None has fired.
+  - **Scope:** `git diff autoloop/m2-wave-b...HEAD` changes only `pkg/engine/cards/path.go`, `pkg/engine/cards/cards.go`, this task file and the test file. `cards_path_arkha_test.go` is unchanged since 10b30dc.
+  - **Fences and reuse:** the definition is plain `ability` data that matches the Definition: the trigger, its opposing-Headquarters slot, the bottom-of-deck pile pick and the `IfDone` damage step. It adds no shape. No existing helper builds an opposing-Headquarters slot, so there is nothing to reuse.
+  - **Rules fidelity:** "you may" is answered on placement (`SVY-R9`) and the target is locked then (`SVY-R3`). The put is an `UpTo: 1` pick on resolution, and no pick means no damage (`SVY-R14`, `SVY-R16`).
+  - **Gates, re-run by the reviewer in a review worktree (6d21110):** `go tool task check` exits 0, which includes the 5 card tests, `TestStarterSet_Executable` and `TestView_Case4_NoLeak`. `go tool task sim` runs clean: P0 65.0% / P1 34.0% / draws 1.0% (was 70.5% / 28.5% / 1.0%), every invariant holds and the monitors found no violation.
