@@ -4,7 +4,7 @@ title: The view asks the engine whether a chosen card is still in a pile, (g *Ga
 kind: harness
 tier: flash
 wave: B.1 (board directives #65 and #67, structural review 4 findings 4 and 6)
-status: ready
+status: in-progress
 branch: m2/T-0088-discard-card
 depends_on: [T-0087]
 claims: [func:DiscardCard]
