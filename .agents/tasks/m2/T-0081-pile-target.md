@@ -4,7 +4,7 @@ title: A chosen target in a discard pile, chosen on placement and verified at re
 kind: shape
 tier: sonnet
 wave: B
-status: tests
+status: tests-review
 branch: m2/T-0081-pile-target
 depends_on: [T-0077]
 claims: [target:pile, view:pile-targets]
@@ -82,3 +82,8 @@ View test in `pkg/view/view_test.go` (a new test; no existing test changes):
   - Second of three tasks for the Watchman (T-0080 split): this one claims `target:pile` and `view:pile-targets`; the card task (`headquarters.go`, `cards.go`) comes next. No claims overlap: no other task is open.
   - Reuse: `pileDecision`, `matchesCard`, `pickBounds` and the top-down fixed order (T-0077) are reused, not copied. Searched `pkg/engine` and the `done` tasks for an existing chosen target outside the battlefield: none.
   - Placement: the view change is forced by the view's own promise that no discard card carries an instance ID, and the slot test sits on `StackItem` so that `pkg/view` doesn't import `ability`. Four non-test files.
+- 2026-10-27 rules-test-author: Wrote the tests; status is now `tests-review`. No helpers requested.
+  - `pkg/engine/pile_target_test.go`: `TestFR_TGT_001_PileTargetOffersMatchingCardsInYourDiscardPile`, `TestFR_TGT_001_PileTargetIsChosenOnPlacement`, `TestFR_TGT_001_PileTargetReturnsTheChosenCardToHand`, `TestFR_TGT_001_PileTargetCanGoOnTheBottomOfTheDeck`, `TestFR_TGT_003_PileTargetThatLeftThePileIsIllegal`, `TestFR_TGT_003_PileTargetUpToNKeepsTheCardsStillInThePile`, `TestFR_TGT_003_PileTargetWithNoMatchAsksNothing`, `TestFR_MOD_001_SinglePileTargetIsNotAsked`, `TestFR_MOD_001_PileTargetTimeoutChoosesTheTopCard`, `TestFR_TGT_001_AssetStepOnAPileSlotDoesNothing`.
+  - `pkg/view/view_test.go`: `TestView_PileTargetShowsCardNamesNotInstanceIDs` (new test only; fails to compile until `StackView.ChosenCards` exists, which also stops the whole view test package from building).
+  - The engine package compiles today (the tests use no new API). Eight fail now. `...ThatLeftThePileIsIllegal` and `...WithNoMatchAsksNothing` pass before the build because nothing moves today, so they guard against regressions. "Left the pile" moves the card from an observer hook on the ability's `place` event, using `takeCard` and `putCard`.
+  - Left out: the leave-and-return case (Open Question 10), as the task says. `PileSlot` is covered through the view test (items with no `Targets`) and the engine tests, not by a direct unit test.
