@@ -52,7 +52,6 @@ var NotYetExecutable = []string{
 	"Reaver's Rush",
 	"Rhapsody's Embrace",
 	"Rhapsody's Hollow",
-	"Rogue Fleshshaper",
 	"Ruin Partisans",
 	"Shifting Impossibility",
 	"Sinuous Growth",
