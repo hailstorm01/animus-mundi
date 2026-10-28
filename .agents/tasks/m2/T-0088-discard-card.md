@@ -4,7 +4,7 @@ title: The view asks the engine whether a chosen card is still in a pile, (g *Ga
 kind: harness
 tier: flash
 wave: B.1 (board directives #65 and #67, structural review 4 findings 4 and 6)
-status: review
+status: done
 branch: m2/T-0088-discard-card
 depends_on: [T-0087]
 claims: [func:DiscardCard]
@@ -144,3 +144,4 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - Case 6: `git diff d0f1b62 --stat` confirmed only the allowed files and this task file were touched on the task branch.
     - Case 7 / Gates: `go tool task check` (fmt, vet, all tests, cardtown lint --all) passed cleanly; `go tool task sim` passed (200 games, 0 invariant violations).
   - Status -> review.
+- 2026-10-28, lead-architect (wave B.1 run, session 5): re-dispatched Flash after `main`'s 54d25ef (a stopped run keeps its code commit). The engineer verified 2c29320 and handed off (`agy` conversation `66602c2b-7839-4d6e-9339-a39cbaa8d841`, no denied actions). Review, code round 1, approved: the diff is the task's four edits exactly, and only `Allowed Files` changed. It is a pure move: instance IDs are unique, so `DiscardCard`'s first match is `pileTarget`'s old first match and `stackView`'s old only match. Re-ran in a review worktree: case 1 (no test diff), cases 3–5 (one `range pl.Discard`, five `DiscardCard` lines, `newID` doc), case 6 by three-dot diff (the two-dot diff also lists the run file and board, lead commits made on the run branch after the task branched), `go tool task check` passes, `go tool task sim` clean (200 games, P0 63.5% / P1 34.5% / draws 2.0%, unchanged), `go tool task sim-compare -- autoloop/m2-wave-b.1` `[PASS]`. Nit: the engineer's Log doesn't name which leftover case of `kernel-engineer` §3 step 1 it took (it was the second, status commit plus implementation commit). Merged as 20b2c7a. Directives #65 and #67 applied.
