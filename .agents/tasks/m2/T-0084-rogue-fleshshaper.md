@@ -4,7 +4,7 @@ title: Make Rogue Fleshshaper executable (wave B card, flash)
 kind: card
 tier: flash
 wave: B
-status: review
+status: done
 branch: m2/T-0084-rogue-fleshshaper
 depends_on: [T-0083]
 claims: [card:Rogue Fleshshaper]
@@ -76,3 +76,8 @@ To be written in a new file, `pkg/engine/cards_path_fleshshaper_test.go`, from t
   - Reused: `ability.HookDeploy`, `ability.Effect` (`Modes`, `ChooseN`), `ability.Target`, `ability.Filter` (`NonScratch`), `ability.OpHeal`, `ability.OpDealDamage`, `ability.SubjectTarget`.
   - Commands: `go test ./pkg/engine -run TestCard_RogueFleshshaper` (all 7 tests passed); `go test ./pkg/engine -run TestStarterSet_Executable` (passed); `go tool task check` passed (gofmt, `go vet`, all unit & scenario tests, `cardtown lint --all`); `go tool task sim` passed clean (200 random games, all invariants held).
   - Reviewer: each mode in `Modes` defines its own single target slot, so each mode's step addresses `Target: 0`, and the modal trigger resolution joins and remaps the chosen mode's targets.
+- 2026-10-28 lead-architect (wave run B, session 22, D5): **Approved, `done`.** Session 21 ended at a usage limit after setting `ready`, before the dispatch. This session dispatched Flash (`agy` conversation `635c019f-e2a1-490f-bcce-d687d8041872`, no denied action). Review of `git diff autoloop/m2-wave-b...m2/T-0084-rogue-fleshshaper`:
+  - Scope: only `cards/path.go` and `cards/cards.go` changed outside the task file; `cards_path_fleshshaper_test.go` is unchanged since the approved test commit 7321808.
+  - Fences and reuse: plain `ability` data, no new shape, no card name in engine code. It matches the Definition: one non-optional `HookDeploy` trigger, `ChooseN` 1, two modes in printed order, each with one exactly-one slot (`UpTo` 0) and its step on `Target: 0`.
+  - Rules fidelity: mode 1's `Filter{}` is any asset in any battlefield zone of either side; mode 2 adds only `NonScratch`. Ward is left to `FR-TGT-003`'s general check, not written into the card.
+  - Gates re-run in a scratch worktree of the task branch: the seven card tests and `TestStarterSet_Executable` pass, `go tool task check` passes, and `go tool task sim` runs clean, with 200 games at P0 63.5% / P1 34.5% / draws 2.0% (unchanged, since this is not a deck card).
