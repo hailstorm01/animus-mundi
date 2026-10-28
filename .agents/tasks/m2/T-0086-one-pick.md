@@ -4,7 +4,7 @@ title: One untargeted pick body, pickFrom, and one predicate for "this filter ch
 kind: harness
 tier: flash
 wave: B.1 (board directives #63 and #66, structural review 4 findings 2 and 5)
-status: ready
+status: in-progress
 branch: m2/T-0086-one-pick
 depends_on: [T-0085]
 claims: [func:pickFrom, func:ability.Filter.InPile]
