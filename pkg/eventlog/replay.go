@@ -217,8 +217,7 @@ func diff(rec, got engine.Event) string {
 	case rec.Turn != got.Turn || rec.Phase != got.Phase:
 		return fmt.Sprintf("turn and phase: recorded T%d %s, replayed T%d %s", rec.Turn, rec.Phase, got.Turn, got.Phase)
 	case rec.Player != got.Player || rec.Card != got.Card || rec.Inst != got.Inst || rec.Source != got.Source ||
-		rec.Target != got.Target || rec.Zone != got.Zone || rec.Amount != got.Amount ||
-		rec.Secondary != got.Secondary || rec.Resource != got.Resource:
+		rec.Target != got.Target || rec.Zone != got.Zone || rec.Amount != got.Amount || rec.Resource != got.Resource:
 		return fmt.Sprintf("%s event fields: recorded %+v, replayed %+v", rec.Kind, structured(rec), structured(got))
 	}
 	if (rec.Decision == nil) != (got.Decision == nil) ||
@@ -244,8 +243,8 @@ func diff(rec, got engine.Event) string {
 	return ""
 }
 
-func structured(e engine.Event) [9]any {
-	return [9]any{e.Player, e.Card, e.Inst, e.Source, e.Target, e.Zone, e.Amount, e.Secondary, e.Resource}
+func structured(e engine.Event) [8]any {
+	return [8]any{e.Player, e.Card, e.Inst, e.Source, e.Target, e.Zone, e.Amount, e.Resource}
 }
 
 func decisionEqual(a, b engine.DecisionRecord) bool {
@@ -257,7 +256,7 @@ func decisionEqual(a, b engine.DecisionRecord) bool {
 // word of Detail.
 func actionOf(e engine.Event) (engine.Action, error) {
 	word, _, _ := strings.Cut(e.Detail, " ")
-	a := engine.Action{Player: engine.PlayerID(e.Player), Asset: e.Source, Target: e.Target, Secondary: e.Secondary, Card: e.Inst}
+	a := engine.Action{Player: engine.PlayerID(e.Player), Asset: e.Source, Target: e.Target, Card: e.Inst}
 	found := false
 	for k := engine.ActGenerate; k <= engine.ActEndTurn; k++ {
 		if k.String() == word {

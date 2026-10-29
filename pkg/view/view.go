@@ -84,7 +84,6 @@ type StackView struct {
 	Card       string  // Deploy: the card on the stack; Ability: its source card
 	Zone       string  // Deploy: the declared zone; March: the origin zone
 	Target     int     // Attack: the primary defender (asset ID)
-	Secondary  int     // Attack: the Berserk secondary target, 0 if none
 	Keyword    string  // Ability: the keyword its trigger came from ("Aggressive"); empty for a printed ability
 	Chosen     [][]int // Ability: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
 	// ChosenCards: Ability: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
@@ -169,7 +168,7 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 	case engine.StackMarch:
 		s.Zone = it.Zone.String()
 	case engine.StackAttack:
-		s.Target, s.Secondary = it.Target, it.Secondary
+		s.Target = it.Target
 	case engine.StackAbility:
 		s.Keyword = it.Keyword.String()
 		// A face-down asset has no abilities today; if one ever has, its
