@@ -2,6 +2,27 @@
 
 package engine
 
+// checkAttack returns nil if a, an Attack, is legal right now (FR-CBT-001):
+// the attacker is a Readied asset of a.Player's on the battlefield
+// (readyAsset, so an Exhausted asset cannot attack), it is a Unit or
+// Headquarters in its combat zone (canDeclareAttack), and the defender is one
+// it may attack (CanAttack). check calls it after the checks every action
+// shares.
+func (g *Game) checkAttack(a Action) error {
+	att, err := g.readyAsset(a)
+	if err != nil {
+		return err
+	}
+	if !canDeclareAttack(att) {
+		return illegal("%s cannot attack from %s (FR-CBT-001)", att, att.Zone)
+	}
+	def := g.Asset(a.Target)
+	if def == nil || !g.CanAttack(att, def) {
+		return illegal("illegal combat target (FR-CBT-001)")
+	}
+	return nil
+}
+
 // declareAttack is Steps 1 and 2 of combat (FR-CBT-002).
 func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)

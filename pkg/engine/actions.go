@@ -162,17 +162,7 @@ func (g *Game) check(a Action) error {
 			return illegal("only Units march (FR-ZON-002)")
 		}
 	case ActAttack:
-		att, err := g.readyAsset(a)
-		if err != nil {
-			return err
-		}
-		if !canDeclareAttack(att) {
-			return illegal("%s cannot attack from %s (FR-CBT-001)", att, att.Zone)
-		}
-		def := g.Asset(a.Target)
-		if def == nil || !g.CanAttack(att, def) {
-			return illegal("illegal combat target (FR-CBT-001)")
-		}
+		return g.checkAttack(a)
 	case ActScratch:
 		if p.HQ == nil || a.Asset != p.HQ.ID {
 			return illegal("only your Headquarters can Deploy Scratch Company")
