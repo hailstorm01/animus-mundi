@@ -176,6 +176,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0091 | The clients stop reading an Attack's secondary target (directive #68 part (c), harness, flash) | done |
 | T-0092 | Events carry no secondary target, and doc.go stops listing Berserk (directive #68 part (d1), harness, flash) | done |
 | T-0093 | An Attack has one target, so Action and StackItem lose Secondary (directive #68 part (d2), harness, flash) | done |
+| T-0094 | Attack legality lives in combat.go, (g *Game) checkAttack (directive #69, harness, flash, pure move) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
