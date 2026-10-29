@@ -82,7 +82,7 @@ func (g *Game) destroyAll(as []*Asset) {
 }
 
 // deathSweep handles every lethal asset (sweepDeaths): deaths a replacement
-// applies to are replaced one at a time in their controller's order (SVY-R5),
+// applies to are replaced one at a time in a fixed order (SVY-R20, SVY-R22),
 // and the rest are destroyed simultaneously. Then it applies the match-loss
 // checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).
 // It runs only when nothing is resolving, so an HQ damaged
@@ -92,7 +92,7 @@ func (g *Game) deathSweep() {
 	var loses [2]bool
 	var reasons [2]string
 	seen := map[int]bool{}
-	g.sweepDeaths(g.newlyLethal(seen), seen, &loses, &reasons)
+	g.sweepDeaths(seen, &loses, &reasons)
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
 			p.DrewFromEmpty = false
@@ -139,33 +139,19 @@ func (g *Game) destroyDying(dying []*Asset, loses *[2]bool, reasons *[2]string) 
 	g.destroyAll(dying)
 }
 
-// sweepDeaths handles dying, a set of simultaneous deaths. Those a replacement
-// applies to are replaced one at a time in their controller's order, with an
-// interim sweep of what a byproduct newly left lethal between two of them;
-// then the rest die together (SVY-R5, replace.go). seen holds every asset
-// this sweep has taken up, so an interim sweep takes up only the new ones.
-func (g *Game) sweepDeaths(dying []*Asset, seen map[int]bool, loses *[2]bool, reasons *[2]string) {
-	queue := g.replacedQueue(dying)
-	if len(queue) == 0 {
-		g.destroyDying(dying, loses, reasons)
-		return
-	}
-	for _, a := range queue {
-		if g.Asset(a.ID) != a || !g.IsLethal(a) {
-			continue
+// sweepDeaths takes up the lethal assets in passes. In each pass, the deaths a
+// replacement applies to are replaced first (replaceDeaths), then the rest die
+// together; what a byproduct newly left lethal dies in the next pass, a new
+// moment (SVY-R20, FR-LAY-002). seen holds every asset the sweep has taken up,
+// so a pass takes up only new ones.
+func (g *Game) sweepDeaths(seen map[int]bool, loses *[2]bool, reasons *[2]string) {
+	for {
+		dying := g.newlyLethal(seen)
+		if len(dying) == 0 {
+			return
 		}
-		if !g.replaceDeath(a) {
-			continue
-		}
-		g.sweepDeaths(g.newlyLethal(seen), seen, loses, reasons)
+		g.destroyDying(g.replaceDeaths(dying, g.IsLethal), loses, reasons)
 	}
-	var rest []*Asset
-	for _, a := range dying {
-		if g.Asset(a.ID) == a && g.IsLethal(a) {
-			rest = append(rest, a)
-		}
-	}
-	g.destroyDying(rest, loses, reasons)
 }
 
 func (g *Game) end(o Outcome) {
