@@ -81,27 +81,18 @@ func (g *Game) destroyAll(as []*Asset) {
 	}
 }
 
-// deathSweep destroys every lethal asset simultaneously, then applies the
-// match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003,
-// FR-WIN-001). It runs only when nothing is resolving, so an HQ damaged
+// deathSweep handles every lethal asset (sweepDeaths): deaths a replacement
+// applies to are replaced one at a time in their controller's order (SVY-R5),
+// and the rest are destroyed simultaneously. Then it applies the match-loss
+// checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).
+// It runs only when nothing is resolving, so an HQ damaged
 // mid-resolution loses only if it is still lethal here, and every loss found
 // by one sweep is simultaneous.
 func (g *Game) deathSweep() {
-	var dying []*Asset
-	for _, a := range g.Assets() {
-		if g.IsLethal(a) {
-			dying = append(dying, a)
-		}
-	}
-
 	var loses [2]bool
 	var reasons [2]string
-	for _, a := range dying {
-		if a.Printed().Type == TypeHeadquarters {
-			loses[a.Controller], reasons[a.Controller] = true, "Headquarters destroyed"
-		}
-	}
-	g.destroyAll(dying)
+	seen := map[int]bool{}
+	g.sweepDeaths(g.newlyLethal(seen), seen, &loses, &reasons)
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
 			p.DrewFromEmpty = false
@@ -123,6 +114,58 @@ func (g *Game) deathSweep() {
 	case loses[1]:
 		g.end(Outcome{Over: true, Winner: 0, Reason: reasons[1]})
 	}
+}
+
+// newlyLethal returns the lethal assets whose IDs are not in seen, and adds them to seen.
+func (g *Game) newlyLethal(seen map[int]bool) []*Asset {
+	var out []*Asset
+	for _, a := range g.Assets() {
+		if !seen[a.ID] && g.IsLethal(a) {
+			seen[a.ID] = true
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+// destroyDying destroys the assets as one simultaneous event and notes each
+// destroyed Headquarters as a loss at this sweep.
+func (g *Game) destroyDying(dying []*Asset, loses *[2]bool, reasons *[2]string) {
+	for _, a := range dying {
+		if a.Printed().Type == TypeHeadquarters {
+			loses[a.Controller], reasons[a.Controller] = true, "Headquarters destroyed"
+		}
+	}
+	g.destroyAll(dying)
+}
+
+// sweepDeaths handles dying, a set of simultaneous deaths. Those a replacement
+// applies to are replaced one at a time in their controller's order, with an
+// interim sweep of what a byproduct newly left lethal between two of them;
+// then the rest die together (SVY-R5, replace.go). seen holds every asset
+// this sweep has taken up, so an interim sweep takes up only the new ones.
+func (g *Game) sweepDeaths(dying []*Asset, seen map[int]bool, loses *[2]bool, reasons *[2]string) {
+	queue := g.replacedQueue(dying)
+	if len(queue) == 0 {
+		g.destroyDying(dying, loses, reasons)
+		return
+	}
+	for _, a := range queue {
+		if g.Asset(a.ID) != a || !g.IsLethal(a) {
+			continue
+		}
+		if !g.replaceDeath(a) {
+			continue
+		}
+		g.sweepDeaths(g.newlyLethal(seen), seen, loses, reasons)
+	}
+	var rest []*Asset
+	for _, a := range dying {
+		if g.Asset(a.ID) == a && g.IsLethal(a) {
+			rest = append(rest, a)
+		}
+	}
+	g.destroyDying(rest, loses, reasons)
 }
 
 func (g *Game) end(o Outcome) {

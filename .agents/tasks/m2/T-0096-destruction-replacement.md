@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: review
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -69,7 +69,7 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
 - **Left out:** a kill step's destruction (T-0097), two replacements for one death (T-0097), a Scratch Company filter (T-0098), and two players' replacements in one sweep (no M2 matchup reaches it: only Animus prints one).
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected. If a test needs one, `rules-test-author` names it here.
+- None. The file declares its own helpers (`guardianStructure`, `guardianUnit`, `(*scene).sweep`, `eventSeq`, `wantReplaced`) and reuses `mortal`, `killedTrigger`, `unbowed`, `healSelf`, `allDamage`, `trigUnit`, `deployFromHand`, `inHand`, `inDiscard`.
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go` (`Def.Replacements`, `Would`, `Replacement`, `SubjectReplaced`)
@@ -93,3 +93,34 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - **Directives:** read `BOARD.md` on `main` (d015ef4) fresh. #14 is a standing order, and Impossibility is a deck card. #73 is `open`, and this task starts it. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #58 (no exhaust by a cost or an effect); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse and placement:** searched `pkg/engine` and the `done` tasks for a replacement, a replaced-asset subject or a battlefield-to-hand move, and found none. The Boundaries table gives replacements to `pkg/engine`, so a new `replace.go` there holds them. The step loop is shared (`runSteps`), not copied.
   - **Deck cards still on `NotYetExecutable` (#14 (e)):** 23 (10 Animus, 13 Path).
+- 2026-10-29 rules-test-author: Wrote `pkg/engine/replacement_test.go` (10 tests, no helpers requested). The file does not compile until `ability.Replacement`, `ability.WouldBeDestroyed`, `ability.SubjectReplaced` and `Def.Replacements` exist (`go vet` reports only these). `cardtown lint rules` shows `FR-REP-001` traced.
+  - Tests: `TestFR_REP_001_ReplacedDeathReturnsTheUnitToItsOwnersHand`, `..._ReplacedDeathFiresNoDeathTrigger`, `..._ReplacementDoesNotApplyOutsideItsFilter`, `..._ControllerOrdersTheReplacedDeaths`, `..._ReplacedDeathOrderFallsBackToOldestFirst`, `..._SourceLeftLethalByAByproductStopsApplying`, `..._SourceLethalInTheSameSweepReplacesEveryDeath` (cites FR-REP-001 and the 2026-10-29 user ruling), `..._ByproductDamageFiresTheSourcesDamageTrigger`, `..._TheAffectedAssetsControllerOrdersTheirDeaths`, and `TestFR_ZON_004_FaceDownUnitReturnedToHandIsItsPrintedCard`.
+  - Deviation from the suggested source: the guardian in the order, byproduct, filter, face-down and non-active tests is a structure, so the unit sweeper does not also damage it (the task's own order case needs the source to take only the byproduct damage). The same-sweep ruling test uses a unit guardian. The sweeper is a deployed unit whose deploy trigger deals 1 damage to a filter.
+  - Order tests expect one `DecideOrder` per player with the queued deaths as options in oldest-first order, so picks `[2,0,1]` mean the third unit is replaced first. The unscripted-seat cases rely on the default chooser's timeout fallback.
+  - Left out, as the task says: kill steps, two replacements for one death, a Scratch Company filter, two players' replacements in one sweep.
+- 2026-10-29 lead-architect (D4): **Tests approved, `ready`.** Checked the 10 tests in 935e42b against `FR-REP-001` (lines 450, 453, 455, 456), `SVY-R5`, line 218 (`FR-ZON-004`, `FR-ZON-005`) and the user ruling of 2026-10-29. Each expected outcome follows from the cited text or the task's binding Shape:
+  - the replaced unit goes to hand, not the discard pile, with no death trigger and no `destroy` event;
+  - an opposing unit outside the filter dies normally;
+  - the order answer, and the oldest-first fallback, decide which deaths a 2-Health source absorbs. The source is destroyed before the unreplaced death, at the interim sweep;
+  - a source lethal in the same sweep replaces all three deaths, then dies;
+  - the byproduct's damage trigger is placed after the sweep;
+  - a face-down unit returns as its printed instance, with no `Card` on its `leave` event;
+  - the non-active player orders their own deaths.
+  - **Structure source:** using a structure in most tests is sound. It keeps the sweeper's damage off the source, so only byproducts count.
+  - **Fallback:** the fallback cases rely on a seat with no chooser. `choose` applies the `FR-MOD-001` §6 fallback there (collection order for `DecideOrder`), so nothing new is needed.
+  - **Helpers:** every helper used exists (`putScratch`, `allDamage`, `unbowed`, `healSelf`, `mortal`, `killedTrigger`, `drawN`, `deployTrigger`, `trigUnit`, `structure`, `inHand`, `inDiscard`, `eventsOfKind`, `asked`, `alive`, `wantDamage`, `script`, `deployFromHand`).
+  - **Events:** the `replace` and `leave` kinds are a public contract (ADR-0005) fixed by the Shape, so asserting on them is not an implementation detail.
+- 2026-10-29 kernel-engineer: Implemented to the binding Shape. Changed `ability.go` (`Def.Replacements`, `Would`/`WouldBeDestroyed`, `Replacement`, `SubjectReplaced` appended last in `Subject`), `effects.go` (`runSteps` shared by `resolveAbility` and the replacement, `resolution.replaced`, `SubjectReplaced` in `stepAssets` and `stepRelocate`), `damage.go`, and new `replace.go` (`findReplacement`, `replacedQueue`, `replaceDeath`, `relocateReplaced`). No test or scenario_test.go change.
+  - **Reuse:** searched for an existing replacement or battlefield-to-hand move, none. Reused `leaveBattlefield`, `putCard`, `matchesFilter`, `assetsByID`, `choose`/`DecideOrder`, `destroyAll`.
+  - **Sweep (`damage.go`):** `deathSweep` now calls `sweepDeaths`. With an empty queue it does exactly the old thing (HQ losses noted, one `destroyAll`, same order). With a queue, each replaced death is followed by a recursive sweep of assets lethal now and not in the `seen` set (every asset any level of this sweep has taken up), so the outer sweep's pending deaths are never swept early. Then the rest of `dying` that is still on the battlefield and lethal is destroyed together. The `leave` event is logged with no `Card`.
+  - **Look closely:** `leave` is logged before the asset leaves (so `String()` still names it); an HQ is never queued unless a filter matches it (none do in M2).
+  - **Commands:** `go test ./pkg/engine -run 'TestFR_REP_001|TestFR_ZON_004_FaceDownUnitReturnedToHand'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare` PASS (byte for byte).
+- 2026-10-29 lead-architect (D5, round 1): **Changes requested (one note).**
+  - **Scope:** `git diff main...dd1f7fc` changes only the four Allowed Files, this task file and the test file. `replacement_test.go` and `scenario_test.go` are unchanged since 935e42b.
+  - **Fences and placement:** no card name in engine code. The replacement logic sits in the new `replace.go` in `pkg/engine`, as the Boundaries table gives it.
+  - **Reuse:** `runSteps` is the one step loop. HQ-loss marking moved into `destroyDying` and is not copied. `replacedQueue` builds its `DecideOrder` the way `flushTriggers` does, per player, active player first, asking only with two or more. I don't count it as a duplicate under D2.0: they implement two different rules (`FR-TRG-003` for triggers, and the lead's reading in design note Open Question 13 for replaced deaths), so a change to one would not require the other. The fallback and fast path both live in `choose`.
+  - **Rules fidelity:** the empty-queue path is the old sweep (`newlyLethal` walks `g.Assets()` in the same order). `seen` keeps interim sweeps off the outer sweep's pending deaths, as Shape step 4 requires. A queued death whose source left at an interim sweep falls through to `rest` and is destroyed normally. `relocateReplaced` logs `leave` with no `Card`, before the asset leaves, so its name still resolves.
+  - **Gates, re-run by the reviewer in a review worktree (dd1f7fc):** `go tool task check` exits 0. `go tool task sim` is clean: P0 63.5% / P1 34.5% / draws 2.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare` passes byte for byte against `main`.
+  - **Note 1:** `deathSweep`'s doc comment (`damage.go`, just above `func (g *Game) deathSweep()`) still says it "destroys every lethal asset simultaneously", which is no longer true. Replace its first sentence with: `deathSweep handles every lethal asset (sweepDeaths): deaths a replacement applies to are replaced one at a time in their controller's order (SVY-R5), and the rest are destroyed simultaneously. Then it applies the match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).` Keep the rest of the comment. Comment only: no code or test change, so re-run `go tool task check` and `go tool task sim-compare`.
+- 2026-10-29 kernel-engineer (round 1): Answered Note 1. Replaced the first sentence of `deathSweep`'s doc comment in `pkg/engine/damage.go` with the lead's text (rewrapped to 80 columns, rest of the comment kept). Comment only: the diff shows no code or test change.
+  - **Commands:** `go tool task check` passed (lint summary: all checks passed); `go tool task sim-compare` PASS (starter and stress sims match main byte for byte).

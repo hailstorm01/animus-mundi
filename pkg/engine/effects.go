@@ -18,6 +18,8 @@ type resolution struct {
 	chosen [][]*Asset
 	cards  [][]*Instance
 	done   []int
+	// replaced is the asset whose event a replacement replaces: SubjectReplaced (replace.go).
+	replaced *Asset
 }
 
 // resolveAbility runs a triggered ability's steps in order. It resolves even if
@@ -40,7 +42,13 @@ func (g *Game) resolveAbility(it *StackItem) {
 			}
 		}
 	}
-	for i, st := range it.Effect.Steps {
+	g.runSteps(r)
+}
+
+// runSteps runs the steps of r's item in order, recording how many things each
+// did. A resolving ability and an inline replacement (replace.go) share it.
+func (g *Game) runSteps(r *resolution) {
+	for i, st := range r.it.Effect.Steps {
 		n := 0
 		// "If you do": skipped, and counted as 0, unless the step just before it did something.
 		if !st.IfDone || (i > 0 && r.done[i-1] > 0) {
@@ -176,6 +184,9 @@ func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 // stepRelocate moves each card of stepCards to its owner's hand or deck (the
 // bottom if st.Bottom), and returns how many moved.
 func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
+	if st.Subject == ability.SubjectReplaced {
+		return g.relocateReplaced(r, st)
+	}
 	n := 0
 	for _, inst := range g.stepCards(r, st) {
 		if !g.takeCard(inst) {
@@ -252,6 +263,10 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 	case ability.SubjectTarget:
 		if st.Target >= 0 && st.Target < len(r.chosen) {
 			return r.chosen[st.Target]
+		}
+	case ability.SubjectReplaced:
+		if a := r.replaced; a != nil && g.Asset(a.ID) == a {
+			return []*Asset{a}
 		}
 	case ability.SubjectSelf:
 		// The source itself, if it is still on the battlefield; once it has
