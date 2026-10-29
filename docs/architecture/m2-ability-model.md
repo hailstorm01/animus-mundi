@@ -102,7 +102,8 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    #71 (a step on each player) and the costs question added to #61 are recorded with the wave but wait for their own triggers. Done when #68–#70 are `applied`, the starter sim is byte-identical to wave B.1's end through #68 and `go tool task sim-compare` passes for #69 and #70, and `go tool task check` and `go tool task sim` pass.
 6c. **Wave G's destruction replacement goes before wave C (user, 2026-10-29, for board directive #73).** #73's test needs *Shifting Impossibility*, a deck card, replacing a death. The rest of wave G (damage redirection, *Animoceps Spore Cloud*) stays deferred by #14 (b). In order, serial:
    - T-0096: replacement at the death sweep, one death at a time in its controller's order (`SVY-R5`).
-   - T-0097: kill steps go through replacement (`SVY-R15`), and the affected asset's controller chooses between replacements (`FR-REP-001`, `FR-REP-003`).
+   - T-0097: kill steps go through replacement (`SVY-R15`, Open Question 13).
+   - T-0100: the affected asset's controller chooses between replacements (`FR-REP-001`, `FR-REP-003`), and `doc.go` lists replacements as built. Split from T-0097 under the D2 size rule (six non-test files), and numbered after T-0099 so that T-0098 and T-0099 keep the ids the board already gives them.
    - T-0098: a Scratch Company filter, and *Shifting Impossibility*.
    - T-0099: #73. The combat-kill hook fires only when the sweep destroys the defender (`SVY-R19`).
 
