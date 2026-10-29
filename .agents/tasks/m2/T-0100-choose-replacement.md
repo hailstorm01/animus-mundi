@@ -4,7 +4,7 @@ title: When several replacements apply to one death, its controller chooses whic
 kind: shape
 tier: sonnet
 wave: G
-status: tests-review
+status: ready
 branch: m2/T-0100-choose-replacement
 depends_on: [T-0101]
 claims: [decision:replacement, replacement:choice]
@@ -73,3 +73,4 @@ Synthetic cards only, reusing the helpers in `replacement_test.go` (`guardianStr
   - **Compiles before implementation:** the tests read the question kind as `d.Kind.String() == "Replacement"`, not `DecideReplacement`, so the package builds. Before the engineer's work, five fail (every one that expects a question) and `OneApplicableReplacementAsksNothing` passes, since one replacement already asks nothing today.
   - **Timeout test shape:** the sweep also hits the two guardian units (they are allied units), so they get Health 5 instead of placing victims out of reach. Expected damage is 3 on the Reserves guardian (1 sweep + 2 byproducts) and 1 on the Main Theater one.
   - **Left out:** nothing.
+- 2026-10-29 lead-architect (wave G run, session 5): Tests approved (D4). Each matches `SVY-R23` and the FRD 01 lines it cites: one question per death in the fixed order, the options in `assetsByID` order, a lethal source offered, no question for a single replacement, and a timeout to §6's fixed order (Reserves before the Main Theater) and then printed order within a source. The deviation in `ReplacementChoiceTimesOutToFixedOrder` (guardians at Health 5, hit by the sweep, damage 3 and 1) is accepted: same rule, different setup. `alliedUnits` has `Other`, so the sweeper and killer are never victims and the question counts hold. Status `ready`; dispatching `kernel-engineer` (sonnet).
