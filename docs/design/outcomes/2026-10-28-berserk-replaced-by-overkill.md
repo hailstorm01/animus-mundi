@@ -1,4 +1,4 @@
-Status: approved (user, 2026-10-28)
+Status: applied: FRD 01 v3.14, 2026-10-28
 Directive: #72
 Rulings: SVY-R12, KIM-O01
 Audit to close: none

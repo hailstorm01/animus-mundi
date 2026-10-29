@@ -197,7 +197,6 @@ var StandaloneKeywords = map[string]StandaloneKeywordDef{
 	"Resistant":         {Keyword: "RESISTANT", Parameterized: true},
 	"Aggressive":        {Keyword: "AGGRESSIVE", Parameterized: true},
 	"Armor":             {Keyword: "ARMOR", Parameterized: true},
-	"Berserk":           {Keyword: "BERSERK", Parameterized: true},
 }
 
 // CardBlueprint is the compiled production representation of a Card Town card (FR-DAT-005, FR-CMP-022).
@@ -655,8 +654,7 @@ type OverrideEntry struct {
         "ARMOR",
         "VERSATILE",
         "ETHEREAL",
-        "DEPLOYS_EXHAUSTED",
-        "BERSERK"
+        "DEPLOYS_EXHAUSTED"
       ]
     },
     "PrimitiveEnum": {
@@ -1209,7 +1207,7 @@ func JoinCardCatalogWithAst(blueprints []*model.CardBlueprint, overrides *model.
      - Splits `rulesText` on `\n` into non-empty trimmed lines.
      - Matches each line against the 10 standalone `KEYWORD_GRANT` patterns in `FR-ABL-012`:
        - Parameterless keywords: `^(Stalwart|Ward|Guardian|Versatile|Ethereal|Deploys Exhausted)$` $\rightarrow$ `AbilityDef{AbilityType: "KEYWORD_GRANT", Keyword: mappedEnum}`.
-       - Parameterized keywords: `^(Resistant|Aggressive|Armor|Berserk)\s+(\d+)$` (where `parameter >= 1`) $\rightarrow$ `AbilityDef{AbilityType: "KEYWORD_GRANT", Keyword: mappedEnum, Parameter: &param}`.
+       - Parameterized keywords: `^(Resistant|Aggressive|Armor)\s+(\d+)$` (where `parameter >= 1`) $\rightarrow$ `AbilityDef{AbilityType: "KEYWORD_GRANT", Keyword: mappedEnum, Parameter: &param}`.
      - Note: The 5 non-standalone keywords (`Unbowed`, `Cornered`, `Heal N`, `Scratch N`, `Regroup N`) intentionally do NOT match standalone `KEYWORD_GRANT` synthesis (`FR-CMP-013` item 3).
      - Records all matched standalone keyword lines in `printedKeywords`, and sets `isKeywordOnly = (len(matched) == len(lines))` (provided `cardType != "MANEUVER"`, since Maneuvers require `MANEUVER_EFFECT` payloads per `FR-CMP-013` item 3).
 2. **Orphan Override Detection (`FR-CMP-017` item 3)**:
@@ -1266,7 +1264,7 @@ func ValidateBlueprintCollection(collection *model.BlueprintCollection, schemaDi
      - `CONTINUOUS_AURA` (`FR-ABL-004`): requires `scope` (`SELF`, `ALLIED_IN_ZONE`, `OPPOSING_IN_ZONE`, `ALL_IN_ZONE`) and at least one of `modifiers`, `abilityGrants`, or `staticPermission`. Optional: `activeZone` (`BATTLEFIELD`, `HAND`, `DISCARD`), `filter`.
      - `REPLACEMENT_WATCHER` (`FR-ABL-005`): requires `interceptHook` (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) and `replacementAction` (`EffectDef`). Optional: `condition`.
      - `MANEUVER_EFFECT` (`FR-ABL-006`): requires either `effect` (`EffectDef`) or modal fields (`modalCount >= 1` and `options` with `len >= 2`, `FR-ABL-010`). Optional: `targeting`.
-     - `KEYWORD_GRANT` (`FR-ABL-012`): requires `keyword` in valid keywords; if parameterized (`RESISTANT`, `AGGRESSIVE`, `ARMOR`, `BERSERK`), requires `parameter != nil && *parameter >= 1`.
+     - `KEYWORD_GRANT` (`FR-ABL-012`): requires `keyword` in valid keywords; if parameterized (`RESISTANT`, `AGGRESSIVE`, `ARMOR`), requires `parameter != nil && *parameter >= 1`.
    - Recursively validates `EffectDef` (`primitive` in the 26 atomic primitives or `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE`, `FR-PRM-001`), `FilterDef`, `ValueToken` (`type` in `STATIC`, `DYNAMIC`, `QUERY`, `VARIABLE_X`), `CostDef`, `TargetRef` (`selector`, `bindingPolicy`, `poolValue` for `DISTRIBUTED_POOL` per `FR-ABL-011`, `FR-TGT-101`), and `ConditionDef`.
    - On any violation, dispatches `ERR_OVERRIDE_SCHEMA_INVALID` (Exit Code `4`).
 
@@ -1595,7 +1593,7 @@ go test -v ./pkg/compiler/ingest/...
 - Implement unit tests `TST-03-014` through `TST-03-021` in `pkg/compiler/linker/linker_test.go` per **TDD Section 4.2**.
 
 #### Acceptance Criteria
-- [ ] Vanilla cards (`""` or `"--"`) normalize to `rulesText: ""` and `abilities: []`, and cards with only standalone `KEYWORD_GRANT` lines (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`, `Berserk N`) resolve directly from the lookup table (`FR-CMP-013`, `FR-ABL-012`).
+- [ ] Vanilla cards (`""` or `"--"`) normalize to `rulesText: ""` and `abilities: []`, and cards with only standalone `KEYWORD_GRANT` lines (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`) resolve directly from the lookup table (`FR-CMP-013`, `FR-ABL-012`).
 - [ ] Non-standalone keywords (`Unbowed`, `Cornered`, `Heal N`, `Scratch N`, `Regroup N`), bespoke text, and Maneuvers require a matching entry in `ast_overrides.json` or fail with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-013`, `FR-CMP-019`).
 - [ ] Orphan overrides (`ERR_ORPHAN_OVERRIDE`), `rulesText` mismatches (`ERR_OVERRIDE_TEXT_MISMATCH`), unverified overrides (`ERR_OVERRIDE_UNVERIFIED`), missing printed standalone keyword ASTs (`ERR_PARITY_UNMAPPED_TEXT`), extraneous ASTs on vanilla/keyword cards (`ERR_PARITY_ORPHAN_AST`), and non-canonical targeting verbs under `--strict` (`ERR_PARITY_VERB`) are enforced (`FR-CMP-017`, `FR-CMP-019`, `FR-CMP-020`, `FR-VAL-002`).
 - [ ] Unit tests `TST-03-014`–`TST-03-021` in `linker_test.go` pass with 0 failures.

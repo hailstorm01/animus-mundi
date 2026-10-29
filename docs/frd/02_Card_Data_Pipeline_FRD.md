@@ -294,8 +294,8 @@ Every `AbilityDef` effect node (`FR-ABL-001`, `EffectDef` in `FR-ABL-007`) dispa
 | `REGISTER_DELAYED_TRIGGER` | `triggerHook: Enum, duration: Enum [END_OF_TURN, NEXT_OCCURRENCE], condition: ConditionDef, effect: EffectDef` | Registers a turn-scoped delayed triggered ability on a bound target or turn boundary (*Rage's Wake*, *Redline Infusion*). |
 
 #### FR-TGT-101: Bound Action Payload & Upfront Target Locking Model
-- Action declarations and trigger target selections bind against the AST via structured payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices` (`FR-ABL-010`), and `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SECONDARY_BERSERK_TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`, and optional `allocatedValue` per `FR-ABL-011`). Any card partition or deck inspection choices (*Hourglass Diviner*, *Samsara, Living Tempest*) do not bind on declaration and are executed strictly during resolution via interactive client choice prompts (`PlayerChoicePrompt`; `FR-MOD-001`, `FR-MSG-005`).
-- **Upfront Target Locking (`bindingPolicy: "UPFRONT_LOCK"`)**: For composite abilities or attacks where a secondary effect depends on an outcome determined during resolution (*Samsara, Living Tempest*, or **Berserk N** secondary Main Theater targets in `FR-KWD-002o`), external targets are bound upfront when the action or trigger is placed onto the Resolution Stack (`FR-TGT-001`), completing execution atomically without a mid-resolution target prompt.
+- Action declarations and trigger target selections bind against the AST via structured payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices` (`FR-ABL-010`), and `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`, and optional `allocatedValue` per `FR-ABL-011`). Any card partition or deck inspection choices (*Hourglass Diviner*, *Samsara, Living Tempest*) do not bind on declaration and are executed strictly during resolution via interactive client choice prompts (`PlayerChoicePrompt`; `FR-MOD-001`, `FR-MSG-005`).
+- **Upfront Target Locking (`bindingPolicy: "UPFRONT_LOCK"`)**: For composite abilities where a secondary effect depends on an outcome determined during resolution (*Samsara, Living Tempest*), external targets are bound upfront when the action or trigger is placed onto the Resolution Stack (`FR-TGT-001`), completing execution atomically without a mid-resolution target prompt.
 
 ---
 
@@ -334,7 +334,6 @@ All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)
 | **Deploys Exhausted**| `KEYWORD_GRANT` (`keyword: "DEPLOYS_EXHAUSTED"`) | Registers `WOULD_DEPLOY` replacement setting initial readiness to `EXHAUSTED` (`FR-KWD-002l`). |
 | **Scratch N** | `EffectDef` (`primitive: "SCRATCH", count: N`) | Atomic effect primitive executing `Deploy Scratch Company` `N` times sequentially (`FR-KWD-002m`, `FR-INH-004`). |
 | **Regroup N** | `EffectDef` (`primitive: "REGROUP", count: N`) | Atomic effect primitive transitioning up to `N` exhausted allied assets to `READIED` (`FR-KWD-002n`). |
-| **Berserk N** | `KEYWORD_GRANT` (`keyword: "BERSERK", parameter: N`) | Static combat ability dealing $N$ secondary cleave damage to chosen secondary Main Theater asset (`FR-KWD-002o`, `FR-CBT-002`). |
 
 - **Dynamic & Continuous Grants**: Keywords and subtypes may also be granted dynamically via atomic primitives `GRANT_KEYWORD` and `GRANT_SUBTYPE` (`FR-PRM-001`) or continuously via `ContinuousAuraDef` modifiers (`KEYWORD_GRANT`, `SUBTYPE_GRANT`) and compound `abilityGrants` (Layer 6; `FR-ABL-004`).
 

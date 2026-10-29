@@ -18,19 +18,19 @@ This document defines the network architecture, communication transport, client-
 2. **Missing Wire Message Definitions**: Added complete Protobuf message schemas for `StateSyncSnapshot` (standardizing nomenclature across `FR-SES-005`, `FR-MSG-001`, and `FR-PAC-004`), `PublicStateHash`, `HeartbeatMessage`, and pre-game setup server messages (`FirstPlayerChoicePrompt`, `FirstPlayerDetermined`, `MulliganPrompt`, `MulliganResultNotification`) in `FR-MSG-001` and `FR-MSG-004` (`DA-NET-002`).
 3. **Off-Stack Economic Operation Stack Comments**: Corrected comments in `FR-MSG-002` and `FR-MSG-003` to reflect that `GenerateResourceCommand` and `ConvertResourceCommand` are stack-exempt and do not require an empty resolution stack (`FR-RES-001`, `FR-RES-003`, `FR-CAP-001`, `DA-NET-003`).
 4. **Interactive Choice Serialization & Free Deployments**: Added `allocated_values` and `destination_zone` to `ChoiceResponse` (`FR-MSG-005`), expanded `PartitionedSelection.category_or_zone` to support `"DEPLOY_RESERVES"` and `"DEPLOY_MAIN_THEATER"`, and added `"DISTRIBUTED_POOL_ALLOCATE"` and `"DEPLOY_ZONE_SELECT"` prompt types to `PlayerChoicePrompt` (`DA-NET-004`).
-5. **Attack Command Canonical TargetBinding & Forfeit Reasons**: Unified `AttackCommand` (`FR-MSG-003`) with canonical `repeated TargetBinding target_bindings` architecture, supporting primary targets (`TARGET_ROLE_TARGET`) and secondary Berserk defenders (`TARGET_ROLE_SECONDARY_BERSERK_TARGET`); and added `"FORFEIT_TIMEOUT"` and `"FORFEIT_PROTOCOL_ABUSE"` to `MatchConcludedEvent.conclusion_reason` (`FR-MSG-004`, `DA-NET-005`).
+5. **Attack Command Canonical TargetBinding & Forfeit Reasons**: Unified `AttackCommand` (`FR-MSG-003`) with canonical `repeated TargetBinding target_bindings` architecture, supporting primary targets (`TARGET_ROLE_TARGET`); and added `"FORFEIT_TIMEOUT"` and `"FORFEIT_PROTOCOL_ABUSE"` to `MatchConcludedEvent.conclusion_reason` (`FR-MSG-004`, `DA-NET-005`).
 
 ### Revision Summary (v1.2 -> v1.3):
 1. **Protobuf Tag Collision Fix**: Renumbered `ClientCommand.action` match orchestration and session recovery tags starting at `3` (`match_join = 3` through `request_state_snapshot = 7`) to eliminate duplicate field tags `1` and `2` in `FR-MSG-002` (`DA-NET-001`).
 2. **Stack-Pushed Tactical Inherent Actions Alignment**: Separated Off-Stack Economic Operations (`GenerateResourceCommand`, `ConvertResourceCommand`) from Stack-Pushed Tactical Inherent Actions (`MarchCommand`, `AttackCommand`, `DeployScratchCommand`) across `FR-MSG-002`, `FR-MSG-003`, and `FR-PAC-004`, and expanded `StackPushedEvent.ability_type` in `FR-MSG-004` to include `"ATTACK"`, `"MARCH"`, and `"DEPLOY_SCRATCH"` (`FR-CAP-001`, `FR-INH-001`, `DA-NET-002`).
 3. **Handshake Catalog Checksum & Session Wire Schemas**: Added 256-bit `catalogChecksum` verification (`FR-DAT-004`, `FR-CMP-025`, `FR-CMP-026`) to `FR-SES-001`, and defined explicit Protobuf schemas and envelope/command tags for `ClientHandshake`, `HandshakeAck`, `HandshakeReject`, `ReconnectRequest`, and `RequestStateSnapshot` in `FR-MSG-001`, `FR-MSG-002`, and `FR-MSG-003` (`DA-NET-003`).
-4. **Berserk Secondary Target Role & Active/Non-Active Prompt Clocks**: Added `TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7` to `enum TargetRole` in `FR-MSG-003` (`FR-TGT-101`, `FR-KWD-002o`) and aligned `FR-PAC-001` `PlayerChoicePrompt` deadlines with `FR-MOD-001` (15,000 ms for the active player, 10,000 ms for the non-active player, plus the 3,000 ms animation buffer; `DA-NET-004`).
+4. **Active/Non-Active Prompt Clocks**: Aligned `FR-PAC-001` `PlayerChoicePrompt` deadlines with `FR-MOD-001` (15,000 ms for the active player, 10,000 ms for the non-active player, plus the 3,000 ms animation buffer; `DA-NET-004`).
 5. **Choice Option Blueprint Identity & Full Prompt Taxonomy**: Added `string blueprint_id = 4` to `ChoiceOption` in `FR-MSG-005` for hidden-zone reveals (`FR-SEC-004`) and expanded `PlayerChoicePrompt.prompt_type` to include `"SEARCH_DECK"`, `"REVEAL_HAND"`, `"REPLACEMENT_CONFLICT_SELECT"` (`FR-REP-001`), and `"OPTIONAL_TRIGGER_CONFIRM"` (`FR-MOD-001`, `DA-NET-005`).
 
 ### Revision Summary (v1.1 -> v1.2):
 1. **Opponent-Turn Forfeiture Protection**: Eliminated erroneous 60s forfeiture timers during opponent turns; disconnection counters draw down strictly when the offline player holds active priority or an unanswered prompt (`FR-SES-005`, `DA-NET-001`).
 2. **State Snapshot Flood Protection**: Imposed authoritative rate-limiting of 1 `FullStateSnapshot` per 3,000 ms with backoff after 3 consecutive failures to neutralize DOS packet storms (`FR-SES-005`, `FR-PAC-004`, `DA-NET-002`).
-3. **Wire Command Boundary Clamping**: Mandated range validation for `tactics_requested` [1..50] and clamped `AttackCommand.target_asset_ids` to 1 (or 2 for Berserk), rejecting violations with `ERR_INVALID_COMMAND_ARGUMENTS` (`FR-MSG-003`, `FR-ERR-001`, `DA-NET-003`).
+3. **Wire Command Boundary Clamping**: Mandated range validation for `tactics_requested` [1..50] and clamped `AttackCommand.target_asset_ids` to 1, rejecting violations with `ERR_INVALID_COMMAND_ARGUMENTS` (`FR-MSG-003`, `FR-ERR-001`, `DA-NET-003`).
 4. **Choice Prompt Animation Buffering**: Added an automatic 3,000 ms grace window on interactive `PlayerChoicePrompt` issuances before the 15s (active player) / 10s (non-active player) decision clock initiates, preventing cascading animation truncation (`FR-PAC-001`, `DA-NET-004`).
 5. **Guardian Priority Wire Error Code**: Introduced explicit `ERR_GUARDIAN_PRIORITY_VIOLATION` to `FR-ERR-001`, enabling client UI to flash the mandatory Guardian target asset (`DA-NET-005`).
 6. **Replay Anti-Scouting Quarantine**: Quarantined unmasked `.rec` replay telemetry on the server until match-set (e.g. Best-of-3) conclusion, preventing opponent deck scouting during tournament sets (`FR-SPC-002`, `DA-NET-006`).
@@ -509,11 +509,10 @@ message MarchCommand {
 
 message AttackCommand {
   string attacker_asset_id = 1;
-  // Standard attack targets strictly 1 asset or HQ; Berserk N units (FR-KWD-002o, FR-ENG-031) may bind an optional secondary Main Theater asset to receive flat N cleave damage without retaliation (FR-CBT-002).
+  // An attack targets exactly 1 asset or HQ (FR-CBT-002).
   // Binds attack targets via canonical TargetBinding architecture:
   // - Primary target: target_role = TARGET_ROLE_TARGET (Asset or HQ)
-  // - Optional secondary target for Berserk N units: target_role = TARGET_ROLE_SECONDARY_BERSERK_TARGET
-  // Clamped to max 1 binding for standard attacks, max 2 for Berserk N attacks; excess bindings rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
+  // Clamped to max 1 binding; excess bindings rejected with ERR_INVALID_COMMAND_ARGUMENTS (DA-NET-003).
   repeated TargetBinding target_bindings = 2;
 }
 
@@ -533,7 +532,6 @@ enum TargetRole {
   TARGET_ROLE_DISCARD_COST = 4;             // For activated ability hand discard costs
   TARGET_ROLE_EXHAUST_COST = 5;             // For additional enactment exhaust costs (Funeral Fungus)
   TARGET_ROLE_DESTINATION_ZONE = 6;         // For target destination zone selections (Sandstorm Lightbringer)
-  TARGET_ROLE_SECONDARY_BERSERK_TARGET = 7; // Upfront secondary defender binding for Berserk N attacks (FR-KWD-002o, FR-TGT-101)
   TARGET_ROLE_MOVE_COST = 8;                // For zone relocation costs (e.g. Arkha, Sun's Fury discard-to-deck cost)
 }
 
@@ -562,7 +560,7 @@ message TargetBinding {
   string target_id = 1;      // AssetInstance ID, CardInstance ID (for discard costs), Player ID, or Zone
   int32 allocated_value = 2; // For DISTRIBUTED_POOL (e.g. Macrocannon Barrage)
   int32 modal_index = 3;     // Associated mode index for modal spells (e.g. Ambush Tactics)
-  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST, EXHAUST_COST, DESTINATION_ZONE, SECONDARY_BERSERK_TARGET, MOVE_COST)
+  TargetRole target_role = 4;// Role qualifier for multi-target actions (SOURCE, TARGET, SACRIFICE_COST, DISCARD_COST, EXHAUST_COST, DESTINATION_ZONE, MOVE_COST)
 }
 ```
 
@@ -622,14 +620,13 @@ message AssetMovedEvent {
 
 message CombatDefenderOutcome {
   string defender_asset_id = 1;
-  int32 damage_committed = 2;   // Primary combat damage or flat Berserk cleave damage committed to this defender
-  int32 retaliation_damage = 3; // Retaliation damage dealt back to attacker (0 for secondary Berserk cleave target)
-  bool is_secondary_cleave = 4; // true if target received cleave damage via Berserk N without retaliating
+  int32 damage_committed = 2;   // Combat damage committed to this defender
+  int32 retaliation_damage = 3; // Retaliation damage dealt back to attacker
 }
 
 message CombatResolvedEvent {
   string attacker_asset_id = 1;
-  repeated CombatDefenderOutcome defenders = 2; // Multi-defender outcomes (primary combat defender and optional secondary Berserk cleave defender)
+  repeated CombatDefenderOutcome defenders = 2; // Outcome for the attack's one combat defender
   bool is_simultaneous_hq_defeat = 3;
 }
 
@@ -1070,4 +1067,3 @@ In compliance with **FR-TRG-002**, **FR-REP-001**, and **FR-MOD-001**:
 | **FR-CBT-003** | Simultaneous Defeat & Match Draw| Section 4.3 (`MatchConcludedEvent` with `RESULT_MATCH_DRAW`) |
 | **FR-ENT-101** | Scratch Face-Down Wrapper | Section 3.1 (`FR-SEC-001` Opaque proxy ID masking) |
 | **FR-ENT-102** | Tucked Sub-Entities (`NO-AH-5`)| Section 3.1 (`FR-SEC-002` Double-blind attached zone preservation) |
-| **FR-KWD-002o**| Berserk N Keyword | Section 4.2 (`AttackCommand.target_bindings` multi-target support via `TARGET_ROLE_SECONDARY_BERSERK_TARGET` for flat N secondary cleave damage) |

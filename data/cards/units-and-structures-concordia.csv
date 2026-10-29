@@ -7,7 +7,7 @@
 "Spoil Forest Irregulars","UNIT","CONCORDIA","Mending, Specialist","2","0","RESERVES","--","3","4","0","0","COMMON","false"
 "Ego Spark","UNIT","CONCORDIA","Spirit, Ego","2","0","RESERVES","Guardian","1","4","1","2","RARE","false"
 "Hourglass Diviner","UNIT","CONCORDIA","Sands, Mage","2","0","RESERVES","When this unit deploys, look at the top 2 cards of your deck. Put one into your hand and the other on the bottom of your deck.","1","3","1","1","UNCOMMON","false"
-"Tempest Surge","UNIT","CONCORDIA","Elemental, Tempest","2","0","MAIN_THEATER","Berserk 2
+"Tempest Surge","UNIT","CONCORDIA","Elemental, Tempest","2","0","MAIN_THEATER","Overkill: Deal damage equal to the excess to chosen opposing unit in the Main Theater.
 T2: This unit gets +2 power until end of turn.","4","1","0","0","UNCOMMON","false"
 "Forest Heavies","UNIT","CONCORDIA","Treefolk, Mending","3","0","RESERVES","--","4","5","0","0","COMMON","false"
 "Frontier Foundry","STRUCTURE","CONCORDIA","Forge, Industrial","3","0","MAIN_THEATER","Stalwart","2","2","2","2","UNCOMMON","false"
