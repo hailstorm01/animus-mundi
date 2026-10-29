@@ -4,7 +4,7 @@ title: Berserk's rules leave the kernel, so an Attack has no secondary target an
 kind: harness
 tier: sonnet
 wave: B.2 (board directive #68 part (a), with #72's changes; the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0089-berserk-rules
 depends_on: [T-0088]
 claims: [rule:berserk-secondary-removed, func:CanCleave, func:hasCleaveTarget, func:legalSecondary, func:cleave, file:pkg/engine/combat.go]
@@ -134,9 +134,9 @@ Run each command on its own, pointed at your worktree (W). Record each command a
 - the six test files in acceptance case 1, for the named test edits only
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 1): wrote the task from board directive #68 part (a), the first task of wave B.2, with #72's changes (only #72 (3) touches this part). Harness, so it skips `tests` and goes straight to `ready`; tier `sonnet` as #68 gives. Lead decisions: (1) no new test, because the task removes a rule and the deletions plus cases 2–4 show it is gone; a test of "Secondary is illegal" would need a Berserk attacker to fail first, and part (b) would delete it. (2) #68 lists `TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires` for a plain attacker, but it already has one, so it stays unchanged. (3) The edited `RetaliationOnTheAttackerFiresItsUnbowed` now overlaps `TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed` (there both combatants have Unbowed). #68 says to keep it, so it stays; the overlap is in test setup only, which D2.0 doesn't count as a duplicate. (4) Case 6 allows the one changed fizzle line (see the case). Parts (b)–(d), #69 and #70 stay open for the next sessions, in board order; #61 and #71 stay `waiting`. Next: `kernel-engineer`.
@@ -150,3 +150,10 @@ Run each command on its own, pointed at your worktree (W). Record each command a
   - Case 6: base and new `sim -deck starter -p0 ANIMUS -p1 PATH -events` both exit 0, 104197 lines each. `git diff --no-index --stat` reports 201 lines changed, not 1: 200 are each game's `match-start` line, which differs only in its `"revision"` stamp (accd305... vs 184bbee..., the build's VCS revision); the other one is game 120 seq 202, the `fizzle` event, `attack fizzles: the defender is gone, so there is no Berserk cleave` to `attack fizzles: the defender is gone`. Verified with `diff` after filtering `"kind":"match-start"` lines. Judged as meeting the case (the only content change is the wording); the lead should confirm the revision-stamp reading.
   - Case 7: `git diff autoloop/m2-wave-b.2 --stat` lists actions.go, combat.go, the six test files and this task file. Pass.
   - Case 8: `go tool task check` exit 0 (`cardtown lint rules` lists FR-KWD-002o as not yet executable, as expected); `go tool task sim` exit 0.
+- 2026-10-28, lead-architect (wave B.2 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as dbf6f0a. Review of `git diff autoloop/m2-wave-b.2...m2/T-0089-berserk-rules` (7d83d4a test, 184bbee code):
+  - Scope: only `actions.go`, `combat.go`, the six named test files and this file changed. The `test(T-0089)` commit holds every test edit and no code; `go test ./...` passes on it (re-run on the old code) and on the tip.
+  - The code matches the task's edits line for line. The secondary is refused in one place, `LegalActions` offers only the plain Attack, and `CanCleave`, `hasCleaveTarget`, `legalSecondary`, `cleave` and the `ability` import are gone. The kept tests test what they tested, now without Berserk.
+  - Fences and reuse: no card name, no new shape, nothing duplicated; `sweepKillsTwo` uses existing helpers.
+  - **One unrequested test-file edit, comment only:** the engineer removed the `// ---- Rulings KIM-B05, J01, B06, S03, S04 (2026-10-19) ----` heading in `rules_test.go`, reporting that only the deleted 002o tests sat under it. That is not so: `TestFR_CBT_002_CommittedAttackIgnoresLaterGuardianAndEthereal` (KIM-J01), `TestFR_CAP_001_ZeroYieldGenerationIsLegal` (KIM-S03) and the two KIM-S04 tests still do. No behavior or test changed, and the keyword matrix still maps each ruling to its tests, so it isn't worth a round that would rewrite the test commit. The fix is a named edit in part (b)'s test commit, recorded on directive #68's board row: restore the heading as `// ---- Rulings KIM-J01, S03, S04 (2026-10-19) ----` above the KIM-J01 test. The same edit rewords `attack_reverify_test.go`'s file comment, which still cites "KIM-B06 as extended, FR-KWD-002o" (the engineer flagged it): it becomes "(SVY-R8, FRD 01 v3.8: FR-CBT-002 Step 3 "Combatant Target Check", FR-TGT-003)".
+  - Case 6: the lead's wording missed that each game's `match-start` event carries the build revision, so 200 more lines differ by that stamp alone. Re-checked: with `match-start` lines set aside, the only difference is game 120 seq 202, the fizzle wording; the `match-start` lines are equal apart from `"revision"`. The case holds under its intent, so this is a gap in how the case was written, not the engineer's.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: cases 2–4 and 7 as the Log reports; `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress both byte-identical, so the stress decks reach no cleave); `go tool task check` passes (`FR-KWD-002o` now listed as not yet executable); `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged). The merge's tree equals the task tip's, so the gates hold on the run branch.
