@@ -4,7 +4,7 @@ title: A Scratch Company filter, and Shifting Impossibility (FR-TGT-001, FR-REP-
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0098-shifting-impossibility
 depends_on: [T-0100]
 claims: [filter:scratch, card:Shifting Impossibility]
@@ -59,10 +59,10 @@ Filter tests use synthetic cards. Card tests use the real *Shifting Impossibilit
 - `pkg/engine/cards/cards.go` (`NotYetExecutable`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'ScratchFilterTargetsOnly|FilteredAllScratchHitsOnly|TestCard_ShiftingImpossibility'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`cardtown lint --all`, in `go tool task check`)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'ScratchFilterTargetsOnly|FilteredAllScratchHitsOnly|TestCard_ShiftingImpossibility'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`cardtown lint --all`, in `go tool task check`)
 
 ## Log
 - 2026-10-29 lead-architect (wave G run, session 6): Wrote the task, next in design note Deliverable 6c after T-0100 (done, 4adc393). Planned by T-0096 as `Filter.Scratch` plus the card that first uses it.
@@ -80,3 +80,9 @@ Filter tests use synthetic cards. Card tests use the real *Shifting Impossibilit
   - **Changed:** `ability.Filter.Scratch` (after `NonScratch`); `matchesPrinted` reads the Scratch Company subtype once and tests both flags, three doc comments say "Scratch and NonScratch"; `animusDefs["Shifting Impossibility"]` (one `Replacement`, steps `OpReturnToHand` on `SubjectReplaced`, `OpDealDamage` 1 on `SubjectSelf`); removed it from `NotYetExecutable`.
   - **Reused:** the existing `Replacement` shape and `NonScratch` check; no new shapes. No helpers added to `scenario_test.go`; no test edited.
   - **Commands:** `go test ./pkg/engine -run 'ScratchFilterTargetsOnly|FilteredAllScratchHitsOnly|TestCard_ShiftingImpossibility'` ok; `go tool task check` passed; `go tool task sim`: Animus 32/50 executable (was 31 before this card); 200 games, P0 wins 67.0%, P1 32.5%, draws 0.5%, avg 26.8 turns, "[PASS] Every match terminated with all invariants holding." No `sim-compare` (not a pure move).
+- 2026-10-29 lead-architect (wave G run, session 6): Code review (D5) passed, no changes.
+  - **Scope:** only the four Allowed Files and the task file changed after the test commit 7f2624d; no test edited (checked with `git diff`).
+  - **Fences and reuse:** the card name appears only in `cards`. `Scratch` sits beside `NonScratch` and both read one `HasSubtype("Scratch Company")` in `matchesPrinted`, so what counts as a Scratch Company is written once. The card reuses the `Replacement` shape, `SubjectReplaced` and `SubjectSelf`.
+  - **Rules fidelity:** general. Every filter check (targets, picks, "all" steps, replacement filters) goes through `matchesPrinted`, and a face-down asset's printed face is the Scratch Company face.
+  - **Gates re-run in a review worktree:** the listed tests ok; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (was 63.5% / 34.5% / 2.0%; the Animus deck now plays the card), Animus 32/50 main cards executable.
+  - Merged into `autoloop/m2-wave-g` with `--no-ff` as 3215a5b. Its tree is the gated task tip. Status `done`. Deck cards still on `NotYetExecutable` (#14 (e)): 22 (9 Animus, 13 Path). Next: T-0099 (#73), design note Deliverable 6c.
