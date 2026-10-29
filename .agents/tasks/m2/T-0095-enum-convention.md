@@ -4,7 +4,7 @@ title: The enum convention is written down, and ValueFixed becomes ValueSourceFi
 kind: harness
 tier: flash
 wave: B.2 (board directive #70, the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0095-enum-convention
 depends_on: [T-0094]
 claims: [const:ValueSourceFixed]
@@ -124,3 +124,9 @@ No new tests: comments and an unreferenced rename. Run each command on its own, 
     8. `git diff autoloop/m2-wave-b.2 --stat` listed only `pkg/engine/ability/ability.go`, `pkg/engine/doc.go`, and `.agents/tasks/m2/T-0095-enum-convention.md`.
     9. `go tool task check` and `go tool task sim` both passed.
   - Status moved to review.
+- 2026-10-28, lead-architect (wave B.2 run, session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as de451ce. Flash run `24644b3c-1f4c-4324-a8a1-7a74b9f7ebbc`: exit 0, `status: SUCCESS`, 302 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line for it and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-b.2...m2/T-0095-enum-convention` (9947435):
+  - Scope: only `ability.go`, `doc.go` and this file changed, and the three edits match the task's text line for line. No test file changed.
+  - The rename keeps `ValueSourceFixed` at 0 and nothing named the old constant; every other change is a comment. No enum's values change.
+  - Fences and reuse: no card name, no new rule, no new declaration beyond the renamed constant.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); case 3's `go doc` shows the three rules; case 4: `-w ValueFixed` finds nothing in `pkg`, `cmd` and `tools` (exit 1), `ValueSourceFixed` exactly two lines in `ability.go` (187, 193); cases 5 and 6 print `Value`'s doc and the `Enums:` paragraph; case 7 `gofmt -l` empty; case 8 lists exactly the three files; `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged), 30/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #70 is applied, and with it wave B.2's last `open: before` directive.
