@@ -4,7 +4,7 @@ title: When several replacements apply to one death, its controller chooses whic
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: review
 branch: m2/T-0100-choose-replacement
 depends_on: [T-0101]
 claims: [decision:replacement, replacement:choice]
@@ -74,3 +74,8 @@ Synthetic cards only, reusing the helpers in `replacement_test.go` (`guardianStr
   - **Timeout test shape:** the sweep also hits the two guardian units (they are allied units), so they get Health 5 instead of placing victims out of reach. Expected damage is 3 on the Reserves guardian (1 sweep + 2 byproducts) and 1 on the Main Theater one.
   - **Left out:** nothing.
 - 2026-10-29 lead-architect (wave G run, session 5): Tests approved (D4). Each matches `SVY-R23` and the FRD 01 lines it cites: one question per death in the fixed order, the options in `assetsByID` order, a lethal source offered, no question for a single replacement, and a timeout to §6's fixed order (Reserves before the Main Theater) and then printed order within a source. The deviation in `ReplacementChoiceTimesOutToFixedOrder` (guardians at Health 5, hit by the sweep, damage 3 and 1) is accepted: same rule, different setup. `alliedUnits` has `Other`, so the sweeper and killer are never victims and the question counts hold. Status `ready`; dispatching `kernel-engineer` (sonnet).
+- 2026-10-29 kernel-engineer: Implemented the Shape; status `review`.
+  - **Changed:** `replace.go`: `replacementOption`, `replacementsFor` in place of `findReplacement`, `replacedQueue` uses `len(replacementsFor)>0`, `replaceDeath` applies one with no question and calls `chooseReplacement` for several (labels add `(replacement n)` for a source with several printed replacements). `choice.go`: `DecideReplacement` appended, `String`, fallback case (gofmt realigned the const comments). `doc.go`: built list, Not built yet, Files.
+  - **Reuse:** no new fixed-order rule; the timeout is `fixedOrderPicks` via the DecideTarget/DecidePick fallback. No second loop over sources.
+  - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
+  - **Look at:** chooseReplacement's label loop compares the replacement pointer to find its printed position.

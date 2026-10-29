@@ -9,16 +9,17 @@ import (
 type DecisionKind int
 
 const (
-	DecideTarget   DecisionKind = iota // mandatory targets: fallback picks the first legal options in fixed order (SVY-R16)
-	DecideMode                         // "Choose N" modes: fallback picks the first listed options
-	DecideOptional                     // "you may": fallback declines (no picks)
-	DecideOrder                        // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
-	DecideHand                         // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
-	DecidePick                         // untargeted pick from the battlefield or a discard pile as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
+	DecideTarget      DecisionKind = iota // mandatory targets: fallback picks the first legal options in fixed order (SVY-R16)
+	DecideMode                            // "Choose N" modes: fallback picks the first listed options
+	DecideOptional                        // "you may": fallback declines (no picks)
+	DecideOrder                           // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
+	DecideHand                            // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
+	DecidePick                            // untargeted pick from the battlefield or a discard pile as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
+	DecideReplacement                     // choose which of several replacements applies to one event (FR-REP-001, SVY-R23), asked of the affected asset's controller: same fallback as DecideTarget, the first source in fixed order (SVY-R16), a source's own replacements in listed (printed) order
 )
 
 func (k DecisionKind) String() string {
-	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick"}[k]
+	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick", "Replacement"}[k]
 }
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -131,7 +132,7 @@ func (g *Game) choose(d Decision) []int {
 // fallbackPicks is the FR-MOD-001 §6 answer for a missing, timed-out or invalid reply.
 func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
-	case DecideTarget, DecidePick:
+	case DecideTarget, DecidePick, DecideReplacement:
 		return g.fixedOrderPicks(d)
 	case DecideOrder:
 		picks := make([]int, d.Min)
