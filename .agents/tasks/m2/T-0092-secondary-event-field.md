@@ -4,7 +4,7 @@ title: Events carry no secondary target, and doc.go stops listing Berserk (direc
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (d), first half, with #72; the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0092-secondary-event-field
 depends_on: [T-0091]
 claims: [field:Event.Secondary-removed, file:pkg/engine/events.go, file:pkg/engine/doc.go]
@@ -95,3 +95,10 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
     6. `go -C W tool task check` passed all checks (gofmt, vet, test, linters). `go -C W tool task sim` passed clean (200 matches, all invariants held).
   - Commit: `feat(engine): events carry no secondary target and doc.go stops listing Berserk (T-0092)` (00f0376). Handing off to `lead-architect` for review.
 - 2026-10-28, lead-architect (wave B.2 run, session 4): synced `main`'s 90789c4 (lead D7: removals name literal paths) into the run branch as 78b42bc. Wrote this task from board directive #68 part (d), the next of wave B.2's blocking directives in board order. Part (d) edits five non-test files, so under the D2 size rule it is two tasks: this one (the `secondary` event field and `doc.go`) and T-0093 (`Action.Secondary`, `StackItem.Secondary`), written in the same commit and `queued`. Each half compiles and passes on its own. Wrote decision record 0006, which supersedes ADR-0005 for the `secondary` field, in this commit, as #68 asks before part (d) merges; ADR-0005's status line and the decisions index point to it. Harness, so it goes straight to `ready`; tier `flash`, the harness default, and every command here is on the headless allow-list. Waiting directives checked: none has triggered (#8: this task doesn't touch `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #69 and #70 stay open for the sessions after T-0093. Next: `kernel-engineer` on Flash.
+- 2026-10-28, lead-architect (wave B.2 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as 2c78e88. Flash run `b8a36176-70b7-4ce2-8aca-319afcc53f3c`: exit 0, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line for it and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-b.2...m2/T-0092-secondary-event-field` (00f0376):
+  - Scope: only `events.go`, `stack.go`, `doc.go` and this file changed, and the three code edits match the task's text line for line. No test file changed, as the task asked (no test commit).
+  - Fences and reuse: no card name, no new shape, nothing added; `StackItem.Secondary` and `Action.Secondary` are left for T-0093.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); case 3 prints nothing; case 4 lists exactly `actions.go`, `combat.go`, `stack.go`; `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged).
+  - Reviewer's events check: starter `-events` files from both builds have 104197 lines each and differ in exactly 200 lines, each game's `match-start` `revision`. The base file holds no `secondary` key, as ADR 0006 says.
+  - Nits, not worth a round: the engineer's status commit is `chore(task): start T-0092` rather than `chore(tasks): T-0092 in-progress`, and its Log entry sits above the lead's.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch.
