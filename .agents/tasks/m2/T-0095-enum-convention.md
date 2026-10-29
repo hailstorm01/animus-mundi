@@ -4,7 +4,7 @@ title: The enum convention is written down, and ValueFixed becomes ValueSourceFi
 kind: harness
 tier: flash
 wave: B.2 (board directive #70, the user's code review, before wave C)
-status: ready
+status: review
 branch: m2/T-0095-enum-convention
 depends_on: [T-0094]
 claims: [const:ValueSourceFixed]
@@ -102,10 +102,25 @@ No new tests: comments and an unreferenced rename. Run each command on its own, 
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 7): wrote the task from board directive #70, the last open directive of wave B.2 now that #69 is applied (T-0094). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #70 gives; every command here is on the headless allow-list. The comment text was checked with `gofmt -d` and `go doc` before it went into the task. #70 case (c) says "nothing in the repository names `ValueFixed`"; done task files (T-0028), the board and the design note's Deliverable 6b keep the old name as history, so case 4 checks `pkg`, `cmd` and `tools`. `doc.go` lists `engine`'s seven enums and why they stay plain `iota` (#70: `ActionKind.String` indexes an array by value); no enum's values change. `main` has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #58, #61, #71: no such hook, claim or card here; #6, #7: mode is `serial`). Next: `kernel-engineer` on Flash.
+- 2026-10-28, kernel-engineer (T-0095):
+  - Changed `pkg/engine/ability/ability.go`: expanded package comment with the three enum patterns (`1 << iota`, `iota + 1`, `iota`); renamed `ValueFixed` to `ValueSourceFixed`; expanded `Value` doc comment explaining why it is a struct.
+  - Changed `pkg/engine/doc.go`: added paragraph documenting `engine` enums as plain `iota` lists with ordinary first members.
+  - Reused: existing structure, formatting, comments, and enum values unchanged.
+  - Acceptance cases verified:
+    1. `git diff autoloop/m2-wave-b.2 -- '*_test.go'` returned empty; `go test ./...` passed (exit 0).
+    2. `go tool task sim-compare -- autoloop/m2-wave-b.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-b.2 byte for byte, exit codes included`.
+    3. `go doc ./pkg/engine/ability` printed package comments documenting `1 << iota`, `iota + 1`, and `iota`.
+    4. `git grep -n -w ValueFixed -- pkg cmd tools` returned empty (exit 1); `git grep -n ValueSourceFixed -- pkg cmd tools` matched exactly 2 lines in `pkg/engine/ability/ability.go`.
+    5. `go doc ./pkg/engine/ability Value` printed doc comment mentioning `ValueSourceFixed` and "the number of X".
+    6. `go doc ./pkg/engine` printed the `Enums:` documentation paragraph.
+    7. `gofmt -l W/pkg/engine` returned empty.
+    8. `git diff autoloop/m2-wave-b.2 --stat` listed only `pkg/engine/ability/ability.go`, `pkg/engine/doc.go`, and `.agents/tasks/m2/T-0095-enum-convention.md`.
+    9. `go tool task check` and `go tool task sim` both passed.
+  - Status moved to review.

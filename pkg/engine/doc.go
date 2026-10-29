@@ -66,6 +66,12 @@
 // engine from this module, and view imports engine and eventlog; cardtown lint
 // fences checks those imports.
 //
+// Enums: this package's enums (ActionKind, Resource, CardType, DecisionKind,
+// StackKind, Zone, Phase) are plain iota lists. Their zero value is an
+// ordinary first member (ActGenerate, ZoneDeck, PhaseSetup), not a default or
+// an unset marker, and ActionKind.String indexes an array by value. The shape
+// enums in pkg/engine/ability follow that package's three rules instead.
+//
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
 // it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md
 // or an "OPEN(SVY-...)" comment pointing at the survey's ruling questions in
