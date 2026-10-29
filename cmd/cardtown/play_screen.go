@@ -158,9 +158,6 @@ func actionLabel(v view.View, a engine.Action) string {
 	case engine.ActMarch:
 		return fmt.Sprintf("March: %s", findAsset(a.Asset))
 	case engine.ActAttack:
-		if a.Secondary > 0 {
-			return fmt.Sprintf("Attack: %s -> %s, %s", findAsset(a.Asset), findAsset(a.Target), findAsset(a.Secondary))
-		}
 		return fmt.Sprintf("Attack: %s -> %s", findAsset(a.Asset), findAsset(a.Target))
 	case engine.ActScratch:
 		return fmt.Sprintf("Deploy Scratch Company: %s", findAsset(a.Asset))
