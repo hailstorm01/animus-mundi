@@ -4,7 +4,7 @@ title: Kill steps go through destruction replacement, and a replaced kill still 
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: review
 branch: m2/T-0097-kill-replacement
 depends_on: [T-0096]
 claims: [replacement:kill-step]
@@ -68,3 +68,18 @@ To be written in a new file, `pkg/engine/replacement_kill_test.go`, with synthet
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g` (294b6a2, the same as `main`) fresh. #14 is a standing order: Impossibility is a deck card. #73 is `open: before the first wave C task`, and this task continues it. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #58 (no exhaust by a cost or an effect); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse:** the only kill path is `stepKill` (`destroyAll`'s callers are `stepKill` and `destroyDying`; no kill cost is built yet). The replacement loop is moved out of `sweepDeaths` into `replaceDeaths` and shared, not copied (D5.3).
   - **Deck cards still on `NotYetExecutable` (#14 (e)):** 23 (10 Animus, 13 Path).
+- 2026-10-29 rules-test-author: Wrote `pkg/engine/replacement_kill_test.go` (6 tests, all fail until the engine change; vet and `cardtown lint rules` clean). Tests: `TestFR_REP_001_ReplacedKillReturnsTheUnitToItsOwnersHand`, `..._ReplacedKillStillCountsAsDone` (SVY-R15), `..._OneKillStepsDeathsAreAllReplaced` (user ruling 2026-10-29; 1-Health source), `..._KillStepDestroysWhatNoReplacementAppliesTo`, `..._SourceKilledByTheSameStepReplacesTheOthersFirst`, `..._ControllerOrdersTheReplacedKills` (SVY-R5).
+  - **Helpers requested:** none. The file declares `killStep` and `(*scene).killer`, and reuses `replacement_test.go`'s helpers.
+  - **Left out:** the "every existing test passes unchanged" case is the full suite, not a new test.
+- 2026-10-29 lead-architect (D4): **Tests approved, `ready`.** Checked the 6 tests in f9ec020 against `FR-REP-001` (lines 450, 454, 456), `SVY-R15`, `SVY-R5` and the user ruling of 2026-10-29 (design note Open Question 13). Each expected outcome follows from the cited text or the binding Shape:
+  - a replaced kill sends the unit to hand, not the discard pile, with a `replace` and a `leave` event, no `destroy` event and no death trigger;
+  - the `IfDone` draw after a replaced kill runs (`SVY-R15`);
+  - a 1-Health source replaces both kills of one step, so nothing was swept mid-item, and its `destroy` comes after both `leave` events;
+  - an opposing unit outside the filter is destroyed normally, and its death trigger fires;
+  - a source killed by the same step replaces the other two kills first;
+  - one `DecideOrder` with two options orders the replaced kills.
+  - **Killer:** `alliedUnits` and test 4's filter both set `Other`, so the killer unit never kills itself, and the guardian's own `Other` keeps it from replacing its own death.
+  - **Helpers:** reused from `replacement_test.go` unedited (`alliedUnits`, `guardianStructure`, `guardianUnit`, `eventSeq`, `wantReplaced`), plus the file's own `killStep` and `(*scene).killer`.
+- 2026-10-29 kernel-engineer: Implemented. Moved `sweepDeaths`' loop into `replaceDeaths` (`replace.go`); `sweepDeaths` (`damage.go`) and `stepKill` (`effects.go`) both call it, so there is one loop. `stepKill` passes `dies` always true and no-op `between` (no sweep mid-item), and still returns `len(dying)` (SVY-R15). Comment-only edits: `WouldBeDestroyed` (`ability.go`), `findReplacement` (T-0100). Reuse: `replacedQueue`, `replaceDeath`, `destroyAll`, `destroyDying`; nothing new added besides `replaceDeaths`.
+  - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` pass; `go tool task check` pass; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
+  - **Look at:** `replaceDeaths` excludes replaced assets from the rest even if still on the battlefield (FR-REP-003).

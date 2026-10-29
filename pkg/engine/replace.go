@@ -12,7 +12,7 @@ import (
 // destruction now: the first, in battlefield order, oldest source first, of the
 // replacements printed by a face-up asset on the battlefield whose filter a
 // matches. A source that is itself lethal still applies until the sweep
-// destroys it. Letting a's controller choose between several is T-0097's.
+// destroys it. Letting a's controller choose between several is T-0100's.
 func (g *Game) findReplacement(a *Asset) (*Asset, *ability.Replacement) {
 	for _, src := range g.assetsByID() {
 		if src.FaceDown || src.Printed().Ability == nil {
@@ -58,6 +58,31 @@ func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 		out = append(out, mine...)
 	}
 	return out
+}
+
+// replaceDeaths replaces the deaths of dying that a replacement applies to, one at
+// a time in their controller's order (replacedQueue, SVY-R5), and calls between
+// after each one it replaces. It returns the rest, to be destroyed together: the
+// assets of dying still on the battlefield, for which dies still holds, whose
+// death it did not replace.
+func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool, between func()) []*Asset {
+	replaced := map[int]bool{}
+	for _, a := range g.replacedQueue(dying) {
+		if g.Asset(a.ID) != a || !dies(a) {
+			continue
+		}
+		if g.replaceDeath(a) {
+			replaced[a.ID] = true
+			between()
+		}
+	}
+	var rest []*Asset
+	for _, a := range dying {
+		if !replaced[a.ID] && g.Asset(a.ID) == a && dies(a) {
+			rest = append(rest, a)
+		}
+	}
+	return rest
 }
 
 // replaceDeath replaces a's destruction in full, if a replacement still applies:

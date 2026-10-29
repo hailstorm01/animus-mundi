@@ -157,9 +157,12 @@ func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	return len(as)
 }
 
-// stepKill destroys each asset the step acts on at once, inline (FR-LAY-002,
-// FR-ZON-002), not at the death sweep. A Headquarters is skipped: the match-loss
-// check lives in deathSweep and no M2 card kills one. It returns the assets killed.
+// stepKill kills each step asset except a Headquarters, as one simultaneous event.
+// A death a replacement applies to is replaced instead, in its controller's order,
+// before the rest are destroyed (replaceDeaths), with no sweep between: a source a
+// byproduct leaves lethal applies to every death of this step and is destroyed at
+// the sweep after the item (design note Open Question 13). A replaced kill still
+// counts as done (SVY-R15). It returns how many it killed.
 func (g *Game) stepKill(r *resolution, st ability.Step) int {
 	var dying []*Asset
 	for _, a := range g.stepAssets(r, st) {
@@ -167,7 +170,7 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 			dying = append(dying, a)
 		}
 	}
-	g.destroyAll(dying)
+	g.destroyAll(g.replaceDeaths(dying, func(*Asset) bool { return true }, func() {}))
 	return len(dying)
 }
 
