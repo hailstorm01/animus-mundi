@@ -81,9 +81,11 @@ func (g *Game) destroyAll(as []*Asset) {
 	}
 }
 
-// deathSweep destroys every lethal asset simultaneously, then applies the
-// match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003,
-// FR-WIN-001). It runs only when nothing is resolving, so an HQ damaged
+// deathSweep handles every lethal asset (sweepDeaths): deaths a replacement
+// applies to are replaced one at a time in their controller's order (SVY-R5),
+// and the rest are destroyed simultaneously. Then it applies the match-loss
+// checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).
+// It runs only when nothing is resolving, so an HQ damaged
 // mid-resolution loses only if it is still lethal here, and every loss found
 // by one sweep is simultaneous.
 func (g *Game) deathSweep() {

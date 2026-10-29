@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: changes
+status: review
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -122,3 +122,5 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - **Rules fidelity:** the empty-queue path is the old sweep (`newlyLethal` walks `g.Assets()` in the same order). `seen` keeps interim sweeps off the outer sweep's pending deaths, as Shape step 4 requires. A queued death whose source left at an interim sweep falls through to `rest` and is destroyed normally. `relocateReplaced` logs `leave` with no `Card`, before the asset leaves, so its name still resolves.
   - **Gates, re-run by the reviewer in a review worktree (dd1f7fc):** `go tool task check` exits 0. `go tool task sim` is clean: P0 63.5% / P1 34.5% / draws 2.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare` passes byte for byte against `main`.
   - **Note 1:** `deathSweep`'s doc comment (`damage.go`, just above `func (g *Game) deathSweep()`) still says it "destroys every lethal asset simultaneously", which is no longer true. Replace its first sentence with: `deathSweep handles every lethal asset (sweepDeaths): deaths a replacement applies to are replaced one at a time in their controller's order (SVY-R5), and the rest are destroyed simultaneously. Then it applies the match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).` Keep the rest of the comment. Comment only: no code or test change, so re-run `go tool task check` and `go tool task sim-compare`.
+- 2026-10-29 kernel-engineer (round 1): Answered Note 1. Replaced the first sentence of `deathSweep`'s doc comment in `pkg/engine/damage.go` with the lead's text (rewrapped to 80 columns, rest of the comment kept). Comment only: the diff shows no code or test change.
+  - **Commands:** `go tool task check` passed (lint summary: all checks passed); `go tool task sim-compare` PASS (starter and stress sims match main byte for byte).
