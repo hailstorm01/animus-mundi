@@ -152,3 +152,27 @@ func TestFR_REP_001_ReplacedKillsAreNotOrderedByThePlayer(t *testing.T) {
 	wantReplaced(t, s, a, b)
 	noOrderAsked(t, s, 0)
 }
+
+func TestFR_REP_001_KillStepAsksForEachKill(t *testing.T) {
+	// SVY-R21, SVY-R23: a kill step's replaced deaths are each a choice.
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, guardianStructure(4))
+	b := s.put(0, ZoneMainTheater, guardianStructure(4))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{1}})
+	s.killer(0, killStep(alliedUnits))
+	asks := replacementAsks(s, 0)
+	if len(asks) != 2 {
+		t.Fatalf("player 0 was asked %d replacement questions, want 2, one per kill (SVY-R21, SVY-R23)", len(asks))
+	}
+	for _, d := range asks {
+		wantOffered(t, d, a.ID, b.ID)
+	}
+	wantReplaced(t, s, u1, u2)
+	for _, u := range []*Asset{u1, u2} {
+		if s.alive(u) || !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
+			t.Errorf("%s's kill is replaced and it returns to hand (FR-REP-001)", u)
+		}
+	}
+}
