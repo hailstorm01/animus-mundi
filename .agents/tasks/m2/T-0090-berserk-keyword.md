@@ -4,7 +4,7 @@ title: The Berserk keyword leaves the kernel, so a "Berserk N" line loads as uns
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (b), with #72's changes; the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0090-berserk-keyword
 depends_on: [T-0089]
 claims: [keyword:berserk-removed, field:Keywords.Berserk, file:pkg/engine/cardload.go]
