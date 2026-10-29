@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: in-progress
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
