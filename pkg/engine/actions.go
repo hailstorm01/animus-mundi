@@ -175,12 +175,7 @@ func (g *Game) check(a Action) error {
 			return illegal("illegal combat target (FR-CBT-001)")
 		}
 		if a.Secondary != 0 {
-			sec := g.Asset(a.Secondary)
-			if sec == nil || !g.CanCleave(att, def, sec) {
-				return illegal("illegal Berserk secondary target (FR-KWD-002o)")
-			}
-		} else if g.hasCleaveTarget(att, def) {
-			return illegal("a Berserk secondary target is mandatory when a legal one exists (FR-KWD-002o)")
+			return illegal("an Attack has no secondary target")
 		}
 	case ActScratch:
 		if p.HQ == nil || a.Asset != p.HQ.ID {
@@ -251,11 +246,6 @@ func (g *Game) LegalActions() []Action {
 				continue
 			}
 			try(Action{Kind: ActAttack, Player: pid, Asset: a.ID, Target: def.ID})
-			for _, sec := range g.Theater {
-				if g.CanCleave(a, def, sec) {
-					try(Action{Kind: ActAttack, Player: pid, Asset: a.ID, Target: def.ID, Secondary: sec.ID})
-				}
-			}
 		}
 	}
 	try(Action{Kind: ActConvert, Player: pid})
