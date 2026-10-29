@@ -4,7 +4,7 @@ title: A combat-kill trigger fires only when the sweep destroys the defender, so
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: in-progress
 branch: m2/T-0099-replaced-defender-no-kill
 depends_on: [T-0098]
 claims: [trigger:awaits-destruction, hook:combat-kill gate]
