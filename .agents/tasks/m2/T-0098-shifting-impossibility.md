@@ -4,7 +4,7 @@ title: A Scratch Company filter, and Shifting Impossibility (FR-TGT-001, FR-REP-
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: in-progress
 branch: m2/T-0098-shifting-impossibility
 depends_on: [T-0100]
 claims: [filter:scratch, card:Shifting Impossibility]
