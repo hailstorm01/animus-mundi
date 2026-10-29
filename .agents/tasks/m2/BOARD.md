@@ -185,6 +185,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0097 | Kill steps go through destruction replacement, and a replaced kill still counts as done (FR-REP-001, SVY-R15, directive #73 part 2, wave G shape, sonnet) | done |
 | T-0101 | A replacement sees every death at the same moment, in a fixed order, with no destruction partway through a sweep (FR-REP-001, SVY-R20, SVY-R21, SVY-R22, directive #74, wave G shape, sonnet) | done |
 | T-0100 | When several replacements apply to one death, its controller chooses which, death by death (FR-REP-001, FR-MOD-001 §6, SVY-R23, directive #75, wave G shape, sonnet) | done |
+| T-0098 | A Scratch Company filter, and Shifting Impossibility (FR-TGT-001, FR-REP-001, wave G shape, sonnet) | tests |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
