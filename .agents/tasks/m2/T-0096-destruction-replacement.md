@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -78,10 +78,10 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
 - `pkg/engine/effects.go` (`runSteps`, `resolution.replaced`, `SubjectReplaced` in `stepAssets` and `stepRelocate`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001|TestFR_ZON_004_FaceDownUnitReturnedToHand'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No executable card prints a replacement yet, so the sims are unchanged: `go tool task sim-compare` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001|TestFR_ZON_004_FaceDownUnitReturnedToHand'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No executable card prints a replacement yet, so the sims are unchanged: `go tool task sim-compare` passes
 
 ## Log
 - 2026-10-29 lead-architect: Wrote the task. Board directive #73 is `open`. Its named test needs *Shifting Impossibility*, and the kernel has no replacement machinery (`doc.go`: "replacement effects beyond the damage pipeline" are not built; `cardtown lint rules` lists `FR-REP-001` to `FR-REP-003` as not yet executable). The user chose to pull wave G forward (2026-10-29), ahead of wave C. The design note allows C to G in any order, and Impossibility is a deck card (#14 (a)). Asked the user one rules question for the tests (the source lethal in the same sweep). Answer: it replaces every death, then dies (Inputs; design note Open Question 13).
@@ -124,3 +124,5 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - **Note 1:** `deathSweep`'s doc comment (`damage.go`, just above `func (g *Game) deathSweep()`) still says it "destroys every lethal asset simultaneously", which is no longer true. Replace its first sentence with: `deathSweep handles every lethal asset (sweepDeaths): deaths a replacement applies to are replaced one at a time in their controller's order (SVY-R5), and the rest are destroyed simultaneously. Then it applies the match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).` Keep the rest of the comment. Comment only: no code or test change, so re-run `go tool task check` and `go tool task sim-compare`.
 - 2026-10-29 kernel-engineer (round 1): Answered Note 1. Replaced the first sentence of `deathSweep`'s doc comment in `pkg/engine/damage.go` with the lead's text (rewrapped to 80 columns, rest of the comment kept). Comment only: the diff shows no code or test change.
   - **Commands:** `go tool task check` passed (lint summary: all checks passed); `go tool task sim-compare` PASS (starter and stress sims match main byte for byte).
+- 2026-10-29 lead-architect (D5, round 2): **Approved.** 2a90f1b changes only `deathSweep`'s doc comment, to Note 1's text, and the task file. Merged into `main` with `--no-ff` as 9320395. Gates re-run by the reviewer on the merge: `go tool task check` exits 0, and `go tool task sim` is clean (P0 63.5% / P1 34.5% / draws 2.0%, unchanged; every invariant holds). Round 1's `sim-compare` pass still stands, because round 2 changed a comment only.
+  - Status `done`. Next: T-0097, kill steps go through replacement and a choice between several replacements (Log, first entry). Deck cards still on `NotYetExecutable` (#14 (e)): 23 (10 Animus, 13 Path), unchanged.
