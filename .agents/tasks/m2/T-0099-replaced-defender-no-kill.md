@@ -4,7 +4,7 @@ title: A combat-kill trigger fires only when the sweep destroys the defender, so
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: tests-review
 branch: m2/T-0099-replaced-defender-no-kill
 depends_on: [T-0098]
 claims: [trigger:awaits-destruction, hook:combat-kill gate]
@@ -66,3 +66,8 @@ New file `pkg/engine/combat_kill_replaced_test.go`. Use the real *Eternal Watchm
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g` fresh. #73 is `open: before the first wave C task`, and this task applies it. #74 and #75 are `applied`. #14 is a standing order; this task has no card. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no repeated targets); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse and placement:** see Shape, Reuse. Every file sits where the Boundaries table puts it (`engine` for triggers, combat and the sweep; `ability` for the hook's comment).
   - **Deck cards still on `NotYetExecutable` (#14 (e)):** 22 (9 Animus, 13 Path); this task changes none.
+- 2026-10-29 rules-test-author: Wrote `pkg/engine/combat_kill_replaced_test.go` (4 tests, all compile; they fail now for the intended reasons, and the T-0080 and Watchman tests are untouched).
+  - `TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheDeathIsReplaced`, `..._CombatKillTriggerFiresWhenAnotherDeathInTheSweepIsReplaced`, `..._ReplacedDefenderGivesNoTriggerWhenTheAttackerAlsoDies`, `..._DroppedCombatKillTriggerIsNotOfferedForOrdering`.
+  - **Helpers requested:** none.
+  - **Left out:** nothing. Note for case 2: the bystander's lethal damage is set before the Attack (Damage = Health), as the task suggested.
+  - `cardtown lint rules`: every TestFR_* traces to an active requirement.
