@@ -4,7 +4,7 @@ title: Kill steps go through destruction replacement, and a replaced kill still 
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: in-progress
 branch: m2/T-0097-kill-replacement
 depends_on: [T-0096]
 claims: [replacement:kill-step]
