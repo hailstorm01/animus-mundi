@@ -120,3 +120,5 @@ Audit to close: none
   - **`PRODUCT_SUMMARY.md`:** update lines 88, 109, 118, 161, 162, 170, 172, 177, 251 and 276. R12 is ruled, and the "Before Berserk cards" gate goes. The historical notes (lines 162 and 170) name the past contradiction neutrally or point to `SVY-R12`.
   - No M2 change. The M2 target of 59 of 62 is unchanged, since `FR-KWD-002o` was never counted as executable.
 - **Prompt to run:** `@pm-lead Runbook A: Berserk retired for Overkill (SVY-R12); M3 keyword list and PRODUCT_SUMMARY updated, new M3 shape for granted triggered abilities`
+
+> **Revision (2026-10-28):** The `FR-CBT-002` sentence this outcome added ("triggers from the same event") and #72's "a trigger on `HookCombatKill` with one more gate" are corrected by [2026-10-28-combat-kills-and-replaced-deaths.md](2026-10-28-combat-kills-and-replaced-deaths.md) (directive #73). Overkill depends only on damage.
