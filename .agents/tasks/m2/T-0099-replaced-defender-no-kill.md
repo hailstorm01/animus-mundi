@@ -4,7 +4,7 @@ title: A combat-kill trigger fires only when the sweep destroys the defender, so
 kind: shape
 tier: sonnet
 wave: G
-status: tests-review
+status: ready
 branch: m2/T-0099-replaced-defender-no-kill
 depends_on: [T-0098]
 claims: [trigger:awaits-destruction, hook:combat-kill gate]
@@ -71,3 +71,4 @@ New file `pkg/engine/combat_kill_replaced_test.go`. Use the real *Eternal Watchm
   - **Helpers requested:** none.
   - **Left out:** nothing. Note for case 2: the bystander's lethal damage is set before the Attack (Damage = Health), as the task suggested.
   - `cardtown lint rules`: every TestFR_* traces to an active requirement.
+- 2026-10-29 lead-architect (wave G run, session 7): Tests approved (D4). Each matches `FR-CBT-002` line 531 and `SVY-R19`: the real *Eternal Watchman* killing a Scratch Company that *Shifting Impossibility* saves places no trigger and returns no card (an unscripted chooser would also catch a target question); a destroyed structure defender still fires when a bystander's death in the same sweep is replaced, so the gate is per defender; a replaced defender fires nothing even when the attacker dies to retaliation in the same sweep (T-0080's same-sweep case stays as it is); and the dropped trigger is never offered in a `DecideOrder`, with Scratch 3 against Scratch 1 showing which trigger resolved. The bystander's damage set before the Attack is lethal at the Attack's sweep, since `resolveStack` sweeps only after the item resolves. Status `ready`; dispatching `kernel-engineer` (sonnet).
