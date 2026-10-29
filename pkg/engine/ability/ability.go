@@ -133,6 +133,7 @@ type Filter struct {
 	Allegiance Allegiance // relative to the ability's controller
 	Kinds      Kinds      // zero means any asset
 	NonScratch bool       // excludes Scratch Company units
+	Scratch    bool       // only Scratch Company units
 	Other      bool       // excludes the ability's own source asset ("other")
 	Zone       Zone       // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
 }

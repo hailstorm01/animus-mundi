@@ -53,7 +53,6 @@ var NotYetExecutable = []string{
 	"Rhapsody's Embrace",
 	"Rhapsody's Hollow",
 	"Ruin Partisans",
-	"Shifting Impossibility",
 	"Sinuous Growth",
 	"Solarheart Monk",
 	"Steel Rain",

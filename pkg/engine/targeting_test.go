@@ -501,3 +501,44 @@ func TestFR_TRG_004_DeathTriggerFromTargetedDamageResolvesBeforeTheNextStackItem
 		t.Errorf("the stack is empty after the cascade: %d items", len(s.g.Stack))
 	}
 }
+
+// --- Scratch filter (T-0098): only Scratch Company units ---
+
+func TestFR_TGT_001_ScratchFilterTargetsOnlyScratchCompanies(t *testing.T) {
+	// A chosen target with Scratch set (and no allegiance) offers the face-down
+	// Scratch Companies of both players and no face-up unit, structure or
+	// Headquarters (FR-TGT-001: subtype criteria in a filter).
+	s := newScene(t)
+	b := s.targetBoard()
+	s.script(0, Answer{Picks: []int{0}})
+	f := ability.Filter{Kinds: ability.KindUnit, Scratch: true}
+	src := s.deployTargeter(0, []ability.Target{{Filter: f}}, dmgTo(1, 0))
+	asked := s.asked(0)
+	if len(asked) != 1 {
+		t.Fatalf("two Scratch Companies are legal, so the controller is asked once: asked %d times (FR-TGT-001)", len(asked))
+	}
+	if got, w := refs(asked[0]), ids(b.c0, b.c1); !reflect.DeepEqual(got, w) {
+		t.Errorf("options are exactly both players' Scratch Companies (FR-TGT-001): got %v, want %v", got, w)
+	}
+	if s.alive(b.c0) {
+		t.Errorf("the picked Scratch Company takes 1 damage and, as a 1/1, is destroyed (FR-TGT-001)")
+	}
+	if !s.alive(b.c1) {
+		t.Errorf("the Scratch Company that was not picked is untouched (FR-TGT-001)")
+	}
+	for _, a := range []*Asset{b.u0, b.u1, b.s0, b.s1, src, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		s.wantDamage(a, 0)
+	}
+}
+
+func TestFR_TGT_002_FilteredAllScratchHitsOnlyScratchCompanies(t *testing.T) {
+	// An "all" damage step with Kinds unit and Scratch damages every Scratch
+	// Company, of both players, and no other unit (FR-TGT-002).
+	s, b, src, _ := sweeper(t, 0, allDamage(1, ability.Filter{Kinds: ability.KindUnit, Scratch: true}))
+	if s.alive(b.c0) || s.alive(b.c1) {
+		t.Errorf("both 1/1 Scratch Companies take 1 damage and are destroyed (FR-TGT-002): ally alive %v, enemy alive %v", s.alive(b.c0), s.alive(b.c1))
+	}
+	for _, a := range []*Asset{b.u0, b.u1, b.s0, b.s1, src, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		s.wantDamage(a, 0)
+	}
+}

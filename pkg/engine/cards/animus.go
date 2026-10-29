@@ -191,6 +191,23 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Shifting Impossibility": {
+		Text: []string{"If an allied Scratch Company unit would be killed, return it to its owner's hand and deal 1 damage to this unit instead."},
+		Replacements: []ability.Replacement{
+			{
+				Event: ability.WouldBeDestroyed,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					Scratch:    true,
+				},
+				Steps: []ability.Step{
+					{Op: ability.OpReturnToHand, Subject: ability.SubjectReplaced},
+					{Op: ability.OpDealDamage, Amount: ability.Value{N: 1}, Subject: ability.SubjectSelf},
+				},
+			},
+		},
+	},
 	"Spoil Forest Colossus": {
 		Text: []string{"Whenever this unit deploys or attacks, chosen asset heals 2."},
 		Triggers: []ability.Trigger{
