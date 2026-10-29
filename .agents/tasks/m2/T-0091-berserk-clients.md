@@ -4,7 +4,7 @@ title: The clients stop reading an Attack's secondary target (directive #68 part
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (c), with #72; the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0091-berserk-clients
 depends_on: [T-0090]
 claims: [reader:secondary-removed, file:pkg/eventlog/replay.go, file:cmd/cardtown/play_screen.go]
