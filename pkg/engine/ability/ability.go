@@ -1,6 +1,16 @@
 // Package ability is the shape vocabulary for printed card abilities: plain
 // data, no game logic and no card names (the fences linter enforces the
 // latter). New types here arrive only through a `shape` task.
+//
+// A new enum here follows one of three rules, chosen by what its zero value
+// means:
+//   - A set of flags that combine is declared with 1 << iota, one bit per
+//     member, so a value may hold several (Kinds).
+//   - An enum with no default starts at iota + 1, so an unset field (the zero
+//     value) is invalid and never passes for the first member (Hook, Op).
+//   - An enum whose zero value is a meaningful default starts at iota, and the
+//     first member's comment says "the zero value" (TurnOwner, Keyword, Zone,
+//     Allegiance, Subject, ValueSource).
 package ability
 
 // Def is the executable definition of one card's printed abilities.
@@ -174,12 +184,15 @@ type Step struct {
 type ValueSource int
 
 const (
-	ValueFixed       ValueSource = iota // the zero value: N
+	ValueSourceFixed ValueSource = iota // the zero value: N
 	ValueSourcePower                    // the source's effective power when the step resolves, or its last-known effective power (SVY-R10); N is ignored
 )
 
-// Value is a number a step uses, read when the step resolves. The zero source
-// always means the fixed N.
+// Value is a number a step uses, read when the step resolves; From says where
+// it comes from. It is a struct, not a bare int, so that each source can carry
+// what it needs: N is read only for ValueSourceFixed (the zero source), and a
+// later source, such as "the number of X", adds its own field here without
+// changing Step.
 type Value struct {
 	N    int
 	From ValueSource
