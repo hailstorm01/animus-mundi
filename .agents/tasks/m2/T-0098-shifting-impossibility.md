@@ -4,7 +4,7 @@ title: A Scratch Company filter, and Shifting Impossibility (FR-TGT-001, FR-REP-
 kind: shape
 tier: sonnet
 wave: G
-status: in-progress
+status: review
 branch: m2/T-0098-shifting-impossibility
 depends_on: [T-0100]
 claims: [filter:scratch, card:Shifting Impossibility]
@@ -76,3 +76,7 @@ Filter tests use synthetic cards. Card tests use the real *Shifting Impossibilit
   - Helpers requested: none. `go vet ./pkg/engine` fails only on `ability.Filter.Scratch`, the field this task adds. `cardtown lint rules` passes.
   - Notes: in `ReplacesOnlyAlliedScratchCompanies` a face-up allied unit cannot be swept without also sweeping *Shifting Impossibility* (it is an allied non-Scratch unit), so the sweep filter hits it for 1 and the test expects exactly 1 damage on it and no `replace` events. The "no `killed` event" check also checks `destroy`, the only death-event kind other tests use. *Shifting Impossibility* "at 1 Current Health" is set as `Damage = 3` of 4 Health. No cases left out.
 - 2026-10-29 lead-architect (wave G run, session 6): Tests approved (D4). Each matches the FRD 01 line it cites: the Scratch filter offers and hits only Scratch Companies of either side; an allied Scratch Company's sweep death and an *Infested Apostle* kill are replaced (hand, printed card, 1 damage to the source, no `destroy`), and the Apostle's "if you do" damage still lands (`SVY-R15`); a face-up allied unit and an opposing Scratch Company die normally; at 1 Current Health it replaces both deaths of the pass and is destroyed after the last `leave` (`SVY-R20`); two copies ask one `"Replacement"` question offering both (`SVY-R23`). The sweep in `ReplacesOnlyAlliedScratchCompanies` hitting *Shifting Impossibility* for exactly 1 is accepted. Status `ready`; dispatching `kernel-engineer` (sonnet).
+- 2026-10-29 kernel-engineer: Implemented, status review.
+  - **Changed:** `ability.Filter.Scratch` (after `NonScratch`); `matchesPrinted` reads the Scratch Company subtype once and tests both flags, three doc comments say "Scratch and NonScratch"; `animusDefs["Shifting Impossibility"]` (one `Replacement`, steps `OpReturnToHand` on `SubjectReplaced`, `OpDealDamage` 1 on `SubjectSelf`); removed it from `NotYetExecutable`.
+  - **Reused:** the existing `Replacement` shape and `NonScratch` check; no new shapes. No helpers added to `scenario_test.go`; no test edited.
+  - **Commands:** `go test ./pkg/engine -run 'ScratchFilterTargetsOnly|FilteredAllScratchHitsOnly|TestCard_ShiftingImpossibility'` ok; `go tool task check` passed; `go tool task sim`: Animus 32/50 executable (was 31 before this card); 200 games, P0 wins 67.0%, P1 32.5%, draws 0.5%, avg 26.8 turns, "[PASS] Every match terminated with all invariants holding." No `sim-compare` (not a pure move).

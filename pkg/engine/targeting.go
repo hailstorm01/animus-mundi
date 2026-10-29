@@ -180,7 +180,7 @@ func kindOf(t CardType) ability.Kinds {
 
 // matchesCard reports whether card inst, in a discard pile, meets every
 // criterion of the pile filter f for an ability controlled by ctl whose own
-// card is src: allegiance by the card's owner, Kinds and NonScratch by its
+// card is src: allegiance by the card's owner, Kinds, Scratch and NonScratch by its
 // printed characteristics (FR-ZON-004), Other not src. f must be InPile.
 func (g *Game) matchesCard(ctl PlayerID, src *Instance, f ability.Filter, inst *Instance) bool {
 	if !f.InPile() || (f.Other && inst == src) {
@@ -201,7 +201,7 @@ func (g *Game) legalTarget(ctl PlayerID, src int, f ability.Filter, a *Asset) bo
 
 // matchesPrinted is the card-level part of a filter, shared by assets and
 // cards in piles: Allegiance by side, the player the entity belongs to (relative
-// to ctl), then Kinds and NonScratch by the card's printed characteristics.
+// to ctl), then Kinds, Scratch and NonScratch by the card's printed characteristics.
 func matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool {
 	switch f.Allegiance {
 	case ability.AllegianceAllied:
@@ -216,11 +216,12 @@ func matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool
 	if f.Kinds != 0 && f.Kinds&kindOf(c.Type) == 0 {
 		return false
 	}
-	return !(f.NonScratch && c.HasSubtype("Scratch Company"))
+	scratch := c.HasSubtype("Scratch Company")
+	return !(f.NonScratch && scratch) && !(f.Scratch && !scratch)
 }
 
 // matchesFilter reports whether battlefield asset a meets every criterion of f
-// (allegiance relative to ctl, kinds, NonScratch, Other: not the source asset
+// (allegiance relative to ctl, kinds, Scratch and NonScratch, Other: not the source asset
 // src, Zone: currently in that battlefield zone). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
 // this alone.
 func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
