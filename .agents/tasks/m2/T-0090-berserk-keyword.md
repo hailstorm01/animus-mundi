@@ -4,7 +4,7 @@ title: The Berserk keyword leaves the kernel, so a "Berserk N" line loads as uns
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (b), with #72's changes; the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0090-berserk-keyword
 depends_on: [T-0089]
 claims: [keyword:berserk-removed, field:Keywords.Berserk, file:pkg/engine/cardload.go]
@@ -123,3 +123,10 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
     - Case 6: `git diff autoloop/m2-wave-b.2 --stat` lists only the 7 allowed files.
     - Case 7: `go tool task check` passed (fmt-check, vet, test, linter --all) and `go tool task sim` passed (200 matches terminated with invariants holding).
   - Handoff: ready for review by `lead-architect`.
+- 2026-10-28, lead-architect (wave B.2 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as 2ddf8a8. Flash run `f22d5ee8-1a66-4292-bb06-48afb9e06cc2`: exit 0, no denied actions. Review of `git diff autoloop/m2-wave-b.2...m2/T-0090-berserk-keyword` (faadf06 test, 127110d code):
+  - Scope: only `card.go`, `cardload.go`, `view.go`, the three named test files and this file changed. The `test(T-0090)` commit holds every test edit and no code; `go test ./...` passes on it (re-run on the old code) and on the tip.
+  - The code and test edits match the task's text line for line, including the restored heading and the reworded file comment.
+  - Fences and reuse: no card name, no new shape, nothing added.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: cases 2–4 as the Log reports (`54 of 169` executable, neither Berserk card listed); `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged).
+  - Reviewer's events check: starter `-events` files from both builds have 104197 lines each, and with each `match-start` line's `revision` set aside they are identical.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch.
