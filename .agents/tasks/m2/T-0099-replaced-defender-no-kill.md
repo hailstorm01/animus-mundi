@@ -4,7 +4,7 @@ title: A combat-kill trigger fires only when the sweep destroys the defender, so
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0099-replaced-defender-no-kill
 depends_on: [T-0098]
 claims: [trigger:awaits-destruction, hook:combat-kill gate]
@@ -56,9 +56,9 @@ New file `pkg/engine/combat_kill_replaced_test.go`. Use the real *Eternal Watchm
 - `pkg/engine/ability/ability.go` (`HookCombatKill` comment only)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_CBT_002|TestFR_TRG_003_CombatKill|TestCard_EternalWatchman|TestCard_ShiftingImpossibility'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_CBT_002|TestFR_TRG_003_CombatKill|TestCard_EternalWatchman|TestCard_ShiftingImpossibility'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-29 lead-architect (wave G run, session 7): Wrote the task, the last of design note Deliverable 6c after T-0098 (done, 3215a5b). It applies directive #73.
@@ -76,3 +76,9 @@ New file `pkg/engine/combat_kill_replaced_test.go`. Use the real *Eternal Watchm
   - Changed `trigger.go` (`pendingTrigger.awaits`, `fireCombatKill(att, def)` sets `awaits` on the triggers it buffered, `confirmDestroyed`, `flushTriggers` drops triggers with `awaits != 0` right after the `Outcome.Over` check), `damage.go` (`destroyAll` calls `confirmDestroyed`), `combat.go` (passes `def`, comment), `ability/ability.go` (`HookCombatKill` comment only).
   - Reuse: no existing "only if destroyed" gate (as the task noted); `fireHook`, `posOf` and the placement order unchanged.
   - Ran: `go test ./pkg/engine -run 'TestFR_CBT_002|TestFR_TRG_003_CombatKill|TestCard_EternalWatchman|TestCard_ShiftingImpossibility'` ok; `go tool task check` all passed; `go tool task sim` ran clean (exit 0).
+- 2026-10-29 lead-architect (wave G run, session 7): Code review (D5) passed, no changes.
+  - **Scope:** only the four Allowed Files and the task file changed after the test commit f95112e; no test edited (checked with `git diff`).
+  - **Fences and reuse:** no card name in engine code. `awaits` is an asset ID on the buffered trigger, not a combat-only flag; `fireHook`, `posOf` and the placement order are untouched, so T-0080's APNAP and same-sweep tests hold unchanged.
+  - **Rules fidelity:** general. Any defender that does not reach `destroyAll` before the flush (replaced by any replacement, or not destroyed at all) gives no combat-kill trigger, and the drop happens before ordering and optional questions (`FR-CBT-002` line 531, `SVY-R19`).
+  - **Gates re-run in a review worktree:** the listed tests ok; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged result line). Monitor coverage counts shift slightly against the run branch (for example attack declarations 2385 → 2373), as expected when a replaced Scratch Company no longer gives *Eternal Watchman* a card back. `sim-compare` differs, which is expected: not a pure move.
+  - Merged into `autoloop/m2-wave-g` with `--no-ff` as 0f42d43. Its tree is the gated task tip. Status `done`. Directive #73 `applied`; design note Deliverable 6c complete. Deck cards still on `NotYetExecutable` (#14 (e)): 22 (9 Animus, 13 Path).
