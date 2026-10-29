@@ -4,7 +4,7 @@ title: Berserk's rules leave the kernel, so an Attack has no secondary target an
 kind: harness
 tier: sonnet
 wave: B.2 (board directive #68 part (a), with #72's changes; the user's code review, before wave C)
-status: in-progress
+status: review
 branch: m2/T-0089-berserk-rules
 depends_on: [T-0088]
 claims: [rule:berserk-secondary-removed, func:CanCleave, func:hasCleaveTarget, func:legalSecondary, func:cleave, file:pkg/engine/combat.go]
@@ -140,3 +140,13 @@ Run each command on its own, pointed at your worktree (W). Record each command a
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 1): wrote the task from board directive #68 part (a), the first task of wave B.2, with #72's changes (only #72 (3) touches this part). Harness, so it skips `tests` and goes straight to `ready`; tier `sonnet` as #68 gives. Lead decisions: (1) no new test, because the task removes a rule and the deletions plus cases 2–4 show it is gone; a test of "Secondary is illegal" would need a Berserk attacker to fail first, and part (b) would delete it. (2) #68 lists `TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires` for a plain attacker, but it already has one, so it stays unchanged. (3) The edited `RetaliationOnTheAttackerFiresItsUnbowed` now overlaps `TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed` (there both combatants have Unbowed). #68 says to keep it, so it stays; the overlap is in test setup only, which D2.0 doesn't count as a duplicate. (4) Case 6 allows the one changed fizzle line (see the case). Parts (b)–(d), #69 and #70 stay open for the next sessions, in board order; #61 and #71 stay `waiting`. Next: `kernel-engineer`.
+- 2026-10-28, kernel-engineer (sonnet): done, `review`. Commits: `test(T-0089)` 7d83d4a (all test edits, nothing else), then `feat(engine)` 184bbee. Reuse search: nothing new written; `sweepKillsTwo` uses the existing `deployFromHand`, `trigUnit`, `deployTrigger`, `allDamage` helpers as the task text gave it. Removed `CanCleave`, `hasCleaveTarget`, `legalSecondary`, `cleave` and the `ability` import from combat.go; `check` now refuses any `Secondary`; `LegalActions` offers only the plain Attack. Also deleted the `// ---- Rulings KIM-B05, J01, B06, S03, S04 ----` section heading in rules_test.go, since only the deleted 002o tests sat under it (not named in the task; reviewer please confirm). Left the T-0053 file-header comment in attack_reverify_test.go, which still cites FR-KWD-002o, as unnamed.
+  - Test commit on old code: `go test ./...` passed (no failing package). Branch tip: same.
+  - Case 1: `git diff autoloop/m2-wave-b.2 --stat -- '*_test.go'` lists exactly attack_reverify, combat_kill, death_trigger, rules, scenario, unbowed `_test.go`. Pass.
+  - Case 2: `git grep -n "TestFR_KWD_002o_\|cleave(\|berserkKillsTwo\|Berserk" -- 'pkg/engine/*_test.go'` printed nothing. Pass.
+  - Case 3: `git grep -n -i "cleave\|berserk\|legalSecondary" -- pkg/engine/actions.go pkg/engine/combat.go` printed only `actions.go:52` (the `Action.Secondary` comment). Pass.
+  - Case 4: `git grep -n "Secondary" -- actions.go combat.go` printed three lines: actions.go:52 field, actions.go:177 `if a.Secondary != 0 {`, combat.go:9 `g.push`. Pass.
+  - Case 5: `go tool task sim-compare -- autoloop/m2-wave-b.2`: `[PASS] starter and stress sims match ... byte for byte, exit codes included`. The stress sim did not differ either.
+  - Case 6: base and new `sim -deck starter -p0 ANIMUS -p1 PATH -events` both exit 0, 104197 lines each. `git diff --no-index --stat` reports 201 lines changed, not 1: 200 are each game's `match-start` line, which differs only in its `"revision"` stamp (accd305... vs 184bbee..., the build's VCS revision); the other one is game 120 seq 202, the `fizzle` event, `attack fizzles: the defender is gone, so there is no Berserk cleave` to `attack fizzles: the defender is gone`. Verified with `diff` after filtering `"kind":"match-start"` lines. Judged as meeting the case (the only content change is the wording); the lead should confirm the revision-stamp reading.
+  - Case 7: `git diff autoloop/m2-wave-b.2 --stat` lists actions.go, combat.go, the six test files and this task file. Pass.
+  - Case 8: `go tool task check` exit 0 (`cardtown lint rules` lists FR-KWD-002o as not yet executable, as expected); `go tool task sim` exit 0.
