@@ -4,7 +4,7 @@ title: A Scratch Company filter, and Shifting Impossibility (FR-TGT-001, FR-REP-
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: tests-review
 branch: m2/T-0098-shifting-impossibility
 depends_on: [T-0100]
 claims: [filter:scratch, card:Shifting Impossibility]
@@ -70,3 +70,8 @@ Filter tests use synthetic cards. Card tests use the real *Shifting Impossibilit
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g` fresh. #73 stays `open: before the first wave C task`; this is wave G, and T-0099 applies #73. #14 is a standing order, and *Shifting Impossibility* is a deck card (#14 (a)). Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no repeated targets); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse and placement:** see Shape, Reuse. Every file sits where the Boundaries table puts it (`ability` for shapes, `engine` for filter checks, `cards` for definitions).
   - **Deck cards still on `NotYetExecutable` (#14 (e)):** 23 (10 Animus, 13 Path) before this task; 22 (9 Animus, 13 Path) once it merges.
+- 2026-10-29 rules-test-author: Tests written, status tests-review.
+  - `targeting_test.go`: `TestFR_TGT_001_ScratchFilterTargetsOnlyScratchCompanies`, `TestFR_TGT_002_FilteredAllScratchHitsOnlyScratchCompanies`.
+  - `cards_animus_impossibility_test.go`: `TestCard_ShiftingImpossibility_ReturnsAScratchCompanyKilledAtTheSweep`, `_ReplacesOnlyAlliedScratchCompanies`, `_ReplacedKillStillCountsAsDone`, `_ItsOwnLethalDamageStillReplacesEveryDeathInThePass`, `_TwoCopiesAskWhichOneReplaces`. The file declares its own helpers `alliedScratch` and `noEvent`.
+  - Helpers requested: none. `go vet ./pkg/engine` fails only on `ability.Filter.Scratch`, the field this task adds. `cardtown lint rules` passes.
+  - Notes: in `ReplacesOnlyAlliedScratchCompanies` a face-up allied unit cannot be swept without also sweeping *Shifting Impossibility* (it is an allied non-Scratch unit), so the sweep filter hits it for 1 and the test expects exactly 1 damage on it and no `replace` events. The "no `killed` event" check also checks `destroy`, the only death-event kind other tests use. *Shifting Impossibility* "at 1 Current Health" is set as `Damage = 3` of 4 Health. No cases left out.
