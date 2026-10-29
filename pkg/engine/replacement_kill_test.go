@@ -7,11 +7,11 @@ import (
 )
 
 // Tests for kill steps going through destruction replacement (T-0097, board
-// directive #73 part 2): FR-REP-001 (inline substitution, SVY-R15 a replaced
-// action still counts as done, SVY-R5 ordering), FR-LAY-002 (nothing is swept
-// while an item resolves) and the user ruling of 2026-10-29 (not yet in
-// FRD 01): a replacement sees every death of one kill step, and a source left
-// lethal is destroyed at the sweep after the item.
+// directive #73 part 2; T-0101, directive #74): FR-REP-001 (inline
+// substitution, SVY-R15 a replaced action still counts as done, SVY-R20 to
+// SVY-R22 fixed order), FR-LAY-002 (nothing is swept while an item resolves)
+// and SVY-R21: a replacement sees every death of one kill step, and a source
+// left lethal is destroyed at the sweep after the item.
 //
 // Cards are synthetic and reuse replacement_test.go's guardians. A "killer"
 // unit's deploy trigger runs the given steps.
@@ -75,7 +75,7 @@ func TestFR_REP_001_ReplacedKillStillCountsAsDone(t *testing.T) {
 }
 
 func TestFR_REP_001_OneKillStepsDeathsAreAllReplaced(t *testing.T) {
-	// User ruling 2026-10-29. The source has 1 Health: the first byproduct leaves
+	// SVY-R21. The source has 1 Health: the first byproduct leaves
 	// it lethal, but nothing is swept while the item resolves, so it still
 	// replaces the second kill, and is destroyed at the sweep after the item.
 	s := newScene(t)
@@ -86,15 +86,15 @@ func TestFR_REP_001_OneKillStepsDeathsAreAllReplaced(t *testing.T) {
 	wantReplaced(t, s, a, b)
 	for _, u := range []*Asset{a, b} {
 		if s.alive(u) || !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
-			t.Errorf("%s is replaced and returns to hand although the source is lethal after the first kill (user ruling 2026-10-29)", u)
+			t.Errorf("%s is replaced and returns to hand although the source is lethal after the first kill (SVY-R21)", u)
 		}
 	}
 	if s.alive(src) || !inDiscard(s.g.Players[0], src.Inst) {
-		t.Errorf("the lethal source is destroyed at the sweep after the item (user ruling 2026-10-29, FR-LAY-002)")
+		t.Errorf("the lethal source is destroyed at the sweep after the item (SVY-R21, FR-LAY-002)")
 	}
 	last := max(eventSeq(s, "leave", a.ID), eventSeq(s, "leave", b.ID))
 	if d := eventSeq(s, "destroy", src.ID); d == 0 || d < last {
-		t.Errorf("the source is destroyed (seq %d) only after both replaced kills (last leave seq %d) (user ruling 2026-10-29)", d, last)
+		t.Errorf("the source is destroyed (seq %d) only after both replaced kills (last leave seq %d) (SVY-R21)", d, last)
 	}
 }
 
@@ -118,7 +118,7 @@ func TestFR_REP_001_KillStepDestroysWhatNoReplacementAppliesTo(t *testing.T) {
 }
 
 func TestFR_REP_001_SourceKilledByTheSameStepReplacesTheOthersFirst(t *testing.T) {
-	// User ruling 2026-10-29: the source is killed in the same moment as the
+	// SVY-R21: the source is killed in the same moment as the
 	// units it protects, yet it replaces their deaths, then is destroyed.
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, guardianUnit(3))
@@ -128,7 +128,7 @@ func TestFR_REP_001_SourceKilledByTheSameStepReplacesTheOthersFirst(t *testing.T
 	wantReplaced(t, s, a, b)
 	for _, u := range []*Asset{a, b} {
 		if s.alive(u) || !inHand(s.g.Players[0], u.Inst) {
-			t.Errorf("%s is replaced and returns to hand though the source is killed by the same step (user ruling 2026-10-29)", u)
+			t.Errorf("%s is replaced and returns to hand though the source is killed by the same step (SVY-R21)", u)
 		}
 	}
 	if s.alive(src) || !inDiscard(s.g.Players[0], src.Inst) {
@@ -136,29 +136,19 @@ func TestFR_REP_001_SourceKilledByTheSameStepReplacesTheOthersFirst(t *testing.T
 	}
 	last := max(eventSeq(s, "leave", a.ID), eventSeq(s, "leave", b.ID))
 	if d := eventSeq(s, "destroy", src.ID); d == 0 || d < last {
-		t.Errorf("the source is destroyed (seq %d) after both replaced kills (last leave seq %d) (user ruling 2026-10-29)", d, last)
+		t.Errorf("the source is destroyed (seq %d) after both replaced kills (last leave seq %d) (SVY-R21)", d, last)
 	}
 }
 
-func TestFR_REP_001_ControllerOrdersTheReplacedKills(t *testing.T) {
-	// SVY-R5. The controller picks the second unit first.
+func TestFR_REP_001_ReplacedKillsAreNotOrderedByThePlayer(t *testing.T) {
+	// SVY-R20, SVY-R21. Player 0's scripted order answer would reverse the kills;
+	// it is never asked for, and both kills are replaced oldest first.
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, guardianStructure(3))
 	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
 	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
 	s.script(0, Answer{Picks: []int{1, 0}})
 	s.killer(0, killStep(alliedUnits))
-	wantReplaced(t, s, b, a)
-	var orderAsks int
-	for _, d := range s.asked(0) {
-		if d.Kind == DecideOrder {
-			orderAsks++
-			if len(d.Options) != 2 {
-				t.Errorf("the order decision has one option per queued kill, want 2, got %d (SVY-R5)", len(d.Options))
-			}
-		}
-	}
-	if orderAsks != 1 {
-		t.Errorf("the controller is asked once to order the replaced kills, got %d order decisions (SVY-R5)", orderAsks)
-	}
+	wantReplaced(t, s, a, b)
+	noOrderAsked(t, s, 0)
 }

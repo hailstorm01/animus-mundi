@@ -7,9 +7,10 @@ import (
 )
 
 // Tests for destruction replacement at the death sweep (T-0096, board
-// directive #73 part 1): FR-REP-001 (inline substitution, consequential event
-// isolation, sequential per-entity death replacement, SVY-R5 ordering and
-// mid-sweep destruction), FR-LAY-002 (the death sweep) and FR-ZON-004.
+// directive #73 part 1; T-0101, directive #74): FR-REP-001 (inline
+// substitution, consequential event isolation, sequential per-entity death
+// replacement, SVY-R20 to SVY-R22 same-moment deaths, fixed order and sweep
+// passes), FR-LAY-002 (the death sweep) and FR-ZON-004.
 //
 // Cards are synthetic. A "guardian" prints: if another allied unit would be
 // destroyed, return it to its owner's hand and deal 1 damage to this asset
@@ -74,11 +75,11 @@ func wantReplaced(t *testing.T, s *scene, want ...*Asset) {
 	t.Helper()
 	got := replaceTargets(s)
 	if len(got) != len(want) {
-		t.Fatalf("replaced deaths (replace events' targets) = %v, want %d of them (FR-REP-001, SVY-R5)", got, len(want))
+		t.Fatalf("replaced deaths (replace events' targets) = %v, want %d of them (FR-REP-001, SVY-R20, SVY-R22)", got, len(want))
 	}
 	for i, a := range want {
 		if got[i] != a.ID {
-			t.Errorf("replaced death %d = asset %d, want %s (%d) (FR-REP-001, SVY-R5)", i+1, got[i], a, a.ID)
+			t.Errorf("replaced death %d = asset %d, want %s (%d) (FR-REP-001, SVY-R20, SVY-R22)", i+1, got[i], a, a.ID)
 		}
 	}
 }
@@ -148,82 +149,8 @@ func threeVictims(s *scene, health int) (*Asset, [3]*Asset) {
 	return src, us
 }
 
-func TestFR_REP_001_ControllerOrdersTheReplacedDeaths(t *testing.T) {
-	// SVY-R5. The guardian has 2 Health, so it absorbs two deaths. The controller
-	// picks the third unit, then the first. The second byproduct leaves the
-	// guardian lethal, so it is destroyed before the unreplaced second unit.
-	s := newScene(t)
-	src, us := threeVictims(s, 2)
-	s.script(0, Answer{Picks: []int{2, 0, 1}})
-	s.sweep(0, alliedUnits)
-	wantReplaced(t, s, us[2], us[0])
-	for _, u := range []*Asset{us[0], us[2]} {
-		if !inHand(s.g.Players[0], u.Inst) {
-			t.Errorf("%s was replaced and returns to its owner's hand (FR-REP-001, SVY-R5)", u)
-		}
-	}
-	if !inDiscard(s.g.Players[0], us[1].Inst) {
-		t.Errorf("the unit left after the guardian is gone is destroyed normally (SVY-R5)")
-	}
-	if s.alive(src) {
-		t.Errorf("the guardian is lethal after the second byproduct and is destroyed (SVY-R5)")
-	}
-	srcSeq, thirdSeq := eventSeq(s, "destroy", src.ID), eventSeq(s, "destroy", us[1].ID)
-	if srcSeq == 0 || thirdSeq == 0 || srcSeq > thirdSeq {
-		t.Errorf("the guardian is destroyed (seq %d) before the third death (seq %d) (SVY-R5, FR-LAY-002)", srcSeq, thirdSeq)
-	}
-	var orderAsks int
-	for _, d := range s.asked(0) {
-		if d.Kind == DecideOrder {
-			orderAsks++
-			if len(d.Options) != 3 {
-				t.Errorf("the order decision has one option per queued death, want 3, got %d (SVY-R5)", len(d.Options))
-			}
-		}
-	}
-	if orderAsks != 1 {
-		t.Errorf("the controller is asked once to order the replaced deaths, got %d order decisions (SVY-R5)", orderAsks)
-	}
-}
-
-func TestFR_REP_001_ReplacedDeathOrderFallsBackToOldestFirst(t *testing.T) {
-	// SVY-R5. The controller gives no answer: the two oldest units are replaced.
-	s := newScene(t)
-	_, us := threeVictims(s, 2)
-	s.script(0, Answer{Timeout: true})
-	s.sweep(0, alliedUnits)
-	wantReplaced(t, s, us[0], us[1])
-	if !inDiscard(s.g.Players[0], us[2].Inst) {
-		t.Errorf("the newest unit is left after the guardian is destroyed and dies normally (SVY-R5)")
-	}
-}
-
-func TestFR_REP_001_SourceLeftLethalByAByproductStopsApplying(t *testing.T) {
-	// SVY-R5. The guardian has 1 Health: the first byproduct kills it, and the
-	// sweep destroys it before the second death, which is no longer replaced.
-	s := newScene(t)
-	src := s.put(0, ZoneMainTheater, guardianStructure(1))
-	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	s.sweep(0, alliedUnits)
-	wantReplaced(t, s, a)
-	if !inHand(s.g.Players[0], a.Inst) {
-		t.Errorf("the first death is replaced and the unit returns to hand (FR-REP-001)")
-	}
-	if s.alive(src) {
-		t.Errorf("the byproduct damage leaves the guardian lethal and the sweep destroys it (SVY-R5)")
-	}
-	if !inDiscard(s.g.Players[0], b.Inst) || inHand(s.g.Players[0], b.Inst) {
-		t.Errorf("the second unit dies after its replacement's source is destroyed, so it goes to the discard pile (SVY-R5)")
-	}
-	if ds, db := eventSeq(s, "destroy", src.ID), eventSeq(s, "destroy", b.ID); ds == 0 || db == 0 || ds > db {
-		t.Errorf("the guardian is destroyed (seq %d) before the second unit (seq %d) (SVY-R5)", ds, db)
-	}
-}
-
 func TestFR_REP_001_SourceLethalInTheSameSweepReplacesEveryDeath(t *testing.T) {
-	// FR-REP-001 with the user ruling of 2026-10-29 (not yet in FRD 01): a
-	// replacement source that is itself lethal in the same sweep stays on the
+	// SVY-R20 (FR-REP-001): a replacement source that is itself lethal in the same sweep stays on the
 	// battlefield until the sweep's unreplaced deaths happen, so it replaces every
 	// death it applies to and is then destroyed as one of the sweep's own deaths.
 	// One "all allied units" damage step leaves the guardian (1 Health) and three
@@ -238,15 +165,15 @@ func TestFR_REP_001_SourceLethalInTheSameSweepReplacesEveryDeath(t *testing.T) {
 	wantReplaced(t, s, us[0], us[1], us[2])
 	for _, u := range us {
 		if !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
-			t.Errorf("%s is replaced and returns to hand although the guardian is lethal too (user ruling 2026-10-29)", u)
+			t.Errorf("%s is replaced and returns to hand although the guardian is lethal too (SVY-R20)", u)
 		}
 	}
 	if s.alive(src) || !inDiscard(s.g.Players[0], src.Inst) {
-		t.Errorf("the lethal guardian is destroyed after replacing every death (user ruling 2026-10-29)")
+		t.Errorf("the lethal guardian is destroyed after replacing every death (SVY-R20)")
 	}
 	last := eventSeq(s, "leave", us[2].ID)
 	if d := eventSeq(s, "destroy", src.ID); d == 0 || d < last {
-		t.Errorf("the guardian is destroyed (seq %d) only after the last replaced death (seq %d) (user ruling 2026-10-29)", d, last)
+		t.Errorf("the guardian is destroyed (seq %d) only after the last replaced death (seq %d) (SVY-R20)", d, last)
 	}
 }
 
@@ -306,32 +233,87 @@ func TestFR_ZON_004_FaceDownUnitReturnedToHandIsItsPrintedCard(t *testing.T) {
 	}
 }
 
-func TestFR_REP_001_TheAffectedAssetsControllerOrdersTheirDeaths(t *testing.T) {
-	// SVY-R5. Player 1's guardian and two of their units; player 0, the active
-	// player, deploys the sweeper. Player 1 is asked, and orders the deaths.
+func noOrderAsked(t *testing.T, s *scene, p PlayerID) {
+	t.Helper()
+	for _, d := range s.asked(p) {
+		if d.Kind == DecideOrder {
+			t.Errorf("replaced deaths are not ordered by the player, but player %d was asked %q (SVY-R20, SVY-R22)", p, d.Prompt)
+		}
+	}
+}
+
+func TestFR_REP_001_ReplacedDeathsAreNotOrderedByThePlayer(t *testing.T) {
+	// SVY-R20. The guardian has 2 Health, so three byproducts of 1 damage leave
+	// it lethal; the replaced deaths are still all replaced, oldest first, and
+	// player 0's scripted order answer is never asked for.
 	s := newScene(t)
+	src, us := threeVictims(s, 2)
+	s.script(0, Answer{Picks: []int{2, 0, 1}})
+	s.sweep(0, alliedUnits)
+	wantReplaced(t, s, us[0], us[1], us[2])
+	for _, u := range us {
+		if !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
+			t.Errorf("%s was replaced and returns to its owner's hand (FR-REP-001, SVY-R20)", u)
+		}
+	}
+	noOrderAsked(t, s, 0)
+	if s.alive(src) {
+		t.Errorf("the guardian, left lethal by its three byproducts, is destroyed (SVY-R20)")
+	}
+	last := eventSeq(s, "leave", us[2].ID)
+	if d := eventSeq(s, "destroy", src.ID); d == 0 || d < last {
+		t.Errorf("the guardian is destroyed (seq %d) only after the third replaced death (leave seq %d) (SVY-R20)", d, last)
+	}
+}
+
+func TestFR_REP_001_ByproductLethalSourceStillReplacesEveryDeathInThePass(t *testing.T) {
+	// SVY-R20, FRD 01's second example: the guardian (4 Health) is not lethal
+	// when the sweep starts, but five byproducts leave it at -1 Current Health.
+	// All five deaths are replaced; it is destroyed in the next pass.
+	s := newScene(t)
+	src := s.put(0, ZoneMainTheater, guardianStructure(4))
+	var us [5]*Asset
+	for i := range us {
+		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	}
+	s.sweep(0, alliedUnits)
+	wantReplaced(t, s, us[0], us[1], us[2], us[3], us[4])
+	for _, u := range us {
+		if s.alive(u) || !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
+			t.Errorf("%s is replaced and returns to hand, never to the discard pile, although a byproduct left the source lethal (SVY-R20)", u)
+		}
+	}
+	if s.alive(src) || !inDiscard(s.g.Players[0], src.Inst) {
+		t.Errorf("the guardian, left at -1 Current Health, is destroyed in the next pass (SVY-R20, FR-LAY-002)")
+	}
+	last := eventSeq(s, "leave", us[4].ID)
+	if d := eventSeq(s, "destroy", src.ID); d == 0 || d < last {
+		t.Errorf("the guardian is destroyed (seq %d) only after the fifth replaced death (leave seq %d) (SVY-R20)", d, last)
+	}
+}
+
+func TestFR_REP_001_ActivePlayersReplacedDeathsGoFirst(t *testing.T) {
+	// SVY-R22. Player 1's units are older than player 0's, yet player 0, the
+	// active player, has their deaths replaced first.
+	s := newScene(t)
+	s.put(0, ZoneMainTheater, guardianStructure(3))
 	s.put(1, ZoneMainTheater, guardianStructure(3))
-	a := s.put(1, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	b := s.put(1, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	var p1, p0 [2]*Asset
+	for i := range p1 {
+		p1[i] = s.put(1, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	}
+	for i := range p0 {
+		p0[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	}
 	s.script(0)
-	s.script(1, Answer{Picks: []int{1, 0}})
-	s.sweep(0, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit})
-	for _, d := range s.asked(0) {
-		if d.Kind == DecideOrder {
-			t.Errorf("the active player is not asked to order the other player's replaced deaths: %q (SVY-R5)", d.Prompt)
+	s.script(1)
+	s.sweep(0, ability.Filter{Kinds: ability.KindUnit, Other: true})
+	wantReplaced(t, s, p0[0], p0[1], p1[0], p1[1])
+	for _, u := range append(p0[:], p1[:]...) {
+		if s.alive(u) || !inHand(s.g.Players[u.Inst.Owner], u.Inst) {
+			t.Errorf("%s was replaced and returns to its owner's hand (FR-REP-001, SVY-R22)", u)
 		}
 	}
-	var asks int
-	for _, d := range s.asked(1) {
-		if d.Kind == DecideOrder {
-			asks++
-			if d.Player != 1 || len(d.Options) != 2 {
-				t.Errorf("the order decision is player 1's with one option per death, got player %d, %d options (SVY-R5)", d.Player, len(d.Options))
-			}
-		}
-	}
-	if asks != 1 {
-		t.Fatalf("the controller of the replacements and the affected units is asked once, got %d order decisions (SVY-R5)", asks)
-	}
-	wantReplaced(t, s, b, a)
+	noOrderAsked(t, s, 0)
+	noOrderAsked(t, s, 1)
 }

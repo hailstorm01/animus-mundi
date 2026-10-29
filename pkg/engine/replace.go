@@ -1,4 +1,4 @@
-// Replacement effects: destruction replacement at the death sweep (FR-REP-001, SVY-R5).
+// Replacement effects: destruction replacement at the death sweep (FR-REP-001, SVY-R20 to SVY-R22).
 
 package engine
 
@@ -30,9 +30,9 @@ func (g *Game) findReplacement(a *Asset) (*Asset, *ability.Replacement) {
 }
 
 // replacedQueue returns the assets of dying that a replacement applies to, in
-// the order their deaths are replaced: each player orders the deaths of the
-// assets they control, the active player's first (SVY-R5). The fallback order
-// is oldest asset first.
+// the order their deaths are replaced: the active player's first (SVY-R22), then
+// the non-active player's, each player's oldest asset first (SVY-R20). No player
+// orders them.
 func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 	var queued [2][]*Asset
 	for _, a := range dying {
@@ -44,28 +44,17 @@ func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 	for _, pid := range []PlayerID{g.Active, g.Active.Opponent()} {
 		mine := queued[pid]
 		slices.SortFunc(mine, func(x, y *Asset) int { return x.ID - y.ID })
-
-		if len(mine) >= 2 {
-			d := Decision{Player: pid, Kind: DecideOrder, Prompt: "order the deaths your replacement effects apply to (first pick is replaced first)", Min: len(mine), Max: len(mine)}
-			for _, a := range mine {
-				d.Options = append(d.Options, Option{Label: a.String(), Ref: a.ID})
-			}
-			for _, i := range g.choose(d) {
-				out = append(out, mine[i])
-			}
-			continue
-		}
 		out = append(out, mine...)
 	}
 	return out
 }
 
-// replaceDeaths replaces the deaths of dying that a replacement applies to, one at
-// a time in their controller's order (replacedQueue, SVY-R5), and calls between
-// after each one it replaces. It returns the rest, to be destroyed together: the
-// assets of dying still on the battlefield, for which dies still holds, whose
-// death it did not replace.
-func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool, between func()) []*Asset {
+// replaceDeaths replaces the deaths of dying that a replacement applies to, one at a
+// time in replacedQueue's order, with nothing destroyed between them: a source that
+// is lethal, or that a byproduct leaves lethal, still applies (SVY-R20, SVY-R21).
+// It returns the rest, to be destroyed together: the assets of dying still on the
+// battlefield, for which dies still holds, whose death it did not replace.
+func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool) []*Asset {
 	replaced := map[int]bool{}
 	for _, a := range g.replacedQueue(dying) {
 		if g.Asset(a.ID) != a || !dies(a) {
@@ -73,7 +62,6 @@ func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool, between fun
 		}
 		if g.replaceDeath(a) {
 			replaced[a.ID] = true
-			between()
 		}
 	}
 	var rest []*Asset
