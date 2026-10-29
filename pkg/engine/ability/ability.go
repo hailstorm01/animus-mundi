@@ -51,7 +51,7 @@ const (
 	HookAttacks                    // this asset attacked (combat Step 2, FR-CBT-002)
 	HookDamaged                    // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
 	HookExhausted                  // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
-	HookCombatKill                 // this asset attacked, and its combat damage left the defender lethal, so the death sweep after the Attack destroys it (FR-CBT-002 Step 3)
+	HookCombatKill                 // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.

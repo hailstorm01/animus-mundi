@@ -75,6 +75,7 @@ func (g *Game) destroyAll(as []*Asset) {
 	}
 	for i, a := range as {
 		g.fireKilled(a)
+		g.confirmDestroyed(a.ID)
 		g.leaveBattlefield(a, known[i])
 		g.putCard(a.Inst, ZoneDiscard, false)
 		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
