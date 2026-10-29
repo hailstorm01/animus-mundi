@@ -4,7 +4,7 @@ title: A replacement sees every death at the same moment, in a fixed order, with
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0101-same-moment-deaths
 depends_on: [T-0097]
 claims: [replacement:death-order, sweep:passes]
@@ -63,10 +63,10 @@ Authorized edits to protected tests from T-0096 and T-0097, all in the `test(T-0
 - `pkg/engine/effects.go` (`stepKill`'s call and doc comment)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g` passes (no executable card prints a replacement, so the sims are unchanged; see Shape, Sims)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g` passes (no executable card prints a replacement, so the sims are unchanged; see Shape, Sims)
 
 ## Log
 - 2026-10-29 lead-architect (wave G run, session 3): Wrote the task for board directive #74 (`open`), the lead's call being a task of its own rather than folded into T-0097, which merged before #74 reached the run branch. It goes before T-0100, which now plans against it. Design note: Deliverable 6c lists this task and drops "in its controller's order" from T-0096's line, and Open Question 13 is rewritten as answered (this commit).
@@ -90,3 +90,8 @@ Authorized edits to protected tests from T-0096 and T-0097, all in the `test(T-0
   - **Diff:** `replace.go`: `replacedQueue` asks nothing (active player's first, then the other's, each oldest first); `replaceDeaths` loses `between`; file comment cites SVY-R20 to SVY-R22. `damage.go`: `sweepDeaths(seen, loses, reasons)` is a loop of passes (`newlyLethal`, then `destroyDying(replaceDeaths(dying, IsLethal))`); `deathSweep` calls it, doc comments updated. `effects.go`: `stepKill` calls the two-argument `replaceDeaths`; doc comment cites SVY-R21.
   - **Reuse:** no new shape; removed the `between` callback and recursion. `DecideOrder` untouched (triggers use it).
   - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
+- 2026-10-29 lead-architect (D5): **Approved, merged into `autoloop/m2-wave-g` as 5885f1c.**
+  - **Scope:** c2c11f0 changes only `replace.go`, `damage.go` and `effects.go`; no test changed after 7ff925d.
+  - **Fences and reuse:** no card name, no new shape; the one shared `replaceDeaths` loses its callback, and the sweep's recursion is a loop of passes that ends because `seen` only grows.
+  - **Rules fidelity:** `replacedQueue` gives the active player's deaths first, each player's oldest first, with no prompt (`SVY-R20`, `SVY-R22`); nothing is destroyed within a pass, and newly lethal assets die in the next pass (`SVY-R20`, `FR-LAY-002`); kill steps use the same order (`SVY-R21`).
+  - **Gates, re-run in a review worktree:** `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g` byte-identical.
