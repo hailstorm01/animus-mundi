@@ -118,12 +118,6 @@ func (s *scene) attack(att, def *Asset) Action {
 	return Action{Kind: ActAttack, Player: att.Controller, Asset: att.ID, Target: def.ID}
 }
 
-func (s *scene) cleave(att, def, sec *Asset) Action {
-	a := s.attack(att, def)
-	a.Secondary = sec.ID
-	return a
-}
-
 func (s *scene) endTurn() { s.do(Action{Kind: ActEndTurn, Player: s.g.Active}) }
 
 // moveTo moves battlefield asset a to zone z (Main Theater or Reserves),

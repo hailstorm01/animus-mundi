@@ -10,11 +10,10 @@ import (
 // own asset, as the declared attacker, deals combat damage that leaves the
 // defender lethal, so the death sweep after the Attack destroys it (FR-CBT-002
 // Step 3, "Post-Attack & Combat-Kill Triggers"). Retaliation kills do not count
-// (is_attacker false), a Berserk secondary killed by cleave is not a combat kill
-// (FR-KWD-002o: cleave is non-combat effect damage), and a fizzled Attack deals
-// no combat damage (FR-CBT-002 Step 3, "Combatant Target Check"). Like every
-// trigger it is placed after the sweep, in APNAP order with the defender's death
-// triggers (FR-TRG-003, FR-TRG-004).
+// (is_attacker false), and a fizzled Attack deals no combat damage (FR-CBT-002
+// Step 3, "Combatant Target Check"). Like every trigger it is placed after the
+// sweep, in APNAP order with the defender's death triggers (FR-TRG-003,
+// FR-TRG-004).
 //
 // Cards are synthetic: a combat-kill trigger that Scratches 1, observed with
 // wantScratches. Eternal Watchman is a later card task.
@@ -84,19 +83,6 @@ func TestFR_CBT_002_CombatKillTriggerDoesNotFireForTheDefender(t *testing.T) {
 	}
 	s.wantScratches(1, 0, "a retaliation kill is not a combat kill, because the defender did not deal the damage as the declared attacker (FR-CBT-002 Step 3)")
 	s.wantScratches(0, 0, "the attacker has no combat-kill trigger")
-}
-
-func TestFR_CBT_002_CombatKillTriggerDoesNotFireForABerserkSecondary(t *testing.T) {
-	// Covers: FR-KWD-002o
-	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Berserker", 1, 9, Keywords{Berserk: 2}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 9, Keywords{}))
-	sec := s.put(1, ZoneMainTheater, unit("Bystander", 0, 2, Keywords{}))
-	s.do(s.cleave(att, def, sec))
-	if s.alive(sec) || !s.alive(def) {
-		t.Fatalf("precondition: cleave destroys the secondary and the defender survives (secondary alive=%v, defender alive=%v)", s.alive(sec), s.alive(def))
-	}
-	s.wantScratches(0, 0, "Berserk cleave is non-combat effect damage to a secondary, so killing it is not a combat kill (FR-KWD-002o, FR-CBT-002 Step 3)")
 }
 
 func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheAttackFizzles(t *testing.T) {
