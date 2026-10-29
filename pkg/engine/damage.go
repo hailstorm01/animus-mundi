@@ -145,27 +145,7 @@ func (g *Game) destroyDying(dying []*Asset, loses *[2]bool, reasons *[2]string) 
 // then the rest die together (SVY-R5, replace.go). seen holds every asset
 // this sweep has taken up, so an interim sweep takes up only the new ones.
 func (g *Game) sweepDeaths(dying []*Asset, seen map[int]bool, loses *[2]bool, reasons *[2]string) {
-	queue := g.replacedQueue(dying)
-	if len(queue) == 0 {
-		g.destroyDying(dying, loses, reasons)
-		return
-	}
-	for _, a := range queue {
-		if g.Asset(a.ID) != a || !g.IsLethal(a) {
-			continue
-		}
-		if !g.replaceDeath(a) {
-			continue
-		}
-		g.sweepDeaths(g.newlyLethal(seen), seen, loses, reasons)
-	}
-	var rest []*Asset
-	for _, a := range dying {
-		if g.Asset(a.ID) == a && g.IsLethal(a) {
-			rest = append(rest, a)
-		}
-	}
-	g.destroyDying(rest, loses, reasons)
+	g.destroyDying(g.replaceDeaths(dying, g.IsLethal, func() { g.sweepDeaths(g.newlyLethal(seen), seen, loses, reasons) }), loses, reasons)
 }
 
 func (g *Game) end(o Outcome) {

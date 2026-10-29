@@ -4,7 +4,7 @@ title: Kill steps go through destruction replacement, and a replaced kill still 
 kind: shape
 tier: sonnet
 wave: G
-status: in-progress
+status: review
 branch: m2/T-0097-kill-replacement
 depends_on: [T-0096]
 claims: [replacement:kill-step]
@@ -80,3 +80,6 @@ To be written in a new file, `pkg/engine/replacement_kill_test.go`, with synthet
   - one `DecideOrder` with two options orders the replaced kills.
   - **Killer:** `alliedUnits` and test 4's filter both set `Other`, so the killer unit never kills itself, and the guardian's own `Other` keeps it from replacing its own death.
   - **Helpers:** reused from `replacement_test.go` unedited (`alliedUnits`, `guardianStructure`, `guardianUnit`, `eventSeq`, `wantReplaced`), plus the file's own `killStep` and `(*scene).killer`.
+- 2026-10-29 kernel-engineer: Implemented. Moved `sweepDeaths`' loop into `replaceDeaths` (`replace.go`); `sweepDeaths` (`damage.go`) and `stepKill` (`effects.go`) both call it, so there is one loop. `stepKill` passes `dies` always true and no-op `between` (no sweep mid-item), and still returns `len(dying)` (SVY-R15). Comment-only edits: `WouldBeDestroyed` (`ability.go`), `findReplacement` (T-0100). Reuse: `replacedQueue`, `replaceDeath`, `destroyAll`, `destroyDying`; nothing new added besides `replaceDeaths`.
+  - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` pass; `go tool task check` pass; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
+  - **Look at:** `replaceDeaths` excludes replaced assets from the rest even if still on the battlefield (FR-REP-003).

@@ -28,7 +28,7 @@ type Def struct {
 type Would int
 
 const (
-	WouldBeDestroyed Would = iota + 1 // an asset matching the replacement's Filter would be destroyed by the death sweep, being lethal (FR-REP-001, FR-LAY-002)
+	WouldBeDestroyed Would = iota + 1 // an asset matching the replacement's Filter would be destroyed, by the death sweep (being lethal) or by a kill step (FR-REP-001, FR-LAY-002, SVY-R15)
 )
 
 // Replacement is one printed replacement effect. If an asset matching Filter
