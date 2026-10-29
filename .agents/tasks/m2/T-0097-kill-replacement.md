@@ -4,7 +4,7 @@ title: Kill steps go through destruction replacement, and a replaced kill still 
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0097-kill-replacement
 depends_on: [T-0096]
 claims: [replacement:kill-step]
@@ -57,10 +57,10 @@ To be written in a new file, `pkg/engine/replacement_kill_test.go`, with synthet
 - `pkg/engine/ability/ability.go` (`WouldBeDestroyed`'s comment only)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] No executable card prints a replacement yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-g` passes
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] No executable card prints a replacement yet, so the sims are unchanged: `go tool task sim-compare -- autoloop/m2-wave-g` passes
 
 ## Log
 - 2026-10-29 lead-architect (wave G run, session 1): Wrote the task, the second for board directive #73 (open: before the first wave C task).
@@ -83,3 +83,9 @@ To be written in a new file, `pkg/engine/replacement_kill_test.go`, with synthet
 - 2026-10-29 kernel-engineer: Implemented. Moved `sweepDeaths`' loop into `replaceDeaths` (`replace.go`); `sweepDeaths` (`damage.go`) and `stepKill` (`effects.go`) both call it, so there is one loop. `stepKill` passes `dies` always true and no-op `between` (no sweep mid-item), and still returns `len(dying)` (SVY-R15). Comment-only edits: `WouldBeDestroyed` (`ability.go`), `findReplacement` (T-0100). Reuse: `replacedQueue`, `replaceDeath`, `destroyAll`, `destroyDying`; nothing new added besides `replaceDeaths`.
   - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` pass; `go tool task check` pass; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
   - **Look at:** `replaceDeaths` excludes replaced assets from the rest even if still on the battlefield (FR-REP-003).
+- 2026-10-29 lead-architect (D5, round 1): **Approved.**
+  - **Scope:** `git diff autoloop/m2-wave-g...09d6345` changes only the four Allowed Files, this task file and the test file. `replacement_kill_test.go` is unchanged since f9ec020, and no other test changed.
+  - **Shape:** `replaceDeaths` is the loop moved out of `sweepDeaths`, now shared by the sweep and `stepKill`, so it is not copied. A replaced asset is left out of the rest even if it stays on the battlefield (`FR-REP-003`). With an empty queue the sweep destroys exactly the assets it did before, in the same order. `stepKill` still returns `len(dying)`, so a replaced kill counts as done (`SVY-R15`), and no sweep runs between replaced kills. The comments follow the Shape's text.
+  - **Fences and placement:** no card name in engine code, and the new function sits in `replace.go`.
+  - **Gates, re-run by the reviewer in a review worktree (09d6345):** `go tool task check` exits 0. `go tool task sim` is clean: P0 63.5% / P1 34.5% / draws 2.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare -- autoloop/m2-wave-g` passes byte for byte.
+  - Merged into `autoloop/m2-wave-g` with `--no-ff` as c8e391f. Its tree is the gated task tip, because the run branch had no commits after the task branched. Status `done`. Next: T-0100, the choice between several replacements for one death, then T-0098 and T-0099 (design note Deliverable 6c). Deck cards still on `NotYetExecutable` (#14 (e)): 23 (10 Animus, 13 Path), unchanged.
