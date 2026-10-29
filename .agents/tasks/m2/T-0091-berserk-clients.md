@@ -4,7 +4,7 @@ title: The clients stop reading an Attack's secondary target (directive #68 part
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (c), with #72; the user's code review, before wave C)
-status: in-progress
+status: review
 branch: m2/T-0091-berserk-clients
 depends_on: [T-0090]
 claims: [reader:secondary-removed, file:pkg/eventlog/replay.go, file:cmd/cardtown/play_screen.go]
@@ -87,9 +87,29 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
 - `pkg/view/view_test.go`, for the named test edit only
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 3): wrote the task from board directive #68 part (c), the next of wave B.2's blocking directives in board order. Harness, so it goes straight to `ready`; tier `flash`, the harness default (#68 names `sonnet` only for part (a)), and every command here is on the headless allow-list. Lead decisions: (1) no new test (see Tests); (2) `actionLabel` has no test today and gets none, since its remaining Attack label is unchanged; (3) the `-events` comparison is the reviewer's. Applied #72's design-note part in the same commit: the Overkill settling tests are recorded as an M3 item (design note Open Question 12). Waiting directives checked: none has triggered (#8: this task doesn't touch `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). Part (d), #69 and #70 stay open for the next sessions. Next: `kernel-engineer` on Flash.
+- 2026-10-28, kernel-engineer (T-0091): implemented part (c) of directive #68.
+  - Test commit 08d410c: deleted ` || it.Secondary != 0` in `pkg/view/view_test.go` (`TestPlayerView`). Verified with `go test ./...` on the old code (passed, 0 exit).
+  - Implementation commit ecb4bfd:
+    - `pkg/eventlog/replay.go`: removed `rec.Secondary != got.Secondary` from `diff` field comparisons; updated `structured` to return `[8]any` omitting `Secondary`; removed `Secondary: e.Secondary` in `actionOf`.
+    - `pkg/view/view.go`: removed `Secondary int` from `StackView`; in `stackView`'s `case engine.StackAttack:`, set `s.Target = it.Target`. Formatted with `gofmt`.
+    - `cmd/cardtown/play_screen.go`: removed `if a.Secondary > 0 { ... }` branch from `actionLabel`'s `case engine.ActAttack:`.
+  - Reuse: removed defunct readers of Attack secondary targets in clients and tools; engine fields remain untouched for part (d).
+  - Acceptance Cases verified:
+    1. Tests first: commit 08d410c holds test edit only. `go -C W test ./...` passed on test commit and branch tip. `git -C W diff autoloop/m2-wave-b.2 --stat -- '*_test.go'` output: `pkg/view/view_test.go | 2 +-` (1 file changed).
+    2. No client reads secondary: `git -C W grep -n -i secondary -- pkg/eventlog pkg/view pkg/sim cmd` printed nothing (exit code 1).
+    3. Part (d) remainder: `git -C W grep -l -i -E "berserk|secondary|cleave" -- pkg cmd ":!pkg/toolchain/linter"` listed exactly:
+       - `pkg/engine/actions.go`
+       - `pkg/engine/combat.go`
+       - `pkg/engine/doc.go`
+       - `pkg/engine/events.go`
+       - `pkg/engine/stack.go`
+    4. Sims match: `go -C W tool task sim-compare -- autoloop/m2-wave-b.2` passed: "[PASS] starter and stress sims match autoloop/m2-wave-b.2 byte for byte, exit codes included".
+    5. Only allowed files touched: `git -C W diff autoloop/m2-wave-b.2 --stat` listed only `pkg/eventlog/replay.go`, `pkg/view/view.go`, `cmd/cardtown/play_screen.go`, `pkg/view/view_test.go`, and `.agents/tasks/m2/T-0091-berserk-clients.md`.
+    6. Quality gates: `go -C W tool task check` passed (gofmt, `go vet`, all package tests, `cardtown lint --all`). `go -C W tool task sim` passed clean (200 games, all invariants held).
+  - Handed off to reviewer.
