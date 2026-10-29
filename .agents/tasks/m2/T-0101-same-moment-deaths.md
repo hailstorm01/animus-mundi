@@ -4,7 +4,7 @@ title: A replacement sees every death at the same moment, in a fixed order, with
 kind: shape
 tier: sonnet
 wave: G
-status: tests-review
+status: ready
 branch: m2/T-0101-same-moment-deaths
 depends_on: [T-0097]
 claims: [replacement:death-order, sweep:passes]
@@ -80,3 +80,9 @@ Authorized edits to protected tests from T-0096 and T-0097, all in the `test(T-0
   - **Comment/message edits only:** headers and `wantReplaced` messages now cite `SVY-R20`/`SVY-R21`/`SVY-R22`; the three named tests' ruling citations updated. No assertion changes.
   - **Not written:** `TestFR_REP_001_OneKillStepReplacesEveryKill` (same scenario as `OneKillStepsDeathsAreAllReplaced`, per the task).
   - **Helpers requested:** none. `go vet` is clean; `cardtown lint rules` passes; `go test -run TestFR_REP_001` fails only on the four new tests.
+- 2026-10-29 lead-architect (D4): **Tests approved, `ready`.** Checked 7ff925d against FRD 01 v3.16 `FR-REP-001` (lines 460-462), `SVY-R20` to `SVY-R22` and the task's Tests list:
+  - the five named tests are deleted, each replaced by its named new test, and the other edits are comments and messages only (no assertion changed);
+  - `ReplacedDeathsAreNotOrderedByThePlayer`: all three replaced oldest first though the 2-Health guardian is lethal after the second byproduct, no `DecideOrder`, and the guardian is destroyed after the third `leave` (`SVY-R20`);
+  - `ByproductLethalSourceStillReplacesEveryDeathInThePass`: FRD 01's second example, five replaced, then the guardian at -1 is destroyed in the next pass;
+  - `ActivePlayersReplacedDeathsGoFirst`: player 0's (newer) units are replaced before player 1's (older), and neither player is asked (`SVY-R22`);
+  - `ReplacedKillsAreNotOrderedByThePlayer`: the kill step uses the same fixed order (`SVY-R21`).
