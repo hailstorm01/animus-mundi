@@ -4,7 +4,7 @@ title: Attack legality lives in combat.go, (g *Game) checkAttack (directive #69,
 kind: harness
 tier: flash
 wave: B.2 (board directive #69, the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0094-check-attack
 depends_on: [T-0093]
 claims: [func:checkAttack]
