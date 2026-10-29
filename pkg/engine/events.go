@@ -152,7 +152,7 @@ func (g *Game) emitAction(a Action) {
 	case ActMarch, ActScratch:
 		e.Source = a.Asset
 	case ActAttack:
-		e.Source, e.Target, e.Secondary = a.Asset, a.Target, a.Secondary
+		e.Source, e.Target = a.Asset, a.Target
 	case ActDeploy:
 		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
@@ -215,8 +215,7 @@ type Event struct {
 	Zone   string `json:"zone,omitempty"`   // Zone.String()
 	Amount int    `json:"amount,omitempty"`
 
-	Secondary int    `json:"secondary,omitempty"` // action events: an Attack's Berserk secondary target (asset ID)
-	Resource  string `json:"resource,omitempty"`  // action events: a Generate's "Requisition" or "Tactics"
+	Resource string `json:"resource,omitempty"` // action events: a Generate's "Requisition" or "Tactics"
 
 	// Damage events only. Amount is the damage committed to Health (Stage 5).
 	Raw      int  `json:"raw,omitempty"`      // the incoming damage before Stage 2
