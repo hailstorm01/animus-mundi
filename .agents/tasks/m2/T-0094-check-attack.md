@@ -4,7 +4,7 @@ title: Attack legality lives in combat.go, (g *Game) checkAttack (directive #69,
 kind: harness
 tier: flash
 wave: B.2 (board directive #69, the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0094-check-attack
 depends_on: [T-0093]
 claims: [func:checkAttack]
@@ -102,3 +102,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - Case 6: `git -C W diff autoloop/m2-wave-b.2 --stat` showed only actions.go, combat.go, and this task file.
     - Case 7: `go -C W tool task check` passed all stages (fmt, vet, test, lint --all); `go -C W tool task sim` passed on starter decks (200 games, all invariants holding).
   - Ready for review.
+- 2026-10-28, lead-architect (wave B.2 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as 38bd2b8. Flash run `eeeb07bc-6f51-4622-9507-ac9c61e1161e`: exit 0, `status: SUCCESS`, 236 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line for it and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-b.2...m2/T-0094-check-attack` (d4ceecf):
+  - Scope: only `actions.go`, `combat.go` and this file changed, and both code edits match the task's text line for line. No test file changed.
+  - Pure move: `checkAttack` holds the old case's statements in their order with the same error texts, and `check`'s Attack case is `return g.checkAttack(a)`; every other case still falls through to `return nil`.
+  - Fences and reuse: no card name, no new rule, nothing duplicated: `canDeclareAttack(att)` and the attack-target check now appear once, in `combat.go`. `readyAsset` stays in `actions.go` for Generate and March, as #69 says.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); case 3 shows `Apply`'s `g.declareAttack(a)` and `check`'s `return g.checkAttack(a)`; case 4 prints exactly three `checkAttack` lines and one `canDeclareAttack(att)` line, in `combat.go`; case 5's `go doc` names Readied, combat zone and `FR-CBT-001`; case 6 lists exactly the three files; `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged), 30/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #69 is applied.
