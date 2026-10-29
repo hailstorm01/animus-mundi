@@ -4,7 +4,7 @@ title: When several replacements apply to one death, its controller chooses whic
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: done
 branch: m2/T-0100-choose-replacement
 depends_on: [T-0101]
 claims: [decision:replacement, replacement:choice]
@@ -57,10 +57,10 @@ Synthetic cards only, reusing the helpers in `replacement_test.go` (`guardianStr
 - `pkg/engine/doc.go` (built list, "Not built yet", Files list)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g` passes (no executable card prints a replacement yet, so the sims are unchanged; see Shape, Sims)
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_001'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g` passes (no executable card prints a replacement yet, so the sims are unchanged; see Shape, Sims)
 
 ## Log
 - 2026-10-29 lead-architect (wave G run, session 5): Wrote the task for board directive #75 (`SVY-R23`, the user's ruling on design note Open Question 14 and survey R23, which stopped session 4). Design note: Deliverable 6c's T-0100 line no longer waits on a ruling, and Open Question 14 is rewritten as answered (this commit).
@@ -79,3 +79,9 @@ Synthetic cards only, reusing the helpers in `replacement_test.go` (`guardianStr
   - **Reuse:** no new fixed-order rule; the timeout is `fixedOrderPicks` via the DecideTarget/DecidePick fallback. No second loop over sources.
   - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
   - **Look at:** chooseReplacement's label loop compares the replacement pointer to find its printed position.
+- 2026-10-29 lead-architect (wave G run, session 5): Code review (D5) passed, no changes.
+  - **Scope:** only `replace.go`, `choice.go`, `doc.go` and the task file changed after the test commit; no test edited after `b2103a3` (checked with `git diff`).
+  - **Fences and reuse:** no card name, nothing new in a client. `replacementsFor` takes `findReplacement`'s place, and the timeout goes through `fixedOrderPicks`, whose stable sort keeps a source's options in printed order.
+  - **Rules fidelity:** general. One replacement asks nothing and builds no `Decision`; two or more ask `a.Controller` once, when the death is replaced, never from `replacedQueue`. Nit, not a change: a source that prints several replacements gets the "(replacement n)" label even when only one of them applies. It's still accurate.
+  - **Gates re-run in a review worktree:** `go test ./pkg/engine -run 'TestFR_REP_001'` ok; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g` byte-identical (starter and stress).
+  - Merged into `autoloop/m2-wave-g` with `--no-ff` as 4adc393. Its tree is the gated task tip, because the run branch had no commits after the task branched. Status `done`, #75 `applied`. Next: T-0098 (a Scratch Company filter and *Shifting Impossibility*), then T-0099 (#73), design note Deliverable 6c.
