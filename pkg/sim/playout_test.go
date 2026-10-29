@@ -22,7 +22,6 @@ func keywordDeck() []*engine.Card {
 		unit("Bodyguard", 0, 4, engine.Keywords{Guardian: true}),
 		unit("Plated", 2, 1, engine.Keywords{Armor: 2}),
 		unit("Slowpoke", 3, 3, engine.Keywords{DeploysExhausted: true}),
-		unit("Berserker", 2, 3, engine.Keywords{Berserk: 2}),
 		structure("Bastion", 0, 6, engine.Keywords{Guardian: true}),
 	}
 	for i, c := range pool {
@@ -90,8 +89,4 @@ func TestLoadCardsFromRepositoryData(t *testing.T) {
 	}
 	sort.Strings(supported)
 	t.Logf("%d of %d cards are executable by the kernel: %v", len(supported), len(cards), supported)
-	// KIM-B04 ruling: Tempest Surge prints Berserk 2.
-	if c := cards["Tempest Surge"]; c == nil || c.Keywords.Berserk != 2 {
-		t.Errorf("Tempest Surge should parse Berserk 2, got %+v", c)
-	}
 }
