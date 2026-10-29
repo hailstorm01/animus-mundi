@@ -20,6 +20,26 @@ type Def struct {
 	Text []string
 	// Triggers lists the printed triggered abilities, in printed order.
 	Triggers []Trigger
+	// Replacements lists the printed replacement effects, in printed order.
+	Replacements []Replacement
+}
+
+// Would is the event a replacement replaces.
+type Would int
+
+const (
+	WouldBeDestroyed Would = iota + 1 // an asset matching the replacement's Filter would be destroyed by the death sweep, being lethal (FR-REP-001, FR-LAY-002)
+)
+
+// Replacement is one printed replacement effect. If an asset matching Filter
+// would be destroyed (Event), do Steps instead (FR-REP-001). Filter is relative
+// to the controller of the replacement's source. Steps run inline, never on the
+// stack, with that source as their source: SubjectSelf is the source, and
+// SubjectReplaced is the asset whose event is replaced.
+type Replacement struct {
+	Event  Would
+	Filter Filter
+	Steps  []Step
 }
 
 // Hook is the event a trigger watches.
@@ -166,6 +186,7 @@ const (
 	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
 	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
+	SubjectReplaced                  // the asset whose event a replacement replaces (Replacement.Steps only)
 )
 
 // Step applies one primitive.

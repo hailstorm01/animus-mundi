@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: in-progress
+status: review
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -110,3 +110,8 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - **Fallback:** the fallback cases rely on a seat with no chooser. `choose` applies the `FR-MOD-001` §6 fallback there (collection order for `DecideOrder`), so nothing new is needed.
   - **Helpers:** every helper used exists (`putScratch`, `allDamage`, `unbowed`, `healSelf`, `mortal`, `killedTrigger`, `drawN`, `deployTrigger`, `trigUnit`, `structure`, `inHand`, `inDiscard`, `eventsOfKind`, `asked`, `alive`, `wantDamage`, `script`, `deployFromHand`).
   - **Events:** the `replace` and `leave` kinds are a public contract (ADR-0005) fixed by the Shape, so asserting on them is not an implementation detail.
+- 2026-10-29 kernel-engineer: Implemented to the binding Shape. Changed `ability.go` (`Def.Replacements`, `Would`/`WouldBeDestroyed`, `Replacement`, `SubjectReplaced` appended last in `Subject`), `effects.go` (`runSteps` shared by `resolveAbility` and the replacement, `resolution.replaced`, `SubjectReplaced` in `stepAssets` and `stepRelocate`), `damage.go`, and new `replace.go` (`findReplacement`, `replacedQueue`, `replaceDeath`, `relocateReplaced`). No test or scenario_test.go change.
+  - **Reuse:** searched for an existing replacement or battlefield-to-hand move, none. Reused `leaveBattlefield`, `putCard`, `matchesFilter`, `assetsByID`, `choose`/`DecideOrder`, `destroyAll`.
+  - **Sweep (`damage.go`):** `deathSweep` now calls `sweepDeaths`. With an empty queue it does exactly the old thing (HQ losses noted, one `destroyAll`, same order). With a queue, each replaced death is followed by a recursive sweep of assets lethal now and not in the `seen` set (every asset any level of this sweep has taken up), so the outer sweep's pending deaths are never swept early. Then the rest of `dying` that is still on the battlefield and lethal is destroyed together. The `leave` event is logged with no `Card`.
+  - **Look closely:** `leave` is logged before the asset leaves (so `String()` still names it); an HQ is never queued unless a filter matches it (none do in M2).
+  - **Commands:** `go test ./pkg/engine -run 'TestFR_REP_001|TestFR_ZON_004_FaceDownUnitReturnedToHand'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare` PASS (byte for byte).
