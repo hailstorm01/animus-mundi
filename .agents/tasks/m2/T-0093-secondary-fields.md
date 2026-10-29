@@ -4,7 +4,7 @@ title: An Attack has one target, so Action and StackItem lose Secondary (directi
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (d), second half, with #72; the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0093-secondary-fields
 depends_on: [T-0092]
 claims: [field:Action.Secondary-removed, field:StackItem.Secondary-removed, file:pkg/engine/actions.go, file:pkg/engine/combat.go, file:pkg/engine/stack.go]
@@ -100,3 +100,10 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
   - Commit: `feat(engine): remove Secondary field from Action and StackItem (T-0093)` (7c7cc91). Handing off to `lead-architect` for review.
 - 2026-10-28, lead-architect (wave B.2 run, session 4): wrote this task together with T-0092, the two halves of directive #68 part (d) under the D2 size rule (see T-0092's Inputs). `queued` until T-0092 is `done`; the session that dispatches it checks the line numbers above against the run branch first. Harness, tier `flash`; every command here is on the headless allow-list.
 - 2026-10-28, lead-architect (wave B.2 run, session 5): T-0092 is `done` (2c78e88), so this task moves to `ready`. `main` has nothing the run branch lacks, so no sync. Checked the line numbers above against the run branch at 3b503e5: all match (`actions.go:51-52`, `actions.go:177-179`, `combat.go:9`, `stack.go:27-28`), and no test file under `pkg` or `cmd` mentions Berserk, a secondary or cleave, so case 3 needs no test edit. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #69 and #70 stay open for the sessions after this one. Branch `m2/T-0093-secondary-fields` created from the run branch; next: `kernel-engineer` on Flash.
+- 2026-10-28, lead-architect (wave B.2 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as 00a64ce. Flash run `5c267c54-9288-4418-81f2-ed274ea34fb1`: exit 0, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line for it and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-b.2...m2/T-0093-secondary-fields` (7c7cc91):
+  - Scope: only `actions.go`, `combat.go`, `stack.go` and this file changed, and the three code edits match the task's text line for line (both structs gofmt-aligned as written). No test file changed, as the task asked (no test commit).
+  - Fences and reuse: no card name, no new shape, nothing added.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); case 3 prints nothing (exit 1); case 4 passes, `54 of 169 cards are executable by the kernel`, neither Berserk card listed; case 5 lists exactly the four files; `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged), 30/50 Animus main cards executable.
+  - Reviewer's events check: starter `-events` files from both builds have 104197 lines each and differ in exactly 200 lines, each game's `match-start` `revision`; with those filtered out they are identical.
+  - Nit, not worth a round: the engineer's Log entry again sits above the lead's.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #68 is now applied in full (T-0089 to T-0093), and #72 with it.
