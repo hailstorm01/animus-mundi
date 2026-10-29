@@ -4,7 +4,7 @@ title: Attack legality lives in combat.go, (g *Game) checkAttack (directive #69,
 kind: harness
 tier: flash
 wave: B.2 (board directive #69, the user's code review, before wave C)
-status: ready
+status: review
 branch: m2/T-0094-check-attack
 depends_on: [T-0093]
 claims: [func:checkAttack]
@@ -83,10 +83,22 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/combat.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 6): wrote the task from board directive #69, now that #68 is applied in full (T-0089 to T-0093), so the move carries no Berserk code. Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #69 gives; every command here is on the headless allow-list. `checkAttack` goes first in `combat.go`, ahead of `declareAttack`, so the file reads in the order of an attack: legal, declared, resolved. `main` has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #70 stays open for the next session. Next: `kernel-engineer` on Flash.
+- 2026-10-28, kernel-engineer (Flash): pure move implemented and verified.
+  - Changes: Moved the body of check's ActAttack case into `(g *Game) checkAttack(a Action) error` in `pkg/engine/combat.go`, replacing the case body in `pkg/engine/actions.go` with `return g.checkAttack(a)`. Doc comment names Readied, combat zone, and FR-CBT-001.
+  - Reused: `g.readyAsset`, `canDeclareAttack`, `g.Asset`, `g.CanAttack`, `illegal`.
+  - Acceptance cases:
+    - Case 1: `git -C W diff autoloop/m2-wave-b.2 -- '*_test.go'` printed nothing; `go -C W test ./...` passed.
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-b.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-b.2 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -A1 "case ActAttack:" -- pkg/engine/actions.go` printed Apply declareAttack and check checkAttack.
+    - Case 4: `git -C W grep -n "checkAttack" -- pkg/engine` printed 3 lines (actions.go:165, combat.go:5, combat.go:11); `git -C W grep -n "canDeclareAttack(att)" -- pkg/engine` printed 1 line (combat.go:16).
+    - Case 5: `go -C W doc -u ./pkg/engine Game.checkAttack` printed doc comment naming Readied, combat zone, and FR-CBT-001.
+    - Case 6: `git -C W diff autoloop/m2-wave-b.2 --stat` showed only actions.go, combat.go, and this task file.
+    - Case 7: `go -C W tool task check` passed all stages (fmt, vet, test, lint --all); `go -C W tool task sim` passed on starter decks (200 games, all invariants holding).
+  - Ready for review.
