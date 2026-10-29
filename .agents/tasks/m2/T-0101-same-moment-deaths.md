@@ -4,7 +4,7 @@ title: A replacement sees every death at the same moment, in a fixed order, with
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: tests-review
 branch: m2/T-0101-same-moment-deaths
 depends_on: [T-0097]
 claims: [replacement:death-order, sweep:passes]
@@ -74,3 +74,9 @@ Authorized edits to protected tests from T-0096 and T-0097, all in the `test(T-0
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g` fresh. #74 is applied by this task. #73 stays `open: before the first wave C task` (T-0098, T-0099 and T-0100 still to come). #14 is a standing order. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no repeated targets); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Contradicted tests:** directive #74 names four of T-0096's tests. T-0097's `TestFR_REP_001_ControllerOrdersTheReplacedKills` is contradicted the same way (it was written before #74), so it is named here too. Two pairs of the directive's rewrites would have produced the same scenario as a settling test, so the old tests are deleted and replaced, not rewritten in place.
   - **Reuse:** no duplicate. The replacement loop stays the one shared `replaceDeaths` (T-0097); this task removes its `between` callback, and the sweep's recursion becomes a loop of passes.
+- 2026-10-29 rules-test-author: Tests written (commit on the task branch, `test(T-0101)`).
+  - **New (fail until the engineer implements, as intended):** `TestFR_REP_001_ReplacedDeathsAreNotOrderedByThePlayer`, `TestFR_REP_001_ByproductLethalSourceStillReplacesEveryDeathInThePass`, `TestFR_REP_001_ActivePlayersReplacedDeathsGoFirst` (`replacement_test.go`); `TestFR_REP_001_ReplacedKillsAreNotOrderedByThePlayer` (`replacement_kill_test.go`). A small shared helper `noOrderAsked` (asserts no `DecideOrder` was asked of a player) is declared in `replacement_test.go`.
+  - **Deleted (as authorized):** `ControllerOrdersTheReplacedDeaths`, `ReplacedDeathOrderFallsBackToOldestFirst`, `SourceLeftLethalByAByproductStopsApplying`, `TheAffectedAssetsControllerOrdersTheirDeaths`, `ControllerOrdersTheReplacedKills`.
+  - **Comment/message edits only:** headers and `wantReplaced` messages now cite `SVY-R20`/`SVY-R21`/`SVY-R22`; the three named tests' ruling citations updated. No assertion changes.
+  - **Not written:** `TestFR_REP_001_OneKillStepReplacesEveryKill` (same scenario as `OneKillStepsDeathsAreAllReplaced`, per the task).
+  - **Helpers requested:** none. `go vet` is clean; `cardtown lint rules` passes; `go test -run TestFR_REP_001` fails only on the four new tests.
