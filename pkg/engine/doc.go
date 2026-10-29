@@ -34,11 +34,17 @@
 //     runs only if the step before it did something ("if you do", SVY-R14).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
+//   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
+//     destroyed" replacement replaces a death at the death sweep or in a kill step,
+//     every death of one moment seeing its source (SVY-R20, SVY-R21), in a fixed
+//     order (SVY-R22). When several apply to one death, its controller chooses
+//     (DecideReplacement, SVY-R23).
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
 //   - Maneuvers, activated and continuous abilities, continuous Cornered, Heal N,
-//     Regroup N, replacement effects beyond the damage pipeline, and match
+//     Regroup N, replacement effects other than destruction replacement and the
+//     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
 //     and cannot be deployed.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
@@ -54,7 +60,7 @@
 //     cardload.go: the CSV loader and keyword lines.
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
-//     damage.go: the damage pipeline. layers.go: derived power, health and keywords.
+//     damage.go: the damage pipeline. replace.go: destruction replacement. layers.go: derived power, health and keywords.
 //     invariants.go: state checks.
 //
 // Package boundary: this package holds the rules, the game state, the Observer

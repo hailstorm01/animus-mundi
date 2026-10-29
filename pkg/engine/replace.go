@@ -3,17 +3,25 @@
 package engine
 
 import (
+	"fmt"
 	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
 
-// findReplacement returns the source and the replacement that apply to a's
-// destruction now: the first, in battlefield order, oldest source first, of the
-// replacements printed by a face-up asset on the battlefield whose filter a
-// matches. A source that is itself lethal still applies until the sweep
-// destroys it. Letting a's controller choose between several is T-0100's.
-func (g *Game) findReplacement(a *Asset) (*Asset, *ability.Replacement) {
+// replacementOption is one replacement that applies to a destruction, with the
+// asset that prints it.
+type replacementOption struct {
+	src *Asset
+	rep *ability.Replacement
+}
+
+// replacementsFor returns every replacement that applies to a's destruction now,
+// oldest source first, each source's replacements in printed order: those printed
+// by a face-up asset on the battlefield whose filter a matches. A source that is
+// itself lethal still applies until the sweep destroys it (SVY-R20).
+func (g *Game) replacementsFor(a *Asset) []replacementOption {
+	var out []replacementOption
 	for _, src := range g.assetsByID() {
 		if src.FaceDown || src.Printed().Ability == nil {
 			continue
@@ -22,11 +30,11 @@ func (g *Game) findReplacement(a *Asset) (*Asset, *ability.Replacement) {
 		for i := range reps {
 			r := &reps[i]
 			if r.Event == ability.WouldBeDestroyed && g.matchesFilter(src.Controller, src.ID, r.Filter, a) {
-				return src, r
+				out = append(out, replacementOption{src: src, rep: r})
 			}
 		}
 	}
-	return nil, nil
+	return out
 }
 
 // replacedQueue returns the assets of dying that a replacement applies to, in
@@ -36,7 +44,7 @@ func (g *Game) findReplacement(a *Asset) (*Asset, *ability.Replacement) {
 func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 	var queued [2][]*Asset
 	for _, a := range dying {
-		if src, _ := g.findReplacement(a); src != nil {
+		if len(g.replacementsFor(a)) > 0 {
 			queued[a.Controller] = append(queued[a.Controller], a)
 		}
 	}
@@ -75,18 +83,47 @@ func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool) []*Asset {
 
 // replaceDeath replaces a's destruction in full, if a replacement still applies:
 // the destroy never happens, and the replacement's steps run inline, off the
-// stack, with its source as their source. It reports whether it did.
+// stack, with its source as their source. It reports whether it did. When several
+// apply, a's controller chooses one (chooseReplacement, SVY-R23).
 func (g *Game) replaceDeath(a *Asset) bool {
-	src, rep := g.findReplacement(a)
-	if src == nil {
+	opts := g.replacementsFor(a)
+	if len(opts) == 0 {
 		return false
 	}
+	pick := opts[0]
+	if len(opts) > 1 {
+		pick = g.chooseReplacement(a, opts)
+	}
+	src, rep := pick.src, pick.rep
 	g.logEvent(Event{Kind: "replace", Player: int(src.Controller), Source: src.ID, Target: a.ID},
 		"%s replaces the destruction of %s", src, a)
 	it := &StackItem{Kind: StackAbility, Controller: src.Controller, Source: src.ID, Inst: src.Inst,
 		Effect: ability.Effect{Steps: rep.Steps}}
 	g.runSteps(&resolution{it: it, replaced: a})
 	return true
+}
+
+// chooseReplacement asks a's controller which of several replacements applies to
+// its destruction (FR-REP-001, SVY-R23). A timeout picks the first source in the
+// FR-MOD-001 §6 fixed order, a source's own replacements in printed order
+// (DecideReplacement's fallback).
+func (g *Game) chooseReplacement(a *Asset, opts []replacementOption) replacementOption {
+	options := make([]Option, len(opts))
+	for i, o := range opts {
+		label := o.src.String()
+		if n := len(o.src.Printed().Ability.Replacements); n > 1 {
+			for j := range o.src.Printed().Ability.Replacements {
+				if &o.src.Printed().Ability.Replacements[j] == o.rep {
+					label = fmt.Sprintf("%s (replacement %d)", o.src, j+1)
+				}
+			}
+		}
+		options[i] = Option{Label: label, Ref: o.src.ID}
+	}
+	picks := g.choose(Decision{Player: a.Controller, Kind: DecideReplacement,
+		Prompt:  fmt.Sprintf("choose which replacement applies to the destruction of %s", a),
+		Options: options, Min: 1, Max: 1})
+	return opts[picks[0]]
 }
 
 // relocateReplaced returns the replaced asset from the battlefield to its

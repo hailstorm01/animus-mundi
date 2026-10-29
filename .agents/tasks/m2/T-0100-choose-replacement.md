@@ -4,7 +4,7 @@ title: When several replacements apply to one death, its controller chooses whic
 kind: shape
 tier: sonnet
 wave: G
-status: tests
+status: review
 branch: m2/T-0100-choose-replacement
 depends_on: [T-0101]
 claims: [decision:replacement, replacement:choice]
@@ -68,3 +68,14 @@ Synthetic cards only, reusing the helpers in `replacement_test.go` (`guardianStr
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g` fresh after the sync. #75 is applied by this task. #73 stays `open: before the first wave C task` (T-0098, T-0099 still to come); its status cell now names #75. #14 is a standing order. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no repeated targets); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Tests beyond the directive's five:** `TestFR_REP_001_ReplacementChoiceTimesOutToPrintedOrderWithinASource`, because `SVY-R23`'s timeout names a source's own replacements in printed order.
   - **Reuse:** no duplicate. `replacementsFor` takes `findReplacement`'s place rather than sitting beside it, and the timeout is `fixedOrderPicks` (the `DecideTarget`/`DecidePick` fallback), not a new order.
+- 2026-10-29 rules-test-author: Wrote the six listed tests; status `tests-review`.
+  - **Tests:** in `replacement_test.go`: `TestFR_REP_001_ControllerChoosesBetweenReplacementsForEachDeath`, `TestFR_REP_001_ReplacementChoiceTimesOutToFixedOrder`, `TestFR_REP_001_ReplacementChoiceTimesOutToPrintedOrderWithinASource`, `TestFR_REP_001_OneApplicableReplacementAsksNothing`, `TestFR_REP_001_LethalSourceIsStillAChoice`. In `replacement_kill_test.go`: `TestFR_REP_001_KillStepAsksForEachKill`. File-local helpers (in `replacement_test.go`): `replacementAsks`, `replaceSources`, `wantOffered`. No existing test edited; no `scenario_test.go` helper needed.
+  - **Compiles before implementation:** the tests read the question kind as `d.Kind.String() == "Replacement"`, not `DecideReplacement`, so the package builds. Before the engineer's work, five fail (every one that expects a question) and `OneApplicableReplacementAsksNothing` passes, since one replacement already asks nothing today.
+  - **Timeout test shape:** the sweep also hits the two guardian units (they are allied units), so they get Health 5 instead of placing victims out of reach. Expected damage is 3 on the Reserves guardian (1 sweep + 2 byproducts) and 1 on the Main Theater one.
+  - **Left out:** nothing.
+- 2026-10-29 lead-architect (wave G run, session 5): Tests approved (D4). Each matches `SVY-R23` and the FRD 01 lines it cites: one question per death in the fixed order, the options in `assetsByID` order, a lethal source offered, no question for a single replacement, and a timeout to §6's fixed order (Reserves before the Main Theater) and then printed order within a source. The deviation in `ReplacementChoiceTimesOutToFixedOrder` (guardians at Health 5, hit by the sweep, damage 3 and 1) is accepted: same rule, different setup. `alliedUnits` has `Other`, so the sweeper and killer are never victims and the question counts hold. Status `ready`; dispatching `kernel-engineer` (sonnet).
+- 2026-10-29 kernel-engineer: Implemented the Shape; status `review`.
+  - **Changed:** `replace.go`: `replacementOption`, `replacementsFor` in place of `findReplacement`, `replacedQueue` uses `len(replacementsFor)>0`, `replaceDeath` applies one with no question and calls `chooseReplacement` for several (labels add `(replacement n)` for a source with several printed replacements). `choice.go`: `DecideReplacement` appended, `String`, fallback case (gofmt realigned the const comments). `doc.go`: built list, Not built yet, Files.
+  - **Reuse:** no new fixed-order rule; the timeout is `fixedOrderPicks` via the DecideTarget/DecidePick fallback. No second loop over sources.
+  - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` ok; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
+  - **Look at:** chooseReplacement's label loop compares the replacement pointer to find its printed position.

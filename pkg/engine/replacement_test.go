@@ -317,3 +317,167 @@ func TestFR_REP_001_ActivePlayersReplacedDeathsGoFirst(t *testing.T) {
 	noOrderAsked(t, s, 0)
 	noOrderAsked(t, s, 1)
 }
+
+// replacementAsks returns the DecideReplacement questions (kind "Replacement")
+// put to player p, in order. It compares the kind's string so the helper reads
+// the decision events' kind the way replay does.
+func replacementAsks(s *scene, p PlayerID) []Decision {
+	var out []Decision
+	for _, d := range s.asked(p) {
+		if d.Kind.String() == "Replacement" {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// replaceSources returns the Source asset IDs of the "replace" events, in log order.
+func replaceSources(s *scene) []int {
+	var out []int
+	for _, e := range eventsOfKind(s.g.Log, "replace") {
+		out = append(out, e.Source)
+	}
+	return out
+}
+
+// wantOffered checks that decision d offers exactly the sources with the given IDs, in order.
+func wantOffered(t *testing.T, d Decision, ids ...int) {
+	t.Helper()
+	if len(d.Options) != len(ids) {
+		t.Fatalf("replacement question %q offers %d options, want %d (one per applicable replacement) (FR-REP-001, SVY-R23)", d.Prompt, len(d.Options), len(ids))
+	}
+	for i, id := range ids {
+		if d.Options[i].Ref != id {
+			t.Errorf("option %d of %q refers to asset %d, want %d (SVY-R11, SVY-R23)", i+1, d.Prompt, d.Options[i].Ref, id)
+		}
+	}
+}
+
+func TestFR_REP_001_ControllerChoosesBetweenReplacementsForEachDeath(t *testing.T) {
+	// SVY-R23: with two replacements applying, the dying asset's controller
+	// chooses, death by death.
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, guardianStructure(4))
+	b := s.put(0, ZoneMainTheater, guardianStructure(4))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{1}})
+	s.sweep(0, alliedUnits)
+	asks := replacementAsks(s, 0)
+	if len(asks) != 2 {
+		t.Fatalf("player 0 was asked %d replacement questions, want 2, one per death (SVY-R23)", len(asks))
+	}
+	for _, d := range asks {
+		wantOffered(t, d, a.ID, b.ID)
+	}
+	for _, u := range []*Asset{u1, u2} {
+		if s.alive(u) || !inHand(s.g.Players[0], u.Inst) || inDiscard(s.g.Players[0], u.Inst) {
+			t.Errorf("%s is replaced and returns to its owner's hand (FR-REP-001)", u)
+		}
+	}
+	wantReplaced(t, s, u1, u2)
+	if got := replaceSources(s); len(got) != 2 || got[0] != a.ID || got[1] != b.ID {
+		t.Errorf("replace events' sources = %v, want [%d %d]: the first death's chosen replacement is A's, the second's is B's (SVY-R23)", got, a.ID, b.ID)
+	}
+	s.wantDamage(a, 1)
+	s.wantDamage(b, 1)
+}
+
+func TestFR_REP_001_ReplacementChoiceTimesOutToFixedOrder(t *testing.T) {
+	// SVY-R23, SVY-R16: a timeout picks the first source in FR-MOD-001 §6's
+	// fixed order, Reserves before the Main Theater, though the Main Theater
+	// guardian is older. The guardians are allied units too, so the sweep hits
+	// each for 1; they have Health 5 to survive that and two byproducts.
+	s := newScene(t)
+	old := s.put(0, ZoneMainTheater, guardianUnit(5))
+	newer := s.put(0, ZoneReserves, guardianUnit(5))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	s.script(0, Answer{Timeout: true}, Answer{Timeout: true})
+	s.sweep(0, alliedUnits)
+	if n := len(replacementAsks(s, 0)); n != 2 {
+		t.Fatalf("player 0 was asked %d replacement questions, want 2 (SVY-R23)", n)
+	}
+	wantReplaced(t, s, u1, u2)
+	if got := replaceSources(s); len(got) != 2 || got[0] != newer.ID || got[1] != newer.ID {
+		t.Errorf("replace events' sources = %v, want both %d: a timeout picks the Reserves guardian first in §6's fixed order (SVY-R23, SVY-R16)", got, newer.ID)
+	}
+	s.wantDamage(newer, 3) // 1 from the sweep, 2 byproducts
+	s.wantDamage(old, 1)   // 1 from the sweep only
+}
+
+func TestFR_REP_001_ReplacementChoiceTimesOutToPrintedOrderWithinASource(t *testing.T) {
+	// SVY-R23: one source prints two applicable replacements; a timeout
+	// applies the first printed one (return to hand), not the second (deck).
+	s := newScene(t)
+	src := structure("Twin Guardian", 1, 4, Keywords{})
+	toHand := ability.Replacement{Event: ability.WouldBeDestroyed, Filter: alliedUnits,
+		Steps: []ability.Step{{Op: ability.OpReturnToHand, Subject: ability.SubjectReplaced}}}
+	toDeck := ability.Replacement{Event: ability.WouldBeDestroyed, Filter: alliedUnits,
+		Steps: []ability.Step{{Op: ability.OpPutOnDeck, Subject: ability.SubjectReplaced}}}
+	src.Ability = &ability.Def{Replacements: []ability.Replacement{toHand, toDeck}}
+	g := s.put(0, ZoneMainTheater, src)
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	s.script(0, Answer{Timeout: true})
+	s.sweep(0, alliedUnits)
+	asks := replacementAsks(s, 0)
+	if len(asks) != 1 {
+		t.Fatalf("player 0 was asked %d replacement questions, want 1: two replacements apply to the one death (SVY-R23)", len(asks))
+	}
+	wantOffered(t, asks[0], g.ID, g.ID)
+	wantReplaced(t, s, u)
+	if s.alive(u) || !inHand(s.g.Players[0], u.Inst) {
+		t.Errorf("a timeout applies the source's first printed replacement, returning the unit to hand (SVY-R23)")
+	}
+	for _, in := range s.g.Players[0].Deck {
+		if in == u.Inst {
+			t.Errorf("the second printed replacement (put on deck) applied, want the first (SVY-R23)")
+		}
+	}
+}
+
+func TestFR_REP_001_OneApplicableReplacementAsksNothing(t *testing.T) {
+	// SVY-R23: a choice only exists when several replacements apply.
+	s := newScene(t)
+	g := s.put(0, ZoneMainTheater, guardianStructure(3))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	s.script(0, Answer{Picks: []int{1}})
+	s.sweep(0, alliedUnits)
+	for p := PlayerID(0); p < 2; p++ {
+		if n := len(replacementAsks(s, p)); n != 0 {
+			t.Errorf("player %d was asked %d replacement questions, want none: only one replacement applies (SVY-R23)", p, n)
+		}
+	}
+	wantReplaced(t, s, u)
+	if got := replaceSources(s); len(got) != 1 || got[0] != g.ID {
+		t.Errorf("replace events' sources = %v, want [%d] (FR-REP-001)", got, g.ID)
+	}
+	if s.alive(u) || !inHand(s.g.Players[0], u.Inst) {
+		t.Errorf("the death is replaced and the unit returns to hand (FR-REP-001)")
+	}
+}
+
+func TestFR_REP_001_LethalSourceIsStillAChoice(t *testing.T) {
+	// SVY-R20, SVY-R23: a lethal source still applies until the sweep destroys
+	// it, so it is offered. The unit is oldest, so its death is replaced first.
+	s := newScene(t)
+	u := s.put(0, ZoneMainTheater, unit("Victim", 1, 1, Keywords{}))
+	a := s.put(0, ZoneMainTheater, guardianUnit(1))
+	b := s.put(0, ZoneReserves, guardianUnit(4))
+	s.script(0, Answer{Picks: []int{0}})
+	s.sweep(0, alliedUnits)
+	asks := replacementAsks(s, 0)
+	if len(asks) != 1 {
+		t.Fatalf("player 0 was asked %d replacement questions, want 1: only the unit's death has two replacements (SVY-R23)", len(asks))
+	}
+	wantOffered(t, asks[0], a.ID, b.ID)
+	wantReplaced(t, s, u, a)
+	if got := replaceSources(s); len(got) != 2 || got[0] != a.ID || got[1] != b.ID {
+		t.Errorf("replace events' sources = %v, want [%d %d]: the unit's chosen lethal guardian A, then B for A's own death (SVY-R20, SVY-R23)", got, a.ID, b.ID)
+	}
+	for _, x := range []*Asset{u, a} {
+		if s.alive(x) || !inHand(s.g.Players[0], x.Inst) || inDiscard(s.g.Players[0], x.Inst) {
+			t.Errorf("%s is replaced and returns to its owner's hand (SVY-R20)", x)
+		}
+	}
+}
