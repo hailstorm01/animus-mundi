@@ -61,17 +61,18 @@ func TestFR_TRG_003_NonActiveIsRelativeToTheTurn(t *testing.T) {
 
 // --- FR-TRG-002 / FR-TRG-003: each player orders their own death triggers ---
 
-// berserkKillsTwo has player 0's Berserker kill both of player 1's units in one
-// sweep. Player 1's deck top is A, B.
-func berserkKillsTwo(s *scene, d, sec *Card) []*Instance {
+// sweepKillsTwo has player 0 deploy a unit whose deploy trigger deals 5 damage
+// to every opposing unit, so both of player 1's units die in one sweep. Player
+// 1's deck top is A, B.
+func sweepKillsTwo(s *scene, d, sec *Card) []*Instance {
 	s.t.Helper()
 	cards := s.onTop(1, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, unit("Berserker", 5, 9, Keywords{Berserk: 2}))
 	dv := s.put(1, ZoneMainTheater, d)
 	sv := s.put(1, ZoneMainTheater, sec)
-	s.do(s.cleave(att, dv, sv))
+	opposing := ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}
+	s.deployFromHand(0, trigUnit("Sweeper", deployTrigger(allDamage(5, opposing))))
 	if s.alive(dv) || s.alive(sv) {
-		s.t.Fatalf("precondition: the defender and the secondary target both die in one sweep")
+		s.t.Fatalf("precondition: both of player 1's units die in one sweep")
 	}
 	return cards
 }
@@ -80,7 +81,7 @@ func TestFR_TRG_002_NonActivePlayerOrdersTheirOwnDeathTriggers(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	s.script(1, Answer{Picks: []int{0, 1}})
-	berserkKillsTwo(s,
+	sweepKillsTwo(s,
 		mortal("Defender", 1, 1, killedTrigger(drawN(1))),
 		mortal("Bystander", 0, 1, killedTrigger(scratchN(1))))
 	asked := s.asked(1)
@@ -101,7 +102,7 @@ func TestFR_TRG_003_NonActivePlayersOrderAnswerIsApplied(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	s.script(1, Answer{Picks: []int{1, 0}})
-	cards := berserkKillsTwo(s,
+	cards := sweepKillsTwo(s,
 		mortal("Defender", 1, 1, killedTrigger(drawN(1))),
 		mortal("Bystander", 0, 1, killedTrigger(scratchN(1))))
 	p := s.g.Players[1]
@@ -112,7 +113,7 @@ func TestFR_TRG_003_NonActivePlayersOrderAnswerIsApplied(t *testing.T) {
 	s2 := newScene(t)
 	s2.script(0)
 	s2.script(1, Answer{Picks: []int{0, 1}})
-	cards2 := berserkKillsTwo(s2,
+	cards2 := sweepKillsTwo(s2,
 		mortal("Defender", 1, 1, killedTrigger(drawN(1))),
 		mortal("Bystander", 0, 1, killedTrigger(scratchN(1))))
 	p2 := s2.g.Players[1]
@@ -159,7 +160,7 @@ func TestFR_TRG_003_SimultaneousDeathsFallBackToBattlefieldOrder(t *testing.T) {
 	// The earlier asset in battlefield order (Defender, Draw) is placed first and
 	// resolves last; the later one (Bystander, Scratch) resolves first.
 	s := newScene(t)
-	cards := berserkKillsTwo(s,
+	cards := sweepKillsTwo(s,
 		mortal("Defender", 1, 1, killedTrigger(drawN(1))),
 		mortal("Bystander", 0, 1, killedTrigger(scratchN(1))))
 	p := s.g.Players[1]

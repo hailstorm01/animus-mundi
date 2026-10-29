@@ -135,7 +135,7 @@ func TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires(t *testing.T) {
 	s.wantScratches(1, 0, "Unbowed fires for damage to its own asset only (FR-KWD-002a)")
 }
 
-// --- combat: both combatants, Berserk ---
+// --- combat: both combatants ---
 
 // Covers: FR-REP-004, FR-CBT-002
 func TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed(t *testing.T) {
@@ -147,37 +147,14 @@ func TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed(t *testing.T) {
 	s.wantScratches(1, 2, "the defender took combat damage, so its Unbowed fires (FR-REP-004 Stage 5)")
 }
 
-// Covers: FR-KWD-002o
-func TestFR_KWD_002a_BerserkCleaveDamageFiresTheSecondarysUnbowed(t *testing.T) {
+// Covers: FR-REP-004, FR-CBT-002
+func TestFR_KWD_002a_RetaliationOnTheAttackerFiresItsUnbowed(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 9, Keywords{}))
-	sec := s.put(1, ZoneMainTheater, bowed("Bystander", 0, 5, Keywords{}, unbowed(nil, scratchN(1))))
-	s.do(s.cleave(att, def, sec))
-	s.wantDamage(sec, 2)
-	s.wantScratches(1, 1, "cleave damage that reaches Health fires the secondary's Unbowed (Unb x Bsk, FR-REP-004)")
-}
-
-// Covers: FR-KWD-002b, FR-KWD-002o
-func TestFR_KWD_002a_BerserkCleaveReducedToZeroDoesNotFireUnbowed(t *testing.T) {
-	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Berserker", 2, 9, Keywords{Berserk: 2}))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 9, Keywords{}))
-	sec := s.put(1, ZoneMainTheater, bowed("Resister", 0, 5, Keywords{Resistant: 2}, unbowed(nil, scratchN(1))))
-	s.do(s.cleave(att, def, sec))
-	s.wantDamage(sec, 0)
-	s.wantScratches(1, 0, "cleave reduced to 0 by Resistant is not taken (Unb x Res, FR-REP-004 Stage 5)")
-}
-
-// Covers: FR-KWD-002o
-func TestFR_KWD_002a_RetaliationOnABerserkAttackerFiresItsUnbowed(t *testing.T) {
-	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, bowed("Berserker", 2, 9, Keywords{Berserk: 2}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, bowed("Attacker", 2, 9, Keywords{}, unbowed(nil, scratchN(1))))
 	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{}))
-	sec := s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, Keywords{}))
-	s.do(s.cleave(att, def, sec))
+	s.do(s.attack(att, def))
 	s.wantDamage(att, 2)
-	s.wantScratches(0, 1, "retaliation on a Berserk attacker fires the attacker's Unbowed (Unb x Bsk, FR-REP-004)")
+	s.wantScratches(0, 1, "retaliation damage to the attacker fires the attacker's Unbowed (FR-REP-004)")
 }
 
 // --- non-combat damage and separate instances ---

@@ -2,8 +2,6 @@
 
 package engine
 
-import "animus-mundi/pkg/engine/ability"
-
 // declareAttack is Steps 1 and 2 of combat (FR-CBT-002).
 func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
@@ -49,36 +47,6 @@ func (g *Game) hasGuardian(p PlayerID) bool {
 	return false
 }
 
-// CanCleave reports whether sec is a legal Berserk secondary target.
-func (g *Game) CanCleave(att, def, sec *Asset) bool {
-	if att.Printed().Type != TypeUnit || g.Keywords(att).Berserk <= 0 {
-		return false
-	}
-	if def.Zone != ZoneMainTheater || sec.ID == def.ID {
-		return false // Berserk only cleaves when attacking a Main Theater asset
-	}
-	return g.legalSecondary(att, sec)
-}
-
-// hasCleaveTarget reports whether any legal Berserk secondary exists for this
-// attack, which makes choosing one mandatory (FR-KWD-002o).
-func (g *Game) hasCleaveTarget(att, def *Asset) bool {
-	for _, sec := range g.Theater {
-		if g.CanCleave(att, def, sec) {
-			return true
-		}
-	}
-	return false
-}
-
-// legalSecondary applies normal targeting rules to a Berserk secondary target:
-// an opposing Main Theater asset the attacker's controller may choose. Ward
-// blocks it; Ethereal and Guardian restrict only attacks (FR-KWD-002o).
-func (g *Game) legalSecondary(att, sec *Asset) bool {
-	return sec.Zone == ZoneMainTheater &&
-		g.legalTarget(att.Controller, att.ID, ability.Filter{Allegiance: ability.AllegianceOpposing}, sec)
-}
-
 // inCombatZone reports whether a is where it can fight: a Headquarters in the
 // Headquarters Zone, anything else in the Main Theater.
 func inCombatZone(a *Asset) bool {
@@ -104,20 +72,13 @@ func (g *Game) resolveAttack(it *StackItem) {
 	}
 	if def == nil || !inCombatZone(def) || def.Controller == attController {
 		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
-			"attack fizzles: the defender is gone, so there is no Berserk cleave")
+			"attack fizzles: the defender is gone")
 		return
 	}
 
 	att := g.Asset(it.Source)
 	if att == nil || !inCombatZone(att) {
-		// Attacker-side fizzle: no combat damage, but Berserk cleave still
-		// happens from the attacker's last-known characteristics (FR-CBT-002).
-		src := att
-		if src == nil {
-			src = g.LastKnown(it.Source)
-		}
 		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source}, "attack fizzles: the attacker is gone")
-		g.cleave(it, src, def)
 		return
 	}
 
@@ -127,26 +88,9 @@ func (g *Game) resolveAttack(it *StackItem) {
 		"%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
 	g.dealDamage(att, def, attPower, true)
 	g.dealDamage(def, att, defPower, true)
-	// Berserk cleave is committed within Step 3, before the death sweep,
-	// whether or not either combatant dies (FR-KWD-002o).
-	g.cleave(it, att, def)
-	// Only the declared attacker fires, and only for the defender: retaliation
-	// and a cleave kill do not count (FR-CBT-002 Step 3).
+	// Only the declared attacker fires, and only for the defender: a
+	// retaliation kill does not count (FR-CBT-002 Step 3).
 	if g.IsLethal(def) {
 		g.fireCombatKill(att)
 	}
-}
-
-// cleave deals Berserk N non-combat damage to the attack's secondary target if
-// it is still legal (two-stage verification, FR-TGT-003).
-func (g *Game) cleave(it *StackItem, att, def *Asset) {
-	if att == nil || it.Secondary == 0 || att.Printed().Type != TypeUnit || def.Zone != ZoneMainTheater {
-		return
-	}
-	n := g.Keywords(att).Berserk
-	sec := g.Asset(it.Secondary)
-	if n <= 0 || sec == nil || !g.legalSecondary(att, sec) {
-		return
-	}
-	g.dealDamage(att, sec, n, false)
 }

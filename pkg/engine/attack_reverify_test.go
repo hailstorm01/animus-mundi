@@ -48,28 +48,27 @@ func (s *scene) midStack(mutate func(), target *Asset) {
 
 func mayDraw() ability.Trigger { return attackTrig(true, nil, drawN(1)) }
 
-// sides is the board of the side-change scenes: a Berserk 2 attacker (power 3)
-// of player 0 attacks Defender (power 2) with Bystander as its Berserk secondary.
+// sides is the board of the side-change scenes: player 0's attacker (power 3)
+// attacks Defender (power 2).
 type sides struct {
-	s             *scene
-	att, def, sec *Asset
+	s        *scene
+	att, def *Asset
 }
 
 func newSides(t *testing.T) *sides {
 	t.Helper()
 	s := newScene(t)
 	b := &sides{s: s}
-	b.att = s.put(0, ZoneMainTheater, striker("Berserker", 3, 9, Keywords{Berserk: 2}, mayDraw()))
+	b.att = s.put(0, ZoneMainTheater, striker("Attacker", 3, 9, Keywords{}, mayDraw()))
 	b.def = s.put(1, ZoneMainTheater, unit("Defender", 2, 9, Keywords{}))
-	b.sec = s.put(1, ZoneMainTheater, unit("Bystander", 0, 9, Keywords{}))
 	return b
 }
 
-func (b *sides) attack() { b.s.do(b.s.cleave(b.att, b.def, b.sec)) }
+func (b *sides) attack() { b.s.do(b.s.attack(b.att, b.def)) }
 
 func (b *sides) wantFizzle() {
 	b.s.t.Helper()
-	if !b.s.alive(b.att) || !b.s.alive(b.def) || !b.s.alive(b.sec) {
+	if !b.s.alive(b.att) || !b.s.alive(b.def) {
 		b.s.t.Fatalf("no combatant should have been destroyed")
 	}
 	if b.att.Damage != 0 {
@@ -78,12 +77,9 @@ func (b *sides) wantFizzle() {
 	if b.def.Damage != 0 {
 		b.s.t.Errorf("the attack fizzles, so there is no combat damage to the defender (FR-CBT-002 SVY-R8): defender damage %d", b.def.Damage)
 	}
-	if b.sec.Damage != 0 {
-		b.s.t.Errorf("a fizzle caused by the defender failing its check has no Berserk cleave (KIM-B06, FR-KWD-002o): secondary damage %d", b.sec.Damage)
-	}
 }
 
-// Covers: FR-KWD-002o, FR-TGT-003
+// Covers: FR-TGT-003
 func TestFR_CBT_002_DefenderChangesSidesFizzles(t *testing.T) {
 	b := newSides(t)
 	b.s.midStack(func() { b.def.Controller = 0 }, nil)
@@ -91,24 +87,12 @@ func TestFR_CBT_002_DefenderChangesSidesFizzles(t *testing.T) {
 	b.wantFizzle()
 }
 
-// Covers: FR-KWD-002o, FR-TGT-003
+// Covers: FR-TGT-003
 func TestFR_CBT_002_AttackerChangesSidesFizzles(t *testing.T) {
 	b := newSides(t)
 	b.s.midStack(func() { b.att.Controller = 1 }, nil)
 	b.attack()
 	b.wantFizzle()
-}
-
-// Covers: FR-CBT-002, FR-TGT-003
-func TestFR_KWD_002o_SecondaryChangesSidesDissipates(t *testing.T) {
-	b := newSides(t)
-	b.s.midStack(func() { b.sec.Controller = 0 }, nil)
-	b.attack()
-	b.s.wantDamage(b.def, 3) // the attack still resolves: attacker power 3
-	b.s.wantDamage(b.att, 2) // and the defender retaliates: defender power 2
-	if b.sec.Damage != 0 {
-		t.Errorf("a secondary that is no longer an opposing asset of the attacker's controller is illegal, so the cleave dissipates (FR-KWD-002o, FR-TGT-003): secondary damage %d", b.sec.Damage)
-	}
 }
 
 // An opposing target of a chosen-target trigger that gains Ward before the
