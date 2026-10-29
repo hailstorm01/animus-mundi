@@ -4,7 +4,7 @@ title: An Attack has one target, so Action and StackItem lose Secondary (directi
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (d), second half, with #72; the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0093-secondary-fields
 depends_on: [T-0092]
 claims: [field:Action.Secondary-removed, field:StackItem.Secondary-removed, file:pkg/engine/actions.go, file:pkg/engine/combat.go, file:pkg/engine/stack.go]
