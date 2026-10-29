@@ -4,7 +4,7 @@ title: The enum convention is written down, and ValueFixed becomes ValueSourceFi
 kind: harness
 tier: flash
 wave: B.2 (board directive #70, the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0095-enum-convention
 depends_on: [T-0094]
 claims: [const:ValueSourceFixed]
