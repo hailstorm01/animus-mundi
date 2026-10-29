@@ -42,14 +42,13 @@ const (
 
 // Action is one manual declaration. Fields not used by Kind are ignored.
 type Action struct {
-	Kind      ActionKind
-	Player    PlayerID
-	Asset     int      // acting asset: Generate, March, Attack, Scratch
-	Resource  Resource // Generate
-	Card      int      // Deploy: Instance.ID in hand
-	Zone      Zone     // Deploy: declared battlefield zone
-	Target    int      // Attack: primary defender
-	Secondary int      // Attack: Berserk secondary target (0 = none)
+	Kind     ActionKind
+	Player   PlayerID
+	Asset    int      // acting asset: Generate, March, Attack, Scratch
+	Resource Resource // Generate
+	Card     int      // Deploy: Instance.ID in hand
+	Zone     Zone     // Deploy: declared battlefield zone
+	Target   int      // Attack: the defender
 }
 
 // Apply validates and executes a, then resolves the stack until it is empty.
@@ -173,9 +172,6 @@ func (g *Game) check(a Action) error {
 		def := g.Asset(a.Target)
 		if def == nil || !g.CanAttack(att, def) {
 			return illegal("illegal combat target (FR-CBT-001)")
-		}
-		if a.Secondary != 0 {
-			return illegal("an Attack has no secondary target")
 		}
 	case ActScratch:
 		if p.HQ == nil || a.Asset != p.HQ.ID {
