@@ -4,7 +4,7 @@ title: The clients stop reading an Attack's secondary target (directive #68 part
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (c), with #72; the user's code review, before wave C)
-status: review
+status: done
 branch: m2/T-0091-berserk-clients
 depends_on: [T-0090]
 claims: [reader:secondary-removed, file:pkg/eventlog/replay.go, file:cmd/cardtown/play_screen.go]
@@ -113,3 +113,10 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
     5. Only allowed files touched: `git -C W diff autoloop/m2-wave-b.2 --stat` listed only `pkg/eventlog/replay.go`, `pkg/view/view.go`, `cmd/cardtown/play_screen.go`, `pkg/view/view_test.go`, and `.agents/tasks/m2/T-0091-berserk-clients.md`.
     6. Quality gates: `go -C W tool task check` passed (gofmt, `go vet`, all package tests, `cardtown lint --all`). `go -C W tool task sim` passed clean (200 games, all invariants held).
   - Handed off to reviewer.
+- 2026-10-28, lead-architect (wave B.2 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-b.2` as 43a709d. Flash run `1d08ba24-0d55-4d73-911d-336819e485d2`: exit 0, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-b.2...m2/T-0091-berserk-clients` (08d410c test, ecb4bfd code):
+  - Scope: only `replay.go`, `view.go`, `play_screen.go`, `view_test.go` and this file changed. The `test(T-0091)` commit holds the one test edit and no code; `go test ./...` passes on it (re-run on the old code) and on the tip.
+  - The code and test edits match the task's text line for line. The task named the test `TestPlayerView`; its real name is `TestView_Case1_Contents`. The line number and the edit were right, and the engineer edited that line. The implementation commit's `feat(engine)` prefix is wrong for client code; a nit, not worth a round.
+  - Fences and reuse: no card name, no new shape, nothing added; the engine is untouched.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 2 prints nothing; case 3 lists exactly the five `pkg/engine` files left for part (d); `go tool task sim-compare -- autoloop/m2-wave-b.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 63.5% / P1 34.5% / draws 2.0% (unchanged).
+  - Reviewer's events check: starter `-events` files from both builds have 104197 lines each and differ in exactly 200 lines, each game's `match-start` `revision`; with it set aside they are identical.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch.
