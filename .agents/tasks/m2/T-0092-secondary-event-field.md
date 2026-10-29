@@ -4,7 +4,7 @@ title: Events carry no secondary target, and doc.go stops listing Berserk (direc
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (d), first half, with #72; the user's code review, before wave C)
-status: ready
+status: review
 branch: m2/T-0092-secondary-event-field
 depends_on: [T-0091]
 claims: [field:Event.Secondary-removed, file:pkg/engine/events.go, file:pkg/engine/doc.go]
@@ -74,10 +74,24 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-b.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
+- 2026-10-28, kernel-engineer (T-0092): implemented first half of directive #68 part (d).
+  - Changes:
+    - `pkg/engine/events.go`: in `emitAction`'s `ActAttack` case, dropped assignment to `e.Secondary`; in `Event` struct, deleted `Secondary int` field and kept `Resource string`.
+    - `pkg/engine/stack.go`: in `push`'s `StackAttack` case, dropped assignment to `e.Secondary`. Left `StackItem.Secondary` untouched for T-0093.
+    - `pkg/engine/doc.go`: removed `Berserk N.` from line 14 keywords list.
+  - Reused: no new shapes or fields needed; purely removed `Event.Secondary` field and doc reference.
+  - Acceptance Cases & verification results:
+    1. `git -C W diff autoloop/m2-wave-b.2 -- "*_test.go"` printed nothing (clean), and `go -C W test ./...` passed.
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-b.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-b.2 byte for byte, exit codes included`.
+    3. `git -C W grep -n -i secondary -- pkg/engine/events.go pkg/engine/doc.go` exited 1 with no output.
+    4. `git -C W grep -l -i -E "berserk|secondary|cleave" -- pkg cmd ":!pkg/toolchain/linter"` printed exactly `pkg/engine/actions.go`, `pkg/engine/combat.go`, `pkg/engine/stack.go`.
+    5. `git -C W diff autoloop/m2-wave-b.2 --stat` listed only `pkg/engine/doc.go`, `pkg/engine/events.go`, `pkg/engine/stack.go`, and `.agents/tasks/m2/T-0092-secondary-event-field.md`.
+    6. `go -C W tool task check` passed all checks (gofmt, vet, test, linters). `go -C W tool task sim` passed clean (200 matches, all invariants held).
+  - Commit: `feat(engine): events carry no secondary target and doc.go stops listing Berserk (T-0092)` (00f0376). Handing off to `lead-architect` for review.
 - 2026-10-28, lead-architect (wave B.2 run, session 4): synced `main`'s 90789c4 (lead D7: removals name literal paths) into the run branch as 78b42bc. Wrote this task from board directive #68 part (d), the next of wave B.2's blocking directives in board order. Part (d) edits five non-test files, so under the D2 size rule it is two tasks: this one (the `secondary` event field and `doc.go`) and T-0093 (`Action.Secondary`, `StackItem.Secondary`), written in the same commit and `queued`. Each half compiles and passes on its own. Wrote decision record 0006, which supersedes ADR-0005 for the `secondary` field, in this commit, as #68 asks before part (d) merges; ADR-0005's status line and the decisions index point to it. Harness, so it goes straight to `ready`; tier `flash`, the harness default, and every command here is on the headless allow-list. Waiting directives checked: none has triggered (#8: this task doesn't touch `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #69 and #70 stay open for the sessions after T-0093. Next: `kernel-engineer` on Flash.

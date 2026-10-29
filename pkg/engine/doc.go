@@ -11,7 +11,7 @@
 //   - 3-step combat, symmetric retaliation, 5-stage damage mitigation,
 //     state-based death sweeps, HQ defeat, empty-deck loss and Match Draws.
 //   - Standalone keywords: Resistant N, Stalwart, Aggressive N, Ethereal,
-//     Ward, Versatile, Guardian, Armor N, Deploys Exhausted, Berserk N.
+//     Ward, Versatile, Guardian, Armor N, Deploys Exhausted.
 //   - Ability shapes as plain data in pkg/engine/ability, and card definitions
 //     keyed by card name in pkg/engine/cards. Engine code never names a card
 //     (cardtown lint fences).

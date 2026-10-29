@@ -53,7 +53,7 @@ func (g *Game) push(item *StackItem) {
 	case StackMarch:
 		what = "March"
 	case StackAttack:
-		e.Target, e.Secondary = item.Target, item.Secondary
+		e.Target = item.Target
 		what = "Attack"
 	case StackScratch:
 		what = "Scratch"
