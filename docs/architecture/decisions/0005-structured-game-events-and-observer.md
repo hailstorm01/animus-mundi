@@ -1,6 +1,6 @@
 # 0005. Structured game events, one read-only observer, and turn-start snapshots
 
-- **Status:** Accepted
+- **Status:** Accepted; the `secondary` event field superseded by [0006](0006-attacks-carry-no-secondary-target.md)
 - **Date:** 2026-10-20
 
 ## Context

@@ -95,7 +95,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
 
    Every task is a pure move. Done when #62–#67 are `applied`, each task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
 6b. **Wave B.2, cleanup (harness), added 2026-10-28 from the user's code review (board directives #68–#71).** It goes after wave B.1 and before wave C. Like B.1 it has no survey row and no cards, so a wave run of it writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks, in board order:
-   - #68: Berserk leaves the kernel (the keyword, the secondary target, cleave, and their fields and readers), in four parts under the size rule. The user expects the keyword to be redesigned (survey `R12`), so it is not kept half-built. FRD 01's Berserk text waits for `R12`.
+   - #68: Berserk leaves the kernel (the keyword, the secondary target, cleave, and their fields and readers), in five parts under the size rule (part (d) became T-0092 and T-0093). The user expects the keyword to be redesigned (survey `R12`), so it is not kept half-built. FRD 01's Berserk text waits for `R12`.
    - #69: attack legality moves from `actions.go`'s `check` to `combat.go` (pure move).
    - #70: the enum convention in `ability`'s package comment, and `ValueFixed` renamed to `ValueSourceFixed`.
 
