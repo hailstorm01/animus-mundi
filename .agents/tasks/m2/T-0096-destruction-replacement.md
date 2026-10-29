@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: tests-review
+status: ready
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -98,3 +98,15 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - Deviation from the suggested source: the guardian in the order, byproduct, filter, face-down and non-active tests is a structure, so the unit sweeper does not also damage it (the task's own order case needs the source to take only the byproduct damage). The same-sweep ruling test uses a unit guardian. The sweeper is a deployed unit whose deploy trigger deals 1 damage to a filter.
   - Order tests expect one `DecideOrder` per player with the queued deaths as options in oldest-first order, so picks `[2,0,1]` mean the third unit is replaced first. The unscripted-seat cases rely on the default chooser's timeout fallback.
   - Left out, as the task says: kill steps, two replacements for one death, a Scratch Company filter, two players' replacements in one sweep.
+- 2026-10-29 lead-architect (D4): **Tests approved, `ready`.** Checked the 10 tests in 935e42b against `FR-REP-001` (lines 450, 453, 455, 456), `SVY-R5`, line 218 (`FR-ZON-004`, `FR-ZON-005`) and the user ruling of 2026-10-29. Each expected outcome follows from the cited text or the task's binding Shape:
+  - the replaced unit goes to hand, not the discard pile, with no death trigger and no `destroy` event;
+  - an opposing unit outside the filter dies normally;
+  - the order answer, and the oldest-first fallback, decide which deaths a 2-Health source absorbs. The source is destroyed before the unreplaced death, at the interim sweep;
+  - a source lethal in the same sweep replaces all three deaths, then dies;
+  - the byproduct's damage trigger is placed after the sweep;
+  - a face-down unit returns as its printed instance, with no `Card` on its `leave` event;
+  - the non-active player orders their own deaths.
+  - **Structure source:** using a structure in most tests is sound. It keeps the sweeper's damage off the source, so only byproducts count.
+  - **Fallback:** the fallback cases rely on a seat with no chooser. `choose` applies the `FR-MOD-001` §6 fallback there (collection order for `DecideOrder`), so nothing new is needed.
+  - **Helpers:** every helper used exists (`putScratch`, `allDamage`, `unbowed`, `healSelf`, `mortal`, `killedTrigger`, `drawN`, `deployTrigger`, `trigUnit`, `structure`, `inHand`, `inDiscard`, `eventsOfKind`, `asked`, `alive`, `wantDamage`, `script`, `deployFromHand`).
+  - **Events:** the `replace` and `leave` kinds are a public contract (ADR-0005) fixed by the Shape, so asserting on them is not an implementation detail.
