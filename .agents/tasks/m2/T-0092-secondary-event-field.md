@@ -4,7 +4,7 @@ title: Events carry no secondary target, and doc.go stops listing Berserk (direc
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (d), first half, with #72; the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0092-secondary-event-field
 depends_on: [T-0091]
 claims: [field:Event.Secondary-removed, file:pkg/engine/events.go, file:pkg/engine/doc.go]
