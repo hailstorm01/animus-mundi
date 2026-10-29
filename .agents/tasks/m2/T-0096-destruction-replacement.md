@@ -4,7 +4,7 @@ title: Destruction replacement at the death sweep, one death at a time in its co
 kind: shape
 tier: sonnet
 wave: G
-status: review
+status: changes
 branch: m2/T-0096-destruction-replacement
 depends_on: []
 claims: [replacement:would-be-destroyed, subject:replaced, sweep:per-entity, event:replace, event:leave]
@@ -115,3 +115,10 @@ To be written in `pkg/engine/replacement_test.go`, with synthetic cards only. Th
   - **Sweep (`damage.go`):** `deathSweep` now calls `sweepDeaths`. With an empty queue it does exactly the old thing (HQ losses noted, one `destroyAll`, same order). With a queue, each replaced death is followed by a recursive sweep of assets lethal now and not in the `seen` set (every asset any level of this sweep has taken up), so the outer sweep's pending deaths are never swept early. Then the rest of `dying` that is still on the battlefield and lethal is destroyed together. The `leave` event is logged with no `Card`.
   - **Look closely:** `leave` is logged before the asset leaves (so `String()` still names it); an HQ is never queued unless a filter matches it (none do in M2).
   - **Commands:** `go test ./pkg/engine -run 'TestFR_REP_001|TestFR_ZON_004_FaceDownUnitReturnedToHand'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare` PASS (byte for byte).
+- 2026-10-29 lead-architect (D5, round 1): **Changes requested (one note).**
+  - **Scope:** `git diff main...dd1f7fc` changes only the four Allowed Files, this task file and the test file. `replacement_test.go` and `scenario_test.go` are unchanged since 935e42b.
+  - **Fences and placement:** no card name in engine code. The replacement logic sits in the new `replace.go` in `pkg/engine`, as the Boundaries table gives it.
+  - **Reuse:** `runSteps` is the one step loop. HQ-loss marking moved into `destroyDying` and is not copied. `replacedQueue` builds its `DecideOrder` the way `flushTriggers` does, per player, active player first, asking only with two or more. I don't count it as a duplicate under D2.0: they implement two different rules (`FR-TRG-003` for triggers, and the lead's reading in design note Open Question 13 for replaced deaths), so a change to one would not require the other. The fallback and fast path both live in `choose`.
+  - **Rules fidelity:** the empty-queue path is the old sweep (`newlyLethal` walks `g.Assets()` in the same order). `seen` keeps interim sweeps off the outer sweep's pending deaths, as Shape step 4 requires. A queued death whose source left at an interim sweep falls through to `rest` and is destroyed normally. `relocateReplaced` logs `leave` with no `Card`, before the asset leaves, so its name still resolves.
+  - **Gates, re-run by the reviewer in a review worktree (dd1f7fc):** `go tool task check` exits 0. `go tool task sim` is clean: P0 63.5% / P1 34.5% / draws 2.0% (unchanged), every invariant holds and the monitors found no violation. `go tool task sim-compare` passes byte for byte against `main`.
+  - **Note 1:** `deathSweep`'s doc comment (`damage.go`, just above `func (g *Game) deathSweep()`) still says it "destroys every lethal asset simultaneously", which is no longer true. Replace its first sentence with: `deathSweep handles every lethal asset (sweepDeaths): deaths a replacement applies to are replaced one at a time in their controller's order (SVY-R5), and the rest are destroyed simultaneously. Then it applies the match-loss checks: HQ defeat and empty-deck draws (FR-LAY-002, FR-CBT-003, FR-WIN-001).` Keep the rest of the comment. Comment only: no code or test change, so re-run `go tool task check` and `go tool task sim-compare`.
