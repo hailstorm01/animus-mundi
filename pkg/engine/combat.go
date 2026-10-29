@@ -6,7 +6,7 @@ package engine
 func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
 	g.exhaust(att)
-	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target, Secondary: a.Secondary})
+	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target})
 	g.logEvent(Event{Kind: "attack", Player: int(a.Player), Source: att.ID, Target: a.Target},
 		"%s attacks %s", att, g.Asset(a.Target))
 	// Step 2: attack triggers enqueue on top of the Attack action; Apply's

@@ -23,9 +23,8 @@ type StackItem struct {
 	Inst *Instance // StackDeploy: the card on the stack
 	Zone Zone      // StackDeploy: declared zone; StackMarch: origin zone
 
-	Source    int // asset ID: marching unit, attacker, scratching HQ
-	Target    int // StackAttack: primary defender
-	Secondary int // StackAttack: Berserk secondary target, 0 if none
+	Source int // asset ID: marching unit, attacker, scratching HQ
+	Target int // StackAttack: the defender
 
 	Effect  ability.Effect  // StackAbility: the effect resolving (Source is its source asset)
 	Chosen  [][]int         // StackAbility: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
