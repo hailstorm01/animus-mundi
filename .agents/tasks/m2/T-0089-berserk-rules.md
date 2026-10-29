@@ -4,7 +4,7 @@ title: Berserk's rules leave the kernel, so an Attack has no secondary target an
 kind: harness
 tier: sonnet
 wave: B.2 (board directive #68 part (a), with #72's changes; the user's code review, before wave C)
-status: ready
+status: in-progress
 branch: m2/T-0089-berserk-rules
 depends_on: [T-0088]
 claims: [rule:berserk-secondary-removed, func:CanCleave, func:hasCleaveTarget, func:legalSecondary, func:cleave, file:pkg/engine/combat.go]
