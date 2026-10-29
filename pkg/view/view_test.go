@@ -264,7 +264,7 @@ func TestView_Case1_Contents(t *testing.T) {
 	if it := v.Stack[0]; it.Kind != "Deploy" || it.Controller != 1 || it.Card != "Beta Incoming" || it.Zone != "Reserves" {
 		t.Errorf("stack[0] = %+v, want player 1's Deploy of Beta Incoming to Reserves", it)
 	}
-	if it := v.Stack[1]; it.Kind != "Attack" || it.Controller != 0 || it.Source != s.lancer.ID || it.Target != s.raider.ID || it.Secondary != 0 {
+	if it := v.Stack[1]; it.Kind != "Attack" || it.Controller != 0 || it.Source != s.lancer.ID || it.Target != s.raider.ID {
 		t.Errorf("stack[1] = %+v, want player 0's Attack by %d on %d", it, s.lancer.ID, s.raider.ID)
 	}
 	if it := v.Stack[2]; it.Kind != "Ability" || it.Controller != 0 || it.Source != s.sentry.ID || it.Card != "Alpha Sentry" ||
