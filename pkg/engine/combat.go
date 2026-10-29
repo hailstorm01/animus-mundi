@@ -110,8 +110,9 @@ func (g *Game) resolveAttack(it *StackItem) {
 	g.dealDamage(att, def, attPower, true)
 	g.dealDamage(def, att, defPower, true)
 	// Only the declared attacker fires, and only for the defender: a
-	// retaliation kill does not count (FR-CBT-002 Step 3).
+	// retaliation kill does not count (FR-CBT-002 Step 3). The trigger waits on the
+	// sweep destroying the defender: a replaced death is no kill (SVY-R19).
 	if g.IsLethal(def) {
-		g.fireCombatKill(att)
+		g.fireCombatKill(att, def)
 	}
 }

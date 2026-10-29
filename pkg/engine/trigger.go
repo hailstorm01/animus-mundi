@@ -15,6 +15,9 @@ type pendingTrigger struct {
 	placement
 	pos  sourcePos // where the source stood when it fired
 	trig ability.Trigger
+	// awaits is an asset this trigger waits on: placed only if destroyAll destroys
+	// it before the flush (SVY-R19); 0 for none.
+	awaits int
 }
 
 // sourcePos is where a trigger's source stood when it fired: its zone's rank
@@ -53,9 +56,25 @@ func (g *Game) fireDamaged(a *Asset) { g.fireHook(a, ability.HookDamaged) }
 // fireExhausted buffers a's own exhaust triggers. exhaust calls it after a becomes Exhausted.
 func (g *Game) fireExhausted(a *Asset) { g.fireHook(a, ability.HookExhausted) }
 
-// fireCombatKill buffers att's own combat-kill triggers. resolveAttack calls it after
-// the declared attacker's combat damage left the defender lethal.
-func (g *Game) fireCombatKill(att *Asset) { g.fireHook(att, ability.HookCombatKill) }
+// fireCombatKill buffers att's own combat-kill triggers. resolveAttack calls it when
+// the attacker's combat damage left def lethal; the triggers wait on def's
+// destruction, because a replaced death is not a kill (SVY-R19).
+func (g *Game) fireCombatKill(att, def *Asset) {
+	n := len(g.pending)
+	g.fireHook(att, ability.HookCombatKill)
+	for i := n; i < len(g.pending); i++ {
+		g.pending[i].awaits = def.ID
+	}
+}
+
+// confirmDestroyed clears the wait on asset id for every buffered trigger that awaits it.
+func (g *Game) confirmDestroyed(id int) {
+	for i := range g.pending {
+		if g.pending[i].awaits == id {
+			g.pending[i].awaits = 0
+		}
+	}
+}
 
 // fireHook buffers a's own triggers for hook in printed order. A face-down
 // asset has no printed abilities.
@@ -134,7 +153,8 @@ func (g *Game) fireAttacks(a *Asset) {
 // first, then the non-active player's on top (FR-TRG-003). Each player orders
 // their own triggers; a single trigger is not asked about. An optional trigger
 // is asked about in its turn to be placed, before its modes and targets; declined, it is
-// not placed (SVY-R9). Each player's triggers are listed, and by default placed,
+// not placed (SVY-R9). A trigger still waiting on an asset's destruction is dropped,
+// because the sweep did not destroy it (SVY-R19). Each player's triggers are listed, and by default placed,
 // in source order (sourcePos). A match that ended discards the buffer.
 func (g *Game) flushTriggers() {
 	buf := g.pending
@@ -142,6 +162,7 @@ func (g *Game) flushTriggers() {
 	if g.Outcome.Over {
 		return
 	}
+	buf = slices.DeleteFunc(buf, func(p pendingTrigger) bool { return p.awaits != 0 })
 	for _, pid := range []PlayerID{g.Active, g.Active.Opponent()} {
 		var mine []pendingTrigger
 		for _, p := range buf {
