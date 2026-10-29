@@ -426,6 +426,8 @@ func TestFR_KWD_002f_AggressiveResolvesBeforeDamageAndExpires(t *testing.T) {
 	}
 }
 
+// ---- Rulings KIM-J01, S03, S04 (2026-10-19) ----
+
 // declareThen declares a, runs between (standing in for Step 2 triggers), then
 // resolves the stack.
 func (s *scene) declareThen(a Action, between func()) {

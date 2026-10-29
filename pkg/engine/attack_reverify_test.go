@@ -7,8 +7,7 @@ import (
 )
 
 // Tests for T-0053: an Attack's combatants are re-verified when it resolves
-// (SVY-R8, FRD 01 v3.8: FR-CBT-002 Step 3 "Combatant Target Check", KIM-B06 as
-// extended, FR-KWD-002o, FR-TGT-003).
+// (SVY-R8, FRD 01 v3.8: FR-CBT-002 Step 3 "Combatant Target Check", FR-TGT-003).
 //
 // No starter card changes control, so these scenes use a synthetic attacker with
 // an optional "whenever this attacks, you may draw a card" trigger. Its "you may"

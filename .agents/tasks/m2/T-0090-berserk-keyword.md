@@ -4,7 +4,7 @@ title: The Berserk keyword leaves the kernel, so a "Berserk N" line loads as uns
 kind: harness
 tier: flash
 wave: B.2 (board directive #68 part (b), with #72's changes; the user's code review, before wave C)
-status: ready
+status: review
 branch: m2/T-0090-berserk-keyword
 depends_on: [T-0089]
 claims: [keyword:berserk-removed, field:Keywords.Berserk, file:pkg/engine/cardload.go]
@@ -98,9 +98,28 @@ The reviewer also compares a starter `-events` file from both builds (#68 case (
 - the three test files in acceptance case 1, for the named test edits only
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-28, lead-architect (wave B.2 run, session 2): wrote the task from board directive #68 part (b), the next of wave B.2's blocking directives in board order, with #72 (1) and (3), and the two comment edits T-0089's review put on #68's row. Harness, so it goes straight to `ready`; tier `flash`, the harness default, since #68 gives `sonnet` only for part (a)'s test changes and every command here is on the headless allow-list. Lead decisions: (1) no new test (see Tests); (2) the `Berserker` unit leaves `keywordDeck` rather than keeping a Berserk name with no keyword; (3) the restored heading sits above `declareThen` (see Tests); (4) the `-events` comparison is the reviewer's. Waiting directives checked: none has triggered (#8: this task doesn't touch `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). Parts (c)–(d), #69 and #70 stay open for the next sessions. Next: `kernel-engineer` on Flash.
+- 2026-10-28, kernel-engineer (wave B.2 run, session 2): implemented T-0090 in scratch worktree on branch `m2/T-0090-berserk-keyword`.
+  - In commit `faadf06` (`test(T-0090): drop Berserk test assertions and restore rules_test heading`), made the test edits:
+    - Removed `Berserker` unit from `keywordDeck` and deleted the Tempest Surge assertion in `pkg/sim/playout_test.go`.
+    - Restored heading `// ---- Rulings KIM-J01, S03, S04 (2026-10-19) ----` above `declareThen` in `pkg/engine/rules_test.go`.
+    - Removed KIM-B06 and FR-KWD-002o references from the header comment in `pkg/engine/attack_reverify_test.go`.
+    - Verified `go test ./...` passed on this test commit before any implementation changes.
+  - In commit `127110d` (`feat(engine): the Berserk keyword leaves the kernel (T-0090)`), implemented removal of Berserk:
+    - `pkg/engine/card.go`: removed `Berserk int` from `Keywords`.
+    - `pkg/engine/cardload.go`: updated regex and comment in `keywordLine` to match only `Resistant|Aggressive|Armor`; removed `case "Berserk":` from `ParseKeywordLine`.
+    - `pkg/view/view.go`: removed `num("Berserk", k.Berserk)` from `keywords`.
+  - Acceptance Cases:
+    - Case 1: `git diff autoloop/m2-wave-b.2 --stat -- '*_test.go'` matched exactly `attack_reverify_test.go`, `rules_test.go`, and `playout_test.go`. `go test ./...` passed on both `faadf06` and branch tip.
+    - Case 2: `git grep -n -i berserk -- pkg/engine/card.go pkg/engine/cardload.go pkg/view/view.go pkg/sim/playout_test.go pkg/engine/attack_reverify_test.go` printed only `pkg/view/view.go:87:	Secondary  int     // Attack: the Berserk secondary target, 0 if none`.
+    - Case 3: `git grep -l -i berserk -- pkg cmd ':!pkg/toolchain/linter'` printed exactly `pkg/engine/actions.go`, `pkg/engine/doc.go`, `pkg/engine/events.go`, `pkg/engine/stack.go`, `pkg/view/view.go`.
+    - Case 4: `go test ./pkg/sim -run TestLoadCardsFromRepositoryData -v` passed; reported `54 of 169 cards are executable by the kernel` with neither Tempest Surge nor Redline Infusion listed.
+    - Case 5: `go tool task sim-compare -- autoloop/m2-wave-b.2` passed: starter and stress sims match byte for byte, exit codes included.
+    - Case 6: `git diff autoloop/m2-wave-b.2 --stat` lists only the 7 allowed files.
+    - Case 7: `go tool task check` passed (fmt-check, vet, test, linter --all) and `go tool task sim` passed (200 matches terminated with invariants holding).
+  - Handoff: ready for review by `lead-architect`.

@@ -35,7 +35,6 @@ type Keywords struct {
 	Guardian         bool
 	Armor            int
 	DeploysExhausted bool
-	Berserk          int
 }
 
 // Card holds a card's printed characteristics (FR-CRD-101).

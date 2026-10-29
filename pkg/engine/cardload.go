@@ -17,9 +17,8 @@ import (
 	"animus-mundi/pkg/engine/cards"
 )
 
-// Numeric keywords always print N (KIM-B04 ruling); a bare "Berserk" is not
-// a keyword and loads as unsupported.
-var keywordLine = regexp.MustCompile(`^(Resistant|Aggressive|Armor|Berserk) (-?\d+)$`)
+// keywordLine matches a numeric keyword, which always prints its N.
+var keywordLine = regexp.MustCompile(`^(Resistant|Aggressive|Armor) (-?\d+)$`)
 
 // ParseKeywordLine parses one standalone keyword line from rules text.
 func ParseKeywordLine(line string, kw *Keywords) bool {
@@ -32,8 +31,6 @@ func ParseKeywordLine(line string, kw *Keywords) bool {
 			kw.Aggressive += n
 		case "Armor":
 			kw.Armor += n
-		case "Berserk":
-			kw.Berserk += n
 		}
 		return true
 	}

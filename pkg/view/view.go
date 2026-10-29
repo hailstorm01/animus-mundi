@@ -219,6 +219,5 @@ func keywords(k engine.Keywords) []string {
 	flag("Guardian", k.Guardian)
 	num("Armor", k.Armor)
 	flag("Deploys Exhausted", k.DeploysExhausted)
-	num("Berserk", k.Berserk)
 	return out
 }
