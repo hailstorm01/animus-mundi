@@ -172,6 +172,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0087 | One place discards from hand, (g *Game) discardFromHand (directive #64, harness, flash, pure move) | done |
 | T-0088 | The view asks the engine whether a chosen card is still in a pile, (g *Game) DiscardCard (directives #65 and #67, harness, flash, pure move) | done |
 | T-0089 | Berserk's rules leave the kernel, so an Attack has no secondary target and nothing cleaves (directive #68 part (a), harness, sonnet) | done |
+| T-0090 | The Berserk keyword leaves the kernel, so a "Berserk N" line loads as unsupported (directive #68 part (b), harness, flash) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
