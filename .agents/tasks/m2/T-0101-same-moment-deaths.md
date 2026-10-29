@@ -4,7 +4,7 @@ title: A replacement sees every death at the same moment, in a fixed order, with
 kind: shape
 tier: sonnet
 wave: G
-status: ready
+status: review
 branch: m2/T-0101-same-moment-deaths
 depends_on: [T-0097]
 claims: [replacement:death-order, sweep:passes]
@@ -86,3 +86,7 @@ Authorized edits to protected tests from T-0096 and T-0097, all in the `test(T-0
   - `ByproductLethalSourceStillReplacesEveryDeathInThePass`: FRD 01's second example, five replaced, then the guardian at -1 is destroyed in the next pass;
   - `ActivePlayersReplacedDeathsGoFirst`: player 0's (newer) units are replaced before player 1's (older), and neither player is asked (`SVY-R22`);
   - `ReplacedKillsAreNotOrderedByThePlayer`: the kill step uses the same fixed order (`SVY-R21`).
+- 2026-10-29 kernel-engineer: Implemented; `status: review`.
+  - **Diff:** `replace.go`: `replacedQueue` asks nothing (active player's first, then the other's, each oldest first); `replaceDeaths` loses `between`; file comment cites SVY-R20 to SVY-R22. `damage.go`: `sweepDeaths(seen, loses, reasons)` is a loop of passes (`newlyLethal`, then `destroyDying(replaceDeaths(dying, IsLethal))`); `deathSweep` calls it, doc comments updated. `effects.go`: `stepKill` calls the two-argument `replaceDeaths`; doc comment cites SVY-R21.
+  - **Reuse:** no new shape; removed the `between` callback and recursion. `DecideOrder` untouched (triggers use it).
+  - **Commands:** `go test ./pkg/engine -run TestFR_REP_001` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g` PASS (byte-identical).
