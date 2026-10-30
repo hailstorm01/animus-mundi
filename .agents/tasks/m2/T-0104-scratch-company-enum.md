@@ -4,7 +4,7 @@ title: Scratch Company in a filter is one three-way enum, ability.ScratchCompany
 kind: harness
 tier: flash
 wave: G.1 (board directive #78, structural review 5, finding 3)
-status: ready
+status: review
 branch: m2/T-0104-scratch-company-enum
 depends_on: [T-0103]
 claims: [type:ScratchCompany, field:Filter.Scratch, func:matchesPrinted]
@@ -162,11 +162,25 @@ No new tests: behavior is unchanged, and the existing tests (with Edit 7) pin it
 - Test files, only as Edit 7 names: `pkg/engine/cards_animus_impossibility_test.go`, `pkg/engine/source_power_test.go`, `pkg/engine/targeting_test.go`, `pkg/engine/trigger_order_test.go`, `pkg/engine/zone_filter_test.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-29, lead-architect (wave G.1 run, session 3): wrote the task from board directive #78, the next of #76 to #79 in board order now that #77 is applied (T-0103). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #78 gives; every command here is on the headless allow-list. The size rule counts four non-test files (`ability.go`, `targeting.go`, `animus.go`, `path.go`), as #78 says. #78 names six test files' sites; at fc6faa2 they are seven sites in five files (`targeting_test.go` has three), and Edit 7 names each. The two helpers keep their `bool` parameter so none of their callers changes. #78 case (d) ("no file under `pkg/` mentions `NonScratch`") is read as the field: two protected test names contain the word "NonScratch" for the rule's "non-Scratch unit", and renaming them is not what the directive is after, so case 4 matches the whole word. Reuse: `ability` has no Scratch Company type yet (searched `ScratchCompany`, `ScratchAny`, `ScratchOnly`, `ScratchExcluded`), and `matchesPrinted` is the only reader of either flag. `main` has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #79 stays `open: before the next Deliverables task`; #81 stays `open: after #79`. Next: `kernel-engineer` on Flash.
 - 2026-10-29, lead-architect (wave G.1 run, session 4): session 3 ran out of usage before committing this file, and left it uncommitted in the run branch's worktree, which this session moved into its own scratch folder. Re-checked every Edit and site against fc6faa2: they hold. Rewrote three Acceptance Case commands: case 1 finds the `test(T-0104)` commit with `git log` instead of `HEAD~1`, which is a status commit by review time; case 5 greps `targeting.go` only, since the test helpers also write `f.Scratch`; case 6 uses two `-e` patterns instead of `\|`. `main` (556811f) still has nothing the run branch lacks; the board is unchanged since session 3's read, so its directive and trigger checks stand.
+- 2026-10-29, kernel-engineer (session 1, flash): implemented T-0104 per directive #78 and task specification.
+  - Step 1: Loaded task in scratch worktree and set status: in-progress (commit 9a9f1eb).
+  - Step 4 (Harness / Edit 7): Applied test edits 1-7 in `pkg/engine/cards_animus_impossibility_test.go`, `pkg/engine/source_power_test.go`, `pkg/engine/targeting_test.go`, `pkg/engine/trigger_order_test.go`, and `pkg/engine/zone_filter_test.go`. Verified pre-implementation failure with `go -C W vet ./pkg/engine` (failed only on `undefined: ability.ScratchOnly`). Committed test changes as `test(T-0104): update tests for ability.ScratchCompany enum` (commit 3ffa57e).
+  - Step 5 (Implementation): Applied Edits 1-3 to `pkg/engine/ability/ability.go` (package comment, `Filter.Scratch` as `ScratchCompany` enum removing `NonScratch`, defined `ScratchCompany` with `ScratchAny`, `ScratchOnly`, `ScratchExcluded`), Edits 4-5 to `pkg/engine/targeting.go` (`matchesPrinted` switch on `f.Scratch`, updated 3 doc comments), and Edit 6 to `pkg/engine/cards/animus.go` (Shifting Impossibility `ScratchOnly`) and `pkg/engine/cards/path.go` (Rogue Fleshshaper, Saboteur `ScratchExcluded`). Realigned formatting with `gofmt`. Committed as `feat(engine): Scratch Company in Filter is ability.ScratchCompany enum (T-0104)` (commit 0a5549c).
+  - Acceptance Cases:
+    1. Tests changed only as named: `git -C W diff autoloop/m2-wave-g.1 --stat -- '*_test.go'` listed exactly the 5 files (15 insertions, 7 deletions). `git -C W log --oneline autoloop/m2-wave-g.1..HEAD` listed `test(T-0104)` commit 3ffa57e. `git -C W show --stat 3ffa57e` listed the same 5 files. `go -C W test ./...` passed (32s).
+    2. Sims byte-identical: `go -C W tool task sim-compare -- autoloop/m2-wave-g.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.1 byte for byte, exit codes included`.
+    3. Card checks unchanged: `go -C W test ./pkg/engine/... -run "TestDefs_MatchRulesText|TestStarterSet_Executable"` passed (`ok animus-mundi/pkg/engine 0.767s`).
+    4. No NonScratch field: `git -C W grep -nw NonScratch -- pkg` printed nothing (exit status 1).
+    5. One switch: `git -C W grep -n "f.Scratch" -- pkg/engine/targeting.go` printed `pkg/engine/targeting.go:219: switch f.Scratch {`.
+    6. Enum used: `git -C W grep -n -e ability.ScratchOnly -e ability.ScratchExcluded -- pkg/engine/cards` printed 3 lines (animus.go:202, path.go:289, path.go:318).
+    7. Only these edits: `git -C W diff autoloop/m2-wave-g.1 --stat` listed only `ability.go`, `targeting.go`, `animus.go`, `path.go`, the 5 test files, and the task file.
+    8. `go -C W tool task check` (gofmt, vet, test, all linters) and `go -C W tool task sim` (starter simulation 200 games) passed cleanly.
+  - Reviewer notes: Diff strictly follows Edits 1-7 in the task specification; no behavior change occurred. Handing off to lead-architect for review.

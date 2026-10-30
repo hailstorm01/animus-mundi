@@ -286,7 +286,7 @@ var pathDefs = map[string]*ability.Def{
 							Targets: []ability.Target{
 								{
 									Filter: ability.Filter{
-										NonScratch: true,
+										Scratch: ability.ScratchExcluded,
 									},
 								},
 							},
@@ -315,7 +315,7 @@ var pathDefs = map[string]*ability.Def{
 							Filter: ability.Filter{
 								Allegiance: ability.AllegianceOpposing,
 								Kinds:      ability.KindUnit,
-								NonScratch: true,
+								Scratch:    ability.ScratchExcluded,
 							},
 						},
 						{
