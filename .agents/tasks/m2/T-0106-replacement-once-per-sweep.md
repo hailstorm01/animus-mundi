@@ -4,7 +4,7 @@ title: A destruction replacement saves an asset at most once per sweep, and the 
 kind: shape
 tier: sonnet
 wave: G.1
-status: review
+status: done
 branch: m2/T-0106-replacement-once-per-sweep
 depends_on: [T-0100, T-0105]
 claims: [rule:replacement-once-per-window, helper:used-replacements]
@@ -60,11 +60,11 @@ Directive #81's "the sweep still ends" is covered by (a) and (b) finishing. *Shi
 - `pkg/engine/doc.go` (the destruction-replacement bullet only)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_|TestCard_ShiftingImpossibility|TestFR_CBT_002'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (no printed card reaches the new behavior; see Shape, Sims)
-- [ ] No non-test file in `pkg/engine` still declares `newlyLethal` or a `seen` set in the sweep.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_REP_|TestCard_ShiftingImpossibility|TestFR_CBT_002'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (no printed card reaches the new behavior; see Shape, Sims)
+- [x] No non-test file in `pkg/engine` still declares `newlyLethal` or a `seen` set in the sweep.
 
 ## Log
 - 2026-10-29 lead-architect (wave G.1 run, session 5): Wrote the task for board directive #81 (`open: before the next Deliverables task`; #76–#79 applied, so #81 goes before the wave closes). `main` (556811f) has nothing the run branch lacks, so no sync.
@@ -80,3 +80,4 @@ Directive #81's "the sweep still ends" is covered by (a) and (b) finishing. *Shi
   - `replace.go`: `usedKey`/`usedReplacements`; `replacementsFor`, `replacedQueue`, `replaceDeaths`, `replaceDeath` take the set; `replaceDeath` records the option it applies. Order, SVY-R23 prompt and timeout untouched.
   - `sweep.go`: `deathSweep` makes one set; `sweepDeaths` takes it and each pass takes up `lethalAssets()` (every lethal asset, `Assets()` order); `newlyLethal` and `seen` removed; comment rewritten. `effects.go`: `stepKill` passes `usedReplacements{}`. `doc.go`: bullet extended.
   - Ran: `go test ./pkg/engine -run 'TestFR_REP_|TestCard_ShiftingImpossibility|TestFR_CBT_002'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.1` PASS byte for byte; grep of sweep.go finds no `newlyLethal`/`seen`.
+- 2026-10-29 lead-architect (code review, round 1): Approved, merged into `autoloop/m2-wave-g.1` as aace7a6 (the merge tree is the gated task tip 5fd363b). Re-run in a review worktree at 5fd363b: `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g.1` byte-identical. Scope: only Allowed Files and `replacement_once_test.go` changed, and no test changed after 7a5b28d. Fences pass. Reuse: the used set replaces `seen`, so the sweep keeps one per-sweep record, and `stepKill` gets its own window. Rules fidelity: `replacementsFor` leaves out a replacement already used on the asset for every caller, so the queue, the `SVY-R23` prompt and the apply step all see the same options; each pass takes up every lethal asset, and every pass either destroys one or uses up a replacement, so the sweep ends. Directive #81 `applied`.
