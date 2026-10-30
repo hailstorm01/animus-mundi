@@ -19,7 +19,7 @@ func battlefield(s engine.Snapshot) []engine.AssetSnap {
 // checks Ward on the options now (FR-KWD-002h).
 func (m *Monitors) checkTargetDecision(e engine.Event) {
 	const mon = monTargeting
-	if e.Decision == nil || e.Decision.Kind != "Target" {
+	if e.Decision == nil || e.Decision.Kind != engine.DecideTarget.String() {
 		return
 	}
 	m.count(mon, "FR-TGT-001", "SVY-R3")
@@ -53,7 +53,7 @@ func (m *Monitors) checkTargetDecision(e engine.Event) {
 // item resolved (FR-TGT-001, SVY-R3).
 func (m *Monitors) endTargetPrompts(e engine.Event) {
 	for _, t := range m.targets {
-		if e.Kind != "place" || e.Player != t.player {
+		if e.Kind != engine.EventPlace || e.Player != t.player {
 			m.fail(monTargeting, t.seq, "player %d's Target decision is followed by a %s event (player %d), not the placement of its item", t.player, e.Kind, e.Player)
 		}
 	}

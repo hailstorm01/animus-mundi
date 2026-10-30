@@ -4,7 +4,7 @@ title: pkg/sim matches events by the event kind constants, and actions by engine
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: review
 branch: m2/T-0113-event-kinds-sim
 depends_on: [T-0112]
 claims: []
@@ -79,10 +79,27 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
 - `pkg/sim/playout.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 7): wrote the task from board directive #86, part 4 of the five-task split T-0110 recorded; T-0112 is `done` (merge c7f9c81). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #86 gives. No new test, for the same reason as T-0111 and T-0112: the unchanged tests and `sim-compare` pin a pure move, and T-0110's test pins each event constant's value. A `git grep` over every non-test `pkg/sim` file for a kind compared or switched on by literal found exactly the fifteen lines above, all in the four files #86 named. One lead decision beyond #86's wording: `monitor_targeting.go:22` matches `DecisionRecord.Kind` against `"Target"`, the same scheme as the action kinds in `Detail` (a kind string the engine writes with a `String()` method, matched by literal), so it takes `engine.DecideTarget.String()` like #86's third bullet does for actions; it is in an allowed file and keeps case 3 clean. Case 3 uses `[^A-Za-z0-9]` after `case` so `sim.go`'s numeric `case 0:` / `case 1:` don't match. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. The edits were dry-run on the run branch (Inputs). `main` (37d9c89) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #87 (c) stays `open: before the next Deliverables task`, after #86. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (wave G.2 run, session 7): implemented T-0113 in scratch worktree.
+  - Replaced 15 literal kinds across 4 allowed files with constants and String() calls from pkg/engine:
+    - pkg/sim/monitor.go: engine.EventDecision (line 145, 149), engine.EventCombat (line 151), engine.EventDamage (line 153), engine.EventMatchStart (line 155), engine.EventTurnStart (line 159), engine.EventDeploy, engine.EventScratch (line 161), engine.EventAction (line 163), engine.ActAttack.String() (line 165), engine.ActGenerate.String() (line 167), engine.ActConvert.String() (line 169).
+    - pkg/sim/monitor_entry.go: engine.EventScratch (line 13).
+    - pkg/sim/monitor_targeting.go: engine.DecideTarget.String() (line 22), engine.EventPlace (line 56).
+    - pkg/sim/playout.go: engine.EventInvalidAnswer (line 32).
+  - Reused existing engine constants and types: EventDecision, EventCombat, EventDamage, EventMatchStart, EventTurnStart, EventDeploy, EventScratch, EventAction, EventPlace, EventInvalidAnswer, ActAttack, ActGenerate, ActConvert, DecideTarget.
+  - Acceptance Cases 1–8 verified:
+    1. git -C W diff autoloop/m2-wave-g.2 -- '*_test.go': empty diff. go -C W test ./...: PASS (all pkgs ok).
+    2. go -C W tool task sim-compare -- autoloop/m2-wave-g.2: PASS (starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included).
+    3. git -C W grep -n -E -e "Kind [!=]= [^A-Za-z]" -e "case [^A-Za-z0-9]" -- pkg/sim ':!*_test.go': exit 1, no match (no literal event/action/decision kinds remaining in pkg/sim non-test code).
+    4. git -C W grep -n -E -e "engine[.]Event[A-Z]" -e "engine[.]Act[A-Z]" -e "engine[.]Decide[A-Z]" -- pkg/sim/monitor.go pkg/sim/monitor_entry.go pkg/sim/monitor_targeting.go pkg/sim/playout.go: exactly 15 matches at expected lines.
+    5. git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg: exactly 11 11 pkg/sim/monitor.go, 1 1 pkg/sim/monitor_entry.go, 2 2 pkg/sim/monitor_targeting.go, 1 1 pkg/sim/playout.go.
+    6. go -C W run ./cmd/cardtown lint fences: PASS.
+    7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 5 files (the 4 pkg/sim files plus this task file).
+    8. go -C W tool task check: PASS (fmt-check, vet, test, fences, frd, tdd, rules, csvs, syntax all passed). go -C W tool task sim: PASS (200 starter games, all invariants held).
+  - Status moved to review.

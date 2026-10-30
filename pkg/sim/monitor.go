@@ -142,31 +142,31 @@ func (m *Monitors) Event(e engine.Event) {
 			p.targeted = true
 		}
 	}
-	if e.Kind != "decision" {
+	if e.Kind != engine.EventDecision {
 		m.endTargetPrompts(e)
 	}
 	switch e.Kind {
-	case "decision":
+	case engine.EventDecision:
 		m.checkTargetDecision(e)
-	case "combat":
+	case engine.EventCombat:
 		m.openCombat(e)
-	case "damage":
+	case engine.EventDamage:
 		m.checkDamage(e)
-	case "match-start":
+	case engine.EventMatchStart:
 		if e.Start != nil {
 			m.seed = e.Start.Seed
 		}
-	case "turn-start":
+	case engine.EventTurnStart:
 		m.checkTurnStart(e)
-	case "deploy", "scratch":
+	case engine.EventDeploy, engine.EventScratch:
 		m.watchEntry(e)
-	case "action":
+	case engine.EventAction:
 		switch kind, _, _ := strings.Cut(e.Detail, " "); kind {
-		case "Attack":
+		case engine.ActAttack.String():
 			m.checkAttack(e)
-		case "Generate":
+		case engine.ActGenerate.String():
 			m.checkGenerate(e)
-		case "Convert":
+		case engine.ActConvert.String():
 			m.checkConvert(e)
 		}
 	}
