@@ -4,7 +4,7 @@ title: Scratch Company in a filter is one three-way enum, ability.ScratchCompany
 kind: harness
 tier: flash
 wave: G.1 (board directive #78, structural review 5, finding 3)
-status: review
+status: done
 branch: m2/T-0104-scratch-company-enum
 depends_on: [T-0103]
 claims: [type:ScratchCompany, field:Filter.Scratch, func:matchesPrinted]
@@ -184,3 +184,4 @@ No new tests: behavior is unchanged, and the existing tests (with Edit 7) pin it
     7. Only these edits: `git -C W diff autoloop/m2-wave-g.1 --stat` listed only `ability.go`, `targeting.go`, `animus.go`, `path.go`, the 5 test files, and the task file.
     8. `go -C W tool task check` (gofmt, vet, test, all linters) and `go -C W tool task sim` (starter simulation 200 games) passed cleanly.
   - Reviewer notes: Diff strictly follows Edits 1-7 in the task specification; no behavior change occurred. Handing off to lead-architect for review.
+- 2026-10-29, lead-architect (wave G.1 run, session 4, review): approved, round 1, no changes. Checked against `git diff autoloop/m2-wave-g.1...m2/T-0104-scratch-company-enum`, not the Log: Edits 1–6 are in `feat` (0a5549c, the four allowed non-test files), Edit 7's seven sites are the whole `test(T-0104)` commit (3ffa57e, the five named test files), and no other line changed. `matchesPrinted`'s switch gives the old result for each of the three values, and no definition or test set both old flags. Re-ran in a review worktree: cases 4–6 as written, `go tool task check` (pass), `go tool task sim-compare -- autoloop/m2-wave-g.1` (`[PASS]`, starter and stress byte-identical) and `go tool task sim` (200 games, P0 67.0% / P1 32.5% / draws 0.5%, no monitor violation). Flash run `2050fee2`, 404 s, no refusals. Merged into `autoloop/m2-wave-g.1` as 24b7f71. Directive #78 applied.
