@@ -17,40 +17,27 @@ import (
 	"animus-mundi/pkg/engine/cards"
 )
 
-// keywordLine matches a numeric keyword, which always prints its N.
-var keywordLine = regexp.MustCompile(`^(Resistant|Aggressive|Armor) (-?\d+)$`)
+// keywordN matches a numeric keyword's N, which always prints.
+var keywordN = regexp.MustCompile(`^-?\d+$`)
 
-// ParseKeywordLine parses one standalone keyword line from rules text.
+// ParseKeywordLine parses one standalone keyword line from rules text
+// (keywordDefs).
 func ParseKeywordLine(line string, kw *Keywords) bool {
-	if m := keywordLine.FindStringSubmatch(line); m != nil {
-		n, _ := strconv.Atoi(m[2])
-		switch m[1] {
-		case "Resistant":
-			kw.Resistant += n
-		case "Aggressive":
-			kw.Aggressive += n
-		case "Armor":
-			kw.Armor += n
+	for _, d := range keywordDefs {
+		if d.flag != nil {
+			if line == d.name {
+				*d.flag(kw) = true
+				return true
+			}
+			continue
 		}
-		return true
+		if n, ok := strings.CutPrefix(line, d.name+" "); ok && keywordN.MatchString(n) {
+			v, _ := strconv.Atoi(n)
+			*d.num(kw) += v
+			return true
+		}
 	}
-	switch line {
-	case "Stalwart":
-		kw.Stalwart = true
-	case "Ethereal":
-		kw.Ethereal = true
-	case "Ward":
-		kw.Ward = true
-	case "Versatile":
-		kw.Versatile = true
-	case "Guardian":
-		kw.Guardian = true
-	case "Deploys Exhausted":
-		kw.DeploysExhausted = true
-	default:
-		return false
-	}
-	return true
+	return false
 }
 
 // LoadCards reads every CSV in dir (data/cards) and returns cards by name.
