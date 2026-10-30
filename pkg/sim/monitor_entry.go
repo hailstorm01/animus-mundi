@@ -10,7 +10,7 @@ func (m *Monitors) watchEntry(e engine.Event) {
 		if a == nil {
 			return // left the battlefield before the state settled: skip
 		}
-		if e.Kind == "scratch" {
+		if e.Kind == engine.EventScratch {
 			m.count(mon, "FR-ZON-005")
 			if a.Zone != engine.ZoneReserves.String() || a.Controller != e.Player || !a.FaceDown || !a.Exhausted {
 				m.fail(mon, e.Seq, "Scratch Company %d entered as zone %s, controller %d, face-down %t, Exhausted %t; want Reserves, controller %d, face-down, Exhausted",

@@ -29,7 +29,7 @@ func Playout(g *engine.Game, policies [2]Policy, maxTurns int) (PlayoutResult, e
 			return res, fmt.Errorf("turn %d: policy chose an action LegalActions offered but Apply rejected: %w", g.Turn, err)
 		}
 		for _, e := range g.Log[logged:] {
-			if e.Kind == "invalid-answer" {
+			if e.Kind == engine.EventInvalidAnswer {
 				return res, fmt.Errorf("turn %d after %s: a chooser answer was rejected: %s", g.Turn, a.Kind, e.Detail)
 			}
 		}
