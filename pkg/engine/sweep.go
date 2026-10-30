@@ -22,6 +22,23 @@ func (g *Game) destroyAll(as []*Asset) {
 	}
 }
 
+// kill kills each of as except a Headquarters, as one simultaneous event.
+// A death a replacement applies to is replaced instead, in a fixed order,
+// before the rest are destroyed (replaceDeaths), with no sweep between: a source a
+// byproduct leaves lethal applies to every death of this kill and is destroyed at
+// the sweep after the item (SVY-R21). A replaced kill still
+// counts as done (SVY-R15). It returns how many it killed.
+func (g *Game) kill(as []*Asset) int {
+	var dying []*Asset
+	for _, a := range as {
+		if a.Printed().Type != TypeHeadquarters {
+			dying = append(dying, a)
+		}
+	}
+	g.destroyAll(g.replaceDeaths(dying, func(*Asset) bool { return true }, usedReplacements{}))
+	return len(dying)
+}
+
 // deathSweep handles every lethal asset (sweepDeaths): deaths a replacement
 // applies to are replaced one at a time in a fixed order (SVY-R20, SVY-R22),
 // and the rest are destroyed simultaneously. Then it applies the match-loss

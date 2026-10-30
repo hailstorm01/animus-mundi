@@ -115,13 +115,11 @@ func (g *Game) resolveMarch(it *StackItem) {
 	if a == nil || a.Zone != it.Zone {
 		return // left the battlefield or already moved: the March does nothing
 	}
-	g.removeFromBattlefield(a)
 	dest := ZoneMainTheater
 	if it.Zone == ZoneMainTheater {
 		dest = ZoneReserves
 	}
-	// Damage, Armor and modifiers persist across battlefield zones (FR-ZON-004).
-	g.placeOnBattlefield(a, dest)
+	g.moveOnBattlefield(a, dest)
 	g.logEvent(Event{Kind: "march", Player: int(it.Controller), Source: a.ID, Zone: dest.String()},
 		"%s marches to %s", a, dest)
 }

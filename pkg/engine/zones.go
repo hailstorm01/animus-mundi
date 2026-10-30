@@ -156,6 +156,14 @@ func (g *Game) removeFromBattlefield(a *Asset) {
 	}
 }
 
+// moveOnBattlefield moves a from its battlefield zone to the battlefield zone to.
+// Damage, Armor and modifiers persist across battlefield zones (FR-ZON-004), and
+// a gets a new arrival number on placement (SVY-R7).
+func (g *Game) moveOnBattlefield(a *Asset, to Zone) {
+	g.removeFromBattlefield(a)
+	g.placeOnBattlefield(a, to)
+}
+
 // newAsset builds the asset inst becomes as it enters the battlefield under
 // controller, with a new ID. Every way onto the battlefield builds its asset
 // here. The entry state comes from the printed keywords: Deploys Exhausted

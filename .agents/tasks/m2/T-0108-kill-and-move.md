@@ -4,7 +4,7 @@ title: Killing is one function, (g *Game) kill, and moving between battlefield z
 kind: harness
 tier: flash
 wave: G.2 (board directives #83 and #84, structural review 6, findings 2 and 3)
-status: in-progress
+status: review
 branch: m2/T-0108-kill-and-move
 depends_on: [T-0107]
 claims: [func:kill, func:moveOnBattlefield]
@@ -117,10 +117,27 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/zones.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 2): wrote the task from board directives #83 and #84, next in board order now that #82 is applied (T-0107). One task for both, as #83 allows: four non-test files, within the size rule. Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as both directives give. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. #84 (c) is read as "no non-test file but `zones.go` calls `removeFromBattlefield`": two existing tests call it directly for setup, and case 4 lists them. The `FR-ZON-004` comment moves from `resolveMarch` into `moveOnBattlefield`'s doc comment, which also names `SVY-R7`, as #84 asks. The edits were dry-run on the run branch (Inputs). `main` (281e7d8) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #85, #86 and #87 (c) stay `open: before the next Deliverables task`; #85 is next. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer: Implemented pure moves for directives #83 and #84.
+  - **Edits:**
+    - `pkg/engine/effects.go`: `stepKill` delegates to `g.kill(g.stepAssets(r, st))`.
+    - `pkg/engine/sweep.go`: added `(g *Game) kill(as []*Asset) int` with replacement death handling and destroyAll.
+    - `pkg/engine/stack.go`: `resolveMarch` delegates to `g.moveOnBattlefield(a, dest)`.
+    - `pkg/engine/zones.go`: added `(g *Game) moveOnBattlefield(a *Asset, to Zone)`.
+  - **Reuse:** Centralized existing simultaneous kill logic into `(g *Game) kill` in `sweep.go`; centralized battlefield zone relocation into `(g *Game) moveOnBattlefield` in `zones.go`.
+  - **Acceptance Cases 1–9 Verification:**
+    - Case 1: `git -C W diff autoloop/m2-wave-g.2 -- "*_test.go"` printed nothing; `go -C W test ./...` passed (all packages ok).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-g.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -e replaceDeaths -e destroyAll -- pkg/engine/effects.go` exited 1 with no output.
+    - Case 4: `git -C W grep -n "removeFromBattlefield(" -- pkg` printed exactly 5 lines (max_per_turn_test.go:151, scenario_test.go:126, zones.go:143, 147, 163).
+    - Case 5: `git -C W grep -n -e "func (g \*Game) kill(" -e "func (g \*Game) moveOnBattlefield(" -- pkg/engine` printed exactly 2 lines (sweep.go:31, zones.go:162).
+    - Case 6: `git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg/engine` printed `2 14 pkg/engine/effects.go`, `1 3 pkg/engine/stack.go`, `17 0 pkg/engine/sweep.go`, `8 0 pkg/engine/zones.go`.
+    - Case 7: `go -C W run ./cmd/cardtown lint fences` exited 0 (`[PASS] Package code is free of card names, invalid markers and disallowed imports`).
+    - Case 8: `git -C W diff autoloop/m2-wave-g.2 --stat` showed only the 4 engine files and the task file.
+    - Case 9: `go -C W tool task check` passed completely (fmt, vet, test, all linters clean); `go -C W tool task sim` passed (200 games clean).
