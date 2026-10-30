@@ -4,7 +4,7 @@ title: A step acts only on chosen assets still on the battlefield, so a later st
 kind: shape
 tier: sonnet
 wave: G.2
-status: tests
+status: tests-review
 branch: m2/T-0107-removed-target-skipped
 depends_on: [T-0102]
 claims: [rule:removed-target-skipped, helper:step-assets-target]
@@ -62,3 +62,6 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
 - 2026-10-30 lead-architect (wave G.2 run, session 1): Wrote the task for board directive #82 (`open: before the next Deliverables task`, design note Deliverable 6e's first task). Run file created; `main` (281e7d8) has nothing the run branch lacks, so no sync.
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g.2` fresh. #82 is applied by this task; #83, #84, #85, #86 and #87 (c) follow it in board order, all `open: before the next Deliverables task`. #14 is a standing order. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no "for each" repeated targets: test (c) chooses one unit in two different slots, which `chooseTargets` already allows, slot by slot); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse:** this task removes a duplicate rather than adding one: the "still on the battlefield" check for targets moves from `stepRelocate` into `stepAssets`, where every asset step reads it.
+- 2026-10-30 rules-test-author: Wrote `pkg/engine/removed_target_test.go` (4 tests, synthetic cards, own helper `rtStep`; reuses `iydDeploy`, `rlStep`, `damageTo`, `mortal`). Tests: `TestFR_ZON_004_ReturnedTargetTakesNoLaterDamage` (a), `TestFR_ZON_004_KilledTargetGetsNoLaterModifier` (b), `TestFR_TGT_003_RemovedTargetLeavesTheRestOfItsSlot` (c; scripted chooser picks X and Y for the up-to-2 slot and X for the exact slot, told apart by `Decision.Max`), `TestFR_ZON_004_ReplacedKillLeavesNoTarget` (d; a structure with a test-only destruction replacement returning the dying ally unit to hand).
+  - **Red before implementation:** all four fail now (later step still damages or modifies the removed unit; (a) also fires its damage-taken trigger). None already passes.
+  - **Helpers requested:** none. Cases left out: none.
