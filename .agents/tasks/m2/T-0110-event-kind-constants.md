@@ -4,7 +4,7 @@ title: Event kinds are named constants in events.go, and events.go, choice.go, s
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: in-progress
 branch: m2/T-0110-event-kind-constants
 depends_on: [T-0109]
 claims: [const:EventMatchStart, const:EventTurnStart, const:EventAction, const:EventDecision, const:EventInvalidAnswer, const:EventGenerate, const:EventPlace, const:EventDeploy, const:EventMarch, const:EventScratch, const:EventAttack, const:EventFizzle, const:EventCombat, const:EventDamage, const:EventReplace, const:EventDestroy, const:EventLeave, const:EventDraw, const:EventDiscard, const:EventResult, const:EventMatchEnd]
