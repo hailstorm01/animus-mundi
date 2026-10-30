@@ -113,7 +113,7 @@ func TestFR_ZON_004_PutOnDeckGoesOnTopWithoutBottom(t *testing.T) {
 	}
 }
 
-func TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved(t *testing.T) {
+func TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved(t *testing.T) {
 	s := newScene(t)
 	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, Keywords{}))
 	inst := e.Inst
@@ -148,7 +148,7 @@ func TestFR_ZON_004_FaceDownAssetReturnsAsItsCard(t *testing.T) {
 	c := s.putScratch(1)
 	inst := c.Inst
 	s.script(0, Answer{Picks: []int{0}})
-	s.iydDeploy(iydTrigger(false, []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, NonScratch: false}}},
+	s.iydDeploy(iydTrigger(false, []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}}},
 		rlStep(ability.OpReturnToHand, ability.SubjectTarget, false)))
 	if s.alive(c) {
 		t.Fatalf("the face-down unit leaves the battlefield")
