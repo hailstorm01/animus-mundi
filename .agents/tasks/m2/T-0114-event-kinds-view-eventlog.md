@@ -4,7 +4,7 @@ title: pkg/view and pkg/eventlog match events by the event kind constants, so no
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: review
+status: done
 branch: m2/T-0114-event-kinds-view-eventlog
 depends_on: [T-0113]
 claims: []
@@ -87,3 +87,9 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
     7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 4 files (the 3 pkg files plus this task file).
     8. go -C W tool task check: PASS (fmt-check, vet, test, fences, frd, tdd, rules, csvs, syntax all passed). go -C W tool task sim: PASS (200 starter games, all invariants held).
   - Status moved to review.
+- 2026-10-30, lead-architect (wave G.2 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as 8375cdf. Flash run `c0db4b69-9c6c-43c7-bdbf-486105c78f82`: exit 0, `status: SUCCESS`, 311 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). `main` (37d9c89) had no commits the run branch lacked, so no sync. Review of `git diff 71a8389...m2/T-0114-event-kinds-view-eventlog` (d5b345d):
+  - Scope: only `pkg/view/log.go`, `pkg/eventlog/eventlog.go`, `pkg/eventlog/replay.go` and this file changed; no test file changed (case 1 printed nothing).
+  - Pure move, checked line by line: the code hunks are exactly Edits 1–3, identical to the lead's dry run. Each of the five replaced literals became the constant with the same value, so every comparison is unchanged. The `replay.go` error message keeps its text.
+  - Fences and placement: no card name, no new rule, no new declaration; all three files already imported `pkg/engine`.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 3 (git grep exit 1, nothing printed: no event kind literal is left in non-test Go under `pkg/` or `cmd/cardtown`, #86 (c)); case 4 (5 lines); case 5 (the three numstat lines); case 6 `cardtown lint fences`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go test ./...` and `go tool task check` pass; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's `pkg` tree equals the task tip's, so the gates hold on the run branch. Directive #86 is `applied` (T-0110 to T-0114). #87 (c) is next, the last `open: before` directive of wave G.2.
