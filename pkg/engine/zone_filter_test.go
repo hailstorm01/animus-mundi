@@ -16,7 +16,11 @@ import (
 
 // tgtZone is one "chosen" slot with the given conjunction filter and zone.
 func tgtZone(a ability.Allegiance, k ability.Kinds, nonScratch bool, z ability.Zone) ability.Target {
-	return ability.Target{Filter: ability.Filter{Allegiance: a, Kinds: k, NonScratch: nonScratch, Zone: z}}
+	f := ability.Filter{Allegiance: a, Kinds: k, Zone: z}
+	if nonScratch {
+		f.Scratch = ability.ScratchExcluded
+	}
+	return ability.Target{Filter: f}
 }
 
 // zoneBoard is a mixed board: some assets in the Main Theater (mt*), some in

@@ -475,7 +475,7 @@ func TestFR_TGT_002_FilteredAllOpposingUnitsHitsOnlyOpposingUnits(t *testing.T) 
 }
 
 func TestFR_TGT_002_FilteredAllNonScratchSkipsScratchCompanies(t *testing.T) {
-	s, b, _, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, NonScratch: true}))
+	s, b, _, _ := sweeper(t, 0, allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, Scratch: ability.ScratchExcluded}))
 	s.wantDamage(b.u1, 1)
 	s.wantDamage(b.c1, 0)
 }

@@ -16,7 +16,7 @@ import (
 // face-down 1/1 from scene.putScratch; a sweeper keeps off Shifting Impossibility
 // by naming Scratch in its filter, unless the test says otherwise.
 
-var alliedScratch = ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Scratch: true}
+var alliedScratch = ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Scratch: ability.ScratchOnly}
 
 // noEvent reports a failure if the log holds an event of one of the kinds aimed at asset a.
 func noEvent(t *testing.T, s *scene, a *Asset, why string, kinds ...string) {

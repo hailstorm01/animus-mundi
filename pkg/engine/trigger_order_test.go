@@ -136,7 +136,7 @@ func TestFR_TRG_003_MultiTargetTriggersFallBackToSourcePositionNotPickOrder(t *t
 		}
 		return Answer{Picks: picks}
 	}
-	two := ability.Target{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, NonScratch: true, Other: true}, UpTo: 2}
+	two := ability.Target{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Scratch: ability.ScratchExcluded, Other: true}, UpTo: 2}
 	c := unit("Pinger", 1, 9, Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{targetTrigger([]ability.Target{two}, dmgTo(1, 0))}}

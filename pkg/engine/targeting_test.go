@@ -18,7 +18,11 @@ import (
 
 // tgt is one "chosen" slot with the given conjunction filter.
 func tgt(a ability.Allegiance, k ability.Kinds, nonScratch bool) ability.Target {
-	return ability.Target{Filter: ability.Filter{Allegiance: a, Kinds: k, NonScratch: nonScratch}}
+	f := ability.Filter{Allegiance: a, Kinds: k}
+	if nonScratch {
+		f.Scratch = ability.ScratchExcluded
+	}
+	return ability.Target{Filter: f}
 }
 
 // dmgTo is "deal n damage to chosen <slot>".
@@ -511,7 +515,7 @@ func TestFR_TGT_001_ScratchFilterTargetsOnlyScratchCompanies(t *testing.T) {
 	s := newScene(t)
 	b := s.targetBoard()
 	s.script(0, Answer{Picks: []int{0}})
-	f := ability.Filter{Kinds: ability.KindUnit, Scratch: true}
+	f := ability.Filter{Kinds: ability.KindUnit, Scratch: ability.ScratchOnly}
 	src := s.deployTargeter(0, []ability.Target{{Filter: f}}, dmgTo(1, 0))
 	asked := s.asked(0)
 	if len(asked) != 1 {
@@ -534,7 +538,7 @@ func TestFR_TGT_001_ScratchFilterTargetsOnlyScratchCompanies(t *testing.T) {
 func TestFR_TGT_002_FilteredAllScratchHitsOnlyScratchCompanies(t *testing.T) {
 	// An "all" damage step with Kinds unit and Scratch damages every Scratch
 	// Company, of both players, and no other unit (FR-TGT-002).
-	s, b, src, _ := sweeper(t, 0, allDamage(1, ability.Filter{Kinds: ability.KindUnit, Scratch: true}))
+	s, b, src, _ := sweeper(t, 0, allDamage(1, ability.Filter{Kinds: ability.KindUnit, Scratch: ability.ScratchOnly}))
 	if s.alive(b.c0) || s.alive(b.c1) {
 		t.Errorf("both 1/1 Scratch Companies take 1 damage and are destroyed (FR-TGT-002): ally alive %v, enemy alive %v", s.alive(b.c0), s.alive(b.c1))
 	}
