@@ -28,7 +28,7 @@ func (g *Game) declareAttack(a Action) {
 	att := g.Asset(a.Asset)
 	g.exhaust(att)
 	g.push(&StackItem{Kind: StackAttack, Controller: a.Player, Source: att.ID, Target: a.Target})
-	g.logEvent(Event{Kind: "attack", Player: int(a.Player), Source: att.ID, Target: a.Target},
+	g.logEvent(Event{Kind: EventAttack, Player: int(a.Player), Source: att.ID, Target: a.Target},
 		"%s attacks %s", att, g.Asset(a.Target))
 	// Step 2: attack triggers enqueue on top of the Attack action; Apply's
 	// resolveStack places them before anything resolves.
@@ -92,20 +92,20 @@ func (g *Game) resolveAttack(it *StackItem) {
 		attController = lk.Controller
 	}
 	if def == nil || !inCombatZone(def) || def.Controller == attController {
-		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source},
+		g.logEvent(Event{Kind: EventFizzle, Player: -1, Source: it.Source},
 			"attack fizzles: the defender is gone")
 		return
 	}
 
 	att := g.Asset(it.Source)
 	if att == nil || !inCombatZone(att) {
-		g.logEvent(Event{Kind: "fizzle", Player: -1, Source: it.Source}, "attack fizzles: the attacker is gone")
+		g.logEvent(Event{Kind: EventFizzle, Player: -1, Source: it.Source}, "attack fizzles: the attacker is gone")
 		return
 	}
 
 	// Lock effective values at the start of the simultaneous step (FR-LAY-003).
 	attPower, defPower := g.Power(att), g.Power(def)
-	g.logEvent(Event{Kind: "combat", Player: -1, Source: att.ID, Target: def.ID},
+	g.logEvent(Event{Kind: EventCombat, Player: -1, Source: att.ID, Target: def.ID},
 		"%s (%d) and %s (%d) exchange combat damage", att, attPower, def, defPower)
 	g.dealDamage(att, def, attPower, true)
 	g.dealDamage(def, att, defPower, true)

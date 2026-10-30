@@ -4,7 +4,7 @@ title: actions.go, combat.go and damage.go emit with the event kind constants (d
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: review
 branch: m2/T-0111-event-kinds-actions-combat-damage
 depends_on: [T-0110]
 claims: []
@@ -66,10 +66,27 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
 - `pkg/engine/damage.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 5): wrote the task from board directive #86, part 2 of the five-task split T-0110 recorded; T-0110 is `done` (merge c91f765). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #86 gives. No new test: like T-0105 and T-0108, a pure move is pinned by the unchanged tests and `sim-compare`, and T-0110's test already pins each constant's value. A `git grep` over every non-test engine file for a quoted kind found exactly the six lines above in these three files; `damage.go:47`'s `"combat"` is log text, so it stays (T-0114's case (c) must not count it either). Case 3 uses `[^A-Za-z]` so it matches a quote but not `ActGenerate`, `StackAttack` or an `Event…` constant. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. The edits were dry-run on the run branch (Inputs). `main` (281e7d8) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #87 (c) stays `open: before the next Deliverables task`, after #86. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (T-0111): implemented directive #86 part 2 in commit `feat(engine): emit with event kind constants in actions, combat, damage (T-0111)` (77ab96f):
+  - `pkg/engine/actions.go:72`: replaced `"generate"` with `EventGenerate`.
+  - `pkg/engine/combat.go:31`: replaced `"attack"` with `EventAttack`.
+  - `pkg/engine/combat.go:95, 102`: replaced `"fizzle"` with `EventFizzle`.
+  - `pkg/engine/combat.go:108`: replaced `"combat"` with `EventCombat`.
+  - `pkg/engine/damage.go:55`: replaced `"damage"` with `EventDamage`. Left line 47 (`kind = "combat"`) unchanged as instructed.
+  Reused: existing event kind constants from `pkg/engine/events.go` (`EventGenerate`, `EventAttack`, `EventFizzle`, `EventCombat`, `EventDamage`).
+  Acceptance cases verified on task branch:
+  - Case 1: `git -C W diff autoloop/m2-wave-g.2 -- '*_test.go'` printed nothing; `go -C W test ./...` passed (exit code 0).
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-g.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included`.
+  - Case 3: `git -C W grep -n -E -e "Kind: [^A-Za-z]" -e "logf[(][^A-Za-z]" -- pkg/engine/actions.go pkg/engine/combat.go pkg/engine/damage.go` printed nothing (exit code 1).
+  - Case 4: `git -C W grep -n -E "Kind: Event" -- pkg/engine/actions.go pkg/engine/combat.go pkg/engine/damage.go` printed exactly the 6 expected lines (`actions.go:72`, `combat.go:31`, `combat.go:95`, `combat.go:102`, `combat.go:108`, `damage.go:55`).
+  - Case 5: `git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg` printed exactly `1 1 actions.go`, `4 4 combat.go`, `1 1 damage.go`.
+  - Case 6: `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
+  - Case 7: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 3 pkg files and the task file.
+  - Case 8: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
+  Handoff: ready for lead-architect review.

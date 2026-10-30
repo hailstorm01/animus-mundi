@@ -69,7 +69,7 @@ func (g *Game) Apply(a Action) error {
 		} else {
 			p.Tac += yield
 		}
-		g.logEvent(Event{Kind: "generate", Player: int(a.Player), Source: as.ID, Amount: yield},
+		g.logEvent(Event{Kind: EventGenerate, Player: int(a.Player), Source: as.ID, Amount: yield},
 			"%s exhausts for resources (R%d T%d)", as, p.Req, p.Tac)
 	case ActConvert:
 		p.Req -= 2
