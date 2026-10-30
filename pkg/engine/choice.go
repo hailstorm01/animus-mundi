@@ -1,3 +1,5 @@
+// Choices: the decisions put to a player, the Chooser that answers them, and the fallback for a missing, timed-out or invalid answer (FR-MOD-001 §6).
+
 package engine
 
 import (
