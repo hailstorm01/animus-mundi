@@ -184,22 +184,41 @@ func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 	return total
 }
 
-// stepRelocate moves each card of stepCards to its owner's hand or deck (the
-// bottom if st.Bottom), and returns how many moved.
-func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
-	if st.Subject == ability.SubjectReplaced {
-		return g.relocateReplaced(r, st)
+// relocateTo maps a relocate step to where its cards go: its owner's hand, or
+// its owner's deck (the bottom if st.Bottom).
+func relocateTo(st ability.Step) (to Zone, bottom bool) {
+	if st.Op == ability.OpPutOnDeck {
+		return ZoneDeck, st.Bottom
 	}
+	return ZoneHand, false
+}
+
+// stepRelocate moves each asset of stepAssets, then each card of stepCards, to
+// its owner's hand or deck, and returns how many moved. An asset leaves the
+// battlefield with its last-known state (FR-ZON-004); the event carries no
+// Card, as a face-down asset's card is private in a hand or deck. An asset an
+// earlier step already removed from the battlefield is skipped.
+func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
+	to, bottom := relocateTo(st)
 	n := 0
+	for _, a := range g.stepAssets(r, st) {
+		if g.Asset(a.ID) != a {
+			continue
+		}
+		text := "%s returns to its owner's hand"
+		if to == ZoneDeck {
+			text = "%s is put into its owner's deck"
+		}
+		g.logEvent(Event{Kind: "leave", Player: -1, Target: a.ID, Zone: to.String()}, text, a)
+		g.leaveBattlefield(a, g.effectiveState(a))
+		g.putCard(a.Inst, to, bottom)
+		n++
+	}
 	for _, inst := range g.stepCards(r, st) {
 		if !g.takeCard(inst) {
 			continue
 		}
-		if st.Op == ability.OpReturnToHand {
-			g.putCard(inst, ZoneHand, false)
-		} else {
-			g.putCard(inst, ZoneDeck, st.Bottom)
-		}
+		g.putCard(inst, to, bottom)
 		n++
 	}
 	return n

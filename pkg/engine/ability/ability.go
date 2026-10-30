@@ -167,8 +167,8 @@ type Op int
 const (
 	OpScratch      Op = iota + 1 // its controller performs Deploy Scratch Company Amount times (FR-ZON-005)
 	OpDraw                       // its controller draws Amount cards (FR-WIN-001 applies to an empty deck)
-	OpReturnToHand               // put the Subject card into its owner's hand
-	OpPutOnDeck                  // put the Subject card into its owner's deck: on top, or on the bottom if Bottom
+	OpReturnToHand               // put the Subject card or asset into its owner's hand
+	OpPutOnDeck                  // put the Subject card or asset into its owner's deck: on top, or on the bottom if Bottom
 	OpDealDamage                 // Amount non-combat damage to the Subject (FR-REP-004)
 	OpHeal                       // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
 	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
