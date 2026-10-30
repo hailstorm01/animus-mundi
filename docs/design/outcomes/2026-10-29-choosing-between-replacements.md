@@ -1,4 +1,4 @@
-Status: approved (user, 2026-10-29)
+Status: applied: FRD 01 v3.17, 2026-10-29
 Directive: #75
 Rulings: SVY-R23
 Audit to close: none
