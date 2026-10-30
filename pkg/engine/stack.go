@@ -43,7 +43,7 @@ func (it *StackItem) PileSlot(i int) bool {
 // for every item kind, with the stack depth after the push as Amount.
 func (g *Game) push(item *StackItem) {
 	g.Stack = append(g.Stack, item)
-	e := Event{Kind: "place", Player: int(item.Controller), Source: item.Source, Amount: len(g.Stack)}
+	e := Event{Kind: EventPlace, Player: int(item.Controller), Source: item.Source, Amount: len(g.Stack)}
 	var what string
 	switch item.Kind {
 	case StackDeploy:
@@ -105,7 +105,7 @@ func (g *Game) resolveDeploy(it *StackItem) {
 	c := it.Inst.Card
 	a := g.newAsset(it.Inst, it.Controller, false)
 	g.placeOnBattlefield(a, it.Zone)
-	g.logEvent(Event{Kind: "deploy", Player: int(it.Controller), Card: c.Name, Inst: it.Inst.ID, Source: a.ID, Zone: it.Zone.String()},
+	g.logEvent(Event{Kind: EventDeploy, Player: int(it.Controller), Card: c.Name, Inst: it.Inst.ID, Source: a.ID, Zone: it.Zone.String()},
 		"player %d deploys %s to %s", it.Controller, a, it.Zone)
 	g.fireDeploy(a)
 }
@@ -120,6 +120,6 @@ func (g *Game) resolveMarch(it *StackItem) {
 		dest = ZoneReserves
 	}
 	g.moveOnBattlefield(a, dest)
-	g.logEvent(Event{Kind: "march", Player: int(it.Controller), Source: a.ID, Zone: dest.String()},
+	g.logEvent(Event{Kind: EventMarch, Player: int(it.Controller), Source: a.ID, Zone: dest.String()},
 		"%s marches to %s", a, dest)
 }

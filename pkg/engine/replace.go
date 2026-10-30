@@ -107,7 +107,7 @@ func (g *Game) replaceDeath(a *Asset, used usedReplacements) bool {
 	}
 	src, rep := pick.src, pick.rep
 	used[usedKey{a.ID, src.ID, rep}] = true
-	g.logEvent(Event{Kind: "replace", Player: int(src.Controller), Source: src.ID, Target: a.ID},
+	g.logEvent(Event{Kind: EventReplace, Player: int(src.Controller), Source: src.ID, Target: a.ID},
 		"%s replaces the destruction of %s", src, a)
 	it := &StackItem{Kind: StackAbility, Controller: src.Controller, Source: src.ID, Inst: src.Inst,
 		Effect: ability.Effect{Steps: rep.Steps}}
