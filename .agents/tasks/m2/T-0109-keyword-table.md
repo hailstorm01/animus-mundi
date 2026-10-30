@@ -4,7 +4,7 @@ title: Keyword names live in one table, keywordDefs, that ParseKeywordLine and K
 kind: harness
 tier: flash
 wave: G.2 (board directive #85, structural review 6, finding 4)
-status: ready
+status: in-progress
 branch: m2/T-0109-keyword-table
 depends_on: [T-0108]
 claims: [var:keywordDefs, func:Keywords.Lines]
