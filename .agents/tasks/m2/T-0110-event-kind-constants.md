@@ -4,7 +4,7 @@ title: Event kinds are named constants in events.go, and events.go, choice.go, s
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: review
 branch: m2/T-0110-event-kind-constants
 depends_on: [T-0109]
 claims: [const:EventMatchStart, const:EventTurnStart, const:EventAction, const:EventDecision, const:EventInvalidAnswer, const:EventGenerate, const:EventPlace, const:EventDeploy, const:EventMarch, const:EventScratch, const:EventAttack, const:EventFizzle, const:EventCombat, const:EventDamage, const:EventReplace, const:EventDestroy, const:EventLeave, const:EventDraw, const:EventDiscard, const:EventResult, const:EventMatchEnd]
@@ -152,10 +152,24 @@ Run each command on its own, pointed at your worktree (W). Record each command a
 - `pkg/engine/eventkinds_test.go` (new)
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 4): wrote the task from board directive #86, next in board order now that #85 is applied (T-0109). #86 says to split under the D2 size rule; 17 non-test files carry a kind literal (10 in `pkg/engine`, 4 in `pkg/sim`, 1 in `pkg/view`, 2 in `pkg/eventlog`; none in `cmd/cardtown`), so it is five tasks, T-0110 to T-0114 (Inputs), each at most four non-test files. Only this one is written; the other four are written in later sessions, in that order, and #86 stays open until T-0114 is done. Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #86 gives. The constants keep the order events happen in a match, not alphabetical. The pin test is the task's own test: sim-compare would not notice a misspelled value of a kind no monitor reads. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses; case 4 uses `[^E]` and `[(]` so it needs neither. The edits were dry-run on the run branch (Inputs). `main` (281e7d8) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #87 (c) stays `open: before the next Deliverables task`, after #86. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (T-0110): implemented directive #86 part 1 in two commits:
+  1. `test(T-0110): each event kind constant holds its ADR-0005 value` (fd15414) added `pkg/engine/eventkinds_test.go` with `TestEventKinds_ValuesAreTheSchema`. Verified initial failure: build failed due to undefined constants (`undefined: EventMatchStart`, etc.).
+  2. `feat(engine): event kinds as named constants in events.go (T-0110)` (aefe7c9) declared exported untyped string constants `EventMatchStart` ... `EventMatchEnd` in `pkg/engine/events.go`, updated emitters in `events.go` (`EventDecision`, `EventAction`, `EventMatchStart`, `EventTurnStart`, `EventMatchEnd`), `choice.go` (`EventInvalidAnswer`), `sweep.go` (`EventDestroy`, `EventResult`), and `zones.go` (`EventDraw`, `EventScratch`, `EventDiscard`).
+  Reused: existing ADR-0005 schema values and event emitter structure.
+  Acceptance cases verified on task branch:
+  - Case 1: `git -C W diff autoloop/m2-wave-g.2 --stat -- '*_test.go'` listed only `pkg/engine/eventkinds_test.go`; `go -C W test ./...` passed.
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-g.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included`.
+  - Case 3: `go -C W test ./pkg/engine -run TestEventKinds_ -v` passed `TestEventKinds_ValuesAreTheSchema`; test commit alone failed to build as expected.
+  - Case 4: `git -C W grep -n -E -e "Kind: [^E]" -e "logf[(][^E]" -- pkg/engine/events.go pkg/engine/choice.go pkg/engine/sweep.go pkg/engine/zones.go` printed exactly the 4 expected non-event-kind lines.
+  - Case 5: `git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg` printed exactly `1 1 choice.go`, `36 0 eventkinds_test.go`, `32 5 events.go`, `3 3 sweep.go`, `3 3 zones.go`.
+  - Case 6: `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
+  - Case 7: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 5 pkg files and the task file.
+  - Case 8: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
+  Handoff: ready for lead-architect review.

@@ -134,13 +134,13 @@ func (g *Game) emitDecision(d Decision, picks []int, how string) {
 	for i, o := range d.Options {
 		rec.Options[i], rec.Refs[i] = o.Label, o.Ref
 	}
-	g.emit(Event{Kind: "decision", Detail: fmt.Sprintf("player %d decides %q: %v (%s)", d.Player, d.Prompt, rec.Picks, how),
+	g.emit(Event{Kind: EventDecision, Detail: fmt.Sprintf("player %d decides %q: %v (%s)", d.Player, d.Prompt, rec.Picks, how),
 		Player: int(d.Player), Decision: rec})
 }
 
 // emitAction records an accepted action, before its effects.
 func (g *Game) emitAction(a Action) {
-	e := Event{Kind: "action", Detail: a.Kind.String(), Player: int(a.Player)}
+	e := Event{Kind: EventAction, Detail: a.Kind.String(), Player: int(a.Player)}
 	switch a.Kind {
 	case ActGenerate:
 		e.Source = a.Asset
@@ -178,14 +178,14 @@ func (g *Game) emitMatchStart(cfg Config, decider PlayerID, playFirst bool, asid
 		}
 	}
 	st.Revision, st.Modified = BuildInfo()
-	g.emit(Event{Kind: "match-start", Detail: fmt.Sprintf("seed %d, player %d decides, play first %t", cfg.Seed, decider, playFirst),
+	g.emit(Event{Kind: EventMatchStart, Detail: fmt.Sprintf("seed %d, player %d decides, play first %t", cfg.Seed, decider, playFirst),
 		Player: -1, Start: st})
 }
 
 // emitTurnStart carries the full-state snapshot for the turn that begins now.
 func (g *Game) emitTurnStart() {
 	s := g.snapshot()
-	g.emit(Event{Kind: "turn-start", Detail: fmt.Sprintf("turn %d begins for player %d", g.Turn, g.Active),
+	g.emit(Event{Kind: EventTurnStart, Detail: fmt.Sprintf("turn %d begins for player %d", g.Turn, g.Active),
 		Player: int(g.Active), Snapshot: &s})
 }
 
@@ -195,7 +195,7 @@ func (g *Game) emitMatchEnd(o Outcome) {
 	if !o.Draw {
 		end.Winner = int(o.Winner)
 	}
-	g.emit(Event{Kind: "match-end", Detail: o.Reason, Player: -1, End: end})
+	g.emit(Event{Kind: EventMatchEnd, Detail: o.Reason, Player: -1, End: end})
 }
 
 // Event is an entry in the game log. Tests and the simulator read it; the
@@ -228,3 +228,30 @@ type Event struct {
 	Snapshot *Snapshot       `json:"snapshot,omitempty"` // Kind "turn-start"
 	End      *MatchEnd       `json:"end,omitempty"`      // Kind "match-end"
 }
+
+// Event kinds, the values of Event.Kind. They are the event schema of ADR-0005:
+// written logs and the clients match on them, so a value never changes. Every
+// emit and every match names a kind by its constant.
+const (
+	EventMatchStart    = "match-start"
+	EventTurnStart     = "turn-start"
+	EventAction        = "action"
+	EventDecision      = "decision"
+	EventInvalidAnswer = "invalid-answer"
+	EventGenerate      = "generate"
+	EventPlace         = "place"
+	EventDeploy        = "deploy"
+	EventMarch         = "march"
+	EventScratch       = "scratch"
+	EventAttack        = "attack"
+	EventFizzle        = "fizzle"
+	EventCombat        = "combat"
+	EventDamage        = "damage"
+	EventReplace       = "replace"
+	EventDestroy       = "destroy"
+	EventLeave         = "leave"
+	EventDraw          = "draw"
+	EventDiscard       = "discard"
+	EventResult        = "result"
+	EventMatchEnd      = "match-end"
+)
