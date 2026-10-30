@@ -4,7 +4,7 @@ title: A step acts only on chosen assets still on the battlefield, so a later st
 kind: shape
 tier: sonnet
 wave: G.2
-status: review
+status: done
 branch: m2/T-0107-removed-target-skipped
 depends_on: [T-0102]
 claims: [rule:removed-target-skipped, helper:step-assets-target]
@@ -52,11 +52,11 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
 - `pkg/engine/effects.go` (`stepAssets`' `SubjectTarget` case and doc comment; `stepRelocate`'s check and doc comment)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (no executable card reaches the case; see Shape, Sims)
-- [ ] `stepRelocate` has no `g.Asset(a.ID) != a` check of its own, and the only `g.Asset(...)` checks on a step's assets in `effects.go` are in `stepAssets`.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (no executable card reaches the case; see Shape, Sims)
+- [x] `stepRelocate` has no `g.Asset(a.ID) != a` check of its own, and the only `g.Asset(...)` checks on a step's assets in `effects.go` are in `stepAssets`.
 
 ## Log
 - 2026-10-30 lead-architect (wave G.2 run, session 1): Wrote the task for board directive #82 (`open: before the next Deliverables task`, design note Deliverable 6e's first task). Run file created; `main` (281e7d8) has nothing the run branch lacks, so no sync.
@@ -69,3 +69,4 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
 - 2026-10-30 kernel-engineer: Implemented. Only `pkg/engine/effects.go` changed: `stepAssets`' `SubjectTarget` case now returns only chosen assets with `g.Asset(a.ID) == a` (pick order, `r.chosen` untouched) and its doc comment says so; `stepRelocate` lost its own `g.Asset(a.ID) != a` check and the doc sentence. `replace.go` untouched.
   - **Reuse:** no new shape; the check moved from `stepRelocate` into `stepAssets`.
   - **Gates:** `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.2` PASS byte for byte. `grep g.Asset( effects.go`: remaining checks are `resolveAbility` target re-verify, `value`, `itemSource`, and `stepAssets` (target, replaced, self); none in `stepRelocate`.
+- 2026-10-30 lead-architect (code review, round 1): Approved, merged into `autoloop/m2-wave-g.2` (the merge tree is the gated task tip). Re-run in a review worktree at 1585def: `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g.2` byte-identical. Scope: only `effects.go` among non-test files; `removed_target_test.go` is unchanged since its `test(T-0107)` commit 3838d34. Fences: no card names, no new shape. Reuse: the "still on the battlefield" check now lives once, in `stepAssets`' `SubjectTarget` case; `stepRelocate`'s copy is gone, and the remaining `g.Asset` checks in `effects.go` are the second verification stage, the source reads and the `SubjectReplaced`/`SubjectSelf` cases. Rules fidelity: every asset step reads targets through `stepAssets`, so damage, heal, Armor, stat, kill and relocate steps all skip a removed target and count only what they act on. Directive #82 `applied`.
