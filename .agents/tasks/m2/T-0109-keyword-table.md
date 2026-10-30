@@ -4,7 +4,7 @@ title: Keyword names live in one table, keywordDefs, that ParseKeywordLine and K
 kind: harness
 tier: flash
 wave: G.2 (board directive #85, structural review 6, finding 4)
-status: review
+status: done
 branch: m2/T-0109-keyword-table
 depends_on: [T-0108]
 claims: [var:keywordDefs, func:Keywords.Lines]
@@ -202,3 +202,9 @@ Run each command on its own, pointed at your worktree (W). Record each command a
   - Case 8: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 4 package files plus this task file.
   - Case 9: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
   Handoff: ready for lead-architect review.
+- 2026-10-30, lead-architect (wave G.2 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as 5b09f74. Flash run `061ae9a8-759d-4848-b03b-26ce335c5b71`: exit 0, `status: SUCCESS`, 410 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.2...m2/T-0109-keyword-table` (4e93608):
+  - Scope: only `card.go`, `cardload.go`, `keywords_test.go`, `view.go` and this file changed. The `test(T-0109)` commit (3585287) holds only `keywords_test.go`, and on its own it fails to build (`go vet ./pkg/engine`: `c.kw.Lines undefined`); the `feat` commit (3f60a1b) touches no test file. No existing test changed.
+  - Pure move, checked line by line: the code hunks are exactly Edits 1–3, identical to the lead's dry run. `Lines` prints what `view.keywords` printed, in the same order; `ParseKeywordLine` accepts the same lines as the old regex and switch (a flag's exact name; a numeric name, one space, `-?\d+`), adds N for a numeric keyword and sets a flag.
+  - Fences and placement: no card name, no new rule; the table and `Lines` sit beside `Keywords` in `card.go`, as #85 places them. `pkg/view` keeps no keyword list; `ability.Keyword.String` is untouched.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (only `keywords_test.go` among test files); case 4 (the 15 listed lines, string literals only at `card.go:54` and `:61`); case 5 (no output, exit 1 as expected); case 6 (the four numstat lines); case 7 `cardtown lint fences` `[PASS]`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #85 is applied. #86 is next, then #87 (c).
