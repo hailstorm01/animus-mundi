@@ -4,7 +4,7 @@ title: Event kinds are named constants in events.go, and events.go, choice.go, s
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: review
+status: done
 branch: m2/T-0110-event-kind-constants
 depends_on: [T-0109]
 claims: [const:EventMatchStart, const:EventTurnStart, const:EventAction, const:EventDecision, const:EventInvalidAnswer, const:EventGenerate, const:EventPlace, const:EventDeploy, const:EventMarch, const:EventScratch, const:EventAttack, const:EventFizzle, const:EventCombat, const:EventDamage, const:EventReplace, const:EventDestroy, const:EventLeave, const:EventDraw, const:EventDiscard, const:EventResult, const:EventMatchEnd]
@@ -173,3 +173,9 @@ Run each command on its own, pointed at your worktree (W). Record each command a
   - Case 7: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 5 pkg files and the task file.
   - Case 8: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
   Handoff: ready for lead-architect review.
+- 2026-10-30, lead-architect (wave G.2 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as c91f765. Flash run `ad55c13f-816f-448a-80c9-3857afbfe1e6`: exit 0, `status: SUCCESS`, 410 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line for it and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.2...m2/T-0110-event-kind-constants` (2e95df7):
+  - Scope: only `events.go`, `choice.go`, `sweep.go`, `zones.go`, `eventkinds_test.go` and this file changed. The `test(T-0110)` commit (fd15414) holds only `eventkinds_test.go`, and on its own it fails to build (`go vet ./pkg/engine`: `undefined: EventMatchStart`); the `feat` commit (aefe7c9) touches no test file. No existing test changed.
+  - Pure move, checked line by line: the code hunks are exactly Edits 1–4, identical to the lead's dry run. Each of the 11 replaced literals became the constant with the same value, so every emitted event is unchanged; the test pins all 21 values.
+  - Fences and placement: no card name, no new rule; the constants sit with `Event` in `events.go`, as #86 places them.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (only `eventkinds_test.go` among test files); case 4 (the 4 listed lines, none an event kind); case 5 (the five numstat lines); case 6 `cardtown lint fences` `[PASS]`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #86 stays open: T-0111 (`actions.go`, `combat.go`, `damage.go`) is next, then T-0112, T-0113 and T-0114, then #87 (c).
