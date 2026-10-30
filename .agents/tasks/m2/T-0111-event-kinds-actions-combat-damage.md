@@ -4,7 +4,7 @@ title: actions.go, combat.go and damage.go emit with the event kind constants (d
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: review
+status: done
 branch: m2/T-0111-event-kinds-actions-combat-damage
 depends_on: [T-0110]
 claims: []
@@ -90,3 +90,9 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
   - Case 7: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 3 pkg files and the task file.
   - Case 8: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
   Handoff: ready for lead-architect review.
+- 2026-10-30, lead-architect (wave G.2 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as 10d99e8. Flash run `903bcdee-d6f5-477a-9150-f05e01e6b6cd`: exit 0, `status: SUCCESS`, 335 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.2...m2/T-0111-event-kinds-actions-combat-damage` (f2a28a4):
+  - Scope: only `actions.go`, `combat.go`, `damage.go` and this file changed; no test file changed (case 1 printed nothing).
+  - Pure move, checked line by line: the code hunks are exactly Edits 1–3, identical to the lead's dry run. Each of the 6 replaced literals became the constant with the same value, so every emitted event is unchanged. `damage.go:47`'s `"combat"` (log text) stays.
+  - Fences and placement: no card name, no new rule, no new declaration.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 3 (git grep exit 1, nothing printed); case 4 (the six lines); case 5 (the three numstat lines); case 6 `cardtown lint fences`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #86 stays open: T-0112 (`effects.go`, `replace.go`, `stack.go`) is next, then T-0113 and T-0114, then #87 (c).
