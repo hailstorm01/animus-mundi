@@ -4,7 +4,7 @@ title: The death sweep gets its own file, sweep.go (directive #79, harness, flas
 kind: harness
 tier: flash
 wave: G.1 (board directive #79, structural review 5, finding 4)
-status: ready
+status: in-progress
 branch: m2/T-0105-sweep-file
 depends_on: [T-0104]
 claims: [file:pkg/engine/sweep.go]
