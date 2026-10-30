@@ -4,7 +4,7 @@ title: Killing is one function, (g *Game) kill, and moving between battlefield z
 kind: harness
 tier: flash
 wave: G.2 (board directives #83 and #84, structural review 6, findings 2 and 3)
-status: review
+status: done
 branch: m2/T-0108-kill-and-move
 depends_on: [T-0107]
 claims: [func:kill, func:moveOnBattlefield]
@@ -141,3 +141,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - Case 7: `go -C W run ./cmd/cardtown lint fences` exited 0 (`[PASS] Package code is free of card names, invalid markers and disallowed imports`).
     - Case 8: `git -C W diff autoloop/m2-wave-g.2 --stat` showed only the 4 engine files and the task file.
     - Case 9: `go -C W tool task check` passed completely (fmt, vet, test, all linters clean); `go -C W tool task sim` passed (200 games clean).
+- 2026-10-30, lead-architect (wave G.2 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as 3ad2c4b. Flash run `cb47e814-4788-4c43-b98e-f4439e29556a`: exit 0, `status: SUCCESS`, 315 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.2...m2/T-0108-kill-and-move` (a7c58a4):
+  - Scope: only `effects.go`, `stack.go`, `sweep.go`, `zones.go` and this file changed. No test file changed.
+  - Pure move, checked line by line: the four hunks are exactly Edits 1–4. `kill`'s body is `stepKill`'s old body with `g.stepAssets(r, st)` replaced by `as`; `moveOnBattlefield` holds `resolveMarch`'s two calls in their old order, and the `FR-ZON-004` comment moved with them. The one reordering (`removeFromBattlefield` after `dest` is computed) has no observable effect, and sim-compare agrees.
+  - Fences and placement: no card name, no new rule; `kill` sits beside `destroyAll` in `sweep.go` and `moveOnBattlefield` beside `removeFromBattlefield` in `zones.go`, both package `engine`, as #83 and #84 place them.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); case 3 (no output, exit 1 as expected); case 4 (five lines, none in `stack.go`); case 7 `cardtown lint fences` `[PASS]`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directives #83 and #84 are applied. #85 is next, then #86 and #87 (c).
