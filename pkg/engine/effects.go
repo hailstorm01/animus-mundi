@@ -193,7 +193,7 @@ func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 		if to == ZoneDeck {
 			text = "%s is put into its owner's deck"
 		}
-		g.logEvent(Event{Kind: "leave", Player: -1, Target: a.ID, Zone: to.String()}, text, a)
+		g.logEvent(Event{Kind: EventLeave, Player: -1, Target: a.ID, Zone: to.String()}, text, a)
 		g.leaveBattlefield(a, g.effectiveState(a))
 		g.putCard(a.Inst, to, bottom)
 		n++

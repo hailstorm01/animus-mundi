@@ -4,7 +4,7 @@ title: effects.go, replace.go and stack.go emit with the event kind constants (d
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: review
 branch: m2/T-0112-event-kinds-effects-replace-stack
 depends_on: [T-0111]
 claims: []
@@ -64,10 +64,22 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
 - `pkg/engine/stack.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 6): wrote the task from board directive #86, part 3 of the five-task split T-0110 recorded; T-0111 is `done` (merge 10d99e8). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #86 gives. No new test, for the same reason as T-0111: the unchanged tests and `sim-compare` pin a pure move, and T-0110's test pins each constant's value. A `git grep` over every non-test engine file for a quoted kind (and a `grep` for every `Kind` in these three files) found exactly the five lines above; `replace.go:135`'s `DecideReplacement` is a decision kind, so it stays. Case 3 now covers all of `pkg/engine`, since this is the last engine part; it uses `[^A-Za-z]` so it matches a quote but not a `Stack…`, `Decide…` or `Event…` constant. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. The edits were dry-run on the run branch (Inputs). `main` (281e7d8) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #87 (c) stays `open: before the next Deliverables task`, after #86. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (wave G.2 run, session 6): implemented T-0112 in scratch worktree.
+  - Replaced 5 literal event kinds across 3 allowed files with constants from pkg/engine/events.go (T-0110): EventLeave in effects.go:196, EventReplace in replace.go:110, and EventPlace, EventDeploy, EventMarch in stack.go:46, 108, 123. Left replace.go:135 (DecideReplacement) untouched as instructed. Reused existing constants: EventLeave, EventReplace, EventPlace, EventDeploy, EventMarch.
+  - Acceptance Cases 1–8 verified:
+    1. git -C W diff autoloop/m2-wave-g.2 -- '*_test.go': empty diff. go -C W test ./...: PASS (all pkgs ok).
+    2. go -C W tool task sim-compare -- autoloop/m2-wave-g.2: PASS (starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included).
+    3. git -C W grep -n -E -e "Kind: [^A-Za-z]" -e "logf[(][^A-Za-z]" -- pkg/engine/*.go ':!*_test.go': exit 1, no match (no literal event kinds remaining in engine non-test code).
+    4. git -C W grep -n -E "Kind: Event" -- pkg/engine/effects.go pkg/engine/replace.go pkg/engine/stack.go: exactly 5 matches (effects.go:196 EventLeave, replace.go:110 EventReplace, stack.go:46 EventPlace, stack.go:108 EventDeploy, stack.go:123 EventMarch).
+    5. git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg: exactly 1 1 pkg/engine/effects.go, 1 1 pkg/engine/replace.go, 3 3 pkg/engine/stack.go.
+    6. go -C W run ./cmd/cardtown lint fences: PASS.
+    7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 4 files (the 3 pkg/engine files plus this task file).
+    8. go -C W tool task check: PASS (fmt-check, vet, test, fences, frd, tdd, rules, csvs, syntax all passed). go -C W tool task sim: PASS (200 starter games, all invariants held).
+  - Status moved to review.
