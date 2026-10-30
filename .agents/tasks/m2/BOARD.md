@@ -195,6 +195,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0099 | A combat-kill trigger fires only when the sweep destroys the defender, so a replaced death is no kill (FR-CBT-002, SVY-R19, directive #73, wave G shape, sonnet) | done |
 | T-0102 | A step returns or puts any asset it acts on, not only a replaced one (FR-ZON-004, FR-TGT-003, directive #76, wave G.1 shape, sonnet) | done |
 | T-0103 | One APNAP order, (g *Game) apnap, and replacedQueue takes "oldest first" from assetsByID (directive #77, harness, flash, pure move) | done |
+| T-0104 | Scratch Company in a filter is one three-way enum, ability.ScratchCompany (directive #78, harness, flash, no behavior change) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
