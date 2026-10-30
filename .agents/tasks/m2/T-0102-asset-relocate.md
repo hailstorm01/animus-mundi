@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests-review
+status: tests
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -74,3 +74,6 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
   - **Fail before the implementation:** all but the FR-TGT-003 test, because `stepRelocate` moves no asset for `SubjectTarget`, `SubjectPick`, `SubjectSelf` or `SubjectAll`. Several stop at their first "leaves the battlefield" check, so their later checks (last-known power 4, new asset on redeploy, deck position, leave event) are not yet exercised; the redeploy mechanics were checked separately.
   - **Passes already:** `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved` is a regression guard (the current code also moves nothing); it kills the target with a `OpKill` step earlier in the same ability, since a fizzle needs the unit gone before the return step.
   - **Left out:** nothing; no Headquarters test, as the task says.
+- 2026-10-29 lead-architect (tests review, round 1): The outcomes match `FR-ZON-004`, `FR-TGT-003` and `SVY-R3`. The FR-TGT-003 test's mid-resolution departure is the stricter case and is kept: `r.chosen` still holds the killed asset when the return step runs, so the asset half must skip an asset no longer on the battlefield. A target gone before resolution is dropped by `resolveAbility`'s second verification, which every op shares and earlier tests pin. Back to `tests` for two edits, both in a new `test(T-0102)` commit:
+  1. `TestFR_ZON_004_FaceDownAssetReturnsAsItsCard`: drop `NonScratch: false` from the target filter. It is the zero value, and directive #78 removes the field, which would make this an unnamed seventh test site for #78.
+  2. Rename `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved` to `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`, so the name says what it sets up, and update the Tests list and your Log line to match.
