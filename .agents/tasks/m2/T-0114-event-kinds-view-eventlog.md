@@ -4,7 +4,7 @@ title: pkg/view and pkg/eventlog match events by the event kind constants, so no
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: in-progress
 branch: m2/T-0114-event-kinds-view-eventlog
 depends_on: [T-0113]
 claims: []
