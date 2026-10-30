@@ -120,7 +120,7 @@ func (g *Game) choose(d Decision) []int {
 				g.emitDecision(d, a.Picks, "answer")
 				return a.Picks
 			}
-			g.logf("invalid-answer", "player %d gave an invalid answer %v to %q", d.Player, a.Picks, d.Prompt)
+			g.logf(EventInvalidAnswer, "player %d gave an invalid answer %v to %q", d.Player, a.Picks, d.Prompt)
 			how = "invalid"
 		}
 	}

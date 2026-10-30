@@ -18,7 +18,7 @@ func (g *Game) destroyAll(as []*Asset) {
 		g.confirmDestroyed(a.ID)
 		g.leaveBattlefield(a, known[i])
 		g.putCard(a.Inst, ZoneDiscard, false)
-		g.logEvent(Event{Kind: "destroy", Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
+		g.logEvent(Event{Kind: EventDestroy, Player: -1, Target: a.ID, Card: a.Inst.Card.Name}, "%s is destroyed", a)
 	}
 }
 
@@ -121,9 +121,9 @@ func (g *Game) end(o Outcome) {
 	g.Phase = PhaseOver
 	g.Stack = nil
 	if o.Draw {
-		g.logf("result", "match draw: %s", o.Reason)
+		g.logf(EventResult, "match draw: %s", o.Reason)
 	} else {
-		g.logf("result", "player %d wins: %s", o.Winner, o.Reason)
+		g.logf(EventResult, "player %d wins: %s", o.Winner, o.Reason)
 	}
 	g.emitMatchEnd(o)
 }

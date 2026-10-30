@@ -26,7 +26,7 @@ func (g *Game) draw(pid PlayerID, n int) {
 	for range n {
 		if len(p.Deck) == 0 {
 			p.DrewFromEmpty = true
-			g.logEvent(Event{Kind: "draw", Player: int(pid)}, "player %d must draw from an empty deck", pid)
+			g.logEvent(Event{Kind: EventDraw, Player: int(pid)}, "player %d must draw from an empty deck", pid)
 			return
 		}
 		g.moveTopToHand(p)
@@ -44,7 +44,7 @@ func (g *Game) scratch(pid PlayerID, n int) {
 		g.takeCard(inst)
 		a := g.newAsset(inst, pid, true)
 		g.placeOnBattlefield(a, ZoneReserves)
-		g.logEvent(Event{Kind: "scratch", Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
+		g.logEvent(Event{Kind: EventScratch, Player: int(pid), Source: a.ID}, "player %d deploys %s", pid, a)
 		g.fireDeploy(a) // a scratch is a unit deploying (KIM-S05)
 	}
 }
@@ -75,7 +75,7 @@ func (g *Game) discardFromHand(pid PlayerID, n int) []*Instance {
 	for _, inst := range picked {
 		g.takeCard(inst)
 		g.putCard(inst, ZoneDiscard, false)
-		g.logEvent(Event{Kind: "discard", Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
+		g.logEvent(Event{Kind: EventDiscard, Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
 			"player %d discards %s", pid, inst.Card.Name)
 	}
 	return picked
