@@ -212,6 +212,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0112 | effects.go, replace.go and stack.go emit with the event kind constants (directive #86 part 3 of 5, harness, flash, pure move) | done |
 | T-0113 | pkg/sim matches events by the event kind constants, and actions by engine.ActAttack.String() and its siblings (directive #86 part 4 of 5, harness, flash, pure move) | done |
 | T-0114 | pkg/view and pkg/eventlog match events by the event kind constants, so no event kind is a literal outside events.go (directive #86 part 5 of 5, harness, flash, pure move) | done |
+| T-0115 | File comments on damage.go, choice.go, invariants.go and layers.go, so every engine file says its job above the package line (directive #87 (c), harness, flash, comments only) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
