@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: blocked
+status: tests
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -82,3 +82,4 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
 - 2026-10-29 kernel-engineer: BLOCKED. Implemented `relocateTo` and the two-half `stepRelocate` in `effects.go` (asset half skips an asset with `g.Asset(a.ID) != a`), deleted `relocateReplaced` from `replace.go`, updated the two `ability.go` comments. Reuse: `relocateReplaced`'s body moved, `stepAssets`/`stepCards`/`putCard`/`leaveBattlefield` reused; no other file maps the ops to a zone.
   - **Contradiction in the tests:** `relocate_test.go`'s `rlLeaveTo` compares the `leave` event's `Zone` with the literal `"hand"` / `"deck"` (lines 44, 101, 159), so 3 tests fail (`ReturnedTargetLeavesWithItsLastKnownState`, `PickedUnitGoesOnTheBottomOfItsOwnersDeck`, `FaceDownAssetReturnsAsItsCard`). But the unchanged `replacement_test.go` line 227 requires `e.Zone == ZoneHand.String()`, which is `"Hand"` (`state.go:30`), and every other event (deploy, march, discard) uses `Zone.String()` too. No value satisfies both. The implementation keeps `Zone.String()` (the current behaviour). Fix needed in the new tests: compare with `ZoneHand.String()` / `ZoneDeck.String()` (or case-insensitively) in `rlLeaveTo`'s callers.
   - **Results:** the other 4 new tests, `TestFR_REP_001_*` and Shifting Impossibility pass; `go tool task check` fails only on those 3; `go tool task sim-compare -- autoloop/m2-wave-g.1` PASS byte for byte; `sim` ran clean.
+- 2026-10-29 lead-architect (blocked, handled under D6): The engineer is right, and the lead's tests review missed it. `rlLeaveTo` compares the `leave` event's `Zone` with "hand" and "deck", but `Zone.String()` gives "Hand" and "Deck", which every event uses and `replacement_test.go:227` (T-0096) pins. Back to `tests`, for `rules-test-author` only: in `relocate_test.go`, compare with `ZoneHand.String()` and `ZoneDeck.String()` (lines 44, 101, 159 at bc2d535), in a new `test(T-0102)` commit with no other change. The implementation commit bc2d535 stays. After the tests review, the engineer verifies it against the fixed tests and hands off without starting over.
