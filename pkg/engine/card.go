@@ -4,6 +4,7 @@ package engine
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 
 	"animus-mundi/pkg/engine/ability"
@@ -35,6 +36,45 @@ type Keywords struct {
 	Guardian         bool
 	Armor            int
 	DeploysExhausted bool
+}
+
+// keywordDef is one standalone keyword: its printed name and its Keywords
+// field. A numeric keyword (num) prints its N, as in "Resistant 2"; a flag
+// keyword prints its name alone.
+type keywordDef struct {
+	name string
+	num  func(*Keywords) *int
+	flag func(*Keywords) *bool
+}
+
+// keywordDefs lists the standalone keywords in printed order. ParseKeywordLine
+// and Keywords.Lines both walk it, so each keyword's name is written only here.
+var keywordDefs = []keywordDef{
+	{name: "Resistant", num: func(k *Keywords) *int { return &k.Resistant }},
+	{name: "Stalwart", flag: func(k *Keywords) *bool { return &k.Stalwart }},
+	{name: "Aggressive", num: func(k *Keywords) *int { return &k.Aggressive }},
+	{name: "Ethereal", flag: func(k *Keywords) *bool { return &k.Ethereal }},
+	{name: "Ward", flag: func(k *Keywords) *bool { return &k.Ward }},
+	{name: "Versatile", flag: func(k *Keywords) *bool { return &k.Versatile }},
+	{name: "Guardian", flag: func(k *Keywords) *bool { return &k.Guardian }},
+	{name: "Armor", num: func(k *Keywords) *int { return &k.Armor }},
+	{name: "Deploys Exhausted", flag: func(k *Keywords) *bool { return &k.DeploysExhausted }},
+}
+
+// Lines lists k's standalone keywords in printed form and order, never nil.
+func (k Keywords) Lines() []string {
+	out := []string{}
+	for _, d := range keywordDefs {
+		switch {
+		case d.num != nil:
+			if n := *d.num(&k); n != 0 {
+				out = append(out, d.name+" "+strconv.Itoa(n))
+			}
+		case *d.flag(&k):
+			out = append(out, d.name)
+		}
+	}
+	return out
 }
 
 // Card holds a card's printed characteristics (FR-CRD-101).

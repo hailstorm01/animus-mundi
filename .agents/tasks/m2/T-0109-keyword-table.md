@@ -4,7 +4,7 @@ title: Keyword names live in one table, keywordDefs, that ParseKeywordLine and K
 kind: harness
 tier: flash
 wave: G.2 (board directive #85, structural review 6, finding 4)
-status: ready
+status: review
 branch: m2/T-0109-keyword-table
 depends_on: [T-0108]
 claims: [var:keywordDefs, func:Keywords.Lines]
@@ -180,10 +180,25 @@ Run each command on its own, pointed at your worktree (W). Record each command a
 - `pkg/view/view.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 3): wrote the task from board directive #85, next in board order now that #83 and #84 are applied (T-0108). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #85 gives. Three non-test files, within the size rule. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. #85 (d) ("each appears in exactly one non-test Go file") is read as the names' string literals: comments and field reads (`kw.Stalwart`) also contain the words, so case 4 lists every line and shows that only `card.go` spells them as data. The table holds an accessor per field rather than a reflect lookup, so the compiler checks each field name. The edits were dry-run on the run branch (Inputs). `main` (281e7d8) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). #86 and #87 (c) stay `open: before the next Deliverables task`; #86 is next. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (T-0109): implemented directive #85 in two commits:
+  1. `test(T-0109): each standalone keyword prints one line that parses back` (3585287) wrote `pkg/engine/keywords_test.go` with `TestKeywords_LinesRoundTrip` and `TestKeywords_LinesEmpty`. Verified initial failure: compilation failed with `(Keywords{}).Lines undefined`.
+  2. `feat(engine): keyword names live in one table keywordDefs (T-0109)` (3f60a1b) added `keywordDef`, `keywordDefs`, and `(k Keywords) Lines() []string` in `pkg/engine/card.go`; updated `ParseKeywordLine` in `pkg/engine/cardload.go` to walk `keywordDefs` using `strings.CutPrefix` and `keywordN`; updated `pkg/view/view.go` to use `Lines()` on cards and assets and removed private `keywords` helper and unused `strconv` import.
+  Reused: existing `Keywords` struct fields and accessors, `strings.CutPrefix`, `strconv.Itoa`/`Atoi`.
+  Acceptance cases verified on task branch:
+  - Case 1: `git -C W diff autoloop/m2-wave-g.2 --stat -- '*_test.go'` listed only `pkg/engine/keywords_test.go`; `go -C W test ./...` passed.
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-g.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included`.
+  - Case 3: `go -C W test ./pkg/engine -run TestKeywords_ -v` passed both round-trip and empty tests.
+  - Case 4: `git -C W grep -n -F -e Stalwart -e "Deploys Exhausted" -- pkg ':!*_test.go'` printed exactly the expected 15 lines across `pkg/engine` and `pkg/sim`, with string literals only in `card.go`.
+  - Case 5: `git -C W grep -n "func keywords" -- pkg` returned no matches (exit code 1).
+  - Case 6: `git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg` showed exactly 40/0 `card.go`, 17/30 `cardload.go`, 41/0 `keywords_test.go`, and 3/32 `view.go`.
+  - Case 7: `go -C W run ./cmd/cardtown lint fences` exited 0.
+  - Case 8: `git -C W diff autoloop/m2-wave-g.2 --stat` listed only the 4 package files plus this task file.
+  - Case 9: `go -C W tool task check` and `go -C W tool task sim` passed cleanly.
+  Handoff: ready for lead-architect review.

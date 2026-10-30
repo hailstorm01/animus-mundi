@@ -16,11 +16,7 @@
 // cards do, because an Action names them.
 package view
 
-import (
-	"strconv"
-
-	"animus-mundi/pkg/engine"
-)
+import "animus-mundi/pkg/engine"
 
 // View is what one seat may see. It is a deep copy: changing it changes no game.
 type View struct {
@@ -137,7 +133,7 @@ func side(g *engine.Game, p *engine.Player, own bool) Side {
 func cardView(c *engine.Card) CardView {
 	return CardView{
 		Card: c.Name, Type: c.Type.String(), ReqCost: c.ReqCost, TacCost: c.TacCost,
-		Power: c.Power, Health: c.Health, Keywords: keywords(c.Keywords), Text: c.RulesText,
+		Power: c.Power, Health: c.Health, Keywords: c.Keywords.Lines(), Text: c.RulesText,
 		Executable: c.Supported(),
 	}
 }
@@ -148,7 +144,7 @@ func assetView(g *engine.Game, a *engine.Asset) AssetView {
 	return AssetView{
 		ID: a.ID, Card: a.Printed().Name, Controller: int(a.Controller), Owner: int(a.Inst.Owner),
 		Zone: a.Zone.String(), Exhausted: a.Exhausted, FaceDown: a.FaceDown, Damage: a.Damage, Armor: a.Armor,
-		Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: keywords(g.Keywords(a)),
+		Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a).Lines(),
 	}
 }
 
@@ -194,29 +190,4 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 		}
 	}
 	return s
-}
-
-// keywords lists k's standalone keywords in printed form, never nil.
-func keywords(k engine.Keywords) []string {
-	out := []string{}
-	num := func(name string, n int) {
-		if n != 0 {
-			out = append(out, name+" "+strconv.Itoa(n))
-		}
-	}
-	flag := func(name string, on bool) {
-		if on {
-			out = append(out, name)
-		}
-	}
-	num("Resistant", k.Resistant)
-	flag("Stalwart", k.Stalwart)
-	num("Aggressive", k.Aggressive)
-	flag("Ethereal", k.Ethereal)
-	flag("Ward", k.Ward)
-	flag("Versatile", k.Versatile)
-	flag("Guardian", k.Guardian)
-	num("Armor", k.Armor)
-	flag("Deploys Exhausted", k.DeploysExhausted)
-	return out
 }
