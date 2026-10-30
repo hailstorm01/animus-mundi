@@ -4,7 +4,7 @@ title: A destruction replacement saves an asset at most once per sweep, and the 
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests-review
+status: ready
 branch: m2/T-0106-replacement-once-per-sweep
 depends_on: [T-0100, T-0105]
 claims: [rule:replacement-once-per-window, helper:used-replacements]
@@ -75,3 +75,4 @@ Directive #81's "the sweep still ends" is covered by (a) and (b) finishing. *Shi
 - 2026-10-29 rules-test-author: Wrote `pkg/engine/replacement_once_test.go`: `TestFR_REP_003_ReplacementAppliesOncePerSweep`, `_NextPassAppliesAnotherReplacement`, `_ReplacementThatHealsSaves`, `_KillThenSweepAppliesAgain`, `_ReplacementSavesFromAKill`. Helpers requested: none (the file declares `damageInsteadReplacement`, `damageInsteadStructure`, `wantInvariants`). Cases left out: none.
   - **Fail before the implementation:** `AppliesOncePerSweep`, `NextPassAppliesAnotherReplacement` and `KillThenSweepAppliesAgain` (the unit survives lethal, `CheckInvariants` reports "lethal but survived the death sweep", and the second replace event never happens, because the kernel takes an asset up once per sweep). `ReplacementThatHealsSaves` and `ReplacementSavesFromAKill` pass already: they pin behavior that must stay.
   - `go vet` is clean; `cardtown lint rules` passes.
+- 2026-10-29 lead-architect (tests review, round 1): Approved, `ready` for `kernel-engineer` (sonnet). Checked each test against `FR-REP-003` (line 463), `FR-REP-001` (line 469 and its last *Example*) and `SVY-R23`: (a), (b) and (d) fail today for the reason the ruling changes (the sweep takes an asset up only once); (c) and the kill-save test pin behavior that must stay. `wantReplaced` counts every `replace` event, so (a) also pins "no second application in one sweep". Engineer: keep the replace order and the `SVY-R23` prompt exactly as they are; only the used set is new.
