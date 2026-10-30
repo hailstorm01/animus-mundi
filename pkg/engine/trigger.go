@@ -163,7 +163,7 @@ func (g *Game) flushTriggers() {
 		return
 	}
 	buf = slices.DeleteFunc(buf, func(p pendingTrigger) bool { return p.awaits != 0 })
-	for _, pid := range []PlayerID{g.Active, g.Active.Opponent()} {
+	for _, pid := range g.apnap() {
 		var mine []pendingTrigger
 		for _, p := range buf {
 			if p.controller == pid {
