@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests
+status: tests-review
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -70,3 +70,7 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g.1` fresh. #76 is applied by this task; #77, #78 and #79 follow it in board order. #81's trigger has fired (`docs/design/outcomes/2026-10-29-replacement-once-per-sweep.md` is `applied: FRD 01 v3.18`), so it is `open`, and by its own Order line it goes after #79. #14 is a standing order. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no repeated targets); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse:** this task removes a duplicate rather than adding one: `relocateReplaced`'s move becomes the asset half of `stepRelocate`, and the op-to-zone mapping is written once.
   - **Tests beyond the directive:** put on top without `Bottom`, the source returning itself, and `SubjectAll`, so every asset subject `stepAssets` returns is pinned once.
+- 2026-10-29 rules-test-author: Wrote `pkg/engine/relocate_test.go` (6 tests listed under Tests, plus the put-on-deck test is shared by a helper): `TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState`, `TestFR_ZON_004_PickedUnitGoesOnTheBottomOfItsOwnersDeck`, `TestFR_ZON_004_PutOnDeckGoesOnTopWithoutBottom`, `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved`, `TestFR_ZON_004_FaceDownAssetReturnsAsItsCard`, `TestFR_ZON_004_SourceStillOnTheBattlefieldReturnsItself`, `TestFR_ZON_004_ReturnAllMatchingUnits`. No helpers requested (the file declares its own `rl*` helpers).
+  - **Fail before the implementation:** all but the FR-TGT-003 test, because `stepRelocate` moves no asset for `SubjectTarget`, `SubjectPick`, `SubjectSelf` or `SubjectAll`. Several stop at their first "leaves the battlefield" check, so their later checks (last-known power 4, new asset on redeploy, deck position, leave event) are not yet exercised; the redeploy mechanics were checked separately.
+  - **Passes already:** `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved` is a regression guard (the current code also moves nothing); it kills the target with a `OpKill` step earlier in the same ability, since a fizzle needs the unit gone before the return step.
+  - **Left out:** nothing; no Headquarters test, as the task says.
