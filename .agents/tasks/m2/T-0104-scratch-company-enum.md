@@ -4,7 +4,7 @@ title: Scratch Company in a filter is one three-way enum, ability.ScratchCompany
 kind: harness
 tier: flash
 wave: G.1 (board directive #78, structural review 5, finding 3)
-status: ready
+status: in-progress
 branch: m2/T-0104-scratch-company-enum
 depends_on: [T-0103]
 claims: [type:ScratchCompany, field:Filter.Scratch, func:matchesPrinted]
