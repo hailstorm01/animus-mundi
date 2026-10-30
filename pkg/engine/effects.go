@@ -170,7 +170,7 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 			dying = append(dying, a)
 		}
 	}
-	g.destroyAll(g.replaceDeaths(dying, func(*Asset) bool { return true }))
+	g.destroyAll(g.replaceDeaths(dying, func(*Asset) bool { return true }, usedReplacements{}))
 	return len(dying)
 }
 

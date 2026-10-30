@@ -16,11 +16,24 @@ type replacementOption struct {
 	rep *ability.Replacement
 }
 
+// usedKey names one replacement that has applied to one asset: the asset, the
+// source asset's ID and the printed replacement. The source ID is part of the key
+// because two copies of a card share one printed Replacement.
+type usedKey struct {
+	asset, src int
+	rep        *ability.Replacement
+}
+
+// usedReplacements records the replacements that have applied in one window: a
+// death sweep, or one kill step (FR-REP-003, SVY-R24).
+type usedReplacements map[usedKey]bool
+
 // replacementsFor returns every replacement that applies to a's destruction now,
 // oldest source first, each source's replacements in printed order: those printed
-// by a face-up asset on the battlefield whose filter a matches. A source that is
+// by a face-up asset on the battlefield whose filter a matches, except those
+// already used on a in this window (FR-REP-003, SVY-R24). A source that is
 // itself lethal still applies until the sweep destroys it (SVY-R20).
-func (g *Game) replacementsFor(a *Asset) []replacementOption {
+func (g *Game) replacementsFor(a *Asset, used usedReplacements) []replacementOption {
 	var out []replacementOption
 	for _, src := range g.assetsByID() {
 		if src.FaceDown || src.Printed().Ability == nil {
@@ -29,7 +42,7 @@ func (g *Game) replacementsFor(a *Asset) []replacementOption {
 		reps := src.Printed().Ability.Replacements
 		for i := range reps {
 			r := &reps[i]
-			if r.Event == ability.WouldBeDestroyed && g.matchesFilter(src.Controller, src.ID, r.Filter, a) {
+			if r.Event == ability.WouldBeDestroyed && g.matchesFilter(src.Controller, src.ID, r.Filter, a) && !used[usedKey{a.ID, src.ID, r}] {
 				out = append(out, replacementOption{src: src, rep: r})
 			}
 		}
@@ -41,10 +54,10 @@ func (g *Game) replacementsFor(a *Asset) []replacementOption {
 // the order their deaths are replaced: the players in apnap order, so the active
 // player's first (SVY-R22), each player's oldest asset first (assetsByID,
 // SVY-R20). No player orders them.
-func (g *Game) replacedQueue(dying []*Asset) []*Asset {
+func (g *Game) replacedQueue(dying []*Asset, used usedReplacements) []*Asset {
 	var queued [2][]*Asset
 	for _, a := range g.assetsByID() {
-		if slices.Contains(dying, a) && len(g.replacementsFor(a)) > 0 {
+		if slices.Contains(dying, a) && len(g.replacementsFor(a, used)) > 0 {
 			queued[a.Controller] = append(queued[a.Controller], a)
 		}
 	}
@@ -60,13 +73,13 @@ func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 // is lethal, or that a byproduct leaves lethal, still applies (SVY-R20, SVY-R21).
 // It returns the rest, to be destroyed together: the assets of dying still on the
 // battlefield, for which dies still holds, whose death it did not replace.
-func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool) []*Asset {
+func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool, used usedReplacements) []*Asset {
 	replaced := map[int]bool{}
-	for _, a := range g.replacedQueue(dying) {
+	for _, a := range g.replacedQueue(dying, used) {
 		if g.Asset(a.ID) != a || !dies(a) {
 			continue
 		}
-		if g.replaceDeath(a) {
+		if g.replaceDeath(a, used) {
 			replaced[a.ID] = true
 		}
 	}
@@ -83,8 +96,8 @@ func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool) []*Asset {
 // the destroy never happens, and the replacement's steps run inline, off the
 // stack, with its source as their source. It reports whether it did. When several
 // apply, a's controller chooses one (chooseReplacement, SVY-R23).
-func (g *Game) replaceDeath(a *Asset) bool {
-	opts := g.replacementsFor(a)
+func (g *Game) replaceDeath(a *Asset, used usedReplacements) bool {
+	opts := g.replacementsFor(a, used)
 	if len(opts) == 0 {
 		return false
 	}
@@ -93,6 +106,7 @@ func (g *Game) replaceDeath(a *Asset) bool {
 		pick = g.chooseReplacement(a, opts)
 	}
 	src, rep := pick.src, pick.rep
+	used[usedKey{a.ID, src.ID, rep}] = true
 	g.logEvent(Event{Kind: "replace", Player: int(src.Controller), Source: src.ID, Target: a.ID},
 		"%s replaces the destruction of %s", src, a)
 	it := &StackItem{Kind: StackAbility, Controller: src.Controller, Source: src.ID, Inst: src.Inst,

@@ -32,8 +32,7 @@ func (g *Game) destroyAll(as []*Asset) {
 func (g *Game) deathSweep() {
 	var loses [2]bool
 	var reasons [2]string
-	seen := map[int]bool{}
-	g.sweepDeaths(seen, &loses, &reasons)
+	g.sweepDeaths(usedReplacements{}, &loses, &reasons)
 	for _, p := range g.Players {
 		if p.DrewFromEmpty {
 			p.DrewFromEmpty = false
@@ -57,12 +56,11 @@ func (g *Game) deathSweep() {
 	}
 }
 
-// newlyLethal returns the lethal assets whose IDs are not in seen, and adds them to seen.
-func (g *Game) newlyLethal(seen map[int]bool) []*Asset {
+// lethalAssets returns every lethal asset, in g.Assets() order.
+func (g *Game) lethalAssets() []*Asset {
 	var out []*Asset
 	for _, a := range g.Assets() {
-		if !seen[a.ID] && g.IsLethal(a) {
-			seen[a.ID] = true
+		if g.IsLethal(a) {
 			out = append(out, a)
 		}
 	}
@@ -82,16 +80,19 @@ func (g *Game) destroyDying(dying []*Asset, loses *[2]bool, reasons *[2]string) 
 
 // sweepDeaths takes up the lethal assets in passes. In each pass, the deaths a
 // replacement applies to are replaced first (replaceDeaths), then the rest die
-// together; what a byproduct newly left lethal dies in the next pass, a new
-// moment (SVY-R20, FR-LAY-002). seen holds every asset the sweep has taken up,
-// so a pass takes up only new ones.
-func (g *Game) sweepDeaths(seen map[int]bool, loses *[2]bool, reasons *[2]string) {
+// together. Each pass takes up every asset still lethal, a new moment (SVY-R20,
+// FR-LAY-002): what a byproduct left lethal, and what a replacement left on the
+// battlefield lethal. used holds the replacements already applied in this sweep;
+// none applies to the same asset again (FR-REP-003, SVY-R24). The sweep ends when
+// a pass finds no lethal asset, as every pass destroys an asset or uses up a
+// replacement for one.
+func (g *Game) sweepDeaths(used usedReplacements, loses *[2]bool, reasons *[2]string) {
 	for {
-		dying := g.newlyLethal(seen)
+		dying := g.lethalAssets()
 		if len(dying) == 0 {
 			return
 		}
-		g.destroyDying(g.replaceDeaths(dying, g.IsLethal), loses, reasons)
+		g.destroyDying(g.replaceDeaths(dying, g.IsLethal, used), loses, reasons)
 	}
 }
 
