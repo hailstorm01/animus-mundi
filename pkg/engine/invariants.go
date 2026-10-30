@@ -1,3 +1,5 @@
+// Invariants: the state properties CheckInvariants verifies between actions.
+
 package engine
 
 import "fmt"

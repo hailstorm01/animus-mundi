@@ -4,7 +4,7 @@ title: File comments on damage.go, choice.go, invariants.go and layers.go, so ev
 kind: harness
 tier: flash
 wave: G.2 (board directive #87 (c), structural review 6, finding 6)
-status: ready
+status: review
 branch: m2/T-0115-engine-file-comments
 depends_on: [T-0114]
 claims: []
@@ -86,10 +86,24 @@ No new tests: comments only, and the unchanged tests and `sim-compare` pin that 
 - `pkg/engine/layers.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 9): wrote the task from board directive #87 (c), the last `open: before` directive of wave G.2; T-0114 is `done` (merge 8375cdf) and #86 is `applied`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #87 gives. No new test: comments only, pinned by the unchanged tests and `sim-compare`. Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. The edits were dry-run on the run branch (Inputs). `main` (37d9c89) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). When this task is `done`, #87 is `applied` and wave G.2's directives #82 to #87 are all applied. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (wave G.2 run, session 9): implemented T-0115 in scratch worktree.
+  - Added file comments and blank lines above `package engine` in damage.go, choice.go, and invariants.go.
+  - Moved existing three-line pipeline comment above `package engine` in layers.go, prefixing first line with `Layers: `.
+  - Search for reuse: none needed (comments only, following existing topic-prefixed style across pkg/engine).
+  - Verified Acceptance Cases 1–8:
+    1. git -C W grep -n -E -e "^package " -- ':(glob)pkg/engine/*.go' ':!*_test.go': 24 lines printed, none on line 1 (:3: on damage.go, choice.go, invariants.go; :5: on layers.go; :89: on doc.go).
+    2. git -C W grep -n -e "^// Damage: " -e "^// Choices: " -e "^// Invariants: " -e "^// Layers: " -- pkg/engine: exactly 4 lines, all on line 1.
+    3. git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg: exactly 2 0 choice.go, 2 0 damage.go, 2 0 invariants.go, 3 3 layers.go.
+    4. go -C W doc ./pkg/engine: package doc starts with Package engine is the executable form... without top comments leaking into package doc.
+    5. git -C W diff autoloop/m2-wave-g.2 -- '*_test.go': empty diff. go -C W test ./...: PASS (all packages ok).
+    6. go -C W tool task sim-compare -- autoloop/m2-wave-g.2: [PASS] starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included.
+    7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 5 files (the 4 pkg/engine files and the task file).
+    8. go -C W tool task check: PASS (gofmt, go vet, all tests, full cardtown lint suite). go -C W tool task sim: PASS (200 starter games, all invariants held).
+  - Status moved to review.

@@ -1,3 +1,5 @@
+// Damage: the five-stage mitigation pipeline for one damage instance (FR-REP-004).
+
 package engine
 
 // DamageResult records what each mitigation stage did to one damage instance.
