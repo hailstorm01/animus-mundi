@@ -22,9 +22,9 @@ func LogLines(events []engine.Event, seat engine.PlayerID) []string {
 	out := make([]string, 0, len(events))
 	for _, e := range events {
 		switch {
-		case e.Kind == "match-start" && e.Start != nil:
+		case e.Kind == engine.EventMatchStart && e.Start != nil:
 			out = append(out, eventlog.FormatEvent(redact(e, matchStart(e.Start, seat))))
-		case e.Kind == "turn-start":
+		case e.Kind == engine.EventTurnStart:
 			out = append(out, eventlog.FormatEvent(redact(e, fmt.Sprintf("turn %d, player %d is active", e.Turn, e.Player))))
 		default:
 			out = append(out, eventlog.FormatEvent(e))

@@ -29,7 +29,7 @@ func FormatEvent(e engine.Event) string {
 		st := e.Start
 		body = fmt.Sprintf("seed %d; decks %q vs %q; HQs %s vs %s; player %d decides, play first=%t",
 			st.Seed, st.Decks[0], st.Decks[1], st.HQs[0], st.HQs[1], st.Decider, st.PlayFirst)
-	case e.Kind == "turn-start":
+	case e.Kind == engine.EventTurnStart:
 		body = fmt.Sprintf("turn %d, player %d is active", e.Turn, e.Player)
 	case e.Decision != nil:
 		d := e.Decision
