@@ -209,6 +209,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0109 | Keyword names live in one table, keywordDefs, that ParseKeywordLine and Keywords.Lines both walk (directive #85, harness, flash, pure move) | done |
 | T-0110 | Event kinds are named constants in events.go, and events.go, choice.go, sweep.go and zones.go emit with them (directive #86 part 1 of 5, harness, flash, pure move) | done |
 | T-0111 | actions.go, combat.go and damage.go emit with the event kind constants (directive #86 part 2 of 5, harness, flash, pure move) | done |
+| T-0112 | effects.go, replace.go and stack.go emit with the event kind constants (directive #86 part 3 of 5, harness, flash, pure move) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
