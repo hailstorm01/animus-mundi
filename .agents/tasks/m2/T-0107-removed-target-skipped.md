@@ -4,7 +4,7 @@ title: A step acts only on chosen assets still on the battlefield, so a later st
 kind: shape
 tier: sonnet
 wave: G.2
-status: tests
+status: done
 branch: m2/T-0107-removed-target-skipped
 depends_on: [T-0102]
 claims: [rule:removed-target-skipped, helper:step-assets-target]
@@ -52,13 +52,21 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
 - `pkg/engine/effects.go` (`stepAssets`' `SubjectTarget` case and doc comment; `stepRelocate`'s check and doc comment)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (no executable card reaches the case; see Shape, Sims)
-- [ ] `stepRelocate` has no `g.Asset(a.ID) != a` check of its own, and the only `g.Asset(...)` checks on a step's assets in `effects.go` are in `stepAssets`.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (no executable card reaches the case; see Shape, Sims)
+- [x] `stepRelocate` has no `g.Asset(a.ID) != a` check of its own, and the only `g.Asset(...)` checks on a step's assets in `effects.go` are in `stepAssets`.
 
 ## Log
 - 2026-10-30 lead-architect (wave G.2 run, session 1): Wrote the task for board directive #82 (`open: before the next Deliverables task`, design note Deliverable 6e's first task). Run file created; `main` (281e7d8) has nothing the run branch lacks, so no sync.
   - **Directives:** read `BOARD.md` on `autoloop/m2-wave-g.2` fresh. #82 is applied by this task; #83, #84, #85, #86 and #87 (c) follow it in board order, all `open: before the next Deliverables task`. #14 is a standing order. Waiting triggers checked: #6 and #7 (mode is `serial`); #8 (no `deck.go` change); #15 (no turn hook); #20 (b) (no wave C shape task); #58 (no exhaust by a cost or an effect); #59 (2) (no "for each" repeated targets: test (c) chooses one unit in two different slots, which `chooseTargets` already allows, slot by slot); #61 (no modal card); #71 (no effect on each player). None has fired.
   - **Reuse:** this task removes a duplicate rather than adding one: the "still on the battlefield" check for targets moves from `stepRelocate` into `stepAssets`, where every asset step reads it.
+- 2026-10-30 rules-test-author: Wrote `pkg/engine/removed_target_test.go` (4 tests, synthetic cards, own helper `rtStep`; reuses `iydDeploy`, `rlStep`, `damageTo`, `mortal`). Tests: `TestFR_ZON_004_ReturnedTargetTakesNoLaterDamage` (a), `TestFR_ZON_004_KilledTargetGetsNoLaterModifier` (b), `TestFR_TGT_003_RemovedTargetLeavesTheRestOfItsSlot` (c; scripted chooser picks X and Y for the up-to-2 slot and X for the exact slot, told apart by `Decision.Max`), `TestFR_ZON_004_ReplacedKillLeavesNoTarget` (d; a structure with a test-only destruction replacement returning the dying ally unit to hand).
+  - **Red before implementation:** all four fail now (later step still damages or modifies the removed unit; (a) also fires its damage-taken trigger). None already passes.
+  - **Helpers requested:** none. Cases left out: none.
+- 2026-10-30 lead-architect (tests review, round 1): Approved, `ready` for `kernel-engineer` (sonnet). The four tests match directive #82 (a)–(d) and the user's 2026-10-30 ruling: each later step skips the removed unit and still acts on the rest of its slot ((c): Y takes 1), a step whose whole slot left counts 0 so its `IfDone` follower does not run ((b), `SVY-R14`), and a replaced kill leaves no target ((d)). They assert outcomes only (events, zones, deck counts). Re-run in a review worktree at 6786c54: all four fail before the implementation. Engineer: follow the Shape exactly; `replace.go` is not touched.
+- 2026-10-30 kernel-engineer: Implemented. Only `pkg/engine/effects.go` changed: `stepAssets`' `SubjectTarget` case now returns only chosen assets with `g.Asset(a.ID) == a` (pick order, `r.chosen` untouched) and its doc comment says so; `stepRelocate` lost its own `g.Asset(a.ID) != a` check and the doc sentence. `replace.go` untouched.
+  - **Reuse:** no new shape; the check moved from `stepRelocate` into `stepAssets`.
+  - **Gates:** `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.2` PASS byte for byte. `grep g.Asset( effects.go`: remaining checks are `resolveAbility` target re-verify, `value`, `itemSource`, and `stepAssets` (target, replaced, self); none in `stepRelocate`.
+- 2026-10-30 lead-architect (code review, round 1): Approved, merged into `autoloop/m2-wave-g.2` (the merge tree is the gated task tip). Re-run in a review worktree at 1585def: `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g.2` byte-identical. Scope: only `effects.go` among non-test files; `removed_target_test.go` is unchanged since its `test(T-0107)` commit 3838d34. Fences: no card names, no new shape. Reuse: the "still on the battlefield" check now lives once, in `stepAssets`' `SubjectTarget` case; `stepRelocate`'s copy is gone, and the remaining `g.Asset` checks in `effects.go` are the second verification stage, the source reads and the `SubjectReplaced`/`SubjectSelf` cases. Rules fidelity: every asset step reads targets through `stepAssets`, so damage, heal, Armor, stat, kill and relocate steps all skip a removed target and count only what they act on. Directive #82 `applied`.
