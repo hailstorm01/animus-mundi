@@ -41,7 +41,7 @@ func TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState(t *testing.T) {
 	if !inHand(s.g.Players[1], inst) {
 		t.Errorf("the returned unit's card is in its owner's hand")
 	}
-	if _, ok := rlLeaveTo(s, e.ID, "hand"); !ok {
+	if _, ok := rlLeaveTo(s, e.ID, ZoneHand.String()); !ok {
 		t.Errorf("a leave event names the unit with zone hand")
 	}
 	lk := s.g.LastKnownEffective(e.ID)
@@ -98,7 +98,7 @@ func TestFR_ZON_004_PickedUnitGoesOnTheBottomOfItsOwnersDeck(t *testing.T) {
 	if d[0] != top[0] {
 		t.Errorf("the top card of the deck is unchanged")
 	}
-	if _, ok := rlLeaveTo(s, ally.ID, "deck"); !ok {
+	if _, ok := rlLeaveTo(s, ally.ID, ZoneDeck.String()); !ok {
 		t.Errorf("a leave event names the unit with zone deck")
 	}
 }
@@ -134,7 +134,7 @@ func TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved(t *testing.T) {
 	if inHand(p, inst) {
 		t.Errorf("a target that is no longer on the battlefield is not returned to hand")
 	}
-	if _, ok := rlLeaveTo(s, e.ID, "hand"); ok {
+	if _, ok := rlLeaveTo(s, e.ID, ZoneHand.String()); ok {
 		t.Errorf("no leave event to hand is logged for it")
 	}
 	if n := faceDownCount(s.g.Players[0]); n != 0 {
@@ -156,7 +156,7 @@ func TestFR_ZON_004_FaceDownAssetReturnsAsItsCard(t *testing.T) {
 	if !inHand(s.g.Players[1], inst) {
 		t.Errorf("it goes to its owner's hand as its own printed card instance")
 	}
-	e, ok := rlLeaveTo(s, c.ID, "hand")
+	e, ok := rlLeaveTo(s, c.ID, ZoneHand.String())
 	if !ok {
 		t.Fatalf("a leave event to hand is logged")
 	}
