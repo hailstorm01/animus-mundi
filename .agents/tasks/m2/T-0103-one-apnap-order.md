@@ -4,7 +4,7 @@ title: One APNAP order, (g *Game) apnap, and replacedQueue takes "oldest first" 
 kind: harness
 tier: flash
 wave: G.1 (board directive #77, structural review 5, finding 2)
-status: ready
+status: in-progress
 branch: m2/T-0103-one-apnap-order
 depends_on: [T-0102]
 claims: [func:apnap, func:replacedQueue]
