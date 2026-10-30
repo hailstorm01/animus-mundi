@@ -4,7 +4,7 @@ title: A step acts only on chosen assets still on the battlefield, so a later st
 kind: shape
 tier: sonnet
 wave: G.2
-status: tests-review
+status: ready
 branch: m2/T-0107-removed-target-skipped
 depends_on: [T-0102]
 claims: [rule:removed-target-skipped, helper:step-assets-target]
@@ -65,3 +65,4 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
 - 2026-10-30 rules-test-author: Wrote `pkg/engine/removed_target_test.go` (4 tests, synthetic cards, own helper `rtStep`; reuses `iydDeploy`, `rlStep`, `damageTo`, `mortal`). Tests: `TestFR_ZON_004_ReturnedTargetTakesNoLaterDamage` (a), `TestFR_ZON_004_KilledTargetGetsNoLaterModifier` (b), `TestFR_TGT_003_RemovedTargetLeavesTheRestOfItsSlot` (c; scripted chooser picks X and Y for the up-to-2 slot and X for the exact slot, told apart by `Decision.Max`), `TestFR_ZON_004_ReplacedKillLeavesNoTarget` (d; a structure with a test-only destruction replacement returning the dying ally unit to hand).
   - **Red before implementation:** all four fail now (later step still damages or modifies the removed unit; (a) also fires its damage-taken trigger). None already passes.
   - **Helpers requested:** none. Cases left out: none.
+- 2026-10-30 lead-architect (tests review, round 1): Approved, `ready` for `kernel-engineer` (sonnet). The four tests match directive #82 (a)–(d) and the user's 2026-10-30 ruling: each later step skips the removed unit and still acts on the rest of its slot ((c): Y takes 1), a step whose whole slot left counts 0 so its `IfDone` follower does not run ((b), `SVY-R14`), and a replaced kill leaves no target ((d)). They assert outcomes only (events, zones, deck counts). Re-run in a review worktree at 6786c54: all four fail before the implementation. Engineer: follow the Shape exactly; `replace.go` is not touched.
