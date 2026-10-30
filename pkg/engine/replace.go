@@ -38,21 +38,19 @@ func (g *Game) replacementsFor(a *Asset) []replacementOption {
 }
 
 // replacedQueue returns the assets of dying that a replacement applies to, in
-// the order their deaths are replaced: the active player's first (SVY-R22), then
-// the non-active player's, each player's oldest asset first (SVY-R20). No player
-// orders them.
+// the order their deaths are replaced: the players in apnap order, so the active
+// player's first (SVY-R22), each player's oldest asset first (assetsByID,
+// SVY-R20). No player orders them.
 func (g *Game) replacedQueue(dying []*Asset) []*Asset {
 	var queued [2][]*Asset
-	for _, a := range dying {
-		if len(g.replacementsFor(a)) > 0 {
+	for _, a := range g.assetsByID() {
+		if slices.Contains(dying, a) && len(g.replacementsFor(a)) > 0 {
 			queued[a.Controller] = append(queued[a.Controller], a)
 		}
 	}
 	var out []*Asset
-	for _, pid := range []PlayerID{g.Active, g.Active.Opponent()} {
-		mine := queued[pid]
-		slices.SortFunc(mine, func(x, y *Asset) int { return x.ID - y.ID })
-		out = append(out, mine...)
+	for _, pid := range g.apnap() {
+		out = append(out, queued[pid]...)
 	}
 	return out
 }

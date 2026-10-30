@@ -4,7 +4,7 @@ title: One APNAP order, (g *Game) apnap, and replacedQueue takes "oldest first" 
 kind: harness
 tier: flash
 wave: G.1 (board directive #77, structural review 5, finding 2)
-status: ready
+status: review
 branch: m2/T-0103-one-apnap-order
 depends_on: [T-0102]
 claims: [func:apnap, func:replacedQueue]
@@ -119,10 +119,26 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-29, lead-architect (wave G.1 run, session 2): wrote the task from board directive #77, the next of #76 to #79 in board order now that #76 is applied (T-0102). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #77 gives; every command here is on the headless allow-list. The two `{p, p.Opponent()}` loops in `state.go:277` (`fixedOrderPositions`) and `targeting.go:98` start from the choosing player, not the active one, so they are a different order (`SVY-R16`) and stay. `main` has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #78, #79 stay `open: before the next Deliverables task`; #81 stays `open: after #79`. Next: `kernel-engineer` on Flash.
+- 2026-10-29, kernel-engineer (wave G.1, tier flash): Implemented pure move for directive #77; `status: review`.
+  - **Diff:**
+    - `pkg/engine/state.go`: Added `(g *Game) apnap() []PlayerID` right after `newID` returning `[]PlayerID{g.Active, g.Active.Opponent()}` (SVY-R22, FR-TRG-003). Updated `assetsByID` doc comment to explain oldest-entered-first and explicitly cite `replacementsFor`, `replacedQueue`, `SVY-R20`, and `SVY-R22`.
+    - `pkg/engine/trigger.go`: `flushTriggers` now loops over `g.apnap()` instead of constructing `[]PlayerID{g.Active, g.Active.Opponent()}` inline.
+    - `pkg/engine/replace.go`: `replacedQueue` now walks `g.assetsByID()` filtering for `slices.Contains(dying, a) && len(g.replacementsFor(a)) > 0`, queues into `queued[a.Controller]`, and returns players' slices in `g.apnap()` order, eliminating the duplicate ID sort and inline APNAP slice.
+  - **Reuse:** Reused existing `assetsByID()` in `pkg/engine/state.go`; replaced inline APNAP slices with `g.apnap()`.
+  - **Commands run:**
+    - Case 1: `git diff autoloop/m2-wave-g.1 -- '*_test.go'` printed nothing; `go test ./...` passed.
+    - Case 2: `go tool task sim-compare -- autoloop/m2-wave-g.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-g.1 byte for byte, exit codes included`.
+    - Case 3: `git grep -n "g.Active, g.Active.Opponent()" -- pkg` printed 1 line in `pkg/engine/state.go:211`.
+    - Case 4: `git grep -n "x.ID - y.ID" -- pkg` printed 1 line in `pkg/engine/state.go:256` (`assetsByID`).
+    - Case 5: `git grep -n "g.apnap()" -- pkg/engine` printed 2 lines (`pkg/engine/replace.go:52` and `pkg/engine/trigger.go:166`).
+    - Case 6: `git grep -n "replacedQueue (each player's oldest" -- pkg/engine/state.go` printed 1 line (line 229).
+    - Case 7: `git diff autoloop/m2-wave-g.1 --stat` confirmed only `pkg/engine/replace.go`, `pkg/engine/state.go`, `pkg/engine/trigger.go` and `.agents/tasks/m2/T-0103-one-apnap-order.md`.
+    - Case 8: `go tool task check` passed all checks (`fmt-check`, `vet`, `test`, all cardtown linters); `go tool task sim` ran clean with 100% terminated matches and all invariants holding.
+  - **Reviewer:** Pure move as requested. Verify that `replacedQueue` ordering and `sim-compare` remain identical.

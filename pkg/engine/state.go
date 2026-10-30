@@ -204,6 +204,13 @@ func (g *Game) newID() int {
 	return g.nextID
 }
 
+// apnap returns the players in APNAP order: the active player, then the
+// non-active player. Simultaneous triggers are placed in this order
+// (FR-TRG-003), and replaced deaths are taken up in it (SVY-R22).
+func (g *Game) apnap() []PlayerID {
+	return []PlayerID{g.Active, g.Active.Opponent()}
+}
+
 // Battlefield orders. The battlefield is listed in exactly three orders, and
 // each rule that walks it uses one of them. New code picks one of these three
 // rather than adding a fourth.
@@ -215,8 +222,12 @@ func (g *Game) newID() int {
 // order doesn't change it (SVY-R7, FR-TRG-003). Uses where order doesn't
 // matter (lookups, readying, invariants, legal actions) also use it.
 //
-// assetsByID: oldest (lowest ID) first. Decision option lists and "all" steps
-// use it (SVY-R11).
+// assetsByID: oldest (lowest ID) first. "Oldest" means the asset that entered
+// the battlefield first, not the one that reached its current zone first: an
+// asset gets its ID when it enters the battlefield and keeps it. Decision
+// option lists and "all" steps use it (SVY-R11), and so do replacementsFor
+// (oldest source first) and replacedQueue (each player's oldest replaced asset
+// first, the players in apnap order) (SVY-R20, SVY-R22).
 //
 // fixedOrderPositions: the choosing player's assets before the opponent's;
 // within a player the Headquarters, then Reserves, then the Main Theater, each
