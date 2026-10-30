@@ -206,6 +206,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0106 | A destruction replacement saves an asset at most once per sweep, and the next pass takes it up again (FR-REP-003, SVY-R24, directive #81, wave G.1 shape, sonnet) | done |
 | T-0107 | A step acts only on chosen assets still on the battlefield, so a later step does nothing to a target an earlier one removed (FR-ZON-004, FR-TGT-003, directive #82, wave G.2 shape, sonnet) | done |
 | T-0108 | Killing is one function, (g *Game) kill, and moving between battlefield zones is one, (g *Game) moveOnBattlefield (directives #83 and #84, harness, flash, pure move) | done |
+| T-0109 | Keyword names live in one table, keywordDefs, that ParseKeywordLine and Keywords.Lines both walk (directive #85, harness, flash, pure move) | ready |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
