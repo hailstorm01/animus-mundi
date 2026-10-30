@@ -4,7 +4,7 @@ title: pkg/sim matches events by the event kind constants, and actions by engine
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: review
+status: done
 branch: m2/T-0113-event-kinds-sim
 depends_on: [T-0112]
 claims: []
@@ -103,3 +103,9 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
     7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 5 files (the 4 pkg/sim files plus this task file).
     8. go -C W tool task check: PASS (fmt-check, vet, test, fences, frd, tdd, rules, csvs, syntax all passed). go -C W tool task sim: PASS (200 starter games, all invariants held).
   - Status moved to review.
+- 2026-10-30, lead-architect (wave G.2 run, session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as f206224. Flash run `aa089b7c-2c83-4b44-b06d-fd1d06746209`: exit 0, `status: SUCCESS`, 313 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). `main` (37d9c89) had no commits the run branch lacked, so no sync. Review of `git diff 75aaa36...m2/T-0113-event-kinds-sim` (4820b25):
+  - Scope: only `monitor.go`, `monitor_entry.go`, `monitor_targeting.go`, `playout.go` and this file changed; no test file changed (case 1 printed nothing).
+  - Pure move, checked line by line: the code hunks are exactly Edits 1–4, identical to the lead's dry run. Each of the 15 replaced literals became the constant or `String()` call with the same value, so every comparison is unchanged. Monitor names, rule IDs and messages stay.
+  - Fences and placement: no card name, no new rule, no new declaration; `pkg/sim` already imported `pkg/engine`.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 3 (git grep exit 1, nothing printed: no kind literal is left in non-test `pkg/sim`); case 4 (15 lines); case 5 (the four numstat lines); case 6 `cardtown lint fences`; `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's `pkg` tree equals the task tip's, so the gates hold on the run branch. Directive #86 stays open: T-0114 (`pkg/view`, `pkg/eventlog`, case (c) over all of `pkg/` and `cmd/cardtown`) is next, then #87 (c).
