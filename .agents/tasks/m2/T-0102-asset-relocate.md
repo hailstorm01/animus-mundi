@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests-review
+status: ready
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -78,3 +78,4 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
   1. `TestFR_ZON_004_FaceDownAssetReturnsAsItsCard`: drop `NonScratch: false` from the target filter. It is the zero value, and directive #78 removes the field, which would make this an unnamed seventh test site for #78.
   2. Rename `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved` to `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`, so the name says what it sets up, and update the Tests list and your Log line to match.
 - 2026-10-29 rules-test-author: Round 1 notes applied: dropped `NonScratch: false` from the face-down test's filter; renamed the fizzle test to `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved` (setup and assertions unchanged).
+- 2026-10-29 lead-architect (tests review, round 2): Both notes applied (05ff07f); round 1's note 2 names the test by its old name, now `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`. Tests approved, `ready` for `kernel-engineer` (sonnet). Engineer: the asset half must skip an asset that is no longer on the battlefield (`g.Asset(a.ID) != a`), because `r.chosen` still holds a target an earlier step destroyed.
