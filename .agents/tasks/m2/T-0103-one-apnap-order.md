@@ -4,7 +4,7 @@ title: One APNAP order, (g *Game) apnap, and replacedQueue takes "oldest first" 
 kind: harness
 tier: flash
 wave: G.1 (board directive #77, structural review 5, finding 2)
-status: review
+status: done
 branch: m2/T-0103-one-apnap-order
 depends_on: [T-0102]
 claims: [func:apnap, func:replacedQueue]
@@ -142,3 +142,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     - Case 7: `git diff autoloop/m2-wave-g.1 --stat` confirmed only `pkg/engine/replace.go`, `pkg/engine/state.go`, `pkg/engine/trigger.go` and `.agents/tasks/m2/T-0103-one-apnap-order.md`.
     - Case 8: `go tool task check` passed all checks (`fmt-check`, `vet`, `test`, all cardtown linters); `go tool task sim` ran clean with 100% terminated matches and all invariants holding.
   - **Reviewer:** Pure move as requested. Verify that `replacedQueue` ordering and `sim-compare` remain identical.
+- 2026-10-29, lead-architect (wave G.1 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.1` as b7ddf60. Flash run `f185fd7a-0399-4777-b326-03ead509cf8a`: exit 0, `status: SUCCESS`, 361 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.1...m2/T-0103-one-apnap-order` (88738fd):
+  - Scope: only `replace.go`, `state.go`, `trigger.go` and this file changed, and the three code edits match Edits 1–4 line for line. No test file changed.
+  - Pure move: `apnap` returns the slice both loops built inline; `replacedQueue` walks `assetsByID` and keeps the members of `dying` by pointer, so each player's list is in ID order without its own sort. `replaceDeaths` is untouched.
+  - Fences and reuse: no card name, no new rule. The APNAP slice and the ID comparator now appear once each, in `state.go`. The two chooser-relative loops (`fixedOrderPositions`, `targeting.go:98`) are a different order and stay.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff; `go test ./...` passes); case 3 one line, `state.go:211`; case 4 one line, `state.go:256`; case 5 two lines, `replace.go:52` and `trigger.go:166`; case 6 one line, `state.go:229`; case 7 the four files; `go tool task sim-compare -- autoloop/m2-wave-g.1` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #77 is applied.
