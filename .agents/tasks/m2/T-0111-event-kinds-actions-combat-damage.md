@@ -4,7 +4,7 @@ title: actions.go, combat.go and damage.go emit with the event kind constants (d
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: in-progress
 branch: m2/T-0111-event-kinds-actions-combat-damage
 depends_on: [T-0110]
 claims: []
