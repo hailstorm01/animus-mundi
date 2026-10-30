@@ -4,7 +4,7 @@ title: pkg/view and pkg/eventlog match events by the event kind constants, so no
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: review
 branch: m2/T-0114-event-kinds-view-eventlog
 depends_on: [T-0113]
 claims: []
@@ -64,10 +64,26 @@ No new tests: a pure move, and T-0110's `TestEventKinds_ValuesAreTheSchema` alre
 - `pkg/eventlog/replay.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-30, lead-architect (wave G.2 run, session 8): wrote the task from board directive #86, part 5 of the five-task split T-0110 recorded; T-0113 is `done` (merge f206224). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #86 gives. No new test, for the same reason as T-0111 to T-0113: the unchanged tests and `sim-compare` pin a pure move, and T-0110's test pins each constant's value. A `git grep` over every non-test Go file under `pkg/` and `cmd/cardtown` for a kind compared by literal, an `Event{Kind: …}` literal or a `logf` kind argument found exactly the five lines above, all in the three files #86's split gives T-0114 (Inputs lists what else was checked). Every command here is on the headless allow-list, one per line, with no `|`, `$` or unquoted parentheses. The edits were dry-run on the run branch (Inputs). `main` (37d9c89) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, claim or card here). When this task is `done`, #86 is `applied`, and #87 (c) is the last `open: before` directive of the wave. Next: `kernel-engineer` on Flash.
+- 2026-10-30, kernel-engineer (wave G.2 run, session 8): implemented T-0114 in scratch worktree.
+  - Replaced 5 literal kinds across 3 allowed files with constants from pkg/engine:
+    - pkg/view/log.go: engine.EventMatchStart (line 25), engine.EventTurnStart (line 27).
+    - pkg/eventlog/eventlog.go: engine.EventTurnStart (line 32).
+    - pkg/eventlog/replay.go: engine.EventMatchStart (line 30), engine.EventAction (line 98).
+  - Reused existing engine constants: EventMatchStart, EventTurnStart, EventAction from pkg/engine/events.go.
+  - Acceptance Cases 1–8 verified:
+    1. git -C W diff autoloop/m2-wave-g.2 -- '*_test.go': empty diff. go -C W test ./...: PASS (all pkgs ok).
+    2. go -C W tool task sim-compare -- autoloop/m2-wave-g.2: PASS (starter and stress sims match autoloop/m2-wave-g.2 byte for byte, exit codes included).
+    3. git -C W grep -n -E -e "Kind [!=]= [^A-Za-z]" -e "Kind: [^A-Za-z]" -e "logf[(][^A-Za-z]" -- pkg cmd/cardtown ':!*_test.go': exit 1, no match (no literal event kinds remaining in non-test pkg or cmd/cardtown Go code).
+    4. git -C W grep -n -E -e "engine[.]Event[A-Z]" -- pkg/view/log.go pkg/eventlog/eventlog.go pkg/eventlog/replay.go: exactly 5 matches at expected lines.
+    5. git -C W diff autoloop/m2-wave-g.2 --numstat -- pkg: exactly 1 1 pkg/eventlog/eventlog.go, 2 2 pkg/eventlog/replay.go, 2 2 pkg/view/log.go.
+    6. go -C W run ./cmd/cardtown lint fences: PASS.
+    7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 4 files (the 3 pkg files plus this task file).
+    8. go -C W tool task check: PASS (fmt-check, vet, test, fences, frd, tdd, rules, csvs, syntax all passed). go -C W tool task sim: PASS (200 starter games, all invariants held).
+  - Status moved to review.

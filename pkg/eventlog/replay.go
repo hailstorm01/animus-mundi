@@ -27,7 +27,7 @@ func ReplayWarning(events []engine.Event) string {
 // Any difference between the replayed game and the record is an error naming
 // the first Seq where they differ.
 func Replay(events []engine.Event, at int, resolveDeck func(name string) (engine.DeckList, error)) (engine.Snapshot, error) {
-	if len(events) == 0 || events[0].Kind != "match-start" || events[0].Start == nil {
+	if len(events) == 0 || events[0].Kind != engine.EventMatchStart || events[0].Start == nil {
 		return engine.Snapshot{}, fmt.Errorf("replay: the record must start with a match-start event")
 	}
 	for i, e := range events {
@@ -95,7 +95,7 @@ func Replay(events []engine.Event, at int, resolveDeck func(name string) (engine
 		if r.done() || e.Seq > at {
 			break
 		}
-		if e.Kind != "action" {
+		if e.Kind != engine.EventAction {
 			continue
 		}
 		if r.seen+1 != e.Seq {
