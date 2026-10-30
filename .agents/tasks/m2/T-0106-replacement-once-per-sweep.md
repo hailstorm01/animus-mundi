@@ -4,7 +4,7 @@ title: A destruction replacement saves an asset at most once per sweep, and the 
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests
+status: tests-review
 branch: m2/T-0106-replacement-once-per-sweep
 depends_on: [T-0100, T-0105]
 claims: [rule:replacement-once-per-window, helper:used-replacements]
@@ -72,3 +72,6 @@ Directive #81's "the sweep still ends" is covered by (a) and (b) finishing. *Shi
   - **Reuse:** no existing record of applied replacements exists (`grep` of `pkg/engine` for `replacementsFor`, `seen`, `used`). The set replaces `seen`, so the sweep keeps one per-sweep record, not two.
   - **Tests beyond the directive:** `TestFR_REP_003_ReplacementSavesFromAKill`, the other half of the outcome's example, so that the kill window is pinned both when the asset is lethal afterwards and when it is not.
   - **Design note:** Open Question 15 marked answered in this commit.
+- 2026-10-29 rules-test-author: Wrote `pkg/engine/replacement_once_test.go`: `TestFR_REP_003_ReplacementAppliesOncePerSweep`, `_NextPassAppliesAnotherReplacement`, `_ReplacementThatHealsSaves`, `_KillThenSweepAppliesAgain`, `_ReplacementSavesFromAKill`. Helpers requested: none (the file declares `damageInsteadReplacement`, `damageInsteadStructure`, `wantInvariants`). Cases left out: none.
+  - **Fail before the implementation:** `AppliesOncePerSweep`, `NextPassAppliesAnotherReplacement` and `KillThenSweepAppliesAgain` (the unit survives lethal, `CheckInvariants` reports "lethal but survived the death sweep", and the second replace event never happens, because the kernel takes an asset up once per sweep). `ReplacementThatHealsSaves` and `ReplacementSavesFromAKill` pass already: they pin behavior that must stay.
+  - `go vet` is clean; `cardtown lint rules` passes.
