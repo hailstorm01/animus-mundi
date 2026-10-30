@@ -4,7 +4,7 @@ title: effects.go, replace.go and stack.go emit with the event kind constants (d
 kind: harness
 tier: flash
 wave: G.2 (board directive #86, structural review 6, finding 5)
-status: ready
+status: in-progress
 branch: m2/T-0112-event-kinds-effects-replace-stack
 depends_on: [T-0111]
 claims: []
