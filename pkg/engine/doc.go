@@ -38,7 +38,8 @@
 //     destroyed" replacement replaces a death at the death sweep or in a kill step,
 //     every death of one moment seeing its source (SVY-R20, SVY-R21), in a fixed
 //     order (SVY-R22). When several apply to one death, its controller chooses
-//     (DecideReplacement, SVY-R23).
+//     (DecideReplacement, SVY-R23). A replacement applies at most once to a given
+//     asset per sweep or kill step (SVY-R24).
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
