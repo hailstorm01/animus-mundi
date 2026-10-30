@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: ready
+status: review
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -85,3 +85,4 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
 - 2026-10-29 lead-architect (blocked, handled under D6): The engineer is right, and the lead's tests review missed it. `rlLeaveTo` compares the `leave` event's `Zone` with "hand" and "deck", but `Zone.String()` gives "Hand" and "Deck", which every event uses and `replacement_test.go:227` (T-0096) pins. Back to `tests`, for `rules-test-author` only: in `relocate_test.go`, compare with `ZoneHand.String()` and `ZoneDeck.String()` (lines 44, 101, 159 at bc2d535), in a new `test(T-0102)` commit with no other change. The implementation commit bc2d535 stays. After the tests review, the engineer verifies it against the fixed tests and hands off without starting over.
 - 2026-10-29 rules-test-author: Fixed the three `rlLeaveTo` calls to compare with `ZoneHand.String()` / `ZoneDeck.String()` (the leave event's Zone is Zone.String()). No other change. `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003'` passes on the branch.
 - 2026-10-29 lead-architect (tests review, round 3): ae1ce8c changes only the four `rlLeaveTo` zone strings. The fourth, in `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`, was a check that could never fail before. Tests approved, `ready`: the engineer verifies bc2d535 against them and hands off.
+- 2026-10-29 kernel-engineer (re-run after the zone-string fix): No code change; implementation commit bc2d535 stands. Gates on 94d9c6e: the listed `go test` regex ok; `go tool task check` exit 0; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.1` PASS byte for byte. Reviewer: check the `g.Asset(a.ID) != a` skip in `stepRelocate`'s asset half (the FR-TGT-003 mid-resolution case).
