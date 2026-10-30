@@ -4,7 +4,7 @@ title: Killing is one function, (g *Game) kill, and moving between battlefield z
 kind: harness
 tier: flash
 wave: G.2 (board directives #83 and #84, structural review 6, findings 2 and 3)
-status: ready
+status: in-progress
 branch: m2/T-0108-kill-and-move
 depends_on: [T-0107]
 claims: [func:kill, func:moveOnBattlefield]
