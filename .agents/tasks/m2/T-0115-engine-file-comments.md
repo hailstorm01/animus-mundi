@@ -4,7 +4,7 @@ title: File comments on damage.go, choice.go, invariants.go and layers.go, so ev
 kind: harness
 tier: flash
 wave: G.2 (board directive #87 (c), structural review 6, finding 6)
-status: review
+status: done
 branch: m2/T-0115-engine-file-comments
 depends_on: [T-0114]
 claims: []
@@ -107,3 +107,9 @@ No new tests: comments only, and the unchanged tests and `sim-compare` pin that 
     7. git -C W diff autoloop/m2-wave-g.2 --stat: exactly 5 files (the 4 pkg/engine files and the task file).
     8. go -C W tool task check: PASS (gofmt, go vet, all tests, full cardtown lint suite). go -C W tool task sim: PASS (200 starter games, all invariants held).
   - Status moved to review.
+- 2026-10-30, lead-architect (wave G.2 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.2` as d0dcf5d. Flash run `6ca758d6-cd5d-47b5-a41a-710dd9350629`: exit 0, `status: SUCCESS`, 249 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). `main` (37d9c89) had no commits the run branch lacked, so no sync. Review of `git diff autoloop/m2-wave-g.2...m2/T-0115-engine-file-comments` (f311b31):
+  - Scope: only the four allowed files and this task file changed; no test file changed (case 5 printed nothing).
+  - Comments only, checked line by line: the four code hunks are exactly Edits 1–4, and the blobs are identical to the lead's dry run (`acd7763`, `d80ecfd`, `73037ab`, `86c8a37`). `layers.go`'s comment lines 2 and 3 are unchanged, only moved above `package engine`.
+  - Fences and placement: no card name, no new rule, no new declaration.
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (24 lines, none at line 1); case 2 (4 lines, each at line 1); case 3 (the four numstat lines); case 4 (`go doc ./pkg/engine` starts with the package doc; none of the four comments leaks into it); case 6 `go tool task sim-compare -- autoloop/m2-wave-g.2` `[PASS]` (starter and stress byte-identical); `cardtown lint fences`; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's `pkg` tree equals the task tip's, so the gates hold on the run branch. Directive #87 is `applied`; #82 to #87 are all applied, and wave G.2 is complete.
