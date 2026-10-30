@@ -4,7 +4,7 @@ title: File comments on damage.go, choice.go, invariants.go and layers.go, so ev
 kind: harness
 tier: flash
 wave: G.2 (board directive #87 (c), structural review 6, finding 6)
-status: ready
+status: in-progress
 branch: m2/T-0115-engine-file-comments
 depends_on: [T-0114]
 claims: []
