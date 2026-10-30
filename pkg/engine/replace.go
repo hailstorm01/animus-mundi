@@ -125,21 +125,3 @@ func (g *Game) chooseReplacement(a *Asset, opts []replacementOption) replacement
 		Options: options, Min: 1, Max: 1})
 	return opts[picks[0]]
 }
-
-// relocateReplaced returns the replaced asset from the battlefield to its
-// owner's hand or deck, as one thing done. Its last-known state is kept
-// (FR-ZON-004). The event carries no Card: a face-down asset's card is private
-// in a hand or deck.
-func (g *Game) relocateReplaced(r *resolution, st ability.Step) int {
-	as := g.stepAssets(r, st)
-	for _, a := range as {
-		to, text := ZoneHand, "%s returns to its owner's hand"
-		if st.Op == ability.OpPutOnDeck {
-			to, text = ZoneDeck, "%s is put into its owner's deck"
-		}
-		g.logEvent(Event{Kind: "leave", Player: -1, Target: a.ID, Zone: to.String()}, text, a)
-		g.leaveBattlefield(a, g.effectiveState(a))
-		g.putCard(a.Inst, to, st.Bottom)
-	}
-	return len(as)
-}
