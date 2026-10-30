@@ -196,15 +196,11 @@ func relocateTo(st ability.Step) (to Zone, bottom bool) {
 // stepRelocate moves each asset of stepAssets, then each card of stepCards, to
 // its owner's hand or deck, and returns how many moved. An asset leaves the
 // battlefield with its last-known state (FR-ZON-004); the event carries no
-// Card, as a face-down asset's card is private in a hand or deck. An asset an
-// earlier step already removed from the battlefield is skipped.
+// Card, as a face-down asset's card is private in a hand or deck.
 func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 	to, bottom := relocateTo(st)
 	n := 0
 	for _, a := range g.stepAssets(r, st) {
-		if g.Asset(a.ID) != a {
-			continue
-		}
 		text := "%s returns to its owner's hand"
 		if to == ZoneDeck {
 			text = "%s is put into its owner's deck"
@@ -275,7 +271,9 @@ func (g *Game) itemSource(it *StackItem) *Asset {
 }
 
 // stepAssets returns the assets an asset step acts on: the entities chosen for
-// its slot that are still legal, in pick order, or for SubjectAll every
+// its slot that are still legal and still on the battlefield, in pick order (a
+// target an earlier step or mode removed is skipped: FR-ZON-004, FR-TGT-003
+// partial invalidation), or for SubjectAll every
 // battlefield asset matching st.Filter now, oldest first, or for SubjectSelf the
 // source if it is still on the battlefield. "All" is not a
 // target, so Ward excludes nothing and nothing is asked (FR-TGT-002,
@@ -284,7 +282,13 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 	switch st.Subject {
 	case ability.SubjectTarget:
 		if st.Target >= 0 && st.Target < len(r.chosen) {
-			return r.chosen[st.Target]
+			var out []*Asset
+			for _, a := range r.chosen[st.Target] {
+				if g.Asset(a.ID) == a {
+					out = append(out, a)
+				}
+			}
+			return out
 		}
 	case ability.SubjectReplaced:
 		if a := r.replaced; a != nil && g.Asset(a.ID) == a {

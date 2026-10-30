@@ -4,7 +4,7 @@ title: A step acts only on chosen assets still on the battlefield, so a later st
 kind: shape
 tier: sonnet
 wave: G.2
-status: ready
+status: review
 branch: m2/T-0107-removed-target-skipped
 depends_on: [T-0102]
 claims: [rule:removed-target-skipped, helper:step-assets-target]
@@ -66,3 +66,6 @@ Directive #82's acceptance (every existing test passes unchanged, `sim-compare`)
   - **Red before implementation:** all four fail now (later step still damages or modifies the removed unit; (a) also fires its damage-taken trigger). None already passes.
   - **Helpers requested:** none. Cases left out: none.
 - 2026-10-30 lead-architect (tests review, round 1): Approved, `ready` for `kernel-engineer` (sonnet). The four tests match directive #82 (a)–(d) and the user's 2026-10-30 ruling: each later step skips the removed unit and still acts on the rest of its slot ((c): Y takes 1), a step whose whole slot left counts 0 so its `IfDone` follower does not run ((b), `SVY-R14`), and a replaced kill leaves no target ((d)). They assert outcomes only (events, zones, deck counts). Re-run in a review worktree at 6786c54: all four fail before the implementation. Engineer: follow the Shape exactly; `replace.go` is not touched.
+- 2026-10-30 kernel-engineer: Implemented. Only `pkg/engine/effects.go` changed: `stepAssets`' `SubjectTarget` case now returns only chosen assets with `g.Asset(a.ID) == a` (pick order, `r.chosen` untouched) and its doc comment says so; `stepRelocate` lost its own `g.Asset(a.ID) != a` check and the doc sentence. `replace.go` untouched.
+  - **Reuse:** no new shape; the check moved from `stepRelocate` into `stepAssets`.
+  - **Gates:** `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_'` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.2` PASS byte for byte. `grep g.Asset( effects.go`: remaining checks are `resolveAbility` target re-verify, `value`, `itemSource`, and `stepAssets` (target, replaced, self); none in `stepRelocate`.
