@@ -4,7 +4,7 @@ title: The death sweep gets its own file, sweep.go (directive #79, harness, flas
 kind: harness
 tier: flash
 wave: G.1 (board directive #79, structural review 5, finding 4)
-status: in-progress
+status: review
 branch: m2/T-0105-sweep-file
 depends_on: [T-0104]
 claims: [file:pkg/engine/sweep.go]
@@ -86,10 +86,25 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
 - `pkg/engine/sweep.go` (new)
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-10-29, lead-architect (wave G.1 run, session 4): wrote the task from board directive #79, the last of #76 to #79 in board order now that #78 is applied (T-0104). Harness, so it skips `tests` and goes straight to `ready`; tier `flash` as #79 gives; every command here is on the headless allow-list, with no `|`, parentheses or `$` (case 3, 4 and 6 use `-e` patterns). #79's `OPEN(SVY-R24)` bullet is dropped as #81 says, since R24 is ruled (FRD 01 v3.18). `doc.go`'s line for `placement.go` is #80's. `main` (556811f) has no commits the run branch lacks, so no sync. Waiting directives checked: none has triggered (#8: no `deck.go`; #15, #20 (b), #58, #59 (2), #61, #71: no such hook, shape, claim or card here; #6, #7: mode is `serial`). #81 stays `open: after #79`, so it is the next task once this one is `done`. Next: `kernel-engineer` on Flash.
+- 2026-10-29, kernel-engineer (session 1, flash): implemented T-0105 per directive #79 and task specification.
+  - Step 1: Loaded task in scratch worktree and set status: in-progress (commit 65b56bc).
+  - Step 3 (Reuse): Pure move of existing death sweep functions (`destroyAll`, `deathSweep`, `newlyLethal`, `destroyDying`, `sweepDeaths`, `end`). No new shapes added.
+  - Step 5 (Implementation): Created `pkg/engine/sweep.go` with 4-line header followed by `damage.go` lines 65-171 byte-for-byte; trimmed `pkg/engine/damage.go` to line 63 ending after `dealDamage`; updated `pkg/engine/doc.go` file map with `placement.go` and `sweep.go`. Committed as `feat(engine): move death sweep to sweep.go (T-0105)` (commit 3590cdb).
+  - Acceptance Cases:
+    1. Tests unchanged: `git -C W diff autoloop/m2-wave-g.1 -- "*_test.go"` printed nothing. `go -C W test ./...` passed (33s).
+    2. Sims byte-identical: `go -C W tool task sim-compare -- autoloop/m2-wave-g.1` passed: `[PASS] starter and stress sims match autoloop/m2-wave-g.1 byte for byte, exit codes included`.
+    3. Pipeline only in damage.go: `git -C W grep -n -e "^func " -e "^type " -e "^var " -e "^const " -- pkg/engine/damage.go` printed exactly 3 lines (`type DamageResult struct {`, `func (r DamageResult) Taken() bool`, `func (g *Game) dealDamage(...) DamageResult`).
+    4. Six functions in sweep.go: `git -C W grep -n -e "^func " -e "^type " -e "^var " -e "^const " -- pkg/engine/sweep.go` printed exactly 6 lines in order (`destroyAll`, `deathSweep`, `newlyLethal`, `destroyDying`, `sweepDeaths`, `end`).
+    5. Moved not changed: `git -C W diff autoloop/m2-wave-g.1 --numstat -- pkg/engine/damage.go pkg/engine/sweep.go` printed `0 108 pkg/engine/damage.go` and `111 0 pkg/engine/sweep.go`.
+    6. Complete file map: `git -C W grep -n -e "sweep.go:" -e "placement.go:" -- pkg/engine/doc.go` printed 2 lines. Every non-test, non-doc .go file directly in `pkg/engine` is listed in `doc.go`.
+    7. Fences: `go -C W run ./cmd/cardtown lint fences` passed (`[PASS] Package code is free of card names, invalid markers and disallowed imports.`).
+    8. Only these edits: `git -C W diff autoloop/m2-wave-g.1 --stat` listed only `pkg/engine/damage.go`, `pkg/engine/doc.go`, `pkg/engine/sweep.go`, and the task file.
+    9. Standard gates: `go -C W tool task check` (gofmt, vet, test, all linters) and `go -C W tool task sim` (starter decks 200 matches) passed cleanly.
+  - Reviewer notes: Diff is a pure file split and documentation map update; no logic or tests were altered. Ready for lead-architect review.
