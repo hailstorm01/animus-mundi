@@ -4,7 +4,7 @@ title: The death sweep gets its own file, sweep.go (directive #79, harness, flas
 kind: harness
 tier: flash
 wave: G.1 (board directive #79, structural review 5, finding 4)
-status: review
+status: done
 branch: m2/T-0105-sweep-file
 depends_on: [T-0104]
 claims: [file:pkg/engine/sweep.go]
@@ -108,3 +108,9 @@ No new tests: a pure move. Run each command on its own, pointed at your worktree
     8. Only these edits: `git -C W diff autoloop/m2-wave-g.1 --stat` listed only `pkg/engine/damage.go`, `pkg/engine/doc.go`, `pkg/engine/sweep.go`, and the task file.
     9. Standard gates: `go -C W tool task check` (gofmt, vet, test, all linters) and `go -C W tool task sim` (starter decks 200 matches) passed cleanly.
   - Reviewer notes: Diff is a pure file split and documentation map update; no logic or tests were altered. Ready for lead-architect review.
+- 2026-10-29, lead-architect (wave G.1 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-g.1` as dd82c77. Flash run `4a25adb4-6a34-4a59-8382-190615af9eae`: exit 0, `status: SUCCESS`, 312 s, no refusals (the JSON has no `denied_actions` entry, `cli.log` has no `soft-denying` line and the transcript no `permission check failed`). Review of `git diff autoloop/m2-wave-g.1...m2/T-0105-sweep-file` (81bf1bb):
+  - Scope: only `damage.go`, `doc.go`, `sweep.go` and this file changed. No test file changed.
+  - Pure move, checked byte for byte: `sweep.go` after its four header lines equals the run branch's `damage.go` lines 65-171, and the new `damage.go` equals the old one's lines 1-63. `doc.go` changes only the two map lines in Edit 3.
+  - Fences and placement: no card name, no new rule; `sweep.go` stays in package `engine`, which the Boundaries table gives the rules. Every non-test file directly in `pkg/engine` other than `doc.go` is named in the file map (checked against `git ls-files`).
+  - Gates re-run in a scratch worktree of the task branch, each with exit 0: case 1 (no `_test.go` diff); cases 3 and 4 (three and six declarations, as listed); case 5 (`0 108` and `111 0`); case 7 `cardtown lint fences`; `go tool task sim-compare -- autoloop/m2-wave-g.1` `[PASS]` (starter and stress byte-identical); `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged), 32/50 Animus and 25/50 Path main cards executable.
+  - The merge's tree equals the task tip's, so the gates hold on the run branch. Directive #79 is applied, and with it #76 to #79. #81 is now `open: before the next Deliverables task`.
