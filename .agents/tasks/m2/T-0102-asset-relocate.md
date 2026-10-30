@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: tests
+status: tests-review
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -77,3 +77,4 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
 - 2026-10-29 lead-architect (tests review, round 1): The outcomes match `FR-ZON-004`, `FR-TGT-003` and `SVY-R3`. The FR-TGT-003 test's mid-resolution departure is the stricter case and is kept: `r.chosen` still holds the killed asset when the return step runs, so the asset half must skip an asset no longer on the battlefield. A target gone before resolution is dropped by `resolveAbility`'s second verification, which every op shares and earlier tests pin. Back to `tests` for two edits, both in a new `test(T-0102)` commit:
   1. `TestFR_ZON_004_FaceDownAssetReturnsAsItsCard`: drop `NonScratch: false` from the target filter. It is the zero value, and directive #78 removes the field, which would make this an unnamed seventh test site for #78.
   2. Rename `TestFR_TGT_003_TargetThatLeftBeforeResolutionIsNotMoved` to `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`, so the name says what it sets up, and update the Tests list and your Log line to match.
+- 2026-10-29 rules-test-author: Round 1 notes applied: dropped `NonScratch: false` from the face-down test's filter; renamed the fizzle test to `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved` (setup and assertions unchanged).
