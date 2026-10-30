@@ -4,7 +4,7 @@ title: A step returns or puts any asset it acts on, not only a replaced one (FR-
 kind: shape
 tier: sonnet
 wave: G.1
-status: review
+status: done
 branch: m2/T-0102-asset-relocate
 depends_on: [T-0098]
 claims: [primitive:RETURN_TO_HAND(asset), primitive:PUT_ON_DECK(asset), helper:relocate-destination]
@@ -59,11 +59,11 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
 - `pkg/engine/ability/ability.go` (the `OpReturnToHand` and `OpPutOnDeck` comments only)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_ShiftingImpossibility'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (no current card reaches the new paths; see Shape, Sims)
-- [ ] Outside the destination helper, no non-test file in `pkg/engine` maps `OpReturnToHand` or `OpPutOnDeck` to a zone (directive #76 (g)), and `replace.go` declares no relocation.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003|TestFR_REP_001|TestCard_ShiftingImpossibility'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-g.1` passes (no current card reaches the new paths; see Shape, Sims)
+- [x] Outside the destination helper, no non-test file in `pkg/engine` maps `OpReturnToHand` or `OpPutOnDeck` to a zone (directive #76 (g)), and `replace.go` declares no relocation.
 
 ## Log
 - 2026-10-29 lead-architect (wave G.1 run, session 1): Wrote the task for board directive #76 (`open: before the next Deliverables task`, design note Deliverable 6d's first task). Run file created; `main` (556811f) has nothing the run branch lacks, so no sync.
@@ -86,3 +86,4 @@ Directive #76's (a) (every existing test passes unchanged, including `TestFR_REP
 - 2026-10-29 rules-test-author: Fixed the three `rlLeaveTo` calls to compare with `ZoneHand.String()` / `ZoneDeck.String()` (the leave event's Zone is Zone.String()). No other change. `go test ./pkg/engine -run 'TestFR_ZON_004|TestFR_TGT_003'` passes on the branch.
 - 2026-10-29 lead-architect (tests review, round 3): ae1ce8c changes only the four `rlLeaveTo` zone strings. The fourth, in `TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved`, was a check that could never fail before. Tests approved, `ready`: the engineer verifies bc2d535 against them and hands off.
 - 2026-10-29 kernel-engineer (re-run after the zone-string fix): No code change; implementation commit bc2d535 stands. Gates on 94d9c6e: the listed `go test` regex ok; `go tool task check` exit 0; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-g.1` PASS byte for byte. Reviewer: check the `g.Asset(a.ID) != a` skip in `stepRelocate`'s asset half (the FR-TGT-003 mid-resolution case).
+- 2026-10-29 lead-architect (code review, round 1): Approved, merged into `autoloop/m2-wave-g.1` as c84890e (the merge tree is the gated task tip). Re-run in a review worktree at 94d9c6e: `go tool task check` passes; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-g.1` byte-identical. Scope: only Allowed Files and `relocate_test.go` changed; the one test edit after bc2d535 is ae1ce8c, the `test(T-0102)` zone-string fix the lead asked for. Fences pass. Reuse: `relocateReplaced` is gone, and `relocateTo` is the only place either op maps to a zone (grep: the other hits are card data, the dispatch switch and `doc.go`). Rules fidelity: every asset subject goes through `stepAssets`, and the `g.Asset(a.ID) != a` skip keeps a target an earlier step destroyed in its pile (`FR-ZON-004`: it is a new object). Directive #76 `applied`.
