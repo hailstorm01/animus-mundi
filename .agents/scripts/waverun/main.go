@@ -114,6 +114,7 @@ func main() {
 		fmt.Printf("Session:    claude -p \"@lead-architect next (wave run: ...)\" %s\n", strings.Join(cliArgs, " "))
 		os.Exit(0)
 	}
+	keepAwake()
 
 	if !branchExists(r.branch) {
 		if _, err := git("branch", r.branch, *base); err != nil {
