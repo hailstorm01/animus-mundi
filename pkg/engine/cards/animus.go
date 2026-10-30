@@ -199,7 +199,7 @@ var animusDefs = map[string]*ability.Def{
 				Filter: ability.Filter{
 					Allegiance: ability.AllegianceAllied,
 					Kinds:      ability.KindUnit,
-					Scratch:    true,
+					Scratch:    ability.ScratchOnly,
 				},
 				Steps: []ability.Step{
 					{Op: ability.OpReturnToHand, Subject: ability.SubjectReplaced},

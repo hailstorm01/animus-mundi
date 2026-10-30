@@ -10,7 +10,7 @@
 //     value) is invalid and never passes for the first member (Hook, Op).
 //   - An enum whose zero value is a meaningful default starts at iota, and the
 //     first member's comment says "the zero value" (TurnOwner, Keyword, Zone,
-//     Allegiance, Subject, ValueSource).
+//     Allegiance, ScratchCompany, Subject, ValueSource).
 package ability
 
 // Def is the executable definition of one card's printed abilities.
@@ -130,12 +130,11 @@ type Target struct {
 
 // Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
 type Filter struct {
-	Allegiance Allegiance // relative to the ability's controller
-	Kinds      Kinds      // zero means any asset
-	NonScratch bool       // excludes Scratch Company units
-	Scratch    bool       // only Scratch Company units
-	Other      bool       // excludes the ability's own source asset ("other")
-	Zone       Zone       // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
+	Allegiance Allegiance     // relative to the ability's controller
+	Kinds      Kinds          // zero means any asset
+	Scratch    ScratchCompany // ScratchAny (zero) means any unit; else only Scratch Company units, or none
+	Other      bool           // excludes the ability's own source asset ("other")
+	Zone       Zone           // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
 }
 
 // InPile reports whether f chooses cards in a discard pile rather than assets
@@ -159,6 +158,16 @@ const (
 	KindUnit Kinds = 1 << iota
 	KindStructure
 	KindHeadquarters
+)
+
+// ScratchCompany is a filter's Scratch Company criterion: whether a unit with
+// the Scratch Company subtype matches (FR-TGT-001).
+type ScratchCompany int
+
+const (
+	ScratchAny      ScratchCompany = iota // the zero value: any unit, Scratch Company or not
+	ScratchOnly                           // only Scratch Company units ("allied Scratch Company unit")
+	ScratchExcluded                       // no Scratch Company units ("non-Scratch unit")
 )
 
 // Op is one primitive step.
