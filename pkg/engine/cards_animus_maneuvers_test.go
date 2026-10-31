@@ -597,3 +597,101 @@ func TestCard_RapturousSermon_AsksNothingAndPaysFourTactics(t *testing.T) {
 		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", pl.Req, pl.Tac)
 	}
 }
+
+// Rhapsody's Embrace (T-0128): "As an additional cost to enact this maneuver,
+// kill an allied unit." / "Kill chosen opposing unit." Costs 0 Requisition, 3
+// Tactics. Feed the Despoiler: the same cost / "Draw 2 cards." Costs 1 Tactics.
+
+func TestFR_TRN_003a_RhapsodysEmbrace(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	a1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Ally Two", 1, 5, Keywords{}))
+	f1 := s.put(1, ZoneMainTheater, unit("Foe One", 1, 5, Keywords{}))
+	f2 := s.put(1, ZoneMainTheater, unit("Foe Two", 1, 5, Keywords{}))
+	inst := enactFor(s, "Rhapsody's Embrace")
+	kcScript(s, f2, a2)
+	s.do(enactAction(inst))
+	p0, p1 := s.g.Players[0], s.g.Players[1]
+	if s.alive(a2) || !inDiscard(p0, a2.Inst) || !s.alive(a1) {
+		t.Errorf("the chosen allied unit is killed as the cost and no other (FR-TRN-003a)")
+	}
+	if s.alive(f2) || !inDiscard(p1, f2.Inst) || !s.alive(f1) {
+		t.Errorf("the chosen opposing unit is killed and no other (printed effect)")
+	}
+	if lastDiscard(p0) != inst {
+		t.Errorf("the Maneuver is in its owner's discard pile")
+	}
+	if p0.Req != 3 || p0.Tac != 2 {
+		t.Errorf("it costs 3 Tactics and no Requisition: pool R%d T%d, want R3 T2", p0.Req, p0.Tac)
+	}
+
+	t.Run("no opposing unit", func(t *testing.T) {
+		s := newScene(t)
+		s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+		inst := enactFor(s, "Rhapsody's Embrace")
+		if offersEnact(s.g, inst) {
+			t.Errorf("without an opposing unit to kill the Maneuver is not offered, though an allied unit could pay (SVY-R29)")
+		}
+		s.reject(enactAction(inst))
+		if !inHand(s.g.Players[0], inst) {
+			t.Errorf("the card stays in hand (SVY-R29)")
+		}
+	})
+	t.Run("no allied unit", func(t *testing.T) {
+		s := newScene(t)
+		s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+		inst := enactFor(s, "Rhapsody's Embrace")
+		if offersEnact(s.g, inst) {
+			t.Errorf("without an allied unit to kill the Maneuver is not offered (SVY-R29, FR-TRN-003a)")
+		}
+		s.reject(enactAction(inst))
+		if !inHand(s.g.Players[0], inst) {
+			t.Errorf("the card stays in hand (SVY-R29)")
+		}
+	})
+}
+
+func TestFR_TRN_003a_FeedTheDespoiler(t *testing.T) {
+	// Covers: SVY-R29
+	s := newScene(t)
+	a1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, Keywords{}))
+	a2 := s.put(0, ZoneReserves, unit("Ally Two", 1, 5, Keywords{}))
+	inst := enactFor(s, "Feed the Despoiler")
+	p := s.g.Players[0]
+	hand, deck := len(p.Hand), len(p.Deck)
+	kcScript(s, nil, a1)
+	s.do(enactAction(inst))
+	if s.alive(a1) || !inDiscard(p, a1.Inst) || !s.alive(a2) {
+		t.Errorf("the chosen allied unit is killed as the cost and no other (FR-TRN-003a)")
+	}
+	if got := len(p.Hand) - (hand - 1); got != 2 {
+		t.Errorf("its controller draws 2 cards: hand grew by %d beyond the Maneuver leaving, want 2", got)
+	}
+	if got := deck - len(p.Deck); got != 2 {
+		t.Errorf("2 cards left the deck, got %d", got)
+	}
+	if p.Req != 3 || p.Tac != 4 {
+		t.Errorf("it costs 1 Tactics: pool R%d T%d, want R3 T4", p.Req, p.Tac)
+	}
+
+	t.Run("a Scratch Company can pay", func(t *testing.T) {
+		s := newScene(t)
+		sc := s.putScratch(0)
+		inst := enactFor(s, "Feed the Despoiler")
+		if !offersEnact(s.g, inst) {
+			t.Fatalf("a face-down Scratch Company is an allied unit, so the cost is payable (FR-TRN-003a)")
+		}
+		s.do(enactAction(inst))
+		if s.alive(sc) || !inDiscard(s.g.Players[0], sc.Inst) {
+			t.Errorf("the Scratch Company is killed as the cost (FR-TRN-003a)")
+		}
+	})
+	t.Run("no allied unit", func(t *testing.T) {
+		s := newScene(t)
+		inst := enactFor(s, "Feed the Despoiler")
+		if offersEnact(s.g, inst) {
+			t.Errorf("without an allied unit to kill the Maneuver is not offered (SVY-R29)")
+		}
+	})
+}
