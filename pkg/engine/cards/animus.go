@@ -77,6 +77,25 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Deafening Aria": {
+		Text: []string{
+			"Deal 1 damage to all opposing units in the Main Theater.",
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneMainTheater,
+					},
+				},
+			},
+		},
+	},
 	"Despoiler Larva": {
 		Text: []string{"Whenever this unit attacks, Scratch 1."},
 		Triggers: []ability.Trigger{
@@ -105,6 +124,35 @@ var animusDefs = map[string]*ability.Def{
 							Amount:  ability.Value{N: 2},
 							Subject: ability.SubjectOpponents,
 						},
+					},
+				},
+			},
+		},
+	},
+	"Despoiler's Emergence": {
+		Text: []string{
+			"Deal 4 damage to all opposing assets in the Main Theater.",
+			"Deal 2 damage to all opposing non-Scratch assets in opponents' Reserves.",
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 4},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Zone:       ability.ZoneMainTheater,
+					},
+				},
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 2},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Scratch:    ability.ScratchExcluded,
+						Zone:       ability.ZoneReserves,
 					},
 				},
 			},

@@ -28,8 +28,6 @@ var NotYetExecutable = []string{
 	"Chainbreaker's Tenacity",
 	"Cliff of Portents",
 	"Conversion Spike",
-	"Deafening Aria",
-	"Despoiler's Emergence",
 	"Devilhorn Sanction",
 	"Devilhorn Scouting Party",
 	"Disorienting Pulse",
