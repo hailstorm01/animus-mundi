@@ -54,6 +54,12 @@ type result struct {
 	IsError           bool    `json:"is_error"`
 	Subtype           string  `json:"subtype"`
 	TotalCostUSD      float64 `json:"total_cost_usd"`
+	SessionID         string  `json:"session_id"`
+	NumTurns          int     `json:"num_turns"`
+	TerminalReason    string  `json:"terminal_reason"`
+	APIErrorStatus    int     `json:"api_error_status"`
+	APIError          string  `json:"api_error"`
+	Result            string  `json:"result"`
 	PermissionDenials []struct {
 		ToolName  string          `json:"tool_name"`
 		ToolInput json.RawMessage `json:"tool_input"`
@@ -166,6 +172,11 @@ func main() {
 			r.spent += res.TotalCostUSD
 		}
 		fmt.Printf("   took %s, $%.2f\n", took, res.TotalCostUSD)
+		if runErr != nil || !parsed || res.IsError || len(res.PermissionDenials) > 0 {
+			for _, l := range diagnosis(res, parsed, out, runErr) {
+				fmt.Println("   " + l)
+			}
+		}
 		if runErr != nil || !parsed {
 			r.stop(fmt.Sprintf("session %d exited with code %d", n, exitCode(runErr)), 1)
 		}
@@ -173,9 +184,6 @@ func main() {
 			r.stop(fmt.Sprintf("session %d ended with %s", n, res.Subtype), 1)
 		}
 		if len(res.PermissionDenials) > 0 {
-			for _, d := range res.PermissionDenials {
-				fmt.Printf("   refused: %s %s\n", d.ToolName, d.ToolInput)
-			}
 			r.stop(fmt.Sprintf("session %d had refused tool calls", n), 1)
 		}
 
@@ -222,6 +230,42 @@ func (r *run) stop(reason string, code int) {
 	fmt.Printf("   Land it: git merge --no-ff %s   (on %s, when you are satisfied)\n", r.branch, *base)
 	fmt.Printf("   Resume:  go tool task wave-run -- -Wave %s -Tasks <n>\n", *wave)
 	os.Exit(code)
+}
+
+// diagnosis says why a session failed: the exit error, the result's error
+// fields and refused tool calls, or the end of the output when it is not a
+// result. A usage limit, for example, exits 1 with is_error set, a 429 in
+// api_error_status and the reset time in result.
+func diagnosis(res result, parsed bool, out []byte, runErr error) []string {
+	var ls []string
+	if runErr != nil {
+		ls = append(ls, fmt.Sprintf("exit: %v", runErr))
+	}
+	if !parsed {
+		tail := strings.TrimSpace(string(out))
+		if tail == "" {
+			return append(ls, "no output on stdout (stderr, if any, is above)")
+		}
+		if len(tail) > 1500 {
+			tail = "..." + tail[len(tail)-1500:]
+		}
+		return append(ls, "output is not a result JSON; it ends:", tail)
+	}
+	ls = append(ls, fmt.Sprintf("session %s: subtype %s, terminal reason %s, is_error %t, %d turns",
+		res.SessionID, res.Subtype, res.TerminalReason, res.IsError, res.NumTurns))
+	if res.APIErrorStatus != 0 || res.APIError != "" {
+		ls = append(ls, fmt.Sprintf("API error: %d %s", res.APIErrorStatus, res.APIError))
+	}
+	if msg := strings.TrimSpace(res.Result); msg != "" {
+		if len(msg) > 500 {
+			msg = msg[:500] + "..."
+		}
+		ls = append(ls, "result: "+msg)
+	}
+	for _, d := range res.PermissionDenials {
+		ls = append(ls, fmt.Sprintf("refused: %s %s", d.ToolName, d.ToolInput))
+	}
+	return ls
 }
 
 // runText is the run file as committed on the run branch, or nothing before
