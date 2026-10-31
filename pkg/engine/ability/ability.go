@@ -211,7 +211,14 @@ type Step struct {
 	Target  int    // SubjectTarget: index into Effect.Targets
 	Filter  Filter // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
 	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
+	Dealer  int    // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
 	IfDone  bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
+}
+
+// DealerSlot returns the Effect.Targets index of the step's chosen dealer, and
+// whether it has one.
+func (s Step) DealerSlot() (slot int, ok bool) {
+	return s.Dealer - 1, s.Dealer > 0
 }
 
 // ValueSource is where a Value's number comes from.
@@ -219,7 +226,7 @@ type ValueSource int
 
 const (
 	ValueSourceFixed ValueSource = iota // the zero value: N
-	ValueSourcePower                    // the source's effective power when the step resolves, or its last-known effective power (SVY-R10); N is ignored
+	ValueSourcePower                    // the effective power of the step's dealer when the step resolves: the source, read with its last-known effective power once it has left (SVY-R10), or a chosen dealer (Step.Dealer), read only while it is on the battlefield (SVY-R27); N is ignored
 )
 
 // Value is a number a step uses, read when the step resolves; From says where

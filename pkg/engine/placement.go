@@ -105,6 +105,9 @@ func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 			if st.Subject == ability.SubjectTarget {
 				st.Target += shift
 			}
+			if st.Dealer > 0 {
+				st.Dealer += shift
+			}
 			joined.Steps = append(joined.Steps, st)
 		}
 	}
