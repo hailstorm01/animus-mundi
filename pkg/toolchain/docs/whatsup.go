@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"animus-mundi/pkg/toolchain/audit"
 	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/linter/rules"
 )
@@ -100,10 +99,6 @@ func ShowTools(repoRoot string) {
 	fmt.Println("    cardtown sim [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
 	fmt.Println("- cardtown hook install : Installs native Git pre-commit hook into .git/hooks/pre-commit")
 	fmt.Println("    cardtown hook install")
-	fmt.Println("- cardtown audit status : Read-only status report for pending Card Town audits")
-	fmt.Println("    cardtown audit status")
-	fmt.Println("- cardtown audit resolve <AuditFile> : Resolves pending audit, updates registry, and commits")
-	fmt.Println("    cardtown audit resolve [-dry-run] [-push] <AuditFile>")
 	fmt.Println("- cardtown tdd slice [flags] : Topologically slice approved TDD into GitHub Milestone & Issues")
 	fmt.Println("    cardtown tdd slice [-dry-run] [-publish] [-update-existing] <TddFile>")
 	fmt.Println("- cardtown whats-up [flags] : Live capability and state snapshot for the docs workflow")
@@ -111,7 +106,7 @@ func ShowTools(repoRoot string) {
 	fmt.Println()
 }
 
-// ShowState displays repository git status, hook status, and pending audits.
+// ShowState displays repository git status, hook status and the docs workflow's live state.
 func ShowState(repoRoot string) {
 	fmt.Println("== LIVE STATE ==")
 
@@ -164,10 +159,6 @@ func ShowState(repoRoot string) {
 	if open, reachable, ok := openMatrixItems(repoRoot); ok {
 		fmt.Printf("Keyword interaction matrix: %d open item(s), %d reachable with current cards\n", open, reachable)
 	}
-
-	fmt.Println()
-	fmt.Println("Pending audits:")
-	_ = audit.Status(repoRoot)
 
 	// Portfolio sync staleness check
 	sumFile := filepath.Join(repoRoot, "docs", "PRODUCT_SUMMARY.md")
