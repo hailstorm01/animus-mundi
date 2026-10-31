@@ -4,7 +4,7 @@ title: A Maneuver can have an additional cost that kills a chosen allied unit, p
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0128-kill-cost
 depends_on: [T-0081, T-0097, T-0098, T-0108, T-0116, T-0117, T-0123]
 claims: [type:ability.Cost, type:ability.CostKind, const:CostKill, field:Def.ExtraCosts, field:placement.costs, func:costDecision, func:costsPayable, func:payCosts, card:Rhapsody's Embrace, card:Feed the Despoiler]
