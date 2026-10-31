@@ -4,7 +4,7 @@ title: Enact a Maneuver from hand, resolve its effect and put it into its owner'
 kind: shape
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/T-0116-enact-maneuver
 depends_on: [T-0083, T-0107]
 claims: [action:enact, stack:maneuver, def:effect]
@@ -72,11 +72,11 @@ Synthetic Maneuver cards only (`TypeManeuver`, an `ability.Def` with an `Effect`
 - `pkg/engine/stack.go` (`StackManeuver`, field comments, `push`, `resolve`, `resolveManeuver`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MNV_001|TestFR_TGT_001_ManeuverTarget|TestFR_QUE_001_Maneuver|TestFR_MOD_001_ModalManeuver|TestCard_SupportedManeuver|TestLoadCards_'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c` passes (no card gains a `Def.Effect`; see Shape, Sims)
-- [ ] `ActEndTurn` is still the last `ActionKind`, and `StackAbility` keeps its value.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MNV_001|TestFR_TGT_001_ManeuverTarget|TestFR_QUE_001_Maneuver|TestFR_MOD_001_ModalManeuver|TestCard_SupportedManeuver|TestLoadCards_'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c` passes (no card gains a `Def.Effect`; see Shape, Sims)
+- [x] `ActEndTurn` is still the last `ActionKind`, and `StackAbility` keeps its value.
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 1. Synced `main` (FRD 01 v3.19, `17ca104`) into `autoloop/m2-wave-c` (`5c155a0`). Directive #88's trigger has fired (the outcome's `Status:` is `applied: FRD 01 v3.19`), so it is `open`. Its first bullet is split under the D2 size rule: this task builds the enact action and its resolution (four non-test files). The next task builds `SVY-R29` legality (#88 tests (a), (b)) in `placement.go` and `actions.go`, sharing `legalModes`' exactly-one-slot check. After it come the delegated dealer (#88 tests (c), (d); it edits `effects.go`, so its task also corrects `resolveAbility`'s "triggered ability" doc comment), `MOVE_ZONE` (#88 test (e)), the client harness task (see Shape, Clients) and the card tasks, deck cards first (#14 (a)). Directive #20 (b) was triggered by this task, the first wave C shape task. It applies to the task for *Steel Rain*'s discard cost, so it stays `open` until then. Duplicates searched: there is no other enact path, and `chooseOnPlacement` and `resolveAbility` are reused, not copied. Status `tests`; dispatching `rules-test-author`.
@@ -95,3 +95,4 @@ Synthetic Maneuver cards only (`TypeManeuver`, an `ability.Def` with an `Effect`
   2. **Field comments (`stack.go`).** `Keyword` is not used by a `StackManeuver`, so restore it to `StackAbility:` only. `Effect`'s "(Source is its source asset)" becomes "(for StackAbility, Source is its source asset)".
   Re-run `go tool task check`, `go tool task sim` and `go tool task sim-compare -- autoloop/m2-wave-c`.
 - 2026-10-30 kernel-engineer: review round 1 notes answered; status `review`. (1) Added `(g *Game) handPlay(p, id)` (in hand, `Supported()`, can pay; messages unchanged) and `payCost(p, c)` in `actions.go`. `check`'s Deploy and Enact cases call `handPlay` and keep only their own checks (Deploy: type and zones; Enact: `TypeManeuver`); `Apply` pays through `payCost` in both. (2) `stack.go`: `Keyword` comment is `StackAbility:` only again; `Effect` says "(for StackAbility, Source is its source asset)". Ran `go tool task check` (exit 0), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-c` (PASS byte for byte). Tests untouched.
+- 2026-10-30 lead-architect: code review round 2 (D5), approved. Note 1: `handPlay` and `payCost` in `actions.go` are the one hand-play precondition and payment, and Deploy and Enact keep only their own checks. Note 2: the `Keyword` and `Effect` field comments are corrected. No test changed after `2eaac9c`. Re-ran in a review worktree: `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5%, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-c` PASS byte for byte. Merged `--no-ff` into `autoloop/m2-wave-c` (bc0158b). Status `done`. Next: the `SVY-R29` legality task (#88 tests (a), (b)).
