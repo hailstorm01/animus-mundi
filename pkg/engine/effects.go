@@ -22,7 +22,8 @@ type resolution struct {
 	replaced *Asset
 }
 
-// resolveAbility runs a triggered ability's steps in order. It resolves even if
+// resolveAbility runs the stack item's effect, a triggered ability's or an
+// enacted Maneuver's, step by step in order. It resolves even if
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
 	// Second verification stage (FR-TGT-003), entity by entity: one that is
@@ -95,8 +96,19 @@ func stepPlayers(it *StackItem, st ability.Step) []PlayerID {
 // stepDealDamage deals one instance per asset, all before the item's death
 // sweep, so the deaths they cause are simultaneous (FR-REP-004, FR-LAY-002).
 // Like every step it returns how many things it did: here, the assets it hit.
+// With a chosen dealer (Step.Dealer) that asset deals the damage, at its current
+// power; with none left the step deals nothing and logs no event (SVY-R27).
 func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
-	n, src := g.value(r.it, st.Amount), g.itemSource(r.it)
+	src, dealer := g.itemSource(r.it), (*Asset)(nil)
+	if slot, ok := st.DealerSlot(); ok {
+		ds := g.slotAssets(r, slot)
+		if len(ds) == 0 {
+			return 0
+		}
+		dealer = ds[0]
+		src = dealer
+	}
+	n := g.value(r.it, st.Amount, dealer)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		g.dealDamage(src, a, n, false)
@@ -106,7 +118,7 @@ func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
 
 // stepHeal removes damage from each asset the step acts on.
 func (g *Game) stepHeal(r *resolution, st ability.Step) int {
-	n := g.value(r.it, st.Amount)
+	n := g.value(r.it, st.Amount, nil)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		a.Damage = max(0, a.Damage-n)
@@ -116,7 +128,7 @@ func (g *Game) stepHeal(r *resolution, st ability.Step) int {
 
 // stepAddArmor gives each asset the step acts on Armor.
 func (g *Game) stepAddArmor(r *resolution, st ability.Step) int {
-	n := g.value(r.it, st.Amount)
+	n := g.value(r.it, st.Amount, nil)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		a.Armor += n
@@ -141,7 +153,7 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 	total := 0
 	for _, pid := range stepPlayers(r.it, st) {
 		before := len(g.Players[pid].Deck)
-		take(pid, g.value(r.it, st.Amount))
+		take(pid, g.value(r.it, st.Amount, nil))
 		total += before - len(g.Players[pid].Deck)
 	}
 	return total
@@ -152,7 +164,7 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
-		a.TempPower += g.value(r.it, st.Amount)
+		a.TempPower += g.value(r.it, st.Amount, nil)
 	}
 	return len(as)
 }
@@ -165,7 +177,7 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 // stepDiscard has each step player discard Amount cards of their choice from
 // their own hand (discardFromHand). It returns how many cards they discarded.
 func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
-	n, total := g.value(r.it, st.Amount), 0
+	n, total := g.value(r.it, st.Amount, nil), 0
 	for _, pid := range stepPlayers(r.it, st) {
 		total += len(g.discardFromHand(pid, n))
 	}
@@ -232,12 +244,32 @@ func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
 	return nil
 }
 
-// value reads v for it as its step resolves (SVY-R10). Source power is the
-// source's effective power if it is on the battlefield, else the effective
-// power recorded as it left (FR-ZON-004), else 0.
-func (g *Game) value(it *StackItem, v ability.Value) int {
+// slotAssets returns slot i's chosen assets that are still on the battlefield,
+// in pick order, or nil for an index out of range (FR-ZON-004, SVY-R27).
+func (g *Game) slotAssets(r *resolution, i int) []*Asset {
+	if i < 0 || i >= len(r.chosen) {
+		return nil
+	}
+	var out []*Asset
+	for _, a := range r.chosen[i] {
+		if g.Asset(a.ID) == a {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+// value reads v for it as its step resolves (SVY-R10). With a nil dealer,
+// source power is the source's effective power if it is on the battlefield,
+// else the effective power recorded as it left (FR-ZON-004), else 0. With a
+// chosen dealer it is that asset's current power, never a last-known value
+// (SVY-R27).
+func (g *Game) value(it *StackItem, v ability.Value, dealer *Asset) int {
 	if v.From != ability.ValueSourcePower {
 		return v.N
+	}
+	if dealer != nil {
+		return g.Power(dealer)
 	}
 	if a := g.Asset(it.Source); a != nil {
 		return g.Power(a)
@@ -269,15 +301,7 @@ func (g *Game) itemSource(it *StackItem) *Asset {
 func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 	switch st.Subject {
 	case ability.SubjectTarget:
-		if st.Target >= 0 && st.Target < len(r.chosen) {
-			var out []*Asset
-			for _, a := range r.chosen[st.Target] {
-				if g.Asset(a.ID) == a {
-					out = append(out, a)
-				}
-			}
-			return out
-		}
+		return g.slotAssets(r, st.Target)
 	case ability.SubjectReplaced:
 		if a := r.replaced; a != nil && g.Asset(a.ID) == a {
 			return []*Asset{a}
