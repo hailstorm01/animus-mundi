@@ -4,9 +4,9 @@ title: Make Despoiler's Emergence and Deafening Aria executable (damage to all o
 kind: card
 tier: flash
 wave: C
-status: blocked
+status: queued
 branch: m2/T-0120-all-damage-maneuvers
-depends_on: [T-0116, T-0117]
+depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Despoiler's Emergence, card:Deafening Aria]
 cards: [Despoiler's Emergence, Deafening Aria]
 requirements: [FR-MNV-001, FR-TGT-002, FR-REP-004]
@@ -75,3 +75,4 @@ To be written in a new file, `pkg/engine/cards_animus_maneuvers_test.go`, from t
   1. `pkg/engine/events_test.go:331` (`TestEvents_Case4_EveryActionKind`): "no action event for Enact". T-0116 exempted `ActEnact` with `if k == ActEnact && !starterManeuver { continue }`. Now that Despoiler's Emergence is executable, `starterManeuver` is true, but Despoiler's Emergence is a 1-of 4-Tactics card in a 40-card deck; in seeds 1..10, random play in `playStarter` never accumulates 4 Tactics and enacts it.
   2. `pkg/sim/policy_test.go:141` (`TestProgress_Case4_Coverage`): "Despoiler's Emergence deployed 0 times in 1000 games, want at least 10". `TestProgress_Case4_Coverage` expects every supported card in starter decks to emit >=10 `deploy` events, but Maneuvers are enacted rather than deployed (`e.Kind == "deploy"` never fires for Maneuvers; also `ProgressPolicy` in `pkg/sim/policy.go` only supports deploys/attacks/marches/yields).
   Fixing either test or policy requires modifying files outside Allowed Files (`pkg/engine/events_test.go`, `pkg/sim/policy_test.go`, `pkg/sim/policy.go`).
+- 2026-10-30 lead-architect (wave run C, session 6, D6): **Requeued, `queued` behind T-0121.** `agy` conversation `ae65880f-af81-403f-94b6-d0a499e26f01` finished (exit 0, `SUCCESS`) with no denied action and set `blocked`. The block is a gap in my spec, not in this task: the two failing tests are harness tests T-0116 left for the first starter Maneuver. `ProgressPolicy` never enacts a Maneuver, `TestProgress_Case4_Coverage` counts only `deploy` events, and `TestEvents_Case4_EveryActionKind` expects 10 uniform random playouts to enact a 1-of 4-Tactics card. Both fixes are outside this task's Allowed Files, so they are T-0121 (harness, sonnet), written on the run branch. The implementation commit 8305cd5 matches the Definitions exactly (checked against `git diff be12091 m2/T-0120-all-damage-maneuvers`). Next, once T-0121 is `done`: merge the run branch into this branch, re-run the gates, and review 8305cd5 (D5). The approved tests stand, so there is no new test round.
