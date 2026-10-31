@@ -4,7 +4,7 @@ title: A Maneuver can be enacted only if each exactly-one target slot has a lega
 kind: shape
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/T-0117-enact-needs-targets
 depends_on: [T-0116]
 claims: [legality:enact-targets]
@@ -56,14 +56,15 @@ Synthetic Maneuvers only, added to `pkg/engine/maneuver_test.go` (from T-0116), 
 - `pkg/engine/actions.go` (`check`'s and `Apply`'s `ActEnact` cases)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MNV_001|TestFR_MOD_001|TestFR_TGT_001|TestFR_QUE_001_Maneuver|TestCard_SupportedManeuver'`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c` passes (no card gains a `Def.Effect`; see Shape, Sims)
-- [ ] The exactly-one slot check is written once, in `slotsLegal`, which `legalModes` and `placeable` both call.
+- [x] The listed tests pass: `go test ./pkg/engine -run 'TestFR_MNV_001|TestFR_MOD_001|TestFR_TGT_001|TestFR_QUE_001_Maneuver|TestCard_SupportedManeuver'`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c` passes (no card gains a `Def.Effect`; see Shape, Sims)
+- [x] The exactly-one slot check is written once, in `slotsLegal`, which `legalModes` and `placeable` both call.
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 2. No `main` commits to sync. Directives read on the run branch: #88 is `open`, and its enacting bullet's second part is this task (#88 tests (a), (b)). It edits two non-test files, `placement.go` and `actions.go`. Waiting triggers checked: #58 (no exhaust in `claims:`), #59 (2) (no repeated targets), #61's fifth question (no card with modes in `cards:`), #71 (no each-player effect), #15 and #8 (no hook or `deck.go` change). None has fired. Duplicates searched: the exactly-one slot check exists once, inline in `legalModes`. This task moves it into `slotsLegal` so that `placeable` shares it, and puts the Maneuver placement in one place (`maneuverPlacement`) for `check` and `Apply`. Status `tests`; dispatching `rules-test-author`. After this task come the delegated dealer (#88 (c), (d), which also corrects `resolveAbility`'s "triggered ability" comment in `effects.go`), `MOVE_ZONE` (#88 (e)), the client harness task (T-0116, Shape, Clients) and the card tasks, deck cards first (#14 (a)).
 - 2026-10-30 rules-test-author: tests written in `pkg/engine/maneuver_test.go` (plus a small `killChosenUnit` helper there): `TestFR_MNV_001_CannotEnactWithoutRequiredTarget`, `TestFR_MOD_001_ChooseTwoNeedsTwoLegalModes`, `TestFR_MOD_001_ChooseOneNeedsOneLegalMode`, `TestFR_MNV_001_UpToSlotNeverStopsEnact`, `TestFR_MNV_001_PileTargetNeededToEnact`, `TestFR_MNV_001_SecondRequiredSlotAlsoNeeded`. Helpers requested: none. `go vet` clean, `cardtown lint rules` traces all. Five fail as expected; `UpToSlotNeverStopsEnact` passes already (it pins existing behavior against regression). Nothing left out. Status `tests-review`.
 - 2026-10-30 lead-architect: tests reviewed (D4), approved. The six tests check `SVY-R29` as `FR-MNV-001` (line 334) and `FR-MOD-001` §5 state it, through `LegalActions` and `Apply`, not through implementation details: a required slot with no legal entity (on the battlefield, in a discard pile, or in a second slot) and too few legal modes for "Choose one" and "Choose two" make the Maneuver illegal, and the rejected card stays in hand with its cost unpaid. An "up to 1" slot never does. `TestFR_MNV_001_UpToSlotNeverStopsEnact` already passes, which is right: it pins the "up to N" side against a too-strict check. Re-ran in a review worktree: the other five fail, and only on the missing check. Status `ready`; dispatching `kernel-engineer` (sonnet).
 - 2026-10-30 kernel-engineer: implemented. `placement.go`: `slotsLegal` (the exactly-one slot check, moved out of `legalModes`, which now calls it), `placeable` (modal: `len(legalModes) >= ChooseN`; else `slotsLegal`), `maneuverPlacement`; `placement` and `chooseModes` doc comments updated. `actions.go`: `check`'s `ActEnact` rejects with an SVY-R29 message when `!placeable`, and `Apply` uses `maneuverPlacement`. Reuse: `legalModes`, `targetDecision`, `chooseOnPlacement` unchanged; no second copy of the slot check. Ran: the Done When test pattern (ok), `go tool task check` (pass), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-c` (byte for byte match). Nothing unusual for the reviewer; the one message covers both modal and target cases.
+- 2026-10-30 lead-architect: code review (D5), approved in round 1. Scope: only `placement.go` and `actions.go` changed, and no test changed after `c8bdb75`. Fences: no card name, nothing outside `engine`. Reuse: the exactly-one slot check is written once, in `slotsLegal`, which `legalModes` and `placeable` both call. `maneuverPlacement` is the one Maneuver placement, used by `check` and `Apply`. Rules fidelity: `placeable` reads every exactly-one slot of any filter (battlefield and pile) and `ChooseN` against `legalModes`, with no test input special-cased. Triggers keep `chooseModes`' fewer-than-N path (`SVY-R30`). Re-ran in a review worktree: `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 67.0% / P1 32.5% / draws 0.5%, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-c` PASS byte for byte. Merged `--no-ff` into `autoloop/m2-wave-c` (cec8b06). Status `done`. Next: the delegated dealer (#88 tests (c), (d)).
