@@ -4,7 +4,7 @@ title: Enact a Maneuver from hand, resolve its effect and put it into its owner'
 kind: shape
 tier: sonnet
 wave: C
-status: queued
+status: tests
 branch: m2/T-0116-enact-maneuver
 depends_on: [T-0083, T-0107]
 claims: [action:enact, stack:maneuver, def:effect]
