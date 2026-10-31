@@ -1,0 +1,85 @@
+---
+id: T-0128
+title: A Maneuver can have an additional cost that kills a chosen allied unit, paid on declaration, and Rhapsody's Embrace and Feed the Despoiler use it (FR-TRN-003a, SVY-R2, SVY-R15, wave C shape, sonnet)
+kind: shape
+tier: sonnet
+wave: C
+status: tests
+branch: m2/T-0128-kill-cost
+depends_on: [T-0081, T-0097, T-0098, T-0108, T-0116, T-0117, T-0123]
+claims: [type:ability.Cost, type:ability.CostKind, const:CostKill, field:Def.ExtraCosts, field:placement.costs, func:costDecision, func:costsPayable, func:payCosts, card:Rhapsody's Embrace, card:Feed the Despoiler]
+cards: [Rhapsody's Embrace, Feed the Despoiler]
+requirements: [FR-TRN-003a, FR-TRN-003, FR-MNV-001, FR-TGT-001, FR-MOD-001, FR-REP-001]
+---
+
+## Goal
+A Maneuver can print *"As an additional cost to enact this maneuver, kill an allied unit."* Its controller chooses one allied unit as it is declared, and the unit is killed then, before the Maneuver resolves. A Maneuver whose cost can't be paid can't be enacted. Triggers the kill causes go on the stack above the Maneuver and resolve first, and a kill a replacement replaces still pays the cost. *Rhapsody's Embrace* (a deck card: *"Kill chosen opposing unit."*) and *Feed the Despoiler* (kept, #14 (c): *"Draw 2 cards."*) are the cards that first use it. The exhaust cost (*Funeral Fungus*, a deck card) is T-0129, and *Funeral Fungus* itself T-0130 (split under the D2 size rule). *Steel Rain*'s discard cost waits for #59 (2)'s ruling (#20 (b)).
+
+## Inputs
+- FRD 01:
+  - `FR-TRN-003a`, "Additional Sacrifice, Discard & Exhaust Costs" (line 335): a cost of killing an allied asset (*Feed the Despoiler*, *Rhapsody's Embrace*) is paid immediately on declaration. Abilities triggered by paying it go onto the Resolution Stack **on top of** the declared card and resolve before it. A cost a replacement changes or replaces still counts as paid: if *Shifting Impossibility* returns a Scratch Company unit killed to pay *Rhapsody's Embrace*'s cost, the Maneuver still resolves.
+  - `FR-TRN-003`, `FR-MNV-001` (line 333): on declaration the card moves from Hand to the Resolution Stack zone, and the player pays all resource and additional costs upfront. Triggers from paying an additional cost see the declared card already on the stack.
+  - `SVY-R2`, "Targets and Costs Are Committed Together" (line 353): targets are chosen and costs paid at the same moment, and target eligibility is judged against the game state at that moment. A card that moves to a zone by paying a cost is not yet there when targets are chosen, so it can't be chosen there as a target of the card it paid for.
+  - `SVY-R29`, "A Maneuver Needs Its Required Targets" (line 334): a Maneuver that can't be enacted stays in hand.
+  - `SVY-R15`, "Replaced Actions Still Count as Done" (line 478): a cost a replacement replaces stays paid; triggers that watch the replaced event don't fire.
+  - `FR-MOD-001` §1 (line 380), the single-option fast path, and §6 (line 385), "Mandatory Targets and Untargeted Selections": a timeout picks the first legal option in fixed order (own Headquarters, then Reserves, then the Main Theater, each zone in the order its assets entered).
+  - Glossary, "Additional Costs" (line 178): non-resource costs required on declaration, such as sacrificing an allied unit.
+- Rulings that apply: `SVY-R2`, `SVY-R15`, `SVY-R16`, `SVY-R21`, `SVY-R29`.
+- Survey rows: *Feed the Despoiler* (`docs/design/m2_starter_set_ability_survey.md` line 126) and *Rhapsody's Embrace* (line 131), both "replaced kill cost stays paid (`SVY-R15`)".
+- Design note (`docs/architecture/m2-ability-model.md`): Boundaries line 30 names `Def.ExtraCosts` (declaration costs, `FR-TRN-003a`) and line 34 the `Cost` shape ("kill/exhaust a chosen allied asset, discard N, ..."). Line 52: a declaration is offered only if at least one complete, legal set of choices exists. Line 49: triggers are flushed after declaration costs.
+- Card text (`data/cards/maneuvers-animus.csv`), two printed lines each:
+  - *Rhapsody's Embrace* (0 Requisition, 3 Tactics): `As an additional cost to enact this maneuver, kill an allied unit.` / `Kill chosen opposing unit.`
+  - *Feed the Despoiler* (0 Requisition, 1 Tactics): `As an additional cost to enact this maneuver, kill an allied unit.` / `Draw 2 cards.`
+- Kernel today:
+  - `Apply`'s `ActEnact` case (`actions.go:83-88`): `payCost`, `takeCard`, then `chooseOnPlacement(maneuverPlacement(...), Effect)`, then `push`. `check`'s `ActEnact` case (`actions.go:156-166`) rejects a Maneuver that isn't `placeable`.
+  - `placement.go`: `placement` (line 15), `chooseOnPlacement` (line 26, modes then targets), `maneuverPlacement` (line 35), `slotsLegal` (line 41), `placeable` (line 54, Maneuvers only).
+  - `targeting.go`: `assetDecision` (line 67, options oldest first, bounds by `pickBounds`), `pickFrom` (line 146, the body of every untargeted pick), `matchesFilter` (line 232, the filter without Ward).
+  - `kill` (`sweep.go:31`): the one kill, through replacement (#83, `SVY-R15`, `SVY-R21`); it destroys at once, and `destroyAll` fires the killed hook into the pending buffer.
+  - `resolveStack` (`stack.go:81`) flushes pending triggers before resolving anything, so a trigger fired before the Maneuver's `push` resolves would be placed on top of it.
+  - `ability.Def` (`ability/ability.go:17`): `Text`, `Triggers`, `Replacements`, `Effect`.
+  - *Devilhorn Sanction* (`cards/path.go:172`) is *"Kill chosen opposing unit."*; *Improvised Orders* (`cards/path.go:208`) has an `OpDraw` step.
+
+### Shape (lead decisions, binding)
+- **`ability.CostKind`**, an enum with no default (`iota + 1`, package comment rule): `CostKill`, "kill one allied asset matching `Cost.Filter`, chosen by the payer (`FR-TRN-003a`)". Exhaust (T-0129) and discard (*Steel Rain*) come later as further members.
+- **`ability.Cost struct { Kind CostKind; Filter Filter }`**: one additional cost, paid when its card is declared (`FR-TRN-003a`). `Filter` is relative to the payer and is a battlefield filter (never `InPile`). Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
+- **`ability.Def.ExtraCosts []Cost`**, after `Effect`: the additional costs, in printed order (design note line 30). Zero for a card without one.
+- **`placement.costs []ability.Cost`**: the additional costs paid with this placement. `maneuverPlacement` sets it from `inst.Card.Ability.ExtraCosts`; a trigger's placement has none, so nothing changes for triggers.
+- **`func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset)`** in `placement.go`: `g.assetDecision(pl.controller, DecidePick, prompt, 0, ...)` over the assets for which `g.matchesFilter(pl.controller, pl.source, c.Filter, a)` holds, with prompt `fmt.Sprintf("%s: choose an asset to kill (additional cost)", pl.label)`. It is a `DecidePick`: an untargeted selection with §6's fixed-order fallback and §1's fast path (no new `DecisionKind`). Both the legality check and the payment build their decision with it, as `slotsLegal` and `chooseTargets` share `targetDecision`.
+- **`func (g *Game) costsPayable(pl placement) bool`**: every cost of `pl.costs` has at least one option. `placeable` returns false when it fails, before looking at modes or slots, and its doc comment names costs. With one cost per in-scope card, no two costs compete for one asset; a second cost on a card is out of scope.
+- **`func (g *Game) payCosts(pl placement)`**: for each cost in printed order, ask its `costDecision` through `pickFrom` and `g.kill` the picked asset. It reuses `kill` as is, so a replaced kill counts as paid and its triggers fire as usual. `chooseOnPlacement` calls it last, after modes and targets are chosen, and its doc comment says so: targets are judged against the state before the cost is paid (`SVY-R2`), and the player sees the target prompts first and the cost prompt last. `Apply` is unchanged: the card is already off the hand when the cost is paid, and the cost's triggers are pending until `resolveStack` places them on top of the pushed Maneuver.
+- **Cards** (`cards/animus.go`), both with `Text` holding the two printed lines and `ExtraCosts: []ability.Cost{{Kind: ability.CostKill, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}}`:
+  - *Rhapsody's Embrace*: `Effect` with one exactly-one target slot (opposing unit) and one `OpKill` step on it, as *Devilhorn Sanction*.
+  - *Feed the Despoiler*: `Effect` with one `OpDraw` step, `Amount: Value{N: 2}`.
+  - Both names leave `cards.NotYetExecutable`.
+- **Out of scope:** the exhaust cost and directive #58 (T-0129); *Funeral Fungus* (T-0130); the discard cost, `PerResult` targets and *Steel Rain* (#20 (b), #59 (2)); *Veil Render*'s deploy cost (wave F); costs on modes (#61's fifth question); `doc.go`'s built list.
+- **Sims:** this changes play (*Rhapsody's Embrace* is in the Animus starter deck), so there is no `sim-compare`. `go tool task sim` must run clean.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+Shape tests in a new file `pkg/engine/kill_cost_test.go`, on synthetic Maneuvers built with `maneuver_test.go`'s `maneuver`, `steps`, `enactAction`, `offersEnact` and `lastDiscard` (a synthetic card gets its `ExtraCosts` on its `Ability`). Card tests in `pkg/engine/cards_animus_maneuvers_test.go`, as new functions. No existing test is edited.
+- `TestFR_TRN_003a_KillCostPaidOnDeclaration`: a synthetic Maneuver with the kill cost (allied unit) and an untargeted step whose result is visible (for example draw a card). The controller has two allied units, and a scripted chooser picks the second. After `Apply`: that unit's card is in its owner's discard pile, the other unit is still on the battlefield, the step ran and the Maneuver is in its owner's discard pile.
+- `TestFR_TRN_003a_KillCostMustBePayable` (`SVY-R29`, design note line 52): with no allied unit (only the Headquarters and an allied Structure on the controller's side, and opposing units present), the Maneuver is not in `LegalActions` (`offersEnact` false), `Apply` of it returns an error wrapping `ErrIllegal`, and the card stays in hand with resources unspent. With one allied unit added, it is offered.
+- `TestFR_TRN_003a_CostTriggersResolveBeforeTheManeuver`: the killed unit has a synthetic death trigger (`HookKilled`, a visible untargeted step). Its effect resolves before the Maneuver's: in the event log, the trigger's effect comes before the Maneuver's step and before the Maneuver goes to the discard pile.
+- `TestFR_TRN_003a_ReplacedKillCostStaysPaid` (`SVY-R15`): the real *Shifting Impossibility* is on the controller's battlefield, and the cost kills an allied Scratch Company unit. The unit's card goes to its owner's hand instead, *Shifting Impossibility* takes its 1 damage, and the Maneuver still resolves (its step ran, it is in the discard pile).
+- `TestFR_TRN_003a_CostPaidAfterTargetsAreChosen` (`SVY-R2`): a synthetic Maneuver with the kill cost and an exactly-one target slot "unit card in your discard pile" (`Filter{Allegiance: AllegianceAllied, Kinds: KindUnit, Zone: ZoneDiscard}`). (a) With the controller's discard pile empty and one allied unit on the battlefield, the Maneuver is not offered: the card the cost would put there doesn't count. (b) With one unit card C already in that pile, it is offered; the target decision lists C and not the unit the cost then kills, and C is the target. The target decision is asked before the cost's.
+- `TestFR_MOD_001_KillCostTimeoutPicksFixedOrder` (§6, `SVY-R16`): two allied units, one in the Main Theater deployed first and one in the Reserves deployed later. The cost's decision times out (as `fallback_order_test.go` times a choice out): the Reserves unit is killed, because Reserves come before the Main Theater in fixed order.
+- `TestFR_MOD_001_KillCostSingleOptionNotAsked` (§1): with one allied unit, the Maneuver resolves and kills it with no decision asked of the controller.
+- `TestFR_TRN_003a_RhapsodysEmbrace` (real card): kills the chosen allied unit as its cost and the chosen opposing unit; both are in their owners' discard piles, the card is in its owner's discard pile, and 3 Tactics and no Requisition were spent. With no opposing unit it is not offered (`SVY-R29`), even with an allied unit to kill; with no allied unit it is not offered either.
+- `TestFR_TRN_003a_FeedTheDespoiler` (real card): kills the chosen allied unit and its controller draws 2 cards (hand size, deck size); 1 Tactics spent. A face-down Scratch Company unit is an allied unit and can pay the cost.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go` (`CostKind`, `CostKill`, `Cost`, `Def.ExtraCosts`)
+- `pkg/engine/placement.go` (`placement.costs`, `maneuverPlacement`, `costDecision`, `costsPayable`, `payCosts`, `placeable`, `chooseOnPlacement`)
+- `pkg/engine/cards/animus.go` (*Rhapsody's Embrace*, *Feed the Despoiler*)
+- `pkg/engine/cards/cards.go` (both names off `NotYetExecutable`)
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run 'TestFR_TRN_003a|TestFR_MOD_001_KillCost'`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `kill` is still the one function that kills, `assetDecision` and `pickFrom` the one way an asset is picked, and `costDecision` the one place a cost's options are listed (legality and payment both use it).
+
+## Log
+- 2026-10-31 lead-architect: wave C run, session 15. No `main` commits to sync (`main` at 50be0e5 is an ancestor of the run branch). Not `WAVE-COMPLETE`: 17 deck cards are on `NotYetExecutable`, 4 of them in this wave's `Cards` (*Rhapsody's Embrace*, *Funeral Fungus*, *Ambush Tactics*, *Steel Rain*). Directives read on the run branch: no `open: before` directive. #14 (a): deck cards first. None of the four has all its shapes `done`, so the next work is the additional-cost shape that *Rhapsody's Embrace* and *Funeral Fungus* need; *Steel Rain* also needs #59 (2)'s ruling and *Ambush Tactics* #61's fifth question and #88's distinctness ruling, none of which this shape asks. FRD 01 settles the kill cost: paid on declaration (`FR-TRN-003a`), triggers on top of the Maneuver, a replaced kill still paid (`SVY-R15`), targets judged before the cost moves anything (`SVY-R2`), and the design note (line 52) offers a declaration only with a complete legal set of choices, so an unpayable cost blocks the enact. The order of the controller's own prompts (targets, then the cost) changes no in-scope outcome and is a lead decision. Split under the D2 size rule: kill and exhaust costs with all three cards would touch five non-test files (`actions.go` for #58's guard), so this task is the kill cost with its two cards; T-0129 (exhaust cost, #58) and T-0130 (*Funeral Fungus*) are queued on the board in this commit. #58's trigger fires with T-0129, whose `claims:` include exhausting by a cost, so it is set `open`, applying in T-0129. Waiting triggers checked: #8 (no `deck.go` change), #15 (no turn-boundary or draw hook), #59 (2) (no repeated targets), #61's fifth question (no modal card in `cards:`), #71 (no each-player effect), #88's distinctness (no two slots). None has fired. #14 and #20 (b) stay `open` for the card tasks and *Steel Rain*. Duplicates searched: no cost exists in `pkg/engine` or `ability` today (`git grep` for `Cost`), and no `done` task built one. The cost's pick reuses `assetDecision`, `pickFrom` and `matchesFilter`, and its payment the one `kill` (#83); `costDecision` is shared by legality and payment, as `targetDecision` is. Status `tests`; dispatching `rules-test-author`.
