@@ -4,7 +4,7 @@ title: Make Improvised Orders executable (draw 3, then discard a card, wave C ca
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0125-improvised-orders
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Improvised Orders]
@@ -59,3 +59,4 @@ To be added to `pkg/engine/cards_path_maneuvers_test.go`, from the CSV text, loa
 
 ## Log
 - 2026-10-31 lead-architect: wave C run, session 11. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). Not `WAVE-COMPLETE`: 20 deck cards are on `NotYetExecutable`, 7 of them in this wave's `Cards` (*Rapturous Sermon*, *Animoceps Spores*, *Rhapsody's Embrace*, *Funeral Fungus*, *Ambush Tactics*, *Steel Rain*, *Improvised Orders*). Directives read on the run branch: no `open: before` directive; #90 applied by T-0124. #14 (a): deck cards first. *Improvised Orders* is a deck card whose every shape is `done` (the steps of *Chainbreaker Irregulars*' trigger, on a Maneuver), so it needs no shape task; *Animoceps Spores* is the other such deck card and stays for a later session. No non-deck card shares this card's shapes, so none joins under #14 (c). #20 (b) stays open for *Steel Rain*'s discard-cost task. Waiting triggers checked: #8 (no `deck.go` change), #15 (a draw step is not a draw hook), #58 (no exhaust in `claims:`), #59 (2) (no target slot), #61's fifth question (no modal card in `cards:`), #71 (acts on its controller only, not on each player), #88's distinctness (no slot, no *Ambush Tactics*). None has fired. Duplicates searched: no new code; `OpDraw` and `OpDiscard` go through the one `draw` and the one `discardFromHand`. Two non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-31 rules-test-author: wrote 7 tests in `pkg/engine/cards_path_maneuvers_test.go` (with setup helpers `improvisedScene`, `handDiscards` in that file): `TestCard_ImprovisedOrders_DrawsThreeThenDiscardsTheCardPicked`, `_MayDiscardACardJustDrawn`, `_TimeoutDiscardsTheLastCardDrawn`, `_ItselfIsNeverOffered`, `_ShortDeckDrawsWhatIsThereThenLoses`, `_OnlyTheControllersHandAndDeckAreUsed`, `_PaysTwoTactics`. All fail now because the card is on `NotYetExecutable` (Enact rejected: needs rules the kernel does not implement yet). Helpers requested: none. Cases left out: none. `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
