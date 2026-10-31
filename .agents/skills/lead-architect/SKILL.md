@@ -47,6 +47,7 @@ When the user explicitly asks for a full TDD, these principles apply:
   - `docs/architecture/` (design notes `docs/architecture/<milestone>-<topic>.md` and decision records `docs/architecture/decisions/NNNN-<slug>.md`, plus the decisions index).
   - `docs/tdd/` (full Technical Design Documents, only in Runbook B).
   - `docs/AGENTS.md` (updating the documentation map when new documents are created).
+  - `docs/design/outcomes/` (`Status: open` ruling-question stubs only, when stopping on a rules question in Runbook D2/D6/D7, committed on the integration branch).
   - `.agents/tasks/` (task files and each milestone's `BOARD.md`, Runbook D only). It may add rows to `BOARD.md`'s `Directives for the Lead` table only in four cases: in Runbook E, for findings the user approved by number; in D2.3, for an existing equivalent a task's plan keeps; in D2.4, for work a task splits off that waits on a trigger; and in D5.3, for a duplicate a review finds.
   - Merges of approved task branches into the integration branch (Runbook D only), or into a wave run's `autoloop/` branch (D7), plus merges of the integration branch into that run branch. Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
@@ -312,7 +313,7 @@ Owns the queue so that no two tasks build the same thing, and reviews everything
      - for a task, its task file's `status`;
      - for a mode or milestone, the top of `BOARD.md`.
 
-     When a trigger has happened, set the directive to `open` and handle it in this prompt. If a trigger names nothing you can check, ask the user to restate it and leave it `waiting`.
+     When a trigger has happened, set the directive to `open` (or `open: before <task>` when the waiting cell specifies `(then open: before <task>)`) and handle it in this prompt. If a directive says `waiting: a user ruling, asked before <condition>` and that condition is now reached, stop and queue the ruling question in `docs/design/outcomes/` as in D6. If a trigger names nothing you can check, ask the user to restate it and leave it `waiting`.
    - **Re-read before committing a task.** Right before you commit a new or rewritten task file, read `BOARD.md` again. A directive added or changed since your first read counts like any other open directive. Apply it in this task if it belongs there. Otherwise name it in the task's Log as going into the next one. A blocking directive doesn't wait for the next one: commit this task as `queued`, and the directive's task is the one this prompt moves.
    - If a directive conflicts with the design note or FRD 01, stop and ask the user.
 1. After any blocking directive (step 0), take work in the order of the design note's `Deliverables` list (M2: `docs/architecture/m2-ability-model.md`). Use the survey's waves only to order the work inside a wave deliverable. Write a task only when everything it `depends_on` is `done`, or explicitly queued ahead of it.
@@ -365,13 +366,27 @@ Review `git diff <integration-branch>...<task-branch>`:
 
 #### D6. Blocked tasks
 - **Missing shape:** write the shape task, add it to `depends_on`, and requeue.
-- **Rules question:** surface it to the user in the survey's question format (the question, the cards affected, and a recommendation), and add it to the survey or the matrix. Never answer it yourself.
+- **Rules question:** never answer it yourself. Write a `Status: open` ruling-question stub to `docs/design/outcomes/<YYYY-MM-DD>-<slug>.md` and commit it on the **integration branch** (named at the top of `BOARD.md`; use a scratch worktree of the integration branch when on a task or `autoloop/` branch) as `chore(design): open ruling question <slug> (lead-architect)`:
+  ```markdown
+  Status: open (lead-architect, YYYY-MM-DD)
+  Task / Directive: T-NNNN / #NN (branch: <branch>)
+  Cards: <card names>
+
+  ### ❓ Open Ruling Question: [short title] (YYYY-MM-DD)
+
+  - **Question:** [the exact rules question(s) FRD 01 does not settle, numbered if several]
+  - **Source:** [task T-NNNN, directive #NN, design note Open Question N, or survey/matrix item]
+  - **Cards affected:** [card names, exact rules text from `data/cards/*.csv`, and whether each is in the current milestone and in a starter deck]
+  - **Current FRD 01 & engine state:** [what FRD 01 currently says (`FR-*` IDs and lines), what `pkg/engine` currently does (`file:line`), and why it doesn't settle the case]
+  - **Lead's recommendation:** [1–3 sentences: recommended ruling and why]
+  ```
+  Also add the open question to the design note's Open Questions if it is not already there, and stop with: `Run @game-designer (question queued in docs/design/outcomes/<YYYY-MM-DD>-<slug>.md)`. `game-designer` picks up `Status: open` stubs automatically and overwrites the file in place when the ruling is made.
 - **Too big:** split the task.
 
 #### D7. Wave runs (unattended, on an `autoloop/` branch)
 The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (Go program: `.agents/scripts/waverun`). The runner creates `autoloop/<milestone>-wave-<x>` from the integration branch if it doesn't exist. Then, for each task, it opens a fresh headless Opus session with the prompt `@lead-architect next (wave run: wave <X>, run branch <branch>, run file <path>, scratch <folder>)`. Put every worktree you open (sync, review, merge) in that scratch folder, and remove each one before the session ends. Write every path in a removal (`git worktree remove`, `rm`) as a literal absolute path, never a shell variable: Claude Code's safety check refuses `rm $S/…` even in auto mode, and the runner stops on any refusal (wave B.2, session 3). The runner deletes the folder if it is empty and reports it if it is not. That session is one ordinary build-loop prompt, D1–D6, with these changes:
 
-1. **The run branch stands in for the integration branch everywhere:** reading `BOARD.md` and directives (D2.0), basing and merging task branches, `go tool task sim-compare -- <run branch>` in pure-move tasks and reviews, and the gates in D5. Never commit to, merge into, or move the integration branch. Leave the `Integration branch` line of `BOARD.md` as it is.
+1. **The run branch stands in for the integration branch everywhere:** reading `BOARD.md` and directives (D2.0), basing and merging task branches, `go tool task sim-compare -- <run branch>` in pure-move tasks and reviews, and the gates in D5. Never commit to, merge into, or move the integration branch, **with one exception:** when stopping on a rules question (D6 or a `waiting: a user ruling` directive), commit the `Status: open` stub in `docs/design/outcomes/<YYYY-MM-DD>-<slug>.md` on the integration branch (via a scratch worktree in `<scratch>`) so `@game-designer` finds it on `main`, and name that path in the `STOP` row (step 6). Leave the `Integration branch` line of `BOARD.md` as it is.
 2. **Sync first:** if the integration branch has commits the run branch lacks (directives the user added mid-run), merge it into the run branch with `--no-ff` in a scratch worktree. If the only conflicts are in `BOARD.md` and no row was changed on both sides, resolve them yourself: keep your version of each row you changed and add the integration branch's new rows. The usual case is a directive's status cell you updated, right next to a directive row the user added (wave G, session 2: #73's cell beside the new #74). Before committing, check that no conflict markers are left and that no directive or task number is duplicated or missing, and name the rows you resolved in the session's run-file row. On any other conflict, abort the merge and stop (step 6).
 3. **Run file:** `.agents/tasks/<milestone>/runs/<run branch with / replaced by ->.md`, committed on the run branch. If it doesn't exist, create it first with this header. `Cards` lists the wave's survey-row cards that this run can build. `Deferred` lists the rest of the row, each with the directive that holds it back (for example #14 (b): non-deck cards wait for the playtest checkpoint). `Kept` gives the reason for each non-deck card left in `Cards`, so later sessions don't decide it again (session 1 of wave B called Rogue Fleshshaper deferred; session 2 kept it, because Ambush Tactics, a deck card, needs its modal shape, #14 (b), (c)). Keep reasons off the `Cards` line, because the runner matches each name there exactly. Spell names as in `pkg/engine/cards/cards.go` and separate them with `;`. When a directive changes the scope mid-run, or the header lacks a `Deferred` or `Kept` line, rewrite all three lines in that session's commit. The runner checks only `Cards`:
    ```markdown
