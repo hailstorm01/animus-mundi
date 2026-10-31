@@ -25,11 +25,12 @@ const (
 	ActMarch                      // stack-pushed (FR-CAP-001)
 	ActAttack                     // stack-pushed (FR-CBT-002)
 	ActScratch                    // stack-pushed, HQ only (FR-CAP-001)
+	ActEnact                      // Maneuver from Hand, stack-pushed (FR-MNV-001, FR-TRN-003)
 	ActEndTurn
 )
 
 func (k ActionKind) String() string {
-	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "EndTurn"}[k]
+	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "Enact", "EndTurn"}[k]
 }
 
 // Resource selects Requisition or Tactics.
@@ -46,7 +47,7 @@ type Action struct {
 	Player   PlayerID
 	Asset    int      // acting asset: Generate, March, Attack, Scratch
 	Resource Resource // Generate
-	Card     int      // Deploy: Instance.ID in hand
+	Card     int      // Deploy, Enact: Instance.ID in hand
 	Zone     Zone     // Deploy: declared battlefield zone
 	Target   int      // Attack: the defender
 }
@@ -80,6 +81,13 @@ func (g *Game) Apply(a Action) error {
 		p.Tac -= inst.Card.TacCost
 		g.takeCard(inst)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
+	case ActEnact:
+		inst := handCard(p, a.Card)
+		p.Req -= inst.Card.ReqCost
+		p.Tac -= inst.Card.TacCost
+		g.takeCard(inst)
+		eff, chosen := g.chooseOnPlacement(placement{controller: a.Player, inst: inst, label: inst.Card.Name}, inst.Card.Ability.Effect)
+		g.push(&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst, Effect: eff, Chosen: chosen})
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
@@ -149,6 +157,21 @@ func (g *Game) check(a Action) error {
 		}
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {
 			return illegal("%s cannot be deployed to %s", c.Name, a.Zone)
+		}
+		if p.Req < c.ReqCost || p.Tac < c.TacCost {
+			return illegal("cannot pay for %s (needs R%d T%d)", c.Name, c.ReqCost, c.TacCost)
+		}
+	case ActEnact:
+		inst := handCard(p, a.Card)
+		if inst == nil {
+			return illegal("card %d is not in hand", a.Card)
+		}
+		c := inst.Card
+		if !c.Supported() {
+			return illegal("%s needs rules the kernel does not implement yet", c.Name)
+		}
+		if c.Type != TypeManeuver {
+			return illegal("%s is not a Maneuver", c.Name)
 		}
 		if p.Req < c.ReqCost || p.Tac < c.TacCost {
 			return illegal("cannot pay for %s (needs R%d T%d)", c.Name, c.ReqCost, c.TacCost)
@@ -239,6 +262,9 @@ func (g *Game) LegalActions() []Action {
 		for _, z := range inst.Card.DeployZones {
 			try(Action{Kind: ActDeploy, Player: pid, Card: inst.ID, Zone: z})
 		}
+	}
+	for _, inst := range p.Hand {
+		try(Action{Kind: ActEnact, Player: pid, Card: inst.ID})
 	}
 	if p.HQ != nil {
 		try(Action{Kind: ActScratch, Player: pid, Asset: p.HQ.ID})

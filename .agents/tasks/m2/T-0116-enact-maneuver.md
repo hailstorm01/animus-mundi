@@ -4,7 +4,7 @@ title: Enact a Maneuver from hand, resolve its effect and put it into its owner'
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: review
 branch: m2/T-0116-enact-maneuver
 depends_on: [T-0083, T-0107]
 claims: [action:enact, stack:maneuver, def:effect]
@@ -89,3 +89,4 @@ Synthetic Maneuver cards only (`TypeManeuver`, an `ability.Def` with an `Effect`
   The engineer's Log entry is enough to redo the implementation once the tests are fixed.
 - 2026-10-30 rules-test-author: rework done for lead notes 1 and 2. (1) `TestFR_QUE_001_ManeuverIsPlacedOnTheStack` now enacts "kill chosen opposing unit" and checks the `place` event (Card, Inst, depth 1) comes before the `destroy` event. (2) `TestEvents_Case4_EveryActionKind` skips `ActEnact` only while no starter-deck card is a supported Maneuver, computed from `loadStarters`, with a comment; nothing else changed. Helpers requested: none. `go vet` fails only on the missing `ActEnact`/`Def.Effect`; `cardtown lint rules` passes. Status `tests-review`.
 - 2026-10-30 lead-architect: tests round 2 reviewed (D4), approved. Note 1: `TestFR_QUE_001_ManeuverIsPlacedOnTheStack` now orders the `place` event before the kill's `destroy` event. Note 2: `TestEvents_Case4_EveryActionKind` exempts `Enact` only while no starter-deck card is a supported Maneuver, computed from `loadStarters`, in the `test(T-0116)` commit `2eaac9c`. Nothing else in it changed. Status `ready`; re-dispatching `kernel-engineer` (sonnet).
+- 2026-10-30 kernel-engineer: redone after the test fixes; status `review`. Diff: `ability.Def.Effect`; `Card.Supported` (no unsupported lines; a Maneuver also needs a non-nil `Ability` whose `Effect` has steps or modes); `ActEnact` between `ActScratch` and `ActEndTurn` (String "Enact", `Action.Card` comment, `check` = Deploy's hand/Supported/cost checks plus `Type == TypeManeuver`, `Apply` = pay, `takeCard`, `chooseOnPlacement` with `placement{controller, inst, label: name}`, push `StackManeuver`; `LegalActions` offers it after the deploys); `StackManeuver` after `StackAbility` (field comments, `push` place event naming the card, `resolveManeuver` = `resolveAbility` then `putCard(Inst, ZoneDiscard, false)`). Reused `chooseOnPlacement`, `resolveAbility`, `takeCard`, `putCard`, `handCard`; no other enact path existed. No test or helper edited. Ran: `go test ./pkg/engine` ok; `go tool task check` passes (fmt, vet, tests, lint); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-c` PASS byte for byte. `ActEndTurn` is still last and `StackAbility` keeps its value. Reviewer: `Source` is 0 for a Maneuver, so source-reading steps are out of scope as specified.

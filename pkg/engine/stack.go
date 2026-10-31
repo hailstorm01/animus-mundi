@@ -12,7 +12,8 @@ const (
 	StackMarch
 	StackAttack
 	StackScratch
-	StackAbility // a triggered ability: runs Effect's steps for Controller
+	StackAbility  // a triggered ability: runs Effect's steps for Controller
+	StackManeuver // an enacted Maneuver: runs Effect's steps for Controller, then Inst goes to its owner's discard pile (FR-MNV-001)
 )
 
 // StackItem is one entry on the shared LIFO Resolution Stack (FR-QUE-001).
@@ -20,16 +21,16 @@ type StackItem struct {
 	Kind       StackKind
 	Controller PlayerID
 
-	Inst *Instance // StackDeploy: the card on the stack
+	Inst *Instance // StackDeploy, StackManeuver: the card on the stack
 	Zone Zone      // StackDeploy: declared zone; StackMarch: origin zone
 
-	Source int // asset ID: marching unit, attacker, scratching HQ
+	Source int // asset ID: marching unit, attacker, scratching HQ; 0 for a StackManeuver (a Maneuver is not an asset)
 	Target int // StackAttack: the defender
 
-	Effect  ability.Effect  // StackAbility: the effect resolving (Source is its source asset)
-	Chosen  [][]int         // StackAbility: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
+	Effect  ability.Effect  // StackAbility, StackManeuver: the effect resolving (Source is its source asset)
+	Chosen  [][]int         // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
 	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
-	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
+	Keyword ability.Keyword // StackAbility, StackManeuver: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
 }
 
 // PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so
@@ -56,6 +57,9 @@ func (g *Game) push(item *StackItem) {
 		what = "Attack"
 	case StackScratch:
 		what = "Scratch"
+	case StackManeuver:
+		e.Card, e.Inst = item.Inst.Card.Name, item.Inst.ID
+		what = "Maneuver " + e.Card
 	case StackAbility:
 		e.Card, e.Inst = cardName(item.Inst), 0
 		if item.Inst != nil {
@@ -98,7 +102,17 @@ func (g *Game) resolve(it *StackItem) {
 		g.scratch(it.Controller, 1)
 	case StackAbility:
 		g.resolveAbility(it)
+	case StackManeuver:
+		g.resolveManeuver(it)
 	}
+}
+
+// resolveManeuver resolves an enacted Maneuver's effect as resolveAbility does
+// (two-stage target verification, then the steps), then puts the card into its
+// owner's discard pile, even if every target fizzled (FR-MNV-001).
+func (g *Game) resolveManeuver(it *StackItem) {
+	g.resolveAbility(it)
+	g.putCard(it.Inst, ZoneDiscard, false)
 }
 
 func (g *Game) resolveDeploy(it *StackItem) {
