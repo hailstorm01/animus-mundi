@@ -51,7 +51,7 @@ kind: shape | card | harness
 tier: flash | sonnet
 wave: A1 | A2 | B | C | D | E | F | G
 status: queued
-branch: m2/T-NNNN-<slug>
+branch: m2/T-NNNN-<slug>   # or m2/autoloop-wave-<x>/T-NNNN-<slug> in a wave run (lead-architect D7.4)
 depends_on: [T-NNNN]
 claims: [<shape or file this task alone may create or change, e.g. primitive:SCRATCH, hook:deploy>]
 cards: [<card names, for card tasks>]
