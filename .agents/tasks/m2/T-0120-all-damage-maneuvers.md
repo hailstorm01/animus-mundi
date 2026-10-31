@@ -4,7 +4,7 @@ title: Make Despoiler's Emergence and Deafening Aria executable (damage to all o
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0120-all-damage-maneuvers
 depends_on: [T-0116, T-0117]
 claims: [card:Despoiler's Emergence, card:Deafening Aria]
@@ -69,3 +69,4 @@ To be written in a new file, `pkg/engine/cards_animus_maneuvers_test.go`, from t
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 6. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). Not `WAVE-COMPLETE`: 22 deck cards are on `NotYetExecutable`. Directives read on the run branch: no `open: before` directive. #14 (a): deck cards first; *Despoiler's Emergence* is a deck card, and *Deafening Aria* joins under #14 (c) (same shape, every shape done, already in the run file's `Kept`). #20 (b) stays open for *Steel Rain*'s discard-cost task. Waiting triggers checked: #8 (no `deck.go` change), #15 (no turn hook), #58 (no exhaust in `claims:`), #59 (2) (no repeated targets), #61's fifth question (no modal card in `cards:`), #71 (both steps act on assets, not on each player), #88's distinctness (no *Ambush Tactics*). None has fired. Taken ahead of T-0119's suggested *Rapturous Sermon* with *Ensnaring Mist*: *Ensnaring Mist* has two exactly-one "chosen unit" slots, and FRD 01 doesn't say whether one unit may fill both (`SVY-R11` covers one clause, `SVY-R4` only "for each" repeats); the task that takes it, or *Rapturous Sermon* alone, should check that first. Duplicates searched: no new code; the definitions reuse `OpDealDamage` on `SubjectAll` exactly as *Craterfall Ancient*'s death trigger does. Two non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-30 rules-test-author: tests written in `pkg/engine/cards_animus_maneuvers_test.go`, all ten named in the Tests section: `TestCard_DespoilersEmergence_{FourToEveryOpposingAssetInTheMainTheater, TwoToOpposingNonScratchAssetsInReserves, NoHeadquartersIsDamaged, ArmorAbsorbsEachInstance, LethalAssetsDieAfterItResolves, EnactableWithNoOpposingAsset, AsksNothing, PaysFourTactics}` and `TestCard_DeafeningAria_{OneToEveryOpposingUnitInTheMainTheater, KillsOneHealthUnits}`. Helpers requested: none (file adds `enactFor`, `damageEventsOn`; reuses `inDiscardPile` from `cards_animus_test.go`). Cases left out: none. `go vet` clean, `cardtown lint rules` passes; all ten fail now because the cards are not yet executable. Status `tests-review`.
