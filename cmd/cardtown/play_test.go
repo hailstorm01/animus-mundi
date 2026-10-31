@@ -10,6 +10,7 @@ import (
 
 	"animus-mundi/pkg/engine"
 	"animus-mundi/pkg/sim"
+	"animus-mundi/pkg/view"
 	"animus-mundi/pkg/view/viewtest"
 )
 
@@ -260,4 +261,43 @@ func TestTerminalChooserUsesKernelValid(t *testing.T) {
 			t.Errorf("unexpected Invalid line in output:\n%s", out.String())
 		}
 	})
+}
+
+// T-0122 Case 7: The play screen labels the Enact action.
+func TestPlay_ActionLabelNamesTheEnactedCard(t *testing.T) {
+	v := view.View{
+		You: view.Side{
+			Hand: []view.CardView{
+				{Inst: 42, Card: "Alpha Volley"},
+			},
+		},
+	}
+	got := actionLabel(v, engine.Action{Kind: engine.ActEnact, Player: 0, Card: 42})
+	want := "Enact: Alpha Volley"
+	if got != want {
+		t.Errorf("actionLabel for in-hand Maneuver = %q, want %q", got, want)
+	}
+	gotFallback := actionLabel(v, engine.Action{Kind: engine.ActEnact, Player: 0, Card: 99})
+	wantFallback := "Enact: Card#99"
+	if gotFallback != wantFallback {
+		t.Errorf("actionLabel fallback for Maneuver = %q, want %q", gotFallback, wantFallback)
+	}
+}
+
+// T-0122 Case 8: The play screen's stack line names a Maneuver's card.
+func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
+	v := view.View{
+		Stack: []view.StackView{
+			{Kind: "Maneuver", Controller: 0, Card: "Alpha Volley"},
+			{Kind: "Attack", Controller: 1, Source: 7, Target: 3},
+		},
+	}
+	var buf bytes.Buffer
+	printScreen(&buf, v, nil)
+	out := buf.String()
+
+	expectedSection := "Resolution Stack:\n  Maneuver: Alpha Volley (Player 0)\n  Attack (Player 1, Source 7)\n"
+	if !strings.Contains(out, expectedSection) {
+		t.Errorf("printScreen output did not contain expected stack section:\n%s\nGot output:\n%s", expectedSection, out)
+	}
 }
