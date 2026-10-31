@@ -4,7 +4,7 @@ title: The view, viewtest and the play screen show an enacted Maneuver (directiv
 kind: harness
 tier: flash
 wave: C
-status: review
+status: done
 branch: m2/T-0122-maneuver-clients
 depends_on: [T-0116, T-0121]
 claims: [view:stackView StackManeuver, view:stackKinds Maneuver, viewtest:PublicNames StackManeuver, play-screen:actionLabel Enact, play-screen:stack line Maneuver]
@@ -66,3 +66,4 @@ Tests: `pkg/view/view_test.go` and `cmd/cardtown/play_test.go`, new tests only. 
     - go tool task sim (PASS)
     - go tool task sim-compare -- autoloop/m2-wave-c (PASS: byte-identical starter and stress sims)
   - Worktree cleaned up. Task ready for review.
+- 2026-10-30 lead-architect: review round 1, approved, merged into `autoloop/m2-wave-c` (cb08f45). Checked against the diff: only the three Allowed Files and the two test files changed, and no test changed after `test(T-0122)` (db9b261). Case 3: the per-slot loop moved into `chosenTargets`, which the Ability and Maneuver branches both call, with no second copy; the Ability branch keeps its `Keyword` and face-down logic. Case 4: the `StackView` comments and the `stackKinds` label are in. Cases 7 and 8: `actionLabel` reuses `findHandCard`, and only the Maneuver stack line changed. Re-run by the reviewer: at db9b261 the tests for cases 1, 2, 6, 7 and 8 fail. Case 5's test passes there too, as intended: it pins #89 (d), that the view needs no new event. At 6bf1592 `go tool task check` passes, `go tool task sim` is clean (200 games, P0 67.0% / P1 32.5% / draws 0.5%, no monitor violation), and `go tool task sim-compare -- autoloop/m2-wave-c` passes. Directive #89 applied. T-0120 is no longer behind #89: its branch takes in the run branch before its 8305cd5 is reviewed.
