@@ -4,7 +4,7 @@ title: Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C c
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0123-devilhorn-sanction
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Devilhorn Sanction]
@@ -68,3 +68,4 @@ To be written in a new file, `pkg/engine/cards_path_maneuvers_test.go`, from the
 - 2026-10-30 lead-architect (D6, then D4 round 2): the block is a defect in a test I approved, not in the code. `agy` conversation `766c978a-d6b1-483c-b291-4ae48df9060e` exited 0 (`SUCCESS`) with no denied action and set `blocked`. Implementation commit 6540bed matches the Definition exactly (checked against `git diff 489dabb 6540bed -- pkg/`): one opposing-unit target slot, one `OpKill` step on `SubjectTarget`, and the name off `NotYetExecutable`. It stands; no new engineer run is needed once the test is fixed. Status `tests`, notes for `rules-test-author`:
   1. `TestCard_DevilhornSanction_WardUnitCannotBeChosen` puts one Ward unit and one plain opposing unit on the battlefield. Ward leaves one legal target, so the `FR-MOD-001` §1 single-option fast path picks it without asking, `s.asked(0)` is empty and `targetOffers` returns nil. Put two plain opposing units beside the Ward one, so a decision is asked, and assert it offers exactly the two plain units and not the Ward one, as `TestCard_Saboteur_OpposingWardUnitCannotBeChosen` (`cards_path_test.go`) does. Keep the check that the Ward unit survives. This edit to a T-0123 test is authorized here and goes in a new `test(T-0123)` commit.
   2. `targetOffers` returning nil when no target decision was asked lets a test pass or fail for the wrong reason. Make it fail the test (`s.t.Fatalf`) when no `DecideTarget` decision was asked. `TestCard_DevilhornSanction_OnlyOpposingUnitsAreOffered` has two legal units, so it is unaffected.
+- 2026-10-30 rules-test-author (round 2): applied both review notes in `pkg/engine/cards_path_maneuvers_test.go`. (1) `TestCard_DevilhornSanction_WardUnitCannotBeChosen` now has two plain opposing units beside the Ward one, so a decision is asked; it asserts exactly the two plain units are offered, the Ward unit is not, and the Ward unit survives. (2) `targetOffers` now calls `s.t.Fatalf` when no `DecideTarget` decision was asked. Nothing else changed. The definition is already on the branch (6540bed), so all eight `TestCard_DevilhornSanction_*` PASS now (KillsChosenOpposingUnit, KillsInReservesAndFaceDown, IgnoresHealthAndArmor, OnlyOpposingUnitsAreOffered, WardUnitCannotBeChosen, NotEnactableWithoutLegalTarget, ShiftingImpossibilityReplacesTheKill, PaysThreeTactics). Helpers requested: none. Status `tests-review`.

@@ -38,6 +38,7 @@ func targetOffers(s *scene) map[int]bool {
 			return m
 		}
 	}
+	s.t.Fatalf("no target decision was asked of seat 0")
 	return nil
 }
 
@@ -118,11 +119,12 @@ func TestCard_DevilhornSanction_WardUnitCannotBeChosen(t *testing.T) {
 	s := newScene(t)
 	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
 	plain := s.put(1, ZoneMainTheater, unit("Plain", 1, 3, Keywords{}))
+	plain2 := s.put(1, ZoneMainTheater, unit("Plain2", 1, 3, Keywords{}))
 	chooseAsset(s, plain)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	got := targetOffers(s)
-	if got[ward.ID] || !got[plain.ID] {
-		t.Errorf("an opposing Ward unit is not offered while a plain one is, got refs %v (FR-KWD-002h)", got)
+	if got[ward.ID] || len(got) != 2 || !got[plain.ID] || !got[plain2.ID] {
+		t.Errorf("an opposing Ward unit is not offered, only the two plain ones are, got refs %v (FR-KWD-002h)", got)
 	}
 	if !s.alive(ward) {
 		t.Errorf("the Ward unit survives (FR-KWD-002h)")
