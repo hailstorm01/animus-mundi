@@ -27,10 +27,10 @@ type StackItem struct {
 	Source int // asset ID: marching unit, attacker, scratching HQ; 0 for a StackManeuver (a Maneuver is not an asset)
 	Target int // StackAttack: the defender
 
-	Effect  ability.Effect  // StackAbility, StackManeuver: the effect resolving (Source is its source asset)
+	Effect  ability.Effect  // StackAbility, StackManeuver: the effect resolving (for StackAbility, Source is its source asset)
 	Chosen  [][]int         // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
 	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004)
-	Keyword ability.Keyword // StackAbility, StackManeuver: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
+	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed ability
 }
 
 // PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so

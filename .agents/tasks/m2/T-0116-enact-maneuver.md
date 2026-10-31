@@ -4,7 +4,7 @@ title: Enact a Maneuver from hand, resolve its effect and put it into its owner'
 kind: shape
 tier: sonnet
 wave: C
-status: changes
+status: review
 branch: m2/T-0116-enact-maneuver
 depends_on: [T-0083, T-0107]
 claims: [action:enact, stack:maneuver, def:effect]
@@ -94,3 +94,4 @@ Synthetic Maneuver cards only (`TypeManeuver`, an `ability.Def` with an `Effect`
   1. **One hand-play precondition and one payment (reuse, D5.3).** `check`'s `ActDeploy` and `ActEnact` cases each spell out "in hand, `Supported()`, can pay `ReqCost`/`TacCost`", and `Apply` pays twice. Effective costs (`FR-CST-001`, wave E's hand-active cost reduction) would then need editing in two places. In `actions.go`, add one `(g *Game) handPlay(p *Player, id int) (*Instance, error)` that returns the hand card after the three checks, with today's messages unchanged, and one `payCost(p *Player, c *Card)`. Both cases use them, and each keeps only its own check: the type and zones for Deploy, `TypeManeuver` for Enact. Every existing test passes unchanged.
   2. **Field comments (`stack.go`).** `Keyword` is not used by a `StackManeuver`, so restore it to `StackAbility:` only. `Effect`'s "(Source is its source asset)" becomes "(for StackAbility, Source is its source asset)".
   Re-run `go tool task check`, `go tool task sim` and `go tool task sim-compare -- autoloop/m2-wave-c`.
+- 2026-10-30 kernel-engineer: review round 1 notes answered; status `review`. (1) Added `(g *Game) handPlay(p, id)` (in hand, `Supported()`, can pay; messages unchanged) and `payCost(p, c)` in `actions.go`. `check`'s Deploy and Enact cases call `handPlay` and keep only their own checks (Deploy: type and zones; Enact: `TypeManeuver`); `Apply` pays through `payCost` in both. (2) `stack.go`: `Keyword` comment is `StackAbility:` only again; `Effect` says "(for StackAbility, Source is its source asset)". Ran `go tool task check` (exit 0), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-c` (PASS byte for byte). Tests untouched.
