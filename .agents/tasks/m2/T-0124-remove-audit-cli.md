@@ -4,7 +4,7 @@ title: Remove the retired cardtown audit command and pkg/toolchain/audit (direct
 kind: harness
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/T-0124-remove-audit-cli
 depends_on: []
 claims: [cli:audit command removed, toolchain:audit package removed, whats-up:audit lines removed]
@@ -46,14 +46,15 @@ requirements: []
 Tests: `cmd/cardtown/tools_test.go` and `pkg/toolchain/docs/whatsup_test.go`, both new files, new tests only. No existing test is edited.
 
 ## Done When
-- [ ] Cases 1-3 have tests, each of which failed before the implementation commit; cases 4-6 are checked at review, case 7 by the command below, case 8 by `sim-compare`.
-- [ ] `go test ./cmd/cardtown`
-- [ ] `go test ./pkg/toolchain/...`
-- [ ] `go run ./cmd/cardtown whats-up`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
+- [x] Cases 1-3 have tests, each of which failed before the implementation commit; cases 4-6 are checked at review, case 7 by the command below, case 8 by `sim-compare`.
+- [x] `go test ./cmd/cardtown`
+- [x] `go test ./pkg/toolchain/...`
+- [x] `go run ./cmd/cardtown whats-up`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-10-31 lead-architect: wave C run, session 10. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). No `open: before` directive. #90 is `open`, so D2.0 applies it before the next wave C card task is written; it is this prompt's task. Waiting triggers #8 (no `deck.go` change here), #15, #58, #59 (2), #61 (fifth question), #71, #88 (distinctness) not fired. Duplicates searched: removal only, nothing added beyond the tests' copy of `captureOutput` (test setup). Every file is in the package that owns it (`cmd/cardtown` the CLI, `pkg/toolchain/docs` the whats-up snapshot). #90's import path (`github.com/card-town/card-town/...`) and its `whatsup.go` line numbers (53-54, 142) are stale; the Inputs give today's, and its "two capability lines" are four printed lines (two entries with a usage line each). Tier `sonnet`, not the `flash` #90 names: case 4 deletes a file, and the headless allow-list has no command that can (`git rm` and `Remove-Item` are refused; `kernel-engineer` §3 step 5), so a Flash run would end at that step. The work is otherwise small: four files, deletions only, no engine change. Harness, so `ready`; branch `m2/T-0124-remove-audit-cli` from `autoloop/m2-wave-c`.
 - 2026-10-31 kernel-engineer: tests first (a0d7131): `TestUsage_ListsNoAuditCommand` (cmd/cardtown/tools_test.go), `TestShowTools_ListsNoAuditTool` and `TestShowState_PrintsNoPendingAudits` (pkg/toolchain/docs/whatsup_test.go), each with a copied `captureOutput`; the usage and state tests failed before the change (tools test also failed on `cardtown audit`). Implementation is deletions only: `git rm pkg/toolchain/audit/audit.go`; removed `case "audit"` and the usage line in main.go; removed `runAudit`, the audit import and fixed the file comment in tools.go; removed the audit import, four tools lines, the "Pending audits" block (blank Println included) and reworded ShowState's doc comment in whatsup.go. Reuse: nothing added. Ran: `go tool task check` PASS; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-c` PASS byte-identical; `go run ./cmd/cardtown whats-up` exit 0, no audit command or Pending audits block (remaining "audit" text is unrelated: lint blurb, branch name, TDD "Audited=" column, and the deleted file in the uncommitted list). Reviewer: `go build ./...` is covered by check.
+- 2026-10-31 lead-architect: review round 1, approved, merged into `autoloop/m2-wave-c` (60a9008). Checked against the diff: only the four Allowed Files and the two new test files changed, and no test changed after `test(T-0124)` (a0d7131). Case 4: `pkg/toolchain/audit/audit.go` is deleted, and nothing imports the package (`go vet ./...` passes). Case 5: `main.go`'s `case "audit":` branch is gone, so `audit` falls to `default`. Case 6: both comments read as the task gives them. `flag` and `normalizeArgs` are kept for `runTdd` and `runWhatsUp`. Re-run by the reviewer: at a0d7131 all three new tests fail. At 2d1755f `go tool task check` passes, `go tool task sim` is clean (200 games, P0 68.5% / P1 31.0% / draws 0.5%, no monitor violation), `go tool task sim-compare -- autoloop/m2-wave-c` is byte-identical, and `go run ./cmd/cardtown whats-up` exits 0 with no audit command or "Pending audits" block. The "audit" text left in its output is unrelated: the lint skill's description, the branch name and the TDD `Audited=` column. Nit, not a change: the implementation commit is titled `feat(engine)` though no engine file changed. Directive #90 applied.
