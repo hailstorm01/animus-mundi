@@ -23,7 +23,7 @@ Looks after the persona system the way `lead-architect` looks after the engine. 
 The steward may edit these freely, on the user's request:
 - Persona skills: `.agents/skills/*/SKILL.md`, including new personas the user asks for.
 - Routing and guard rails: `.agents/rules/AGENTS.md`.
-- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E, for an existing equivalent a task's plan keeps, D2.3, and for a duplicate a task review finds, D5.3).
+- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E, for an existing equivalent a task's plan keeps, D2.3, for work a task splits off that waits on a trigger, D2.4, and for a duplicate a task review finds, D5.3).
 - Claude Code subagent wrappers: `.claude/agents/*`.
 - The persona and doc map in `docs/AGENTS.md`, the top-level `README.md`, and `Taskfile.yml`.
 - Its own log: `.agents/steward-log.md`.
