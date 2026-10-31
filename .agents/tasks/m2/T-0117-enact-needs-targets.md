@@ -4,7 +4,7 @@ title: A Maneuver can be enacted only if each exactly-one target slot has a lega
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0117-enact-needs-targets
 depends_on: [T-0116]
 claims: [legality:enact-targets]
