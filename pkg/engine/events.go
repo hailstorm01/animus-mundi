@@ -158,6 +158,10 @@ func (g *Game) emitAction(a Action) {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
 		}
 		e.Zone = a.Zone.String()
+	case ActEnact:
+		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
+			e.Card, e.Inst = inst.Card.Name, inst.ID
+		}
 	}
 	g.emit(e)
 }
