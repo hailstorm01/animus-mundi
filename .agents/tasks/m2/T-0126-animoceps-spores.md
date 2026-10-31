@@ -4,7 +4,7 @@ title: Make Animoceps Spores executable (Scratch 2, then return an allied Scratc
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0126-animoceps-spores
 depends_on: [T-0072, T-0116, T-0117, T-0121]
 claims: [card:Animoceps Spores]
@@ -59,3 +59,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 
 ## Log
 - 2026-10-31 lead-architect: wave C run, session 13. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). Not `WAVE-COMPLETE`: 19 deck cards are on `NotYetExecutable`, 6 of them in this wave's `Cards` (*Rapturous Sermon*, *Animoceps Spores*, *Rhapsody's Embrace*, *Funeral Fungus*, *Ambush Tactics*, *Steel Rain*). Directives read on the run branch: no `open: before` directive. #14 (a): deck cards first. *Animoceps Spores* is the deck card session 11 named whose every shape is `done`, so it needs no shape task. No non-deck card has its shapes (*Disorienting Pulse* and *Tactical Withdrawal* return a chosen unit, a target, not a pick), so none joins under #14 (c). #20 (b) stays open for *Steel Rain*'s discard-cost task. Waiting triggers checked: #8 (no `deck.go` change), #15 (a scratch step is not a turn-boundary or draw hook), #58 (no exhaust in `claims:`), #59 (2) (no target slot), #61's fifth question (no modal card in `cards:`), #71 (acts on its controller only), #88's distinctness (no slot, no *Ambush Tactics*). None has fired. Duplicates searched: no new code; `OpScratch` goes through the one `stepScratch`, the pick through the one `pickAssets`, the return through the one `stepRelocate`. Two non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-31 rules-test-author: wrote 7 tests in `pkg/engine/cards_animus_maneuvers_test.go`: `TestCard_AnimocepsSpores_ScratchesTwoThenReturnsThePickedOne`, `_MayReturnAnOlderScratchCompany`, `_TimeoutReturnsTheFirstInFixedOrder`, `_OnlyAlliedScratchCompanyUnitsAreOffered`, `_OneCardDeckReturnsItWithoutAsking`, `_EmptyDeckDoesNothing`, `_PaysTwoTactics`. Helpers requested: none (the file adds its own `sp*` setup helpers). `go vet` is clean, `cardtown lint rules` passes, and all 7 fail as expected (card not yet executable). Cases left out: none. The first test does not assume which of the two scratched units the scripted pick (index 0) returns; it checks that exactly one went to hand and the other stayed.
