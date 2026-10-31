@@ -7,14 +7,14 @@ Authoritative, zero-guesswork Technical Design Documents (`docs/tdd/<XX>_<Name>_
 ```text
 Authoritative FRD in docs/frd/<XX>_<Name>_FRD.md
         │
-        ▼  (Pre-TDD Audit Gate: cardtown audit status checks for Blocker/High items)
-lead-architect (Runbook A) ──► docs/tdd/<XX>_<Name>_TDD.md
+        ▼
+lead-architect (Runbook B) ──► docs/tdd/<XX>_<Name>_TDD.md
         │
         ▼
 cardtown lint tdd ──► verifies 0 dangling FR-XXX-YYY refs, 100% FRD coverage, valid SLICE DAG
         │
         ▼  (Human reviews TDD & confirms GitHub issue slicing)
-lead-architect (Runbook B) ──► cardtown tdd slice -DryRun (preview) ──► -Publish (live)
+lead-architect (Runbook C) ──► cardtown tdd slice -DryRun (preview) ──► -Publish (live)
         │
         ▼
 GitHub Milestone + Topological Issues ([SLICE-XX-01], [SLICE-XX-02], ...) with 'Depends on #N'
