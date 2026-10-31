@@ -274,3 +274,156 @@ func TestCard_SupportedManeuverNeedsAnEffect(t *testing.T) {
 		}
 	}
 }
+
+// Tests for T-0117 (FR-MNV-001, FR-MOD-001 §5, SVY-R29): a Maneuver can be
+// enacted only if each exactly-one target slot has a legal entity when it is
+// declared, and a "Choose N" one only with at least N legal modes. An "up to N"
+// slot never stops it. A Maneuver that cannot be enacted stays in hand.
+
+func killChosenUnit(a ability.Allegiance) ability.Effect {
+	return ability.Effect{
+		Targets: []ability.Target{tgt(a, ability.KindUnit, false)},
+		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget}},
+	}
+}
+
+func TestFR_MNV_001_CannotEnactWithoutRequiredTarget(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	inst := s.give(0, maneuver("Execute", 1, 0, killChosenUnit(ability.AllegianceAny)))
+	p := s.g.Players[0]
+	p.Req, p.Tac = 2, 0
+	if offersEnact(s.g, inst) {
+		t.Errorf("with no unit on the battlefield, \"kill chosen unit\" has no legal target and is not a legal action (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(p, inst) || p.Req != 2 {
+		t.Errorf("a Maneuver that cannot be enacted stays in hand and costs nothing: in hand %v, Req %d, want true, 2 (FR-MNV-001)", inHand(p, inst), p.Req)
+	}
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Errorf("with one unit on the battlefield, the Maneuver is a legal action (FR-MNV-001)")
+	}
+}
+
+func TestFR_MOD_001_ChooseTwoNeedsTwoLegalModes(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	build := func(upTo int) (*scene, *Instance) {
+		s := newScene(t)
+		kill := mode([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
+			ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget})
+		kill.Targets[0].UpTo = upTo
+		inst := s.give(0, maneuver("Both", 0, 0, ability.Effect{
+			Modes: []ability.Effect{mode(nil, drawN(1)), kill}, ChooseN: 2}))
+		return s, inst
+	}
+	s, inst := build(0)
+	if offersEnact(s.g, inst) {
+		t.Errorf("\"Choose two\" with only one legal mode (no opposing unit for mode 2) is not a legal action (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(s.g.Players[0], inst) {
+		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
+	}
+	s2, inst2 := build(1)
+	if !offersEnact(s2.g, inst2) {
+		t.Errorf("when mode 2's slot is \"up to 1\" both modes are legal and the Maneuver is a legal action (FR-MOD-001 §5)")
+	}
+}
+
+func TestFR_MOD_001_ChooseOneNeedsOneLegalMode(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	s := newScene(t)
+	hit := func(op ability.Op) ability.Effect {
+		return mode([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
+			ability.Step{Op: op, Subject: ability.SubjectTarget})
+	}
+	inst := s.give(0, maneuver("Either", 0, 0, ability.Effect{
+		Modes: []ability.Effect{hit(ability.OpKill), hit(ability.OpReturnToHand)}, ChooseN: 1}))
+	if offersEnact(s.g, inst) {
+		t.Errorf("\"Choose one\" whose modes each need an opposing unit is not a legal action with none (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(s.g.Players[0], inst) {
+		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
+	}
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Errorf("with an opposing unit both modes are legal and the Maneuver is a legal action (FR-MOD-001 §5)")
+	}
+}
+
+func TestFR_MNV_001_UpToSlotNeverStopsEnact(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	slot := tgt(ability.AllegianceAny, ability.KindUnit, false)
+	slot.UpTo = 1
+	inst := s.give(0, maneuver("Recall", 0, 0, ability.Effect{
+		Targets: []ability.Target{slot},
+		Steps:   []ability.Step{{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget}},
+	}))
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("an \"up to 1\" slot never stops a Maneuver: with no unit it is still a legal action (SVY-R29)")
+	}
+	s.do(enactAction(inst))
+	for _, d := range s.asked(0) {
+		if d.Kind == DecideTarget {
+			t.Errorf("no legal entity, so no target decision is asked: %+v (FR-TGT-001)", d)
+		}
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestFR_MNV_001_PileTargetNeededToEnact(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	inst := s.give(0, maneuver("Reclaim", 0, 0, ability.Effect{
+		Targets: []ability.Target{ptSlot(0)},
+		Steps:   []ability.Step{ptStep(ability.OpReturnToHand, 0)},
+	}))
+	if offersEnact(s.g, inst) {
+		t.Errorf("with an empty discard pile, \"a unit card in your discard pile\" has no legal entity (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	if offersEnact(s.g, inst) {
+		t.Errorf("only the opponent's unit cards in discard: still no legal entity for an allied pile slot (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(s.g.Players[0], inst) {
+		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
+	}
+	s.inDiscard(0, unit("Mine", 1, 1, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Errorf("with one of the player's own unit cards in their discard pile, the Maneuver is a legal action (SVY-R29)")
+	}
+}
+
+func TestFR_MNV_001_SecondRequiredSlotAlsoNeeded(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	inst := s.give(0, maneuver("Swap", 0, 0, ability.Effect{
+		Targets: []ability.Target{
+			tgt(ability.AllegianceAllied, ability.KindUnit, false),
+			tgt(ability.AllegianceOpposing, ability.KindUnit, false),
+		},
+		Steps: []ability.Step{
+			{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget, Target: 0},
+			{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget, Target: 1},
+		},
+	}))
+	s.put(0, ZoneMainTheater, unit("Mine", 1, 5, Keywords{}))
+	if offersEnact(s.g, inst) {
+		t.Errorf("with an allied unit but no opposing unit the second exactly-one slot is empty: not a legal action (SVY-R29)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(s.g.Players[0], inst) {
+		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
+	}
+	s.put(1, ZoneMainTheater, unit("Theirs", 1, 5, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Errorf("with one allied and one opposing unit both slots are fillable: a legal action (SVY-R29)")
+	}
+}
