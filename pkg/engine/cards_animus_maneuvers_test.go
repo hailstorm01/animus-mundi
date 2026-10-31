@@ -198,3 +198,219 @@ func TestCard_DeafeningAria_KillsOneHealthUnits(t *testing.T) {
 		t.Errorf("the resolved Maneuver ends in its owner's discard pile (FR-MNV-001)")
 	}
 }
+
+// Tests for T-0126 (FR-MNV-001, FR-KWD-002m, FR-ZON-005, FR-TGT-001, FR-MOD-001):
+// Animoceps Spores, loaded from data/cards. Player 0 enacts; player 1 is the
+// opponent.
+//
+// Animoceps Spores: "Scratch 2, then return an allied Scratch Company unit to
+// its owner's hand."
+
+// spFaceDown returns p's face-down Scratch Company assets in Reserves, in the
+// order they entered.
+func spFaceDown(p *Player) []*Asset {
+	var out []*Asset
+	for _, a := range p.Reserves {
+		if a.FaceDown {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+// spScript installs a chooser for seat 0 that records every Decision. On a
+// DecidePick it answers with choose(d), which returns the option index, or -1
+// for a timeout.
+func spScript(s *scene, choose func(d Decision) int) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[0] = nil
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		if d.Kind == DecidePick {
+			if i := choose(d); i >= 0 {
+				return Answer{Picks: []int{i}}
+			}
+		}
+		return Answer{Timeout: true}
+	}
+}
+
+// spPicks returns the DecidePick decisions asked of seat 0.
+func spPicks(s *scene) []Decision {
+	var out []Decision
+	for _, d := range s.asked(0) {
+		if d.Kind == DecidePick {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// spOptionFor returns the index of the option referring to asset a, or -1.
+func spOptionFor(d Decision, a *Asset) int {
+	for i, o := range d.Options {
+		if o.Ref == a.ID {
+			return i
+		}
+	}
+	return -1
+}
+
+func TestCard_AnimocepsSpores_ScratchesTwoThenReturnsThePickedOne(t *testing.T) {
+	// Covers: FR-KWD-002m, FR-ZON-005, FR-TGT-001
+	s := newScene(t)
+	top := s.onTop(0, unit("TopA", 1, 1, Keywords{}), unit("TopB", 1, 1, Keywords{}))
+	spScript(s, func(d Decision) int { return 0 })
+	inst := enactFor(s, "Animoceps Spores")
+	s.do(enactAction(inst))
+	p := s.g.Players[0]
+	picks := spPicks(s)
+	if len(picks) != 1 || picks[0].Player != 0 {
+		t.Fatalf("one DecidePick is asked of player 0 for the return, got %d (FR-TGT-001)", len(picks))
+	}
+	if len(picks[0].Options) != 2 {
+		t.Errorf("the pick offers exactly the two new Scratch Company units, got %d options (FR-TGT-001)", len(picks[0].Options))
+	}
+	h0, h1 := inHand(p, top[0]), inHand(p, top[1])
+	if h0 == h1 {
+		t.Fatalf("exactly one of the two scratched cards is returned to hand: top0 in hand=%v, top1 in hand=%v (FR-ZON-005)", h0, h1)
+	}
+	stay := top[0]
+	if h0 {
+		stay = top[1]
+	}
+	rest := spFaceDown(p)
+	if len(rest) != 1 || rest[0].Inst != stay || !rest[0].Exhausted {
+		t.Errorf("the other Scratch Company stays in Reserves, face-down and Exhausted (FR-KWD-002m)")
+	}
+	if !inDiscardPile(p, inst) {
+		t.Errorf("the resolved Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_AnimocepsSpores_MayReturnAnOlderScratchCompany(t *testing.T) {
+	// Covers: SVY-R3
+	s := newScene(t)
+	s.onTop(0, unit("TopA", 1, 1, Keywords{}), unit("TopB", 1, 1, Keywords{}))
+	old := s.put(0, ZoneMainTheater, unit("Older", 1, 1, Keywords{}))
+	old.FaceDown = true
+	spScript(s, func(d Decision) int { return spOptionFor(d, old) })
+	s.do(enactAction(enactFor(s, "Animoceps Spores")))
+	p := s.g.Players[0]
+	picks := spPicks(s)
+	if len(picks) != 1 {
+		t.Fatalf("one pick question, got %d", len(picks))
+	}
+	if len(picks[0].Options) != 3 || spOptionFor(picks[0], old) < 0 {
+		t.Errorf("the pick offers the older Scratch Company and both new ones: %d options (SVY-R3)", len(picks[0].Options))
+	}
+	if s.alive(old) || !inHand(p, old.Inst) {
+		t.Errorf("the picked older Scratch Company returns to its owner's hand (FR-ZON-005)")
+	}
+	if n := len(spFaceDown(p)); n != 2 {
+		t.Errorf("both new Scratch Companies stay in Reserves, got %d", n)
+	}
+}
+
+func TestCard_AnimocepsSpores_TimeoutReturnsTheFirstInFixedOrder(t *testing.T) {
+	// Covers: SVY-R16
+	s := newScene(t)
+	top := s.onTop(0, unit("TopA", 1, 1, Keywords{}), unit("TopB", 1, 1, Keywords{}))
+	old := s.put(0, ZoneMainTheater, unit("Older", 1, 1, Keywords{}))
+	old.FaceDown = true
+	spScript(s, func(d Decision) int { return -1 })
+	s.do(enactAction(enactFor(s, "Animoceps Spores")))
+	p := s.g.Players[0]
+	if !inHand(p, top[0]) {
+		t.Errorf("a timeout returns the first scratched unit: Reserves come before the Main Theater and it entered first (FR-MOD-001 §6, SVY-R16)")
+	}
+	if inHand(p, top[1]) || !s.alive(old) {
+		t.Errorf("only the first option in fixed order returns on a timeout (SVY-R16)")
+	}
+}
+
+func TestCard_AnimocepsSpores_OnlyAlliedScratchCompanyUnitsAreOffered(t *testing.T) {
+	// Covers: SVY-R3
+	s := newScene(t)
+	s.onTop(0, unit("TopA", 1, 1, Keywords{}), unit("TopB", 1, 1, Keywords{}))
+	foe := s.putScratch(1)
+	plain := s.put(0, ZoneMainTheater, unit("Plain", 1, 1, Keywords{}))
+	spScript(s, func(d Decision) int { return 0 })
+	s.do(enactAction(enactFor(s, "Animoceps Spores")))
+	picks := spPicks(s)
+	if len(picks) != 1 {
+		t.Fatalf("one pick question, got %d", len(picks))
+	}
+	if spOptionFor(picks[0], foe) >= 0 {
+		t.Errorf("an opposing Scratch Company is not allied and is never offered")
+	}
+	if spOptionFor(picks[0], plain) >= 0 {
+		t.Errorf("an allied non-Scratch unit is never offered")
+	}
+	if len(picks[0].Options) != 2 {
+		t.Errorf("only the two new allied Scratch Companies are offered, got %d", len(picks[0].Options))
+	}
+	if !s.alive(foe) || !s.alive(plain) {
+		t.Errorf("the opposing and non-Scratch units are untouched")
+	}
+}
+
+func TestCard_AnimocepsSpores_OneCardDeckReturnsItWithoutAsking(t *testing.T) {
+	// Covers: FR-KWD-002m, FR-TGT-001
+	s := newScene(t)
+	top := s.onTop(0, unit("OnlyCard", 1, 1, Keywords{}))
+	s.g.Players[0].Deck = top
+	spScript(s, func(d Decision) int { return 0 })
+	s.do(enactAction(enactFor(s, "Animoceps Spores")))
+	p := s.g.Players[0]
+	if got := spPicks(s); len(got) != 0 {
+		t.Errorf("a sole option is not asked of the Chooser, got %d pick questions (FR-TGT-001)", len(got))
+	}
+	if !inHand(p, top[0]) || len(spFaceDown(p)) != 0 {
+		t.Errorf("the one scratched unit is returned to hand (FR-KWD-002m, FR-ZON-005)")
+	}
+	if s.g.Outcome.Over {
+		t.Errorf("a scratch is not a draw: player 0 has not lost (FR-KWD-002m)")
+	}
+}
+
+func TestCard_AnimocepsSpores_EmptyDeckDoesNothing(t *testing.T) {
+	// Covers: FR-KWD-002m
+	s := newScene(t)
+	s.g.Players[0].Deck = nil
+	spScript(s, func(d Decision) int { return 0 })
+	inst := enactFor(s, "Animoceps Spores")
+	handBefore := len(s.g.Players[0].Hand)
+	s.do(enactAction(inst))
+	p := s.g.Players[0]
+	if len(spFaceDown(p)) != 0 {
+		t.Errorf("an empty deck scratches nothing (FR-KWD-002m)")
+	}
+	if got := s.asked(0); len(got) != 0 {
+		t.Errorf("nothing is asked, got %d decisions", len(got))
+	}
+	if len(p.Hand) != handBefore-1 {
+		t.Errorf("nothing returns to hand: only the enacted Maneuver left it, hand %d -> %d", handBefore, len(p.Hand))
+	}
+	if s.g.Outcome.Over {
+		t.Errorf("a scratch is not a draw: player 0 has not lost (FR-KWD-002m)")
+	}
+	if !inDiscardPile(p, inst) {
+		t.Errorf("the Maneuver still goes to its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_AnimocepsSpores_PaysTwoTactics(t *testing.T) {
+	// Covers: SVY-R29
+	s := newScene(t)
+	inst := enactFor(s, "Animoceps Spores")
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("with no unit on the battlefield it is still offered: it has no target slot (SVY-R29)")
+	}
+	s.do(enactAction(inst))
+	if p := s.g.Players[0]; p.Tac != 3 || p.Req != 3 {
+		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
