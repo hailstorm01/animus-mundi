@@ -1,4 +1,4 @@
-Status: approved (user, 2026-10-30)
+Status: applied: FRD 01 v3.19, 2026-10-30
 Directive: #88
 Rulings: SVY-R25, SVY-R26, SVY-R27, SVY-R28, SVY-R29, SVY-R30, SVY-R31
 Audit to close: none
