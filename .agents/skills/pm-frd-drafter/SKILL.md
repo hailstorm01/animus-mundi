@@ -49,7 +49,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 
 ### 2.1 Applying a Design Outcome from `game-designer`
 
-When the user runs `@pm-frd-drafter apply Design Outcome docs/design/outcomes/<file>.md`, apply that file's `pm-frd-drafter` section, and nothing else:
+When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs `@pm-frd-drafter apply Design Outcome docs/design/outcomes/<file>.md`), apply that file's `pm-frd-drafter` section, and nothing else:
 0. **Read the outcome from its file.** If the prompt names no path, or the file is not committed on the integration branch, stop and ask for it. Never work from pasted chat text alone. If its `Status` line is already `applied`, stop and say so.
 1. Confirm that every ruling ID in the file's `Rulings:` line has its own dated **user decision** line. Never apply a recommendation. If one is missing, stop and say which.
 2. FRD 01: make each wording change, bump the version, and add a revision-summary entry citing the ruling IDs. Change or mark superseded every place the file's **Superseded wording** list names, including earlier revision summaries.
