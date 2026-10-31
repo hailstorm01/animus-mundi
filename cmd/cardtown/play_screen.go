@@ -80,7 +80,11 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	if len(v.Stack) > 0 {
 		fmt.Fprintln(out, "Resolution Stack:")
 		for _, item := range v.Stack {
-			fmt.Fprintf(out, "  %s (Player %d, Source %d)\n", item.Kind, item.Controller, item.Source)
+			if item.Kind == "Maneuver" {
+				fmt.Fprintf(out, "  Maneuver: %s (Player %d)\n", item.Card, item.Controller)
+			} else {
+				fmt.Fprintf(out, "  %s (Player %d, Source %d)\n", item.Kind, item.Controller, item.Source)
+			}
 		}
 	} else {
 		fmt.Fprintln(out, "Resolution Stack: (empty)")
@@ -155,6 +159,8 @@ func actionLabel(v view.View, a engine.Action) string {
 		return "Convert: 2 Requisition -> 1 Tactics"
 	case engine.ActDeploy:
 		return fmt.Sprintf("Deploy: %s to %s", findHandCard(a.Card), a.Zone)
+	case engine.ActEnact:
+		return fmt.Sprintf("Enact: %s", findHandCard(a.Card))
 	case engine.ActMarch:
 		return fmt.Sprintf("March: %s", findAsset(a.Asset))
 	case engine.ActAttack:

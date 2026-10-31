@@ -744,3 +744,173 @@ func TestView_PileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 		}
 	}
 }
+
+// T-0122 Case 1: A Maneuver stack item shows its kind, card and asset targets.
+func TestView_ManeuverItemShowsItsCardAndTargets(t *testing.T) {
+	s := newScene(t)
+	opp := s.put(1, engine.ZoneMainTheater, testUnit("Opposing Unit", 1, 1, engine.Keywords{}))
+	volley := s.inst(0, &engine.Card{Name: "Alpha Volley", Type: engine.TypeManeuver})
+	s.g.Stack = []*engine.StackItem{{
+		Kind:       engine.StackManeuver,
+		Controller: 0,
+		Inst:       volley,
+		Source:     0,
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}},
+			},
+		},
+		Chosen: [][]int{{opp.ID}},
+	}}
+
+	for seat := engine.PlayerID(0); seat < 2; seat++ {
+		v := view.PlayerView(s.g, seat)
+		if len(v.Stack) != 1 {
+			t.Fatalf("seat %d: stack len = %d, want 1", seat, len(v.Stack))
+		}
+		it := v.Stack[0]
+		if it.Kind != "Maneuver" {
+			t.Errorf("seat %d: Kind = %q, want %q", seat, it.Kind, "Maneuver")
+		}
+		if it.Controller != 0 {
+			t.Errorf("seat %d: Controller = %d, want 0", seat, it.Controller)
+		}
+		if it.Source != 0 {
+			t.Errorf("seat %d: Source = %d, want 0", seat, it.Source)
+		}
+		if it.Card != "Alpha Volley" {
+			t.Errorf("seat %d: Card = %q, want %q", seat, it.Card, "Alpha Volley")
+		}
+		if !reflect.DeepEqual(it.Chosen, [][]int{{opp.ID}}) {
+			t.Errorf("seat %d: Chosen = %v, want [[%d]]", seat, it.Chosen, opp.ID)
+		}
+		if !reflect.DeepEqual(it.ChosenCards, [][]string{{}}) {
+			t.Errorf("seat %d: ChosenCards = %v, want [[]]", seat, it.ChosenCards)
+		}
+		if it.Keyword != "" {
+			t.Errorf("seat %d: Keyword = %q, want empty", seat, it.Keyword)
+		}
+		if it.Zone != "" {
+			t.Errorf("seat %d: Zone = %q, want empty", seat, it.Zone)
+		}
+		if it.Target != 0 {
+			t.Errorf("seat %d: Target = %d, want 0", seat, it.Target)
+		}
+	}
+}
+
+// T-0122 Case 2: A Maneuver's pile slot shows card names, as an Ability's does.
+func TestView_ManeuverPileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
+	s := newScene(t)
+	volley := s.inst(0, &engine.Card{Name: "Maneuver In Question", Type: engine.TypeManeuver})
+	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, engine.Keywords{}))
+	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, engine.Keywords{}))
+	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, engine.Keywords{}))
+	s.g.Players[0].Discard = []*engine.Instance{inPile}
+	s.g.Stack = []*engine.StackItem{{
+		Kind:       engine.StackManeuver,
+		Controller: 0,
+		Source:     0,
+		Inst:       volley,
+		Chosen:     [][]int{{victim.ID}, {inPile.ID, gone.ID}},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}},
+				{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}},
+			},
+		},
+	}}
+
+	for seat := engine.PlayerID(0); seat < 2; seat++ {
+		v := view.PlayerView(s.g, seat)
+		if len(v.Stack) != 1 {
+			t.Fatalf("seat %d: stack = %+v", seat, v.Stack)
+		}
+		it := v.Stack[0]
+		if len(it.Chosen) != 2 || !slices.Equal(it.Chosen[0], []int{victim.ID}) || len(it.Chosen[1]) != 0 {
+			t.Errorf("seat %d: Chosen is the asset ID for the asset slot and empty for the pile slot: %v", seat, it.Chosen)
+		}
+		if len(it.ChosenCards) != 2 || len(it.ChosenCards[0]) != 0 ||
+			!slices.Equal(it.ChosenCards[1], []string{"Card In Pile"}) {
+			t.Errorf("seat %d: ChosenCards is empty for the asset slot and only the name of the card still in a pile for the pile slot: %v", seat, it.ChosenCards)
+		}
+		js := mustJSON(t, v)
+		for _, id := range []int{inPile.ID, gone.ID} {
+			if regexp.MustCompile(fmt.Sprintf(`\b%d\b`, id)).MatchString(js) {
+				t.Errorf("seat %d: the view carries a card instance ID %d, which is never shown", seat, id)
+			}
+		}
+		if strings.Contains(js, "Card Gone From Piles") {
+			t.Errorf("seat %d: a chosen card that left the piles is not named", seat)
+		}
+	}
+}
+
+// T-0122 Case 5: After resolution, the card is in its owner's discard pile in both views, with no new event.
+func TestView_EnactedManeuverEndsInItsOwnersDiscard(t *testing.T) {
+	s := newScene(t)
+	s.g.Players[0].Req, s.g.Players[0].Tac = 2, 2
+	deckCard := s.inst(0, testUnit("Drawn Card", 1, 1, engine.Keywords{}))
+	s.g.Players[0].Deck = []*engine.Instance{deckCard}
+	maneuverCard := &engine.Card{
+		Name: "Tactical Volley", Type: engine.TypeManeuver, ReqCost: 1, TacCost: 0,
+		Ability: &ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+			{Op: ability.OpDraw, Amount: ability.Value{N: 1}},
+		}}},
+	}
+	mInst := s.inst(0, maneuverCard)
+	s.g.Players[0].Hand = []*engine.Instance{mInst}
+	initialHandCount := len(s.g.Players[0].Hand)
+
+	err := s.g.Apply(engine.Action{Kind: engine.ActEnact, Player: 0, Card: mInst.ID})
+	if err != nil {
+		t.Fatalf("apply ActEnact: %v", err)
+	}
+
+	v0 := view.PlayerView(s.g, 0)
+	v1 := view.PlayerView(s.g, 1)
+
+	if len(v0.You.Discard) == 0 || v0.You.Discard[len(v0.You.Discard)-1].Card != "Tactical Volley" {
+		t.Errorf("seat 0 You.Discard does not end with Tactical Volley: %+v", v0.You.Discard)
+	}
+	if len(v1.Opponent.Discard) == 0 || v1.Opponent.Discard[len(v1.Opponent.Discard)-1].Card != "Tactical Volley" {
+		t.Errorf("seat 1 Opponent.Discard does not end with Tactical Volley: %+v", v1.Opponent.Discard)
+	}
+	if len(v0.Stack) != 0 || len(v1.Stack) != 0 {
+		t.Errorf("views have non-empty stack: seat 0 %+v, seat 1 %+v", v0.Stack, v1.Stack)
+	}
+	if v0.You.HandCount != initialHandCount {
+		t.Errorf("seat 0 You.HandCount = %d, want %d", v0.You.HandCount, initialHandCount)
+	}
+
+	for seat := engine.PlayerID(0); seat < 2; seat++ {
+		lines := view.LogLines(s.g.Log, seat)
+		found := false
+		for _, l := range lines {
+			if strings.Contains(l, "Tactical Volley") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("seat %d: LogLines has no line containing Tactical Volley", seat)
+		}
+	}
+}
+
+// T-0122 Case 6: viewtest counts a Maneuver on the stack as public.
+func TestViewtest_ManeuverOnTheStackIsPublic(t *testing.T) {
+	s := newScene(t)
+	m := s.inst(0, &engine.Card{Name: "Alpha Volley", Type: engine.TypeManeuver})
+	s.g.Stack = []*engine.StackItem{{
+		Kind: engine.StackManeuver, Controller: 0, Inst: m,
+	}}
+	pub := viewtest.PublicNames(s.g)
+	if !pub["Alpha Volley"] {
+		t.Errorf("PublicNames does not include Maneuver on stack Alpha Volley")
+	}
+	hid := viewtest.HiddenNames(s.g, 0)
+	if hid["Alpha Volley"] {
+		t.Errorf("HiddenNames includes Maneuver on stack Alpha Volley")
+	}
+}
