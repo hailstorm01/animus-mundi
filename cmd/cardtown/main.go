@@ -40,8 +40,6 @@ func main() {
 		runLint(os.Args[2:])
 	case "hook":
 		runHook(os.Args[2:])
-	case "audit":
-		runAudit(os.Args[2:])
 	case "tdd":
 		runTdd(os.Args[2:])
 	case "replay":
@@ -69,7 +67,6 @@ func printUsage() {
 	fmt.Println("  play      Play a text-mode match against a sim policy, drawn only from PlayerView")
 	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax, fences)")
 	fmt.Println("  hook      Manage Git lifecycle hooks (install pre-commit)")
-	fmt.Println("  audit     Manage PM Devil's Advocate audit lifecycle (status, resolve)")
 	fmt.Println("  tdd       Technical Design Document tools (slicing & GitHub issue publishing)")
 	fmt.Println("  sim       Random-policy playouts on the rules kernel (termination, invariants, win rates)")
 	fmt.Println("  replay    Rebuild a recorded game from a sim -events file and print its state at any event")

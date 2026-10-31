@@ -4,7 +4,7 @@ title: Remove the retired cardtown audit command and pkg/toolchain/audit (direct
 kind: harness
 tier: sonnet
 wave: C
-status: ready
+status: review
 branch: m2/T-0124-remove-audit-cli
 depends_on: []
 claims: [cli:audit command removed, toolchain:audit package removed, whats-up:audit lines removed]
@@ -56,3 +56,4 @@ Tests: `cmd/cardtown/tools_test.go` and `pkg/toolchain/docs/whatsup_test.go`, bo
 
 ## Log
 - 2026-10-31 lead-architect: wave C run, session 10. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). No `open: before` directive. #90 is `open`, so D2.0 applies it before the next wave C card task is written; it is this prompt's task. Waiting triggers #8 (no `deck.go` change here), #15, #58, #59 (2), #61 (fifth question), #71, #88 (distinctness) not fired. Duplicates searched: removal only, nothing added beyond the tests' copy of `captureOutput` (test setup). Every file is in the package that owns it (`cmd/cardtown` the CLI, `pkg/toolchain/docs` the whats-up snapshot). #90's import path (`github.com/card-town/card-town/...`) and its `whatsup.go` line numbers (53-54, 142) are stale; the Inputs give today's, and its "two capability lines" are four printed lines (two entries with a usage line each). Tier `sonnet`, not the `flash` #90 names: case 4 deletes a file, and the headless allow-list has no command that can (`git rm` and `Remove-Item` are refused; `kernel-engineer` §3 step 5), so a Flash run would end at that step. The work is otherwise small: four files, deletions only, no engine change. Harness, so `ready`; branch `m2/T-0124-remove-audit-cli` from `autoloop/m2-wave-c`.
+- 2026-10-31 kernel-engineer: tests first (a0d7131): `TestUsage_ListsNoAuditCommand` (cmd/cardtown/tools_test.go), `TestShowTools_ListsNoAuditTool` and `TestShowState_PrintsNoPendingAudits` (pkg/toolchain/docs/whatsup_test.go), each with a copied `captureOutput`; the usage and state tests failed before the change (tools test also failed on `cardtown audit`). Implementation is deletions only: `git rm pkg/toolchain/audit/audit.go`; removed `case "audit"` and the usage line in main.go; removed `runAudit`, the audit import and fixed the file comment in tools.go; removed the audit import, four tools lines, the "Pending audits" block (blank Println included) and reworded ShowState's doc comment in whatsup.go. Reuse: nothing added. Ran: `go tool task check` PASS; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-c` PASS byte-identical; `go run ./cmd/cardtown whats-up` exit 0, no audit command or Pending audits block (remaining "audit" text is unrelated: lint blurb, branch name, TDD "Audited=" column, and the deleted file in the uncommitted list). Reviewer: `go build ./...` is covered by check.
