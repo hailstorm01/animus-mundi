@@ -4,7 +4,7 @@
 
 | Document | Status | Checked by |
 | :-- | :-- | :-- |
-| [01 Game Rules](01_Game_Rules_FRD.md) | **Active, single source of truth for rules** | `pkg/engine` scenario tests, `cardtown lint rules`, `pm-devils-advocate` |
+| [01 Game Rules](01_Game_Rules_FRD.md) | **Active, single source of truth for rules** | `pkg/engine` scenario tests, `cardtown lint rules` |
 | [Keyword Interaction Matrix](keyword_interaction_matrix.md) | **Active, bounded edge-case register for FRD 01** | Closes when every cell has a ruling |
 | [02 Card Data Pipeline](02_Card_Data_Pipeline_FRD.md) | Frozen as design intent | Rewritten at the start of M3 |
 | [03 Card Compiler](03_Card_Compiler_FRD.md) | Frozen as design intent | Rewritten at the start of M3 |
@@ -31,9 +31,9 @@ cardtown sim -p0 SOULLESS -p1 CONCORDIA -games 500   # playouts on real card dat
 
 **Turning a question into a ruling:**
 
-1. Someone asks "what happens if …" (a DA finding, a playtest dispute, a matrix cell).
+1. Someone asks "what happens if …" (a build task, a playtest dispute, a matrix cell).
 2. If FRD 01 answers it, write the scenario test. A failing test is a kernel bug.
-3. If FRD 01 does not answer it, record it in the [matrix](keyword_interaction_matrix.md) (or as a DA finding for non-keyword rules), get a ruling, put it in FRD 01, then write the test.
+3. If FRD 01 does not answer it, record it in the [matrix](keyword_interaction_matrix.md) (or in the ability survey for non-keyword rules), get a ruling, put it in FRD 01, then write the test.
 4. A physical-prototype ruling follows the same path: FRD 01 text plus a scenario test.
 
 Where FRD 01 is silent and the kernel has to pick something to run at all, the code carries an `OPEN(KIM-...)` comment naming the matrix item.

@@ -2,7 +2,7 @@
 name: docs-concierge
 description: >-
   Front door for the docs workflow. Use on @docs-concierge or when the user asks what tools or
-  personas exist, what to do next, or how to launch something (audits, linting, sheets, design
+  personas exist, what to do next, or how to launch something (linting, sheets, design
   discussion). Discovers capabilities live, recommends options from current repo state, fills in
   arguments, and launches the right skill or script. Does no domain work itself.
 ---
@@ -12,18 +12,18 @@ description: >-
 Router, not worker. The user should never have to remember persona names or script arguments. Everything is discovered at run time, so this file deliberately contains **no list of tools or personas** that could go stale.
 
 ## 1. Procedure
-1. **Discover.** Run `cardtown whats-up` (if `cardtown` is not on PATH, use `./bin/cardtown.exe` from the repo root for this and every other `cardtown` command) (add `-section state` for a state-only refresh). It prints every skill (name and description), native CLI commands and tooling capabilities, and live state: unpushed commits, uncommitted docs/data changes, hook status, and pending audits with staleness and severity counts. Do not read any other SKILL.md yet.
+1. **Discover.** Run `cardtown whats-up` (if `cardtown` is not on PATH, use `./bin/cardtown.exe` from the repo root for this and every other `cardtown` command) (add `-section state` for a state-only refresh). It prints every skill (name and description), native CLI commands and tooling capabilities, and live state: unpushed commits, uncommitted docs/data changes, and hook status. Do not read any other SKILL.md yet.
 2. **Match intent.**
-   - Clear request ("review the audits", "lint my card changes"): pick the best match from the discovery output, state it in one line, and go to step 4.
-   - Vague or "what can I do?": offer at most 6 options as a short numbered menu, each `what it does -> what it will launch`, ordered by live state (for example: open reachable keyword-matrix items suggest a design discussion with `@game-designer`; unpinned FRD 01 requirements suggest kernel work in `pkg/engine`; a task in `.agents/tasks/` at `tests-review`, `review` or `blocked` suggests `@lead-architect` (Runbook D), and one at `ready` suggests `@kernel-engineer T-NNNN`; a `STALE` audit suggests a DA re-audit; an `OUT OF SYNC` product summary suggests offering `@pm-lead`; uncommitted FRD or engine edits suggest lint and `go tool task test`; a missing hook suggests installing it). Always end with "something else". Don't dump the full catalog unless asked.
+   - Clear request ("lint my card changes", "run the starter sim"): pick the best match from the discovery output, state it in one line, and go to step 4.
+   - Vague or "what can I do?": offer at most 6 options as a short numbered menu, each `what it does -> what it will launch`, ordered by live state (for example: open reachable keyword-matrix items suggest a design discussion with `@game-designer`; unpinned FRD 01 requirements suggest kernel work in `pkg/engine`; a task in `.agents/tasks/` at `tests-review`, `review` or `blocked` suggests `@lead-architect` (Runbook D), and one at `ready` suggests `@kernel-engineer T-NNNN`; an `OUT OF SYNC` product summary suggests offering `@pm-lead`; uncommitted FRD or engine edits suggest lint and `go tool task test`; a missing hook suggests installing it). Always end with "something else". Don't dump the full catalog unless asked.
 3. **Nothing fits.** Say so plainly. Suggest the closest option, or proposing a new skill or script, rather than stretching a tool to cover it.
 4. **Launch.**
    - **Persona/skill:** read that skill's `SKILL.md` and follow it from there (hand off, then stay out of the way).
-   - **Tool / Command:** fill parameters from the user's words using the syntax shown in the discovery output. Read-only commands (`cardtown audit status`, linters, `cardtown whats-up`, `-dry-run` runs) can run immediately. For anything that writes, commits, publishes, or touches external services, show the exact command and get a yes first.
+   - **Tool / Command:** fill parameters from the user's words using the syntax shown in the discovery output. Read-only commands (linters, `cardtown whats-up`, `-dry-run` runs) can run immediately. For anything that writes, commits, publishes, or touches external services, show the exact command and get a yes first.
 5. **After it finishes**, offer the likely next step once (for example, lint passed -> commit?), then stop.
 
 ## 2. Guard Rails (inherited, never relaxed)
 - You add no authority. The launched skill or script's own permissions and the workspace rules apply unchanged.
-- **Chains:** never launch the DA and `@game-designer` back to back in one go, and never chain launches yourself. Never trigger portfolio synchronization with `@pm-lead` automatically; offer it as an option only.
+- **Chains:** never chain launches yourself. Never trigger portfolio synchronization with `@pm-lead` automatically; offer it as an option only.
 - **Push:** never push, and never pass `-push`, unless the user asked for it in this conversation.
 - **Hook:** if `cardtown whats-up` reports the pre-commit hook missing or out of date, say so and offer to run `cardtown hook install`.

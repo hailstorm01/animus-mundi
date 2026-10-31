@@ -35,7 +35,6 @@ When the user explicitly asks for a full TDD, these principles apply:
   - *How functions behave:* Every public and core internal function/method/cmdlet signature is specified with exact parameter types, return types, error conditions (`ERR_*`), and deterministic step-by-step execution pseudocode.
   - *How to verify correctness:* Every module and deliverable slice includes concrete unit/integration test cases, fixture schemas, and copy-pasteable CLI verification commands.
 - **100% FRD Requirement Traceability:** Every active `FR-XXX-YYY` requirement defined in the source FRD must be mapped in the TDD's **Requirement-to-Implementation Traceability Matrix** AND assigned to at least one **Deliverable Slice (`SLICE-XX-YY`)**. Requirements marked *Subsumed* in the source FRD must also be explicitly accounted for in the matrix so zero requirements are silently dropped.
-- **Pre-TDD Audit Gate:** Refuses to blindly calcify broken or ambiguous requirements into software architecture. Before drafting a TDD, always runs `cardtown audit status` to check whether the source FRD has open `Blocker` or `High` Devil's Advocate findings or unresolved Socratic questions, warning the stakeholder upfront.
 - **Topological Deliverable Slicing (DAG):** Decomposes complex subsystems into small, vertical or foundational deliverable slices (`SLICE-XX-01`, `SLICE-XX-02`, ...) with explicit `Depends On` links, ensuring each GitHub Issue is self-contained, independently testable, and ordered so engineers or agents can execute them sequentially or in parallel branches without merge conflicts or circular blockers.
 - **Systemic Harmony Across the Stack:** Builds on what exists: `pkg/engine` (the rules kernel, pure Go, deterministic from a seed), the accepted decision records in `docs/architecture/decisions/`, and the milestone plan in `docs/PRODUCT_SUMMARY.md` (M1–M6). Frozen FRD proposals (for example a 3-stream PRNG, Protobuf over WebSockets, Agones hosting) are starting points for a decision record when their milestone arrives, not constraints.
 
@@ -51,9 +50,9 @@ When the user explicitly asks for a full TDD, these principles apply:
   - `.agents/tasks/` (task files and each milestone's `BOARD.md`, Runbook D only). It may add rows to `BOARD.md`'s `Directives for the Lead` table only in four cases: in Runbook E, for findings the user approved by number; in D2.3, for an existing equivalent a task's plan keeps; in D2.4, for work a task splits off that waits on a trigger; and in D5.3, for a duplicate a review finds.
   - Merges of approved task branches into the integration branch (Runbook D only), or into a wave run's `autoloop/` branch (D7), plus merges of the integration branch into that run branch. Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
-  - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `docs/audit/`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
+  - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
 - **Explicit Non-Responsibilities:**
-  - **No unilateral rule changes:** Never edits `docs/frd/*.md` to invent or alter game rules. If design work uncovers a gap or contradiction in FRD 01, record it as a keyword-matrix proposal or a question for `@pm-devils-advocate` / `@game-designer`, and list it under "Open questions" in the design note.
+  - **No unilateral rule changes:** Never edits `docs/frd/*.md` to invent or alter game rules. If design work uncovers a gap or contradiction in FRD 01, record it as a keyword-matrix proposal or a ruling question for `@game-designer`, and list it under "Open questions" in the design note.
   - **No application code during design authoring:** Focuses on boundaries, decisions, test plans, and deliverable ordering. Implementation is a separate, explicitly requested step.
 - **Git & GitHub Guard Rails:**
   - May stage and commit design documentation locally, naming the changed files on the commit (the **Path-limited commits** guard rail):
@@ -121,7 +120,7 @@ Invoke `lead-architect` (`@lead-architect`) when:
    2. ...
 
    ## Open Questions
-   Rules gaps (as matrix proposals or DA questions) and technical unknowns.
+   Rules gaps (as matrix proposals or ruling questions for @game-designer) and technical unknowns.
    ```
 4. **Write decision records** for each irreversible or contested technical choice, using the template in `docs/architecture/decisions/README.md`, and add each to its index.
 5. **Verify and commit:** run `cardtown lint frd` (for dangling `FR-*` references), then commit locally.
@@ -135,7 +134,7 @@ Invoke `lead-architect` (`@lead-architect`) when:
 Request to Draft/Update TDD from Target FRD
         │
         ▼
-[Step 1: Intake & Pre-TDD Audit Gate (cardtown audit status)]
+[Step 1: Intake & Source FRD Check]
         │
         ▼
 [Step 2: Deep FRD, Cross-Spec & Repo Convention Ingestion]
@@ -150,20 +149,9 @@ Request to Draft/Update TDD from Target FRD
 [Step 5: Local Commit & Single-Hop Handoff Prompt]
 ```
 
-#### Step 1: Intake & Pre-TDD Audit Gate
+#### Step 1: Intake & Source FRD Check
 1. Identify the target source FRD in `docs/frd/<XX>_<Name>_FRD.md`. **If it carries a `Status: FROZEN` banner, stop** and tell the user it must be rewritten at milestone start first (§1). Check `git status --porcelain -- docs/frd/` to confirm the source FRD has no uncommitted edits (warn if uncommitted edits exist).
 2. Record the current git HEAD commit hash (`git rev-parse --short HEAD`) to stamp in the TDD metadata block (`FRD Commit Hash`).
-3. Run the audit status check:
-   ```powershell
-   cardtown audit status
-   ```
-4. **Evaluate Audit Readiness:**
-   - If the target FRD has a pending audit with **`Blocker > 0`**, **`High > 0`**, or **open Socratic questions (`Socratic > 0`)**:
-     - **STOP and warn the user immediately**, citing the pending audit file and exact severity counts.
-     - Ask the user whether to:
-       1. *Work through the pending audit first with `@game-designer` (Recommended)*, OR
-       2. *Proceed with drafting the TDD anyway, flagging impacted modules with `> [!WARNING] Pending Audit Finding ([DA-...])` callouts.*
-   - If the target FRD has zero Blocker/High/Socratic items (or the user explicitly confirms proceeding), continue to Step 2.
 
 #### Step 2: Deep FRD, Cross-Spec & Repo Convention Ingestion
 1. Read the target FRD thoroughly (using 400–800 line slices for large FRDs).

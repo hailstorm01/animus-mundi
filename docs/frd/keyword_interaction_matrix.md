@@ -14,7 +14,6 @@ Unlike an open-ended red-team pass, this document can be finished. There are 15 
 - **Reachability:** `R` means a legal deck can produce the situation against some opponent with today's cards. `U` means it cannot (yet).
 - **Closing an item:** a designer ruling goes into FRD 01, and where the keyword is kernel-executable, a `TestFR_*` scenario test in `pkg/engine` pins it. Then the cell flips to `D`. Physical playtest rulings close items the same way.
 - **The kernel:** wherever an `I` or `?` item affects executable rules, `pkg/engine` picks a behavior and marks it with an `OPEN(KIM-...)` comment, so changing the ruling means changing one marked spot.
-- **For `pm-devils-advocate`:** keyword findings are raised against this matrix (a cell that is wrong or missing), not as fresh prose findings.
 
 ## Matrix
 
