@@ -17,23 +17,69 @@ type placement struct {
 	source     int       // source asset ID
 	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	label      string
+	costs      []ability.Cost // additional costs paid with this placement (FR-TRN-003a); a trigger has none
 }
 
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
 // modes first, if it has any, then the targets of the effect that leaves
 // (FR-MOD-001 §5, SVY-R3). It returns the effect the stack item resolves and
-// the chosen targets, one slice of Refs per target slot.
+// the chosen targets, one slice of Refs per target slot. The additional costs
+// are paid last (payCosts): targets are judged against the state before a cost
+// moves anything (SVY-R2), so the player sees the target prompts first and the
+// cost prompt last.
 func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect, [][]int) {
 	if len(e.Modes) > 0 {
 		e = g.chooseModes(pl, e)
 	}
-	return e, g.chooseTargets(pl, e)
+	targets := g.chooseTargets(pl, e)
+	g.payCosts(pl)
+	return e, targets
 }
 
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
 // both its legality check and the choosing of its modes and targets.
 func maneuverPlacement(pid PlayerID, inst *Instance) placement {
-	return placement{controller: pid, inst: inst, label: inst.Card.Name}
+	pl := placement{controller: pid, inst: inst, label: inst.Card.Name}
+	if inst.Card.Ability != nil {
+		pl.costs = inst.Card.Ability.ExtraCosts
+	}
+	return pl
+}
+
+// costDecision builds the pick of the allied asset that pays cost c, with the
+// assets it lists in option order. It is an untargeted selection (DecidePick),
+// so Ward doesn't apply, a timeout takes the first option in fixed order
+// (FR-MOD-001 §6) and a single option is taken unasked (§1). Legality
+// (costsPayable) and payment (payCosts) both build their decision with it.
+func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
+	prompt := fmt.Sprintf("%s: choose an asset to kill (additional cost)", pl.label)
+	return g.assetDecision(pl.controller, DecidePick, prompt, 0, func(a *Asset) bool {
+		return g.matchesFilter(pl.controller, pl.source, c.Filter, a)
+	})
+}
+
+// costsPayable reports whether every additional cost of pl has at least one
+// option now (FR-TRN-003a, SVY-R29).
+func (g *Game) costsPayable(pl placement) bool {
+	for _, c := range pl.costs {
+		if _, opts := g.costDecision(pl, c); len(opts) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// payCosts pays each additional cost of pl in printed order: its controller
+// picks the asset (costDecision, pickFrom) and it is killed through kill, so a
+// replaced kill still counts as paid (SVY-R15) and the triggers it fires wait
+// in the pending buffer to go above the declared card (FR-TRN-003a).
+func (g *Game) payCosts(pl placement) {
+	for _, c := range pl.costs {
+		d, opts := g.costDecision(pl, c)
+		for _, a := range pickFrom(g, d, opts) {
+			g.kill([]*Asset{a})
+		}
+	}
 }
 
 // slotsLegal reports whether each exactly-one slot of ts has a legal entity
@@ -48,10 +94,13 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 }
 
 // placeable reports whether e can be placed with everything it requires
-// (SVY-R29): at least ChooseN legal modes, or a legal entity for each
+// (SVY-R29): every additional cost payable (costsPayable), then at least ChooseN legal modes, or a legal entity for each
 // exactly-one slot. It applies to enacting a Maneuver only: a trigger is
 // placed whatever it finds (SVY-R30, FR-TGT-003).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
+	if !g.costsPayable(pl) {
+		return false
+	}
 	if len(e.Modes) > 0 {
 		return len(g.legalModes(pl, e)) >= e.ChooseN
 	}

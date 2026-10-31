@@ -25,6 +25,24 @@ type Def struct {
 	// Effect is a Maneuver's effect, resolved when the Maneuver resolves (FR-MNV-001).
 	// It is zero for every other card type.
 	Effect Effect
+	// ExtraCosts lists the additional costs paid when the card is declared, in
+	// printed order (FR-TRN-003a). It is zero for a card without one.
+	ExtraCosts []Cost
+}
+
+// CostKind is what an additional cost asks the payer to do. It has no default.
+type CostKind int
+
+const (
+	CostKill CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
+)
+
+// Cost is one additional cost, paid when its card is declared (FR-TRN-003a).
+// Filter is relative to the payer and is a battlefield filter (never InPile).
+// Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
+type Cost struct {
+	Kind   CostKind
+	Filter Filter
 }
 
 // Would is the event a replacement replaces.
