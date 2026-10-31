@@ -261,6 +261,35 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Rapturous Sermon": {
+		Text: []string{
+			"Move all allied Scratch Company units to the Main Theater. Allied Scratch Company units get +2 power until end of turn.",
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpMoveZone,
+					To:      ability.ZoneMainTheater,
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Scratch:    ability.ScratchOnly,
+					},
+				},
+				{
+					Op:      ability.OpModifyStat,
+					Amount:  ability.Value{N: 2},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Scratch:    ability.ScratchOnly,
+					},
+				},
+			},
+		},
+	},
 	"Shifting Impossibility": {
 		Text: []string{"If an allied Scratch Company unit would be killed, return it to its owner's hand and deal 1 damage to this unit instead."},
 		Replacements: []ability.Replacement{

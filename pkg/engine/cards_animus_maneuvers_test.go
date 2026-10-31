@@ -414,3 +414,186 @@ func TestCard_AnimocepsSpores_PaysTwoTactics(t *testing.T) {
 		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0127 (FR-MNV-001, FR-ZON-002, FR-ZON-004, FR-LAY-001, FR-LAY-003):
+// Rapturous Sermon, loaded from data/cards. Player 0 enacts.
+//
+// Rapturous Sermon: "Move all allied Scratch Company units to the Main
+// Theater. Allied Scratch Company units get +2 power until end of turn."
+
+// rsScratchInMain puts a face-down Scratch Company unit of p in the Main Theater.
+func rsScratchInMain(s *scene, p PlayerID) *Asset {
+	a := s.putScratch(p)
+	s.moveTo(a, ZoneMainTheater)
+	return a
+}
+
+// rsMoveEventsNaming counts move events in the log that name asset a.
+func rsMoveEventsNaming(s *scene, a *Asset) int {
+	n := 0
+	for _, e := range eventsOfKind(s.g.Log, EventMove) {
+		if e.Target == a.ID || e.Source == a.ID {
+			n++
+		}
+	}
+	return n
+}
+
+func TestCard_RapturousSermon_MovesAlliedScratchCompanyToTheMainTheater(t *testing.T) {
+	// Covers: FR-ZON-001, FR-ZON-002
+	s := newScene(t)
+	r1, r2 := s.putScratch(0), s.putScratch(0)
+	m := rsScratchInMain(s, 0)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	for _, a := range []*Asset{r1, r2, m} {
+		if s.g.Asset(a.ID) != a {
+			t.Errorf("a moved unit is still the same asset (FR-ZON-002)")
+		}
+		if a.Zone != ZoneMainTheater || !containsAsset(s.g.TheaterOf(0), a) {
+			t.Errorf("every allied Scratch Company unit ends in player 0's Main Theater (FR-ZON-002)")
+		}
+	}
+	if len(s.g.Players[0].Reserves) != 0 {
+		t.Errorf("no allied unit is left in the Reserves, got %d (FR-ZON-001)", len(s.g.Players[0].Reserves))
+	}
+	for _, a := range []*Asset{r1, r2} {
+		if n := rsMoveEventsNaming(s, a); n != 1 {
+			t.Errorf("a unit that moved has exactly one move event, got %d (FR-ZON-002)", n)
+		}
+	}
+	if n := rsMoveEventsNaming(s, m); n != 0 {
+		t.Errorf("a unit already in the Main Theater does not move: %d move events, want 0 (FR-ZON-002)", n)
+	}
+}
+
+func containsAsset(list []*Asset, a *Asset) bool {
+	for _, x := range list {
+		if x == a {
+			return true
+		}
+	}
+	return false
+}
+
+func TestCard_RapturousSermon_AlliedScratchCompanyGetPlusTwo(t *testing.T) {
+	s := newScene(t)
+	r1, r2 := s.putScratch(0), s.putScratch(0)
+	m := rsScratchInMain(s, 0)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	for _, a := range []*Asset{r1, r2, m} {
+		if got := s.g.Power(a); got != 3 {
+			t.Errorf("each allied Scratch Company unit has power 3 (printed 1, +2), got %d", got)
+		}
+	}
+}
+
+func TestCard_RapturousSermon_OthersAreUntouched(t *testing.T) {
+	s := newScene(t)
+	s.putScratch(0)
+	plain := s.put(0, ZoneReserves, unit("Plain", 2, 3, Keywords{}))
+	foe := s.putScratch(1)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	if plain.Zone != ZoneReserves || !containsAsset(s.g.Players[0].Reserves, plain) {
+		t.Errorf("an allied non-Scratch unit stays in the Reserves")
+	}
+	if foe.Zone != ZoneReserves || !containsAsset(s.g.Players[1].Reserves, foe) {
+		t.Errorf("an opposing Scratch Company unit stays in its controller's Reserves")
+	}
+	if got := s.g.Power(plain); got != 2 {
+		t.Errorf("an allied non-Scratch unit keeps its printed power 2, got %d", got)
+	}
+	if got := s.g.Power(foe); got != 1 {
+		t.Errorf("an opposing Scratch Company unit keeps its printed power 1, got %d", got)
+	}
+	for _, a := range []*Asset{plain, foe} {
+		if n := rsMoveEventsNaming(s, a); n != 0 {
+			t.Errorf("a unit the card does not select has no move event, got %d", n)
+		}
+	}
+}
+
+func TestCard_RapturousSermon_MovedUnitsKeepTheirState(t *testing.T) {
+	// Covers: FR-ZON-004
+	s := newScene(t)
+	a := s.putScratch(0)
+	a.Exhausted = true
+	a.Armor = 1
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	if a.Zone != ZoneMainTheater {
+		t.Fatalf("the unit moves to the Main Theater")
+	}
+	if !a.Exhausted {
+		t.Errorf("a unit moved between Reserves and the Main Theater keeps its readiness (FR-ZON-004)")
+	}
+	if a.Armor != 1 {
+		t.Errorf("a moved unit keeps its Armor: got %d, want 1 (FR-ZON-004)", a.Armor)
+	}
+	if got := s.g.Power(a); got != 3 {
+		t.Errorf("the moved unit has power 3, got %d", got)
+	}
+}
+
+func TestCard_RapturousSermon_LaterScratchCompanyDoesNotGetPlusTwo(t *testing.T) {
+	// Covers: FR-LAY-001
+	s := newScene(t)
+	early := s.putScratch(0)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	later := s.putScratch(0) // enters the battlefield after the +2 resolved, same turn
+	if got := s.g.Power(later); got != 1 {
+		t.Errorf("a unit that becomes an allied Scratch Company later gets no +2 (FR-LAY-001): power %d, want 1", got)
+	}
+	if got := s.g.Power(early); got != 3 {
+		t.Errorf("the earlier unit keeps its +2 (FR-LAY-001): power %d, want 3", got)
+	}
+}
+
+func TestCard_RapturousSermon_PlusTwoExpiresAtEndOfTurn(t *testing.T) {
+	// Covers: FR-LAY-003
+	s := newScene(t)
+	r := s.putScratch(0)
+	m := rsScratchInMain(s, 0)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	s.endTurn()
+	for _, a := range []*Asset{r, m} {
+		if got := s.g.Power(a); got != 1 {
+			t.Errorf("the +2 expires at the end of the turn: power %d, want 1 (FR-LAY-003)", got)
+		}
+		if a.Zone != ZoneMainTheater {
+			t.Errorf("the units stay in the Main Theater when the turn ends (FR-ZON-002)")
+		}
+	}
+}
+
+func TestCard_RapturousSermon_EnactableWithNoScratchCompany(t *testing.T) {
+	// Covers: SVY-R29
+	s := newScene(t)
+	inst := enactFor(s, "Rapturous Sermon")
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("a Maneuver with no target slot is a legal Enact with no Scratch Company unit (SVY-R29)")
+	}
+	s.do(enactAction(inst))
+	if n := len(eventsOfKind(s.g.Log, EventMove)); n != 0 {
+		t.Errorf("nothing matched, so nothing moves: %d move events, want 0", n)
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver goes to its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_RapturousSermon_AsksNothingAndPaysFourTactics(t *testing.T) {
+	// Covers: FR-TGT-002
+	s := newScene(t)
+	s.putScratch(0)
+	s.script(0)
+	s.script(1)
+	s.do(enactAction(enactFor(s, "Rapturous Sermon")))
+	for p := PlayerID(0); p < 2; p++ {
+		if got := s.asked(p); len(got) != 0 {
+			t.Errorf("\"all\" is not targeted: player %d was asked %d decisions, want none (FR-TGT-002)", p, len(got))
+		}
+	}
+	pl := s.g.Players[0]
+	if pl.Tac != 1 || pl.Req != 3 {
+		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", pl.Req, pl.Tac)
+	}
+}

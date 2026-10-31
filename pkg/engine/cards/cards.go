@@ -43,7 +43,6 @@ var NotYetExecutable = []string{
 	"Mutation Swell",
 	"Pincer Tactics",
 	"Poisoned Rations",
-	"Rapturous Sermon",
 	"Reaver's Rush",
 	"Rhapsody's Embrace",
 	"Rhapsody's Hollow",
