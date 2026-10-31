@@ -126,13 +126,22 @@ func (g *Game) cornered(p PlayerID) bool {
 // deployedTo reports whether a is in zone z now, which for a deploy trigger is
 // the zone its deploy put it in. ZoneAny always holds.
 func deployedTo(a *Asset, z ability.Zone) bool {
-	switch z {
-	case ability.ZoneReserves:
-		return a.Zone == ZoneReserves
-	case ability.ZoneMainTheater:
-		return a.Zone == ZoneMainTheater
+	if to, ok := battlefieldZone(z); ok {
+		return a.Zone == to
 	}
 	return true
+}
+
+// battlefieldZone maps a battlefield zone a shape names to the engine's zone.
+// It is false for ZoneAny and ZoneDiscard, which are not battlefield zones.
+func battlefieldZone(z ability.Zone) (Zone, bool) {
+	switch z {
+	case ability.ZoneReserves:
+		return ZoneReserves, true
+	case ability.ZoneMainTheater:
+		return ZoneMainTheater, true
+	}
+	return 0, false
 }
 
 // fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger (an

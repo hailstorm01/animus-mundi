@@ -15,6 +15,7 @@ func TestEventKinds_ValuesAreTheSchema(t *testing.T) {
 		{EventPlace, "place"},
 		{EventDeploy, "deploy"},
 		{EventMarch, "march"},
+		{EventMove, "move"},
 		{EventScratch, "scratch"},
 		{EventAttack, "attack"},
 		{EventFizzle, "fizzle"},
