@@ -4,7 +4,7 @@ title: The progress policy enacts Maneuvers, and the coverage tests count them (
 kind: harness
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/T-0121-policy-enacts-maneuvers
 depends_on: [T-0116]
 claims: [func:ProgressPolicy, event-field:action.Card for Enact]
@@ -39,14 +39,15 @@ Once a starter-deck Maneuver is executable, `cardtown sim` plays it and the two 
 Tests: `pkg/sim/policy_test.go` and `pkg/engine/events_test.go` (new tests, plus the two authorized edits above).
 
 ## Done When
-- [ ] Every acceptance case has a test, and each new or edited test failed before the implementation commit (case 4 is checked by `sim-compare`, cases 6 and 7 by the edited tests passing).
-- [ ] `go test ./pkg/sim -run TestProgress`
-- [ ] `go test ./pkg/engine -run TestEvents_Case4`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
+- [x] Every acceptance case has a test, and each new or edited test failed before the implementation commit (case 4 is checked by `sim-compare`, cases 6 and 7 by the edited tests passing).
+- [x] `go test ./pkg/sim -run TestProgress`
+- [x] `go test ./pkg/engine -run TestEvents_Case4`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 6, D6. Written for T-0120, which blocked on `TestProgress_Case4_Coverage` and `TestEvents_Case4_EveryActionKind` once *Despoiler's Emergence* became the first executable starter Maneuver (the Flash run finished with no denied action). Its implementation commit (8305cd5) passes its own ten tests and `go tool task sim`; only these two harness tests fail, and both need files outside its Allowed Files. Duplicates searched: `ProgressPolicy` is the only policy that ranks actions (`RandomPolicy` already picks Enact uniformly); `emitAction` is the one action-event writer. Tier `sonnet`: the policy must keep its random draws unchanged when no Enact is legal (case 4). Two non-test files. `queued`; T-0120 is requeued behind it. Wave run: `STOP: blocked task`, as wave B's T-0078/T-0079 (row 14).
 - 2026-10-30 lead-architect: wave C run, session 7. Synced `main` (directive #89, merge 4e2336a). Inputs re-checked against the run branch (`policy.go`, `emitAction`): unchanged. #89 (the view and play screen, `open: before T-0120`) does not overlap these claims, so it is written after this task. Harness, so `ready`; dispatched to `kernel-engineer` (sonnet) on `m2/T-0121-policy-enacts-maneuvers`, branched from `autoloop/m2-wave-c`.
 - 2026-10-30 kernel-engineer: test commit first (new `TestProgress_Case6_EnactsManeuvers`, `TestEvents_Case4_EnactActionEventNamesItsCard`, the two authorized edits); the new tests failed before the implementation (16 policy failures, Enact event had no Card/Inst). Implementation: `emitAction` fills Card and Inst for `ActEnact` (same as Deploy); `ProgressPolicy` merges Deploy and Enact into one `plays` list (no extra `r` draw when no Enact is legal) and the shortfall scan now includes supported Maneuvers. Reuse: `handCard`, existing Deploy branch shape. Ran: `go tool task check` pass, `go tool task sim` clean, `go tool task sim-compare -- autoloop/m2-wave-c` byte-identical. Case 3's unsupported check asserts only that no Generate/Enact is returned (random Attack/March can still be picked).
+- 2026-10-30 lead-architect: review round 1, approved, merged into `autoloop/m2-wave-c` (62bac04). Checked against the diff: cases 1–3 in `TestProgress_Case6_EnactsManeuvers`, case 5 in `TestEvents_Case4_EnactActionEventNamesItsCard` (one Enact action event with `Card` and `Inst`, before the `place` event), cases 6 and 7 are the authorized edits in `test(T-0121)` (6869f13) and nowhere later, case 8 in the doc comment. Only Allowed Files and their tests changed; the `emitAction` change is its Enact branch only. Case 4: with no `ActEnact` in `legal`, `plays` holds exactly the old `deploys` and the shortfall scan adds only supported Maneuvers (none on this branch), so the draws are unchanged. Reuse: the Enact branch repeats Deploy's two-line `handCard` lookup; it's too small to count as a duplicate under D2.0. Re-run by the reviewer: at 6869f13 both new tests fail (policy picks March or Scratch, the event has no `Card`); at d0756e6 `go tool task check` passes, `go tool task sim` is clean (200 games, P0 67.0% / P1 32.5% / draws 0.5%) and `go tool task sim-compare -- autoloop/m2-wave-c` passes. The engineer's note that case 3's unsupported-Maneuver check can't assert EndTurn is accepted: the policy may still pick an Attack or March there, and the check that matters (no Generate, no Enact) holds.
