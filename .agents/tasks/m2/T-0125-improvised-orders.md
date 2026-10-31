@@ -4,7 +4,7 @@ title: Make Improvised Orders executable (draw 3, then discard a card, wave C ca
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0125-improvised-orders
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Improvised Orders]
