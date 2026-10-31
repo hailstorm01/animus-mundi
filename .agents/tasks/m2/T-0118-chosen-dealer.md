@@ -4,7 +4,7 @@ title: A chosen asset can deal a step's damage, equal to its current power, and 
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0118-chosen-dealer
 depends_on: [T-0117]
 claims: [field:Step.Dealer, step:chosen-dealer]
