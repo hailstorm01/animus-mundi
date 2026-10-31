@@ -4,7 +4,7 @@ title: The view, viewtest and the play screen show an enacted Maneuver (directiv
 kind: harness
 tier: flash
 wave: C
-status: in-progress
+status: review
 branch: m2/T-0122-maneuver-clients
 depends_on: [T-0116, T-0121]
 claims: [view:stackView StackManeuver, view:stackKinds Maneuver, viewtest:PublicNames StackManeuver, play-screen:actionLabel Enact, play-screen:stack line Maneuver]
@@ -46,12 +46,23 @@ Before the first starter-deck Maneuver is executable (T-0120), every client of t
 Tests: `pkg/view/view_test.go` and `cmd/cardtown/play_test.go`, new tests only. No existing test is edited.
 
 ## Done When
-- [ ] Every acceptance case has a test (case 3 is checked by the existing view tests and at review, case 4 at review, case 9 by `sim-compare`), and each new test failed before the implementation commit.
-- [ ] `go test ./pkg/view/...`
-- [ ] `go test ./cmd/cardtown`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
+- [x] Every acceptance case has a test (case 3 is checked by the existing view tests and at review, case 4 at review, case 9 by `sim-compare`), and each new test failed before the implementation commit.
+- [x] `go test ./pkg/view/...`
+- [x] `go test ./cmd/cardtown`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 8. No `main` commits to sync. Directive #89 is `open: before T-0120`, so it is this prompt's task (D2.0), ahead of T-0120. Duplicates searched: `stackView`'s Ability branch is the one place that fills a stack item's chosen targets, so the Maneuver branch shares it (case 3); `PublicNames` is the one public-name oracle; `actionLabel`'s `findHandCard` already names Deploy's card. #89 (d) decided above: no new event, the view reads discard piles from state. `eventlog.Replay` already rebuilds an Enact (`actionOf`), so it isn't touched. Three non-test files, all in the packages that own them (`pkg/view` the client view, `cmd/cardtown` the play screen). Tier `flash`: small, no engine change, no random draws. Harness, so `ready`; branch `m2/T-0122-maneuver-clients` from `autoloop/m2-wave-c`.
+- 2026-10-30 kernel-engineer: acceptance tests added in test(T-0122) commit db9b261 (all cases covered; cases 1, 2, 6, 7, 8 verified failing prior to implementation). Implemented in feat(view) commit 5c75b01:
+  - pkg/view/view.go: updated StackView comments (naming Maneuver, Source 0 for Maneuver, Card, Chosen/ChosenCards), added engine.StackManeuver to stackKinds map, extracted chosenTargets helper to share target slot resolution across StackAbility and StackManeuver without code duplication (case 3), wired StackManeuver to populate Card and Chosen/ChosenCards.
+  - pkg/view/viewtest/viewtest.go: included engine.StackManeuver in PublicNames stack item loop.
+  - cmd/cardtown/play_screen.go: added engine.ActEnact case to actionLabel reusing findHandCard, updated printScreen to format Maneuver stack line as "  Maneuver: %s (Player %d)\n" without Source.
+  - Commands run and verified:
+    - go test ./pkg/view/... (PASS)
+    - go test ./cmd/cardtown (PASS)
+    - go tool task check (gofmt, go vet, all tests, cardtown lint --all all PASS)
+    - go tool task sim (PASS)
+    - go tool task sim-compare -- autoloop/m2-wave-c (PASS: byte-identical starter and stress sims)
+  - Worktree cleaned up. Task ready for review.
