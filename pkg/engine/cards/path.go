@@ -169,6 +169,26 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Devilhorn Sanction": {
+		Text: []string{"Kill chosen opposing unit."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpKill,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Hammerhand Brigands": {
 		Text: []string{"Unbowed: Scratch 1."},
 		Triggers: []ability.Trigger{
