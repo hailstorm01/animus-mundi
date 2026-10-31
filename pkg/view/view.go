@@ -74,21 +74,22 @@ type AssetView struct {
 
 // StackView is one Resolution Stack item.
 type StackView struct {
-	Kind       string // "Deploy", "March", "Attack", "Scratch" or "Ability"
+	Kind       string // "Deploy", "March", "Attack", "Scratch", "Ability" or "Maneuver"
 	Controller int
-	Source     int     // asset ID: marching unit, attacker, scratching HQ, or ability source
-	Card       string  // Deploy: the card on the stack; Ability: its source card
+	Source     int     // asset ID: marching unit, attacker, scratching HQ, or ability source; 0 for a Maneuver
+	Card       string  // Deploy: the card on the stack; Ability: its source card; Maneuver: the card on the stack
 	Zone       string  // Deploy: the declared zone; March: the origin zone
 	Target     int     // Attack: the primary defender (asset ID)
 	Keyword    string  // Ability: the keyword its trigger came from ("Aggressive"); empty for a printed ability
-	Chosen     [][]int // Ability: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
-	// ChosenCards: Ability: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
+	Chosen     [][]int // Ability, Maneuver: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
+	// ChosenCards: Ability, Maneuver: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
 	ChosenCards [][]string
 }
 
 var stackKinds = map[engine.StackKind]string{
 	engine.StackDeploy: "Deploy", engine.StackMarch: "March", engine.StackAttack: "Attack",
 	engine.StackScratch: "Scratch", engine.StackAbility: "Ability",
+	engine.StackManeuver: "Maneuver",
 }
 
 // PlayerView is seat's view of g now.
@@ -156,6 +157,24 @@ func assetViews(g *engine.Game, as []*engine.Asset) []AssetView {
 	return out
 }
 
+func chosenTargets(g *engine.Game, it *engine.StackItem) ([][]int, [][]string) {
+	chosen := make([][]int, len(it.Chosen))
+	chosenCards := make([][]string, len(it.Chosen))
+	for i, ids := range it.Chosen {
+		chosen[i], chosenCards[i] = []int{}, []string{}
+		if !it.PileSlot(i) {
+			chosen[i] = append(chosen[i], ids...)
+			continue
+		}
+		for _, id := range ids {
+			if inst := g.DiscardCard(id); inst != nil {
+				chosenCards[i] = append(chosenCards[i], inst.Card.Name)
+			}
+		}
+	}
+	return chosen, chosenCards
+}
+
 func stackView(g *engine.Game, it *engine.StackItem) StackView {
 	s := StackView{Kind: stackKinds[it.Kind], Controller: int(it.Controller), Source: it.Source}
 	switch it.Kind {
@@ -174,20 +193,12 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 		} else if it.Inst != nil {
 			s.Card = it.Inst.Card.Name
 		}
-		s.Chosen = make([][]int, len(it.Chosen))
-		s.ChosenCards = make([][]string, len(it.Chosen))
-		for i, ids := range it.Chosen {
-			s.Chosen[i], s.ChosenCards[i] = []int{}, []string{}
-			if !it.PileSlot(i) {
-				s.Chosen[i] = append(s.Chosen[i], ids...)
-				continue
-			}
-			for _, id := range ids {
-				if inst := g.DiscardCard(id); inst != nil {
-					s.ChosenCards[i] = append(s.ChosenCards[i], inst.Card.Name)
-				}
-			}
+		s.Chosen, s.ChosenCards = chosenTargets(g, it)
+	case engine.StackManeuver:
+		if it.Inst != nil {
+			s.Card = it.Inst.Card.Name
 		}
+		s.Chosen, s.ChosenCards = chosenTargets(g, it)
 	}
 	return s
 }

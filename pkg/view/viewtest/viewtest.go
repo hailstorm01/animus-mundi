@@ -22,7 +22,7 @@ func PublicNames(g *engine.Game) map[string]bool {
 		}
 	}
 	for _, it := range g.Stack {
-		if (it.Kind == engine.StackDeploy || it.Kind == engine.StackAbility) && it.Inst != nil {
+		if (it.Kind == engine.StackDeploy || it.Kind == engine.StackAbility || it.Kind == engine.StackManeuver) && it.Inst != nil {
 			pub[it.Inst.Card.Name] = true
 		}
 	}
