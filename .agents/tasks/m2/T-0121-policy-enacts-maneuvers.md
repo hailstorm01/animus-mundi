@@ -4,7 +4,7 @@ title: The progress policy enacts Maneuvers, and the coverage tests count them (
 kind: harness
 tier: sonnet
 wave: C
-status: ready
+status: review
 branch: m2/T-0121-policy-enacts-maneuvers
 depends_on: [T-0116]
 claims: [func:ProgressPolicy, event-field:action.Card for Enact]
@@ -49,3 +49,4 @@ Tests: `pkg/sim/policy_test.go` and `pkg/engine/events_test.go` (new tests, plus
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 6, D6. Written for T-0120, which blocked on `TestProgress_Case4_Coverage` and `TestEvents_Case4_EveryActionKind` once *Despoiler's Emergence* became the first executable starter Maneuver (the Flash run finished with no denied action). Its implementation commit (8305cd5) passes its own ten tests and `go tool task sim`; only these two harness tests fail, and both need files outside its Allowed Files. Duplicates searched: `ProgressPolicy` is the only policy that ranks actions (`RandomPolicy` already picks Enact uniformly); `emitAction` is the one action-event writer. Tier `sonnet`: the policy must keep its random draws unchanged when no Enact is legal (case 4). Two non-test files. `queued`; T-0120 is requeued behind it. Wave run: `STOP: blocked task`, as wave B's T-0078/T-0079 (row 14).
 - 2026-10-30 lead-architect: wave C run, session 7. Synced `main` (directive #89, merge 4e2336a). Inputs re-checked against the run branch (`policy.go`, `emitAction`): unchanged. #89 (the view and play screen, `open: before T-0120`) does not overlap these claims, so it is written after this task. Harness, so `ready`; dispatched to `kernel-engineer` (sonnet) on `m2/T-0121-policy-enacts-maneuvers`, branched from `autoloop/m2-wave-c`.
+- 2026-10-30 kernel-engineer: test commit first (new `TestProgress_Case6_EnactsManeuvers`, `TestEvents_Case4_EnactActionEventNamesItsCard`, the two authorized edits); the new tests failed before the implementation (16 policy failures, Enact event had no Card/Inst). Implementation: `emitAction` fills Card and Inst for `ActEnact` (same as Deploy); `ProgressPolicy` merges Deploy and Enact into one `plays` list (no extra `r` draw when no Enact is legal) and the shortfall scan now includes supported Maneuvers. Reuse: `handCard`, existing Deploy branch shape. Ran: `go tool task check` pass, `go tool task sim` clean, `go tool task sim-compare -- autoloop/m2-wave-c` byte-identical. Case 3's unsupported check asserts only that no Generate/Enact is returned (random Attack/March can still be picked).

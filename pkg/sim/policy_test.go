@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/ability"
 )
 
 // Tests for T-0022: ProgressPolicy and SimOptions.Policy. Each
@@ -83,6 +84,71 @@ func TestProgress_Case2_Preferences(t *testing.T) {
 	}
 }
 
+// drawManeuver is a synthetic Maneuver costing req Requisition and tac Tactics
+// with the untargeted step "draw 1".
+func drawManeuver(name string, req, tac int) *engine.Card {
+	return &engine.Card{Name: name, Type: engine.TypeManeuver, ReqCost: req, TacCost: tac,
+		Ability: &ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+			{Op: ability.OpDraw, Amount: ability.Value{N: 1}}}}}}
+}
+
+func TestProgress_Case6_EnactsManeuvers(t *testing.T) {
+	deployed, enacted := 0, 0
+	for seed := uint64(1); seed <= 16; seed++ {
+		// Case 1: only an affordable Maneuver in hand: Enact it.
+		s := newScene(t)
+		s.g.Players[0].Hand = nil
+		m := s.give(0, drawManeuver("Study", 0, 0))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		if seed <= 8 {
+			got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
+			if got.Kind != engine.ActEnact || got.Card != m.ID {
+				t.Errorf("seed %d: affordable Maneuver, got %+v, want Enact of it", seed, got)
+			}
+		}
+
+		// Case 2: a unit and a Maneuver: both kinds are offered, nothing else.
+		s = newScene(t)
+		s.g.Players[0].Hand = nil
+		s.give(0, unit("Free", 1, 1, engine.Keywords{}))
+		s.give(0, drawManeuver("Study", 0, 0))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
+		switch got.Kind {
+		case engine.ActDeploy:
+			deployed++
+		case engine.ActEnact:
+			enacted++
+		default:
+			t.Errorf("seed %d: unit and Maneuver in hand, got %s, want Deploy or Enact", seed, got.Kind)
+		}
+
+		// Case 3: a 2 Tactics Maneuver, pool 0/0: Generate Tactics. An
+		// unsupported one closes nothing.
+		if seed <= 8 {
+			s = newScene(t)
+			s.g.Players[0].Hand = nil
+			s.give(0, drawManeuver("Costly", 0, 2))
+			s.g.Players[0].Req, s.g.Players[0].Tac = 0, 0
+			worker := unit("Worker", 1, 1, engine.Keywords{})
+			worker.TacYield = 1
+			s.put(0, engine.ZoneReserves, worker)
+			got = ProgressPolicy(seed)(s.g, s.g.LegalActions())
+			if got.Kind != engine.ActGenerate || got.Resource != engine.Tactics {
+				t.Errorf("seed %d: short on Tactics for a Maneuver, got %+v, want Generate Tactics", seed, got)
+			}
+			s.g.Players[0].Hand[0].Card = &engine.Card{Name: "Dud", Type: engine.TypeManeuver, TacCost: 2}
+			got = ProgressPolicy(seed)(s.g, s.g.LegalActions())
+			if got.Kind == engine.ActGenerate || got.Kind == engine.ActEnact {
+				t.Errorf("seed %d: unsupported Maneuver closes nothing, got %+v", seed, got)
+			}
+		}
+	}
+	if deployed == 0 || enacted == 0 {
+		t.Errorf("over 16 seeds: %d Deploys, %d Enacts, want both at least once", deployed, enacted)
+	}
+}
+
 func progressRun(t *testing.T) (SimStats, []byte) {
 	t.Helper()
 	var cols []*gameCollector
@@ -136,17 +202,18 @@ func TestProgress_Case4_Coverage(t *testing.T) {
 	}
 	sort.Strings(names)
 	for _, n := range names {
-		t.Logf("%-40s %d deploys", n, counts[n])
+		t.Logf("%-40s %d plays", n, counts[n])
 		if counts[n] < 10 {
-			t.Errorf("%s deployed %d times in 1000 games, want at least 10", n, counts[n])
+			t.Errorf("%s played %d times in 1000 games, want at least 10", n, counts[n])
 		}
 	}
 }
 
+// deployCounter counts plays: a deploy event, or an Enact action event, by card.
 type deployCounter struct{ counts map[string]int }
 
 func (c *deployCounter) Event(e engine.Event) {
-	if e.Kind == "deploy" {
+	if e.Kind == "deploy" || (e.Kind == "action" && e.Detail == "Enact") {
 		c.counts[e.Card]++
 	}
 }
