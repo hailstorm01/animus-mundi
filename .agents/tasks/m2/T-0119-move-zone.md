@@ -4,7 +4,7 @@ title: An effect can move a unit to its controller's Reserves or the Main Theate
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0119-move-zone
 depends_on: [T-0118]
 claims: [op:OpMoveZone, field:Step.To, event:move, func:battlefieldZone]
