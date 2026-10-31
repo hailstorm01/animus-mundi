@@ -313,23 +313,45 @@ func TestEvents_Case4_EveryActionKind(t *testing.T) {
 			seen[strings.Fields(e.Detail)[0]] = true
 		}
 	}
-	// Enact is exempt only while no starter-deck card is an executable
-	// Maneuver (nothing can enact one); once one is, the check applies again.
-	starterManeuver := false
-	for _, d := range loadStarters(t) {
-		for _, c := range append([]*Card{d.HQ}, d.Main...) {
-			if c != nil && c.Type == TypeManeuver && c.Supported() {
-				starterManeuver = true
-			}
-		}
-	}
 	for k := ActGenerate; k <= ActEndTurn; k++ {
-		if k == ActEnact && !starterManeuver {
+		// Enact is covered by TestEvents_Case4_EnactActionEventNamesItsCard,
+		// because a uniform random playout of 10 seeds doesn't reliably
+		// reach a 1-of Maneuver.
+		if k == ActEnact {
 			continue
 		}
 		if !seen[k.String()] {
 			t.Errorf("no action event for %s", k)
 		}
+	}
+}
+
+func TestEvents_Case4_EnactActionEventNamesItsCard(t *testing.T) {
+	s := newScene(t)
+	inst := s.give(0, maneuver("Study", 0, 0, steps(drawN(1))))
+	s.do(enactAction(inst))
+	acts := eventsOfKind(s.g.Log, "action")
+	if len(acts) != 1 || acts[0].Detail != "Enact" {
+		t.Fatalf("want one Enact action event, got %+v", acts)
+	}
+	a := acts[0]
+	if a.Player != 0 || a.Card != "Study" || a.Inst != inst.ID {
+		t.Errorf("Enact action event fields: %+v, want player 0, card Study, inst %d", a, inst.ID)
+	}
+	actIdx, placeIdx := -1, -1
+	for i, e := range s.g.Log {
+		if e.Kind == "action" && actIdx < 0 {
+			actIdx = i
+		}
+		if e.Kind == "place" && placeIdx < 0 {
+			placeIdx = i
+		}
+	}
+	if placeIdx >= 0 && actIdx > placeIdx {
+		t.Errorf("the action event (log %d) comes before the place event (log %d)", actIdx, placeIdx)
+	}
+	if placeIdx < 0 {
+		t.Errorf("no place event for the Maneuver")
 	}
 }
 
