@@ -4,7 +4,7 @@ title: The view, viewtest and the play screen show an enacted Maneuver (directiv
 kind: harness
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0122-maneuver-clients
 depends_on: [T-0116, T-0121]
 claims: [view:stackView StackManeuver, view:stackKinds Maneuver, viewtest:PublicNames StackManeuver, play-screen:actionLabel Enact, play-screen:stack line Maneuver]
