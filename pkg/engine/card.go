@@ -114,7 +114,14 @@ func (c *Card) HasSubtype(s string) bool {
 
 // Supported reports whether the kernel can fully execute this card.
 func (c *Card) Supported() bool {
-	return len(c.Unsupported) == 0 && c.Type != TypeManeuver
+	if len(c.Unsupported) != 0 {
+		return false
+	}
+	if c.Type == TypeManeuver {
+		// A Maneuver is executable only through its Effect (FR-MNV-001).
+		return c.Ability != nil && (len(c.Ability.Effect.Steps) > 0 || len(c.Ability.Effect.Modes) > 0)
+	}
+	return true
 }
 
 // scratchFace is the face-down Scratch Company characteristic set (FR-ZON-005).

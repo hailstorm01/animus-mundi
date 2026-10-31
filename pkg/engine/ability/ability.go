@@ -22,6 +22,9 @@ type Def struct {
 	Triggers []Trigger
 	// Replacements lists the printed replacement effects, in printed order.
 	Replacements []Replacement
+	// Effect is a Maneuver's effect, resolved when the Maneuver resolves (FR-MNV-001).
+	// It is zero for every other card type.
+	Effect Effect
 }
 
 // Would is the event a replacement replaces.

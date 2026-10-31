@@ -313,7 +313,20 @@ func TestEvents_Case4_EveryActionKind(t *testing.T) {
 			seen[strings.Fields(e.Detail)[0]] = true
 		}
 	}
+	// Enact is exempt only while no starter-deck card is an executable
+	// Maneuver (nothing can enact one); once one is, the check applies again.
+	starterManeuver := false
+	for _, d := range loadStarters(t) {
+		for _, c := range append([]*Card{d.HQ}, d.Main...) {
+			if c != nil && c.Type == TypeManeuver && c.Supported() {
+				starterManeuver = true
+			}
+		}
+	}
 	for k := ActGenerate; k <= ActEndTurn; k++ {
+		if k == ActEnact && !starterManeuver {
+			continue
+		}
 		if !seen[k.String()] {
 			t.Errorf("no action event for %s", k)
 		}

@@ -25,11 +25,12 @@ const (
 	ActMarch                      // stack-pushed (FR-CAP-001)
 	ActAttack                     // stack-pushed (FR-CBT-002)
 	ActScratch                    // stack-pushed, HQ only (FR-CAP-001)
+	ActEnact                      // Maneuver from Hand, stack-pushed (FR-MNV-001, FR-TRN-003)
 	ActEndTurn
 )
 
 func (k ActionKind) String() string {
-	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "EndTurn"}[k]
+	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "Enact", "EndTurn"}[k]
 }
 
 // Resource selects Requisition or Tactics.
@@ -46,7 +47,7 @@ type Action struct {
 	Player   PlayerID
 	Asset    int      // acting asset: Generate, March, Attack, Scratch
 	Resource Resource // Generate
-	Card     int      // Deploy: Instance.ID in hand
+	Card     int      // Deploy, Enact: Instance.ID in hand
 	Zone     Zone     // Deploy: declared battlefield zone
 	Target   int      // Attack: the defender
 }
@@ -76,10 +77,15 @@ func (g *Game) Apply(a Action) error {
 		p.Tac++
 	case ActDeploy:
 		inst := handCard(p, a.Card)
-		p.Req -= inst.Card.ReqCost
-		p.Tac -= inst.Card.TacCost
+		payCost(p, inst.Card)
 		g.takeCard(inst)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
+	case ActEnact:
+		inst := handCard(p, a.Card)
+		payCost(p, inst.Card)
+		g.takeCard(inst)
+		eff, chosen := g.chooseOnPlacement(placement{controller: a.Player, inst: inst, label: inst.Card.Name}, inst.Card.Ability.Effect)
+		g.push(&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst, Effect: eff, Chosen: chosen})
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
@@ -136,22 +142,24 @@ func (g *Game) check(a Action) error {
 			return illegal("conversion needs 2 Requisition")
 		}
 	case ActDeploy:
-		inst := handCard(p, a.Card)
-		if inst == nil {
-			return illegal("card %d is not in hand", a.Card)
+		inst, err := g.handPlay(p, a.Card)
+		if err != nil {
+			return err
 		}
 		c := inst.Card
-		if !c.Supported() {
-			return illegal("%s needs rules the kernel does not implement yet", c.Name)
-		}
 		if c.Type != TypeUnit && c.Type != TypeStructure {
 			return illegal("%s cannot be deployed", c.Name)
 		}
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {
 			return illegal("%s cannot be deployed to %s", c.Name, a.Zone)
 		}
-		if p.Req < c.ReqCost || p.Tac < c.TacCost {
-			return illegal("cannot pay for %s (needs R%d T%d)", c.Name, c.ReqCost, c.TacCost)
+	case ActEnact:
+		inst, err := g.handPlay(p, a.Card)
+		if err != nil {
+			return err
+		}
+		if inst.Card.Type != TypeManeuver {
+			return illegal("%s is not a Maneuver", inst.Card.Name)
 		}
 	case ActMarch:
 		as, err := g.readyAsset(a)
@@ -175,6 +183,30 @@ func (g *Game) check(a Action) error {
 		return illegal("unknown action kind %d", a.Kind)
 	}
 	return nil
+}
+
+// handPlay returns the card with instance ID id if p may play it from hand:
+// it is in hand, the kernel supports it and p can pay its cost. Deploy and
+// Enact both start here and then check only what is their own.
+func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
+	inst := handCard(p, id)
+	if inst == nil {
+		return nil, illegal("card %d is not in hand", id)
+	}
+	c := inst.Card
+	if !c.Supported() {
+		return nil, illegal("%s needs rules the kernel does not implement yet", c.Name)
+	}
+	if p.Req < c.ReqCost || p.Tac < c.TacCost {
+		return nil, illegal("cannot pay for %s (needs R%d T%d)", c.Name, c.ReqCost, c.TacCost)
+	}
+	return inst, nil
+}
+
+// payCost takes c's printed resource cost from p.
+func payCost(p *Player, c *Card) {
+	p.Req -= c.ReqCost
+	p.Tac -= c.TacCost
 }
 
 func (g *Game) readyAsset(a Action) (*Asset, error) {
@@ -239,6 +271,9 @@ func (g *Game) LegalActions() []Action {
 		for _, z := range inst.Card.DeployZones {
 			try(Action{Kind: ActDeploy, Player: pid, Card: inst.ID, Zone: z})
 		}
+	}
+	for _, inst := range p.Hand {
+		try(Action{Kind: ActEnact, Player: pid, Card: inst.ID})
 	}
 	if p.HQ != nil {
 		try(Action{Kind: ActScratch, Player: pid, Asset: p.HQ.ID})
