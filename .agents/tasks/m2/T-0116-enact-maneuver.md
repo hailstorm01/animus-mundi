@@ -4,7 +4,7 @@ title: Enact a Maneuver from hand, resolve its effect and put it into its owner'
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0116-enact-maneuver
 depends_on: [T-0083, T-0107]
 claims: [action:enact, stack:maneuver, def:effect]
@@ -87,3 +87,4 @@ Synthetic Maneuver cards only (`TypeManeuver`, an `ability.Def` with an `Effect`
   1. Rewrite `TestFR_QUE_001_ManeuverIsPlacedOnTheStack` on a kill step, as the Tests section now says.
   2. Make the task-authorized edit to `TestEvents_Case4_EveryActionKind` that the Tests section now names, in the `test(T-0116)` commit (a second `test(T-0116): …` commit is fine).
   The engineer's Log entry is enough to redo the implementation once the tests are fixed.
+- 2026-10-30 rules-test-author: rework done for lead notes 1 and 2. (1) `TestFR_QUE_001_ManeuverIsPlacedOnTheStack` now enacts "kill chosen opposing unit" and checks the `place` event (Card, Inst, depth 1) comes before the `destroy` event. (2) `TestEvents_Case4_EveryActionKind` skips `ActEnact` only while no starter-deck card is a supported Maneuver, computed from `loadStarters`, with a comment; nothing else changed. Helpers requested: none. `go vet` fails only on the missing `ActEnact`/`Def.Effect`; `cardtown lint rules` passes. Status `tests-review`.
