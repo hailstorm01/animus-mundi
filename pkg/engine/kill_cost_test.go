@@ -107,15 +107,17 @@ func TestFR_TRN_003a_KillCostMustBePayable(t *testing.T) {
 func TestFR_TRN_003a_CostTriggersResolveBeforeTheManeuver(t *testing.T) {
 	// Covers: FR-TRN-003, FR-MNV-001
 	s := newScene(t)
-	martyr := s.put(0, ZoneMainTheater, mortal("Martyr", 1, 1, killedTrigger(ability.Step{
-		Op: ability.OpDealDamage, Amount: ability.Value{N: 2}, Subject: ability.SubjectAll,
-		Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindHeadquarters}})))
-	inst := s.give(0, killCostManeuver("Sacrifice", 0, 0, steps(drawN(1))))
+	hqDamage := func(n int) ability.Step {
+		return ability.Step{Op: ability.OpDealDamage, Amount: ability.Value{N: n}, Subject: ability.SubjectAll,
+			Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindHeadquarters}}
+	}
+	martyr := s.put(0, ZoneMainTheater, mortal("Martyr", 1, 1, killedTrigger(hqDamage(2))))
+	inst := s.give(0, killCostManeuver("Sacrifice", 0, 0, steps(hqDamage(1))))
 	s.do(enactAction(inst))
 	if s.alive(martyr) {
 		t.Fatalf("precondition: the only allied unit was killed as the cost")
 	}
-	var sacPlace, trigPlace, dmg, draw, discard int
+	var sacPlace, trigPlace, trigDmg, sacDmg, discard int
 	for _, e := range s.g.Log {
 		switch {
 		case e.Kind == "place" && e.Card == "Sacrifice":
@@ -128,24 +130,24 @@ func TestFR_TRN_003a_CostTriggersResolveBeforeTheManeuver(t *testing.T) {
 			if e.Amount != 2 {
 				t.Errorf("the cost's trigger is placed on top of the Maneuver, depth 2, got %d (FR-TRN-003a)", e.Amount)
 			}
-		case e.Kind == "damage" && e.Target == s.g.Players[1].HQ.ID:
-			dmg = e.Seq
-		case e.Kind == "draw" && sacPlace != 0 && draw == 0:
-			draw = e.Seq
+		case e.Kind == "damage" && e.Target == s.g.Players[1].HQ.ID && e.Amount == 2 && sacPlace != 0 && trigDmg == 0:
+			trigDmg = e.Seq
+		case e.Kind == "damage" && e.Target == s.g.Players[1].HQ.ID && e.Amount == 1 && sacPlace != 0 && sacDmg == 0:
+			sacDmg = e.Seq
 		case e.Kind == "discard" && e.Inst == inst.ID:
 			discard = e.Seq
 		}
 	}
-	if sacPlace == 0 || trigPlace == 0 || dmg == 0 || draw == 0 {
-		t.Fatalf("missing events: Maneuver place %d, trigger place %d, trigger damage %d, Maneuver draw %d", sacPlace, trigPlace, dmg, draw)
+	if sacPlace == 0 || trigPlace == 0 || trigDmg == 0 || sacDmg == 0 {
+		t.Fatalf("missing events: Maneuver place %d, trigger place %d, trigger 2 damage %d, Maneuver 1 damage %d", sacPlace, trigPlace, trigDmg, sacDmg)
 	}
 	if trigPlace < sacPlace {
 		t.Errorf("the trigger goes onto the stack after the Maneuver was declared, above it (seq %d vs %d) (FR-TRN-003a)", trigPlace, sacPlace)
 	}
-	if dmg > draw {
-		t.Errorf("the cost's trigger resolves (seq %d) before the Maneuver's step (seq %d) (FR-TRN-003a)", dmg, draw)
+	if trigDmg > sacDmg {
+		t.Errorf("the cost's trigger resolves (2 damage, seq %d) before the Maneuver's step (1 damage, seq %d) (FR-TRN-003a)", trigDmg, sacDmg)
 	}
-	if discard != 0 && dmg > discard {
+	if discard != 0 && trigDmg > discard {
 		t.Errorf("the cost's trigger resolves before the Maneuver goes to the discard pile (FR-TRN-003a)")
 	}
 	if lastDiscard(s.g.Players[0]) != inst {
