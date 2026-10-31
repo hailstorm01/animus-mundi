@@ -242,6 +242,7 @@ const (
 	EventPlace         = "place"
 	EventDeploy        = "deploy"
 	EventMarch         = "march"
+	EventMove          = "move" // an effect moved an asset between battlefield zones; March keeps EventMarch
 	EventScratch       = "scratch"
 	EventAttack        = "attack"
 	EventFizzle        = "fizzle"

@@ -187,6 +187,7 @@ const (
 	OpDiscard                    // its controller discards Amount cards of their choice from their own hand (FR-MOD-001 §1, §6; SVY-R16)
 	OpModifyStat                 // the Subject gets +Amount power until end of turn (Layer 5, FR-LAY-001; expires in Sub-Phase 4c, FR-LAY-003). Other stats and durations come later
 	OpKill                       // destroy the Subject at once, into its owner's discard pile (FR-LAY-002, FR-ZON-002); a Headquarters is skipped (no M2 card kills one)
+	OpMoveZone                   // move each Subject unit to Step.To, in its controller's battlefield, keeping its state (FR-ZON-002, FR-ZON-004). A unit already there, a Structure and a Headquarters don't move
 )
 
 // Subject is what a step acts on.
@@ -212,6 +213,7 @@ type Step struct {
 	Filter  Filter // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
 	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
 	Dealer  int    // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
+	To      Zone   // OpMoveZone only: ZoneReserves or ZoneMainTheater, the unit's controller's
 	IfDone  bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 }
 

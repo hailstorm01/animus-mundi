@@ -80,8 +80,32 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepKill(r, st)
 	case ability.OpReturnToHand, ability.OpPutOnDeck:
 		return g.stepRelocate(r, st)
+	case ability.OpMoveZone:
+		return g.stepMoveZone(r, st)
 	}
 	return 0
+}
+
+// stepMoveZone moves each unit of stepAssets to st.To in its controller's
+// battlefield and returns how many moved. A Structure, a Headquarters and a
+// unit already there are skipped and don't count (FR-ZON-002). The unit keeps
+// its state (FR-ZON-004); moving is not deploying, so no deploy trigger fires
+// (SVY-R1). The event carries no Card, as stepRelocate's leave doesn't.
+func (g *Game) stepMoveZone(r *resolution, st ability.Step) int {
+	to, ok := battlefieldZone(st.To)
+	if !ok {
+		return 0
+	}
+	n := 0
+	for _, a := range g.stepAssets(r, st) {
+		if a.Printed().Type != TypeUnit || a.Zone == to {
+			continue
+		}
+		g.moveOnBattlefield(a, to)
+		g.logEvent(Event{Kind: EventMove, Player: -1, Target: a.ID, Zone: to.String()}, "%s moves to %s", a, to)
+		n++
+	}
+	return n
 }
 
 // stepPlayers returns the players a player step acts on: the opponent for
