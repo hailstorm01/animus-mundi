@@ -223,7 +223,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0120 | Make Despoiler's Emergence and Deafening Aria executable (damage to all opposing assets in a zone, wave C card, flash) | done |
 | T-0121 | The progress policy enacts Maneuvers, and the coverage tests count them (D6 for T-0120, harness, sonnet) | done |
 | T-0122 | The view, viewtest and the play screen show an enacted Maneuver (directive #89, harness, flash) | done |
-| T-0123 | Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C card, flash) | tests |
+| T-0123 | Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C card, flash) | done |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
