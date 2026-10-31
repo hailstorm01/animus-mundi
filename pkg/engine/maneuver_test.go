@@ -178,27 +178,30 @@ func TestFR_TGT_001_ManeuverTargetChosenOnDeclaration(t *testing.T) {
 func TestFR_QUE_001_ManeuverIsPlacedOnTheStack(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TRN-003
 	s := newScene(t)
-	inst := s.give(0, maneuver("Study", 0, 0, steps(drawN(1))))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	inst := s.give(0, maneuver("Execute", 0, 0, ability.Effect{
+		Targets: []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
+		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget}},
+	}))
+	s.script(0, Answer{Picks: []int{0}})
 	s.do(enactAction(inst))
 	places := eventsOfKind(s.g.Log, "place")
 	if len(places) != 1 {
 		t.Fatalf("enacting emits one place event, got %d (FR-QUE-001)", len(places))
 	}
 	pe := places[0]
-	if pe.Card != "Study" || pe.Inst != inst.ID {
-		t.Errorf("the place event names the card: Card %q Inst %d, want Study %d", pe.Card, pe.Inst, inst.ID)
+	if pe.Card != "Execute" || pe.Inst != inst.ID {
+		t.Errorf("the place event names the card: Card %q Inst %d, want Execute %d", pe.Card, pe.Inst, inst.ID)
 	}
 	if pe.Amount != 1 {
 		t.Errorf("the Maneuver is placed at stack depth 1, got %d (FR-QUE-001)", pe.Amount)
 	}
-	draws := eventsOfKind(s.g.Log, "draw")
-	if len(draws) == 0 {
-		t.Fatalf("precondition: the effect drew a card")
+	destroys := eventsOfKind(s.g.Log, "destroy")
+	if len(destroys) != 1 || s.alive(victim) {
+		t.Fatalf("precondition: the effect destroyed the chosen unit with one destroy event, got %+v", destroys)
 	}
-	for _, e := range draws {
-		if e.Seq < pe.Seq {
-			t.Errorf("the effect's draw (seq %d) happens after the Maneuver is placed (seq %d)", e.Seq, pe.Seq)
-		}
+	if destroys[0].Seq < pe.Seq {
+		t.Errorf("the effect's destroy (seq %d) happens after the Maneuver is placed (seq %d) (FR-QUE-001)", destroys[0].Seq, pe.Seq)
 	}
 }
 
