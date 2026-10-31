@@ -219,7 +219,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0117 | A Maneuver can be enacted only if each exactly-one target slot has a legal entity, and a "Choose N" one only with N legal modes (FR-MNV-001, SVY-R29, directive #88 part 2, wave C shape, sonnet) | done |
 | T-0118 | A chosen asset can deal a step's damage, equal to its current power, and deals none once it is gone (FR-TGT-003, SVY-R27, SVY-R31, directive #88 part 3, wave C shape, sonnet) | done |
 | T-0119 | An effect can move a unit to its controller's Reserves or the Main Theater (`MOVE_ZONE`), keeping its state (FR-ZON-002, FR-ZON-004, SVY-R26, directive #88 part 4, wave C shape, sonnet) | done |
-| T-0120 | Make Despoiler's Emergence and Deafening Aria executable (damage to all opposing assets in a zone, wave C card, flash) | queued |
+| T-0120 | Make Despoiler's Emergence and Deafening Aria executable (damage to all opposing assets in a zone, wave C card, flash) | done |
 | T-0121 | The progress policy enacts Maneuvers, and the coverage tests count them (D6 for T-0120, harness, sonnet) | done |
 | T-0122 | The view, viewtest and the play screen show an enacted Maneuver (directive #89, harness, flash) | done |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
