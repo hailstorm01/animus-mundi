@@ -4,7 +4,7 @@ title: Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C c
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0123-devilhorn-sanction
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Devilhorn Sanction]
@@ -62,3 +62,4 @@ To be written in a new file, `pkg/engine/cards_path_maneuvers_test.go`, from the
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 9. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). Not `WAVE-COMPLETE`: 21 deck cards are on `NotYetExecutable`, 8 of them in this wave's `Cards` (*Rapturous Sermon*, *Animoceps Spores*, *Rhapsody's Embrace*, *Funeral Fungus*, *Ambush Tactics*, *Steel Rain*, *Devilhorn Sanction*, *Improvised Orders*). Directives read on the run branch: no `open: before` directive. #14 (a): deck cards first; *Devilhorn Sanction* is a deck card whose every shape is `done`, so it needs no shape task. No non-deck card has its shape (*Disorienting Pulse* returns to hand, *Fortify* adds Armor), so none joins under #14 (c). #20 (b) stays open for *Steel Rain*'s discard-cost task. Waiting triggers checked: #8 (no `deck.go` change), #15 (no turn hook), #58 (no exhaust in `claims:`), #59 (2) (one exactly-one slot, no repeated targets), #61's fifth question (no modal card in `cards:`), #71 (acts on a unit, not on each player), #88's distinctness (one slot, no *Ambush Tactics*). None has fired. Duplicates searched: no new code; the definition is `OpKill` on `SubjectTarget`, which `stepKill` already serves through `stepAssets` and the one `kill` (T-0108), as T-0117's synthetic "Kill chosen unit" Maneuver does. Two non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-10-30 rules-test-author: tests written in `pkg/engine/cards_path_maneuvers_test.go`: `TestCard_DevilhornSanction_` KillsChosenOpposingUnit, KillsInReservesAndFaceDown, IgnoresHealthAndArmor, OnlyOpposingUnitsAreOffered, WardUnitCannotBeChosen, NotEnactableWithoutLegalTarget, ShiftingImpossibilityReplacesTheKill, PaysThreeTactics. All fail now with "needs rules the kernel does not implement yet" (one asserts Enact offered). The file defines its own helpers `chooseAsset` and `targetOffers`. Helpers requested: none. Left out: the FR-TGT-003 resolution-time case, as the Tests section says. The face-down case checks the discard pile only (the test cannot see the face-up state). Status `tests-review`.
