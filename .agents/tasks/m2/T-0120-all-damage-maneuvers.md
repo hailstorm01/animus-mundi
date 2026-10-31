@@ -4,7 +4,7 @@ title: Make Despoiler's Emergence and Deafening Aria executable (damage to all o
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0120-all-damage-maneuvers
 depends_on: [T-0116, T-0117]
 claims: [card:Despoiler's Emergence, card:Deafening Aria]
