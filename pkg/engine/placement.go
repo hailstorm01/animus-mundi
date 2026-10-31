@@ -11,7 +11,7 @@ import (
 
 // placement is an effect being placed on the stack, as choosing its modes and
 // targets sees it: who controls it, its source and the label its prompts use.
-// A fired trigger carries one (pendingTrigger); a played Maneuver will too.
+// A fired trigger carries one (pendingTrigger); a played Maneuver does too (maneuverPlacement).
 type placement struct {
 	controller PlayerID
 	source     int       // source asset ID
@@ -30,20 +30,40 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 	return e, g.chooseTargets(pl, e)
 }
 
+// maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
+// both its legality check and the choosing of its modes and targets.
+func maneuverPlacement(pid PlayerID, inst *Instance) placement {
+	return placement{controller: pid, inst: inst, label: inst.Card.Name}
+}
+
+// slotsLegal reports whether each exactly-one slot of ts has a legal entity
+// now. An "up to N" slot never makes it false (design note Open Question 11).
+func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
+	for i, t := range ts {
+		if t.UpTo == 0 && len(g.targetDecision(pl, i, t).Options) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// placeable reports whether e can be placed with everything it requires
+// (SVY-R29): at least ChooseN legal modes, or a legal entity for each
+// exactly-one slot. It applies to enacting a Maneuver only: a trigger is
+// placed whatever it finds (SVY-R30, FR-TGT-003).
+func (g *Game) placeable(pl placement, e ability.Effect) bool {
+	if len(e.Modes) > 0 {
+		return len(g.legalModes(pl, e)) >= e.ChooseN
+	}
+	return g.slotsLegal(pl, e.Targets)
+}
+
 // legalModes returns the indices of e's legal modes, in printed order. A mode
-// is legal if each of its exactly-one target slots has a legal entity now; an
-// "up to N" slot never makes it illegal (design note Open Question 11).
+// is legal if each of its exactly-one target slots has a legal entity now (slotsLegal).
 func (g *Game) legalModes(pl placement, e ability.Effect) []int {
 	var legal []int
 	for k, m := range e.Modes {
-		ok := true
-		for i, t := range m.Targets {
-			if t.UpTo == 0 && len(g.targetDecision(pl, i, t).Options) == 0 {
-				ok = false
-				break
-			}
-		}
-		if ok {
+		if g.slotsLegal(pl, m.Targets) {
 			legal = append(legal, k)
 		}
 	}
@@ -56,7 +76,8 @@ func (g *Game) legalModes(pl placement, e ability.Effect) []int {
 // (legalModes) are offered, so a timeout takes the first listed legal ones
 // (§6) and a single legal mode is answered automatically (§1). With no legal
 // mode nothing is asked and the effect is empty. With fewer legal modes than
-// ChooseN all of them are chosen.
+// ChooseN all of them are chosen; an enacted Maneuver never gets here with
+// fewer than ChooseN (placeable, SVY-R29), only a trigger does (SVY-R30).
 func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 	legal := g.legalModes(pl, e)
 	if len(legal) == 0 {
