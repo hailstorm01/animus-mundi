@@ -4,7 +4,7 @@ title: Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C c
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0123-devilhorn-sanction
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Devilhorn Sanction]
