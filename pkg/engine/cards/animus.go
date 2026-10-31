@@ -36,6 +36,28 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Animoceps Spores": {
+		Text: []string{
+			"Scratch 2, then return an allied Scratch Company unit to its owner's hand.",
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:     ability.OpScratch,
+					Amount: ability.Value{N: 2},
+				},
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectPick,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Scratch:    ability.ScratchOnly,
+					},
+				},
+			},
+		},
+	},
 	"Craterfall Ancient": {
 		Text: []string{
 			"Whenever this unit attacks, you may deal damage equal to its power to each of up to 2 other chosen assets.",
