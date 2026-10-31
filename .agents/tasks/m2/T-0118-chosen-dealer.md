@@ -4,7 +4,7 @@ title: A chosen asset can deal a step's damage, equal to its current power, and 
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/T-0118-chosen-dealer
 depends_on: [T-0117]
 claims: [field:Step.Dealer, step:chosen-dealer]
@@ -73,3 +73,4 @@ Synthetic Maneuvers only, in a new file `pkg/engine/dealer_test.go`, reusing `ma
 
 ## Log
 - 2026-10-30 lead-architect: wave C run, session 3. No `main` commits to sync (`git log autoloop/m2-wave-c..main` is empty). Not `WAVE-COMPLETE`: 22 deck cards are still on `NotYetExecutable`. Directives read on the run branch: #88 is `open`, and its delegated-dealer bullet is this task (tests (c), (d)); #14 and #20 (b) stay open for the card tasks and *Steel Rain*. Waiting triggers checked: #58 (no exhaust in `claims:`), #59 (2) (no repeated targets), #61's fifth question (`cards:` is empty), #71 (no each-player effect), #15 and #8 (no hook or `deck.go` change). None has fired. Duplicates searched: `stepDealDamage` always deals as the item's source, and no step names another dealer; `value` is the one reader of a `Value` and stays so, taking the dealer; the slot's "still on the battlefield" check moves into `slotAssets`, shared by `stepAssets` and the dealer. Three non-test files. Distinctness between slots (*"another chosen unit"*) is left out, as its own shape: no filter compares two slots today. Recorded in #88's status cell as the task after this one, with `MOVE_ZONE` (test (e)). Status `tests`; dispatching `rules-test-author`.
+- 2026-10-30 rules-test-author: tests written in `pkg/engine/dealer_test.go`: `TestFR_TGT_003_RemovedDealerDealsNothing`, `TestFR_MOD_001_ChosenModesResolveInPrintedOrder`, `TestFR_TGT_003_DealerInALaterModeIsItsOwnSlot`, `TestFR_TGT_003_DealerDealsItsCurrentPower`, `TestFR_TGT_003_DealerGoneBeforeResolutionDealsNothing`. Local helpers in the same file (`newDealerBoard`, `dealerStep`, `dealerMode`, `returnMode`, `deckTopMode`, `wantDamageFrom`); no helpers requested for `scenario_test.go`. `go vet` fails only on the missing `ability.Step.Dealer` field (the engineer's). `cardtown lint rules` passes. The dealer leaves mid-stack through an event observer on the Maneuver's `place` event calling `removeFromBattlefield`. Left out: dealer equal to the damaged unit (out of scope per Shape). Status `tests-review`.
