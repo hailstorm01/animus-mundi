@@ -205,6 +205,21 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Improvised Orders": {
+		Text: []string{"Draw 3 cards, then discard a card."},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:     ability.OpDraw,
+					Amount: ability.Value{N: 3},
+				},
+				{
+					Op:     ability.OpDiscard,
+					Amount: ability.Value{N: 1},
+				},
+			},
+		},
+	},
 	"Ironclad Colossus": {
 		Text: []string{"Whenever this unit deploys or attacks, chosen unit gains 2 armor."},
 		Triggers: []ability.Trigger{
