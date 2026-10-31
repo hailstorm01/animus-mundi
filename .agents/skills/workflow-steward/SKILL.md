@@ -54,7 +54,7 @@ Everything else belongs to another persona: FRDs, the matrix, the survey, design
 4. Summarize what the persona will now do differently, and any permission change the user agreed to.
 
 ### C. Record a directive for the lead
-Write the row the user dictates, numbered after the last one, with source `User, <date>`, and status `open`, `open: before <task>` (blocking, lead-architect D2.0) or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
+Write the row the user dictates, numbered one after the `Last directive:` line at the top of `BOARD.md` (and update `Last directive: #<n>` to match), with source `User, <date>`, and status `open`, `open: before <task>` (blocking, lead-architect D2.0) or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
 
 ### D. Reconcile branches and worktrees (only on request)
 1. Survey: `git worktree list`, the status of each worktree, `git branch -vv`, and commits on any branch not yet in the integration branch.
