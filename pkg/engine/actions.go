@@ -84,7 +84,7 @@ func (g *Game) Apply(a Action) error {
 		inst := handCard(p, a.Card)
 		payCost(p, inst.Card)
 		g.takeCard(inst)
-		eff, chosen := g.chooseOnPlacement(placement{controller: a.Player, inst: inst, label: inst.Card.Name}, inst.Card.Ability.Effect)
+		eff, chosen := g.chooseOnPlacement(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect)
 		g.push(&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst, Effect: eff, Chosen: chosen})
 	case ActMarch:
 		as := g.Asset(a.Asset)
@@ -160,6 +160,9 @@ func (g *Game) check(a Action) error {
 		}
 		if inst.Card.Type != TypeManeuver {
 			return illegal("%s is not a Maneuver", inst.Card.Name)
+		}
+		if !g.placeable(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect) {
+			return illegal("%s has no legal choice for a required target or enough legal modes (SVY-R29)", inst.Card.Name)
 		}
 	case ActMarch:
 		as, err := g.readyAsset(a)
