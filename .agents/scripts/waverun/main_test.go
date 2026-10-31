@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -75,5 +76,26 @@ func TestPendingCards(t *testing.T) {
 func TestNotYetExecutableMissing(t *testing.T) {
 	if _, err := notYetExecutable("package cards\n"); err == nil {
 		t.Error("no error for cards.go without NotYetExecutable")
+	}
+}
+
+// usageLimit is the result of wave C session 3, which hit the 5-hour limit.
+const usageLimit = `{"session_id":"009a8e60-5405-438f-908a-172fac0e4b84","total_cost_usd":2.0005712,"permission_denials":[],"terminal_reason":"api_error","is_error":true,"num_turns":34,"subtype":"success","api_error_status":429,"api_error_origin":"first_party","api_error":"usage_limit_reached","result":"You've hit your 5-hour limit · resets 9:30pm (America/New_York)","type":"result"}`
+
+func TestDiagnosis(t *testing.T) {
+	var res result
+	if err := json.Unmarshal([]byte(usageLimit), &res); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"session 009a8e60-5405-438f-908a-172fac0e4b84: subtype success, terminal reason api_error, is_error true, 34 turns",
+		"API error: 429 usage_limit_reached",
+		"result: You've hit your 5-hour limit · resets 9:30pm (America/New_York)",
+	}
+	if got := diagnosis(res, true, []byte(usageLimit), nil); !reflect.DeepEqual(got, want) {
+		t.Errorf("usage limit:\n got %q\nwant %q", got, want)
+	}
+	if got := diagnosis(result{}, false, []byte("panic: boom\n"), nil); !reflect.DeepEqual(got, []string{"output is not a result JSON; it ends:", "panic: boom"}) {
+		t.Errorf("unparsed output: got %q", got)
 	}
 }
