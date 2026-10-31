@@ -4,7 +4,7 @@ title: Make Rapturous Sermon executable (move all allied Scratch Company units t
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0127-rapturous-sermon
 depends_on: [T-0069, T-0098, T-0104, T-0116, T-0117, T-0119, T-0121]
 claims: [card:Rapturous Sermon]
