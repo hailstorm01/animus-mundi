@@ -4,7 +4,7 @@ title: Make Animoceps Spores executable (Scratch 2, then return an allied Scratc
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/T-0126-animoceps-spores
 depends_on: [T-0072, T-0116, T-0117, T-0121]
 claims: [card:Animoceps Spores]
