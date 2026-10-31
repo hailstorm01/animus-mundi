@@ -226,6 +226,7 @@ Instructions from the user, a readiness review, a user-approved `game-designer` 
 | T-0123 | Make Devilhorn Sanction executable (kill a chosen opposing unit, wave C card, flash) | done |
 | T-0124 | Remove the retired cardtown audit command and pkg/toolchain/audit (directive #90, harness, sonnet) | done |
 | T-0125 | Make Improvised Orders executable (draw 3, then discard a card, wave C card, flash) | done |
+| T-0126 | Make Animoceps Spores executable (Scratch 2, then return an allied Scratch Company unit, wave C card, flash) | tests |
 | T-0038 | Fence every package under pkg/, and check the client packages' imports (directive #30, harness, sonnet) | done |
 | T-0039 | Move sim, eventlog and view to the top of pkg/ (directive #31, harness, flash, pure move) | done |
 | T-0040 | Package comments for sim and eventlog (directive #33, harness, flash, comments only) | done |
