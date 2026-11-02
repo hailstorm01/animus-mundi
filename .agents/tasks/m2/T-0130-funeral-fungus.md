@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: tests-review
+status: tests
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -69,3 +69,5 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - 2026-10-31 lead-architect: queued in wave C session 15, with T-0128's task commit (D2.4).
 - 2026-11-02 lead-architect: wave C session 17. Inputs, Tests and Allowed Files written against 242811e; branch renamed for the wave run (D7.4). No `open: before` directive; waiting triggers #6, #7, #8, #15, #59 (2), #61 (fifth question), #71, #88 (distinctness) not fired. Status `tests`.
 - 2026-11-02 rules-test-author: tests written in `pkg/engine/cards_animus_maneuvers_test.go`: `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard`, `_OnlyAReadiedAlliedUnitPays`, `_NeedsAUnitCardInItsControllersDiscardPile`, `_ScratchCompanyCanPay`, `_ShamblerTriggerResolvesFirst`. Helpers requested: none (own helper `ffChoose` in the test file). All five fail now (card not executable). Left out: the FR-TGT-003 skipped-target case, which the task did not list. Heal-before-return ordering is checked by sampling state on each observed event, since the heal and return-to-hand event kind names are not in the test helpers. Status `tests-review`.
+- 2026-11-02 lead-architect (tests-review, round 1): status `tests`. The other four tests are approved as written. Notes:
+  1. `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard` never exercises the payer's choice of which Readied allied unit to exhaust ("exhaust a readied allied unit" is chosen by the payer, `FR-TRN-003a`). The cost payer is picked through a `DecidePick` decision, not `DecideTarget`, so `ffChoose` answers it with option 0. Cost options are in asset-ID order (lowest ID first), so `Ally` is option 0 and the `ally` in `prefer` has no effect. As written, the test asserts the fixed option order, which is an implementation detail. Fix: have `ffChoose` apply `prefer` to `DecidePick` decisions as well as `DecideTarget`, and in this test choose `Bystander` (in the Reserves, the later ID, so not option 0) as the payer. Assert that `Bystander` is Exhausted and `Ally` is still Readied. Keep the rest of the test as it is.
