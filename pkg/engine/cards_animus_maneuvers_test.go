@@ -695,3 +695,183 @@ func TestFR_TRN_003a_FeedTheDespoiler(t *testing.T) {
 		}
 	})
 }
+
+// Funeral Fungus (T-0130): "As an additional cost to enact this maneuver,
+// exhaust a readied allied unit." / "Return chosen unit card from your discard
+// pile to your hand." Costs 0 Requisition, 1 Tactics.
+
+// ffChoose answers every DecideTarget with the option referring to whichever of
+// prefer is offered first (an *Asset or an *Instance, by ID), and every other
+// decision with its first option. It records the decisions in s.asks[0].
+func ffChoose(s *scene, prefer ...any) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[0] = nil
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		if d.Kind == DecideTarget {
+			for _, want := range prefer {
+				id := 0
+				switch v := want.(type) {
+				case *Asset:
+					id = v.ID
+				case *Instance:
+					id = v.ID
+				}
+				for i, o := range d.Options {
+					if o.Ref == id {
+						return Answer{Picks: []int{i}}
+					}
+				}
+			}
+		}
+		return Answer{Picks: []int{0}}
+	}
+}
+
+func TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard(t *testing.T) {
+	// Covers: FR-TRN-003a, FR-MNV-001, FR-TGT-001
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	other := s.put(0, ZoneReserves, unit("Bystander", 1, 5, Keywords{}))
+	cards := s.inDiscard(0, unit("Older", 1, 1, Keywords{}), unit("Newer", 1, 1, Keywords{}))
+	inst := enactFor(s, "Funeral Fungus")
+	p := s.g.Players[0]
+	ffChoose(s, cards[0], ally)
+	s.do(enactAction(inst))
+	if !ally.Exhausted {
+		t.Errorf("the chosen Readied allied unit is exhausted as the additional cost (FR-TRN-003a)")
+	}
+	if other.Exhausted {
+		t.Errorf("no other asset is exhausted (FR-TRN-003a)")
+	}
+	if !inHand(p, cards[0]) || inDiscard(p, cards[0]) {
+		t.Errorf("the chosen (older) unit card returns to its controller's hand, not the top one")
+	}
+	if !inDiscard(p, cards[1]) || inHand(p, cards[1]) {
+		t.Errorf("the unchosen unit card stays in the discard pile")
+	}
+	if lastDiscard(p) != inst {
+		t.Errorf("the Maneuver goes to its owner's discard pile after resolving (FR-MNV-001)")
+	}
+	if p.Req != 3 || p.Tac != 4 {
+		t.Errorf("it costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4", p.Req, p.Tac)
+	}
+}
+
+func TestCard_FuneralFungus_OnlyAReadiedAlliedUnitPays(t *testing.T) {
+	// Covers: SVY-R29, FR-TRN-003a
+	s := newScene(t)
+	tired := s.put(0, ZoneMainTheater, unit("Tired Ally", 1, 5, Keywords{}))
+	tired.Exhausted = true
+	wall := s.put(0, ZoneMainTheater, structure("Ready Wall", 0, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	card := s.inDiscard(0, unit("Fallen", 1, 1, Keywords{}))[0]
+	inst := enactFor(s, "Funeral Fungus")
+	p := s.g.Players[0]
+	if offersEnact(s.g, inst) {
+		t.Errorf("with no Readied allied unit the Maneuver is not offered (SVY-R29, FR-TRN-003a)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(p, inst) || inHand(p, card) {
+		t.Errorf("the rejected Maneuver stays in hand and returns nothing")
+	}
+
+	ready := s.put(0, ZoneMainTheater, unit("Ready Ally", 1, 5, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("with a Readied allied unit the Maneuver is offered (FR-TRN-003a)")
+	}
+	ffChoose(s, card, ready)
+	s.do(enactAction(inst))
+	if !ready.Exhausted {
+		t.Errorf("the Readied allied unit pays the cost by exhausting")
+	}
+	if foe.Exhausted || !tired.Exhausted {
+		t.Errorf("no other unit changes readiness: foe exhausted=%v, tired exhausted=%v, want false/true", foe.Exhausted, tired.Exhausted)
+	}
+	if wall.Exhausted {
+		t.Errorf("the allied structure is not exhausted (the cost needs a unit)")
+	}
+}
+
+func TestCard_FuneralFungus_NeedsAUnitCardInItsControllersDiscardPile(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-001
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.inDiscard(0, maneuver("Spent Spell", 0, 0, steps()), structure("Fallen Wall", 0, 3, Keywords{}))
+	s.inDiscard(1, unit("Their Fallen", 1, 1, Keywords{}))
+	inst := enactFor(s, "Funeral Fungus")
+	p := s.g.Players[0]
+	if offersEnact(s.g, inst) {
+		t.Errorf("without a unit card in its controller's discard pile the Maneuver is not offered (SVY-R29, FR-TGT-001)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(p, inst) {
+		t.Errorf("the card stays in hand (SVY-R29)")
+	}
+	if ally.Exhausted {
+		t.Errorf("the allied unit stays Readied: nothing was paid")
+	}
+
+	s.inDiscard(0, unit("Fallen", 1, 1, Keywords{}))
+	if !offersEnact(s.g, inst) {
+		t.Errorf("with a unit card in its controller's discard pile the Maneuver is offered")
+	}
+}
+
+func TestCard_FuneralFungus_ScratchCompanyCanPay(t *testing.T) {
+	// Covers: FR-TRN-003a
+	s := newScene(t)
+	sc := s.putScratch(0)
+	sc.Exhausted = false
+	card := s.inDiscard(0, unit("Fallen", 1, 1, Keywords{}))[0]
+	inst := enactFor(s, "Funeral Fungus")
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("a Readied face-down Scratch Company is a Readied allied unit, so the cost is payable (FR-TRN-003a)")
+	}
+	ffChoose(s, card, sc)
+	s.do(enactAction(inst))
+	if !sc.Exhausted {
+		t.Errorf("the Scratch Company is Exhausted after paying the cost")
+	}
+	if !inHand(s.g.Players[0], card) {
+		t.Errorf("the unit card returns to hand")
+	}
+}
+
+func TestCard_FuneralFungus_ShamblerTriggerResolvesFirst(t *testing.T) {
+	// Covers: FR-TRN-003a, SVY-R17, FR-CAP-001
+	s := newScene(t)
+	sh := putShambler(s, 0, ZoneMainTheater, 0)
+	hurt := s.put(0, ZoneMainTheater, structure("Hurt Wall", 0, 5, Keywords{}))
+	hurt.Damage = 3
+	card := s.inDiscard(0, unit("Fallen", 1, 1, Keywords{}))[0]
+	inst := enactFor(s, "Funeral Fungus")
+	p := s.g.Players[0]
+	ffChoose(s, card, hurt, sh)
+
+	healedAtReturn, returned := false, false
+	r := &recorder{}
+	r.onEvent = func(Event) {
+		if !returned && inHand(p, card) {
+			returned = true
+			healedAtReturn = hurt.Damage == 2
+		}
+	}
+	s.g.obs = r
+	s.do(enactAction(inst))
+
+	if !sh.Exhausted {
+		t.Errorf("the Shambler is exhausted as the cost")
+	}
+	if hurt.Damage != 2 {
+		t.Errorf("the Shambler's trigger heals the damaged allied asset 1: damage %d, want 2 (SVY-R17)", hurt.Damage)
+	}
+	if !inHand(p, card) {
+		t.Fatalf("the unit card returns to hand")
+	}
+	if !returned || !healedAtReturn {
+		t.Errorf("the trigger goes on top of the Maneuver, so the heal happens before the card returns to hand (FR-TRN-003a)")
+	}
+}

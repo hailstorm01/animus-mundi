@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -53,7 +53,7 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - **Existing tests:** every other test passes unchanged, including `TestStarterSet_Executable` with the name removed, `TestView_Case8_ExecutableFlag` (seat 0's seed-1 hand still holds unsupported cards), `TestProgress_Case4_Coverage` and `TestEvents_Case4_EveryActionKind`.
 
 ## Helpers Needed
-- None expected. The tests use existing helpers (`newScene`, `put`, `putScratch`, `inDiscard`, `give`, `card`, `do`, `reject`, `script`, `asked`), those in `maneuver_test.go` (`enactAction`, `offersEnact`, `lastDiscard`), `inHand` (`trigger_test.go`), `inDiscard(p, inst)` (`cards_animus_apostle_test.go`) and `enactFor`; the test file may add its own setup helpers.
+- None. The tests add their own setup helper `ffChoose` in the test file.
 
 ## Allowed Files
 - `pkg/engine/cards/animus.go` (the definition)
@@ -68,3 +68,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 ## Log
 - 2026-10-31 lead-architect: queued in wave C session 15, with T-0128's task commit (D2.4).
 - 2026-11-02 lead-architect: wave C session 17. Inputs, Tests and Allowed Files written against 242811e; branch renamed for the wave run (D7.4). No `open: before` directive; waiting triggers #6, #7, #8, #15, #59 (2), #61 (fifth question), #71, #88 (distinctness) not fired. Status `tests`.
+- 2026-11-02 rules-test-author: tests written in `pkg/engine/cards_animus_maneuvers_test.go`: `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard`, `_OnlyAReadiedAlliedUnitPays`, `_NeedsAUnitCardInItsControllersDiscardPile`, `_ScratchCompanyCanPay`, `_ShamblerTriggerResolvesFirst`. Helpers requested: none (own helper `ffChoose` in the test file). All five fail now (card not executable). Left out: the FR-TGT-003 skipped-target case, which the task did not list. Heal-before-return ordering is checked by sampling state on each observed event, since the heal and return-to-hand event kind names are not in the test helpers. Status `tests-review`.
