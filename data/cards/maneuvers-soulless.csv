@@ -1,7 +1,7 @@
 "name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","needsRework"
 "Bring It Down","MANEUVER","SOULLESS","0","1","Deal 2 damage to chosen non-Scratch asset.","COMMON","false"
 "Mage Seeker's Inquisition","MANEUVER","SOULLESS","0","1","Chosen opponent reveals their hand. You choose a unit card from it. That player discards that card.","UNCOMMON","false"
-"Piston Fist","MANEUVER","SOULLESS","0","1","Deal 1 damage to chosen unit, and chosen allied unit gets +1 power until end of turn.","COMMON","false"
+"Piston Fist","MANEUVER","SOULLESS","0","1","Deal 1 damage to chosen unit. Chosen allied unit gets +1 power until end of turn.","COMMON","false"
 "Visionary's Insight","MANEUVER","SOULLESS","1","1","Regroup up to one chosen exhausted allied asset.","COMMON","false"
 "Dolus Infusion","MANEUVER","SOULLESS","0","2","Draw 2 cards, and your Headquarters heals 2.","UNCOMMON","false"
 "Inspired Salvage","MANEUVER","SOULLESS","2","2","Return up to 2 chosen Mechanized cards from your discard pile to your hand.","RARE","false"
