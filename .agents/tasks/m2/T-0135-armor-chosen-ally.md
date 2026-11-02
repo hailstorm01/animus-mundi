@@ -4,7 +4,7 @@ title: Make Chainbreaker's Tenacity and Fortify executable (a chosen allied unit
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0135-armor-chosen-ally
 depends_on: [T-0019, T-0069, T-0116, T-0117, T-0121]
 claims: [card:Chainbreaker's Tenacity, card:Fortify]
