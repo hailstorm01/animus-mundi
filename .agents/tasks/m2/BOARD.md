@@ -33,4 +33,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0132](T-0132-hand-empty-condition.md) | A step can run only if its controller has no cards in hand | queued |
+| [T-0132](T-0132-hand-empty-condition.md) | A step can run only if its controller has no cards in hand | tests |
