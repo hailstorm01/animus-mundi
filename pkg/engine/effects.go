@@ -203,7 +203,7 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 	n, total := g.value(r.it, st.Amount, nil), 0
 	for _, pid := range stepPlayers(r.it, st) {
-		total += len(g.discardFromHand(pid, n))
+		total += len(g.discardFromHand(pid, n, false))
 	}
 	return total
 }

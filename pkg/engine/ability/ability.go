@@ -36,14 +36,18 @@ type CostKind int
 const (
 	CostKill    CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
 	CostExhaust                     // exhaust one Readied allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a, SVY-R17)
+	CostDiscard                     // discard up to Cost.UpTo cards of the payer's choice from their own hand, possibly none (FR-TRN-003a)
 )
 
 // Cost is one additional cost, paid when its card is declared (FR-TRN-003a).
-// Filter is relative to the payer and is a battlefield filter (never InPile).
+// Filter is relative to the payer and is a battlefield filter (never InPile);
+// the kill and exhaust costs read it. UpTo is the most cards the discard cost
+// discards (UpTo > 0); no other cost reads it.
 // Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
 type Cost struct {
 	Kind   CostKind
 	Filter Filter
+	UpTo   int
 }
 
 // Would is the event a replacement replaces.
