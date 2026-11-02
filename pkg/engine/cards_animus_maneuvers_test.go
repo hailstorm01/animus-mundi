@@ -1007,3 +1007,252 @@ func TestCard_DisorientingPulse_PaysOneTactics(t *testing.T) {
 		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0134 (FR-MNV-001, FR-TGT-001, FR-KWD-002d, FR-KWD-002h,
+// FR-REP-004): the Animus Maneuver Conversion Spike, loaded from data/cards.
+// Player 0 enacts; player 1 is the opponent.
+//
+// Conversion Spike: "Deal 1 damage to chosen opposing unit, and chosen allied
+// unit or structure heals 1." Cost 2 Tactics.
+
+// csChoose installs a chooser for seat 0 that answers each decision by picking
+// the first offered option whose Ref is one of want, and records the decisions.
+func csChoose(s *scene, want ...*Asset) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[0] = nil
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		for i, o := range d.Options {
+			for _, w := range want {
+				if o.Ref == w.ID {
+					return Answer{Picks: []int{i}}
+				}
+			}
+		}
+		s.t.Errorf("none of the wanted targets is offered in %q: %v", d.Prompt, d.Options)
+		return Answer{Timeout: true}
+	}
+}
+
+// csTargetOffers returns the Ref set of the n-th (0-based) target decision
+// asked of seat 0.
+func csTargetOffers(s *scene, n int) map[int]bool {
+	s.t.Helper()
+	i := 0
+	for _, d := range s.asked(0) {
+		if d.Kind != DecideTarget {
+			continue
+		}
+		if i == n {
+			m := map[int]bool{}
+			for _, o := range d.Options {
+				m[o.Ref] = true
+			}
+			return m
+		}
+		i++
+	}
+	s.t.Fatalf("target decision %d was not asked of seat 0", n)
+	return nil
+}
+
+// csWantOffers fails unless got is exactly the set of want.
+func csWantOffers(t *testing.T, got map[int]bool, why string, want ...*Asset) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Errorf("%s: offered refs %v, want exactly %d entities (FR-TGT-001)", why, got, len(want))
+	}
+	for _, a := range want {
+		if !got[a.ID] {
+			t.Errorf("%s: %s must be offered (FR-TGT-001)", why, a)
+		}
+	}
+}
+
+func TestCard_ConversionSpike_DamagesChosenOpposingUnitAndHealsChosenAlly(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TGT-001, FR-KWD-002d
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	otherFoe := s.put(1, ZoneMainTheater, unit("OtherFoe", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	otherAlly := s.put(0, ZoneMainTheater, unit("OtherAlly", 1, 5, Keywords{}))
+	ally.Damage, otherAlly.Damage = 2, 2
+	inst := enactFor(s, "Conversion Spike")
+	csChoose(s, foe, ally)
+	s.do(enactAction(inst))
+	s.wantDamage(foe, 1)
+	s.wantDamage(otherFoe, 0)
+	s.wantDamage(ally, 1)
+	s.wantDamage(otherAlly, 2)
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_ConversionSpike_HealsAChosenAlliedStructure(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002d
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	wall.Damage, ally.Damage = 3, 3
+	csChoose(s, foe, wall)
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	s.wantDamage(wall, 2)
+	s.wantDamage(ally, 3)
+	s.wantDamage(foe, 1)
+}
+
+func TestCard_ConversionSpike_OpposingSlotOffersOnlyOpposingUnits(t *testing.T) {
+	// Covers: FR-TGT-001, FR-ZON-005
+	s := newScene(t)
+	main := s.put(1, ZoneMainTheater, unit("EMain", 1, 5, Keywords{}))
+	res := s.put(1, ZoneReserves, unit("ERes", 1, 5, Keywords{}))
+	sc := s.putScratch(1)
+	st := s.put(1, ZoneMainTheater, structure("EWall", 0, 5, Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("A1", 1, 5, Keywords{}))
+	s.put(0, ZoneReserves, unit("A2", 1, 5, Keywords{}))
+	csChoose(s, main, a1)
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	got := csTargetOffers(s, 0)
+	csWantOffers(t, got, "first slot (opposing unit)", main, res, sc)
+	for _, a := range []*Asset{st, a1, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not an opposing unit and must not be offered for the damage (FR-TGT-001)", a)
+		}
+	}
+}
+
+func TestCard_ConversionSpike_AlliedSlotOffersOnlyAlliedUnitsAndStructures(t *testing.T) {
+	// Covers: FR-TGT-001
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	s.put(1, ZoneReserves, unit("Foe2", 1, 5, Keywords{}))
+	eSt := s.put(1, ZoneMainTheater, structure("EWall", 0, 5, Keywords{}))
+	aMain := s.put(0, ZoneMainTheater, unit("AMain", 1, 5, Keywords{}))
+	aRes := s.put(0, ZoneReserves, unit("ARes", 1, 5, Keywords{}))
+	aSt := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	csChoose(s, foe, aMain)
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	got := csTargetOffers(s, 1)
+	csWantOffers(t, got, "second slot (allied unit or structure)", aMain, aRes, aSt)
+	for _, a := range []*Asset{s.g.Players[0].HQ, s.g.Players[1].HQ, foe, eSt} {
+		if got[a.ID] {
+			t.Errorf("%s is not an allied unit or structure and must not be offered for the heal (FR-TGT-001)", a)
+		}
+	}
+}
+
+func TestCard_ConversionSpike_OpposingWardUnitCannotBeChosen(t *testing.T) {
+	// Covers: FR-KWD-002h
+	s := newScene(t)
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
+	p2 := s.put(1, ZoneMainTheater, unit("Plain2", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	csChoose(s, p1, ally)
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	csWantOffers(t, csTargetOffers(s, 0), "first slot with an opposing Ward unit", p1, p2)
+	s.wantDamage(ward, 0)
+}
+
+func TestCard_ConversionSpike_AlliedWardUnitCanBeHealed(t *testing.T) {
+	// Covers: FR-KWD-002h
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("AWarded", 1, 5, Keywords{Ward: true}))
+	plain := s.put(0, ZoneMainTheater, unit("APlain", 1, 5, Keywords{}))
+	ward.Damage = 2
+	csChoose(s, foe, ward)
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	csWantOffers(t, csTargetOffers(s, 1), "second slot with an allied Ward unit", ward, plain)
+	s.wantDamage(ward, 1)
+}
+
+func TestCard_ConversionSpike_HealingAnUndamagedAllyDoesNothing(t *testing.T) {
+	// Covers: FR-KWD-002d
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	s.wantDamage(ally, 0)
+	s.wantDamage(foe, 1)
+	if !s.alive(ally) {
+		t.Errorf("healing an undamaged unit leaves it on the battlefield at 0 damage (FR-KWD-002d)")
+	}
+}
+
+func TestCard_ConversionSpike_ArmorAbsorbsTheDamage(t *testing.T) {
+	// Covers: FR-REP-004
+	s := newScene(t)
+	armored := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, Keywords{Armor: 1}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	if armored.Armor != 0 {
+		t.Errorf("1 Armor absorbs the 1 damage: Armor %d, want 0 (FR-REP-004)", armored.Armor)
+	}
+	s.wantDamage(armored, 0)
+	s.wantDamage(ally, 0)
+}
+
+func TestCard_ConversionSpike_KillsAOneHealthUnit(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	if s.alive(foe) {
+		t.Errorf("a chosen opposing unit with 1 health dies once the Maneuver resolves (FR-MNV-001)")
+	}
+}
+
+func TestCard_ConversionSpike_NotEnactableWithoutBothTargets(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	cases := []struct {
+		name  string
+		setup func(s *scene)
+		want  bool
+	}{
+		{"allied unit but no opposing unit", func(s *scene) {
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+		}, false},
+		{"allied unit but only an opposing Ward unit", func(s *scene) {
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+		}, false},
+		{"opposing unit but only the allied Headquarters", func(s *scene) {
+			s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+		}, false},
+		{"one plain opposing unit and one allied unit", func(s *scene) {
+			s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+		}, true},
+	}
+	for _, c := range cases {
+		s := newScene(t)
+		c.setup(s)
+		inst := enactFor(s, "Conversion Spike")
+		if got := offersEnact(s.g, inst); got != c.want {
+			t.Errorf("%s: Enact offered = %v, want %v (SVY-R29)", c.name, got, c.want)
+		}
+		if !c.want {
+			s.reject(enactAction(inst))
+			if !inHand(s.g.Players[0], inst) {
+				t.Errorf("%s: the card stays in hand (SVY-R29)", c.name)
+			}
+		}
+	}
+}
+
+func TestCard_ConversionSpike_PaysTwoTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.do(enactAction(enactFor(s, "Conversion Spike")))
+	if p := s.g.Players[0]; p.Tac != 3 || p.Req != 3 {
+		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
