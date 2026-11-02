@@ -137,3 +137,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0131 | An additional cost can discard up to N cards from the payer's hand (FR-TRN-003a, SVY-R3, directive #20 (b), wave C shape, sonnet) | done |
 | T-0132 | A step can run only if its controller has no cards in hand (FR-MNV-001, FR-TRN-003a, SVY-R3, SVY-R14, directive #20 (b), wave C shape, sonnet) | done |
 | T-0133 | Make Disorienting Pulse and Tactical Withdrawal executable (return a chosen unit to its owner's hand, wave C card, flash) | done |
+| T-0134 | Make Conversion Spike executable (damage a chosen opposing unit, heal a chosen allied unit or structure, wave C card, flash) | done |
