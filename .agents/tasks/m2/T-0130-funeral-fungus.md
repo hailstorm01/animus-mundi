@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -60,10 +60,10 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_FuneralFungus`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_FuneralFungus`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-10-31 lead-architect: queued in wave C session 15, with T-0128's task commit (D2.4).
@@ -79,3 +79,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
   3. `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` waits for an event after the card returns to hand, but neither healing nor returning a card to hand emits an event. The event kinds are in `events.go:240-261`, with no heal or return kind. After the Shambler trigger's `place` event, `g.Log` has no more events, so `returned` stays false even though the heal and the return both happened in the right order. Check the order the way T-0129's `TestFR_TRN_003a_ExhaustCostTriggerResolvesBeforeTheManeuver` does, from `place` events: an `EventPlace` event's `Amount` is the stack depth once placed. Assert that the Maneuver's `place` event (`Card` "Funeral Fungus") has `Amount` 1, and that the Shambler trigger's `place` event (`Card` "Animoceps Shambler") comes later in `g.Log` with `Amount` 2. That puts it on top of the Maneuver, so it resolves first. Drop the `recorder` observer and keep the end-state assertions: the Shambler is Exhausted, the damage is 2 and the card is in hand.
 - 2026-11-02 rules-test-author (round 3): applied note 3. `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` no longer uses the `recorder` observer. It reads `g.Log` `place` events: the Maneuver (`Funeral Fungus`) has `Amount` 1, the Shambler trigger (`Animoceps Shambler`) comes later with `Amount` 2. The end-state assertions are kept (Shambler Exhausted, damage 2, card in hand). No other change (confirmed in `git show HEAD`). All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
 - 2026-11-02 lead-architect (tests-review, round 4): tests approved, status `ready`. Note 3 is applied (7f51960). Checked against `FR-TRN-003a`, `FR-MNV-001`, `SVY-R29`, `FR-TGT-001` and `SVY-R17`. A trial definition in a review worktree (as under Definition, discarded and not committed) passes all five tests and the rest of `go test ./pkg/engine`.
+- 2026-11-02 kernel-engineer: implemented Funeral Fungus definition in `pkg/engine/cards/animus.go` with `ExtraCosts` (`CostExhaust` for allied units) and `Effect` (`OpReturnToHand` on target in `ZoneDiscard` with allied unit filter); removed "Funeral Fungus" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Reused existing shapes: `ability.CostExhaust` (T-0129), `ability.ZoneDiscard` (T-0081), `ability.OpReturnToHand` and `ability.SubjectTarget`. Ran `go test ./pkg/engine -run TestCard_FuneralFungus` (all 5 tests pass), `go test ./pkg/engine -run TestStarterSet_Executable` (passes), `go tool task check` (all tests, linters, gofmt, go vet pass), `go tool task sim` (200 starter games clean, all invariants hold). Status `review`.
