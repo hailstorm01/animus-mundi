@@ -228,16 +228,17 @@ const (
 
 // Step applies one primitive.
 type Step struct {
-	Op      Op
-	Amount  Value
-	Subject Subject
-	Bottom  bool   // OpPutOnDeck: the bottom of the deck instead of the top
-	Target  int    // SubjectTarget: index into Effect.Targets
-	Filter  Filter // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
-	UpTo    int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
-	Dealer  int    // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
-	To      Zone   // OpMoveZone only: ZoneReserves or ZoneMainTheater, the unit's controller's
-	IfDone  bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
+	Op          Op
+	Amount      Value
+	Subject     Subject
+	Bottom      bool   // OpPutOnDeck: the bottom of the deck instead of the top
+	Target      int    // SubjectTarget: index into Effect.Targets
+	Filter      Filter // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
+	UpTo        int    // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
+	Dealer      int    // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
+	To          Zone   // OpMoveZone only: ZoneReserves or ZoneMainTheater, the unit's controller's
+	IfDone      bool   // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
+	IfHandEmpty bool   // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
 }
 
 // DealerSlot returns the Effect.Targets index of the step's chosen dealer, and

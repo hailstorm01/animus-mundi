@@ -51,12 +51,25 @@ func (g *Game) resolveAbility(it *StackItem) {
 func (g *Game) runSteps(r *resolution) {
 	for i, st := range r.it.Effect.Steps {
 		n := 0
-		// "If you do": skipped, and counted as 0, unless the step just before it did something.
-		if !st.IfDone || (i > 0 && r.done[i-1] > 0) {
+		if g.stepRuns(r, i, st) {
 			n = g.runStep(r, st)
 		}
 		r.done = append(r.done, n)
 	}
+}
+
+// stepRuns reports whether step i may run: every gate it sets must hold. A
+// skipped step counts as 0 in r.done. Each gate is read as the step is reached.
+func (g *Game) stepRuns(r *resolution, i int, st ability.Step) bool {
+	// "If you do": the step just before it must have done something.
+	if st.IfDone && (i == 0 || r.done[i-1] == 0) {
+		return false
+	}
+	// "If you have no cards in hand": the controller's hand, never an opponent's.
+	if st.IfHandEmpty && len(g.Players[r.it.Controller].Hand) != 0 {
+		return false
+	}
+	return true
 }
 
 // runStep runs one step and returns how many things it did.
