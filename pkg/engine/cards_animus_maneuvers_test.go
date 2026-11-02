@@ -700,9 +700,10 @@ func TestFR_TRN_003a_FeedTheDespoiler(t *testing.T) {
 // exhaust a readied allied unit." / "Return chosen unit card from your discard
 // pile to your hand." Costs 0 Requisition, 1 Tactics.
 
-// ffChoose answers every DecideTarget and DecidePick (the cost payer) with the option referring to whichever of
-// prefer is offered first (an *Asset or an *Instance, by ID), and every other
-// decision with its first option. It records the decisions in s.asks[0].
+// ffChoose answers every DecideTarget and DecidePick (the cost payer) with the
+// option referring to whichever of prefer is offered first (an *Asset or an
+// *Instance, by ID), and every other decision with its first option. It
+// records the decisions in s.asks[0].
 func ffChoose(s *scene, prefer ...any) {
 	if s.asks == nil {
 		s.asks = map[PlayerID][]Decision{}
@@ -710,7 +711,7 @@ func ffChoose(s *scene, prefer ...any) {
 	s.asks[0] = nil
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
 		s.asks[0] = append(s.asks[0], d)
-		if d.Kind == DecideTarget {
+		if d.Kind == DecideTarget || d.Kind == DecidePick {
 			for _, want := range prefer {
 				id := 0
 				switch v := want.(type) {
