@@ -4,7 +4,7 @@ title: An additional cost can exhaust a readied allied unit, and exhausting an E
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0129-exhaust-cost
 depends_on: [T-0063, T-0128]
 claims: [const:CostExhaust, func:exhaust, func:costDecision, func:payCosts]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/exhaust_cost_test.go`, on synthetic Maneuvers built wi
 - 2026-10-31 lead-architect: queued in wave C session 15, with T-0128's task commit (D2.4). #58 fires with this task, whose `claims:` include exhausting an asset by a cost.
 - 2026-11-02 lead-architect: T-0128 merged (d67487b). Covers updated: `payCosts` now runs after the push, and the `placeable` comment re-wrap carried from T-0128's review.
 - 2026-11-02 lead-architect (wave C session 16): Inputs, Shape, Tests, Allowed Files and Done When written against the run branch at 5ed2ca1; branch renamed for the wave run (D7.4); directive #58 applied here. Status `tests`.
+- 2026-11-02 rules-test-author: wrote the six listed tests in pkg/engine/exhaust_cost_test.go (TestFR_TRN_003a_ExhaustCostPaidOnDeclaration, ..._ExhaustCostNeedsAReadiedUnit, ..._ExhaustCostTriggerResolvesBeforeTheManeuver, TestFR_MOD_001_ExhaustCostTimeoutPicksFixedOrder, ..._ExhaustCostSingleOptionNotAsked, TestFR_CAP_001_ExhaustingAnExhaustedAssetDoesNothing with a control subtest) plus the exhaustCostManeuver helper in that file. Helpers requested: none. Cases left out: none. go vet fails only on undefined ability.CostExhaust (expected); cardtown lint rules passes. Status tests-review.
