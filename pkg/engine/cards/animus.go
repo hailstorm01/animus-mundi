@@ -180,6 +180,26 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Feed the Despoiler": {
+		Text: []string{
+			"As an additional cost to enact this maneuver, kill an allied unit.",
+			"Draw 2 cards.",
+		},
+		ExtraCosts: []ability.Cost{
+			{
+				Kind:   ability.CostKill,
+				Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit},
+			},
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:     ability.OpDraw,
+					Amount: ability.Value{N: 2},
+				},
+			},
+		},
+	},
 	"Fungal Evangelist": {
 		Text: []string{"When this unit deploys or is killed, Scratch 2."},
 		Triggers: []ability.Trigger{
@@ -286,6 +306,35 @@ var animusDefs = map[string]*ability.Def{
 						Kinds:      ability.KindUnit,
 						Scratch:    ability.ScratchOnly,
 					},
+				},
+			},
+		},
+	},
+	"Rhapsody's Embrace": {
+		Text: []string{
+			"As an additional cost to enact this maneuver, kill an allied unit.",
+			"Kill chosen opposing unit.",
+		},
+		ExtraCosts: []ability.Cost{
+			{
+				Kind:   ability.CostKill,
+				Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit},
+			},
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpKill,
+					Subject: ability.SubjectTarget,
+					Target:  0,
 				},
 			},
 		},
