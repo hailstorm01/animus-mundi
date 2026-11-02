@@ -33,4 +33,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0135 | Make Chainbreaker's Tenacity and Fortify executable (a chosen allied unit gains armor, Tenacity also +1 power until end of turn, wave C card, flash) | tests |

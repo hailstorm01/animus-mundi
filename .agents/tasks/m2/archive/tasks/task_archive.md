@@ -138,3 +138,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0132 | A step can run only if its controller has no cards in hand (FR-MNV-001, FR-TRN-003a, SVY-R3, SVY-R14, directive #20 (b), wave C shape, sonnet) | done |
 | T-0133 | Make Disorienting Pulse and Tactical Withdrawal executable (return a chosen unit to its owner's hand, wave C card, flash) | done |
 | T-0134 | Make Conversion Spike executable (damage a chosen opposing unit, heal a chosen allied unit or structure, wave C card, flash) | done |
+| T-0135 | Make Chainbreaker's Tenacity and Fortify executable (a chosen allied unit gains armor, Tenacity also +1 power until end of turn, wave C card, flash) | done |
