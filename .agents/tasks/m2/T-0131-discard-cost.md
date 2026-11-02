@@ -4,7 +4,7 @@ title: An additional cost can discard up to N cards from the payer's hand (FR-TR
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0131-discard-cost
 depends_on: [T-0128, T-0129]
 claims: [const:CostDiscard, field:Cost.UpTo, func:costsPayable, func:payCosts, func:discardFromHand]
@@ -72,3 +72,4 @@ In a new file `pkg/engine/discard_cost_test.go`, on synthetic Maneuvers built wi
 - 2026-11-02 lead-architect: wave C run, session 20. Session 19 hit a usage limit after the engineer's block, so it left no run-file row; its clean scratch worktrees (`20261102-120939-2/run`, `/task`) were removed. No `main` commits to sync (`main` d237625 is in the run branch, 2f3224d). Not `WAVE-COMPLETE`: 15 deck cards are on `NotYetExecutable`. Directives re-read on the run branch: no `open: before` directive; #20 (b) is this task; waiting triggers #6, #7, #8, #15, #59 (2), #61 (fifth question), #71 and #88 (distinctness) not fired by this task's `claims:`. Block reviewed; a lead spec defect, not a rules question. The task's Inputs and Tests said the discard event's zone is `hand`, but `discardFromHand` logs `ZoneHand.String()`, `"Hand"`, which `discard_test.go:179` pins; re-running `go test ./pkg/engine -run 'TestFR_.*Discard'` on b28b653 fails only on `discard_cost_test.go:87`. Inputs line and the first test's text corrected to `"Hand"`. Status `tests`, round 2 for `rules-test-author`. Notes:
   1. `TestFR_TRN_003a_DiscardCostPaidOnDeclaration` (`discard_cost_test.go:86`): compare the discard event's `Zone` to `"Hand"` (or `ZoneHand.String()`), not `"hand"`. Change nothing else in any test.
   2. For the engineer's next round (not the tests): b28b653 otherwise matches the Shape (`CostDiscard`, `Cost.UpTo`, `costsPayable` skipping it, `payCosts` paying it through the one `discardFromHand` after the push, `stepDiscard` passing `false`). Re-wrap `payCosts`' doc comment (`placement.go`), whose line ending `so a replaced kill` is now short, and make it read that a replaced kill still counts as paid, not the discard cost.
+- 2026-11-02 rules-test-author: round 2, note 1 applied in a3c969d: `TestFR_TRN_003a_DiscardCostPaidOnDeclaration` now compares the discard event's `Zone` to `"Hand"`. Nothing else changed in any test; no helpers requested. Note 2 left for the engineer. Status `tests-review`.
