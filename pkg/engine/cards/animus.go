@@ -99,6 +99,41 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Conversion Spike": {
+		Text: []string{
+			"Deal 1 damage to chosen opposing unit, and chosen allied unit or structure heals 1.",
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit | ability.KindStructure,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:      ability.OpHeal,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectTarget,
+					Target:  1,
+				},
+			},
+		},
+	},
 	"Deafening Aria": {
 		Text: []string{
 			"Deal 1 damage to all opposing units in the Main Theater.",

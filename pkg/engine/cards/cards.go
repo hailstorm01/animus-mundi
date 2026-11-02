@@ -26,7 +26,6 @@ var NotYetExecutable = []string{
 	"Chainbreaker Phalanx",
 	"Chainbreaker's Tenacity",
 	"Cliff of Portents",
-	"Conversion Spike",
 	"Devilhorn Scouting Party",
 	"Drifting Concept",
 	"Eerie Remnant",
