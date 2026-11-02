@@ -47,8 +47,15 @@ func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 // (FR-MOD-001 §6) and a single option is taken unasked (§1). Legality
 // (costsPayable) and payment (payCosts) both build their decision with it.
 func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
-	prompt := fmt.Sprintf("%s: choose an asset to kill (additional cost)", pl.label)
+	verb := "kill"
+	if c.Kind == ability.CostExhaust {
+		verb = "exhaust"
+	}
+	prompt := fmt.Sprintf("%s: choose an asset to %s (additional cost)", pl.label, verb)
 	return g.assetDecision(pl.controller, DecidePick, prompt, 0, func(a *Asset) bool {
+		if c.Kind == ability.CostExhaust && a.Exhausted {
+			return false
+		}
 		return g.matchesFilter(pl.controller, pl.source, c.Filter, a)
 	})
 }
@@ -65,9 +72,10 @@ func (g *Game) costsPayable(pl placement) bool {
 }
 
 // payCosts pays each additional cost of pl in printed order: its controller
-// picks the asset (costDecision, pickFrom) and it is killed through kill, so a
-// replaced kill still counts as paid (SVY-R15) and the triggers it fires wait
-// in the pending buffer to go above the declared card (FR-TRN-003a). It runs
+// picks the asset (costDecision, pickFrom) and it is killed through kill
+// (CostKill) or exhausted through exhaust (CostExhaust), so a replaced kill
+// still counts as paid (SVY-R15) and the triggers either fires wait in the
+// pending buffer to go above the declared card (FR-TRN-003a). It runs
 // after the Maneuver is pushed, so the card is already on the stack when the
 // cost's triggers are queued (FR-TRN-003), and after its targets were chosen,
 // so they were judged against the state before the cost moved anything (SVY-R2).
@@ -75,7 +83,14 @@ func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		d, opts := g.costDecision(pl, c)
 		for _, a := range pickFrom(g, d, opts) {
-			g.kill([]*Asset{a})
+			switch c.Kind {
+			case ability.CostKill:
+				g.kill([]*Asset{a})
+			case ability.CostExhaust:
+				g.exhaust(a)
+			default:
+				panic(fmt.Sprintf("engine: unknown cost kind %d", c.Kind))
+			}
 		}
 	}
 }
@@ -93,8 +108,9 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 
 // placeable reports whether e can be placed with everything it requires
 // (SVY-R29): every additional cost payable (costsPayable), then at least
-// ChooseN legal modes, or a legal entity for each exactly-one slot. It applies to enacting a Maneuver only: a
-// trigger is placed whatever it finds (SVY-R30, FR-TGT-003).
+// ChooseN legal modes, or a legal entity for each exactly-one slot. It applies
+// to enacting a Maneuver only: a trigger is placed whatever it finds (SVY-R30,
+// FR-TGT-003).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
 		return false

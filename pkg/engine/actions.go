@@ -108,8 +108,12 @@ func (g *Game) Apply(a Action) error {
 }
 
 // exhaust is the one place a Readied asset becomes Exhausted, for any reason
-// (SVY-R17). Entering the battlefield Exhausted is not an exhaust.
+// (SVY-R17). Entering the battlefield Exhausted is not an exhaust. Exhausting
+// an asset that is already Exhausted changes nothing and fires nothing.
 func (g *Game) exhaust(a *Asset) {
+	if a.Exhausted {
+		return
+	}
 	a.Exhausted = true
 	g.fireExhausted(a)
 }
