@@ -885,3 +885,125 @@ func TestCard_FuneralFungus_ShamblerTriggerResolvesFirst(t *testing.T) {
 		t.Errorf("the trigger goes onto the stack after the Maneuver was declared, above it, so it resolves first (FR-TRN-003a)")
 	}
 }
+
+// Tests for T-0133 (FR-MNV-001, FR-TGT-001, FR-KWD-002h, FR-ZON-004,
+// FR-ZON-005): the Animus Maneuver Disorienting Pulse, loaded from data/cards.
+//
+// Disorienting Pulse: "Return chosen opposing unit in the Main Theater to its
+// owner's hand." Cost 1 Tactics.
+
+func TestCard_DisorientingPulse_ReturnsChosenOpposingUnitToItsOwnersHand(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TGT-001, FR-ZON-004
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	other := s.put(1, ZoneMainTheater, unit("Other", 1, 3, Keywords{}))
+	inst := enactFor(s, "Disorienting Pulse")
+	chooseAsset(s, foe)
+	s.do(enactAction(inst))
+	if s.alive(foe) || !inHand(s.g.Players[1], foe.Inst) {
+		t.Errorf("the chosen opposing unit leaves the battlefield and is in its owner's hand (FR-MNV-001, FR-ZON-004)")
+	}
+	if !s.alive(other) {
+		t.Errorf("the unchosen opposing unit stays on the battlefield (FR-TGT-001)")
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_DisorientingPulse_OnlyOpposingMainTheaterUnitsAreOffered(t *testing.T) {
+	// Covers: FR-TGT-001
+	s := newScene(t)
+	u1 := s.put(1, ZoneMainTheater, unit("E1", 1, 3, Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("E2", 1, 3, Keywords{}))
+	res := s.put(1, ZoneReserves, unit("ERes", 1, 3, Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("EWall", 0, 3, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	chooseAsset(s, u1)
+	s.do(enactAction(enactFor(s, "Disorienting Pulse")))
+	got := targetOffers(s)
+	if len(got) != 2 || !got[u1.ID] || !got[u2.ID] {
+		t.Errorf("exactly the two opposing Main Theater units are offered, got refs %v (FR-TGT-001)", got)
+	}
+	for _, a := range []*Asset{res, st, ally, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not an opposing Main Theater unit and must not be offered (FR-TGT-001)", a)
+		}
+	}
+}
+
+func TestCard_DisorientingPulse_WardUnitCannotBeChosen(t *testing.T) {
+	// Covers: FR-KWD-002h
+	s := newScene(t)
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+	p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 3, Keywords{}))
+	p2 := s.put(1, ZoneMainTheater, unit("Plain2", 1, 3, Keywords{}))
+	chooseAsset(s, p1)
+	s.do(enactAction(enactFor(s, "Disorienting Pulse")))
+	got := targetOffers(s)
+	if got[ward.ID] || len(got) != 2 || !got[p1.ID] || !got[p2.ID] {
+		t.Errorf("an opposing Ward unit is not offered, only the two plain ones are, got refs %v (FR-KWD-002h)", got)
+	}
+	if !s.alive(ward) {
+		t.Errorf("the Ward unit stays on the battlefield (FR-KWD-002h)")
+	}
+}
+
+func TestCard_DisorientingPulse_NotEnactableWithoutLegalTarget(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	cases := []struct {
+		name  string
+		setup func(s *scene)
+		want  bool
+	}{
+		{"opposing units only in Reserves", func(s *scene) {
+			s.put(1, ZoneReserves, unit("Res", 1, 3, Keywords{}))
+		}, false},
+		{"only an opposing Ward unit in the Main Theater", func(s *scene) {
+			s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+		}, false},
+		{"only allied units in the Main Theater", func(s *scene) {
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+		}, false},
+		{"one plain opposing unit in the Main Theater", func(s *scene) {
+			s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+		}, true},
+	}
+	for _, c := range cases {
+		s := newScene(t)
+		c.setup(s)
+		inst := enactFor(s, "Disorienting Pulse")
+		if got := offersEnact(s.g, inst); got != c.want {
+			t.Errorf("%s: Enact offered = %v, want %v (SVY-R29)", c.name, got, c.want)
+		}
+		if !c.want {
+			s.reject(enactAction(inst))
+			if !inHand(s.g.Players[0], inst) {
+				t.Errorf("%s: the card stays in hand (SVY-R29)", c.name)
+			}
+		}
+	}
+}
+
+func TestCard_DisorientingPulse_FaceDownScratchCompanyReturnsAsItsCard(t *testing.T) {
+	// Covers: FR-ZON-004, FR-ZON-005, FR-TGT-001
+	s := newScene(t)
+	sc := s.putScratch(1)
+	s.moveTo(sc, ZoneMainTheater)
+	chooseAsset(s, sc)
+	s.do(enactAction(enactFor(s, "Disorienting Pulse")))
+	if s.alive(sc) || !inHand(s.g.Players[1], sc.Inst) {
+		t.Errorf("an opposing face-down Scratch Company is a unit: it is chosen and its printed card goes to its owner's hand (FR-ZON-004, FR-ZON-005)")
+	}
+}
+
+func TestCard_DisorientingPulse_PaysOneTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	chooseAsset(s, foe)
+	s.do(enactAction(enactFor(s, "Disorienting Pulse")))
+	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
+		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
