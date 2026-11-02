@@ -180,6 +180,27 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Disorienting Pulse": {
+		Text: []string{"Return chosen opposing unit in the Main Theater to its owner's hand."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneMainTheater,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Feed the Despoiler": {
 		Text: []string{
 			"As an additional cost to enact this maneuver, kill an allied unit.",
