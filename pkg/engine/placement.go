@@ -79,12 +79,12 @@ func (g *Game) costsPayable(pl placement) bool {
 // payCosts pays each additional cost of pl in printed order: its controller
 // picks the asset (costDecision, pickFrom) and it is killed through kill
 // (CostKill) or exhausted through exhaust (CostExhaust), while a discard cost
-// goes through discardFromHand (CostDiscard), so a replaced kill
-// still counts as paid (SVY-R15) and the triggers either fires wait in the
-// pending buffer to go above the declared card (FR-TRN-003a). It runs
-// after the Maneuver is pushed, so the card is already on the stack when the
-// cost's triggers are queued (FR-TRN-003), and after its targets were chosen,
-// so they were judged against the state before the cost moved anything (SVY-R2).
+// goes through discardFromHand (CostDiscard). A replaced kill (not the discard
+// cost) still counts as paid (SVY-R15), and the triggers either fires wait in
+// the pending buffer to go above the declared card (FR-TRN-003a). It runs after
+// the Maneuver is pushed, so the card is already on the stack when the cost's
+// triggers are queued (FR-TRN-003), and after its targets were chosen, so they
+// were judged against the state before the cost moved anything (SVY-R2).
 func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		if c.Kind == ability.CostDiscard {
