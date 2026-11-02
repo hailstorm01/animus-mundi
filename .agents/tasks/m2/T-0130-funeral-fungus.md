@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
