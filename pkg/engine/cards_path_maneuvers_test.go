@@ -1,6 +1,10 @@
 package engine
 
-import "testing"
+import (
+	"testing"
+
+	"animus-mundi/pkg/engine/ability"
+)
 
 // Tests for T-0123 (FR-MNV-001, FR-TGT-001, FR-TGT-003, FR-KWD-002h,
 // FR-REP-001): the Path Maneuver Devilhorn Sanction, loaded from data/cards.
@@ -505,6 +509,238 @@ func TestCard_TacticalWithdrawal_PaysOneTactics(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
+		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
+
+// Tests for T-0135 (FR-MNV-001, FR-TGT-001, FR-KWD-002h, FR-KWD-002k,
+// FR-LAY-001, FR-LAY-002, FR-LAY-003, FR-REP-004, FR-ZON-005): the Path
+// Maneuvers Chainbreaker's Tenacity and Fortify, loaded from data/cards.
+// Player 0 enacts; player 1 is the opponent.
+//
+// Chainbreaker's Tenacity: "Chosen allied unit gets +1 power until end of turn
+// and gains 2 armor." Cost 1 Tactics.
+// Fortify: "Chosen allied unit gains 3 armor." Cost 1 Tactics.
+
+// armorPair puts two plain allied units (printed power 2, Health 5) in the Main Theater.
+func armorPair(s *scene) (*Asset, *Asset) {
+	a := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	return a, b
+}
+
+// armorOffers enacts the named Maneuver with two allied units, an allied
+// structure, an opposing unit and both Headquarters on the battlefield, and
+// checks that exactly the two allied units are offered.
+func armorOffers(t *testing.T, name string) {
+	t.Helper()
+	s := newScene(t)
+	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	chooseAsset(s, u1)
+	s.do(enactAction(enactFor(s, name)))
+	got := targetOffers(s)
+	if len(got) != 2 || !got[u1.ID] || !got[u2.ID] {
+		t.Errorf("exactly the two allied units are offered, got refs %v (FR-TGT-001)", got)
+	}
+	for _, a := range []*Asset{st, foe, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not an allied unit and must not be offered (FR-TGT-001)", a)
+		}
+	}
+}
+
+// armorNotEnactable checks SVY-R29 for the named Maneuver.
+func armorNotEnactable(t *testing.T, name string) {
+	t.Helper()
+	cases := []struct {
+		name  string
+		setup func(s *scene)
+		want  bool
+	}{
+		{"no unit at all", func(s *scene) {}, false},
+		{"only an allied structure and opposing units", func(s *scene) {
+			s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+		}, false},
+		{"one allied unit", func(s *scene) {
+			s.put(0, ZoneReserves, unit("Ally", 1, 3, Keywords{}))
+		}, true},
+	}
+	for _, c := range cases {
+		s := newScene(t)
+		c.setup(s)
+		inst := enactFor(s, name)
+		if got := offersEnact(s.g, inst); got != c.want {
+			t.Errorf("%s: Enact offered = %v, want %v (SVY-R29)", c.name, got, c.want)
+		}
+		if !c.want {
+			s.reject(enactAction(inst))
+			if !inHand(s.g.Players[0], inst) {
+				t.Errorf("%s: the card stays in hand (SVY-R29)", c.name)
+			}
+		}
+	}
+}
+
+func TestCard_ChainbreakersTenacity_ChosenAllyGetsPlusOnePowerAndTwoArmor(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TGT-001, FR-LAY-001, FR-KWD-002k
+	s := newScene(t)
+	ally, other := armorPair(s)
+	inst := enactFor(s, "Chainbreaker's Tenacity")
+	chooseAsset(s, ally)
+	s.do(enactAction(inst))
+	if got := s.g.Power(ally); got != 3 {
+		t.Errorf("the chosen unit has printed power 2 +1: power %d, want 3 (FR-LAY-001)", got)
+	}
+	if ally.Armor != 2 {
+		t.Errorf("the chosen unit gains 2 armor: Armor %d, want 2 (FR-KWD-002k)", ally.Armor)
+	}
+	if got := s.g.Power(other); got != 2 || other.Armor != 0 {
+		t.Errorf("the unchosen unit is unchanged: power %d Armor %d, want 2 and 0 (FR-TGT-001)", got, other.Armor)
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_ChainbreakersTenacity_PowerExpiresAtEndOfTurnArmorStays(t *testing.T) {
+	// Covers: FR-LAY-003, FR-KWD-002k
+	s := newScene(t)
+	ally, _ := armorPair(s)
+	chooseAsset(s, ally)
+	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
+	s.endTurn()
+	if got := s.g.Power(ally); got != 2 {
+		t.Errorf("the +1 power expires at the end of the turn: power %d, want 2 (FR-LAY-003)", got)
+	}
+	if ally.Armor != 2 {
+		t.Errorf("armor never expires at end of turn: Armor %d, want 2 (FR-KWD-002k)", ally.Armor)
+	}
+}
+
+func TestCard_ChainbreakersTenacity_OnlyAlliedUnitsAreOffered(t *testing.T) {
+	// Covers: FR-TGT-001
+	armorOffers(t, "Chainbreaker's Tenacity")
+}
+
+func TestCard_ChainbreakersTenacity_AlliedWardUnitCanBeChosen(t *testing.T) {
+	// Covers: FR-KWD-002h
+	s := newScene(t)
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 2, 5, Keywords{Ward: true}))
+	plain := s.put(0, ZoneMainTheater, unit("Plain", 2, 5, Keywords{}))
+	chooseAsset(s, ward)
+	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
+	got := targetOffers(s)
+	if !got[ward.ID] || !got[plain.ID] {
+		t.Errorf("an allied Ward unit is offered beside the plain one: Ward stops only opponents, got refs %v (FR-KWD-002h)", got)
+	}
+	if p := s.g.Power(ward); p != 3 || ward.Armor != 2 {
+		t.Errorf("the chosen Ward unit gets +1 power and 2 armor: power %d Armor %d, want 3 and 2 (FR-KWD-002h)", p, ward.Armor)
+	}
+}
+
+func TestCard_ChainbreakersTenacity_NotEnactableWithoutAlliedUnit(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	armorNotEnactable(t, "Chainbreaker's Tenacity")
+}
+
+func TestCard_ChainbreakersTenacity_FaceDownScratchCompanyCanBeChosen(t *testing.T) {
+	// Covers: FR-ZON-005, FR-TGT-001
+	s := newScene(t)
+	sc := s.putScratch(0)
+	s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	chooseAsset(s, sc)
+	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
+	if got := s.g.Power(sc); got != 2 || sc.Armor != 2 {
+		t.Errorf("an allied face-down Scratch Company is a unit: power %d Armor %d, want 2 and 2 (FR-ZON-005)", got, sc.Armor)
+	}
+}
+
+func TestCard_ChainbreakersTenacity_PaysOneTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	ally, _ := armorPair(s)
+	chooseAsset(s, ally)
+	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
+	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
+		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
+
+func TestCard_Fortify_ChosenAllyGainsThreeArmor(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TGT-001, FR-KWD-002k
+	s := newScene(t)
+	ally, other := armorPair(s)
+	inst := enactFor(s, "Fortify")
+	chooseAsset(s, ally)
+	s.do(enactAction(inst))
+	if ally.Armor != 3 {
+		t.Errorf("the chosen unit gains 3 armor: Armor %d, want 3 (FR-KWD-002k)", ally.Armor)
+	}
+	if got := s.g.Power(ally); got != 2 {
+		t.Errorf("Fortify does not change power: %d, want 2", got)
+	}
+	if got := s.g.Power(other); got != 2 || other.Armor != 0 {
+		t.Errorf("the unchosen unit is unchanged: power %d Armor %d, want 2 and 0 (FR-TGT-001)", got, other.Armor)
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_Fortify_ArmorStacksAndOutlastsTheTurn(t *testing.T) {
+	// Covers: FR-LAY-002, FR-KWD-002k
+	s := newScene(t)
+	armored := s.put(0, ZoneMainTheater, unit("Armored", 2, 5, Keywords{Armor: 2}))
+	s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	chooseAsset(s, armored)
+	s.do(enactAction(enactFor(s, "Fortify")))
+	if armored.Armor != 5 {
+		t.Errorf("granted armor adds to armor the unit already has: Armor %d, want 5 (FR-LAY-002)", armored.Armor)
+	}
+	s.endTurn()
+	if armored.Armor != 5 {
+		t.Errorf("armor does not expire at end of turn: Armor %d, want 5 (FR-KWD-002k)", armored.Armor)
+	}
+}
+
+func TestCard_Fortify_ArmorAbsorbsLaterDamage(t *testing.T) {
+	// Covers: FR-REP-004, FR-LAY-002
+	s := newScene(t)
+	ally, _ := armorPair(s)
+	chooseAsset(s, ally)
+	s.do(enactAction(enactFor(s, "Fortify")))
+	zap := s.give(0, maneuver("Zap", 0, 0, ability.Effect{
+		Targets: []ability.Target{tgt(ability.AllegianceAllied, ability.KindUnit, false)},
+		Steps:   []ability.Step{dmgTo(2, 0)},
+	}))
+	s.do(enactAction(zap))
+	if ally.Armor != 1 {
+		t.Errorf("2 damage removes 2 of the 3 armor 1-for-1: Armor %d, want 1 (FR-REP-004)", ally.Armor)
+	}
+	s.wantDamage(ally, 0)
+}
+
+func TestCard_Fortify_OnlyAlliedUnitsAreOffered(t *testing.T) {
+	// Covers: FR-TGT-001
+	armorOffers(t, "Fortify")
+}
+
+func TestCard_Fortify_NotEnactableWithoutAlliedUnit(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	armorNotEnactable(t, "Fortify")
+}
+
+func TestCard_Fortify_PaysOneTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	ally, _ := armorPair(s)
+	chooseAsset(s, ally)
+	s.do(enactAction(enactFor(s, "Fortify")))
 	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
 		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
 	}
