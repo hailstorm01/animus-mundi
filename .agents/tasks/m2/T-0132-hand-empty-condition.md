@@ -4,7 +4,7 @@ title: A step can run only if its controller has no cards in hand (wave C shape,
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0132-hand-empty-condition
 depends_on: [T-0131]
 claims: [field:Step.IfHandEmpty, func:runSteps]
@@ -64,3 +64,4 @@ In a new file `pkg/engine/hand_empty_test.go`, on synthetic Maneuvers built with
 ## Log
 - 2026-11-02 lead-architect (wave C session 19): queued with T-0131's task commit (D2.4).
 - 2026-11-02 lead-architect (wave C session 20): Inputs, Shape, Tests, Allowed Files and Done When written against the run branch at dd3774c. `claims:` narrowed from `condition:hand-empty` to the new field and `runSteps`, the one place step gates are checked. Reuse search: `IfDone` is the only step gate (`effects.go:54`); trigger gates (`TurnOwner`, `ToZone`, `Cornered`) are read on the event, not per step, and nothing in `pkg/engine` or `archive/tasks/task_archive.md` reads a hand at resolution. No ruling needed (Inputs). Status `tests`.
+- 2026-11-02 rules-test-author: wrote pkg/engine/hand_empty_test.go: TestFR_MNV_001_HandEmptyStepRunsWithAnEmptyHand, _HandEmptyStepSkippedWithACardInHand, _HandEmptyReadAfterEarlierSteps, _HandEmptyReadsTheControllersHand, _SkippedHandEmptyStepCountsAsNotDone, TestFR_TRN_003a_DiscardCostThenHandEmptyStep. Helpers requested: none (local test helpers handEmpty and handEmptyScene live in the new file). Cases left out: none. go vet fails only on the missing field ability.Step.IfHandEmpty (the shape under test). cardtown lint rules passes.
