@@ -33,4 +33,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0133](T-0133-return-chosen-unit.md) | Make Disorienting Pulse and Tactical Withdrawal executable (return a chosen unit to its owner's hand, wave C card, flash) | tests |
