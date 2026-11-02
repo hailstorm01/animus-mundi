@@ -4,7 +4,7 @@ title: An additional cost can discard up to N cards from the payer's hand (FR-TR
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0131-discard-cost
 depends_on: [T-0128, T-0129]
 claims: [const:CostDiscard, field:Cost.UpTo, func:costsPayable, func:payCosts, func:discardFromHand]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/discard_cost_test.go`, on synthetic Maneuvers built wi
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 19): written against the run branch at ca50083, with T-0132 (the hand-empty condition) queued (D2.4). Directive #20 (b) split: the cost here; the per-discard target choices and the card stay on #20 (b), behind #59 (2)'s ruling, which must be asked before a task claiming repeated targets is written. Reading for the timeout: §6 line 389's "an up to N selection selects none" sets how many, so line 390's "most recently added" never applies with `Min` 0; `handPicks` already does this. Status `tests`.
+- 2026-11-02 rules-test-author: wrote `pkg/engine/discard_cost_test.go` with the six listed tests (`TestFR_TRN_003a_DiscardCostPaidOnDeclaration`, `..._DiscardCostMayDiscardNone`, `..._DiscardCostOffersTheRestOfTheHand` (table of 2 and 5 other cards), `..._DiscardCostWithAnEmptyHand`, `TestFR_MOD_001_DiscardCostTimeoutDiscardsNone`, `..._DiscardCostAskedWithOneCard`) and local helpers `discardCostManeuver`, `hqPing`, `discardCostScene`, `pingCount`. Reuses existing `inDiscard`/`inHand`. No helpers requested for `scenario_test.go`. `go vet` fails only on `ability.CostDiscard` and `Cost.UpTo` (the task's own claims). `cardtown lint rules` passes. Nothing deliberately left out. Status `tests-review`.
