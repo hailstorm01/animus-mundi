@@ -53,8 +53,11 @@ func (g *Game) scratch(pid PlayerID, n int) {
 // own hand, or the whole hand if it holds fewer, and returns the cards
 // discarded, in pick order. Choosing from your own hand is not an inspection,
 // so a hand of exactly that many cards is discarded without asking
-// (FR-MOD-001 §1, §6; SVY-R16). Every discard from hand goes through it.
-func (g *Game) discardFromHand(pid PlayerID, n int) []*Instance {
+// (FR-MOD-001 §1, §6; SVY-R16). With upTo it discards up to n cards, possibly
+// none: the choice is asked whenever the hand isn't empty, and a timeout
+// discards none (FR-MOD-001 §6, FR-TRN-003a). Every discard from hand goes
+// through it.
+func (g *Game) discardFromHand(pid PlayerID, n int, upTo bool) []*Instance {
 	hand := g.Players[pid].Hand
 	n = min(n, len(hand))
 	if n <= 0 {
@@ -63,6 +66,13 @@ func (g *Game) discardFromHand(pid PlayerID, n int) []*Instance {
 	d := Decision{Player: pid, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n}
 	if n > 1 {
 		d.Prompt = fmt.Sprintf("Discard %d cards", n)
+	}
+	if upTo {
+		d.Min = 0
+		d.Prompt = fmt.Sprintf("Discard up to %d cards", n)
+		if n == 1 {
+			d.Prompt = "Discard up to 1 card"
+		}
 	}
 	for _, inst := range hand {
 		d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})

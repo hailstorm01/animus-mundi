@@ -45,7 +45,8 @@ func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 // assets it lists in option order. It is an untargeted selection (DecidePick),
 // so Ward doesn't apply, a timeout takes the first option in fixed order
 // (FR-MOD-001 §6) and a single option is taken unasked (§1). Legality
-// (costsPayable) and payment (payCosts) both build their decision with it.
+// (costsPayable) and payment (payCosts) both build their decision with it. It
+// is never called for a CostDiscard, which takes no asset.
 func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 	verb := "kill"
 	if c.Kind == ability.CostExhaust {
@@ -61,9 +62,13 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 }
 
 // costsPayable reports whether every additional cost of pl has at least one
-// option now (FR-TRN-003a, SVY-R29).
+// option now (FR-TRN-003a, SVY-R29). A discard cost is always payable, because
+// discarding none pays it.
 func (g *Game) costsPayable(pl placement) bool {
 	for _, c := range pl.costs {
+		if c.Kind == ability.CostDiscard {
+			continue // discarding none pays it
+		}
 		if _, opts := g.costDecision(pl, c); len(opts) == 0 {
 			return false
 		}
@@ -73,14 +78,19 @@ func (g *Game) costsPayable(pl placement) bool {
 
 // payCosts pays each additional cost of pl in printed order: its controller
 // picks the asset (costDecision, pickFrom) and it is killed through kill
-// (CostKill) or exhausted through exhaust (CostExhaust), so a replaced kill
-// still counts as paid (SVY-R15) and the triggers either fires wait in the
-// pending buffer to go above the declared card (FR-TRN-003a). It runs
-// after the Maneuver is pushed, so the card is already on the stack when the
-// cost's triggers are queued (FR-TRN-003), and after its targets were chosen,
-// so they were judged against the state before the cost moved anything (SVY-R2).
+// (CostKill) or exhausted through exhaust (CostExhaust), while a discard cost
+// goes through discardFromHand (CostDiscard). A replaced kill (not the discard
+// cost) still counts as paid (SVY-R15), and the triggers either fires wait in
+// the pending buffer to go above the declared card (FR-TRN-003a). It runs after
+// the Maneuver is pushed, so the card is already on the stack when the cost's
+// triggers are queued (FR-TRN-003), and after its targets were chosen, so they
+// were judged against the state before the cost moved anything (SVY-R2).
 func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
+		if c.Kind == ability.CostDiscard {
+			g.discardFromHand(pl.controller, c.UpTo, true)
+			continue
+		}
 		d, opts := g.costDecision(pl, c)
 		for _, a := range pickFrom(g, d, opts) {
 			switch c.Kind {
