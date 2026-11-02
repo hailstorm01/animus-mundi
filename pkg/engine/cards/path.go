@@ -117,6 +117,33 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Chainbreaker's Tenacity": {
+		Text: []string{"Chosen allied unit gets +1 power until end of turn and gains 2 armor."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpModifyStat,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:      ability.OpAddArmor,
+					Amount:  ability.Value{N: 2},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Devilhorn Captain": {
 		Text: []string{"Unbowed: Deal 1 damage to chosen asset in the Main Theater."},
 		Triggers: []ability.Trigger{
@@ -183,6 +210,27 @@ var pathDefs = map[string]*ability.Def{
 			Steps: []ability.Step{
 				{
 					Op:      ability.OpKill,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
+	"Fortify": {
+		Text: []string{"Chosen allied unit gains 3 armor."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpAddArmor,
+					Amount:  ability.Value{N: 3},
 					Subject: ability.SubjectTarget,
 					Target:  0,
 				},
