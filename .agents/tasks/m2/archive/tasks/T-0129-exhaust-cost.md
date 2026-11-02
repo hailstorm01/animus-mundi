@@ -4,7 +4,7 @@ title: An additional cost can exhaust a readied allied unit, and exhausting an E
 kind: shape
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/autoloop-wave-c/T-0129-exhaust-cost
 depends_on: [T-0063, T-0128]
 claims: [const:CostExhaust, func:exhaust, func:costDecision, func:payCosts]
@@ -69,3 +69,4 @@ In a new file `pkg/engine/exhaust_cost_test.go`, on synthetic Maneuvers built wi
 - 2026-11-02 rules-test-author: wrote the six listed tests in pkg/engine/exhaust_cost_test.go (TestFR_TRN_003a_ExhaustCostPaidOnDeclaration, ..._ExhaustCostNeedsAReadiedUnit, ..._ExhaustCostTriggerResolvesBeforeTheManeuver, TestFR_MOD_001_ExhaustCostTimeoutPicksFixedOrder, ..._ExhaustCostSingleOptionNotAsked, TestFR_CAP_001_ExhaustingAnExhaustedAssetDoesNothing with a control subtest) plus the exhaustCostManeuver helper in that file. Helpers requested: none. Cases left out: none. go vet fails only on undefined ability.CostExhaust (expected); cardtown lint rules passes. Status tests-review.
 - 2026-11-02 lead-architect: tests approved (78d9582): the six listed tests check the cited FRD 01 text (FR-TRN-003a line 335, FR-CAP-001 line 302, SVY-R29, FR-MOD-001 sec. 1 and 6), the order test watches logged damage rather than a draw, and #58's test has a Readied control. Status `ready`, kernel-engineer (sonnet).
 - 2026-11-02 kernel-engineer: added ability.CostExhaust; costDecision filters Exhausted assets and says "exhaust" for it; payCosts switches on kind (kill/exhaust, panics on unknown); exhaust returns early on an Exhausted asset (#58); re-wrapped placeable's comment. Reused costDecision/pickFrom/kill/exhaust/fireExhausted; no new shape elsewhere. Ran: the six listed tests pass; go tool task check passes; go tool task sim-compare -- autoloop/m2-wave-c passes. Status review.
+- 2026-11-02 lead-architect: approved round 1 and merged into `autoloop/m2-wave-c` (0c1aefa). Diff in scope (the three Allowed Files; `exhaust_cost_test.go` unchanged since 78d9582), follows the Shape, no duplicate. Re-ran in a review worktree: the listed tests, `go tool task check`, `go tool task sim-compare -- autoloop/m2-wave-c` (byte-identical) and `go tool task sim` (clean, 200 games, P0 74.5% / P1 25.5% / draws 0.0%). Directive #58 applied and archived. Status `done`.

@@ -132,3 +132,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0126 | Make Animoceps Spores executable (Scratch 2, then return an allied Scratch Company unit, wave C card, flash) | done |
 | T-0127 | Make Rapturous Sermon executable (move all allied Scratch Company units to the Main Theater, then +2 power until end of turn, wave C card, flash) | done |
 | T-0128 | A Maneuver can have an additional cost that kills a chosen allied unit, paid on declaration, and Rhapsody's Embrace and Feed the Despoiler use it (FR-TRN-003a, SVY-R2, SVY-R15, wave C shape, sonnet) | done |
+| T-0129 | An additional cost can exhaust a readied allied unit, and exhausting an Exhausted asset does nothing (FR-TRN-003a, SVY-R17, directive #58, wave C shape, sonnet) | done |
