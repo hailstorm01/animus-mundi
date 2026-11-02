@@ -93,8 +93,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 
 // placeable reports whether e can be placed with everything it requires
 // (SVY-R29): every additional cost payable (costsPayable), then at least
-// ChooseN legal modes, or a legal entity for each exactly-one slot. It applies to enacting a Maneuver only: a trigger is
-// placed whatever it finds (SVY-R30, FR-TGT-003).
+// ChooseN legal modes, or a legal entity for each exactly-one slot. It applies to enacting a Maneuver only: a
+// trigger is placed whatever it finds (SVY-R30, FR-TGT-003).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
 		return false
