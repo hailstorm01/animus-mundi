@@ -4,7 +4,7 @@ title: A step can run only if its controller has no cards in hand (wave C shape,
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: review
 branch: m2/autoloop-wave-c/T-0132-hand-empty-condition
 depends_on: [T-0131]
 claims: [field:Step.IfHandEmpty, func:runSteps]
@@ -64,3 +64,6 @@ In a new file `pkg/engine/hand_empty_test.go`, on synthetic Maneuvers built with
 ## Log
 - 2026-11-02 lead-architect (wave C session 19): queued with T-0131's task commit (D2.4).
 - 2026-11-02 lead-architect (wave C session 20): Inputs, Shape, Tests, Allowed Files and Done When written against the run branch at dd3774c. `claims:` narrowed from `condition:hand-empty` to the new field and `runSteps`, the one place step gates are checked. Reuse search: `IfDone` is the only step gate (`effects.go:54`); trigger gates (`TurnOwner`, `ToZone`, `Cornered`) are read on the event, not per step, and nothing in `pkg/engine` or `archive/tasks/task_archive.md` reads a hand at resolution. No ruling needed (Inputs). Status `tests`.
+- 2026-11-02 rules-test-author: wrote pkg/engine/hand_empty_test.go: TestFR_MNV_001_HandEmptyStepRunsWithAnEmptyHand, _HandEmptyStepSkippedWithACardInHand, _HandEmptyReadAfterEarlierSteps, _HandEmptyReadsTheControllersHand, _SkippedHandEmptyStepCountsAsNotDone, TestFR_TRN_003a_DiscardCostThenHandEmptyStep. Helpers requested: none (local test helpers handEmpty and handEmptyScene live in the new file). Cases left out: none. go vet fails only on the missing field ability.Step.IfHandEmpty (the shape under test). cardtown lint rules passes.
+- 2026-11-02 lead-architect: tests approved (8645967). The six tests check the cited text: the gate is read on the controller's hand as the step resolves, after earlier steps (a discard empties it, a draw fills it; `SVY-R3`, line 357), with the Maneuver on the stack and so never counted (`FR-MNV-001`, line 333); the discard cost empties the hand before any step runs (`FR-TRN-003a`, line 335); a skipped gated step counts as not done, so the next `IfDone` step does not run (`SVY-R14`). The gated step is watched through logged Headquarters damage or the hand and deck, not a draw event. `go vet` fails only on the task's own claim, `Step.IfHandEmpty`. Status `ready`, kernel-engineer (sonnet).
+- 2026-11-02 kernel-engineer: added `Step.IfHandEmpty` (ability.go, gofmt realigned the neighbouring struct fields' comments) and `(g *Game) stepRuns` beside `runSteps` (effects.go): one function holding the `IfDone` test (moved unchanged in meaning) and the new hand test on `g.Players[r.it.Controller].Hand`, read as the step is reached; a skipped step still counts 0 in `r.done`. doc.go names the gate beside `IfDone`. Reuse: extended the existing `IfDone` gate site, no new Op/Subject, no step<Op> change. Ran: the listed tests pass; `go tool task check` passes; `go tool task sim-compare -- autoloop/m2-wave-c` passes (byte-identical). Reviewer: check the gofmt-only realignment in the Step struct.
