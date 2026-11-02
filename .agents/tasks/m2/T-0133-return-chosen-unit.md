@@ -4,7 +4,7 @@ title: Make Disorienting Pulse and Tactical Withdrawal executable (return a chos
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0133-return-chosen-unit
 depends_on: [T-0116, T-0117, T-0121]
 claims: [card:Disorienting Pulse, card:Tactical Withdrawal]
