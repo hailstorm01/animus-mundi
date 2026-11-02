@@ -34,7 +34,8 @@ type Def struct {
 type CostKind int
 
 const (
-	CostKill CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
+	CostKill    CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
+	CostExhaust                     // exhaust one Readied allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a, SVY-R17)
 )
 
 // Cost is one additional cost, paid when its card is declared (FR-TRN-003a).
