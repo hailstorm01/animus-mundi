@@ -4,7 +4,7 @@ title: An additional cost can discard up to N cards from the payer's hand (FR-TR
 kind: shape
 tier: sonnet
 wave: C
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-c/T-0131-discard-cost
 depends_on: [T-0128, T-0129]
 claims: [const:CostDiscard, field:Cost.UpTo, func:costsPayable, func:payCosts, func:discardFromHand]
@@ -73,3 +73,4 @@ In a new file `pkg/engine/discard_cost_test.go`, on synthetic Maneuvers built wi
   1. `TestFR_TRN_003a_DiscardCostPaidOnDeclaration` (`discard_cost_test.go:86`): compare the discard event's `Zone` to `"Hand"` (or `ZoneHand.String()`), not `"hand"`. Change nothing else in any test.
   2. For the engineer's next round (not the tests): b28b653 otherwise matches the Shape (`CostDiscard`, `Cost.UpTo`, `costsPayable` skipping it, `payCosts` paying it through the one `discardFromHand` after the push, `stepDiscard` passing `false`). Re-wrap `payCosts`' doc comment (`placement.go`), whose line ending `so a replaced kill` is now short, and make it read that a replaced kill still counts as paid, not the discard cost.
 - 2026-11-02 rules-test-author: round 2, note 1 applied in a3c969d: `TestFR_TRN_003a_DiscardCostPaidOnDeclaration` now compares the discard event's `Zone` to `"Hand"`. Nothing else changed in any test; no helpers requested. Note 2 left for the engineer. Status `tests-review`.
+- 2026-11-02 lead-architect: round-2 tests approved. a3c969d changes only line 86 of `TestFR_TRN_003a_DiscardCostPaidOnDeclaration`, `"hand"` to `"Hand"`, as note 1 asked; no other test changed. Against b28b653, `go test ./pkg/engine -run 'TestFR_TRN_003a_DiscardCost|TestFR_MOD_001_DiscardCost'` passes. Status `ready`; dispatching `kernel-engineer` (sonnet) for note 2 (the `payCosts` doc comment) and the Done When gates.
