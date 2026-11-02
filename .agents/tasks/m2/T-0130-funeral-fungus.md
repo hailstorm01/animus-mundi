@@ -4,8 +4,8 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: queued
-branch: m2/T-0130-funeral-fungus
+status: tests
+branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
 cards: [Funeral Fungus]
@@ -20,7 +20,51 @@ Covers:
 - The name off `cards.NotYetExecutable`.
 - Benchmark blueprint #8 (`docs/frd/reference/02_Benchmark_Card_Blueprints.md` line 307) as a test source: no Readied allied unit, or no unit card in its controller's discard pile, means it can't be enacted (`SVY-R29`).
 
-Inputs, Tests and Allowed Files are written against the code of the day before this task leaves `queued`. Expected Allowed Files: `pkg/engine/cards/animus.go`, `pkg/engine/cards/cards.go`.
+## Inputs
+- Card (`data/cards/maneuvers-animus.csv` line 5): *Funeral Fungus*, Animus Maneuver, cost 0 Requisition / 1 Tactics, two rules-text lines:
+  - "As an additional cost to enact this maneuver, exhaust a readied allied unit."
+  - "Return chosen unit card from your discard pile to your hand."
+- Survey row: `docs/design/m2_starter_set_ability_survey.md` line 127: exhaust readied allied unit; `RETURN_TO_HAND` chosen unit card from discard; `FR-TRN-003a`; Benchmark #8.
+- Benchmark blueprint #8 (`docs/frd/reference/02_Benchmark_Card_Blueprints.md` lines 307-345): `EXHAUST_ASSET` cost with filter allied, unit, Readied; one `CHOSEN` target, allied, unit card, in the discard pile, count 1; `RETURN_TO_HAND` on it.
+- FRD 01:
+  - `FR-TRN-003a` (line 335, which names this card): the additional cost is paid on declaration. Abilities triggered by paying it go on the stack on top of the Maneuver and resolve before it.
+  - `FR-MNV-001` (line 333): enacted from Hand, costs paid on declaration, the effect runs when it resolves, then the card goes to its owner's Discard pile.
+  - `SVY-R29` (`FR-MNV-001`, line 334): it can be enacted only if its exactly-one target slot has a legal entity on declaration. A Maneuver that can't be enacted stays in hand.
+  - `FR-TGT-001` (line 347): conjunction eligibility. "Your discard pile" is the controller's; "unit card" excludes Maneuvers and Structures.
+  - `SVY-R17` (`FR-CAP-001`, line 55): paying the cost is a change from Readied to Exhausted, so "whenever this unit exhausts" triggers fire, on top of the Maneuver.
+  - `FR-TGT-003`: two-stage verification; a target that left the discard pile before resolution is skipped and the card still goes to the discard pile.
+- Shapes it uses, all `done`: `Def.Effect`, `ActEnact` and `StackManeuver` (T-0116), the `SVY-R29` enact legality (T-0117, `placeable` and `slotsLegal`, `placement.go`), `Def.ExtraCosts` and `ability.Cost` (T-0128), `ability.CostExhaust` (T-0129: `costDecision` offers only Readied assets, `placement.go:49-61`), a chosen target in a discard pile (T-0081: `ability.ZoneDiscard`, `Filter.InPile`), `OpReturnToHand` on `SubjectTarget` (as *Eternal Watchman*, `cards/headquarters.go:30-55`) and the progress policy's enacts (T-0121).
+- Rulings: `SVY-R2` (targets and costs are committed together), `SVY-R17`, `SVY-R29`. No other.
+
+### Definition (the engineer adds it to `animusDefs`)
+- *Funeral Fungus*: `Text` holds both lines. `ExtraCosts`: one `{Kind: ability.CostExhaust, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}` (Readied is what `CostExhaust` means, so the filter has no readiness field). `Effect`:
+  - `Targets`: one exactly-one slot, `Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}`.
+  - `Steps`: one, `{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget, Target: 0}`.
+- No `Triggers` or `Modes`. Model it on *Feed the Despoiler*'s `ExtraCosts` and *Eternal Watchman*'s target and step.
+- Remove the name from `cards.NotYetExecutable`.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, loading the real card (`s.card`). Player 0 enacts; player 1 is the opponent. Give player 0 enough Tactics to pay (`enactFor`). Put cards in a discard pile with `s.inDiscard`.
+- `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard`: player 0 has a Readied allied unit on the battlefield and two unit cards in its discard pile. Enacting it, with player 0 choosing the older of the two (not the top one), exhausts the allied unit, puts the chosen unit card in player 0's hand, leaves the other in the discard pile, and puts the Maneuver in player 0's discard pile (`lastDiscard`). It spends 1 Tactics and no Requisition.
+- `TestCard_FuneralFungus_OnlyAReadiedAlliedUnitPays`: player 0 has an Exhausted allied unit, a Readied allied structure and a unit card in its discard pile; player 1 has a Readied unit. It is not offered (`offersEnact`), enacting it is rejected (`s.reject`), and the card stays in hand. When a Readied allied unit is added, it is offered, and enacting it exhausts that unit and no other asset.
+- `TestCard_FuneralFungus_NeedsAUnitCardInItsControllersDiscardPile` (`SVY-R29`, `FR-TGT-001`): player 0 has a Readied allied unit, a Maneuver card and a Structure card in its own discard pile, and player 1 has a unit card in its discard pile. It is not offered, enacting it is rejected, the card stays in hand, and the allied unit stays Readied. When a unit card is added to player 0's discard pile, it is offered.
+- `TestCard_FuneralFungus_ScratchCompanyCanPay`: a Readied face-down Scratch Company unit is a Readied allied unit, so it can pay the cost; after enacting, it is Exhausted.
+- `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` (`FR-TRN-003a`, `SVY-R17`): the only Readied allied unit is the real *Animoceps Shambler* ("Whenever this unit exhausts, chosen allied asset in the Main Theater heals 1."), and a damaged allied asset is in the Main Theater. Paying the cost with the Shambler fires its trigger, which resolves before the Maneuver: the damaged asset heals 1, and in `g.Log` the heal comes before the unit card's return to hand.
+- **Existing tests:** every other test passes unchanged, including `TestStarterSet_Executable` with the name removed, `TestView_Case8_ExecutableFlag` (seat 0's seed-1 hand still holds unsupported cards), `TestProgress_Case4_Coverage` and `TestEvents_Case4_EveryActionKind`.
+
+## Helpers Needed
+- None expected. The tests use existing helpers (`newScene`, `put`, `putScratch`, `inDiscard`, `give`, `card`, `do`, `reject`, `script`, `asked`), those in `maneuver_test.go` (`enactAction`, `offersEnact`, `lastDiscard`), `inHand` (`trigger_test.go`), `inDiscard(p, inst)` (`cards_animus_apostle_test.go`) and `enactFor`; the test file may add its own setup helpers.
+
+## Allowed Files
+- `pkg/engine/cards/animus.go` (the definition)
+- `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
+
+## Done When
+- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_FuneralFungus`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-10-31 lead-architect: queued in wave C session 15, with T-0128's task commit (D2.4).
+- 2026-11-02 lead-architect: wave C session 17. Inputs, Tests and Allowed Files written against 242811e; branch renamed for the wave run (D7.4). No `open: before` directive; waiting triggers #6, #7, #8, #15, #59 (2), #61 (fifth question), #71, #88 (distinctness) not fired. Status `tests`.
