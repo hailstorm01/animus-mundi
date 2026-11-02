@@ -34,7 +34,6 @@ var NotYetExecutable = []string{
 	"Ensnaring Mist",
 	"Forced Mutation",
 	"Fortify",
-	"Funeral Fungus",
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
 	"Macabre Dancers",
