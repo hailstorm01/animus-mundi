@@ -4,7 +4,7 @@ title: Make Conversion Spike executable (damage a chosen opposing unit, heal a c
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0134-conversion-spike
 depends_on: [T-0019, T-0116, T-0117, T-0121]
 claims: [card:Conversion Spike]
@@ -69,3 +69,4 @@ From the CSV text, loading the real card (`s.card`). Player 0 enacts; player 1 i
 - 2026-11-02 lead-architect: tests round 1, changes requested. Checked against a discarded trial of the task's Definition: with it, ten of the eleven pass and so does the rest of `go test ./pkg/...`; one fails on its own setup. Notes:
   1. `TestCard_ConversionSpike_AlliedWardUnitCanBeHealed` fails with the correct definition: "target decision 1 was not asked of seat 0". The scene has one opposing unit, so the first slot has a single legal entity and no decision is asked for it (T-0123 round 2); the allied slot's decision is then target decision 0, not 1. Put a second plain opposing unit in the Main Theater (so both slots ask, as in `_AlliedSlotOffersOnlyAlliedUnitsAndStructures`), keep `csTargetOffers(s, 1)`, and check that the unchosen opposing unit stays at 0 damage. No other test changes.
   The other ten check their outcomes against the card text and FRD 01: damage 1 to the chosen opposing unit and heal 1 on the chosen ally, unchosen ones untouched, the Maneuver to its owner's discard pile (`FR-MNV-001`); a damaged allied structure can be healed; the first slot offers exactly the opposing units in both zones, a face-down Scratch Company included, never a structure, an ally or a Headquarters, and the second exactly the allied units and structure, never a Headquarters or an opposing asset (`FR-TGT-001`); an opposing Ward unit isn't offered (`FR-KWD-002h`); an undamaged ally stays at 0 (`FR-KWD-002d`); 1 Armor absorbs the damage (`FR-REP-004`); a 1-health unit dies; not enactable without both slots filled and enactable with both (`SVY-R29`); 2 Tactics. The asserts read damage, Armor, zones, pools and offered options, not internals. Status `tests`; re-dispatching `rules-test-author`.
+- 2026-11-02 rules-test-author: tests round 1 note 1 fixed. `TestCard_ConversionSpike_AlliedWardUnitCanBeHealed` now has a second plain opposing unit in the Main Theater so both slots ask; it keeps `csTargetOffers(s, 1)` and also checks the unchosen opposing unit stays at 0 damage. No other test changed; no helpers requested. `go vet` and `cardtown lint rules` clean.

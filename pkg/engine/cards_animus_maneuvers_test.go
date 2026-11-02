@@ -1162,6 +1162,7 @@ func TestCard_ConversionSpike_AlliedWardUnitCanBeHealed(t *testing.T) {
 	// Covers: FR-KWD-002h
 	s := newScene(t)
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	foe2 := s.put(1, ZoneMainTheater, unit("Foe2", 1, 5, Keywords{}))
 	ward := s.put(0, ZoneMainTheater, unit("AWarded", 1, 5, Keywords{Ward: true}))
 	plain := s.put(0, ZoneMainTheater, unit("APlain", 1, 5, Keywords{}))
 	ward.Damage = 2
@@ -1169,6 +1170,7 @@ func TestCard_ConversionSpike_AlliedWardUnitCanBeHealed(t *testing.T) {
 	s.do(enactAction(enactFor(s, "Conversion Spike")))
 	csWantOffers(t, csTargetOffers(s, 1), "second slot with an allied Ward unit", ward, plain)
 	s.wantDamage(ward, 1)
+	s.wantDamage(foe2, 0)
 }
 
 func TestCard_ConversionSpike_HealingAnUndamagedAllyDoesNothing(t *testing.T) {
