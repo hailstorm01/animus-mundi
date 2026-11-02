@@ -33,4 +33,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0130 | Make Funeral Fungus executable (exhaust a readied allied unit as an additional cost, then return chosen unit card from your discard pile to your hand, wave C card, flash) | ready |

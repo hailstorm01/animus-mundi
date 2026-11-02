@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: review
+status: done
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -80,3 +80,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - 2026-11-02 rules-test-author (round 3): applied note 3. `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` no longer uses the `recorder` observer. It reads `g.Log` `place` events: the Maneuver (`Funeral Fungus`) has `Amount` 1, the Shambler trigger (`Animoceps Shambler`) comes later with `Amount` 2. The end-state assertions are kept (Shambler Exhausted, damage 2, card in hand). No other change (confirmed in `git show HEAD`). All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
 - 2026-11-02 lead-architect (tests-review, round 4): tests approved, status `ready`. Note 3 is applied (7f51960). Checked against `FR-TRN-003a`, `FR-MNV-001`, `SVY-R29`, `FR-TGT-001` and `SVY-R17`. A trial definition in a review worktree (as under Definition, discarded and not committed) passes all five tests and the rest of `go test ./pkg/engine`.
 - 2026-11-02 kernel-engineer: implemented Funeral Fungus definition in `pkg/engine/cards/animus.go` with `ExtraCosts` (`CostExhaust` for allied units) and `Effect` (`OpReturnToHand` on target in `ZoneDiscard` with allied unit filter); removed "Funeral Fungus" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Reused existing shapes: `ability.CostExhaust` (T-0129), `ability.ZoneDiscard` (T-0081), `ability.OpReturnToHand` and `ability.SubjectTarget`. Ran `go test ./pkg/engine -run TestCard_FuneralFungus` (all 5 tests pass), `go test ./pkg/engine -run TestStarterSet_Executable` (passes), `go tool task check` (all tests, linters, gofmt, go vet pass), `go tool task sim` (200 starter games clean, all invariants hold). Status `review`.
+- 2026-11-02 lead-architect: approved round 1 and merged into `autoloop/m2-wave-c` (60d2cda). Diff in scope (the two Allowed Files; `cards_animus_maneuvers_test.go` unchanged since 7f51960), matches the Definition, no new shape, no duplicate. Re-ran in a review worktree: `go test ./pkg/engine -run 'TestCard_FuneralFungus|TestStarterSet_Executable'`, `go tool task check` and `go tool task sim` (clean, 200 games, P0 76.0% / P1 23.5% / draws 0.5%, Animus 42/50 executable). Status `done`.
