@@ -4,7 +4,7 @@ title: A step can run only if its controller has no cards in hand (wave C shape,
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0132-hand-empty-condition
 depends_on: [T-0131]
 claims: [field:Step.IfHandEmpty, func:runSteps]
