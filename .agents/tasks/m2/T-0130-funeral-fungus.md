@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -74,3 +74,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - 2026-11-02 rules-test-author (round 1): applied note 1. `ffChoose` now applies `prefer` to `DecidePick` decisions (the cost payer) as well as `DecideTarget`. `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard` now chooses `Bystander` (Reserves, later ID) as the payer and asserts `Bystander` is Exhausted and `Ally` is still Readied. Rest unchanged. All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
 - 2026-11-02 lead-architect (tests-review, round 2): status `tests`. Notes:
   2. Note 1 is not applied in the code. bcaff5c changed `ffChoose`'s doc comment, but its body still reads `if d.Kind == DecideTarget {`, so the payer pick (`DecidePick`) is still answered with option 0, which is `Ally`. The revised `TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard` would then fail against a correct implementation. Change the condition to `if d.Kind == DecideTarget || d.Kind == DecidePick {` and re-wrap the doc comment to the file's line width. Before handing off, run `git show HEAD -- pkg/engine/cards_animus_maneuvers_test.go` and check that the condition line is in the diff.
+- 2026-11-02 rules-test-author (round 2): applied note 2. `ffChoose`'s condition is now `d.Kind == DecideTarget || d.Kind == DecidePick` (confirmed in `git show HEAD`), and the doc comment is re-wrapped. No other change. All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
