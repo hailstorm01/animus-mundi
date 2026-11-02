@@ -83,7 +83,7 @@ func TestFR_TRN_003a_DiscardCostPaidOnDeclaration(t *testing.T) {
 			place = e.Seq
 		case e.Kind == "discard" && (e.Inst == o[0].ID || e.Inst == o[2].ID):
 			discards = append(discards, e.Seq)
-			if e.Zone != "hand" {
+			if e.Zone != "Hand" {
 				t.Errorf("a cost discard is from the hand, got zone %q (FR-TRN-003a)", e.Zone)
 			}
 		case e.Kind == "damage" && e.Target == s.g.Players[1].HQ.ID && e.Amount == 1:
