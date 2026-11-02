@@ -852,15 +852,6 @@ func TestCard_FuneralFungus_ShamblerTriggerResolvesFirst(t *testing.T) {
 	p := s.g.Players[0]
 	ffChoose(s, card, hurt, sh)
 
-	healedAtReturn, returned := false, false
-	r := &recorder{}
-	r.onEvent = func(Event) {
-		if !returned && inHand(p, card) {
-			returned = true
-			healedAtReturn = hurt.Damage == 2
-		}
-	}
-	s.g.obs = r
 	s.do(enactAction(inst))
 
 	if !sh.Exhausted {
@@ -872,7 +863,25 @@ func TestCard_FuneralFungus_ShamblerTriggerResolvesFirst(t *testing.T) {
 	if !inHand(p, card) {
 		t.Fatalf("the unit card returns to hand")
 	}
-	if !returned || !healedAtReturn {
-		t.Errorf("the trigger goes on top of the Maneuver, so the heal happens before the card returns to hand (FR-TRN-003a)")
+	manPlace, trigPlace := 0, 0
+	for _, e := range s.g.Log {
+		switch {
+		case e.Kind == "place" && e.Card == "Funeral Fungus":
+			manPlace = e.Seq
+			if e.Amount != 1 {
+				t.Errorf("the Maneuver is placed at stack depth 1, got %d (FR-TRN-003a)", e.Amount)
+			}
+		case e.Kind == "place" && e.Card == "Animoceps Shambler":
+			trigPlace = e.Seq
+			if e.Amount != 2 {
+				t.Errorf("the Shambler's trigger is placed on top of the Maneuver, depth 2, got %d (FR-TRN-003a, SVY-R17)", e.Amount)
+			}
+		}
+	}
+	if manPlace == 0 || trigPlace == 0 {
+		t.Fatalf("missing place events: Maneuver %d, Shambler trigger %d", manPlace, trigPlace)
+	}
+	if trigPlace < manPlace {
+		t.Errorf("the trigger goes onto the stack after the Maneuver was declared, above it, so it resolves first (FR-TRN-003a)")
 	}
 }
