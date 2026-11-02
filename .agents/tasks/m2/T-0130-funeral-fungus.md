@@ -4,7 +4,7 @@ title: Make Funeral Fungus executable (exhaust a readied allied unit as an addit
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0130-funeral-fungus
 depends_on: [T-0081, T-0128, T-0129]
 claims: [card:Funeral Fungus]
@@ -77,3 +77,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 - 2026-11-02 rules-test-author (round 2): applied note 2. `ffChoose`'s condition is now `d.Kind == DecideTarget || d.Kind == DecidePick` (confirmed in `git show HEAD`), and the doc comment is re-wrapped. No other change. All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
 - 2026-11-02 lead-architect (tests-review, round 3): status `tests`. Note 2 is applied (381916d). With a trial definition in a review worktree (discarded, not committed), the other four tests pass and this one fails:
   3. `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` waits for an event after the card returns to hand, but neither healing nor returning a card to hand emits an event. The event kinds are in `events.go:240-261`, with no heal or return kind. After the Shambler trigger's `place` event, `g.Log` has no more events, so `returned` stays false even though the heal and the return both happened in the right order. Check the order the way T-0129's `TestFR_TRN_003a_ExhaustCostTriggerResolvesBeforeTheManeuver` does, from `place` events: an `EventPlace` event's `Amount` is the stack depth once placed. Assert that the Maneuver's `place` event (`Card` "Funeral Fungus") has `Amount` 1, and that the Shambler trigger's `place` event (`Card` "Animoceps Shambler") comes later in `g.Log` with `Amount` 2. That puts it on top of the Maneuver, so it resolves first. Drop the `recorder` observer and keep the end-state assertions: the Shambler is Exhausted, the damage is 2 and the card is in hand.
+- 2026-11-02 rules-test-author (round 3): applied note 3. `TestCard_FuneralFungus_ShamblerTriggerResolvesFirst` no longer uses the `recorder` observer. It reads `g.Log` `place` events: the Maneuver (`Funeral Fungus`) has `Amount` 1, the Shambler trigger (`Animoceps Shambler`) comes later with `Amount` 2. The end-state assertions are kept (Shambler Exhausted, damage 2, card in hand). No other change (confirmed in `git show HEAD`). All five tests still fail until the card is implemented. Helpers requested: none. Status `tests-review`.
