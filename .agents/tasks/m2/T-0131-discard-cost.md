@@ -4,7 +4,7 @@ title: An additional cost can discard up to N cards from the payer's hand (FR-TR
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0131-discard-cost
 depends_on: [T-0128, T-0129]
 claims: [const:CostDiscard, field:Cost.UpTo, func:costsPayable, func:payCosts, func:discardFromHand]
