@@ -56,7 +56,7 @@ High-level product strategist, portfolio architect, and guardian of the core pro
     git add docs/PRODUCT_SUMMARY.md docs/AGENTS.md
     git commit -m "docs(product): [action summary]" -- docs/PRODUCT_SUMMARY.md docs/AGENTS.md
     ```
-  - **Integration branch only.** Commit only on the integration branch named at the top of the active `BOARD.md`, never on a build-task branch (`m2/T-NNNN-*`). The lead would merge it as part of that task, and the scope review would flag it. Before writing, run `git branch --show-current` and `git status --short`. If the checkout is on another branch or has uncommitted changes, leave it alone and use a scratch worktree, following the **Worktrees** guard rail in `.agents/rules/AGENTS.md` (commands, and what to do when another session holds the branch).
+  - **Integration branch only.** Commit only on the integration branch named at the top of the active `BOARD.md`, never on a build-task branch (`m2/T-NNNN-*` or `m2/autoloop-wave-*/T-NNNN-*`). The lead would merge it as part of that task, and the scope review would flag it. Before writing, run `git branch --show-current` and `git status --short`. If the checkout is on another branch or has uncommitted changes, leave it alone and use a scratch worktree, following the **Worktrees** guard rail in `.agents/rules/AGENTS.md` (commands, and what to do when another session holds the branch).
   - **Never `git push`** unless explicitly requested by the stakeholder.
 
 ---
@@ -164,7 +164,7 @@ Portfolio Sync Trigger (New FRD / Milestone / Check)
 #### Step 1: Inspect Active Specs, Build Board & Gates
 1. Identify the active FRD(s) and milestone state requiring synchronization (frozen FRDs are skipped).
 2. Read the active FRD header and revision summary by line range, and run `cardtown lint frd` and `cardtown lint rules` to get verified requirement counts, domain prefixes, and test-pinning coverage.
-3. Read the open-item tables in `docs/frd/keyword_interaction_matrix.md` and `docs/design/m2_starter_set_ability_survey.md` §4, plus the build board (`.agents/tasks/<milestone>/BOARD.md`), and run `go tool task check` (and `go tool task sim` when checking milestone completion).
+3. Read the open-item tables in `docs/frd/keyword_interaction_matrix.md` and `docs/design/m2_starter_set_ability_survey.md` §4, plus the build board (`.agents/tasks/<milestone>/BOARD.md`; applied directives and `done` tasks live in `archive/directives/directive_archive.md` and `archive/tasks/task_archive.md`, and `BOARD.md`'s header lists `Last directive` and `Last task`), and run `go tool task check` (and `go tool task sim` when checking milestone completion).
 
 #### Step 2: Synthesize Updates into `docs/PRODUCT_SUMMARY.md`
 Apply the verified state to `docs/PRODUCT_SUMMARY.md`:

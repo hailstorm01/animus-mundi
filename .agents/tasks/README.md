@@ -1,6 +1,6 @@
 # Build Tasks
 
-One file per task, under `.agents/tasks/<milestone>/`. The task file is the only place a task's state lives. Agents hand work to each other through task files and git branches, never through chat, because the personas run in different tools on different models.
+One file per task, under `.agents/tasks/<milestone>/` while active or queued, and moved to `.agents/tasks/<milestone>/archive/tasks/` when `done` (together with its `BOARD.md` row in `task_archive.md`; applied directives move to `.agents/tasks/<milestone>/archive/directives/directive_archive.md`). The task file is the only place a task's state lives. Agents hand work to each other through task files and git branches, never through chat, because the personas run in different tools on different models.
 
 | Persona | Model | Runs in |
 | :--- | :--- | :--- |
@@ -29,7 +29,7 @@ queued → tests → tests-review → ready → in-progress → review → done
 | `review` | lead | Reviews the diff against the checklist in `lead-architect` Runbook D. |
 | `changes` | `kernel-engineer` | Fixes the numbered review notes. |
 | `blocked` | lead | The engineer stopped: a missing shape, a rules question, or a task too big. |
-| `done` | — | Merged into the integration branch. |
+| `done` | — | Merged into the integration branch; task file and board row moved to `archive/tasks/`. |
 
 **Harness tasks** (tooling, linters, test helpers) skip `tests` and `tests-review`, because `rules-test-author` only tests game rules. The lead writes the task's `Acceptance Cases`. The engineer turns them into tests, commits those first as `test(T-NNNN): …`, then implements. The lead reviews tests and code together at `review`. A harness task goes `queued → ready → in-progress → review → done`.
 
@@ -51,7 +51,7 @@ kind: shape | card | harness
 tier: flash | sonnet
 wave: A1 | A2 | B | C | D | E | F | G
 status: queued
-branch: m2/T-NNNN-<slug>
+branch: m2/T-NNNN-<slug>   # or m2/autoloop-wave-<x>/T-NNNN-<slug> in a wave run (lead-architect D7.4)
 depends_on: [T-NNNN]
 claims: [<shape or file this task alone may create or change, e.g. primitive:SCRATCH, hook:deploy>]
 cards: [<card names, for card tasks>]

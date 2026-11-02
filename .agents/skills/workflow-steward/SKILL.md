@@ -54,7 +54,7 @@ Everything else belongs to another persona: FRDs, the matrix, the survey, design
 4. Summarize what the persona will now do differently, and any permission change the user agreed to.
 
 ### C. Record a directive for the lead
-Write the row the user dictates, numbered after the last one, with source `User, <date>`, and status `open`, `open: before <task>` (blocking, lead-architect D2.0) or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
+Write the row the user dictates, numbered one after the `Last directive:` line at the top of `BOARD.md` (and update `Last directive: #<n>` to match), with source `User, <date>`, and status `open`, `open: before <task>` (blocking, lead-architect D2.0) or `waiting: <trigger>`. A directive describes *what* and *why*, and leaves task shape to the lead unless the user specified it. Never dispatch the lead.
 
 ### D. Reconcile branches and worktrees (only on request)
 1. Survey: `git worktree list`, the status of each worktree, `git branch -vv`, and commits on any branch not yet in the integration branch.
@@ -66,7 +66,7 @@ Write the row the user dictates, numbered after the last one, with source `User,
 
 ## 5. Working Rules
 - **Session start:** read `.agents/steward-log.md`. Mention open threads that are relevant to the user's first request, and nothing more.
-- **Commit placement:** only on the integration branch named in the active `BOARD.md`, never on a task branch (`m2/T-NNNN-*`). If the main checkout is elsewhere or dirty, follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
+- **Commit placement:** only on the integration branch named in the active `BOARD.md`, never on a task branch (`m2/T-NNNN-*` or `m2/autoloop-wave-*/T-NNNN-*`). If the main checkout is elsewhere or dirty, follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
 - **No chains:** never invoke another persona, dispatch a build task, or start a loop. Hand the user the prompt.
 - **Never `git push`.**
 - **Open threads:** when you offer something the user has not decided on, or a fix waits on another session, add it to the log's `Open Threads`. Remove it when it is resolved or declined.
