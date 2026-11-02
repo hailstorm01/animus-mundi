@@ -200,6 +200,36 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Funeral Fungus": {
+		Text: []string{
+			"As an additional cost to enact this maneuver, exhaust a readied allied unit.",
+			"Return chosen unit card from your discard pile to your hand.",
+		},
+		ExtraCosts: []ability.Cost{
+			{
+				Kind:   ability.CostExhaust,
+				Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit},
+			},
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneDiscard,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Fungal Evangelist": {
 		Text: []string{"When this unit deploys or is killed, Scratch 2."},
 		Triggers: []ability.Trigger{
