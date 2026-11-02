@@ -4,7 +4,7 @@ title: A Maneuver can have an additional cost that kills a chosen allied unit, p
 kind: shape
 tier: sonnet
 wave: C
-status: changes
+status: review
 branch: m2/T-0128-kill-cost
 depends_on: [T-0081, T-0097, T-0098, T-0108, T-0116, T-0117, T-0123]
 claims: [type:ability.Cost, type:ability.CostKind, const:CostKill, field:Def.ExtraCosts, field:placement.costs, func:costDecision, func:costsPayable, func:payCosts, card:Rhapsody's Embrace, card:Feed the Despoiler]
@@ -96,3 +96,4 @@ Shape tests in a new file `pkg/engine/kill_cost_test.go`, on synthetic Maneuvers
   1. Move the `g.payCosts` call from `chooseOnPlacement` to `Apply`'s `ActEnact` case, right after `g.push(&StackItem{Kind: StackManeuver, ...})`, as the revised `payCosts` bullet of the Shape says. `chooseOnPlacement` and its doc comment go back to modes, then targets; `payCosts`' doc comment says it runs after the Maneuver is placed (`FR-TRN-003`) and that targets were judged before it (`SVY-R2`). Triggers' placement is unchanged. Touch nothing else in `actions.go`.
   2. Re-wrap the `placeable` doc comment added in 41ce031 to the file's usual width.
   3. Run every `Done When` command, `go tool task check` and `go tool task sim` included, before setting `review`.
+- 2026-11-02 kernel-engineer: round 3, status `review`. Note 1: `Apply`'s `ActEnact` case now builds `pl := maneuverPlacement(...)`, calls `chooseOnPlacement(pl, ...)`, `g.push` of the Maneuver, then `g.payCosts(pl)`; `chooseOnPlacement` is back to modes then targets (comment trimmed); `payCosts`' doc comment now says it runs after the push (FR-TRN-003) and after targets were judged (SVY-R2). Nothing else in `actions.go` touched. Note 2: the `placeable` doc comment is re-wrapped. Note 3: `go test ./pkg/engine -run 'TestFR_TRN_003a|TestFR_MOD_001_KillCost'` ok; `go tool task check` exit 0; `go tool task sim` exit 0 (targeting monitor reached, no break). Reuse unchanged from round 1 (`assetDecision`, `pickFrom`, `matchesFilter`, the one `kill`).

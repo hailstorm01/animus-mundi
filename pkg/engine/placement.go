@@ -23,17 +23,12 @@ type placement struct {
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
 // modes first, if it has any, then the targets of the effect that leaves
 // (FR-MOD-001 §5, SVY-R3). It returns the effect the stack item resolves and
-// the chosen targets, one slice of Refs per target slot. The additional costs
-// are paid last (payCosts): targets are judged against the state before a cost
-// moves anything (SVY-R2), so the player sees the target prompts first and the
-// cost prompt last.
+// the chosen targets, one slice of Refs per target slot.
 func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect, [][]int) {
 	if len(e.Modes) > 0 {
 		e = g.chooseModes(pl, e)
 	}
-	targets := g.chooseTargets(pl, e)
-	g.payCosts(pl)
-	return e, targets
+	return e, g.chooseTargets(pl, e)
 }
 
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
@@ -72,7 +67,10 @@ func (g *Game) costsPayable(pl placement) bool {
 // payCosts pays each additional cost of pl in printed order: its controller
 // picks the asset (costDecision, pickFrom) and it is killed through kill, so a
 // replaced kill still counts as paid (SVY-R15) and the triggers it fires wait
-// in the pending buffer to go above the declared card (FR-TRN-003a).
+// in the pending buffer to go above the declared card (FR-TRN-003a). It runs
+// after the Maneuver is pushed, so the card is already on the stack when the
+// cost's triggers are queued (FR-TRN-003), and after its targets were chosen,
+// so they were judged against the state before the cost moved anything (SVY-R2).
 func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		d, opts := g.costDecision(pl, c)
@@ -94,8 +92,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 }
 
 // placeable reports whether e can be placed with everything it requires
-// (SVY-R29): every additional cost payable (costsPayable), then at least ChooseN legal modes, or a legal entity for each
-// exactly-one slot. It applies to enacting a Maneuver only: a trigger is
+// (SVY-R29): every additional cost payable (costsPayable), then at least
+// ChooseN legal modes, or a legal entity for each exactly-one slot. It applies to enacting a Maneuver only: a trigger is
 // placed whatever it finds (SVY-R30, FR-TGT-003).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
