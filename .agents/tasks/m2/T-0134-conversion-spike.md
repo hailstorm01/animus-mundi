@@ -4,7 +4,7 @@ title: Make Conversion Spike executable (damage a chosen opposing unit, heal a c
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0134-conversion-spike
 depends_on: [T-0019, T-0116, T-0117, T-0121]
 claims: [card:Conversion Spike]
