@@ -700,7 +700,7 @@ func TestFR_TRN_003a_FeedTheDespoiler(t *testing.T) {
 // exhaust a readied allied unit." / "Return chosen unit card from your discard
 // pile to your hand." Costs 0 Requisition, 1 Tactics.
 
-// ffChoose answers every DecideTarget with the option referring to whichever of
+// ffChoose answers every DecideTarget and DecidePick (the cost payer) with the option referring to whichever of
 // prefer is offered first (an *Asset or an *Instance, by ID), and every other
 // decision with its first option. It records the decisions in s.asks[0].
 func ffChoose(s *scene, prefer ...any) {
@@ -738,13 +738,13 @@ func TestCard_FuneralFungus_ExhaustsAndReturnsTheChosenUnitCard(t *testing.T) {
 	cards := s.inDiscard(0, unit("Older", 1, 1, Keywords{}), unit("Newer", 1, 1, Keywords{}))
 	inst := enactFor(s, "Funeral Fungus")
 	p := s.g.Players[0]
-	ffChoose(s, cards[0], ally)
+	ffChoose(s, cards[0], other)
 	s.do(enactAction(inst))
-	if !ally.Exhausted {
-		t.Errorf("the chosen Readied allied unit is exhausted as the additional cost (FR-TRN-003a)")
+	if !other.Exhausted {
+		t.Errorf("the Readied allied unit the payer chose (Bystander) is exhausted as the additional cost (FR-TRN-003a)")
 	}
-	if other.Exhausted {
-		t.Errorf("no other asset is exhausted (FR-TRN-003a)")
+	if ally.Exhausted {
+		t.Errorf("no other asset is exhausted: the unchosen Readied allied unit stays Readied (FR-TRN-003a)")
 	}
 	if !inHand(p, cards[0]) || inDiscard(p, cards[0]) {
 		t.Errorf("the chosen (older) unit card returns to its controller's hand, not the top one")
