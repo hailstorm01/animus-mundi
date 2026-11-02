@@ -134,3 +134,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0128 | A Maneuver can have an additional cost that kills a chosen allied unit, paid on declaration, and Rhapsody's Embrace and Feed the Despoiler use it (FR-TRN-003a, SVY-R2, SVY-R15, wave C shape, sonnet) | done |
 | T-0129 | An additional cost can exhaust a readied allied unit, and exhausting an Exhausted asset does nothing (FR-TRN-003a, SVY-R17, directive #58, wave C shape, sonnet) | done |
 | T-0130 | Make Funeral Fungus executable (exhaust a readied allied unit as an additional cost, then return chosen unit card from your discard pile to your hand, wave C card, flash) | done |
+| T-0131 | An additional cost can discard up to N cards from the payer's hand (FR-TRN-003a, SVY-R3, directive #20 (b), wave C shape, sonnet) | done |

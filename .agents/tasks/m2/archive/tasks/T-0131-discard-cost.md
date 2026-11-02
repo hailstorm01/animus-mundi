@@ -4,7 +4,7 @@ title: An additional cost can discard up to N cards from the payer's hand (FR-TR
 kind: shape
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/autoloop-wave-c/T-0131-discard-cost
 depends_on: [T-0128, T-0129]
 claims: [const:CostDiscard, field:Cost.UpTo, func:costsPayable, func:payCosts, func:discardFromHand]
@@ -75,3 +75,4 @@ In a new file `pkg/engine/discard_cost_test.go`, on synthetic Maneuvers built wi
 - 2026-11-02 rules-test-author: round 2, note 1 applied in a3c969d: `TestFR_TRN_003a_DiscardCostPaidOnDeclaration` now compares the discard event's `Zone` to `"Hand"`. Nothing else changed in any test; no helpers requested. Note 2 left for the engineer. Status `tests-review`.
 - 2026-11-02 lead-architect: round-2 tests approved. a3c969d changes only line 86 of `TestFR_TRN_003a_DiscardCostPaidOnDeclaration`, `"hand"` to `"Hand"`, as note 1 asked; no other test changed. Against b28b653, `go test ./pkg/engine -run 'TestFR_TRN_003a_DiscardCost|TestFR_MOD_001_DiscardCost'` passes. Status `ready`; dispatching `kernel-engineer` (sonnet) for note 2 (the `payCosts` doc comment) and the Done When gates.
 - 2026-11-02 kernel-engineer: round 2, status `review`. Answered lead note 2: re-wrapped the `payCosts` doc comment in `pkg/engine/placement.go` (comment only, lines filled evenly); it now reads that a replaced kill (not the discard cost) still counts as paid (SVY-R15). No test changed. Commands: `go test ./pkg/engine -run 'TestFR_TRN_003a_DiscardCost|TestFR_MOD_001_DiscardCost'` ok; `go tool task check` passed (all stages, lint PASS); `go tool task sim-compare -- autoloop/m2-wave-c` PASS, starter and stress byte for byte.
+- 2026-11-02 lead-architect: approved, merged into `autoloop/m2-wave-c` as 1ae7a2e (`--no-ff`). Reviewed `git diff autoloop/m2-wave-c...m2/autoloop-wave-c/T-0131-discard-cost`, not the Log. Scope: only Allowed Files and the task file changed; `discard_cost_test.go` changes only in the two `test(T-0131)` commits (0c6d949, a3c969d); no existing test edited. Shape: `CostDiscard` and `Cost.UpTo` in `ability`; `costsPayable` skips a discard cost; `payCosts` pays it in printed order through the one `discardFromHand`, after the push; `discardFromHand(pid, n, upTo)` with `upTo` asks a `DecideHand` with `Min` 0 and `Max` `min(n, len(hand))` whenever the hand isn't empty, and `stepDiscard` passes `false`, so its behavior is unchanged. Fences: no card name in engine code, no new decision kind, no second discard loop. Note 2 met (b561f1d, comment only). Gates re-run by the lead: `go tool task check` exit 0 on the task branch and on the run branch after the merge; `go tool task sim-compare -- autoloop/m2-wave-c` byte-identical; `go tool task sim` clean, 200 games, P0 76.0% / P1 23.5% / draws 0.5%. Status `done`.
