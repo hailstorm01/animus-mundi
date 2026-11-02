@@ -378,4 +378,29 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Tactical Withdrawal": {
+		Text: []string{"Return up to one chosen allied unit to its owner's hand. Draw a card."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+					},
+					UpTo: 1,
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:     ability.OpDraw,
+					Amount: ability.Value{N: 1},
+				},
+			},
+		},
+	},
 }

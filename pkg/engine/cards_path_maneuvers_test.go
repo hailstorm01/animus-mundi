@@ -381,3 +381,131 @@ func TestCard_ImprovisedOrders_PaysTwoTactics(t *testing.T) {
 		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0133 (FR-MNV-001, FR-TGT-001, FR-TGT-002, FR-KWD-002h,
+// FR-ZON-004, FR-ZON-005): the Path Maneuver Tactical Withdrawal, loaded from
+// data/cards. Player 0 enacts; player 1 is the opponent.
+//
+// Tactical Withdrawal: "Return up to one chosen allied unit to its owner's
+// hand. Draw a card." Cost 1 Tactics.
+
+func TestCard_TacticalWithdrawal_ReturnsChosenAlliedUnitThenDraws(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TGT-001, FR-ZON-004
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	other := s.put(0, ZoneMainTheater, unit("Other", 1, 3, Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	inst := enactFor(s, "Tactical Withdrawal")
+	chooseAsset(s, ally)
+	s.do(enactAction(inst))
+	p := s.g.Players[0]
+	if s.alive(ally) || !inHand(p, ally.Inst) {
+		t.Errorf("the chosen allied unit leaves the battlefield and is in its owner's hand (FR-MNV-001, FR-ZON-004)")
+	}
+	if !s.alive(other) {
+		t.Errorf("the unchosen allied unit stays on the battlefield (FR-TGT-001)")
+	}
+	if !inHand(p, top) {
+		t.Errorf("the top card of the deck is drawn (FR-MNV-001)")
+	}
+	if n := len(p.Hand); n < 2 || p.Hand[n-2] != ally.Inst || p.Hand[n-1] != top {
+		t.Errorf("the unit is returned before the card is drawn: hand %v, want the unit then the drawn card last (FR-MNV-001)", p.Hand)
+	}
+	if lastDiscard(p) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_TacticalWithdrawal_ChoosingNoneStillDraws(t *testing.T) {
+	// Covers: FR-TGT-002, SVY-R11
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	s.script(0, Answer{Picks: []int{}})
+	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	p := s.g.Players[0]
+	if !s.alive(ally) || inHand(p, ally.Inst) {
+		t.Errorf("choosing no unit returns nothing (FR-TGT-002)")
+	}
+	if !inHand(p, top) {
+		t.Errorf("the card is still drawn when no unit is chosen (FR-MNV-001)")
+	}
+}
+
+func TestCard_TacticalWithdrawal_EnactableWithNoAlliedUnit(t *testing.T) {
+	// Covers: SVY-R29, FR-TGT-002
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	inst := enactFor(s, "Tactical Withdrawal")
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("an \"up to\" slot never stops an Enact, even with no allied unit (SVY-R29)")
+	}
+	s.script(0)
+	s.do(enactAction(inst))
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("no legal target, so no decision is asked: asked %d times (FR-TGT-002)", n)
+	}
+	if !s.alive(foe) || !s.alive(wall) {
+		t.Errorf("nothing leaves the battlefield")
+	}
+	if !inHand(s.g.Players[0], top) {
+		t.Errorf("the card is still drawn (FR-MNV-001)")
+	}
+}
+
+func TestCard_TacticalWithdrawal_OnlyAlliedUnitsAreOffered(t *testing.T) {
+	// Covers: FR-TGT-001
+	s := newScene(t)
+	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	chooseAsset(s, u1)
+	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	got := targetOffers(s)
+	if len(got) != 2 || !got[u1.ID] || !got[u2.ID] {
+		t.Errorf("exactly the two allied units are offered, got refs %v (FR-TGT-001)", got)
+	}
+	for _, a := range []*Asset{st, foe, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not an allied unit and must not be offered (FR-TGT-001)", a)
+		}
+	}
+}
+
+func TestCard_TacticalWithdrawal_AlliedWardUnitCanBeChosen(t *testing.T) {
+	// Covers: FR-KWD-002h
+	s := newScene(t)
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+	chooseAsset(s, ward)
+	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	if !targetOffers(s)[ward.ID] {
+		t.Errorf("an allied Ward unit is offered: Ward stops only opponents (FR-KWD-002h)")
+	}
+	if s.alive(ward) || !inHand(s.g.Players[0], ward.Inst) {
+		t.Errorf("the chosen allied Ward unit is returned to its owner's hand (FR-KWD-002h)")
+	}
+}
+
+func TestCard_TacticalWithdrawal_FaceDownScratchCompanyReturnsAsItsCard(t *testing.T) {
+	// Covers: FR-ZON-004, FR-ZON-005, FR-TGT-001
+	s := newScene(t)
+	sc := s.putScratch(0)
+	chooseAsset(s, sc)
+	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	if s.alive(sc) || !inHand(s.g.Players[0], sc.Inst) {
+		t.Errorf("an allied face-down Scratch Company is a unit: it is chosen and its printed card goes to its owner's hand (FR-ZON-004, FR-ZON-005)")
+	}
+}
+
+func TestCard_TacticalWithdrawal_PaysOneTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	s.script(0)
+	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
+	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
+		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}

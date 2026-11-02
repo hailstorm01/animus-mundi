@@ -28,7 +28,6 @@ var NotYetExecutable = []string{
 	"Cliff of Portents",
 	"Conversion Spike",
 	"Devilhorn Scouting Party",
-	"Disorienting Pulse",
 	"Drifting Concept",
 	"Eerie Remnant",
 	"Ensnaring Mist",
@@ -47,6 +46,5 @@ var NotYetExecutable = []string{
 	"Sinuous Growth",
 	"Solarheart Monk",
 	"Steel Rain",
-	"Tactical Withdrawal",
 	"Veil Render",
 }
