@@ -4,7 +4,7 @@ title: Make Ensnaring Mist executable (move a chosen unit to its controller's Re
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0142-ensnaring-mist
 depends_on: [T-0056, T-0069, T-0107, T-0116, T-0117, T-0119, T-0135]
 claims: [card:Ensnaring Mist]
@@ -67,3 +67,4 @@ To be added to `pkg/engine/cards_animus_maneuvers_test.go`, from the CSV text, l
 
 ## Log
 - 2026-11-03 lead-architect (wave C session 34): written against the run branch at 056fcde (no `main` commits to sync). Not `WAVE-COMPLETE`: *Ensnaring Mist* and *Pincer Tactics* are still on `NotYetExecutable`; this is the first of the two in the header's `Cards` order. A non-deck card kept by #14 (c): every shape it needs is `done`. #91 (4) goes into this task (the same-unit test); #91 (2) is about a cost on a mode, and this card has no modes. Waiting triggers #6, #7 (mode is `serial`), #8 (this task doesn't touch `deck.go`), #15 (no turn-start, turn-end or draw hook; a -1 power modifier can't make an asset lethal when it expires), #71 (no each-player effect) not fired. Status `tests`.
+- 2026-11-03 rules-test-author: wrote 11 tests in pkg/engine/cards_animus_maneuvers_test.go (file-local helper emChoose, per-slot target chooser): TestCard_EnsnaringMist_MovesOneUnitAndWeakensAnother, _SameUnitFillsBothSlots, _MovedUnitKeepsItsState, _MovesToItsControllersReserves, _UnitAlreadyInReservesStays, _PowerClampsAtZero, _MinusOneExpiresAtEndOfTurn, _ChosenUnitIsAnyUnit, _LegalityNeedsAUnit, _TargetTimeoutsTakeFixedOrder, _PaysTwoTactics. Helpers requested: none. Cases left out: none. go vet clean, lint rules passes; all fail until the card is added. The one-unit case asserts offers only if a decision is asked (the rules do not say whether a single option is auto-picked). Status tests-review.
