@@ -142,3 +142,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0136 | A timed-out repeated choice puts every repetition on the first option (SVY-R32, #91 (1), wave C shape, sonnet) | done |
 | T-0137 | A discard cost's cards are chosen before the targets and discarded after the push (#20 (b), wave C shape, sonnet) | done |
 | T-0138 | A target slot can choose once per card the discard cost discarded (SVY-R4, #20 (b), wave C shape, sonnet) | done |
+| T-0139 | Make *Steel Rain* executable (discard up to 3, 2 damage to a chosen asset per card discarded, draw 2 if the hand is empty; #20 (b), wave C card, flash) | done |
