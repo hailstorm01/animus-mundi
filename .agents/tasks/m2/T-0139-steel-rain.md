@@ -4,7 +4,7 @@ title: Make Steel Rain executable (discard up to 3 cards as an additional cost, 
 kind: card
 tier: flash
 wave: C
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c/T-0139-steel-rain
 depends_on: [T-0116, T-0131, T-0132, T-0136, T-0137, T-0138]
 claims: [card:Steel Rain]
@@ -59,12 +59,13 @@ To be added to `pkg/engine/cards_path_maneuvers_test.go`, from the CSV text, loa
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_SteelRain`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_SteelRain`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 30): written against the run branch at ff872eb (no `main` commits to sync). #20 (b) is the oldest open directive and its shape parts are all done (T-0131, T-0132, T-0136, T-0137, T-0138), leaving this card; a deck card (#14 (a)). #91's only *Steel Rain* part, (1), is applied; its other parts go with the distinctness, *Ensnaring Mist* and *Pincer Tactics* tasks. Waiting triggers #6, #7, #8 (this task doesn't touch `deck.go`), #15, #71 (no each-player effect) not fired. Re-read `BOARD.md` before committing: no new or changed directive. Status `tests`.
 - 2026-11-02 rules-test-author: wrote 8 tests in `pkg/engine/cards_path_maneuvers_test.go` (with a file-local `steelRainScene`, reusing `pdScript`/`maneuverDamage`): `TestCard_SteelRain_DealsTwoToAChosenAssetPerDiscard`, `_SameAssetForEveryDiscard`, `_ChosenAssetIsAnyAsset`, `_DiscardingNoneDealsNothing`, `_EmptyHandAfterTheDiscardDrawsTwo`, `_AloneInHandDrawsTwo`, `_TimeoutConcentratesOnTheFirstLegalAsset`, `_PaysFourTactics`. They fail now because the card is not yet executable. Helpers requested: none. Cases left out: none. Status `tests-review`.
 - 2026-11-02 lead-architect (wave C session 30): tests approved (f281b03). Checked each against FRD 01: `SVY-R4`/R4a (line 365) for one independent choice per discard, repeats and separate 2-damage events; `FR-TGT-001` and `FR-KWD-002h` for "chosen asset" (any asset, both Headquarters, an allied Ward unit, never an opposing Ward unit); `SVY-R32` and `FR-MOD-001` §6 for the timeout on player 0's own Headquarters, with two opposing units so the fallback runs; T-0132's hand-empty gate, read as the draw resolves after the Maneuver left the hand. `PaysFourTactics` uses 5 Tactics and expects 1 left, which pins the cost at 4 as well. Run against a discarded trial definition (the Definition above): all 8 pass, and `go test ./...` passes with it. Status `ready`, dispatching `kernel-engineer` (flash).
+- 2026-11-02 kernel-engineer (flash): implemented Steel Rain (commit dee4ee2). In pkg/engine/cards/path.go, added "Steel Rain" to pathDefs with the 3 printed lines of rules text, ExtraCosts containing {Kind: ability.CostDiscard, UpTo: 3}, and Effect with one Target slot {PerDiscard: true} (empty Filter matching any asset) followed by two Steps: OpDealDamage (2 damage to Target 0) and OpDraw (2 cards with IfHandEmpty: true). Reused ability.CostDiscard (T-0131), Target.PerDiscard (T-0138), Step.IfHandEmpty (T-0132), OpDealDamage, and OpDraw. In pkg/engine/cards/cards.go, removed "Steel Rain" from NotYetExecutable. Verified: go test ./pkg/engine -run TestCard_SteelRain passed (8/8 tests pass); go test ./pkg/engine -run TestStarterSet_Executable passed; go tool task check passed (fmt-check, vet, all package tests, cardtown lint --all); go tool task sim passed (200 games completed clean with all invariants holding). Status `review`.
