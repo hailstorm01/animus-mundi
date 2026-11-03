@@ -32,4 +32,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0138 | A target slot can choose once per card the discard cost discarded (SVY-R4, #20 (b), wave C shape, sonnet) | queued |
+| T-0138 | A target slot can choose once per card the discard cost discarded (SVY-R4, #20 (b), wave C shape, sonnet) | tests |
