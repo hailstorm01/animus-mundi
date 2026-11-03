@@ -11,7 +11,7 @@ import (
 type DecisionKind int
 
 const (
-	DecideTarget      DecisionKind = iota // mandatory targets: fallback picks the first legal options in fixed order (SVY-R16)
+	DecideTarget      DecisionKind = iota // mandatory targets: fallback picks the first legal options in fixed order (SVY-R16); a repeated target choice times out to the first legal entity for every repetition (SVY-R32)
 	DecideMode                            // "Choose N" modes: fallback picks the first listed options
 	DecideOptional                        // "you may": fallback declines (no picks)
 	DecideOrder                           // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
@@ -148,7 +148,7 @@ func (g *Game) fallbackPicks(d Decision) []int {
 		picks := make([]int, d.Min)
 		for i := range picks {
 			if d.Repeats {
-				picks[i] = i % len(d.Options)
+				picks[i] = 0 // every repetition takes the first listed (directive #91)
 			} else {
 				picks[i] = i
 			}
@@ -182,7 +182,9 @@ func (g *Game) handPicks(d Decision) []int {
 }
 
 // fixedOrderPicks returns the indexes of the first d.Min options in the FR-MOD-001
-// §6 fixed order (SVY-R16), in that order. It draws nothing from g.rng.
+// §6 fixed order (SVY-R16), in that order. For a Repeats decision every one of
+// the d.Min picks is the first option in that order, never a cycle (SVY-R32).
+// It draws nothing from g.rng.
 func (g *Game) fixedOrderPicks(d Decision) []int {
 	if d.Min == 0 {
 		return nil
@@ -202,7 +204,7 @@ func (g *Game) fixedOrderPicks(d Decision) []int {
 	picks := make([]int, d.Min)
 	for i := range picks {
 		if d.Repeats {
-			picks[i] = idx[i%len(idx)]
+			picks[i] = idx[0] // every repetition lands on the first (SVY-R32)
 		} else {
 			picks[i] = idx[i]
 		}
