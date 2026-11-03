@@ -14,7 +14,7 @@ Every Animus and Path card executes in `pkg/engine` as a Go value built from a s
 
 ## Boundaries
 
-Six packages. The rules core imports one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle. Three client packages sit on top of `engine` and are never imported by it (board directive #22, T-0024; directive #24, T-0036). They live at the top of `pkg/`, beside `pkg/engine` rather than inside it (directive #31, T-0039), so that `pkg/engine/...` is exactly the rules core. `sim` and `eventlog` import `engine` only, `view` imports `engine` and `eventlog`, and `cmd/cardtown` imports all of them. `pkg/view/viewtest` is test support for the hidden-information leak tests and imports `engine` only (board directive #39, T-0046). `cardtown lint fences` checks these import directions, and the card-name fence covers every package under `pkg/` except `pkg/engine/cards` and `pkg/toolchain` (directive #30, T-0038).
+Six game packages, plus developer tooling under `pkg/toolchain` that no game package imports. The rules core imports one way only: `engine` → `cards` → `ability`. That lets package-`engine` scenario tests use real card definitions without an import cycle. Three client packages sit on top of `engine` and are never imported by it (board directive #22, T-0024; directive #24, T-0036). They live at the top of `pkg/`, beside `pkg/engine` rather than inside it (directive #31, T-0039), so that `pkg/engine/...` is exactly the rules core. `sim` and `eventlog` import `engine` only, `view` imports `engine` and `eventlog`, and `cmd/cardtown` imports all of them. `pkg/view/viewtest` is test support for the hidden-information leak tests and imports `engine` only (board directive #39, T-0046). `cardtown lint fences` checks these import directions, and the card-name fence covers every package under `pkg/` except `pkg/engine/cards` and `pkg/toolchain` (directive #30, T-0038).
 
 | Package | Holds | Card names? | Changed by |
 | :--- | :--- | :--- | :--- |
@@ -24,6 +24,7 @@ Six packages. The rules core imports one way only: `engine` → `cards` → `abi
 | `pkg/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`, and the rule monitors (`Monitors`, `Violation`, `Coverage`, `ReplayCommand`). `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
 | `pkg/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
 | `pkg/view` | One seat's view: `PlayerView` (own hand, counts for the opponent's hand and both decks, public zones, face-down assets as Scratch Company to both seats) and `LogLines` (the event log that seat may read). It imports `engine` and `eventlog` only (board directive #24, T-0036). | No (fenced) | `harness` tasks |
+| `pkg/toolchain` | The linters, pre-commit hook, git helper and docs status behind the CLI. `specdoc`, once board directive #100 builds it, holds what the FRD and rules linters share. | Not fenced | `harness` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
 
@@ -126,6 +127,18 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #87 (c): file comments on the four engine files that lack one.
 
    #83 to #86 are pure moves and #87 (c) is comments only. #82 adds tests and changes the play of no executable card. Done when #82–#87 are `applied`, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
+6f. **Wave C.1, cleanup, added 2026-11-03 from structural review 7 (board directives #92–#102).** It goes after wave C and before the next wave, which builds on it (user, 2026-11-03). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave C.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #92, #93 and #94: one declare sequence, one read of a card's cost, and `costs.go`. They may share a task.
+   - #95: one `deployCard`, which wave F's free deploys reuse.
+   - #96: one `bufferTrigger`.
+   - #97: one read of "another", and `joinModes`.
+   - #98: `Resource.String()` and `IsScratchCompany`.
+   - #99: `sim.PolicyByName`.
+   - #100: `pkg/toolchain/specdoc`, for the FRD and rules linters.
+   - #101: the zone helpers move to `zones.go`.
+   - #102: the docs say what wave C built.
+
+   Every code task is a pure move, and #102 is comments and docs only. Done when #92–#102 are `applied`, every task's `go tool task sim-compare` passed (for #100, unchanged lint output), and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
