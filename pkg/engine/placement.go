@@ -130,10 +130,12 @@ func (g *Game) payCosts(pl placement) {
 }
 
 // slotsLegal reports whether each exactly-one slot of ts has a legal entity
-// now. An "up to N" slot never makes it false (design note Open Question 11).
+// now. An "up to N" slot never makes it false (design note Open Question 11),
+// nor does a PerDiscard slot: its controller can discard none, which needs no
+// target, and the count is not known before the discard is picked (SVY-R29).
 func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 	for i, t := range ts {
-		if t.UpTo == 0 && len(g.targetDecision(pl, i, t).Options) == 0 {
+		if t.UpTo == 0 && !t.PerDiscard && len(g.targetDecision(pl, i, t).Options) == 0 {
 			return false
 		}
 	}

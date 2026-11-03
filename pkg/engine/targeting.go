@@ -16,7 +16,10 @@ import (
 // and a timeout picks none (SVY-R11). A slot with no legal entity stays empty
 // and asks nothing: deploying never requires a target (FR-TGT-003). A slot
 // whose filter names ZoneDiscard chooses cards in discard piles, and its Refs
-// are card instance IDs.
+// are card instance IDs. A PerDiscard slot with no discards or no options asks
+// nothing and stays empty; otherwise it is asked once, with one pick for each
+// card discarded, and every pick's Ref is appended in pick order, repeats
+// included (SVY-R4).
 func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 	targets := e.Targets
 	if len(targets) == 0 {
@@ -26,6 +29,9 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 	for i, t := range targets {
 		d := g.targetDecision(pl, i, t)
 		if t.UpTo > 0 && len(d.Options) == 0 {
+			continue
+		}
+		if t.PerDiscard && (len(pl.discards) == 0 || len(d.Options) == 0) {
 			continue
 		}
 		for _, k := range g.choose(d) {
@@ -44,6 +50,9 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 	if t.UpTo > 0 {
 		prompt = fmt.Sprintf("%s: choose up to %d for target %d", pl.label, t.UpTo, i+1)
 	}
+	if t.PerDiscard {
+		prompt = fmt.Sprintf("%s: choose target %d (%d times)", pl.label, i+1, len(pl.discards))
+	}
 	var d Decision
 	if t.Filter.InPile() {
 		d, _ = g.pileDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(inst *Instance) bool {
@@ -53,6 +62,9 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 		d, _ = g.assetDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
 			return g.legalTarget(pl.controller, pl.source, t.Filter, a)
 		})
+	}
+	if t.PerDiscard {
+		d.Min, d.Max, d.Repeats = len(pl.discards), len(pl.discards), true
 	}
 	return d
 }
