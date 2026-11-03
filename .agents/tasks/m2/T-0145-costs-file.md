@@ -4,7 +4,7 @@ title: Additional costs and a card's cost get their own file, costs.go (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #94, structural review 7, finding 3)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0145-costs-file
 depends_on: [T-0144]
 claims: [file:pkg/engine/costs.go]
