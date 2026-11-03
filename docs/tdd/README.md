@@ -1,5 +1,8 @@
 # Technical Design Documents (TDDs) & Deliverable Slicing
 
+> [!IMPORTANT]
+> **Status: FROZEN (2026-11-03).** The TDD path is retired. This page records how it worked; it is not an active workflow. No persona writes or slices TDDs, Runbooks B and C of `lead-architect` no longer exist, and the `cardtown lint tdd` and `cardtown tdd slice` commands below are being removed. Plan a milestone with a design note and decision records in [`docs/architecture/`](../architecture/) instead. [TDD 03](03_Card_Compiler_TDD.md) is kept as frozen design intent.
+
 Authoritative, zero-guesswork Technical Design Documents (`docs/tdd/<XX>_<Name>_TDD.md`) that translate Card Town Functional Requirements Documents (`docs/frd/<XX>_<Name>_FRD.md` — **what** the system does) into concrete engineering blueprints (**how** to build it) and dependency-ordered GitHub Deliverable Issues (`SLICE-XX-YY`). Persona behavior is defined in `.agents/skills/lead-architect/SKILL.md`; this page is the human-facing overview.
 
 ## Workflow

@@ -1,6 +1,6 @@
 # Handoff to `workflow-steward`: retire the TDD path
 
-- **From:** `lead-architect`, structural review 7 of `main` at `4ee3be2` | **Date:** 2026-11-03 | **Status:** draft, not yet applied. Delete this file once it is.
+- **From:** `lead-architect`, structural review 7 of `main` at `4ee3be2` | **Date:** 2026-11-03 | **Status:** skills, routing and docs applied by `workflow-steward`, 2026-11-03. The user's answers: the skills go; M3 plans with a design note, not a TDD (`pm-lead` reconciles the summary); `docs/tdd/` stays, frozen. The code is directive #103, which corrects the test list below and deletes this file when it lands.
 
 ## The decision
 

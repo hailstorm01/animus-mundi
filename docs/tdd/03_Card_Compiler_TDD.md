@@ -2,7 +2,7 @@
 **Deterministic CSV-to-AST Catalog Linker, JSON Schema Draft 2020-12 Validator & RFC 8785 Cryptographic Bundler (`cmd/compile-blueprints`)**
 
 > [!IMPORTANT]
-> **Status: PARKED (2026-10-19).** Built on [FRD 03](../frd/03_Card_Compiler_FRD.md) v1.2 and [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) v1.3, both now frozen as design intent. Do not slice or publish issues from it (`cardtown tdd slice`) until M3 starts and the FRDs are rewritten from what the `pkg/engine` kernel needed in M2. See [`docs/frd/README.md`](../frd/README.md).
+> **Status: FROZEN as design intent (2026-11-03).** This document records direction and prior thinking. It is not an active specification and is not kept in sync with [FRD 01](../frd/01_Game_Rules_FRD.md), and it was built on [FRD 03](../frd/03_Card_Compiler_FRD.md) v1.2 and [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) v1.3, both frozen too. Where it restates a game rule, **FRD 01 and its `pkg/engine` scenario tests win**. Technical choices here are proposals; they get decided when the code that needs them is built and recorded in [`docs/architecture/decisions/`](../architecture/decisions/README.md). The TDD path is retired: no persona writes or slices TDDs, and the `cardtown` commands this document names are being removed. **Revisit:** M3 plans with a design note and may draw on this; it will not be revised. See [`docs/frd/README.md`](../frd/README.md).
 
 - **Source FRD:** [docs/frd/03_Card_Compiler_FRD.md](../frd/03_Card_Compiler_FRD.md) (FRD v1.2, with companion schemas from [docs/frd/02_Card_Data_Pipeline_FRD.md](../frd/02_Card_Data_Pipeline_FRD.md) v1.3)
 - **FRD Commit Hash:** `17b1444`

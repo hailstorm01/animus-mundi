@@ -2,16 +2,15 @@
 name: cardtown-linter
 description: >-
   Audits and lints Card Town Functional Requirements Documents (FRDs), the executable rules kernel,
-  Technical Design Documents (TDDs), and card sheet CSVs. Verifies that FR-XXX-YYY cross-references
-  resolve, that each requirement has one owning FRD and keywords are defined only in FRD 01, that
-  pkg/engine scenario tests trace to active FRD 01 requirements, TDD coverage and slice DAGs, CSV
-  integrity, and canonical rules-text terminology. Use whenever editing or reviewing Card Town rules,
-  engine tests, TDDs, or balance sheets.
+  and card sheet CSVs. Verifies that FR-XXX-YYY cross-references resolve, that each requirement has
+  one owning FRD and keywords are defined only in FRD 01, that pkg/engine scenario tests trace to
+  active FRD 01 requirements, CSV integrity, and canonical rules-text terminology. Use whenever
+  editing or reviewing Card Town rules, engine tests, or balance sheets.
 ---
 
-# Card Town FRD, Rules, TDD & Card Sheet Linter
+# Card Town FRD, Rules & Card Sheet Linter
 
-This skill provides automated verification across Card Town specifications, the executable rules kernel, technical design documents, and card spreadsheets via the native Go CLI (`cardtown`).
+This skill provides automated verification across Card Town specifications, the executable rules kernel, and card spreadsheets via the native Go CLI (`cardtown`).
 
 ## Native Go CLI Commands
 
@@ -41,16 +40,7 @@ The CLI is compiled to `bin/cardtown.exe` (`bin/cardtown` off Windows). Rebuild 
    cardtown sim -p0 SOULLESS -p1 CONCORDIA -games 500
    ```
 
-4. **TDD Requirement Coverage & Slice DAG Linter:**
-   - **When to run:** When changes are made to a TDD in `docs/tdd/`.
-   - **Check:** Validates header metadata, zero dangling `FR-XXX-YYY` references, 100% coverage of Active and Subsumed requirements from the source FRD, and acyclic `SLICE-XX-YY` Deliverable Slice blocks.
-   ```powershell
-   cardtown lint tdd
-   # Or for a specific TDD file:
-   cardtown lint tdd docs/tdd/03_Card_Compiler_TDD.md
-   ```
-
-5. **CSV Sheet Integrity & Schema Linter:**
+4. **CSV Sheet Integrity & Schema Linter:**
    - **When to run:** When changes are made to a CSV in `data/cards/`, or when a new CSV is created.
    - **Check:** Verifies all CSV sheets parse with standard RFC-4180 rules, checks for duplicate column headers, ensures no corrupted column headers (`xz`), and validates core enums (`cardType`, `faction`, `rarity`, `deploymentZones`).
    ```powershell
@@ -59,7 +49,7 @@ The CLI is compiled to `bin/cardtown.exe` (`bin/cardtown` off Windows). Rebuild 
    cardtown lint sheets data/cards/maneuvers-animus.csv
    ```
 
-6. **Card Rules Syntax & Terminology Linter:**
+5. **Card Rules Syntax & Terminology Linter:**
    - **When to run:** When changes are made to a CSV in `data/cards/`, or when a new CSV is created.
    - **Check:** Audits card rules text for canonical terminology (e.g., `allied` instead of `friendly`, `power` instead of `attack`, and disallows raw `~` MTG shorthand).
    ```powershell
@@ -80,6 +70,5 @@ cardtown lint --all
 
 # Run a single linter family:
 cardtown lint --rules
-cardtown lint --tdd
 cardtown lint --cards
 ```
