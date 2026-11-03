@@ -152,6 +152,12 @@ type Effect struct {
 type Target struct {
 	Filter Filter
 	UpTo   int // 0: exactly one chosen entity. N > 0: up to N distinct entities, possibly none (SVY-R11)
+	// PerDiscard chooses the slot once for each card the placement's discard
+	// cost discarded: each an exactly-one pick, independent of the others, so
+	// the same entity may be chosen more than once (SVY-R4, FR-TGT-001). UpTo
+	// stays 0 with it. With no cards discarded, or no legal entity, the slot
+	// stays empty.
+	PerDiscard bool
 }
 
 // Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
