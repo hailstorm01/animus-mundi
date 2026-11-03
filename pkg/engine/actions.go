@@ -85,6 +85,7 @@ func (g *Game) Apply(a Action) error {
 		payCost(p, inst.Card)
 		g.takeCard(inst)
 		pl := maneuverPlacement(a.Player, inst)
+		pl.discards = g.chooseCostDiscards(pl)
 		eff, chosen := g.chooseOnPlacement(pl, inst.Card.Ability.Effect)
 		g.push(&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst, Effect: eff, Chosen: chosen})
 		g.payCosts(pl)

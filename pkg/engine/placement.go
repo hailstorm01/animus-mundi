@@ -18,6 +18,7 @@ type placement struct {
 	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	label      string
 	costs      []ability.Cost // additional costs paid with this placement (FR-TRN-003a); a trigger has none
+	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
 }
 
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
@@ -61,6 +62,27 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 	})
 }
 
+// chooseCostDiscards has pl's controller pick the hand cards its discard cost
+// discards, before the modes and targets are chosen, so the number discarded is
+// known when the targets are (FR-TRN-003a, SVY-R4). It moves nothing: payCosts
+// discards them after the push. Without a discard cost it asks nothing and
+// returns nil. A placement has at most one discard cost.
+func (g *Game) chooseCostDiscards(pl placement) []*Instance {
+	var picked []*Instance
+	found := false
+	for _, c := range pl.costs {
+		if c.Kind != ability.CostDiscard {
+			continue
+		}
+		if found {
+			panic("engine: a placement has two discard costs")
+		}
+		found = true
+		picked = g.chooseDiscards(pl.controller, c.UpTo, true)
+	}
+	return picked
+}
+
 // costsPayable reports whether every additional cost of pl has at least one
 // option now (FR-TRN-003a, SVY-R29). A discard cost is always payable, because
 // discarding none pays it.
@@ -79,16 +101,18 @@ func (g *Game) costsPayable(pl placement) bool {
 // payCosts pays each additional cost of pl in printed order: its controller
 // picks the asset (costDecision, pickFrom) and it is killed through kill
 // (CostKill) or exhausted through exhaust (CostExhaust), while a discard cost
-// goes through discardFromHand (CostDiscard). A replaced kill (not the discard
+// moves the cards picked earlier (CostDiscard). A replaced kill (not the discard
 // cost) still counts as paid (SVY-R15), and the triggers either fires wait in
 // the pending buffer to go above the declared card (FR-TRN-003a). It runs after
 // the Maneuver is pushed, so the card is already on the stack when the cost's
 // triggers are queued (FR-TRN-003), and after its targets were chosen, so they
-// were judged against the state before the cost moved anything (SVY-R2).
+// were judged against the state before the cost moved anything (SVY-R2). A
+// discard cost's cards were picked before the modes and targets
+// (chooseCostDiscards) and are moved here, through discardCards.
 func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		if c.Kind == ability.CostDiscard {
-			g.discardFromHand(pl.controller, c.UpTo, true)
+			g.discardCards(pl.controller, pl.discards)
 			continue
 		}
 		d, opts := g.costDecision(pl, c)

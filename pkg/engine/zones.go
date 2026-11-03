@@ -51,13 +51,21 @@ func (g *Game) scratch(pid PlayerID, n int) {
 
 // discardFromHand has player pid discard n cards of their choice from their
 // own hand, or the whole hand if it holds fewer, and returns the cards
-// discarded, in pick order. Choosing from your own hand is not an inspection,
-// so a hand of exactly that many cards is discarded without asking
-// (FR-MOD-001 §1, §6; SVY-R16). With upTo it discards up to n cards, possibly
-// none: the choice is asked whenever the hand isn't empty, and a timeout
-// discards none (FR-MOD-001 §6, FR-TRN-003a). Every discard from hand goes
-// through it.
+// discarded, in pick order: chooseDiscards, then discardCards.
 func (g *Game) discardFromHand(pid PlayerID, n int, upTo bool) []*Instance {
+	picked := g.chooseDiscards(pid, n, upTo)
+	g.discardCards(pid, picked)
+	return picked
+}
+
+// chooseDiscards has player pid pick n cards of their choice from their own
+// hand, or the whole hand if it holds fewer, and returns them in pick order.
+// It moves nothing. Choosing from your own hand is not an inspection, so a hand
+// of exactly that many cards is picked without asking (FR-MOD-001 §1, §6;
+// SVY-R16). With upTo it picks up to n cards, possibly none: the choice is
+// asked whenever the hand isn't empty, and a timeout picks none (FR-MOD-001 §6,
+// FR-TRN-003a). Every hand-discard decision is built here.
+func (g *Game) chooseDiscards(pid PlayerID, n int, upTo bool) []*Instance {
 	hand := g.Players[pid].Hand
 	n = min(n, len(hand))
 	if n <= 0 {
@@ -77,18 +85,23 @@ func (g *Game) discardFromHand(pid PlayerID, n int, upTo bool) []*Instance {
 	for _, inst := range hand {
 		d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})
 	}
-	// The options are fixed before any card moves, so take the cards first.
 	var picked []*Instance
 	for _, i := range g.choose(d) {
 		picked = append(picked, hand[i])
 	}
-	for _, inst := range picked {
+	return picked
+}
+
+// discardCards moves each of cards, in the given order, from its pile to its
+// owner's discard pile and logs the discard. Every discard from hand is moved
+// here.
+func (g *Game) discardCards(pid PlayerID, cards []*Instance) {
+	for _, inst := range cards {
 		g.takeCard(inst)
 		g.putCard(inst, ZoneDiscard, false)
 		g.logEvent(Event{Kind: EventDiscard, Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
 			"player %d discards %s", pid, inst.Card.Name)
 	}
-	return picked
 }
 
 // takeCard removes inst from whichever of its owner's piles (deck, hand or
