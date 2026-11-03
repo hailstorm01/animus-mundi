@@ -4,7 +4,7 @@ title: Make Pincer Tactics executable (1 damage to each of up to 2 chosen allied
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0143-pincer-tactics
 depends_on: [T-0017, T-0030, T-0056, T-0104, T-0107, T-0116, T-0117]
 claims: [card:Pincer Tactics]
