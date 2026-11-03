@@ -4,7 +4,7 @@ title: A discard cost's cards are chosen before the targets and discarded after 
 kind: shape
 tier: sonnet
 wave: C
-status: review
+status: done
 branch: m2/autoloop-wave-c/T-0137-discard-chosen-before-targets
 depends_on: [T-0136]
 claims: [field:placement.discards, func:chooseDiscards, func:discardCards, func:discardFromHand, func:chooseCostDiscards, func:payCosts]
@@ -70,3 +70,4 @@ In a new file `pkg/engine/discard_order_test.go`, with synthetic Maneuvers built
 - 2026-11-02 rules-test-author: tests written in `pkg/engine/discard_order_test.go` (helper `dcScript`, local to the file). `TestFR_TRN_003a_DiscardChosenBeforeTargets` and `TestFR_TRN_003a_DiscardChosenBeforeTargetsOnTimeout` fail today (decisions come [Target Hand], want [Hand Target]). Guards that pass today: `TestFR_TGT_001_DiscardCostCardsNotTargetableInPile` (finds the target decision by kind, so it does not pin the order), `TestFR_TRN_003a_DiscardCostEventsStillAfterPlace` (place, then discards in pick order B before A, then damage). Helpers requested: none. Cases left out: none. Status `tests-review`.
 - 2026-11-02 lead-architect (wave C session 28): tests approved (42ff683). Checked each against FRD 01: the two order tests fail today with [Target Hand]; the `SVY-R2` pile guard and the event-order guard pass today and pin what must not change. Status `ready`, dispatching `kernel-engineer` (sonnet).
 - 2026-11-02 kernel-engineer: implemented. discardFromHand split into chooseDiscards (asks, moves nothing) and discardCards (moves, logs); discardFromHand is now both. Added placement.discards and chooseCostDiscards (panics on a second discard cost); ActEnact sets pl.discards before chooseOnPlacement; payCosts calls discardCards(pl.discards). Reuse: the existing decision code moved unchanged into chooseDiscards; no second implementation. Ran: go test -run discard tests ok; go tool task check exit 0; sim-compare -- autoloop/m2-wave-c PASS. Status review.
+- 2026-11-02 lead-architect (wave C session 28): approved and merged into `autoloop/m2-wave-c` (1d41d47). Diff checked against the Shape: only the three Allowed Files changed besides the test commit, no test edited after 42ff683, no card name, the hand-discard decision still built in one place (`chooseDiscards`). Re-ran in a review worktree: the listed tests, `go tool task check`, `go tool task sim` (200 games, P0 76.0% / P1 23.5% / draws 0.5%, unchanged) and `go tool task sim-compare -- autoloop/m2-wave-c` (byte-identical) all pass. Status `done`. #20 (b) goes on with T-0138 (queued), then the *Steel Rain* card task.
