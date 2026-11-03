@@ -33,7 +33,6 @@ var NotYetExecutable = []string{
 	"Macabre Dancers",
 	"Melodic Pummeler",
 	"Mutation Swell",
-	"Pincer Tactics",
 	"Poisoned Rations",
 	"Reaver's Rush",
 	"Rhapsody's Hollow",
