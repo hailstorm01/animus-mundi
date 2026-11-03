@@ -4,7 +4,7 @@ title: One function deploys a card onto the battlefield, deployCard (directive #
 kind: harness
 tier: flash
 wave: C.1 (board directive #95, structural review 7, finding 4)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0146-deploy-card
 depends_on: [T-0145]
 claims: [helper:deployCard]
@@ -100,3 +100,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     - Case 8: `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `pkg/engine/stack.go`, `pkg/engine/zones.go` and `.agents/tasks/m2/T-0146-deploy-card.md`.
     - Case 9: `go -C W tool task check` passed all checks; `go -C W tool task sim` passed 200 starter deck games with all invariants holding.
   - Handoff commit `feat(engine): deployCard helper extracts resolveDeploy body (T-0146)`. Task status set to `review`.
+- 2026-11-03, lead-architect (wave C.1 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as bac48cf. Flash run `c04af5b4-4af3-413a-8f00-a9324f2188d3`: exit 0, `status: SUCCESS`, 304 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"`; its one `permission check failed` match is step 70, a `DONE` step quoting the runbook; the `.err` file holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0146-deploy-card` (f378fe5):
+  - Scope: only `stack.go`, `zones.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: both code files match the task's Edits exactly. The four statements keep their order, with `it.Inst`, `it.Controller` and `it.Zone` passed in. Only this file's status, Log and Done When boxes changed besides.
+  - Fences and placement: no card name, no new rule. `scratch` and `setup.go`'s Headquarters keep their own paths, as the Inputs say.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-8; `cardtown lint fences` `[PASS]`; `go tool task check` passes (it runs every test); `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` matches the task tip's, so the gates hold on the run branch. Directive #95 is applied. Nothing is queued now; the next session takes #96 from the board.

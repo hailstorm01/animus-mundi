@@ -149,3 +149,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0143 | Make *Pincer Tactics* executable (1 damage to each of up to 2 chosen allied units, 2 to a chosen non-Scratch asset; #91 (4), #14 (c), wave C card, flash) | done |
 | T-0144 | One declare sequence, (g *Game) declare, and one read of a card's cost, (g *Game) EffectiveCost (directives #92 and #93, harness, flash, pure move) | done |
 | T-0145 | Additional costs and a card's cost get their own file, costs.go (directive #94, harness, flash, pure move) | done |
+| T-0146 | One function deploys a card onto the battlefield, deployCard (directive #95, harness, flash, pure move) | done |
