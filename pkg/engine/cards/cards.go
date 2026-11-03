@@ -12,7 +12,6 @@ var Defs = map[string]*ability.Def{}
 // execute yet. Card tasks remove names from it; M2 is done when it is empty.
 var NotYetExecutable = []string{
 	"Allshan's Battle Trance",
-	"Ambush Tactics",
 	"Ancestral Monument",
 	"Animoceps Node",
 	"Animoceps Spore Cloud",
