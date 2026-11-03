@@ -4,7 +4,7 @@ title: An "another chosen" target slot must pick a different entity from the ear
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0140-another-target-slot
 depends_on: [T-0116, T-0117, T-0118]
 claims: [field:Target.Another, func:Target.AnotherSlot, func:chooseTargets, func:slotsLegal, func:chooseModes]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/another_target_test.go`, with synthetic Maneuvers enac
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 31): written against the run branch at 7c1bd4b (no `main` commits to sync). #88's last part and #91 (3) are the next work on the board: the distinctness shape task before the *Ambush Tactics* card task, a deck card (#14 (a)). Searched `pkg/engine` and `archive/tasks/task_archive.md` for an equivalent: `SVY-R11` makes one "up to N" slot's picks distinct and `Filter.Other` excludes the source, but nothing relates two slots, so `Target.Another` adds no duplicate, and its no-earlier-slot case reuses `Filter.Other`. Waiting triggers #6, #7 (parallel), #8 (this task doesn't touch `deck.go`), #15 (no turn hook) and #71 (no each-player card) not fired. Re-read `BOARD.md` before committing: no new or changed directive. Status `tests`.
+- 2026-11-02 rules-test-author: wrote `pkg/engine/another_target_test.go`: TestFR_MNV_001_AnotherSlotNeedsTwoDifferentUnitsToEnact, TestFR_MOD_001_AnotherSlotNeedsTwoUnits, TestFR_TGT_002_AnotherSlotExcludesEarlierPick, TestFR_MOD_001_AnotherSlotTimeoutTakesNextDifferent, TestFR_TGT_002_AnotherSlotSingleRemainingOptionIsTakenUnasked, TestFR_TGT_002_AnotherSlotInLaterModeFollowsItsOwnClause, TestFR_MOD_001_AnotherSlotDoesNotChangeTheCardDefinition. Helpers requested: none (file-local helpers only: anotherEffect, anotherKillMode, anotherTargetAsks, anotherOffers, anotherTargetRecords). `go vet` fails only on the missing `ability.Target.Another` field, the contract this task adds. `cardtown lint rules` passes. Cases left out: none. Note: in the later-mode test the "another" slot picks X, which the kill mode has already killed, so that item fizzles at resolution; the test pins only the offered options, as the task describes.
