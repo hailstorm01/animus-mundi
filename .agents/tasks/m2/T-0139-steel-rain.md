@@ -4,7 +4,7 @@ title: Make Steel Rain executable (discard up to 3 cards as an additional cost, 
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0139-steel-rain
 depends_on: [T-0116, T-0131, T-0132, T-0136, T-0137, T-0138]
 claims: [card:Steel Rain]
