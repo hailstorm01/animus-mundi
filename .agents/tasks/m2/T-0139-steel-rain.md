@@ -4,7 +4,7 @@ title: Make Steel Rain executable (discard up to 3 cards as an additional cost, 
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0139-steel-rain
 depends_on: [T-0116, T-0131, T-0132, T-0136, T-0137, T-0138]
 claims: [card:Steel Rain]
@@ -66,3 +66,4 @@ To be added to `pkg/engine/cards_path_maneuvers_test.go`, from the CSV text, loa
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 30): written against the run branch at ff872eb (no `main` commits to sync). #20 (b) is the oldest open directive and its shape parts are all done (T-0131, T-0132, T-0136, T-0137, T-0138), leaving this card; a deck card (#14 (a)). #91's only *Steel Rain* part, (1), is applied; its other parts go with the distinctness, *Ensnaring Mist* and *Pincer Tactics* tasks. Waiting triggers #6, #7, #8 (this task doesn't touch `deck.go`), #15, #71 (no each-player effect) not fired. Re-read `BOARD.md` before committing: no new or changed directive. Status `tests`.
+- 2026-11-02 rules-test-author: wrote 8 tests in `pkg/engine/cards_path_maneuvers_test.go` (with a file-local `steelRainScene`, reusing `pdScript`/`maneuverDamage`): `TestCard_SteelRain_DealsTwoToAChosenAssetPerDiscard`, `_SameAssetForEveryDiscard`, `_ChosenAssetIsAnyAsset`, `_DiscardingNoneDealsNothing`, `_EmptyHandAfterTheDiscardDrawsTwo`, `_AloneInHandDrawsTwo`, `_TimeoutConcentratesOnTheFirstLegalAsset`, `_PaysFourTactics`. They fail now because the card is not yet executable. Helpers requested: none. Cases left out: none. Status `tests-review`.
