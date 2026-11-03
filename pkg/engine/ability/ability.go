@@ -158,6 +158,18 @@ type Target struct {
 	// stays 0 with it. With no cards discarded, or no legal entity, the slot
 	// stays empty.
 	PerDiscard bool
+	// Another 0 means none. k > 0 makes this slot pick an entity different from
+	// the one chosen for Effect.Targets[k-1], the earlier slot of the same
+	// clause ("another chosen X", SVY-R34); k-1 is less than this slot's own
+	// index. "Another" with no earlier slot in its clause is Filter.Other, not
+	// this field.
+	Another int
+}
+
+// AnotherSlot returns the Effect.Targets index of the slot this one must
+// differ from, and whether it has one.
+func (t Target) AnotherSlot() (slot int, ok bool) {
+	return t.Another - 1, t.Another > 0
 }
 
 // Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).

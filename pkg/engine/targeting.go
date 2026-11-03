@@ -4,6 +4,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
@@ -19,7 +20,10 @@ import (
 // are card instance IDs. A PerDiscard slot with no discards or no options asks
 // nothing and stays empty; otherwise it is asked once, with one pick for each
 // card discarded, and every pick's Ref is appended in pick order, repeats
-// included (SVY-R4).
+// included (SVY-R4). An "another" slot (Target.Another, SVY-R34) is never
+// offered the entity chosen for the slot it follows, so a single remaining
+// option is taken unasked, a timeout takes the first remaining one in fixed
+// order, and with none left it stays empty and asks nothing.
 func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 	targets := e.Targets
 	if len(targets) == 0 {
@@ -28,6 +32,9 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 	chosen := make([][]int, len(targets))
 	for i, t := range targets {
 		d := g.targetDecision(pl, i, t)
+		if k, ok := t.AnotherSlot(); ok && k >= 0 && k < i {
+			d = withoutRefs(d, chosen[k], t.UpTo)
+		}
 		if t.UpTo > 0 && len(d.Options) == 0 {
 			continue
 		}
@@ -39,6 +46,22 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 		}
 	}
 	return chosen
+}
+
+// withoutRefs returns d without the options whose Ref is in refs, with its
+// bounds recomputed for the remaining options (SVY-R34).
+func withoutRefs(d Decision, refs []int, upTo int) Decision {
+	var opts []Option
+	for _, o := range d.Options {
+		if !slices.Contains(refs, o.Ref) {
+			opts = append(opts, o)
+		}
+	}
+	d.Options = opts
+	if !d.Repeats {
+		d.Min, d.Max = pickBounds(upTo, len(opts))
+	}
+	return d
 }
 
 // targetDecision builds the decision for target slot i (clause t) of the

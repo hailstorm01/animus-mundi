@@ -129,17 +129,44 @@ func (g *Game) payCosts(pl placement) {
 	}
 }
 
-// slotsLegal reports whether each exactly-one slot of ts has a legal entity
-// now. An "up to N" slot never makes it false (design note Open Question 11),
-// nor does a PerDiscard slot: its controller can discard none, which needs no
-// target, and the count is not known before the discard is picked (SVY-R29).
+// slotsLegal reports whether the exactly-one slots of ts can all be filled at
+// once now: one legal entity each, with every "another" slot's entity
+// different from the one assigned to the slot it follows when that slot is
+// exactly-one too (Target.Another, SVY-R34). It checks a joint assignment, in
+// slot order, not each slot alone. An "up to N" slot never makes it false
+// (design note Open Question 11), nor does a PerDiscard slot: its controller
+// can discard none, which needs no target, and the count is not known before
+// the discard is picked (SVY-R29). An "another" slot that follows one of them
+// needs only a legal entity of its own.
 func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
+	opts := make([][]Option, len(ts))
 	for i, t := range ts {
-		if t.UpTo == 0 && !t.PerDiscard && len(g.targetDecision(pl, i, t).Options) == 0 {
-			return false
-		}
+		opts[i] = g.targetDecision(pl, i, t).Options
 	}
-	return true
+	assigned := make([]int, len(ts))
+	exactlyOne := func(t ability.Target) bool { return t.UpTo == 0 && !t.PerDiscard }
+	var fill func(i int) bool
+	fill = func(i int) bool {
+		if i == len(ts) {
+			return true
+		}
+		if !exactlyOne(ts[i]) {
+			return fill(i + 1)
+		}
+		k, hasPrev := ts[i].AnotherSlot()
+		hasPrev = hasPrev && k >= 0 && k < i && exactlyOne(ts[k])
+		for _, o := range opts[i] {
+			if hasPrev && o.Ref == assigned[k] {
+				continue
+			}
+			assigned[i] = o.Ref
+			if fill(i + 1) {
+				return true
+			}
+		}
+		return false
+	}
+	return fill(0)
 }
 
 // placeable reports whether e can be placed with everything it requires
@@ -199,7 +226,12 @@ func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 	for _, j := range picked {
 		m := e.Modes[legal[j]]
 		shift := len(joined.Targets)
-		joined.Targets = append(joined.Targets, m.Targets...)
+		for _, t := range m.Targets {
+			if t.Another > 0 {
+				t.Another += shift
+			}
+			joined.Targets = append(joined.Targets, t)
+		}
 		for _, st := range m.Steps {
 			if st.Subject == ability.SubjectTarget {
 				st.Target += shift
