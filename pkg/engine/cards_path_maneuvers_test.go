@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -743,5 +744,201 @@ func TestCard_Fortify_PaysOneTactics(t *testing.T) {
 	s.do(enactAction(enactFor(s, "Fortify")))
 	if p := s.g.Players[0]; p.Tac != 4 || p.Req != 3 {
 		t.Errorf("enacting costs 1 Tactics and no Requisition: pool R%d T%d, want R3 T4 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
+
+// Tests for T-0139 (FR-TRN-003a, FR-MNV-001, FR-TGT-001, FR-MOD-001; SVY-R3,
+// SVY-R4, SVY-R16, SVY-R32): the Path Maneuver Steel Rain, loaded from
+// data/cards. Player 0 enacts; player 1 is the opponent.
+//
+// Steel Rain: "As an additional cost to enact this maneuver, discard up to 3
+// cards. For each card discarded this way, deal 2 damage to chosen asset. Then,
+// if you have no cards in hand, draw 2 cards." Cost 4 Tactics.
+
+// steelRainScene gives player 0 an empty hand, then the real Steel Rain and n
+// vanilla cards (in that hand order), and enough resources to enact. It
+// returns the scene, the Maneuver and the other hand cards.
+func steelRainScene(t *testing.T, n int) (*scene, *Instance, []*Instance) {
+	t.Helper()
+	s := newScene(t)
+	s.g.Players[0].Hand = nil
+	inst := enactFor(s, "Steel Rain")
+	var others []*Instance
+	for i := 0; i < n; i++ {
+		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, Keywords{})))
+	}
+	return s, inst, others
+}
+
+func TestCard_SteelRain_DealsTwoToAChosenAssetPerDiscard(t *testing.T) {
+	// Covers: FR-TRN-003a, FR-MNV-001, FR-TGT-001, SVY-R4
+	s, inst, others := steelRainScene(t, 4)
+	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 9, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 9, Keywords{}))
+	pdScript(s, 2, false, a, b)
+	s.do(enactAction(inst))
+	s.wantDamage(a, 2)
+	s.wantDamage(b, 2)
+	amounts, targets := maneuverDamage(s)
+	if !reflect.DeepEqual(amounts, []int{2, 2}) || !reflect.DeepEqual(targets, []int{a.ID, b.ID}) {
+		t.Errorf("two separate 2-damage events in pick order A, B (SVY-R4): got amounts %v on %v", amounts, targets)
+	}
+	p := s.g.Players[0]
+	if !inDiscard(p, others[0]) || !inDiscard(p, others[1]) {
+		t.Errorf("the two discarded cards are in the discard pile (FR-TRN-003a)")
+	}
+	if lastDiscard(p) != inst {
+		t.Errorf("the Maneuver goes to the discard pile after the discarded cards (FR-MNV-001)")
+	}
+	if len(p.Hand) != 2 || p.Hand[0] != others[2] || p.Hand[1] != others[3] {
+		t.Errorf("two cards stay in hand and nothing is drawn (hand not empty): got %d cards", len(p.Hand))
+	}
+}
+
+func TestCard_SteelRain_SameAssetForEveryDiscard(t *testing.T) {
+	// Covers: SVY-R4, FR-REP-004
+	s, inst, _ := steelRainScene(t, 3)
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	pdScript(s, 3, false, u1, u1, u1)
+	s.do(enactAction(inst))
+	s.wantDamage(u1, 6)
+	s.wantDamage(u2, 0)
+	amounts, targets := maneuverDamage(s)
+	if !reflect.DeepEqual(amounts, []int{2, 2, 2}) || !reflect.DeepEqual(targets, []int{u1.ID, u1.ID, u1.ID}) {
+		t.Errorf("each repetition is its own 2-damage instance on the one unit (FR-REP-004): got amounts %v on %v", amounts, targets)
+	}
+}
+
+func TestCard_SteelRain_ChosenAssetIsAnyAsset(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s, inst, _ := steelRainScene(t, 2)
+	own, opp := s.g.Players[0].HQ, s.g.Players[1].HQ
+	allyUnit := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	allyStruct := s.put(0, ZoneMainTheater, structure("Ally Wall", 0, 9, Keywords{}))
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, Keywords{Ward: true}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("Warded Foe", 1, 9, Keywords{Ward: true}))
+	pdScript(s, 2, false, foe, foe)
+	s.do(enactAction(inst))
+	var d *Decision
+	for _, x := range s.asked(0) {
+		if x.Kind == DecideTarget {
+			x := x
+			d = &x
+		}
+	}
+	if d == nil {
+		t.Fatalf("a target decision is asked after the discard (SVY-R3)")
+	}
+	got := map[int]bool{}
+	for _, o := range d.Options {
+		got[o.Ref] = true
+	}
+	for name, a := range map[string]*Asset{"own Headquarters": own, "opposing Headquarters": opp, "allied unit": allyUnit, "allied structure": allyStruct, "allied Ward unit": allyWard, "opposing unit": foe} {
+		if !got[a.ID] {
+			t.Errorf("%s is a legal chosen asset (FR-TGT-001)", name)
+		}
+	}
+	if got[foeWard.ID] {
+		t.Errorf("an opponent's Ward unit is never a legal target (FR-KWD-002h)")
+	}
+}
+
+func TestCard_SteelRain_DiscardingNoneDealsNothing(t *testing.T) {
+	// Covers: SVY-R4, FR-TRN-003a
+	s, inst, others := steelRainScene(t, 2)
+	s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	pdScript(s, 0, false)
+	s.do(enactAction(inst))
+	for _, d := range s.asked(0) {
+		if d.Kind == DecideTarget {
+			t.Errorf("discarding none asks no target (SVY-R4)")
+		}
+	}
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("discarding none deals no damage, got %d (SVY-R4)", got)
+	}
+	if p := s.g.Players[0]; len(p.Hand) != 2 || p.Hand[0] != others[0] || p.Hand[1] != others[1] {
+		t.Errorf("both cards stay in hand and nothing is drawn (the hand is not empty): got %d cards", len(p.Hand))
+	}
+}
+
+func TestCard_SteelRain_EmptyHandAfterTheDiscardDrawsTwo(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TRN-003a
+	for _, tc := range []struct {
+		discards int
+		draws    bool
+	}{{3, true}, {2, false}} {
+		s, inst, _ := steelRainScene(t, 3)
+		s.put(1, ZoneMainTheater, unit("Victim", 1, 9, Keywords{}))
+		top := s.onTop(0, vanilla("D1", "D2", "D3")...)
+		foeHQ := s.g.Players[1].HQ
+		pdScript(s, tc.discards, false, foeHQ, foeHQ, foeHQ)
+		s.do(enactAction(inst))
+		p := s.g.Players[0]
+		if tc.draws {
+			if len(p.Hand) != 2 || p.Hand[0] != top[0] || p.Hand[1] != top[1] {
+				t.Errorf("discarding all three empties the hand, so the top two cards of the deck are drawn: got %d cards in hand (FR-MNV-001)", len(p.Hand))
+			}
+		} else if len(p.Hand) != 1 {
+			t.Errorf("discarding two of three leaves a card in hand, so nothing is drawn: got %d cards in hand (FR-MNV-001)", len(p.Hand))
+		}
+	}
+}
+
+func TestCard_SteelRain_AloneInHandDrawsTwo(t *testing.T) {
+	// Covers: FR-MNV-001, FR-TRN-003a, SVY-R16
+	s, inst, _ := steelRainScene(t, 0)
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 9, Keywords{}))
+	top := s.onTop(0, vanilla("D1", "D2", "D3")...)
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("Steel Rain alone in hand is offered: it may discard up to 3 cards, i.e. none")
+	}
+	pdScript(s, 3, false)
+	s.do(enactAction(inst))
+	if asks := s.asked(0); len(asks) != 0 {
+		t.Errorf("with no other card there is nothing to discard and no target to choose: asked %v", kindsOf(asks))
+	}
+	if got := totalDamage(s.g); got != 0 {
+		t.Errorf("no damage is dealt, got %d", got)
+	}
+	if p := s.g.Players[0]; len(p.Hand) != 2 || p.Hand[0] != top[0] || p.Hand[1] != top[1] {
+		t.Errorf("the Maneuver left the hand when enacted, so the hand is empty as the draw resolves and 2 cards are drawn: got %d in hand (FR-MNV-001)", len(p.Hand))
+	}
+}
+
+func TestCard_SteelRain_TimeoutConcentratesOnTheFirstLegalAsset(t *testing.T) {
+	// Covers: SVY-R32, FR-MOD-001
+	s, inst, _ := steelRainScene(t, 3)
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	pdScript(s, 3, true)
+	s.do(enactAction(inst))
+	s.wantDamage(s.g.Players[0].HQ, 6)
+	s.wantDamage(s.g.Players[1].HQ, 0)
+	s.wantDamage(u1, 0)
+	s.wantDamage(u2, 0)
+}
+
+func TestCard_SteelRain_PaysFourTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s, inst, _ := steelRainScene(t, 1)
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	p := s.g.Players[0]
+	p.Tac = 3
+	if offersEnact(s.g, inst) {
+		t.Errorf("with 3 Tactics Steel Rain is not offered (FR-MNV-001)")
+	}
+	s.reject(enactAction(inst))
+	p.Tac = 5
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("with enough Tactics Steel Rain is offered (FR-MNV-001)")
+	}
+	pdScript(s, 1, false, foe)
+	s.do(enactAction(inst))
+	if p.Tac != 1 || p.Req != 3 {
+		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
