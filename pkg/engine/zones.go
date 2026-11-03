@@ -33,6 +33,20 @@ func (g *Game) draw(pid PlayerID, n int) {
 	}
 }
 
+// deployCard puts inst, already out of its pile, onto the battlefield face-up in
+// zone under controller, with its own deploy event and deploy triggers, and
+// returns the new asset. A free deploy enters this way during resolution, with
+// no stack item and no costs (FR-TRN-003a). scratch has its own path, because it
+// deploys face-down and logs its own event.
+func (g *Game) deployCard(inst *Instance, controller PlayerID, zone Zone) *Asset {
+	a := g.newAsset(inst, controller, false)
+	g.placeOnBattlefield(a, zone)
+	g.logEvent(Event{Kind: EventDeploy, Player: int(controller), Card: inst.Card.Name, Inst: inst.ID, Source: a.ID, Zone: zone.String()},
+		"player %d deploys %s to %s", controller, a, zone)
+	g.fireDeploy(a)
+	return a
+}
+
 // scratch performs Deploy Scratch Company n times (FR-ZON-005, FR-KWD-002m).
 func (g *Game) scratch(pid PlayerID, n int) {
 	p := g.Players[pid]
