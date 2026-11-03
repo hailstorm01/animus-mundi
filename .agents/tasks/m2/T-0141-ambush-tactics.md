@@ -4,7 +4,7 @@ title: Make Ambush Tactics executable (choose two of kill, return to hand, a cho
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0141-ambush-tactics
 depends_on: [T-0083, T-0102, T-0107, T-0116, T-0117, T-0118, T-0123, T-0140]
 claims: [card:Ambush Tactics]
