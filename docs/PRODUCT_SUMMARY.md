@@ -34,7 +34,7 @@ animus-mundi/
 │   ├── design/
 │   │   ├── m2_starter_set_ability_survey.md # Every Animus/Path card mapped to shapes, waves A1-G, SVY-R* rulings
 │   │   └── outcomes/                      # game-designer Design Outcome Reports, one file per decision
-│   ├── tdd/                               # Technical design documents (TDD 03 parked until M3)
+│   ├── tdd/                               # Frozen TDD 03 and an overview of the retired TDD path (design intent only)
 │   └── frd/
 │       ├── README.md                                    # Status, precedence & question-to-ruling workflow
 │       ├── 01_Game_Rules_FRD.md                         # ACTIVE — Master FRD v3.11 (Pure Game Rules & Keywords)
@@ -75,7 +75,7 @@ animus-mundi/
 
 Requirement counts below are linter-registered IDs (`cardtown lint frd`). Following the SOC-002 de-duplication passes and the 2026-10-19 devil's-advocate audits, each FRD keeps superseded IDs as *Subsumed* traceability stubs that point to their canonical owner. The active count is given alongside the total.
 
-Berserk N was retired on 2026-10-28 and replaced by Overkill (`SVY-R12`, [Design Outcome](design/outcomes/2026-10-28-berserk-replaced-by-overkill.md)). This section already describes the FRDs without Berserk. `pm-frd-drafter` makes the matching edits (FRD 01 v3.14, plus removal only from the frozen FRDs 02–05 and TDD 03) once board directive #68 parts (a) and (b) have merged.
+Berserk N was retired on 2026-10-28 and replaced by Overkill (`SVY-R12`, [Design Outcome](design/outcomes/2026-10-28-berserk-replaced-by-overkill.md)). This section describes the FRDs without Berserk. `pm-frd-drafter` made the matching edits in FRD 01 v3.14 and removed it from the frozen FRDs 02–05 and TDD 03.
 
 1. **[Game Rules FRD](frd/01_Game_Rules_FRD.md) (Master FRD v3.11 — 70 Requirement IDs, 62 active; 8 subsumed)**
    - **Deck Construction, Match Setup & First-Turn Rules (`FR-SET-001` - `FR-SET-004`, `FR-DEK-001` - `FR-DEK-002`, `FR-WIN-001`)**: 50-card minimum main deck, 1 faction Headquarters, rarity copy limits (4/3/2/1), pre-mulligan First-Player Determination (15s clock), 6-card opening hand with single partial mulligan (25s clock), Turn 1 draw skip, absence of summoning sickness, mandatory post-search shuffle, empty-deck draw loss, and a simultaneous empty-deck **Match Draw** (`RESULT_MATCH_DRAW`).
@@ -142,11 +142,9 @@ Berserk N was retired on 2026-10-28 and replaced by Overkill (`SVY-R12`, [Design
   - Validates **202 defined requirement IDs** (165 active, 37 subsumed traceability stubs) and verifies **2,121 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`).
   - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`cardtown lint sheets`).
   - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`cardtown lint syntax`).
-  - Audits TDD metadata, 100% FRD requirement coverage, and topological acyclic DAGs (`cardtown lint tdd`).
 - **Workflow Tooling & Pre-commit Hooks**:
   - Native Git pre-commit hook (`cardtown hook install`) enforcing zero lint violations in < 100ms prior to local commits; it rebuilds a stale `cardtown` binary first.
   - `cardtown whats-up` prints a live snapshot of capabilities and state for the docs workflow.
-  - Topological deliverable issue slicer (`cardtown tdd slice`) generating DAG-ordered GitHub Milestones and Issues with zero guesswork.
 - **Sheets Publisher & Importer ([`tools/sheets/publish_card_sheets`](../tools/sheets/README.md), [`tools/sheets/import_card_sheets`](../tools/sheets/README.md))**:
   - Synchronizes local Tier 1 CSV balance data with Tier 2 Google Sheets workbooks using pre-publish timestamp freshness checks (`--Force` override) and interactive terminal diff ingestion (`FR-DAT-001`).
 
@@ -224,7 +222,7 @@ Tasks outside the deliverables list:
 **Not yet verified:** catalog-wide executable count (all 169 cards).
 
 > [!NOTE]
-> **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it. [TDD 03](tdd/03_Card_Compiler_TDD.md) is parked until then.
+> **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it, planned with a design note. [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
 
 ---
 
@@ -245,7 +243,7 @@ flowchart LR
 ```
 
 ### M3: Card Data Pipeline & Full Catalog
-- **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up, then revise or replace TDD 03.
+- **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up. `lead-architect` then plans the build with a design note (`architecture/m3-<topic>.md`) and decision records, as in M2. M3 has no TDD: the path was retired on 2026-11-03, and [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
 - **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test. Soulless and Concordia cards, plus the Rift and Encampment Headquarters deferred from M2, pull in the FRD 01 rules that the M2 starter set did not reach.
 - **Overkill and granted triggered abilities:** *Tempest Surge* and *Redline Infusion* need Overkill (`FR-KWD-002p`). It is a trigger on the existing combat-kill hook (T-0080), with one more gate (the defender's Current Health below 0) and an excess fixed when the hook fires. *Redline Infusion* is the first card to grant a quoted triggered ability until end of turn (*gains "Overkill: Ready this unit."*), a new M3 ability shape. Its settling tests are named on board directive #72.
 - **Done when:** `cardtown lint rules` reports every active FRD 01 requirement pinned, every card without a `needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
@@ -277,7 +275,8 @@ flowchart LR
 | [`design/outcomes/`](design/outcomes/) (Design Outcome Reports) | **Active** | M2 onward | One file per `game-designer` decision; `pm-frd-drafter` sets each one's `Status:` when applied |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
-| [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Parked | M3 | Revise after FRD 03 rewrite |
+| M3 design note (`architecture/m3-<topic>.md`) | Not started | M3 | `lead-architect` writes it after the FRD 02/03 rewrites |
+| [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Frozen as design intent (2026-11-03) | M3 | None: reference only, not revised. The M3 design note does its job |
 | [`04_Client_Engine_Protocol_Networking_FRD.md`](frd/04_Client_Engine_Protocol_Networking_FRD.md) | Frozen as design intent (v1.5) | M5 | Rewrite at M5 start |
 | [`05_Headless_Game_Engine_FRD.md`](frd/05_Headless_Game_Engine_FRD.md) | Frozen as design reference (v1.4) | M2 | Consult while extending `pkg/engine` |
 | `06_Server_Daemon_Matchmaking_FRD.md` | Not started | M5 | Draft at M5 start |
