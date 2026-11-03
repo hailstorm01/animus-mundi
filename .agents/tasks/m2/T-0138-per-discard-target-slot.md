@@ -4,7 +4,7 @@ title: A target slot can choose once per card the discard cost discarded (FR-TGT
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0138-per-discard-target-slot
 depends_on: [T-0136, T-0137]
 claims: [field:Target.PerDiscard, func:chooseTargets, func:targetDecision, func:slotsLegal]
@@ -71,3 +71,4 @@ In a new file `pkg/engine/per_discard_test.go`, with synthetic Maneuvers built b
 ## Log
 - 2026-11-02 lead-architect (wave C session 27): queued with T-0136 when #20 (b) was split (D2.4). Write its Inputs, Tests and Done When against the code of the day before it leaves `queued`.
 - 2026-11-02 lead-architect (wave C session 29): written against the run branch at 03f8983 (no `main` commits to sync). #20 (b) is the oldest open directive and this is its last shape part; #91's open parts sit with the tasks whose `cards:` include *Steel Rain*, *Ambush Tactics*, *Ensnaring Mist* or *Pincer Tactics*, and this task's `cards:` is empty. Re-read `BOARD.md` before committing: no new or changed directive. Status `tests`.
+- 2026-11-02 rules-test-author: wrote pkg/engine/per_discard_test.go: TestFR_TGT_001_PerDiscardSlotChoosesOncePerDiscard, TestFR_TGT_001_PerDiscardSameAssetEachTime, TestFR_TGT_001_PerDiscardSplitAcrossAssets, TestFR_MOD_001_PerDiscardTimeoutConcentrates, TestFR_KWD_002h_PerDiscardSlotNeverOffersOpposingWard, TestFR_MNV_001_PerDiscardSlotNeverBlocksEnact, TestFR_TGT_001_PerDiscardSlotOnTriggerChoosesNothing. All fail to compile today (unknown field ability.Target.PerDiscard). Helpers requested: none (file-local pdScript, perDiscardScene, maneuverDamage). Left out: nothing. Notes: the timeout test expects the choosing player's own Headquarters (first in fixed order with an empty filter); the 3-discard split test uses distinct picks via the first three hand options. go vet fails only on PerDiscard; cardtown lint rules passes. Status tests-review.
