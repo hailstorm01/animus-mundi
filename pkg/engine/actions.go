@@ -77,18 +77,15 @@ func (g *Game) Apply(a Action) error {
 		p.Tac++
 	case ActDeploy:
 		inst := handCard(p, a.Card)
-		payCost(p, inst.Card)
+		g.payCost(p, inst)
 		g.takeCard(inst)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
 	case ActEnact:
 		inst := handCard(p, a.Card)
-		payCost(p, inst.Card)
+		g.payCost(p, inst)
 		g.takeCard(inst)
-		pl := maneuverPlacement(a.Player, inst)
-		pl.discards = g.chooseCostDiscards(pl)
-		eff, chosen := g.chooseOnPlacement(pl, inst.Card.Ability.Effect)
-		g.push(&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst, Effect: eff, Chosen: chosen})
-		g.payCosts(pl)
+		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect,
+			&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst})
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
@@ -207,16 +204,25 @@ func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
 	if !c.Supported() {
 		return nil, illegal("%s needs rules the kernel does not implement yet", c.Name)
 	}
-	if p.Req < c.ReqCost || p.Tac < c.TacCost {
-		return nil, illegal("cannot pay for %s (needs R%d T%d)", c.Name, c.ReqCost, c.TacCost)
+	req, tac := g.EffectiveCost(inst)
+	if p.Req < req || p.Tac < tac {
+		return nil, illegal("cannot pay for %s (needs R%d T%d)", c.Name, req, tac)
 	}
 	return inst, nil
 }
 
-// payCost takes c's printed resource cost from p.
-func payCost(p *Player, c *Card) {
-	p.Req -= c.ReqCost
-	p.Tac -= c.TacCost
+// EffectiveCost returns what deploying or enacting inst costs now, in
+// Requisition and Tactics, the one read of a card's cost (FR-CST-001). No card
+// changes a cost yet, so it is the printed cost.
+func (g *Game) EffectiveCost(inst *Instance) (req, tac int) {
+	return inst.Card.ReqCost, inst.Card.TacCost
+}
+
+// payCost takes inst's cost (EffectiveCost) from p.
+func (g *Game) payCost(p *Player, inst *Instance) {
+	req, tac := g.EffectiveCost(inst)
+	p.Req -= req
+	p.Tac -= tac
 }
 
 func (g *Game) readyAsset(a Action) (*Asset, error) {
