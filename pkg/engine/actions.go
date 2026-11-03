@@ -211,20 +211,6 @@ func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
 	return inst, nil
 }
 
-// EffectiveCost returns what deploying or enacting inst costs now, in
-// Requisition and Tactics, the one read of a card's cost (FR-CST-001). No card
-// changes a cost yet, so it is the printed cost.
-func (g *Game) EffectiveCost(inst *Instance) (req, tac int) {
-	return inst.Card.ReqCost, inst.Card.TacCost
-}
-
-// payCost takes inst's cost (EffectiveCost) from p.
-func (g *Game) payCost(p *Player, inst *Instance) {
-	req, tac := g.EffectiveCost(inst)
-	p.Req -= req
-	p.Tac -= tac
-}
-
 func (g *Game) readyAsset(a Action) (*Asset, error) {
 	as := g.Asset(a.Asset)
 	if as == nil || as.Controller != a.Player {

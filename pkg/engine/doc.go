@@ -57,8 +57,9 @@
 //   - actions.go: Action, Apply, checks and LegalActions. combat.go: attack
 //     legality and combat resolution. stack.go: the Resolution Stack.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
-//     an effect, its modes and then its targets. targeting.go: target
-//     choice and filters. effects.go: running a resolved ability's steps.
+//     an effect, its modes and then its targets. costs.go: a card's cost and
+//     additional costs. targeting.go: target choice and filters. effects.go:
+//     running a resolved ability's steps.
 //   - state.go: core state types and lookups. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
