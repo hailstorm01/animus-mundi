@@ -4,7 +4,7 @@ title: An "another chosen" target slot must pick a different entity from the ear
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0140-another-target-slot
 depends_on: [T-0116, T-0117, T-0118]
 claims: [field:Target.Another, func:Target.AnotherSlot, func:chooseTargets, func:slotsLegal, func:chooseModes]
