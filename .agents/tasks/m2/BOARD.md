@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0141 | Make *Ambush Tactics* executable (choose two of kill, return to hand, a chosen unit deals its power to another chosen unit, put on top of its owner's deck; #14 (a), wave C card, flash) | tests |
