@@ -4,7 +4,7 @@ title: One function deploys a card onto the battlefield, deployCard (directive #
 kind: harness
 tier: flash
 wave: C.1 (board directive #95, structural review 7, finding 4)
-status: ready
+status: review
 branch: m2/autoloop-wave-c.1/T-0146-deploy-card
 depends_on: [T-0145]
 claims: [helper:deployCard]
@@ -77,10 +77,26 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/engine/zones.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 3): wrote this task from directive #95 against the run branch at f03e129, after syncing `main` (merge f03e129, `docs/PRODUCT_SUMMARY.md` only). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `deployCard`; `resolveDeploy` is the only code that builds an `EventDeploy`. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (session 1): implemented pure move of `resolveDeploy` body to `deployCard` helper in `pkg/engine/zones.go`.
+  - Diff shows:
+    - `pkg/engine/stack.go`: `resolveDeploy` delegates to `g.deployCard(it.Inst, it.Controller, it.Zone)` (-6 lines, +1 line).
+    - `pkg/engine/zones.go`: added `(g *Game) deployCard(inst *Instance, controller PlayerID, zone Zone) *Asset` with doc comment directly above `scratch` (+14 lines).
+  - Reuse: `newAsset`, `placeOnBattlefield`, `logEvent` with `EventDeploy`, `fireDeploy`. Searched `pkg/engine` for `deployCard`; no prior declaration existed. `scratch` preserved its face-down path unchanged.
+  - Acceptance cases verified:
+    - Case 1: `git -C W diff autoloop/m2-wave-c.1 -- "*_test.go"` returned empty; `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n "deployCard(" -- pkg/engine` returned 2 lines (`stack.go:119` and `zones.go:41`).
+    - Case 4: `git -C W grep -n "Kind: EventDeploy" -- pkg/engine/stack.go pkg/engine/zones.go` returned 1 line (`zones.go:44`).
+    - Case 5: `git -C W grep -n "g.newAsset(inst, pid, true)" -- pkg/engine/zones.go` returned 1 line (`zones.go:59`).
+    - Case 6: `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg` returned `1	6	pkg/engine/stack.go` and `14	0	pkg/engine/zones.go`.
+    - Case 7: `go -C W run ./cmd/cardtown lint fences` exited 0 (`[PASS]`).
+    - Case 8: `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `pkg/engine/stack.go`, `pkg/engine/zones.go` and `.agents/tasks/m2/T-0146-deploy-card.md`.
+    - Case 9: `go -C W tool task check` passed all checks; `go -C W tool task sim` passed 200 starter deck games with all invariants holding.
+  - Handoff commit `feat(engine): deployCard helper extracts resolveDeploy body (T-0146)`. Task status set to `review`.

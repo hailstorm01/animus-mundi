@@ -116,12 +116,7 @@ func (g *Game) resolveManeuver(it *StackItem) {
 }
 
 func (g *Game) resolveDeploy(it *StackItem) {
-	c := it.Inst.Card
-	a := g.newAsset(it.Inst, it.Controller, false)
-	g.placeOnBattlefield(a, it.Zone)
-	g.logEvent(Event{Kind: EventDeploy, Player: int(it.Controller), Card: c.Name, Inst: it.Inst.ID, Source: a.ID, Zone: it.Zone.String()},
-		"player %d deploys %s to %s", it.Controller, a, it.Zone)
-	g.fireDeploy(a)
+	g.deployCard(it.Inst, it.Controller, it.Zone)
 }
 
 func (g *Game) resolveMarch(it *StackItem) {
