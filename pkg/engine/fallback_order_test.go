@@ -2,6 +2,7 @@ package engine
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -160,4 +161,86 @@ func TestFR_MOD_001_TargetNoChooserAndInvalidAnswerPickLikeATimeout(t *testing.T
 			wantOnlyDamaged(t, s, r, tc.name+" picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16)")
 		})
 	}
+}
+
+// Tests for the timeout of a repeated choice (T-0136, SVY-R32, board
+// directive #91 (1)). A Repeats decision that times out, gets an invalid
+// answer or has no chooser puts every pick on the first option (in fixed order
+// for a target choice), never a cycle through the options.
+
+// repeatFallbacks are the three ways a decision falls back to its default.
+var repeatFallbacks = []struct {
+	name    string
+	install func(s *scene)
+}{
+	{"timeout", func(s *scene) { s.script(0, Answer{Timeout: true}) }},
+	{"invalid answer", func(s *scene) { s.script(0, Answer{Picks: []int{9}}) }},
+	{"no chooser", func(s *scene) { s.g.choosers[0] = nil }},
+}
+
+func TestFR_MOD_001_RepeatedTargetTimeoutConcentrates(t *testing.T) {
+	// Covers: SVY-R32, FR-TGT-001
+	for _, tc := range repeatFallbacks {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newScene(t)
+			theirs := s.put(1, ZoneMainTheater, unit("Their Unit", 1, 5, Keywords{}))
+			mine := s.put(0, ZoneMainTheater, unit("My Unit", 1, 5, Keywords{}))
+			tc.install(s)
+			options := []Option{{Label: "Their Unit", Ref: theirs.ID}, {Label: "My Unit", Ref: mine.ID}}
+			d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: options, Min: 3, Max: 3, Repeats: true}
+			if got := s.g.choose(d); !reflect.DeepEqual(got, []int{1, 1, 1}) {
+				t.Errorf("%s: every repetition lands on the first legal entity in fixed order, the deciding player's own unit: got %v, want [1 1 1] (SVY-R32)", tc.name, got)
+			}
+		})
+	}
+}
+
+func TestFR_MOD_001_RepeatedTargetTimeoutTakesOwnHeadquartersFirst(t *testing.T) {
+	// Covers: SVY-R16, SVY-R32
+	s := newScene(t)
+	theirs := s.put(1, ZoneMainTheater, unit("Their Unit", 1, 5, Keywords{}))
+	mine := s.put(0, ZoneMainTheater, unit("My Theater Unit", 1, 5, Keywords{}))
+	hq := s.g.Players[0].HQ
+	s.script(0, Answer{Timeout: true})
+	options := []Option{{Label: "Their Unit", Ref: theirs.ID}, {Label: "My Theater Unit", Ref: mine.ID}, {Label: "My HQ", Ref: hq.ID}}
+	d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: options, Min: 2, Max: 2, Repeats: true}
+	if got := s.g.choose(d); !reflect.DeepEqual(got, []int{2, 2}) {
+		t.Errorf("both repetitions land on the deciding player's Headquarters, first in fixed order: got %v, want [2 2] (SVY-R16, SVY-R32)", got)
+	}
+}
+
+func TestFR_MOD_001_RepeatedModeTimeoutTakesFirstListed(t *testing.T) {
+	// Covers: SVY-R32
+	s := newScene(t)
+	s.script(0, Answer{Timeout: true})
+	d := Decision{Player: 0, Kind: DecideMode, Prompt: "modes", Options: []Option{{Label: "A"}, {Label: "B"}}, Min: 3, Max: 3, Repeats: true}
+	if got := s.g.choose(d); !reflect.DeepEqual(got, []int{0, 0, 0}) {
+		t.Errorf("a repeatable mode times out to the first listed mode every time: got %v, want [0 0 0] (directive #91 (1))", got)
+	}
+}
+
+func TestFR_MOD_001_NonRepeatedFallbackUnchanged(t *testing.T) {
+	// Covers: SVY-R16
+	t.Run("target", func(t *testing.T) {
+		s := newScene(t)
+		theirs := s.put(1, ZoneMainTheater, unit("Their Unit", 1, 5, Keywords{}))
+		mine := s.put(0, ZoneMainTheater, unit("My Theater Unit", 1, 5, Keywords{}))
+		reserve := s.put(0, ZoneReserves, unit("My Reserves Unit", 1, 5, Keywords{}))
+		s.script(0, Answer{Timeout: true})
+		options := []Option{{Label: "Their Unit", Ref: theirs.ID}, {Label: "My Theater Unit", Ref: mine.ID}, {Label: "My Reserves Unit", Ref: reserve.ID}}
+		d := Decision{Player: 0, Kind: DecideTarget, Prompt: "target", Options: options, Min: 2, Max: 2}
+		got := append([]int(nil), s.g.choose(d)...)
+		sort.Ints(got)
+		if !reflect.DeepEqual(got, []int{1, 2}) {
+			t.Errorf("without Repeats the first two legal options in fixed order are picked, distinct (own Reserves, own Main Theater): got %v, want indexes 1 and 2 (SVY-R16)", got)
+		}
+	})
+	t.Run("mode", func(t *testing.T) {
+		s := newScene(t)
+		s.script(0, Answer{Timeout: true})
+		d := Decision{Player: 0, Kind: DecideMode, Prompt: "modes", Options: []Option{{Label: "A"}, {Label: "B"}, {Label: "C"}}, Min: 2, Max: 2}
+		if got := s.g.choose(d); !reflect.DeepEqual(got, []int{0, 1}) {
+			t.Errorf("without Repeats a mode timeout picks the first two listed: got %v, want [0 1] (FR-MOD-001 sec. 6)", got)
+		}
+	})
 }

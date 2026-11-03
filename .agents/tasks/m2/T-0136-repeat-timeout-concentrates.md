@@ -4,7 +4,7 @@ title: A timed-out repeated choice puts every repetition on the first option (SV
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0136-repeat-timeout-concentrates
 depends_on: []
 claims: [func:fixedOrderPicks, func:fallbackPicks]
@@ -57,3 +57,4 @@ In `pkg/engine/fallback_order_test.go` (beside the other fixed-order timeout tes
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 27): written against the run branch after syncing `main` (51c50df, 2dbd536: D7.1 marks a directive as asked on `main`). Directive #91's trigger fired (its outcome reads `Status: applied: FRD 01 v3.20`), so #91 is open; its part (1) is this task. #20 (b) split under the D2 size rule, because one task would touch six non-test files (`ability.go`, `targeting.go`, `placement.go`, `zones.go`, `actions.go`, `choice.go`): this task (`choice.go`), T-0137 (queued: a discard cost's cards are chosen before the targets and moved after the push, `zones.go`, `placement.go`, `actions.go`) and T-0138 (queued: `ability.Target.PerDiscard`, `ability.go`, `targeting.go`, `placement.go`), then the *Steel Rain* card task, which #20 (b) keeps. Status `tests`.
+- 2026-11-02 rules-test-author: wrote the four tests in `pkg/engine/fallback_order_test.go`: `TestFR_MOD_001_RepeatedTargetTimeoutConcentrates` (subtests timeout, invalid answer, no chooser; options listed opposing first, so own unit is index 1, want `[1 1 1]`), `TestFR_MOD_001_RepeatedTargetTimeoutTakesOwnHeadquartersFirst` (want `[2 2]`), `TestFR_MOD_001_RepeatedModeTimeoutTakesFirstListed` (want `[0 0 0]`), `TestFR_MOD_001_NonRepeatedFallbackUnchanged` (target compared as a sorted set, so only the two fixed-order-first indexes 1 and 2 are pinned, not the order of the returned slice; mode `[0 1]`). Helpers requested: none. Cases left out: none. Today the three Repeats tests fail with cycling picks (`[1 0 1]`, `[2 1]`, `[0 1 0]`); the guard passes. `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
