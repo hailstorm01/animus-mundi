@@ -30,4 +30,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0142 | Make *Ensnaring Mist* executable (move a chosen unit to its controller's Reserves, then a chosen unit gets -1 power until end of turn; #91 (4), #14 (c), wave C card, flash) | tests |
+| T-0142 | Make *Ensnaring Mist* executable (move a chosen unit to its controller's Reserves, then a chosen unit gets -1 power until end of turn; #91 (4), #14 (c), wave C card, flash) | in-progress |
