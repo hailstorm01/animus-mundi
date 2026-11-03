@@ -4,7 +4,7 @@ title: A discard cost's cards are chosen before the targets and discarded after 
 kind: shape
 tier: sonnet
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0137-discard-chosen-before-targets
 depends_on: [T-0136]
 claims: [field:placement.discards, func:chooseDiscards, func:discardCards, func:discardFromHand, func:chooseCostDiscards, func:payCosts]
@@ -67,3 +67,4 @@ In a new file `pkg/engine/discard_order_test.go`, with synthetic Maneuvers built
 ## Log
 - 2026-11-02 lead-architect (wave C session 27): queued with T-0136 when #20 (b) was split (D2.4). Write its Inputs, Tests and Done When against the code of the day before it leaves `queued`.
 - 2026-11-02 lead-architect (wave C session 28): written against the run branch at 446b753 (no `main` commits to sync). #20 (b) is the oldest open directive and its next part; #91 (1) is applied, and #91's other parts sit with the tasks whose `cards:` include *Steel Rain*, *Ambush Tactics*, *Ensnaring Mist* or *Pincer Tactics*, which this task's empty `cards:` doesn't. Added `chooseCostDiscards` to the claims, so `ActEnact` gains one line. Re-read `BOARD.md` before committing: no new or changed directive. Status `tests`.
+- 2026-11-02 rules-test-author: tests written in `pkg/engine/discard_order_test.go` (helper `dcScript`, local to the file). `TestFR_TRN_003a_DiscardChosenBeforeTargets` and `TestFR_TRN_003a_DiscardChosenBeforeTargetsOnTimeout` fail today (decisions come [Target Hand], want [Hand Target]). Guards that pass today: `TestFR_TGT_001_DiscardCostCardsNotTargetableInPile` (finds the target decision by kind, so it does not pin the order), `TestFR_TRN_003a_DiscardCostEventsStillAfterPlace` (place, then discards in pick order B before A, then damage). Helpers requested: none. Cases left out: none. Status `tests-review`.
