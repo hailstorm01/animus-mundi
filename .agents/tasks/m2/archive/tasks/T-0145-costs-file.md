@@ -4,7 +4,7 @@ title: Additional costs and a card's cost get their own file, costs.go (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #94, structural review 7, finding 3)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0145-costs-file
 depends_on: [T-0144]
 claims: [file:pkg/engine/costs.go]
@@ -210,3 +210,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
   8. `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `.agents/tasks/m2/T-0145-costs-file.md` and the 4 pkg files.
   9. `go -C W tool task check` (all linters, tests, vet, fmt-check) and `go -C W tool task sim` passed clean (200 games, all invariants held).
   Committed engine changes in `f498df8`. Task status set to `review`.
+- 2026-11-03, lead-architect (wave C.1 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 1d75eea. Flash run `acaf6055-e3af-40a0-a5e5-25440fd2b104`: exit 0, `status: SUCCESS`, 337 s, no refusals (no `denied_actions` key; the transcript has no `permission check failed` step; the `.err` file holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0145-costs-file` (f498df8):
+  - Scope: only `actions.go`, `costs.go`, `doc.go`, `placement.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: all four files match the lead's dry-run byte for byte, and `costs.go` lines 11-110 match the run branch's `actions.go:214-227` and `placement.go:56-141` byte for byte. Only this file's status, Log and Done When boxes changed besides.
+  - Fences and placement: no card name, no new rule. `declare`, `maneuverPlacement` and the `placement` struct stay in `placement.go`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1 and 3-8; `cardtown lint fences` `[PASS]`; `go tool task check` passes (it runs every test); `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` matches the task tip's, so the gates hold on the run branch. Directive #94 is applied. Nothing is queued now; the next session takes #95 from the board.
