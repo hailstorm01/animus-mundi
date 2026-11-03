@@ -146,3 +146,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0140 | An "another chosen" slot must pick a different entity from the earlier slot of its clause (SVY-R34, #88, #91 (3), wave C shape, sonnet) | done |
 | T-0141 | Make *Ambush Tactics* executable (choose two of kill, return to hand, a chosen unit deals its power to another chosen unit, put on top of its owner's deck; #14 (a), wave C card, flash) | done |
 | T-0142 | Make *Ensnaring Mist* executable (move a chosen unit to its controller's Reserves, then a chosen unit gets -1 power until end of turn; #91 (4), #14 (c), wave C card, flash) | done |
+| T-0143 | Make *Pincer Tactics* executable (1 damage to each of up to 2 chosen allied units, 2 to a chosen non-Scratch asset; #91 (4), #14 (c), wave C card, flash) | done |
