@@ -33,6 +33,82 @@ var pathDefs = map[string]*ability.Def{
 			cornered(ability.Aggressive(3)),
 		},
 	},
+	"Ambush Tactics": {
+		Text: []string{
+			"Choose two:",
+			"- Kill chosen unit.",
+			"- Return chosen unit to its owner's hand.",
+			"- Chosen unit deals damage equal to its power to another chosen unit.",
+			"- Put chosen unit on top of its owner's deck.",
+		},
+		Effect: ability.Effect{
+			ChooseN: 2,
+			Modes: []ability.Effect{
+				{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Kinds: ability.KindUnit},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpKill,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+				{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Kinds: ability.KindUnit},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+				{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Kinds: ability.KindUnit},
+						},
+						{
+							Filter:  ability.Filter{Kinds: ability.KindUnit},
+							Another: 1,
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{From: ability.ValueSourcePower},
+							Subject: ability.SubjectTarget,
+							Target:  1,
+							Dealer:  1,
+						},
+					},
+				},
+				{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Kinds: ability.KindUnit},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpPutOnDeck,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Arkha, Sun's Fury": {
 		Text: []string{"Whenever this unit attacks, you may put a unit card from your discard pile on the bottom of your deck. If you do, deal 3 damage to chosen opposing Headquarters."},
 		Triggers: []ability.Trigger{
