@@ -4,7 +4,7 @@ title: A timed-out repeated choice puts every repetition on the first option (SV
 kind: shape
 tier: sonnet
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0136-repeat-timeout-concentrates
 depends_on: []
 claims: [func:fixedOrderPicks, func:fallbackPicks]
