@@ -4,7 +4,7 @@ title: One function deploys a card onto the battlefield, deployCard (directive #
 kind: harness
 tier: flash
 wave: C.1 (board directive #95, structural review 7, finding 4)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0146-deploy-card
 depends_on: [T-0145]
 claims: [helper:deployCard]
