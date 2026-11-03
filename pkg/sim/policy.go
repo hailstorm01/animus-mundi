@@ -40,8 +40,9 @@ func ProgressPolicy(seed uint64) Policy {
 			if !c.Supported() || (len(c.DeployZones) == 0 && c.Type != engine.TypeManeuver) {
 				continue
 			}
-			needReq = needReq || c.ReqCost > p.Req
-			needTac = needTac || c.TacCost > p.Tac
+			req, tac := g.EffectiveCost(inst)
+			needReq = needReq || req > p.Req
+			needTac = needTac || tac > p.Tac
 		}
 		for _, a := range legal {
 			switch a.Kind {

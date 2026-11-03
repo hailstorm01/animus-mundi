@@ -32,6 +32,17 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 	return e, g.chooseTargets(pl, e)
 }
 
+// declare runs the declare sequence for item, an effect declared by a manual
+// action, in rules order: the discard cost's cards are picked, e's modes and
+// targets are chosen and filled into item, item goes on the stack, and the
+// additional costs are paid (FR-TRN-003, FR-TRN-003a).
+func (g *Game) declare(pl placement, e ability.Effect, item *StackItem) {
+	pl.discards = g.chooseCostDiscards(pl)
+	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
+	g.push(item)
+	g.payCosts(pl)
+}
+
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
 // both its legality check and the choosing of its modes and targets.
 func maneuverPlacement(pid PlayerID, inst *Instance) placement {
