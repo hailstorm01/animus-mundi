@@ -414,6 +414,39 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Pincer Tactics": {
+		Text: []string{"Deal 1 damage to each of up to 2 chosen allied units. Deal 2 damage to chosen non-Scratch asset."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+					},
+					UpTo: 2,
+				},
+				{
+					Filter: ability.Filter{
+						Scratch: ability.ScratchExcluded,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 2},
+					Subject: ability.SubjectTarget,
+					Target:  1,
+				},
+			},
+		},
+	},
 	"Rogue Fleshshaper": {
 		Text: []string{
 			"When this unit deploys, choose one:",
