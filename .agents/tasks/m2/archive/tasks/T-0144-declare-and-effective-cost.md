@@ -4,7 +4,7 @@ title: One declare sequence, (g *Game) declare, and one read of a card's cost, (
 kind: harness
 tier: flash
 wave: C.1 (board directives #92 and #93, structural review 7, findings 1 and 2)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0144-declare-and-effective-cost
 depends_on: []
 claims: [func:declare, func:EffectiveCost, func:payCost signature]
@@ -142,3 +142,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     8. git diff autoloop/m2-wave-c.1 --stat lists only actions.go, placement.go, policy.go, and this task file.
     9. go tool task check and go tool task sim passed (all linters, vet, tests, and starter sims clean).
   - Status moved to review.
+- 2026-11-03, lead-architect (wave C.1 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 1ee9704. Flash run `873ac128-18a5-4e06-8c06-27f216f583ce`: exit 0, `status: SUCCESS`, 430 s, no refusals (no `denied_actions` key; the transcript has no `permission check failed` step; the `.err` file holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0144-declare-and-effective-cost` (99a66e3):
+  - Scope: only `actions.go`, `placement.go`, `policy.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1–6. `declare` holds `ActEnact`'s four steps in their old order, with `Effect` and `Chosen` filled before the push. `EffectiveCost` returns the fields the three call sites read before. `ActDeploy` still pushes for itself (#92).
+  - Fences and placement: no card name, no new rule. `declare` sits beside `chooseOnPlacement`, and `EffectiveCost` beside `payCost` until T-0145 moves both cost functions to `costs.go` (#94). Package `engine` gains only the exported read #93 asks for.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1 and 3–8; `cardtown lint fences` `[PASS]`; `go tool task check` passes (it runs every test); `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` matches the task tip's, so the gates hold on the run branch. Directives #92 and #93 are applied. T-0145 (#94) is next.
