@@ -4,7 +4,7 @@ title: Make Pincer Tactics executable (1 damage to each of up to 2 chosen allied
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0143-pincer-tactics
 depends_on: [T-0017, T-0030, T-0056, T-0104, T-0107, T-0116, T-0117]
 claims: [card:Pincer Tactics]
@@ -68,3 +68,4 @@ To be added to `pkg/engine/cards_path_maneuvers_test.go`, from the CSV text, loa
 
 ## Log
 - 2026-11-03 lead-architect (wave C session 36): written against the run branch at 49a0dd5 (no `main` commits to sync). Not `WAVE-COMPLETE`: *Pincer Tactics* is the last header card on `NotYetExecutable`. A non-deck card kept by #14 (c): every shape it needs is `done`. #91 (4)'s last part goes into this task (the same-unit test); #91 (2) is about a cost on a mode, and this card has no modes. Waiting triggers #6, #7 (mode is `serial`), #8 (this task doesn't touch `deck.go`), #15 (no turn-start, turn-end or draw hook; damage doesn't expire), #71 (no each-player effect) not fired. Status `tests`.
+- 2026-11-03 rules-test-author: wrote 12 tests in `pkg/engine/cards_path_maneuvers_test.go` (with file-local helpers `pincerChoose`, `pincerOffers`): `TestCard_PincerTactics_` `DamagesTwoAlliesAndAnAsset`, `SameUnitTakesOneAndTwo`, `SameUnitDiesInTheSweepAfterBothSteps` (the 1-health case as its own test), `UpToTwoMayBeNoneOrOne`, `AlliedUnitsAreDistinct`, `FirstSlotOffersAlliedUnitsOnly`, `SecondSlotIsAnyNonScratchAsset`, `EnactableWithNoUnits`, `ArmorAbsorbsTheDamage`, `DamageTriggersUnbowed` (uses *Allshan, Chainbreaker Revenant*: survives 1 damage, Armor becomes 2), `TargetTimeoutsTakeFixedOrder`, `PaysThreeTactics`. `go vet ./pkg/engine` and `cardtown lint rules` are clean; all 12 fail now (card not yet executable). Helpers requested: none. Left out: face-up Scratch Company units in the option checks (the harness can only build face-down ones; face-down allied and opposing are covered); the Unbowed once-per-step count, as the task says. The repeated-pick case asserts only that the unit takes no more than the 1 (an invalid answer falls back to none, as in `optional_upto_test.go`). Slot 0 is told from slot 1 by `Decision.Min == 0`.

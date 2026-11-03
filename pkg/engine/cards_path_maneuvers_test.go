@@ -1294,3 +1294,308 @@ func TestCard_AmbushTactics_PaysFourTactics(t *testing.T) {
 		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0143 (FR-MNV-001, FR-TGT-001, FR-TGT-002, FR-TGT-003, FR-MOD-001,
+// FR-REP-004, FR-KWD-002h, FR-KWD-002a): the Path Maneuver Pincer Tactics,
+// loaded from data/cards. Player 0 enacts; player 1 is the opponent.
+//
+// Pincer Tactics: "Deal 1 damage to each of up to 2 chosen allied units. Deal 2
+// damage to chosen non-Scratch asset." Cost 3 Tactics. Slot 0 is the up-to
+// allied units, slot 1 the non-Scratch asset.
+
+// pincerChoose installs a chooser for seat 0 that answers the up-to slot (the
+// DecideTarget with Min 0) with first, and the other DecideTarget with second.
+// A nil slot answer is a timeout. It records the decisions asked, in order.
+func pincerChoose(s *scene, first []*Asset, second *Asset) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[0] = nil
+	idx := func(d Decision, a *Asset) (int, bool) {
+		for i, o := range d.Options {
+			if o.Ref == a.ID {
+				return i, true
+			}
+		}
+		return 0, false
+	}
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		if d.Kind != DecideTarget {
+			s.t.Errorf("unexpected %v decision %q", d.Kind, d.Prompt)
+			return Answer{Timeout: true}
+		}
+		if d.Min == 0 {
+			if first == nil {
+				return Answer{Timeout: true}
+			}
+			picks := []int{}
+			for _, a := range first {
+				i, ok := idx(d, a)
+				if !ok {
+					s.t.Errorf("allied unit %s is not offered by the up-to slot: %v", a, d.Options)
+					return Answer{Timeout: true}
+				}
+				picks = append(picks, i)
+			}
+			return Answer{Picks: picks}
+		}
+		if second == nil {
+			return Answer{Timeout: true}
+		}
+		i, ok := idx(d, second)
+		if !ok {
+			s.t.Errorf("asset %s is not offered by the non-Scratch slot: %v", second, d.Options)
+			return Answer{Timeout: true}
+		}
+		return Answer{Picks: []int{i}}
+	}
+}
+
+// pincerOffers returns the Ref sets of the two target decisions asked of seat 0.
+func pincerOffers(s *scene) (slot0, slot1 map[int]bool) {
+	s.t.Helper()
+	for _, d := range s.asked(0) {
+		if d.Kind != DecideTarget {
+			continue
+		}
+		m := map[int]bool{}
+		for _, o := range d.Options {
+			m[o.Ref] = true
+		}
+		if d.Min == 0 {
+			slot0 = m
+		} else {
+			slot1 = m
+		}
+	}
+	if slot0 == nil || slot1 == nil {
+		s.t.Fatalf("expected both target questions to be asked of seat 0, got %d decisions", len(s.asked(0)))
+	}
+	return slot0, slot1
+}
+
+func TestCard_PincerTactics_DamagesTwoAlliesAndAnAsset(t *testing.T) {
+	// Covers: FR-MNV-001, FR-REP-004
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	b := s.put(0, ZoneReserves, unit("B", 1, 5, Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	inst := enactFor(s, "Pincer Tactics")
+	pincerChoose(s, []*Asset{a, b}, c)
+	s.do(enactAction(inst))
+	s.wantDamage(a, 1)
+	s.wantDamage(b, 1)
+	s.wantDamage(c, 2)
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("Pincer Tactics ends on top of its owner's discard pile (FR-MNV-001)")
+	}
+	if p := s.g.Players[0]; p.Tac != 2 {
+		t.Errorf("3 Tactics are spent: %d left of 5, want 2 (FR-MNV-001)", p.Tac)
+	}
+}
+
+func TestCard_PincerTactics_SameUnitTakesOneAndTwo(t *testing.T) {
+	// Covers: SVY-R35, FR-TGT-002, FR-TGT-003
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 6, Keywords{}))
+	pincerChoose(s, []*Asset{a}, a)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	s.wantDamage(a, 3)
+	if !s.alive(a) {
+		t.Errorf("a 6-health unit taking 1 and 2 survives (SVY-R35)")
+	}
+	wantDealt(t, s.g, a, 2, 3, "the two clauses are independent slots: the same unit takes 1, then 2 (SVY-R35)")
+}
+
+func TestCard_PincerTactics_SameUnitDiesInTheSweepAfterBothSteps(t *testing.T) {
+	// Covers: SVY-R35, FR-TGT-003
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 3, Keywords{}))
+	a.Damage = 2 // one health left
+	pincerChoose(s, []*Asset{a}, a)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	wantDealt(t, s.g, a, 2, 3, "lethal damage is applied in the sweep, so the unit is still there for the 2 (FR-TGT-003)")
+	if s.alive(a) {
+		t.Errorf("the unit dies in the state-based sweep after the effect (FR-TGT-003)")
+	}
+}
+
+func TestCard_PincerTactics_UpToTwoMayBeNoneOrOne(t *testing.T) {
+	// Covers: FR-TGT-002, SVY-R11
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	pincerChoose(s, []*Asset{}, c)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	s.wantDamage(a, 0)
+	s.wantDamage(b, 0)
+	s.wantDamage(c, 2)
+
+	s2 := newScene(t)
+	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	b2 := s2.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	pincerChoose(s2, []*Asset{a2}, c2)
+	s2.do(enactAction(enactFor(s2, "Pincer Tactics")))
+	s2.wantDamage(a2, 1)
+	s2.wantDamage(b2, 0)
+	s2.wantDamage(c2, 2)
+}
+
+func TestCard_PincerTactics_AlliedUnitsAreDistinct(t *testing.T) {
+	// Covers: SVY-R11, FR-TGT-002
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	pincerChoose(s, []*Asset{a, a}, c)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	for _, d := range s.asked(0) {
+		if d.Min == 0 && d.Repeats {
+			t.Errorf("the up-to slot may not pick one unit twice (SVY-R11)")
+		}
+	}
+	if n, sum := dealt(s.g, a); sum > 1 || n > 1 {
+		t.Errorf("a unit named twice never takes the 1 twice: %d events totalling %d (SVY-R11)", n, sum)
+	}
+	s.wantDamage(c, 2)
+
+	s2 := newScene(t)
+	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	pincerChoose(s2, []*Asset{a2}, c2)
+	s2.do(enactAction(enactFor(s2, "Pincer Tactics")))
+	s2.wantDamage(a2, 1)
+}
+
+func TestCard_PincerTactics_FirstSlotOffersAlliedUnitsOnly(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s := newScene(t)
+	main := s.put(0, ZoneMainTheater, unit("Main", 1, 5, Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Res", 1, 5, Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	sc := s.putScratch(0)
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	foeSc := s.putScratch(1)
+	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
+	pincerChoose(s, []*Asset{main}, foe)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	got, _ := pincerOffers(s)
+	for _, a := range []*Asset{main, res, ward, sc} {
+		if !got[a.ID] {
+			t.Errorf("allied %s must be offered (FR-TGT-001, FR-KWD-002h)", a)
+		}
+	}
+	for _, a := range []*Asset{foe, foeSc, wall, foeWall, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not an allied unit and must not be offered (FR-TGT-001)", a)
+		}
+	}
+}
+
+func TestCard_PincerTactics_SecondSlotIsAnyNonScratchAsset(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	allyRes := s.put(0, ZoneReserves, unit("AllyRes", 1, 5, Keywords{}))
+	allyWard := s.put(0, ZoneMainTheater, unit("AllyWard", 1, 5, Keywords{Ward: true}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 1, 5, Keywords{}))
+	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, Keywords{Ward: true}))
+	sc := s.putScratch(0)
+	foeSc := s.putScratch(1)
+	pincerChoose(s, []*Asset{ally}, foe)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	_, got := pincerOffers(s)
+	for _, a := range []*Asset{ally, allyRes, allyWard, wall, foe, foeRes, foeWall, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if !got[a.ID] {
+			t.Errorf("%s must be offered to the non-Scratch slot (FR-TGT-001, FR-KWD-002h)", a)
+		}
+	}
+	for _, a := range []*Asset{sc, foeSc, foeWard} {
+		if got[a.ID] {
+			t.Errorf("%s must not be offered: Scratch Company or opposing Ward (FR-TGT-001, FR-KWD-002h)", a)
+		}
+	}
+}
+
+func TestCard_PincerTactics_EnactableWithNoUnits(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	s := newScene(t)
+	s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	inst := enactFor(s, "Pincer Tactics")
+	if !offersEnact(s.g, inst) {
+		t.Fatalf("an up-to slot never stops an Enact, and a Headquarters is a legal non-Scratch asset (SVY-R29)")
+	}
+	foeHQ := s.g.Players[1].HQ
+	pincerChoose(s, []*Asset{}, foeHQ)
+	s.do(enactAction(inst))
+	s.wantDamage(foeHQ, 2)
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("Pincer Tactics ends in its owner's discard pile (FR-MNV-001)")
+	}
+}
+
+func TestCard_PincerTactics_ArmorAbsorbsTheDamage(t *testing.T) {
+	// Covers: FR-REP-004
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{Armor: 1}))
+	foeHQ := s.g.Players[1].HQ
+	pincerChoose(s, []*Asset{a}, foeHQ)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	if a.Armor != 0 {
+		t.Errorf("the 1 damage removes the 1 Armor first: Armor %d, want 0 (FR-REP-004)", a.Armor)
+	}
+	s.wantDamage(a, 0)
+}
+
+func TestCard_PincerTactics_DamageTriggersUnbowed(t *testing.T) {
+	// Covers: FR-KWD-002a
+	// Allshan, Chainbreaker Revenant: Unbowed gains it 2 armor.
+	s := newScene(t)
+	al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
+	pincerChoose(s, []*Asset{al}, s.g.Players[1].HQ)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	s.wantDamage(al, 1)
+	if al.Armor != 2 {
+		t.Errorf("Unbowed triggers once when the unit survives the 1 damage: Armor %d, want 2 (FR-KWD-002a)", al.Armor)
+	}
+}
+
+func TestCard_PincerTactics_TargetTimeoutsTakeFixedOrder(t *testing.T) {
+	// Covers: FR-MOD-001, SVY-R16
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	pincerChoose(s, nil, nil)
+	s.do(enactAction(enactFor(s, "Pincer Tactics")))
+	s.wantDamage(a, 0)
+	s.wantDamage(b, 0)
+	s.wantDamage(s.g.Players[0].HQ, 2)
+	s.wantDamage(s.g.Players[1].HQ, 0)
+}
+
+func TestCard_PincerTactics_PaysThreeTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	s := newScene(t)
+	inst := enactFor(s, "Pincer Tactics")
+	s.g.Players[0].Tac = 2
+	if offersEnact(s.g, inst) {
+		t.Errorf("with 2 Tactics, Pincer Tactics costing 3 is not offered (FR-MNV-001)")
+	}
+	s.reject(enactAction(inst))
+	if !inHand(s.g.Players[0], inst) {
+		t.Errorf("a rejected Enact leaves the card in hand (FR-MNV-001)")
+	}
+	s.g.Players[0].Tac = 4
+	pincerChoose(s, []*Asset{}, s.g.Players[1].HQ)
+	s.do(enactAction(inst))
+	if p := s.g.Players[0]; p.Tac != 1 || p.Req != 3 {
+		t.Errorf("enacting costs 3 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
