@@ -40,4 +40,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0145 | Additional costs and a card's cost get their own file, costs.go (directive #94, harness, flash, pure move) | queued |
+| T-0145 | Additional costs and a card's cost get their own file, costs.go (directive #94, harness, flash, pure move) | ready |
