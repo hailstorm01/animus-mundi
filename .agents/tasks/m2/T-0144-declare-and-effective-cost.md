@@ -4,7 +4,7 @@ title: One declare sequence, (g *Game) declare, and one read of a card's cost, (
 kind: harness
 tier: flash
 wave: C.1 (board directives #92 and #93, structural review 7, findings 1 and 2)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0144-declare-and-effective-cost
 depends_on: []
 claims: [func:declare, func:EffectiveCost, func:payCost signature]
