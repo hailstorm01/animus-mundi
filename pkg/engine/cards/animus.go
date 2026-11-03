@@ -236,6 +236,40 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Ensnaring Mist": {
+		Text: []string{
+			"Move chosen unit to its controller's Reserves.",
+			"Chosen unit gets -1 power until end of turn.",
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Kinds: ability.KindUnit,
+					},
+				},
+				{
+					Filter: ability.Filter{
+						Kinds: ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpMoveZone,
+					To:      ability.ZoneReserves,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:      ability.OpModifyStat,
+					Amount:  ability.Value{N: -1},
+					Subject: ability.SubjectTarget,
+					Target:  1,
+				},
+			},
+		},
+	},
 	"Feed the Despoiler": {
 		Text: []string{
 			"As an additional cost to enact this maneuver, kill an allied unit.",

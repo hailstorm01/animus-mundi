@@ -1258,3 +1258,274 @@ func TestCard_ConversionSpike_PaysTwoTactics(t *testing.T) {
 		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0142 (FR-MNV-001, FR-ZON-002, FR-LAY-001, FR-LAY-003, FR-TGT-001,
+// FR-TGT-002): the Animus Maneuver Ensnaring Mist, loaded from data/cards.
+// Player 0 enacts; player 1 is the opponent.
+//
+// Ensnaring Mist: "Move chosen unit to its controller's Reserves." / "Chosen
+// unit gets -1 power until end of turn." Cost 2 Tactics. The two "chosen unit"
+// clauses are two independent target slots (SVY-R35).
+
+// emChoose installs a chooser for seat 0 that answers the n-th target decision
+// by picking the option naming picks[n] (a nil or missing entry times the
+// decision out), and records the decisions in s.asks.
+func emChoose(s *scene, picks ...*Asset) {
+	if s.asks == nil {
+		s.asks = map[PlayerID][]Decision{}
+	}
+	s.asks[0] = nil
+	n := 0
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		if d.Kind != DecideTarget {
+			return Answer{Timeout: true}
+		}
+		i := n
+		n++
+		if i >= len(picks) || picks[i] == nil {
+			return Answer{Timeout: true}
+		}
+		for j, o := range d.Options {
+			if o.Ref == picks[i].ID {
+				return Answer{Picks: []int{j}}
+			}
+		}
+		s.t.Errorf("target decision %d does not offer %s: %v", i, picks[i], d.Options)
+		return Answer{Timeout: true}
+	}
+}
+
+func TestCard_EnsnaringMist_MovesOneUnitAndWeakensAnother(t *testing.T) {
+	// Covers: FR-MNV-001, FR-ZON-002, FR-LAY-001
+	s := newScene(t)
+	a := s.put(1, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 3, 5, Keywords{}))
+	inst := enactFor(s, "Ensnaring Mist")
+	emChoose(s, a, b)
+	s.do(enactAction(inst))
+	if a.Zone != ZoneReserves || !containsAsset(s.g.Players[1].Reserves, a) || containsAsset(s.g.TheaterOf(1), a) {
+		t.Errorf("the first chosen unit moves to its controller's Reserves (FR-ZON-002)")
+	}
+	if b.Zone != ZoneMainTheater || !containsAsset(s.g.TheaterOf(1), b) {
+		t.Errorf("the second chosen unit is not moved (FR-MNV-001)")
+	}
+	if got := s.g.Power(b); got != 2 {
+		t.Errorf("the second chosen unit gets -1 power: effective power %d, want 2 (FR-LAY-001)", got)
+	}
+	if got := s.g.Power(a); got != 2 {
+		t.Errorf("the moved unit does not get -1 power: effective power %d, want 2 (FR-MNV-001)", got)
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends on top of its owner's discard pile (FR-MNV-001)")
+	}
+	if p := s.g.Players[0]; p.Tac != 3 || p.Req != 3 {
+		t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T3 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
+
+func TestCard_EnsnaringMist_SameUnitFillsBothSlots(t *testing.T) {
+	// Covers: SVY-R35, SVY-R26
+	s := newScene(t)
+	a := s.put(1, ZoneMainTheater, unit("A", 3, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Other", 3, 5, Keywords{}))
+	emChoose(s, a, a)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if a.Zone != ZoneReserves || !containsAsset(s.g.Players[1].Reserves, a) {
+		t.Errorf("a unit chosen in both slots is moved to its controller's Reserves (SVY-R35)")
+	}
+	if got := s.g.Power(a); got != 2 {
+		t.Errorf("the unit just moved still gets -1 power: effective power %d, want 2 (SVY-R26, SVY-R35)", got)
+	}
+}
+
+func TestCard_EnsnaringMist_MovedUnitKeepsItsState(t *testing.T) {
+	// Covers: FR-ZON-002, FR-ZON-004
+	s := newScene(t)
+	a := s.put(1, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 2, 5, Keywords{}))
+	a.Damage, a.Exhausted = 2, true
+	id := a.ID
+	emChoose(s, a, b)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if a.Zone != ZoneReserves {
+		t.Fatalf("the chosen unit moves to the Reserves (FR-ZON-002)")
+	}
+	if s.g.Asset(id) != a {
+		t.Errorf("a moved unit is the same asset, not a new one (FR-ZON-002)")
+	}
+	if a.Damage != 2 {
+		t.Errorf("a moved unit keeps its damage: %d, want 2 (FR-ZON-004)", a.Damage)
+	}
+	if !a.Exhausted {
+		t.Errorf("a unit moved between the Main Theater and Reserves stays Exhausted (FR-ZON-004)")
+	}
+}
+
+func TestCard_EnsnaringMist_MovesToItsControllersReserves(t *testing.T) {
+	// Covers: FR-ZON-002
+	s := newScene(t)
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	emChoose(s, ally, foe)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if ally.Zone != ZoneReserves || !containsAsset(s.g.Players[0].Reserves, ally) || containsAsset(s.g.Players[1].Reserves, ally) {
+		t.Errorf("an allied unit goes to player 0's Reserves, its controller's (FR-ZON-002)")
+	}
+	if ally.Controller != 0 {
+		t.Errorf("moving a unit does not change its controller (FR-ZON-002)")
+	}
+}
+
+func TestCard_EnsnaringMist_UnitAlreadyInReservesStays(t *testing.T) {
+	// Covers: FR-ZON-002
+	s := newScene(t)
+	a := s.put(1, ZoneReserves, unit("A", 2, 5, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 2, 5, Keywords{}))
+	emChoose(s, a, b)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if a.Zone != ZoneReserves || !containsAsset(s.g.Players[1].Reserves, a) {
+		t.Errorf("a unit already in its controller's Reserves stays there (FR-ZON-002)")
+	}
+	if n := rsMoveEventsNaming(s, a); n != 0 {
+		t.Errorf("a unit that does not move has no move event: %d, want 0 (FR-ZON-002)", n)
+	}
+}
+
+func TestCard_EnsnaringMist_PowerClampsAtZero(t *testing.T) {
+	// Covers: FR-LAY-001
+	s := newScene(t)
+	a := s.put(1, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
+	zero := s.put(1, ZoneMainTheater, unit("Zero", 0, 5, Keywords{}))
+	emChoose(s, a, zero)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if got := s.g.Power(zero); got != 0 {
+		t.Errorf("effective power is never below 0: got %d, want 0 (FR-LAY-001)", got)
+	}
+}
+
+func TestCard_EnsnaringMist_MinusOneExpiresAtEndOfTurn(t *testing.T) {
+	// Covers: FR-LAY-003
+	s := newScene(t)
+	a := s.put(1, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 3, 5, Keywords{}))
+	emChoose(s, a, b)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if got := s.g.Power(b); got != 2 {
+		t.Fatalf("B has -1 power this turn: %d, want 2 (FR-LAY-001)", got)
+	}
+	s.endTurn()
+	if got := s.g.Power(b); got != 3 {
+		t.Errorf("the -1 power expires at the end of the turn: power %d, want 3 (FR-LAY-003)", got)
+	}
+	if a.Zone != ZoneReserves {
+		t.Errorf("the moved unit stays in the Reserves when the turn ends (FR-ZON-002)")
+	}
+}
+
+func TestCard_EnsnaringMist_ChosenUnitIsAnyUnit(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s := newScene(t)
+	aMain := s.put(0, ZoneMainTheater, unit("AMain", 2, 5, Keywords{}))
+	aRes := s.put(0, ZoneReserves, unit("ARes", 2, 5, Keywords{}))
+	aWard := s.put(0, ZoneMainTheater, unit("AWard", 2, 5, Keywords{Ward: true}))
+	aScratch := s.putScratch(0)
+	fMain := s.put(1, ZoneMainTheater, unit("FMain", 2, 5, Keywords{}))
+	fRes := s.put(1, ZoneReserves, unit("FRes", 2, 5, Keywords{}))
+	fWard := s.put(1, ZoneMainTheater, unit("FWard", 2, 5, Keywords{Ward: true}))
+	aWall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	fWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
+	emChoose(s, fMain, fMain)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	for n := 0; n < 2; n++ {
+		got := csTargetOffers(s, n)
+		csWantOffers(t, got, "a chosen-unit slot", aMain, aRes, aWard, aScratch, fMain, fRes)
+		for _, x := range []*Asset{fWard, aWall, fWall, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+			if got[x.ID] {
+				t.Errorf("slot %d: %s is not a legal chosen unit and must not be offered (FR-TGT-001, FR-KWD-002h)", n, x)
+			}
+		}
+	}
+}
+
+func TestCard_EnsnaringMist_LegalityNeedsAUnit(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	t.Run("no unit on the battlefield", func(t *testing.T) {
+		s := newScene(t)
+		s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
+		inst := enactFor(s, "Ensnaring Mist")
+		if offersEnact(s.g, inst) {
+			t.Errorf("with no unit to choose it is not offered (SVY-R29)")
+		}
+		s.reject(enactAction(inst))
+		if !inHand(s.g.Players[0], inst) {
+			t.Errorf("a rejected Enact leaves the card in hand (SVY-R29)")
+		}
+	})
+	t.Run("exactly one unit", func(t *testing.T) {
+		s := newScene(t)
+		u := s.put(1, ZoneMainTheater, unit("Only", 3, 5, Keywords{}))
+		inst := enactFor(s, "Ensnaring Mist")
+		if !offersEnact(s.g, inst) {
+			t.Fatalf("with exactly one unit it is offered (SVY-R29)")
+		}
+		emChoose(s, u, u)
+		s.do(enactAction(inst))
+		for _, d := range s.asked(0) {
+			if d.Kind != DecideTarget {
+				continue
+			}
+			for _, o := range d.Options {
+				if o.Ref != u.ID {
+					t.Errorf("only the single unit may be offered in each slot, got ref %d (FR-TGT-001)", o.Ref)
+				}
+			}
+		}
+		if u.Zone != ZoneReserves || s.g.Power(u) != 2 {
+			t.Errorf("both slots take the only unit: it is moved to Reserves (zone %v) with power %d, want 2 (SVY-R35)", u.Zone, s.g.Power(u))
+		}
+	})
+}
+
+func TestCard_EnsnaringMist_TargetTimeoutsTakeFixedOrder(t *testing.T) {
+	// Covers: FR-MOD-001, SVY-R35
+	s := newScene(t)
+	p := s.put(0, ZoneMainTheater, unit("P", 3, 5, Keywords{}))
+	q := s.put(1, ZoneMainTheater, unit("Q", 3, 5, Keywords{}))
+	emChoose(s)
+	s.do(enactAction(enactFor(s, "Ensnaring Mist")))
+	if p.Zone != ZoneReserves || !containsAsset(s.g.Players[0].Reserves, p) {
+		t.Errorf("a timed-out target takes the first legal entity in fixed order, the chooser's own unit P, which is moved to its Reserves (FR-MOD-001 6)")
+	}
+	if got := s.g.Power(p); got != 2 {
+		t.Errorf("both independent slots take P, so it gets -1 power: %d, want 2 (SVY-R35)", got)
+	}
+	if q.Zone != ZoneMainTheater || s.g.Power(q) != 3 {
+		t.Errorf("Q is untouched (FR-MOD-001 6)")
+	}
+}
+
+func TestCard_EnsnaringMist_PaysTwoTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	t.Run("one Tactics is too few", func(t *testing.T) {
+		s := newScene(t)
+		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+		inst := enactFor(s, "Ensnaring Mist")
+		s.g.Players[0].Tac = 1
+		if offersEnact(s.g, inst) {
+			t.Errorf("with 1 Tactics it is not offered (FR-MNV-001)")
+		}
+		s.reject(enactAction(inst))
+	})
+	t.Run("three Tactics", func(t *testing.T) {
+		s := newScene(t)
+		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+		inst := enactFor(s, "Ensnaring Mist")
+		s.g.Players[0].Tac = 3
+		s.do(enactAction(inst))
+		if p := s.g.Players[0]; p.Tac != 1 || p.Req != 3 {
+			t.Errorf("enacting costs 2 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
+		}
+	})
+}
