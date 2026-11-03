@@ -4,7 +4,7 @@ title: Additional costs and a card's cost get their own file, costs.go (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #94, structural review 7, finding 3)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0145-costs-file
 depends_on: [T-0144]
 claims: [file:pkg/engine/costs.go]
@@ -187,11 +187,26 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 1): queued with T-0144 (D2.4).
 - 2026-11-03, lead-architect (wave C.1 run, session 2): wrote this task from directive #94 against the run branch at 233023f, after syncing `main` (merge 2b0e1e2, which changes nothing under `pkg/`). Directive #103 (remove the TDD toolchain) arrived with that sync; it is `open`, not blocking, and sits after #94 in board order, so it goes into a later task. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `costs.go`, and nothing else reads a card's cost or pays an additional cost. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer: moved `EffectiveCost` and `payCost` from `actions.go`, and `costDecision`, `chooseCostDiscards`, `costsPayable`, and `payCosts` from `placement.go` into new file `pkg/engine/costs.go`. Updated Files list in `pkg/engine/doc.go` to reference `costs.go`. Acceptance cases 1-9 verified:
+  1. `git -C W diff autoloop/m2-wave-c.1 -- '*_test.go'` output empty; `go -C W test ./...` passed (all packages ok).
+  2. `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included`.
+  3. `git -C W grep -n -e 'func (g \*Game) EffectiveCost(' -e 'func (g \*Game) payCost(' -e 'func (g \*Game) costDecision(' -e 'func (g \*Game) chooseCostDiscards(' -e 'func (g \*Game) costsPayable(' -e 'func (g \*Game) payCosts(' -- pkg/engine` printed exactly 6 lines, all in `pkg/engine/costs.go` (lines 14, 19, 31, 50, 69, 92).
+  4. `git -C W grep -n -e 'ability.Cost' -e 'ReqCost' -e 'TacCost' -- pkg/engine/actions.go pkg/engine/placement.go` printed exactly 1 line (`placement.go:20: costs []ability.Cost`).
+  5. `git -C W grep -n 'costs.go' -- pkg/engine/doc.go` printed line 60.
+  6. `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg` printed:
+     0  14  pkg/engine/actions.go
+     110 0  pkg/engine/costs.go
+     3  2   pkg/engine/doc.go
+     0  87  pkg/engine/placement.go
+  7. `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
+  8. `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `.agents/tasks/m2/T-0145-costs-file.md` and the 4 pkg files.
+  9. `go -C W tool task check` (all linters, tests, vet, fmt-check) and `go -C W tool task sim` passed clean (200 games, all invariants held).
+  Committed engine changes in `f498df8`. Task status set to `review`.
