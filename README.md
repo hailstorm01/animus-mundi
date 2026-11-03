@@ -38,8 +38,8 @@ cardtown lint --all                                            # every linter
 - **`-events`** writes the structured event stream: a match-start record (seed, decks, Headquarters, mulligans, engine build), every event and player decision, a full snapshot at each turn start, and a match-end record. Match metrics will be built as queries over these files.
 - **`replay`** rebuilds a recorded game deterministically to any event. It refuses a file recorded at a different git revision, warns when either side has uncommitted changes, and reports the first event where the replay diverges from the record.
 - **`play`** is a text-mode match against a sim policy. The screen and the event log come only from one seat's view (`pkg/view`), so the human never sees the bot's hand, its deck or a face-down card. Actions and decision options are numbered picks; `q` quits. Cards the kernel cannot run yet are marked `[not executable yet]`.
-- **`lint`** checks FRD cross-references, rules traceability (`TestFR_*` tests against FRD 01 requirements), TDDs, card CSVs, rules-text terminology and package fences (no card names in package code, and import direction between packages).
-- `hook`, `tdd` and `whats-up` support the docs workflow. Run `cardtown <command> -h` for flags.
+- **`lint`** checks FRD cross-references, rules traceability (`TestFR_*` tests against FRD 01 requirements), card CSVs, rules-text terminology and package fences (no card names in package code, and import direction between packages).
+- `hook` and `whats-up` support the docs workflow. Run `cardtown <command> -h` for flags.
 
 ## How the Rules Are Built
 
@@ -61,10 +61,10 @@ M2 is built by an agent task loop. The lead architect (Opus) writes tasks in `.a
 - `pkg/sim/` - Match driving: seat policies, playouts, `Simulate`, stress decks and rule monitors. Imports `pkg/engine` only.
 - `pkg/eventlog/` - Event formatting, JSON Lines output and replay. Imports `pkg/engine` only.
 - `pkg/view/` - One seat's view of a game and its event log, for `cardtown play`. Imports `pkg/engine` and `pkg/eventlog`.
-- `pkg/toolchain/` - The linters, pre-commit hook, TDD slicing and docs status behind the CLI.
+- `pkg/toolchain/` - The linters, pre-commit hook and docs status behind the CLI.
 - `data/cards/` - Card data CSVs, one per faction and card type.
 - `data/decks/` - Decklists (`<faction>-<name>.txt`), currently the Animus and Path starter decks.
-- `docs/` - Product summary, FRDs (`frd/`), architecture notes and decision records (`architecture/`), the M2 ability survey (`design/`), and TDDs (`tdd/`). [`docs/AGENTS.md`](docs/AGENTS.md) maps them.
+- `docs/` - Product summary, FRDs (`frd/`), architecture notes and decision records (`architecture/`), the M2 ability survey (`design/`), and the frozen TDD 03 (`tdd/`). [`docs/AGENTS.md`](docs/AGENTS.md) maps them.
 - `.agents/` - Agent personas (`skills/`), routing rules (`rules/`) and the build-task queue (`tasks/`). `.claude/agents/` pins models for the Claude Code subagents.
 - `tools/sheets/` - Publishes the `data/cards` CSVs to the Card Town Google Sheets (one tab per faction).
 - `tools/linter/` - The card standardization audit data and the pre-commit hook script.
