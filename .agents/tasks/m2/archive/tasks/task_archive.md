@@ -141,3 +141,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0135 | Make Chainbreaker's Tenacity and Fortify executable (a chosen allied unit gains armor, Tenacity also +1 power until end of turn, wave C card, flash) | done |
 | T-0136 | A timed-out repeated choice puts every repetition on the first option (SVY-R32, #91 (1), wave C shape, sonnet) | done |
 | T-0137 | A discard cost's cards are chosen before the targets and discarded after the push (#20 (b), wave C shape, sonnet) | done |
+| T-0138 | A target slot can choose once per card the discard cost discarded (SVY-R4, #20 (b), wave C shape, sonnet) | done |
