@@ -426,6 +426,36 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Steel Rain": {
+		Text: []string{
+			"As an additional cost to enact this maneuver, discard up to 3 cards.",
+			"For each card discarded this way, deal 2 damage to chosen asset.",
+			"Then, if you have no cards in hand, draw 2 cards.",
+		},
+		ExtraCosts: []ability.Cost{
+			{Kind: ability.CostDiscard, UpTo: 3},
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					PerDiscard: true,
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 2},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:          ability.OpDraw,
+					Amount:      ability.Value{N: 2},
+					IfHandEmpty: true,
+				},
+			},
+		},
+	},
 	"Tactical Withdrawal": {
 		Text: []string{"Return up to one chosen allied unit to its owner's hand. Draw a card."},
 		Effect: ability.Effect{
