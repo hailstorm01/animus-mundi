@@ -942,3 +942,355 @@ func TestCard_SteelRain_PaysFourTactics(t *testing.T) {
 		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
 	}
 }
+
+// Tests for T-0141 (FR-MNV-001, FR-MOD-001, FR-TGT-002, FR-TGT-003, FR-ZON-004):
+// the Path Maneuver Ambush Tactics, loaded from data/cards. Player 0 enacts;
+// player 1 is the opponent.
+//
+// Ambush Tactics: "Choose two: - Kill chosen unit. - Return chosen unit to its
+// owner's hand. - Chosen unit deals damage equal to its power to another chosen
+// unit. - Put chosen unit on top of its owner's deck." Cost 4 Tactics.
+//
+// Mode indexes in the tests below are the printed order (0 kill, 1 return,
+// 2 deal, 3 deck); every test that uses them has at least two units on the
+// battlefield, so all four modes are offered and index equals printed position.
+
+// atBoard is four opposing units: A (power 2), B (3), C (4) and D (5), all
+// health 30, in the Main Theater in that order.
+type atBoard struct {
+	s          *scene
+	a, b, c, d *Asset
+}
+
+func newATBoard(t *testing.T) *atBoard {
+	t.Helper()
+	s := newScene(t)
+	return &atBoard{
+		s: s,
+		a: s.put(1, ZoneMainTheater, unit("A", 2, 30, Keywords{})),
+		b: s.put(1, ZoneMainTheater, unit("B", 3, 30, Keywords{})),
+		c: s.put(1, ZoneMainTheater, unit("C", 4, 30, Keywords{})),
+		d: s.put(1, ZoneMainTheater, unit("D", 5, 30, Keywords{})),
+	}
+}
+
+// atModeAsks are the DecideMode decisions seat 0 was asked.
+func atModeAsks(s *scene) []Decision {
+	var out []Decision
+	for _, d := range s.asks[0] {
+		if d.Kind == DecideMode {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// atTargetAsks are the DecideTarget decisions seat 0 was asked, in order.
+func atTargetAsks(s *scene) []Decision {
+	var out []Decision
+	for _, d := range s.asks[0] {
+		if d.Kind == DecideTarget {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+func atOffers(d Decision, a *Asset) bool {
+	for _, o := range d.Options {
+		if o.Ref == a.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func atDeckTop(p *Player) *Instance {
+	if len(p.Deck) == 0 {
+		return nil
+	}
+	return p.Deck[0]
+}
+
+func TestCard_AmbushTactics_KillsOneUnitAndReturnsAnother(t *testing.T) {
+	// Covers: FR-MOD-001, FR-MNV-001, FR-ZON-004
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(b.a), pick(b.b))
+	b.s.do(enactAction(inst))
+	if b.s.alive(b.a) || !inDiscardPile(b.s.g.Players[1], b.a.Inst) {
+		t.Errorf("the kill mode kills unit A and its card goes to its owner's discard pile (FR-MOD-001 sec. 5)")
+	}
+	if b.s.alive(b.b) || !inHand(b.s.g.Players[1], b.b.Inst) {
+		t.Errorf("the return mode returns unit B to its owner's hand (FR-ZON-004)")
+	}
+	if lastDiscard(b.s.g.Players[0]) != inst {
+		t.Errorf("Ambush Tactics ends on top of its owner's discard pile (FR-MNV-001)")
+	}
+	if p := b.s.g.Players[0]; p.Tac != 1 || p.Req != 3 {
+		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
+	}
+	if !b.s.alive(b.c) || !b.s.alive(b.d) {
+		t.Errorf("units not chosen are untouched")
+	}
+}
+
+func TestCard_AmbushTactics_ChosenUnitDealsItsPowerToAnother(t *testing.T) {
+	// Covers: SVY-R27, FR-TGT-003, FR-TGT-002, FR-MOD-001
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(2, 3)}, pick(b.b), pick(b.a), pick(b.c))
+	b.s.do(enactAction(inst))
+	wantDamageFrom(t, b.s.g, b.a, b.b, 3, "B (power 3) deals its power to A")
+	if got := len(nonCombatDamage(b.s.g.Log)); got != 1 {
+		t.Errorf("exactly one damage event, got %d (SVY-R27)", got)
+	}
+	b.s.wantDamage(b.b, 0)
+	if b.s.alive(b.c) || atDeckTop(b.s.g.Players[1]) != b.c.Inst {
+		t.Errorf("the deck mode puts C on top of its owner's deck, off the battlefield (FR-MOD-001 sec. 5)")
+	}
+	noFormatErrors(t, b.s.g)
+}
+
+func TestCard_AmbushTactics_DealerUsesItsCurrentPower(t *testing.T) {
+	// Covers: SVY-R27, FR-TGT-003, FR-LAY-001
+	b := newATBoard(t)
+	x := b.s.put(0, ZoneMainTheater, unit("X", 3, 30, Keywords{}))
+	boost := enactFor(b.s, "Chainbreaker's Tenacity")
+	chooseAsset(b.s, x)
+	b.s.do(enactAction(boost))
+	if got := b.s.g.Power(x); got != 4 {
+		t.Fatalf("precondition: Chainbreaker's Tenacity gives X power 3 +1 = 4, got %d", got)
+	}
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 2)}, pick(b.d), pick(x), pick(b.a))
+	b.s.do(enactAction(inst))
+	wantDamageFrom(t, b.s.g, b.a, x, 4, "X deals its current power, printed 3 plus 1, not its printed power")
+}
+
+func TestCard_AmbushTactics_ModesResolveInPrintedOrder(t *testing.T) {
+	// Covers: SVY-R31, SVY-R27, FR-MOD-001
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	// Picked in reverse; targets are asked in printed order: mode 3 (dealer, dealt to), then mode 4.
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(3, 2)}, pick(b.b), pick(b.a), pick(b.b))
+	b.s.do(enactAction(inst))
+	wantDamageFrom(t, b.s.g, b.a, b.b, 3, "the dealing mode resolves first, while B is still on the battlefield")
+	if b.s.alive(b.b) || atDeckTop(b.s.g.Players[1]) != b.b.Inst {
+		t.Errorf("B is then put on top of its owner's deck (SVY-R31)")
+	}
+}
+
+func TestCard_AmbushTactics_ReturnedDealerDealsNothing(t *testing.T) {
+	// Covers: SVY-R25, SVY-R27, FR-TGT-003
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(1, 2)}, pick(b.b), pick(b.b), pick(b.a))
+	b.s.do(enactAction(inst))
+	if b.s.alive(b.b) || !inHand(b.s.g.Players[1], b.b.Inst) {
+		t.Fatalf("precondition: the return mode returned B to its owner's hand")
+	}
+	if got := nonCombatDamage(b.s.g.Log); len(got) != 0 {
+		t.Errorf("a dealer returned by an earlier mode deals nothing and emits no damage event: got %+v (SVY-R27)", got)
+	}
+	b.s.wantDamage(b.a, 0)
+}
+
+func TestCard_AmbushTactics_SameUnitInTwoModes(t *testing.T) {
+	// Covers: SVY-R35, SVY-R25
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	deck := append([]*Instance{}, b.s.g.Players[1].Deck...)
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 3)}, pick(b.a), pick(b.a))
+	b.s.do(enactAction(inst))
+	if b.s.alive(b.a) || !inDiscardPile(b.s.g.Players[1], b.a.Inst) {
+		t.Errorf("A is killed and in its owner's discard pile (SVY-R35)")
+	}
+	if !reflect.DeepEqual(b.s.g.Players[1].Deck, deck) {
+		t.Errorf("the deck step does nothing to a unit the kill mode already removed: the deck is unchanged (SVY-R25)")
+	}
+}
+
+func TestCard_AmbushTactics_TwoDifferentModes(t *testing.T) {
+	// Covers: SVY-R6, FR-MOD-001
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(b.a), pick(b.b))
+	b.s.do(enactAction(inst))
+	asks := atModeAsks(b.s)
+	if len(asks) != 1 {
+		t.Fatalf("one mode decision is asked, got %d", len(asks))
+	}
+	d := asks[0]
+	if len(d.Options) != 4 || d.Min != 2 || d.Max != 2 || d.Repeats {
+		t.Errorf("the mode decision offers 4 options and asks for exactly 2 without repeats: got %d options, Min %d, Max %d, Repeats %v (SVY-R6)",
+			len(d.Options), d.Min, d.Max, d.Repeats)
+	}
+}
+
+func TestCard_AmbushTactics_AnotherUnitIsADifferentUnit(t *testing.T) {
+	// Covers: SVY-R34, FR-TGT-002
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(2, 3)}, pick(b.b), pick(b.a), pick(b.c))
+	b.s.do(enactAction(inst))
+	asks := atTargetAsks(b.s)
+	if len(asks) < 2 {
+		t.Fatalf("the dealer and dealt-to slots are both asked, got %d target decisions", len(asks))
+	}
+	if !atOffers(asks[0], b.b) {
+		t.Errorf("the dealer slot offers every unit, including B (FR-TGT-002)")
+	}
+	second := asks[1]
+	if atOffers(second, b.b) {
+		t.Errorf("the dealt-to slot does not offer the unit chosen as the dealer: options %v (SVY-R34)", labels(second))
+	}
+	if !atOffers(second, b.a) || !atOffers(second, b.c) || !atOffers(second, b.d) {
+		t.Errorf("the dealt-to slot offers every other unit: options %v (SVY-R34)", labels(second))
+	}
+}
+
+func TestCard_AmbushTactics_ChosenUnitIsAnyUnit(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s := newScene(t)
+	alliedMT := s.put(0, ZoneMainTheater, unit("AlliedMT", 2, 30, Keywords{}))
+	alliedRes := s.put(0, ZoneReserves, unit("AlliedRes", 2, 30, Keywords{}))
+	alliedWard := s.put(0, ZoneMainTheater, unit("AlliedWard", 2, 30, Keywords{Ward: true}))
+	foeMT := s.put(1, ZoneMainTheater, unit("FoeMT", 2, 30, Keywords{}))
+	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 2, 30, Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 2, 30, Keywords{Ward: true}))
+	sc := s.putScratch(0)
+	foeStruct := s.put(1, ZoneMainTheater, structure("FoeStruct", 0, 30, Keywords{}))
+	allyStruct := s.put(0, ZoneMainTheater, structure("AllyStruct", 0, 30, Keywords{}))
+	inst := enactFor(s, "Ambush Tactics")
+	s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(foeMT), pick(foeRes))
+	s.do(enactAction(inst))
+	asks := atTargetAsks(s)
+	if len(asks) == 0 {
+		t.Fatalf("no target decision was asked")
+	}
+	d := asks[0]
+	for name, a := range map[string]*Asset{"allied Main Theater unit": alliedMT, "allied Reserves unit": alliedRes,
+		"allied Ward unit": alliedWard, "opposing Main Theater unit": foeMT, "opposing Reserves unit": foeRes,
+		"face-down Scratch Company unit": sc} {
+		if !atOffers(d, a) {
+			t.Errorf("the %s is a legal \"chosen unit\" (FR-TGT-001, FR-KWD-002h)", name)
+		}
+	}
+	for name, a := range map[string]*Asset{"opposing Ward unit": foeWard, "opposing structure": foeStruct,
+		"allied structure": allyStruct} {
+		if atOffers(d, a) {
+			t.Errorf("the %s is not a legal \"chosen unit\" (FR-TGT-001, FR-KWD-002h)", name)
+		}
+	}
+	for _, o := range d.Options {
+		if a := s.g.Asset(o.Ref); a != nil && a.Inst.Card.Type == TypeHeadquarters {
+			t.Errorf("a Headquarters is not a legal \"chosen unit\": option %q (FR-TGT-001)", o.Label)
+		}
+	}
+}
+
+func TestCard_AmbushTactics_LegalityNeedsUnits(t *testing.T) {
+	// Covers: SVY-R29, SVY-R34, FR-MNV-001
+	for _, units := range []int{0, 1, 2} {
+		s := newScene(t)
+		var first *Asset
+		for i := 0; i < units; i++ {
+			a := s.put(1, ZoneMainTheater, unit(string(rune('A'+i)), 2+i, 30, Keywords{}))
+			if first == nil {
+				first = a
+			}
+		}
+		inst := enactFor(s, "Ambush Tactics")
+		if units == 0 {
+			if offersEnact(s.g, inst) {
+				t.Errorf("with no unit no mode is legal, so Ambush Tactics is not offered (SVY-R29)")
+			}
+			s.reject(enactAction(inst))
+			if !inHand(s.g.Players[0], inst) {
+				t.Errorf("the rejected Maneuver stays in hand (FR-MNV-001)")
+			}
+			continue
+		}
+		if !offersEnact(s.g, inst) {
+			t.Errorf("with %d unit(s) at least two modes are legal, so Ambush Tactics is offered (SVY-R29)", units)
+			continue
+		}
+		s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(first), pick(first))
+		s.do(enactAction(inst))
+		asks := atModeAsks(s)
+		want := 3
+		if units == 2 {
+			want = 4
+		}
+		if len(asks) != 1 || len(asks[0].Options) != want {
+			t.Errorf("with %d unit(s) the mode decision offers %d options (mode 3 needs two different units): got %+v (SVY-R34, SVY-R29)", units, want, asks)
+		}
+	}
+}
+
+func TestCard_AmbushTactics_ModeTimeoutTakesTheFirstTwoListed(t *testing.T) {
+	// Covers: FR-MOD-001
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.scriptModal(0, nil, nil, []Answer{{Timeout: true}}, pick(b.a), pick(b.b))
+	b.s.do(enactAction(inst))
+	if got := len(atTargetAsks(b.s)); got != 2 {
+		t.Errorf("kill and return, one slot each, are the first two listed modes: %d target decisions, want 2 (FR-MOD-001 sec. 6)", got)
+	}
+	if b.s.alive(b.a) || !inDiscardPile(b.s.g.Players[1], b.a.Inst) {
+		t.Errorf("the first chosen mode, kill, killed A (FR-MOD-001 sec. 6)")
+	}
+	if b.s.alive(b.b) || !inHand(b.s.g.Players[1], b.b.Inst) {
+		t.Errorf("the second chosen mode, return, returned B (FR-MOD-001 sec. 6)")
+	}
+	if len(nonCombatDamage(b.s.g.Log)) != 0 {
+		t.Errorf("the dealing mode was not chosen (FR-MOD-001 sec. 6)")
+	}
+}
+
+func TestCard_AmbushTactics_TargetTimeoutsTakeFixedOrder(t *testing.T) {
+	// Covers: FR-MOD-001, SVY-R34, FR-TGT-002
+	s := newScene(t)
+	p := s.put(0, ZoneMainTheater, unit("P", 2, 30, Keywords{}))
+	q := s.put(1, ZoneMainTheater, unit("Q", 3, 30, Keywords{}))
+	r := s.put(1, ZoneMainTheater, unit("R", 4, 30, Keywords{}))
+	inst := enactFor(s, "Ambush Tactics")
+	s.scriptModal(0, nil, nil, []Answer{modeAnswer(2, 3)}, timeoutPick, timeoutPick, timeoutPick)
+	s.do(enactAction(inst))
+	wantDamageFrom(t, s.g, q, p, 2, "P, first in fixed order, deals its power to Q, the first legal unit after P")
+	s.wantDamage(r, 0)
+	if s.alive(p) || atDeckTop(s.g.Players[0]) != p.Inst {
+		t.Errorf("the deck slot times out to P, which goes on top of player 0's deck (FR-MOD-001 sec. 6)")
+	}
+}
+
+func TestCard_AmbushTactics_FaceDownScratchCompanyGoesBackAsItsCard(t *testing.T) {
+	// Covers: FR-ZON-005, FR-ZON-004
+	s := newScene(t)
+	sc := s.putScratch(0)
+	other := s.put(1, ZoneMainTheater, unit("Other", 2, 30, Keywords{}))
+	inst := enactFor(s, "Ambush Tactics")
+	s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 3)}, pick(other), pick(sc))
+	s.do(enactAction(inst))
+	if s.alive(sc) || atDeckTop(s.g.Players[0]) != sc.Inst {
+		t.Errorf("a face-down Scratch Company unit put on its owner's deck goes there as its printed card, on top (FR-ZON-005)")
+	}
+}
+
+func TestCard_AmbushTactics_PaysFourTactics(t *testing.T) {
+	// Covers: FR-MNV-001
+	b := newATBoard(t)
+	inst := enactFor(b.s, "Ambush Tactics")
+	b.s.g.Players[0].Tac = 3
+	if offersEnact(b.s.g, inst) {
+		t.Errorf("with 3 Tactics, Ambush Tactics costing 4 is not offered (FR-MNV-001)")
+	}
+	b.s.reject(enactAction(inst))
+	b.s.g.Players[0].Tac = 5
+	b.s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(b.a), pick(b.b))
+	b.s.do(enactAction(inst))
+	if p := b.s.g.Players[0]; p.Tac != 1 || p.Req != 3 {
+		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
