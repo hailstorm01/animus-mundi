@@ -4,7 +4,7 @@ title: Make Ensnaring Mist executable (move a chosen unit to its controller's Re
 kind: card
 tier: flash
 wave: C
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c/T-0142-ensnaring-mist
 depends_on: [T-0056, T-0069, T-0107, T-0116, T-0117, T-0119, T-0135]
 claims: [card:Ensnaring Mist]
