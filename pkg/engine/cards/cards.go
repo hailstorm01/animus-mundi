@@ -42,6 +42,5 @@ var NotYetExecutable = []string{
 	"Ruin Partisans",
 	"Sinuous Growth",
 	"Solarheart Monk",
-	"Steel Rain",
 	"Veil Render",
 }
