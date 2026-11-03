@@ -4,7 +4,7 @@ title: One declare sequence, (g *Game) declare, and one read of a card's cost, (
 kind: harness
 tier: flash
 wave: C.1 (board directives #92 and #93, structural review 7, findings 1 and 2)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0144-declare-and-effective-cost
 depends_on: []
 claims: [func:declare, func:EffectiveCost, func:payCost signature]
@@ -119,10 +119,26 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/sim/policy.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 1): created the run file and wrote this task from board directives #92 and #93, first in board order, against the run branch at e64ca5f. No `main` commits to sync. Not `WAVE-COMPLETE`: #92, #93 and #95–#100 are `open: before the next Deliverables task`. #92–#94 in one task would be five non-test files, so #94 is queued as T-0145 (D2.4), which moves what this task adds to `costs.go`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `payCost` is kept and now reads `EffectiveCost`; nothing else computes a cost or runs the declare steps. The only other reads of the printed cost, `view.go:136` and `play_screen.go:72`, stay as #93 says. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (T-0144): implemented pure move of declare sequence and EffectiveCost (directives #92, #93).
+  - Searched pkg/engine for reuse: declare sequence steps (chooseCostDiscards, chooseOnPlacement, push, payCosts) consolidated in (g *Game) declare(...) in placement.go; payCost kept as (g *Game) payCost reading EffectiveCost.
+  - pkg/engine/placement.go: added (g *Game) declare(pl placement, e ability.Effect, item *StackItem).
+  - pkg/engine/actions.go: updated ActDeploy to call g.payCost(p, inst); updated ActEnact to call g.declare(...); updated handPlay to read g.EffectiveCost(inst); added (g *Game) EffectiveCost(inst *Instance) (req, tac int) and (g *Game) payCost(p *Player, inst *Instance).
+  - pkg/sim/policy.go: updated ProgressPolicy to read g.EffectiveCost(inst).
+  - Acceptance Cases verified:
+    1. git diff autoloop/m2-wave-c.1 -- '*_test.go' printed nothing; go test ./... passed.
+    2. go tool task sim-compare -- autoloop/m2-wave-c.1 passed ([PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included).
+    3. git grep -n -e chooseCostDiscards -e chooseOnPlacement -e payCosts -- pkg/engine/actions.go printed nothing (clean, exit code 1).
+    4. git grep -n -e ReqCost -e TacCost -- pkg/engine/actions.go pkg/sim/policy.go printed exactly 1 line: pkg/engine/actions.go:218:	return inst.Card.ReqCost, inst.Card.TacCost.
+    5. git grep -n -e 'func (g \*Game) declare(' -e 'func (g \*Game) EffectiveCost(' -e 'func (g \*Game) payCost(' -- pkg/engine printed exactly 3 lines in placement.go (line 39) and actions.go (lines 217, 222).
+    6. git diff autoloop/m2-wave-c.1 --numstat -- pkg printed 19/13 actions.go, 11/0 placement.go, 3/2 policy.go.
+    7. go run ./cmd/cardtown lint fences exited 0 ([PASS]).
+    8. git diff autoloop/m2-wave-c.1 --stat lists only actions.go, placement.go, policy.go, and this task file.
+    9. go tool task check and go tool task sim passed (all linters, vet, tests, and starter sims clean).
+  - Status moved to review.
