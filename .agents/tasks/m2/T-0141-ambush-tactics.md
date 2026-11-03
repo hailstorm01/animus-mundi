@@ -4,7 +4,7 @@ title: Make Ambush Tactics executable (choose two of kill, return to hand, a cho
 kind: card
 tier: flash
 wave: C
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-c/T-0141-ambush-tactics
 depends_on: [T-0083, T-0102, T-0107, T-0116, T-0117, T-0118, T-0123, T-0140]
 claims: [card:Ambush Tactics]
@@ -77,3 +77,4 @@ To be added to `pkg/engine/cards_path_maneuvers_test.go`, from the CSV text, loa
 
 ## Log
 - 2026-11-02 lead-architect (wave C session 32): written against the run branch at 2e88e84 (no `main` commits to sync). A deck card (#14 (a)), next on the board after T-0140 (#88's and #91 (3)'s distinctness shape). #91: (1) and (3) are applied; (2) is about a cost on a mode, and no *Ambush Tactics* mode has one; (4) goes with the *Ensnaring Mist* and *Pincer Tactics* tasks. Every shape is `done`, so no ruling is needed. Waiting triggers #6, #7, #8 (this task doesn't touch `deck.go`), #15, #71 (no each-player effect) not fired. Status `tests`.
+- 2026-11-03 rules-test-author: wrote 14 tests in `pkg/engine/cards_path_maneuvers_test.go`: TestCard_AmbushTactics_ KillsOneUnitAndReturnsAnother, ChosenUnitDealsItsPowerToAnother, DealerUsesItsCurrentPower, ModesResolveInPrintedOrder, ReturnedDealerDealsNothing, SameUnitInTwoModes, TwoDifferentModes, AnotherUnitIsADifferentUnit, ChosenUnitIsAnyUnit, LegalityNeedsUnits, ModeTimeoutTakesTheFirstTwoListed, TargetTimeoutsTakeFixedOrder, FaceDownScratchCompanyGoesBackAsItsCard, PaysFourTactics. File-local helpers only (atBoard, atModeAsks, atTargetAsks, atOffers, atDeckTop); no helpers requested. All fail now with "needs rules the kernel does not implement yet"; vet and `cardtown lint rules` clean. Left out: nothing. Note: the ChosenUnitIsAnyUnit test also checks that no Headquarters option appears; the mode-3 dealt-to options are checked in AnotherUnitIsADifferentUnit.
