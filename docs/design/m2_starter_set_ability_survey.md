@@ -15,7 +15,7 @@ FRD 01 is the rules source. This document names requirement IDs and never restat
 - **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems were about *when* targets are chosen (§4, R3–R4); since 2026-10-20 every target is locked on placement.
 - **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
 - **FRD 01 reach:** the starter set reaches **27 of the 30** unpinned FRD 01 requirements, including `FR-SET-001` because starter decks must be construction-legal (Q1). It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers).
-- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19, R7 on 2026-10-20, R8–R11 on 2026-10-21, R13–R17 on 2026-10-23, R18 on 2026-10-26, R12 and R19 on 2026-10-28, R20–R24 on 2026-10-29, and R25–R31 on 2026-10-30; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain), and R5 on 2026-10-29. They are recorded in FRD 01 as `SVY-R1`–`SVY-R31`; R12 (Berserk is replaced by Overkill) is in v3.14. Nothing in the starter set is blocked.
+- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19, R7 on 2026-10-20, R8–R11 on 2026-10-21, R13–R17 on 2026-10-23, R18 on 2026-10-26, R12 and R19 on 2026-10-28, R20–R24 on 2026-10-29, R25–R31 on 2026-10-30, and R32–R35 on 2026-11-02; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain), and R5 on 2026-10-29. They are recorded in FRD 01 as `SVY-R1`–`SVY-R35`; R12 (Berserk is replaced by Overkill) is in v3.14. Nothing in the starter set is blocked.
 
 ---
 
@@ -88,6 +88,10 @@ Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are 
 | **R29** | Can a "Choose N" Maneuver be enacted with fewer than N legal modes, and can any Maneuver be enacted without a legal entity for an exactly-one target slot? (Open Question 11) | Ambush Tactics; every Maneuver with a "chosen" target | **Ruled (user, 2026-10-30): no to both.** Such a Maneuver stays in hand. Recorded in FRD 01 v3.19 as `SVY-R29` (`FR-MNV-001`, `FR-MOD-001` §5). |
 | **R30** | A modal triggered ability with fewer than N legal modes, or none? (Open Question 11) | Rogue Fleshshaper (unreachable in M2) | **Ruled (user, 2026-10-30):** it uses every legal mode, and with none it is placed with no mode and does nothing. Recorded in FRD 01 v3.19 as `SVY-R30` (`FR-MOD-001` §5, `FR-TGT-003`). |
 | **R31** | Do several chosen modes resolve in printed order or pick order? (Open Question 11) | Ambush Tactics, Rogue Fleshshaper | **Ruled (user, 2026-10-30): printed order.** Recorded in FRD 01 v3.19 as `SVY-R31` (`FR-MOD-001` §5). |
+| **R32** | A timed-out repeated target choice puts every repetition on the first legal entity in fixed order | Steel Rain | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R32` (`FR-MOD-001` §6, `FR-TGT-001`). |
+| **R33** | A mode is legal only if its targets exist **and** its costs can be paid; the mode, its targets and its costs lock together on placement; all chosen modes are one stack item | Ambush Tactics, Rogue Fleshshaper (no M2 mode has a cost) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R33` (`FR-MOD-001` §5, `FR-TGT-001`). |
+| **R34** | "Another chosen X" must be a different entity: from the earlier slot it follows in the same clause, or from the source when there is none. A mode or Maneuver is legal only if enough different entities exist; a timeout takes the next different one | Ambush Tactics; Tempest Runner (M3) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R34` (`FR-TGT-002`, `FR-MNV-001`, `FR-MOD-001` §5, §6). |
+| **R35** | Each separate "chosen X" clause is its own target slot, and two slots may pick the same entity. Only a clause that points back ("it", "that unit", "the chosen unit") reuses an earlier target | Ensnaring Mist, Pincer Tactics; MAX-8 Autonomous Warsuit, Frostfire Breath, Piston Fist (outside M2) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R35` (`FR-TGT-002`, `FR-TGT-001`). |
 
 **Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
 
@@ -127,7 +131,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Funeral Fungus ★ | C | Maneuver + additional cost | exhaust readied allied unit; `RETURN_TO_HAND` chosen unit card from discard | `FR-TRN-003a` | Benchmark #8 |
 | Conversion Spike | C | Maneuver | `DEAL_DAMAGE 1` chosen opposing unit; `HEAL 1` chosen allied unit or structure | `FR-TGT-003` | Two independent targets |
 | Deafening Aria | C | Maneuver | `DEAL_DAMAGE 1` all opposing units in Main Theater | | |
-| Ensnaring Mist | C | Maneuver | `MOVE_ZONE` chosen unit → its Reserves; `MODIFY_STAT` −1 power until end of turn to a second chosen unit | `FR-ZON-002`, `FR-LAY-001` | R26 |
+| Ensnaring Mist | C | Maneuver | `MOVE_ZONE` chosen unit → its Reserves; `MODIFY_STAT` −1 power until end of turn to a second chosen unit | `FR-ZON-002`, `FR-LAY-001` | R26, R35 |
 | Rhapsody's Embrace | C | Maneuver + additional cost | kill allied unit; `KILL` chosen opposing unit | `FR-TRN-003a` | Replaced kill cost stays paid (`SVY-R15`) |
 | Despoiler's Emergence | C | Maneuver | `DEAL_DAMAGE 4` all opposing assets in Main Theater; `DEAL_DAMAGE 2` all opposing non-Scratch assets in Reserves | | |
 | Rapturous Sermon | C | Maneuver | `MOVE_ZONE` all allied Scratch Company → Main Theater; `MODIFY_STAT` +2 until end of turn | `FR-LAY-001` snapshot locking | Named in FRD 01 |
@@ -170,10 +174,10 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Blindside | C | Maneuver | `MODIFY_STAT` −3 until end of opponent's turn | `FR-LAY-003` | Full-round duration |
 | Improvised Orders | C | Maneuver | `DRAW_CARD 3`, `DISCARD_CARD 1` | | |
 | Devilhorn Sanction | C | Maneuver | `KILL` chosen opposing unit | | |
-| Pincer Tactics | C | Maneuver | `DEAL_DAMAGE 1` up to 2 chosen allied units; `DEAL_DAMAGE 2` chosen non-Scratch asset | `FR-TGT-002` | Enables Unbowed |
+| Pincer Tactics | C | Maneuver | `DEAL_DAMAGE 1` up to 2 chosen allied units; `DEAL_DAMAGE 2` chosen non-Scratch asset | `FR-TGT-002` | Enables Unbowed; R35 (the non-Scratch asset may be one of the two units) |
 | Poisoned Rations | C | Maneuver | `MODIFY_STAT` −3 max health until end of turn | `FR-LAY-002` | |
-| Ambush Tactics | C | Maneuver, modal | choose two of: `KILL`, `RETURN_TO_HAND`, delegated `DEAL_DAMAGE` = power, `PUT_CARD_ON_DECK` top | `FR-MOD-001`, `FR-TGT-003` | R6, R25, R27–R29, R31; delegated source as on Soul Whip |
-| Steel Rain | C | Maneuver + additional cost | discard up to 3; `DEAL_DAMAGE 2` chosen asset per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TRN-003a`, `FR-TGT-001` (`SVY-R3`, `SVY-R4`) | Targets chosen with the discard; repeats allowed |
+| Ambush Tactics | C | Maneuver, modal | choose two of: `KILL`, `RETURN_TO_HAND`, delegated `DEAL_DAMAGE` = power, `PUT_CARD_ON_DECK` top | `FR-MOD-001`, `FR-TGT-003` | R6, R25, R27–R29, R31, R33, R34; delegated source as on Soul Whip |
+| Steel Rain | C | Maneuver + additional cost | discard up to 3; `DEAL_DAMAGE 2` chosen asset per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TRN-003a`, `FR-TGT-001` (`SVY-R3`, `SVY-R4`) | Targets chosen with the discard; repeats allowed; timeout concentrates on one asset (R32) |
 | Boneyard Scavenger | D | Activated | T1 + exhaust + kill self → `RETURN_TO_HAND` chosen Maneuver card from discard | `FR-ACT-001` | |
 | Ruin Partisans | D | Activated | T2 + exhaust + kill self → `RETURN_TO_HAND` chosen unit card from discard | `FR-ACT-001` | R2 |
 | Encampment (HQ) | M3 | Activated | discard a card + exhaust → `DEAL_DAMAGE 1` to each of up to 2 chosen non-Scratch units | `FR-ACT-001`, `FR-TGT-002` | |
