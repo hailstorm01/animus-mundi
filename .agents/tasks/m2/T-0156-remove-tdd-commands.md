@@ -4,7 +4,7 @@ title: Remove the TDD commands from cardtown and whats-up (directive #103 (b)-(e
 kind: harness
 tier: flash
 wave: none (board directive #103, after wave C.1)
-status: ready
+status: review
 branch: m2/T-0156-remove-tdd-commands
 depends_on: []
 claims: [cli:tdd command removed, cli:lint tdd removed, cli:tdd flag aliases removed, whats-up:tdd lines removed]
@@ -228,10 +228,41 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 Tests, edited only as `Test Edits` says, in the `test(T-0156)` commit: `cmd/cardtown/args_test.go`, `cmd/cardtown/tools_test.go`, `pkg/toolchain/docs/whatsup_test.go`.
 
 ## Done When
-- [ ] Cases 1-4 have the tests above, each of which failed before the implementation commit; cases 5-13 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-4 have the tests above, each of which failed before the implementation commit; cases 5-13 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-04, lead: written from #103, with T-0157 split off and queued (D2.4). Waiting triggers #6, #7, #8, #15, #71 and #91 (2) have not fired: this task touches no `deck.go`, no turn hook, no parallel mode and no card. 13 deck cards are still not executable (#14 (e)), and this task doesn't change that. Dispatch: `ready`, tier `flash`, because it deletes no files.
+- 2026-11-04, kernel-engineer (flash): implemented T-0156.
+  - Test edits: in `cmd/cardtown/args_test.go`, `cmd/cardtown/tools_test.go`, and `pkg/toolchain/docs/whatsup_test.go`, removed defunct flag/command expectations, added `TestFlagAliases_NameOnlyLiveFlags`, `TestUsage_ListsOnlyLiveCommands`, `TestShowTools_ListsOnlyLiveTools`, and `TestShowState_PrintsNoDesignDocumentsBlock`. Verified that running `go test ./cmd/cardtown ./pkg/toolchain/docs` failed on exactly these four new tests. Committed as `test(T-0156): pin live commands, tools and flag aliases`.
+  - Implementation edits:
+    - `cmd/cardtown/lint.go`: removed `linter/tdd` import, `tdd` subcommand case, `tddFlag`, `runTdd`, `changedTdds`, git diff/status detection for `docs/tdd/`, updated nothing-to-lint condition/message, removed TDD linter execution block, and renumbered traceability linter heading to 2.
+    - `cmd/cardtown/main.go`: removed `case "tdd":`, updated `lint` usage line, removed `tdd` usage line, and removed obsolete flag aliases `dryrun`, `updateexisting`, `showbodies`, `tddfile`.
+    - `cmd/cardtown/tools.go`: updated header comment, removed `tddslice` import, and removed `runTdd` function.
+    - `pkg/toolchain/docs/whatsup.go`: removed `cardtown tdd slice` from tools listing, updated lint usage line, and removed the `Technical Design Documents (docs/tdd/)` section in `ShowState`.
+    - Committed as `feat(toolchain): remove TDD commands from cardtown and whats-up (T-0156)`.
+  - Acceptance results (commands pointed at worktree):
+    1. `go test ./cmd/cardtown -run 'TestFlagAliases_NameOnlyLiveFlags'` -> PASS
+    2. `go test ./cmd/cardtown -run 'TestUsage_ListsOnlyLiveCommands'` -> PASS
+    3. `go test ./pkg/toolchain/docs -run 'TestShowTools_ListsOnlyLiveTools'` -> PASS
+    4. `go test ./pkg/toolchain/docs -run 'TestShowState_PrintsNoDesignDocumentsBlock'` -> PASS
+    5. `git diff main...HEAD --stat -- "*_test.go"` -> exactly `cmd/cardtown/args_test.go`, `cmd/cardtown/tools_test.go`, and `pkg/toolchain/docs/whatsup_test.go`
+    6. `go run ./cmd/cardtown tdd` -> prints `Unknown command "tdd"`, usage, and exits with code 1
+    7. `go run ./cmd/cardtown lint --tdd` -> prints `flag provided but not defined: -tdd`, usage, and exits with code 2
+    8. `go run ./cmd/cardtown lint --all` -> PASS (exits 0, runs FRD, Rules Traceability, Card Sheet CSV, Card Rules Syntax, Engine Architecture Fences)
+    9. `go run ./cmd/cardtown whats-up` -> PASS (exits 0, prints no TDD / Technical Design Documents references)
+    10. `git grep -n -i tdd -- cmd pkg/toolchain/docs` -> exit code 1 (no occurrences)
+    11. `git diff main...HEAD --numstat -- cmd pkg` -> exactly matched the 7 lines:
+        `39 41 cmd/cardtown/args_test.go`
+        `4 41 cmd/cardtown/lint.go`
+        `1 8 cmd/cardtown/main.go`
+        `1 46 cmd/cardtown/tools.go`
+        `26 1 cmd/cardtown/tools_test.go`
+        `2 61 pkg/toolchain/docs/whatsup.go`
+        `41 1 pkg/toolchain/docs/whatsup_test.go`
+    12. `go tool task sim-compare` -> `[PASS] starter and stress sims match main byte for byte, exit codes included`
+    13. `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all all pass)
+        `go tool task sim` -> PASS (200 matches, all invariants held)
+  - Handed off: `status: review`.

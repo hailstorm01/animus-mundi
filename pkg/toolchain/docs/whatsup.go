@@ -89,8 +89,8 @@ func ShowSkills(repoRoot string) {
 // ShowTools displays available CLI commands and tools.
 func ShowTools(repoRoot string) {
 	fmt.Println("== TOOLS ==")
-	fmt.Println("- cardtown lint [flags] [files...] : Unified developer linter suite (FRD, TDD, CSV sheets & syntax)")
-	fmt.Println("    cardtown lint [--all|--frd|--tdd|--rules|--cards|--sheets|--syntax|--fences|--staged] [--files <list>]")
+	fmt.Println("- cardtown lint [flags] [files...] : Unified developer linter suite (FRD, CSV sheets & syntax)")
+	fmt.Println("    cardtown lint [--all|--frd|--rules|--cards|--sheets|--syntax|--fences|--staged] [--files <list>]")
 	fmt.Println("- cardtown lint rules : Traces TestFR_* scenario tests in pkg/engine to active FRD 01 requirements and reports untested ones")
 	fmt.Println("    cardtown lint rules")
 	fmt.Println("- cardtown lint fences : Verifies engine code contains no card names and only valid open markers")
@@ -99,8 +99,6 @@ func ShowTools(repoRoot string) {
 	fmt.Println("    cardtown sim [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
 	fmt.Println("- cardtown hook install : Installs native Git pre-commit hook into .git/hooks/pre-commit")
 	fmt.Println("    cardtown hook install")
-	fmt.Println("- cardtown tdd slice [flags] : Topologically slice approved TDD into GitHub Milestone & Issues")
-	fmt.Println("    cardtown tdd slice [-dry-run] [-publish] [-update-existing] <TddFile>")
 	fmt.Println("- cardtown whats-up [flags] : Live capability and state snapshot for the docs workflow")
 	fmt.Println("    cardtown whats-up [-section all|skills|tools|state]")
 	fmt.Println()
@@ -190,63 +188,6 @@ func ShowState(repoRoot string) {
 		}
 	}
 
-	tddDir := filepath.Join(repoRoot, "docs", "tdd")
-	var tddFiles []string
-	if entries, err := os.ReadDir(tddDir); err == nil {
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".md") && e.Name() != "README.md" {
-				tddFiles = append(tddFiles, e.Name())
-			}
-		}
-	}
-	sort.Strings(tddFiles)
-
-	if len(tddFiles) == 0 {
-		fmt.Println("Technical Design Documents (docs/tdd/): none authored yet")
-	} else {
-		fmt.Printf("Technical Design Documents (docs/tdd/): %d authored\n", len(tddFiles))
-		srcRe := regexp.MustCompile(`^\s*-\s+\*\*Source FRD:\*\*\s*(.+)$`)
-		frdFileRe := regexp.MustCompile(`(\d{2}_[A-Za-z0-9_]+_FRD\.md)`)
-		hashRe := regexp.MustCompile(`^\s*-\s+\*\*FRD Commit Hash:\*\*\s*` + "`" + `?([^` + "`" + `\s]+)` + "`" + `?`)
-		sliceHeadingRe := regexp.MustCompile(`^###\s+\[SLICE-\d{2}-\d{2}\]`)
-
-		for _, tf := range tddFiles {
-			p := filepath.Join(tddDir, tf)
-			content, err := os.ReadFile(p)
-			if err != nil {
-				continue
-			}
-			tLines := strings.Split(string(content), "\n")
-			srcFrd := "?"
-			tHash := "?"
-			sliceCnt := 0
-
-			for idx, tl := range tLines {
-				if idx < 30 {
-					if m := srcRe.FindStringSubmatch(tl); len(m) > 1 {
-						if mf := frdFileRe.FindStringSubmatch(m[1]); len(mf) > 1 {
-							srcFrd = mf[1]
-						}
-					}
-					if m := hashRe.FindStringSubmatch(tl); len(m) > 1 {
-						tHash = strings.TrimSpace(m[1])
-					}
-				}
-				if sliceHeadingRe.MatchString(tl) {
-					sliceCnt++
-				}
-			}
-
-			tStale := "CURRENT"
-			if srcFrd != "?" && len(tHash) >= 7 {
-				newer := git.Lines(repoRoot, "log", "--format=%h", tHash+"..HEAD", "--", "docs/frd/"+srcFrd)
-				if len(newer) > 0 {
-					tStale = fmt.Sprintf("STALE (%d newer FRD commit(s))", len(newer))
-				}
-			}
-			fmt.Printf("  - %s: Source=%s | Audited=%s | Freshness=%s | Slices=%d\n", tf, srcFrd, tHash, tStale, sliceCnt)
-		}
-	}
 	fmt.Println()
 }
 

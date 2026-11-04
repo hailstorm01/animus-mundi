@@ -15,7 +15,6 @@ import (
 	"animus-mundi/pkg/toolchain/linter/frd"
 	"animus-mundi/pkg/toolchain/linter/rules"
 	"animus-mundi/pkg/toolchain/linter/syntax"
-	"animus-mundi/pkg/toolchain/linter/tdd"
 )
 
 func runLint(args []string) {
@@ -27,12 +26,6 @@ func runLint(args []string) {
 		switch sub {
 		case "frd":
 			ok, err := frd.Lint(repoRoot, remaining)
-			if err != nil || !ok {
-				os.Exit(1)
-			}
-			os.Exit(0)
-		case "tdd":
-			ok, err := tdd.Lint(repoRoot, remaining)
 			if err != nil || !ok {
 				os.Exit(1)
 			}
@@ -75,7 +68,6 @@ func runLint(args []string) {
 	fs := flag.NewFlagSet("lint", flag.ExitOnError)
 	allFlag := fs.Bool("all", false, "Force full audit across all files")
 	frdFlag := fs.Bool("frd", false, "Run FRD linter")
-	tddFlag := fs.Bool("tdd", false, "Run TDD linter")
 	rulesFlag := fs.Bool("rules", false, "Run executable rules traceability linter")
 	cardsFlag := fs.Bool("cards", false, "Run sheet integrity & syntax linters")
 	sheetsFlag := fs.Bool("sheets", false, "Run sheet integrity linter only")
@@ -110,29 +102,23 @@ func runLint(args []string) {
 	fmt.Println()
 
 	runFrd := false
-	runTdd := false
 	runRules := false
 	runSheets := false
 	runSyntax := false
 	runFences := false
 
 	var changedFrds []string
-	var changedTdds []string
 	var changedCsvs []string
 
 	if *allFlag {
 		runFrd = true
-		runTdd = true
 		runRules = true
 		runSheets = true
 		runSyntax = true
 		runFences = true
-	} else if *frdFlag || *tddFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag || *fencesFlag {
+	} else if *frdFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag || *fencesFlag {
 		if *frdFlag {
 			runFrd = true
-		}
-		if *tddFlag {
-			runTdd = true
 		}
 		if *rulesFlag {
 			runRules = true
@@ -154,7 +140,6 @@ func runLint(args []string) {
 			if err != nil {
 				fmt.Printf("Git staged diff unavailable: %v. Running all linters...\n", err)
 				runFrd = true
-				runTdd = true
 				runRules = true
 				runSheets = true
 				runSyntax = true
@@ -169,8 +154,6 @@ func runLint(args []string) {
 					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, path)
-					} else if strings.HasPrefix(pLower, "docs/tdd/") && strings.HasSuffix(pLower, ".md") && filepath.Base(pLower) != "readme.md" {
-						changedTdds = append(changedTdds, path)
 					} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
 						changedCsvs = append(changedCsvs, path)
 					}
@@ -182,7 +165,6 @@ func runLint(args []string) {
 			if err != nil {
 				fmt.Println("  Git change detection unavailable. Running all linters...")
 				runFrd = true
-				runTdd = true
 				runRules = true
 				runSheets = true
 				runSyntax = true
@@ -197,8 +179,6 @@ func runLint(args []string) {
 					}
 					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
 						changedFrds = append(changedFrds, sf.Path)
-					} else if strings.HasPrefix(pLower, "docs/tdd/") && strings.HasSuffix(pLower, ".md") && filepath.Base(pLower) != "readme.md" {
-						changedTdds = append(changedTdds, sf.Path)
 					} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
 						changedCsvs = append(changedCsvs, sf.Path)
 					}
@@ -210,18 +190,14 @@ func runLint(args []string) {
 			fmt.Printf("  Detected %d modified/added FRD document(s).\n", len(changedFrds))
 			runFrd = true
 		}
-		if len(changedTdds) > 0 {
-			fmt.Printf("  Detected %d modified/added TDD document(s).\n", len(changedTdds))
-			runTdd = true
-		}
 		if len(changedCsvs) > 0 {
 			fmt.Printf("  Detected %d modified/added Card CSV sheet(s).\n", len(changedCsvs))
 			runSheets = true
 			runSyntax = true
 		}
 
-		if !runFrd && !runTdd && !runRules && !runSheets && !runSyntax && !runFences {
-			fmt.Println("  No changes detected in docs/frd/, docs/tdd/, pkg/, or data/cards/.")
+		if !runFrd && !runRules && !runSheets && !runSyntax && !runFences {
+			fmt.Println("  No changes detected in docs/frd/, pkg/, or data/cards/.")
 			fmt.Println("  Nothing to lint! (Use --all to force full audit across all files)")
 			fmt.Println()
 			fmt.Println("==========================================================")
@@ -244,20 +220,7 @@ func runLint(args []string) {
 		}
 	}
 
-	// 2. TDD Linter
-	if runTdd {
-		fmt.Println("\n>>> Running TDD Coverage & Slice Manifest Linter...")
-		files := parsedFiles
-		if len(files) == 0 && len(changedTdds) > 0 && !*allFlag {
-			files = changedTdds
-		}
-		ok, err := tdd.Lint(repoRoot, files)
-		if err != nil || !ok {
-			anyFailed = true
-		}
-	}
-
-	// 2b. Executable Rules Traceability Linter
+	// 2. Executable Rules Traceability Linter
 	if runRules {
 		fmt.Println("\n>>> Running Executable Rules Traceability Linter...")
 		ok, err := rules.Lint(repoRoot, nil)

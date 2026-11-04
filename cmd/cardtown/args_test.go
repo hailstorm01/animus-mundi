@@ -15,10 +15,6 @@ func TestNormalizeArgs(t *testing.T) {
 		{"-ALL", []string{"-ALL"}, []string{"--all"}},
 		{"--Repo-Root=x", []string{"--Repo-Root=x"}, []string{"--repo-root=x"}},
 		{"-reporoot, C:/x", []string{"-reporoot", "C:/x"}, []string{"--repo-root", "C:/x"}},
-		{"-DryRun", []string{"-DryRun"}, []string{"--dry-run"}},
-		{"-updateExisting", []string{"-updateExisting"}, []string{"--update-existing"}},
-		{"-SHOWBODIES", []string{"-SHOWBODIES"}, []string{"--show-bodies"}},
-		{"-tddFile=a.md", []string{"-tddFile=a.md"}, []string{"--tdd-file=a.md"}},
 		{"-commitMessage=Hi There", []string{"-commitMessage=Hi There"}, []string{"--msg=Hi There"}},
 		{"-commit-message, m", []string{"-commit-message", "m"}, []string{"--msg", "m"}},
 		{"-MSG", []string{"-MSG"}, []string{"--msg"}},
@@ -45,45 +41,35 @@ func TestNormalizeArgs(t *testing.T) {
 
 	// Loop over every name the old switch listed.
 	oldSwitchExpected := map[string]string{
-		"all":             "all",
-		"frd":             "frd",
-		"tdd":             "tdd",
-		"cards":           "cards",
-		"sheets":          "sheets",
-		"syntax":          "syntax",
-		"fences":          "fences",
-		"staged":          "staged",
-		"files":           "files",
-		"reporoot":        "repo-root",
-		"repo-root":       "repo-root",
-		"dryrun":          "dry-run",
-		"dry-run":         "dry-run",
-		"publish":         "publish",
-		"updateexisting":  "update-existing",
-		"update-existing": "update-existing",
-		"showbodies":      "show-bodies",
-		"show-bodies":     "show-bodies",
-		"tddfile":         "tdd-file",
-		"tdd-file":        "tdd-file",
-		"source":          "source",
-		"msg":             "msg",
-		"commitmessage":   "msg",
-		"commit-message":  "msg",
-		"push":            "push",
-		"section":         "section",
-		"rules":           "rules",
-		"deck":            "deck",
-		"games":           "games",
-		"seed":            "seed",
-		"p0":              "p0",
-		"p1":              "p1",
-		"seat":            "seat",
-		"policy":          "policy",
-		"maxturns":        "max-turns",
-		"max-turns":       "max-turns",
+		"all":            "all",
+		"frd":            "frd",
+		"cards":          "cards",
+		"sheets":         "sheets",
+		"syntax":         "syntax",
+		"fences":         "fences",
+		"staged":         "staged",
+		"files":          "files",
+		"reporoot":       "repo-root",
+		"repo-root":      "repo-root",
+		"source":         "source",
+		"msg":            "msg",
+		"commitmessage":  "msg",
+		"commit-message": "msg",
+		"push":           "push",
+		"section":        "section",
+		"rules":          "rules",
+		"deck":           "deck",
+		"games":          "games",
+		"seed":           "seed",
+		"p0":             "p0",
+		"p1":             "p1",
+		"seat":           "seat",
+		"policy":         "policy",
+		"maxturns":       "max-turns",
+		"max-turns":      "max-turns",
 	}
 
-	oldNames := strings.Fields("all frd tdd cards sheets syntax fences staged files reporoot repo-root dryrun dry-run publish updateexisting update-existing showbodies show-bodies tddfile tdd-file source msg commitmessage commit-message push section rules deck games seed p0 p1 seat policy maxturns max-turns")
+	oldNames := strings.Fields("all frd cards sheets syntax fences staged files reporoot repo-root source msg commitmessage commit-message push section rules deck games seed p0 p1 seat policy maxturns max-turns")
 
 	for _, name := range oldNames {
 		expectedOutput, ok := oldSwitchExpected[name]
@@ -98,5 +84,17 @@ func TestNormalizeArgs(t *testing.T) {
 				t.Errorf("normalizeArgs(%#v) = %#v, want %#v", []string{inputArg}, got, want)
 			}
 		})
+	}
+}
+
+func TestFlagAliases_NameOnlyLiveFlags(t *testing.T) {
+	want := map[string]string{
+		"reporoot":       "repo-root",
+		"commitmessage":  "msg",
+		"commit-message": "msg",
+		"maxturns":       "max-turns",
+	}
+	if !reflect.DeepEqual(flagAliases, want) {
+		t.Errorf("flagAliases = %#v, want %#v", flagAliases, want)
 	}
 }
