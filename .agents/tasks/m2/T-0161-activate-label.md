@@ -4,7 +4,7 @@ title: The play screen names an activation, its asset and printed text (harness,
 kind: harness
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0161-activate-label
 depends_on: [T-0158]
 claims: [view:asset-text, label:activate]
