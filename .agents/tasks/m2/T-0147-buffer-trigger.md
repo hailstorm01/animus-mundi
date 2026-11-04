@@ -4,7 +4,7 @@ title: One function buffers a fired trigger, bufferTrigger (directive #96, harne
 kind: harness
 tier: flash
 wave: C.1 (board directive #96, structural review 7, finding 5)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0147-buffer-trigger
 depends_on: [T-0146]
 claims: [helper:bufferTrigger]
@@ -75,10 +75,25 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 4): wrote this task from directive #96 against the run branch at 6e4106a, after syncing `main` (merge 6e4106a: `BOARD.md` and `docs/PRODUCT_SUMMARY.md`, no conflicts). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `bufferTrigger`; these two literals are the only places that build a `pendingTrigger` or append to `g.pending`. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (session 1): implemented pure move of pendingTrigger literal to bufferTrigger helper in pkg/engine/trigger.go (#96).
+  - Diff shows:
+    - pkg/engine/trigger.go: replaced pendingTrigger literal in fireHook with g.bufferTrigger(a, fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), t); added bufferTrigger method; replaced pendingTrigger literal in fireAttacks with g.bufferTrigger(a, fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), ability.Aggressive(n)).
+  - Reuse: bufferTrigger unifies pendingTrigger construction between fireHook and fireAttacks. Searched pkg/engine for bufferTrigger; no prior declaration existed.
+  - Acceptance cases verified:
+    - Case 1: git -C W diff autoloop/m2-wave-c.1 -- "*_test.go" printed nothing; go -C W test ./... passed (exit 0).
+    - Case 2: go -C W tool task sim-compare -- autoloop/m2-wave-c.1 printed "[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included".
+    - Case 3: git -C W grep -n "bufferTrigger(" -- pkg/engine printed exactly 3 lines: pkg/engine/trigger.go:111, pkg/engine/trigger.go:117, and pkg/engine/trigger.go:158.
+    - Case 4: git -C W grep -n "pendingTrigger{" -- pkg/engine printed exactly 1 line: pkg/engine/trigger.go:118.
+    - Case 5: git -C W grep -n "g.pending = append" -- pkg/engine printed exactly 1 line: pkg/engine/trigger.go:118.
+    - Case 6: git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg printed "12\t10\tpkg/engine/trigger.go".
+    - Case 7: go -C W run ./cmd/cardtown lint fences exited 0 ("[PASS]").
+    - Case 8: git -C W diff autoloop/m2-wave-c.1 --stat lists only pkg/engine/trigger.go and this task file.
+    - Case 9: go -C W tool task check and go -C W tool task sim passed all checks.
+  - Handoff commit feat(engine): bufferTrigger helper buffers pending triggers (T-0147). Task status set to review.
