@@ -4,7 +4,7 @@ title: Zone helpers live with the zones, deployedTo and battlefieldZone move to 
 kind: harness
 tier: flash
 wave: C.1 (board directive #101, structural review 7, finding 11)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0154-zone-helpers
 depends_on: [T-0153]
 claims: [helper:deployedTo, helper:battlefieldZone]
@@ -89,10 +89,25 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/engine/zones.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 11): wrote this task from directive #101 against the run branch at 01dcbf3; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `pkg/engine` declares each of the two once, and nothing else maps an `ability.Zone` to an engine `Zone`. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (wave C.1 run, session 12): implemented pure move of deployedTo and battlefieldZone from pkg/engine/trigger.go to pkg/engine/zones.go per directive #101.
+  - Diff shows:
+    - pkg/engine/trigger.go: deleted deployedTo and battlefieldZone declarations and comments (lines 132-152, 21 lines deleted).
+    - pkg/engine/zones.go: added animus-mundi/pkg/engine/ability import and inserted deployedTo and battlefieldZone unchanged above remove function (23 lines added).
+  - Search for reuse: verified pkg/engine has no other ability.Zone to engine Zone mappings.
+  - Acceptance cases 1-8 verified:
+    1. git diff autoloop/m2-wave-c.1 -- "*_test.go" printed nothing; go test ./... passed (all packages ok).
+    2. go tool task sim-compare -- autoloop/m2-wave-c.1 printed "[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included".
+    3. git grep -n 'deployedTo(' -- pkg/engine printed exactly targeting.go:278, trigger.go:93, zones.go:237.
+    4. git grep -n 'battlefieldZone(' -- pkg/engine printed exactly effects.go:108, zones.go:238, zones.go:246.
+    5. git diff autoloop/m2-wave-c.1 --numstat -- pkg printed 0 21 pkg/engine/trigger.go and 23 0 pkg/engine/zones.go.
+    6. go run ./cmd/cardtown lint fences passed clean.
+    7. git diff autoloop/m2-wave-c.1 --stat showed only trigger.go, zones.go, and task file.
+    8. go tool task check (fmt-check, vet, test, linters) and go tool task sim passed cleanly.
+  - Ready for review.
