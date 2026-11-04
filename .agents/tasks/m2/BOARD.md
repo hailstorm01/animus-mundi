@@ -31,6 +31,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0159 | The event log, replay and sim policy know an activation (harness, sonnet) | ready |
 | T-0160 | The docs say activated abilities are built, stack.go, doc.go and costs.go comments (harness, flash, comments only) | queued |
 | T-0161 | The play screen names an activation, its asset and printed text (harness, flash) | queued |

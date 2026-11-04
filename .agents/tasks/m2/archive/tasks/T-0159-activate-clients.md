@@ -4,7 +4,7 @@ title: The event log, replay and sim policy know an activation (harness, sonnet)
 kind: harness
 tier: sonnet
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0159-activate-clients
 depends_on: [T-0158]
 claims: [event:activate, replay:activate, policy:activate]
@@ -62,12 +62,13 @@ Each case but 2 and 6 fails before the implementation commit.
 - `pkg/sim/policy.go` (`ProgressPolicy`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine ./pkg/eventlog ./pkg/sim ./pkg/view -run "TestEvents_Case4|TestReplay_Activation|TestProgress_ActivationIsAnAct|TestView_ActivatedAbilityItem"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d` passes (see Shape, Sims)
+- [x] The listed tests pass: `go test ./pkg/engine ./pkg/eventlog ./pkg/sim ./pkg/view -run "TestEvents_Case4|TestReplay_Activation|TestProgress_ActivationIsAnAct|TestView_ActivatedAbilityItem"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d` passes (see Shape, Sims)
 
 ## Log
 - 2026-11-04 lead-architect: split off T-0158 under the D2 size rule (D2.4). Written `queued`.
 - 2026-11-04 lead-architect: wave D run, session 2. No `main` commits to sync (`main` is at 58a2bc9, the run branch's base). Not `WAVE-COMPLETE`: all four header cards are on `NotYetExecutable`. No `open: before` directive; #14 is `open` and orders the cards. Waiting triggers #6, #7, #8 (no task touches `deck.go`), #15, #71, #91 (2) not fired. #104 waits for the first card task with an activated ability, which this is not. Written against the code of the day. The label needs a printed text the `View` doesn't carry, so `pkg/view` joins the four files listed under Covers and the task would have five. Under the D2 size rule the label moves to T-0161 (`queued`, D2.4). What is left is three files. Reuse search: `grep "ActActivate"` outside `pkg/engine` finds nothing. `Event.Amount`, `diff`, `structured` and the `acts` slice are reused. Harness, so it skips `tests`. Status `ready`; dispatching `kernel-engineer` (sonnet).
 - 2026-11-04 kernel-engineer: implemented. Test commit first: cases 1-5 and the case 2 comment edit, plus case 6. Cases 1, 3, 4 and 5 failed before the implementation commit (no Source/Amount on the Activate event, no Activate events from ProgressPolicy, no policy activation). Case 6 (`TestView_ActivatedAbilityItemShowsItsTargets`) passed before the implementation, as the task predicted; it pins existing behavior. Case 2 changes only the comment in `TestEvents_Case4_EveryActionKind`. Changes: `emitAction` has a `case ActActivate` (Source = asset, Amount = ability index); the `Event.Amount` comment says what it means per event kind; `actionOf` sets `a.Ability = e.Amount` for ActActivate; `ProgressPolicy` counts ActActivate as an act, and item 3 of its comment names it. Reuse: `Event.Amount`, `diff`/`structured`, the `acts` slice; no new field or helper. No change to monitors or the view; the 30-game replay with monitors on passed. Commands: `go test ./pkg/engine ./pkg/eventlog ./pkg/sim ./pkg/view -run "TestEvents_Case4|TestReplay_Activation|TestProgress_ActivationIsAnAct|TestView_ActivatedAbilityItem"` pass; `go tool task check` pass; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-d` PASS byte for byte. Reviewer: the case 5 scene exhausts every asset including the HQ and gives player 0 R1 T0; case 6 detects the trigger's decision by a non-empty stack.
+- 2026-11-04 lead-architect: code review (D5), round 1, approved. Merged `--no-ff` into `autoloop/m2-wave-d` as 6a0845d. Reviewed `git diff autoloop/m2-wave-d...` and not the Log. Scope: only the three Allowed Files, the four test files and the task file changed, and no `_test.go` changed after `test(T-0159)` (ed98d25). The one edit to an existing test is the comment case 2 names, in that commit. Tests: each case has its test. At ed98d25 cases 1, 3, 4 and 5 fail and case 6 passes, re-run by the reviewer. Case 3 means what it says: `SimulateWith` returns a monitor's `Violation` as its error (`sim.go:139`), and the games reach all three indexes. Fences: no card name, and the new declarations sit where the task put them. Reuse: `Event.Amount`, `diff`, `structured` and `acts`; no new field. Rules: the effect comes from `Apply`'s existing path. Monitors and the view needed no change: no monitor flagged an activation's exhaust, kill or resource cost in 30 games, and the view shows the activated item's targets. Not yet exercised: a real card's text on the play screen (T-0161). Re-ran in a review worktree: the listed tests pass; `go tool task check` exit 0; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-d` PASS byte for byte. After the merge, on the run branch: `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, no monitor violation. Status `done`.
