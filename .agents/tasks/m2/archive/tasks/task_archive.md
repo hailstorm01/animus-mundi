@@ -161,3 +161,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0155 | The docs say what wave C built, doc.go, sim.go, ability.go and zones.go comments (directive #102, harness, flash, comments only) | done |
 | T-0156 | Remove the TDD commands from cardtown and whats-up (directive #103 (b)-(e), harness, flash) | done |
 | T-0157 | Delete the TDD packages and their git helpers, and finish directive #103 (harness, sonnet) | done |
+| T-0158 | Activate a printed ability of a battlefield asset, its costs paid and its targets chosen on declaration (FR-ACT-001, FR-ACT-002, FR-TRN-003a, SVY-R2, wave D shape, sonnet) | done |

@@ -31,6 +31,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0158 | Activate a printed ability of a battlefield asset, its costs paid and its targets chosen on declaration (FR-ACT-001, FR-ACT-002, FR-TRN-003a, SVY-R2, wave D shape, sonnet) | tests |
 | T-0159 | The event log, replay, sim policy and play screen know an activation (harness, sonnet) | queued |
-| T-0160 | The docs say activated abilities are built, stack.go and doc.go comments (harness, flash, comments only) | queued |
+| T-0160 | The docs say activated abilities are built, stack.go, doc.go and costs.go comments (harness, flash, comments only) | queued |
