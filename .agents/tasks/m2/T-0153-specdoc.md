@@ -4,7 +4,7 @@ title: The linters share one scan, pkg/toolchain/specdoc (directive #100, harnes
 kind: harness
 tier: flash
 wave: C.1 (board directive #100, structural review 7, finding 9)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0153-specdoc
 depends_on: []
 claims: [package:pkg/toolchain/specdoc, helper:ReqRegex, helper:DefLineRegex, helper:ReadLines]
@@ -135,9 +135,29 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/toolchain/linter/fences/fences.go`
 
 ## Done When
-- [ ] Cases 1-11 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-11 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 10): wrote this task against the run branch at 4c2677b; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Placement: the design note's Boundaries row for `pkg/toolchain` names `specdoc`. Reuse search: no shared scan exists under `pkg/toolchain`; `linter/cardsheet` reads CSV sheets only. The search found a third `readLines` in `fences.go`, which this task removes (Inputs). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no task touches `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (wave C.1 run, session 10): implemented directive #100 pure move.
+  - Diff: created `pkg/toolchain/specdoc/specdoc.go` holding `ReqRegex`, `DefLineRegex` and `ReadLines`. Updated `pkg/toolchain/linter/frd/frd.go`, `pkg/toolchain/linter/rules/rules.go` and `pkg/toolchain/linter/fences/fences.go` to import `animus-mundi/pkg/toolchain/specdoc` and call `specdoc.ReqRegex`, `specdoc.DefLineRegex` and `specdoc.ReadLines`. Removed local regexes, `readLines` implementations, and unused imports (`bufio`, `regexp` from `frd.go`, `bufio`, `os` from `rules.go`, `bufio` from `fences.go`).
+  - Reuse: `specdoc` consolidates the three duplicate regex and line-reading implementations across the linters.
+  - Commands and results:
+    - Case 1: `git -C W diff autoloop/m2-wave-c.1 -- '*_test.go'` printed nothing; `go -C W test ./pkg/toolchain/... ./cmd/...` passed.
+    - Case 2: `go -C W run ./cmd/cardtown lint frd` exited 0 and printed expected catalog counts (203 defined IDs across 7 FRDs, 2191 references) with zero dangling references PASS.
+    - Case 3: `go -C W run ./cmd/cardtown lint rules` exited 0 and printed 51 of 62 active FRD 01 requirements have scenario tests with full traceability PASS.
+    - Case 4: `go -C W run ./cmd/cardtown lint fences` exited 0 and printed clean PASS.
+    - Case 5: `git -C W grep -n 'ReqRegex = ' -- pkg` printed `pkg/toolchain/linter/tdd/tdd.go:18: headingReqRegex = ...` (kept per #100) and `pkg/toolchain/specdoc/specdoc.go:12: ReqRegex = ...`; `git -C W grep -n 'DefLineRegex = ' -- pkg` printed `pkg/toolchain/specdoc/specdoc.go:14`; `git -C W grep -n 'func ReadLines' -- pkg` printed `pkg/toolchain/specdoc/specdoc.go:18`.
+    - Case 6: `git -C W grep -n -e 'reqRegex' -e 'defLineRegex' -e 'readLines' -- pkg/toolchain/linter/frd pkg/toolchain/linter/rules pkg/toolchain/linter/fences` printed nothing (exit 1).
+    - Case 7: `git -C W grep -n 'func readLines' -- pkg cmd` printed `pkg/toolchain/linter/tdd/tdd.go:621` (preserved per #100).
+    - Case 8: `git -C W grep -c -F 'specdoc.' -- pkg/toolchain/linter` printed `fences.go:1`, `frd.go:6`, `rules.go:5`.
+    - Case 9: `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg cmd` printed exactly:
+      2 19 pkg/toolchain/linter/fences/fences.go
+      8 29 pkg/toolchain/linter/frd/frd.go
+      7 26 pkg/toolchain/linter/rules/rules.go
+      34 0 pkg/toolchain/specdoc/specdoc.go
+    - Case 10: `git -C W diff autoloop/m2-wave-c.1 --stat` listed only those four toolchain files and the task file.
+    - Case 11: `go -C W tool task check` passed all stages (fmt-check, vet, test, build, lint --all); `go -C W tool task sim` ran clean on starter decks (200 matches, all invariants held).
+  - Reviewer note: `git grep -n 'ReqRegex = '` matched `headingReqRegex = ` in `tdd.go` due to substring match; `tdd.go` was kept intact per directive #100.
