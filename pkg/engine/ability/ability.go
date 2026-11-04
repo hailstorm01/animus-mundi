@@ -192,7 +192,8 @@ func (t Target) AnotherSlot() (slot int, ok bool) {
 // Filter is a conjunction: an entity must meet every set criterion (FR-TGT-001).
 type Filter struct {
 	Allegiance Allegiance     // relative to the ability's controller
-	Kinds      Kinds          // zero means any asset
+	Kinds      Kinds          // zero means any asset, or any card in a pile
+	Subtypes   []string       // the entity carries at least one of these printed subtypes ("Fungus or Plant card"); empty means no subtype criterion
 	Scratch    ScratchCompany // ScratchAny (zero) means any unit; else only Scratch Company units, or none
 	Other      bool           // excludes the ability's own source asset ("other")
 	Zone       Zone           // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
@@ -212,13 +213,14 @@ const (
 	AllegianceOpposing                   // controlled by an opponent
 )
 
-// Kinds is a set of asset types; "structure or Headquarters" sets two bits.
+// Kinds is a set of card types; "structure or Headquarters" sets two bits.
 type Kinds int
 
 const (
 	KindUnit Kinds = 1 << iota
 	KindStructure
 	KindHeadquarters
+	KindManeuver // only a pile filter can meet it: no asset is a Maneuver
 )
 
 // ScratchCompany is a filter's Scratch Company criterion: whether a unit with
