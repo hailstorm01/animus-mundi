@@ -1,4 +1,4 @@
-// Costs: reading and paying a card's cost, and checking and paying a placement's additional costs (FR-CST-001, FR-TRN-003a).
+// Costs: reading and paying a card's cost, and checking and paying a placement's costs, a Maneuver's additional costs or an activated ability's (FR-CST-001, FR-TRN-003a, FR-ACT-001).
 
 package engine
 
@@ -64,9 +64,12 @@ func (g *Game) chooseCostDiscards(pl placement) []*Instance {
 	return picked
 }
 
-// costsPayable reports whether every additional cost of pl has at least one
-// option now (FR-TRN-003a, SVY-R29). A discard cost is always payable, because
-// discarding none pays it.
+// costsPayable reports whether every cost of pl can be paid now: a resources
+// cost needs its Requisition and Tactics (CostResources), exhausting the source
+// needs it Readied (CostExhaustSelf), and a kill or exhaust cost needs at least
+// one option (FR-TRN-003a, FR-ACT-001, SVY-R29). A discard cost is always
+// payable, because discarding none pays it, and so is killing the source
+// (CostKillSelf).
 func (g *Game) costsPayable(pl placement) bool {
 	for _, c := range pl.costs {
 		switch c.Kind {
@@ -91,17 +94,19 @@ func (g *Game) costsPayable(pl placement) bool {
 	return true
 }
 
-// payCosts pays each additional cost of pl in printed order: its controller
-// picks the asset (costDecision, pickFrom) and it is killed through kill
-// (CostKill) or exhausted through exhaust (CostExhaust), while a discard cost
-// moves the cards picked earlier (CostDiscard). A replaced kill (not the discard
-// cost) still counts as paid (SVY-R15), and the triggers either fires wait in
-// the pending buffer to go above the declared card (FR-TRN-003a). It runs after
-// the Maneuver is pushed, so the card is already on the stack when the cost's
-// triggers are queued (FR-TRN-003), and after its targets were chosen, so they
-// were judged against the state before the cost moved anything (SVY-R2). A
-// discard cost's cards were picked before the modes and targets
-// (chooseCostDiscards) and are moved here, through discardCards.
+// payCosts pays each cost of pl in printed order: its controller picks the asset
+// (costDecision, pickFrom) and it is killed through kill (CostKill) or exhausted
+// through exhaust (CostExhaust), the source itself is killed or exhausted the
+// same way (CostKillSelf, CostExhaustSelf), a resources cost takes its
+// Requisition and Tactics (CostResources), and a discard cost moves the cards
+// picked earlier (CostDiscard). A replaced kill (not the discard cost) still
+// counts as paid (SVY-R15), and the triggers a kill or an exhaust fires wait in
+// the pending buffer to go above the declared item (FR-TRN-003a). It runs after
+// the item is pushed, so it is already on the stack when the cost's triggers are
+// queued (FR-TRN-003), and after its targets were chosen, so they were judged
+// against the state before the cost moved anything (SVY-R2). A discard cost's
+// cards were picked before the modes and targets (chooseCostDiscards) and are
+// moved here, through discardCards.
 func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		if c.Kind == ability.CostDiscard {

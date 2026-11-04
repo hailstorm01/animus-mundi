@@ -4,7 +4,7 @@ title: The docs say activated abilities are built, stack.go, doc.go, costs.go an
 kind: harness
 tier: flash
 wave: D
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d/T-0160-activated-comments
 depends_on: [T-0158]
 claims: [comments:pkg/engine/stack.go StackAbility Tracked Keyword, comments:pkg/engine/doc.go activated, comments:pkg/engine/costs.go, comments:pkg/engine/effects.go resolveAbility]
@@ -117,11 +117,30 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–11 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–11 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-04 lead-architect: split off T-0158 under the D2 size rule (D2.4). Written `queued`.
 - 2026-11-04 lead-architect (wave D run, session 3): wrote Inputs, Edits, Acceptance Cases and Allowed Files against the run branch at dfce2be; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Checked each claim against the code: `ActActivate`, `Def.Activated` and the three cost kinds exist; `check` refuses an activation on a non-empty stack (`pkg/engine/actions.go:145`); `declare` chooses targets, pushes the item and pays the costs in that order (`pkg/engine/placement.go:40-45`); `pendingTrigger` items set `Tracked` only for `HookKilled` and the activation's item leaves it and `Keyword` zero (`pkg/engine/trigger.go:181-182`, `pkg/engine/actions.go:103`). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card; #104: not due, this task has no `cards:`). Next: `kernel-engineer` on Flash.
+- 2026-11-04 kernel-engineer (flash): implemented comment updates. No code changes, comments only across the four allowed files.
+  - Changes:
+    - pkg/engine/stack.go: updated trailing comments on StackAbility, Tracked, and Keyword to acknowledge activated abilities.
+    - pkg/engine/effects.go: updated resolveAbility doc comment to mention activated abilities.
+    - pkg/engine/costs.go: updated package header comment, costsPayable comment, and payCosts comment to include activated abilities and their cost kinds.
+    - pkg/engine/doc.go: added Activated abilities under "What runs now", removed Activated abilities from "Not built yet", and updated Files description for costs.go.
+  - Reuse: comments only; no new shapes, types, functions, or helpers added.
+  - Acceptance Cases & verification:
+    1. git diff autoloop/m2-wave-d -- '*_test.go' printed nothing; go test ./... passed.
+    2. go tool task sim-compare -- autoloop/m2-wave-d printed [PASS] (starter and stress sims byte-identical).
+    3. git diff autoloop/m2-wave-d --numstat -- pkg printed exactly 20/15 costs.go, 7/2 doc.go, 2/2 effects.go, 3/3 stack.go.
+    4. git grep -n -F 'triggered or activated' -- pkg/engine/stack.go pkg/engine/effects.go printed exactly effects.go:25 and stack.go:15.
+    5. git grep -n -e 'false for an activated ability' -e 'zero for a printed trigger or an activated ability' -- pkg/engine/stack.go printed exactly stack.go:32 and :33.
+    6. git grep -n -e ActActivate -e Def.Activated -e CostKillSelf -- pkg/engine/doc.go printed doc.go:44, :45, :48.
+    7. git grep -n -F 'Activated and continuous' -- pkg/engine/doc.go printed nothing (exit 1).
+    8. git grep -n -e 'additional cost of pl' -e 'the Maneuver is pushed' -e 'the declared card' -- pkg/engine/costs.go printed nothing (exit 1).
+    9. go run ./cmd/cardtown lint fences passed (exit 0).
+    10. git diff autoloop/m2-wave-d --stat lists only the 4 allowed files and the task file.
+    11. go tool task check (fmt-check, vet, test, linter --all) passed; go tool task sim passed clean.
