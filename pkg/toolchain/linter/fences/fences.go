@@ -1,7 +1,6 @@
 package fences
 
 import (
-	"bufio"
 	"fmt"
 	"go/parser"
 	"go/scanner"
@@ -17,6 +16,7 @@ import (
 	"unicode"
 
 	"animus-mundi/pkg/toolchain/linter/cardsheet"
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 var (
@@ -224,7 +224,7 @@ func Analyze(repoRoot string) (*Report, error) {
 	var items []violationItem
 
 	for _, name := range files {
-		lines, err := readLines(filepath.Join(repoRoot, filepath.FromSlash(name)))
+		lines, err := specdoc.ReadLines(filepath.Join(repoRoot, filepath.FromSlash(name)))
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", name, err)
 		}
@@ -465,21 +465,4 @@ func containsWordSequence(haystack, needle []string) bool {
 		}
 	}
 	return false
-}
-
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	buf := make([]byte, 64*1024)
-	scanner.Buffer(buf, 1024*1024)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }

@@ -1,18 +1,16 @@
 package rules
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 var (
-	reqRegex      = regexp.MustCompile(`FR-[A-Z]{3}-\d{3}[a-z]?`)
-	defLineRegex  = regexp.MustCompile(`^(####|###|\*\*FR-|- \*\*FR-|\| \*\*FR-)`)
 	subsumedRow   = regexp.MustCompile(`^\| \*\*(FR-[A-Z]{3}-\d{3}[a-z]?)\*\*.*Subsumed by`)
 	testNameRegex = regexp.MustCompile(`^func (TestFR_([A-Z]{3})_(\d{3}[a-z]?)\w*)\(`)
 	coversRegex   = regexp.MustCompile(`^// Covers: (.+)$`)
@@ -50,7 +48,7 @@ func Analyze(repoRoot string) (*Coverage, error) {
 	}
 	sort.Strings(files)
 	for _, f := range files {
-		lines, err := readLines(f)
+		lines, err := specdoc.ReadLines(f)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +57,7 @@ func Analyze(repoRoot string) (*Coverage, error) {
 		var covers []string
 		for i, line := range lines {
 			if c := coversRegex.FindStringSubmatch(line); c != nil {
-				covers = append(covers, reqRegex.FindAllString(c[1], -1)...)
+				covers = append(covers, specdoc.ReqRegex.FindAllString(c[1], -1)...)
 				continue
 			}
 			m := testNameRegex.FindStringSubmatch(line)
@@ -124,7 +122,7 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 }
 
 func frdRequirements(path string) (defined, subsumed map[string]bool, err error) {
-	lines, err := readLines(path)
+	lines, err := specdoc.ReadLines(path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -133,28 +131,11 @@ func frdRequirements(path string) (defined, subsumed map[string]bool, err error)
 		if m := subsumedRow.FindStringSubmatch(line); m != nil {
 			subsumed[m[1]] = true
 		}
-		if defLineRegex.MatchString(line) {
-			for _, id := range reqRegex.FindAllString(line, -1) {
+		if specdoc.DefLineRegex.MatchString(line) {
+			for _, id := range specdoc.ReqRegex.FindAllString(line, -1) {
 				defined[id] = true
 			}
 		}
 	}
 	return defined, subsumed, nil
-}
-
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	buf := make([]byte, 64*1024)
-	scanner.Buffer(buf, 1024*1024)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }
