@@ -4,7 +4,7 @@ title: The docs say what wave C built, doc.go, sim.go, ability.go and zones.go c
 kind: harness
 tier: flash
 wave: C.1 (board directive #102, structural review 7, finding 12)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0155-docs-wave-c
 depends_on: [T-0154]
 claims: [comments:pkg/engine/doc.go, comments:pkg/sim/sim.go FactionDeck, comments:pkg/engine/ability/ability.go Subject, comments:pkg/engine/zones.go header]
@@ -109,10 +109,22 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
 - `pkg/engine/ability/ability.go`
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 12): wrote this task from directive #102 against the run branch at cf6ab3d; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Checked each claim against the code: `OpMoveZone`, `Step.Dealer`, `Target.PerDiscard`, `Target.Another`, `StackManeuver` and `Def.ExtraCosts` exist; `OpHeal` runs and no "Heal N" keyword is parsed; `Regroup` appears nowhere in `pkg/engine` outside `doc.go`; `stepDiscard` goes through `stepPlayers`. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). #103 is `open`, not blocking, and outside the wave's done-when. Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (flash): applied directive #102 comment updates. Diff shows exact comment-only changes in 4 files: pkg/engine/doc.go (documented wave C additions in Steps bullet, removed Maneuvers/Heal N from unbuilt, updated zones.go files entry), pkg/engine/zones.go (header comment updated), pkg/sim/sim.go (Headquarters comment updated), and pkg/engine/ability/ability.go (SubjectController and SubjectOpponents trailing comments updated to include OpDiscard). Reused existing structures; no engine code or shape changes. All 10 acceptance cases verified:
+  1. `git diff autoloop/m2-wave-c.1 -- "*_test.go"` (no output) & `go test ./...` (PASS)
+  2. `go tool task sim-compare -- autoloop/m2-wave-c.1` (PASS)
+  3. `git diff autoloop/m2-wave-c.1 --numstat -- pkg` (2 2 ability.go, 13 5 doc.go, 1 1 zones.go, 2 1 sim.go)
+  4. `git grep -n -e OpMoveZone -e Step.Dealer -e Target.PerDiscard -e Target.Another -e StackManeuver -e Def.ExtraCosts -- pkg/engine/doc.go` (lines 30, 36, 38, 39, 41, 43)
+  5. `git grep -n -e "Heal N" -e "Maneuvers, activated" -- pkg/engine/doc.go` (no output, exit code 1)
+  6. `git grep -n "printed abilities ignored" -- pkg/sim/sim.go` (no output, exit code 1)
+  7. `git grep -n -F "OpScratch, OpDraw, OpDiscard" -- pkg/engine/ability/ability.go` (lines 238, 240)
+  8. `go run ./cmd/cardtown lint fences` (exited 0, PASS)
+  9. `git diff autoloop/m2-wave-c.1 --stat` (only the 4 pkg files and this task file)
+  10. `go tool task check` (all format, vet, tests, linters pass) and `go tool task sim` (starter sims run clean, 200/200 games terminated with invariants holding).
+  Committed implementation in 7818da6. Moved task to review.
