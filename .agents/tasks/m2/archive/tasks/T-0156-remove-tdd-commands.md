@@ -4,7 +4,7 @@ title: Remove the TDD commands from cardtown and whats-up (directive #103 (b)-(e
 kind: harness
 tier: flash
 wave: none (board directive #103, after wave C.1)
-status: review
+status: done
 branch: m2/T-0156-remove-tdd-commands
 depends_on: []
 claims: [cli:tdd command removed, cli:lint tdd removed, cli:tdd flag aliases removed, whats-up:tdd lines removed]
@@ -266,3 +266,4 @@ Tests, edited only as `Test Edits` says, in the `test(T-0156)` commit: `cmd/card
     13. `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all all pass)
         `go tool task sim` -> PASS (200 matches, all invariants held)
   - Handed off: `status: review`.
+- 2026-11-04, lead: review round 1, approved, merge 27139e6. Checked against the diff, not the Log: the three test files changed only in f37f105 and not after it; at f37f105 exactly the four new tests fail; the code diff is the listed edits and the numstat matches case 11. Re-ran in a review worktree at 30f7e10: `go tool task check`, `go tool task sim`, `go tool task sim-compare` (`[PASS]`), and cases 6-10. `agy` conversation `0929dd3e-d10c-48d9-add2-8d5417f05d30`: no refused command (no `denied_actions` key, no `permission check failed` match). The transcript's one `"status":"ERROR"` is step 6, a read that returned "file does not exist", which ended nothing. 13 deck cards are still not executable (#14 (e)). #103 stays `open` for (a) and (f). Next: T-0157, `queued`; its Inputs get written against the code of the day before it leaves `queued`.
