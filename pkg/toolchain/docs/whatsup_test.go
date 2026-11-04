@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -34,7 +35,7 @@ func TestShowTools_ListsNoAuditTool(t *testing.T) {
 	if strings.Contains(out, "cardtown audit") {
 		t.Errorf("tools section lists an audit tool:\n%s", out)
 	}
-	for _, want := range []string{"cardtown lint", "cardtown sim", "cardtown hook install", "cardtown tdd slice", "cardtown whats-up"} {
+	for _, want := range []string{"cardtown lint", "cardtown sim", "cardtown hook install", "cardtown whats-up"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("tools section lacks %q", want)
 		}
@@ -64,5 +65,44 @@ func TestShowState_PrintsNoPendingAudits(t *testing.T) {
 	}
 	if !hasHook {
 		t.Error("no line starting \"Pre-commit hook: \"")
+	}
+}
+
+func TestShowTools_ListsOnlyLiveTools(t *testing.T) {
+	lines := strings.Split(captureOutput(func() { ShowTools(repoRoot) }), "\n")
+	var got []string
+	for _, l := range lines {
+		if cmd, _, ok := strings.Cut(l, " : "); ok && strings.HasPrefix(cmd, "- cardtown ") {
+			got = append(got, strings.TrimPrefix(cmd, "- "))
+		}
+	}
+	want := []string{
+		"cardtown lint [flags] [files...]",
+		"cardtown lint rules",
+		"cardtown lint fences",
+		"cardtown sim [flags]",
+		"cardtown hook install",
+		"cardtown whats-up [flags]",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("tools = %q, want %q", got, want)
+	}
+	for _, line := range []string{
+		"- cardtown lint [flags] [files...] : Unified developer linter suite (FRD, CSV sheets & syntax)",
+		"    cardtown lint [--all|--frd|--rules|--cards|--sheets|--syntax|--fences|--staged] [--files <list>]",
+	} {
+		if !slices.Contains(lines, line) {
+			t.Errorf("tools section lacks the line %q", line)
+		}
+	}
+}
+
+func TestShowState_PrintsNoDesignDocumentsBlock(t *testing.T) {
+	out := captureOutput(func() { ShowState(repoRoot) })
+	lines := strings.Split(out, "\n")
+	for _, l := range lines {
+		if strings.HasPrefix(l, "Technical Design Documents") {
+			t.Errorf("state section prints %q", l)
+		}
 	}
 }

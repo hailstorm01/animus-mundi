@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -33,7 +34,7 @@ func TestUsage_ListsNoAuditCommand(t *testing.T) {
 		t.Errorf("usage mentions audit:\n%s", out)
 	}
 	lines := strings.Split(out, "\n")
-	for _, cmd := range []string{"play", "lint", "hook", "tdd", "sim", "replay", "whats-up"} {
+	for _, cmd := range []string{"play", "lint", "hook", "sim", "replay", "whats-up"} {
 		prefix := "  " + cmd + " "
 		n := 0
 		for _, l := range lines {
@@ -44,5 +45,29 @@ func TestUsage_ListsNoAuditCommand(t *testing.T) {
 		if n != 1 {
 			t.Errorf("usage has %d lines starting %q, want 1", n, prefix)
 		}
+	}
+}
+
+func TestUsage_ListsOnlyLiveCommands(t *testing.T) {
+	lines := strings.Split(captureOutput(printUsage), "\n")
+	var got []string
+	inCommands := false
+	for _, l := range lines {
+		switch {
+		case l == "Available Commands:":
+			inCommands = true
+		case inCommands && strings.HasPrefix(l, "  "):
+			got = append(got, strings.Fields(l)[0])
+		default:
+			inCommands = false
+		}
+	}
+	want := []string{"play", "lint", "hook", "sim", "replay", "whats-up"}
+	if !slices.Equal(got, want) {
+		t.Errorf("usage commands = %q, want %q", got, want)
+	}
+	const lint = "  lint      Unified developer linter suite (FRD, executable rules, CSV sheets, rules syntax, fences)"
+	if !slices.Contains(lines, lint) {
+		t.Errorf("usage lacks the line %q", lint)
 	}
 }
