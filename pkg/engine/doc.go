@@ -41,6 +41,11 @@
 //     as a trigger's are, the effect resolves as a StackManeuver item, and the card
 //     then goes to its owner's discard pile. A Maneuver may print additional costs
 //     to kill, exhaust or discard (Def.ExtraCosts), paid on declaration (FR-TRN-003a).
+//   - Activated abilities (ActActivate, FR-ACT-001, FR-ACT-002): a printed
+//     "[Cost]: [Effect]." ability of a battlefield asset (Def.Activated), activated
+//     on an empty stack. On declaration its targets are chosen, it goes on the stack
+//     as a StackAbility item and its costs are paid, including CostResources,
+//     CostExhaustSelf and CostKillSelf (declare, SVY-R2).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
@@ -52,7 +57,7 @@
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Activated and continuous abilities, continuous Cornered,
+//   - Continuous abilities, continuous Cornered,
 //     Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
@@ -66,7 +71,7 @@
 //     legality and combat resolution. stack.go: the Resolution Stack.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
 //     an effect, its modes and then its targets. costs.go: a card's cost and
-//     additional costs. targeting.go: target choice and filters. effects.go:
+//     a placement's costs. targeting.go: target choice and filters. effects.go:
 //     running a resolved ability's steps.
 //   - state.go: core state types and lookups. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.

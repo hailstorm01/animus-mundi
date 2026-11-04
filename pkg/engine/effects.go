@@ -22,8 +22,8 @@ type resolution struct {
 	replaced *Asset
 }
 
-// resolveAbility runs the stack item's effect, a triggered ability's or an
-// enacted Maneuver's, step by step in order. It resolves even if
+// resolveAbility runs the stack item's effect, a triggered or activated
+// ability's or an enacted Maneuver's, step by step in order. It resolves even if
 // its source has left the battlefield: untargeted steps verify nothing.
 func (g *Game) resolveAbility(it *StackItem) {
 	// Second verification stage (FR-TGT-003), entity by entity: one that is
