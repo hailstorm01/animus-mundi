@@ -27,12 +27,20 @@
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
 //     choosing from your own hand (DecideHand, SVY-R16).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
-//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat and OpKill (inline destruction), with "all" steps, source-power values, the
+//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction) and OpMoveZone, with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. SubjectPick is an untargeted pick made as the
 //     step resolves (SVY-R3), asked as a DecidePick and not a target, and a step with IfDone
 //     runs only if the step before it did something ("if you do", SVY-R14), and a step with
-//     IfHandEmpty runs only if its controller has no cards in hand when it resolves.
+//     IfHandEmpty runs only if its controller has no cards in hand when it resolves. A damage
+//     step with Step.Dealer has an asset chosen for one of its slots deal the damage (SVY-R27).
+//   - Target slots that choose once for each card the placement's discard cost
+//     discarded (Target.PerDiscard, SVY-R4), or that must pick an entity different
+//     from an earlier slot's (Target.Another, SVY-R34).
+//   - Maneuvers (ActEnact, FR-MNV-001): modes and targets are chosen on placement,
+//     as a trigger's are, the effect resolves as a StackManeuver item, and the card
+//     then goes to its owner's discard pile. A Maneuver may print additional costs
+//     to kill, exhaust or discard (Def.ExtraCosts), paid on declaration (FR-TRN-003a).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
@@ -44,16 +52,16 @@
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Maneuvers, activated and continuous abilities, continuous Cornered, Heal N,
+//   - Activated and continuous abilities, continuous Cornered,
 //     Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
-//     and cannot be deployed.
+//     and cannot be deployed or enacted.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
 // Files:
 //   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
-//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets.
+//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets, deploying a card, and the zone a shape names.
 //   - actions.go: Action, Apply, checks and LegalActions. combat.go: attack
 //     legality and combat resolution. stack.go: the Resolution Stack.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing

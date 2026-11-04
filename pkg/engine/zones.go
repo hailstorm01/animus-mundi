@@ -1,4 +1,4 @@
-// Zones: shuffling, drawing and moving cards and assets between zones (FR-ZON-001, FR-ZON-004).
+// Zones: shuffling, drawing, deploying and moving cards and assets between zones, and the zone a shape names (FR-ZON-001, FR-ZON-004).
 
 package engine
 
