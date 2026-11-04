@@ -1,0 +1,31 @@
+Status: open (lead-architect, 2026-11-04)
+Task / Directive: none written yet / #104, on the run branch only (branch: autoloop/m2-wave-d)
+Cards: Sinuous Growth; Boneyard Scavenger; Ruin Partisans; Cliff of Portents; Rhapsody's Hollow
+
+### ❓ Open Ruling Question: activating with no legal target, and a deck search's choice and timeout (2026-11-04)
+
+**Numbering:** `main`'s board stops at `#103`, but the run branch already holds `#104`, this question's row. Number the outcome's directive `#105` and set `Last directive: #105`, so the next sync doesn't get two rows numbered 104. There is no `#104` row on `main` to update.
+
+- **Question:**
+  1. **Activating with no legal target.** May an activated ability with an exactly-one target slot be activated when that slot has no legal entity?
+     - (a) No. It can't be activated, as a Maneuver with no legal target can't be enacted, so the player keeps the unit and pays nothing.
+     - (b) Yes. The player pays every cost, the ability goes on the stack, and its targeted clause does nothing, as with a deployment trigger. A player could sacrifice the unit on purpose, for example to fire a death trigger or to put the card in the discard pile.
+  2. **A deck search's choice.** May a player who searches for "a card", with no criteria, choose no card when the deck has one?
+  3. **A deck search's timeout.** If the player doesn't answer that search in time, what happens?
+     - (a) The search takes the top card of the deck, in the deck's order before the shuffle.
+     - (b) The search chooses no card, and the deck is still shuffled.
+- **Source:** board directive #104 on `autoloop/m2-wave-d` (Plan of T-0158, 2026-11-04), asked before the first task whose `cards:` include a card with an activated ability. Wave D run, session 6: all four cards left in the run's `Cards` have activated abilities, so no card task can be written before this ruling. Every shape the three return-from-discard cards need is `done` (T-0158, T-0162). `SEARCH_DECK` isn't built, and its behavior depends on questions 2 and 3.
+- **Cards affected** (`data/cards/units-and-structures-animus.csv`, `data/cards/units-and-structures-path.csv`; all M2, wave D):
+  - *Sinuous Growth* (Animus Unit, **starter deck**, 4 copies): *"T1, kill this unit: Return chosen Fungus or Plant card from your discard pile to your hand."* Question 1.
+  - *Boneyard Scavenger* (Path Unit, **starter deck**, 2 copies): *"T1, exhaust, kill this unit: Return chosen maneuver card from your discard pile to your hand."* Question 1.
+  - *Ruin Partisans* (Path Unit, not in a starter deck): *"T2, exhaust, kill this unit: Return chosen unit card from your discard pile to your hand."* Question 1.
+  - *Rhapsody's Hollow* (Animus Structure, not in a starter deck, deferred by #14 (b)): *"T3, exhaust, kill this structure: Gain control of chosen opposing unit in the Main Theater."* Question 1.
+  - *Cliff of Portents* (Animus Structure, **starter deck**, 1 copy): *"R1, T1, exhaust: Search your deck for a card, put it into your hand, then shuffle your deck."* Questions 2 and 3.
+- **Current FRD 01 & engine state** (FRD 01 v3.20; `pkg/engine` references are to `autoloop/m2-wave-d` at `6229c65`, because activated abilities aren't on `main` yet):
+  - Question 1: `FR-ACT-001` (line 335) says costs are paid and targets chosen on declaration, and that a sacrificed asset can't be its own ability's target (`SVY-R2`). It doesn't say what happens with no legal target. `SVY-R29` and `FR-MNV-001` (line 340) cover a Maneuver only. `FR-TGT-003` (line 381) covers a deployed asset's trigger only. The engine does (b) today, by omission: `check` asks only `costsPayable` (`pkg/engine/actions.go:195`), `chooseTargets` leaves the empty slot unfilled and asks nothing (`pkg/engine/targeting.go:27`, `pkg/engine/choice.go:103`), and `declare` still pushes the item and pays (`pkg/engine/placement.go:40-45`). No test pins either side: `TestFR_ACT_001_SacrificedCardIsNotAChoice` covers one and two other cards in the pile, never none. The design note's Actions paragraph (`docs/architecture/m2-ability-model.md:53`) plans (a): `LegalActions` offers a declaration only if at least one complete, legal set of choices exists.
+  - Question 2: `FR-DEK-001` (lines 158-159) says any card "may be chosen" in a search for *"a card"*, and also that every search shuffles "even if no card was chosen". Its only stated case for choosing nothing is a restricted search with no match. It doesn't say whether an unrestricted search may come up empty by choice.
+  - Question 3: `FR-MOD-001` §6 (lines 393-397) has fallbacks for top-of-deck inspections and for untargeted selections among assets and "cards in a pile such as the Discard pile: from the top down". It names none for a deck search. §6 also opens with *"No fallback is random, so a player can always predict what a timeout does"* (`SVY-R16`). Answer (a) follows a fixed rule, but the deck's order is hidden, so the player can't tell which card it will be. Answer (b) is fully predictable, and it costs the player the card they paid for. There is no `OpSearchDeck` yet (`pkg/engine/ability/ability.go`), so nothing in the engine or its tests pins this.
+- **Lead's recommendation:**
+  1. (a). It can't be activated. It matches the rule for Maneuvers (`SVY-R29`), and uniform timing is the pattern of the rulings so far. It's also MTG's rule. It stops a player from sacrificing for nothing by accident, and the design note's line stands. The cost is that a player can't sacrifice one of these units on purpose while the pile has no legal card. If so ruled, a small shape task has `check` call `placeable` (`pkg/engine/placement.go:108`), which already reads every cost and slot, before the card tasks.
+  2. No. An unrestricted search must find a card if the deck has one, as in MTG. "Even if no card was chosen" then covers a restricted search with no match, or an empty deck. *Cliff of Portents* can still be activated with an empty deck, because it has no target: it finds nothing and pays its costs.
+  3. (a). It reads the top-of-deck inspection's fallback across to the search, and it keeps question 2's "must find". The rule is still a fixed one, even though the player can't see which card comes up. If §6's "predict" should mean the player knows the outcome, choose (b) instead.
