@@ -260,9 +260,9 @@ func matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool
 	}
 	switch f.Scratch {
 	case ability.ScratchOnly:
-		return c.HasSubtype("Scratch Company")
+		return c.IsScratchCompany()
 	case ability.ScratchExcluded:
-		return !c.HasSubtype("Scratch Company")
+		return !c.IsScratchCompany()
 	}
 	return true
 }

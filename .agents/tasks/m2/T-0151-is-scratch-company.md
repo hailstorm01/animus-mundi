@@ -4,7 +4,7 @@ title: One check for a Scratch Company card, IsScratchCompany (directive #98, pa
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: ready
+status: review
 branch: m2/autoloop-wave-c.1/T-0151-is-scratch-company
 depends_on: [T-0150]
 claims: [helper:IsScratchCompany]
@@ -87,11 +87,29 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/sim/sim.go`
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 6): queued with T-0149 (D2.4).
 - 2026-11-03, lead-architect (wave C.1 run, session 8): wrote Inputs, Edits, Acceptance Cases and Allowed Files against the run branch at 900933f; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Reuse search: no helper for this subtype exists in `pkg/engine` or `pkg/sim`; `HasSubtype` is what it calls. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: this task is a pure move; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (Gemini Flash): implemented pure move per lead edits.
+  - Diff shows:
+    - `pkg/engine/card.go`: added `func (c *Card) IsScratchCompany() bool { return c.HasSubtype("Scratch Company") }` below `HasSubtype`.
+    - `pkg/engine/targeting.go`: replaced `c.HasSubtype("Scratch Company")` and `!c.HasSubtype(...)` with `c.IsScratchCompany()` and `!c.IsScratchCompany()`.
+    - `pkg/engine/deck.go`: replaced `c.HasSubtype("Scratch Company")` in the deck check with `c.IsScratchCompany()`.
+    - `pkg/sim/sim.go`: replaced `!c.HasSubtype("Scratch Company")` with `!c.IsScratchCompany()`.
+  - Reuse: `IsScratchCompany()` calls `c.HasSubtype("Scratch Company")`.
+  - Acceptance cases 1-9 verified:
+    1. `git -C W diff autoloop/m2-wave-c.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed (all packages ok).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included`.
+    3. `git -C W grep -n 'HasSubtype(.Scratch Company.)' -- pkg/engine/card.go pkg/engine/targeting.go pkg/engine/deck.go pkg/sim/sim.go` printed `pkg/engine/card.go:117:	return c.HasSubtype("Scratch Company")` (1 line).
+    4. `git -C W grep -n 'IsScratchCompany()' -- pkg/engine/targeting.go pkg/engine/deck.go pkg/sim/sim.go` printed exactly 4 lines (`pkg/engine/deck.go:71`, `pkg/engine/targeting.go:263`, `pkg/engine/targeting.go:265`, `pkg/sim/sim.go:38`).
+    5. `git -C W grep -n 'Subtypes: ' -- pkg/engine/card.go` printed `pkg/engine/card.go:137:	Subtypes: []string{"Infantry", "Scratch Company"},`.
+    6. `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg cmd` printed `5 0 pkg/engine/card.go`, `1 1 pkg/engine/deck.go`, `2 2 pkg/engine/targeting.go`, `1 1 pkg/sim/sim.go`.
+    7. `go -C W run ./cmd/cardtown lint fences` exited 0.
+    8. `git -C W diff autoloop/m2-wave-c.1 --stat` listed only the four allowed files and this task file.
+    9. `go -C W tool task check` (fmt, vet, test, lint --all) and `go -C W tool task sim` (200 games, invariants held) both passed.
+  - Implementation committed as `feat(engine): IsScratchCompany replaces repeated HasSubtype checks (T-0151)` (9aedbdf). Handed off to review.
