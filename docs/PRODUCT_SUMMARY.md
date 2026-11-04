@@ -23,7 +23,7 @@ The repository is organized around an executable rules kernel, the one active ru
 animus-mundi/
 ├── .agents/
 │   ├── skills/                            # Persona definitions (pm-lead, lead-architect, rules-test-author, kernel-engineer, ...)
-│   └── tasks/m2/                          # M2 build loop: BOARD.md (directives + index), archive/ (done tasks T-0001 ... T-0143, applied directives), runs/ (wave-run logs)
+│   └── tasks/m2/                          # M2 build loop: BOARD.md (directives + index), archive/ (done tasks T-0001 ... T-0155, applied directives), runs/ (wave-run logs)
 ├── docs/
 │   ├── AGENTS.md                          # Engineering & agent guidelines
 │   ├── PRODUCT_SUMMARY.md                 # This product roadmap & architecture summary
@@ -182,7 +182,7 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
      - **Wave E:** *Boneyard Amalgam* and *Macabre Dancers*.
      - **Wave F:** *Veil Render*, *Forced Mutation*, *Allshan's Battle Trance*, *Reaver's Rush*, *Devilhorn Scouting Party*, *Eerie Remnant*, *Chainbreaker Phalanx* and *Broken Horn Armorer*.
    - **Build order** (board directive #14): deck cards first. Shapes needed only by non-deck cards wait for a playtest checkpoint, and the other 16 cards on the list wait with them. At the checkpoint, every deck card is executable, starter sim is clean, and a human can finish `cardtown play`. The user then decides whether the remaining Animus and Path cards stay in M2 or move to M3. The checkpoint has not been reached.
-3. **Kernel coverage pulled by starter cards. 🟡 In progress: 51 of 62 FRD 01 requirements pinned (M1: 30; `cardtown lint rules`, 2026-11-03).** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card.
+3. **Kernel coverage pulled by starter cards. 🟡 In progress: 51 of 62 FRD 01 requirements pinned (M1: 30; `cardtown lint rules`, 2026-11-04).** The kernel gains a rule when a starter card needs it, and each rule arrives with a `TestFR_*` scenario test plus a test that uses the card.
    - **Pinned during M2:** triggers, APNAP order and cascades (`FR-TRG-002`–`FR-TRG-005`), targeting and two-stage verification (`FR-TGT-001`–`FR-TGT-003`), choices and timeout fallbacks (`FR-MOD-001`), Layers 1–3 (`FR-LAY-001`–`FR-LAY-003`), Maneuvers (`FR-MNV-001`), additional costs (`FR-TRN-003a`; its free deploys arrive in wave F), destruction replacement (`FR-REP-001`, `FR-REP-003`), Unbowed (`FR-KWD-002a`), Heal N (`FR-KWD-002d`), Cornered (`FR-KWD-002e`) and self-tracking death triggers (`FR-ZON-004`).
    - **Still to pin in M2 (7):** `FR-ACT-001`/`002`, `FR-CST-001`, `FR-DEK-001`/`002`, `FR-ENT-103` and `FR-REP-002`. Only a non-deck card reaches `FR-REP-002` (damage redirection, *Animoceps Spore Cloud*), so the checkpoint decision also decides whether it stays in M2.
    - **Out of starter reach, so they move to M3 (4):** `FR-ENT-102`, `FR-KWD-002n`, `FR-TRG-006` and Overkill (`FR-KWD-002p`). The M2 target is 58 of 62. Berserk (`FR-KWD-002o`), pinned in M1, left the active set in FRD 01 v3.14, and its tests went with board directive #68.
@@ -191,8 +191,8 @@ The build plan is the [M2 design note](architecture/m2-ability-model.md). Abilit
 
 **Done when:** every FRD 01 requirement that a starter card reaches is pinned by a scenario test (`cardtown lint rules`), every Animus and Path card plus the starter Headquarters (Animoceps Rager, Eternal Watchman) is executable, no reachable matrix item or survey ruling is open, `cardtown sim` runs clean on construction-legal Animus and Path decks, and a human can finish a `cardtown play` match.
 
-### 3.3 M2 Accomplished So Far (pm-lead reconciliation, 2026-11-03)
-All 143 build tasks written so far are done and merged into `main`: 48 shape, 31 card and 64 harness tasks (T-0001 to T-0143). Wave C finished on 2026-11-03, and the board has no active tasks. Next is wave C.1, the structural review 7 cleanup (board directives #92–#102), then waves D, E and F. Board directive #103 (removing the TDD toolchain from the code) is also open.
+### 3.3 M2 Accomplished So Far (pm-lead reconciliation, 2026-11-04)
+All 155 build tasks written so far are done and merged into `main`: 48 shape, 31 card and 76 harness tasks (T-0001 to T-0155). Wave C finished on 2026-11-03. Wave C.1, the structural review 7 cleanup (board directives #92–#102), was merged on 2026-11-04, and the board has no active tasks. Next are waves D, E and F. Board directive #103 (removing the TDD toolchain from the code) is also open.
 
 | # | Design-note deliverable | Status | Tasks |
 | :---: | :--- | :---: | :--- |
@@ -208,7 +208,7 @@ All 143 build tasks written so far are done and merged into `main`: 48 shape, 31
 | 6c | Wave G's destruction replacement, moved ahead of wave C | ✅ Done | T-0096–T-0101 |
 | 6d | Wave G.1 cleanup: asset moves, one APNAP order, the death sweep in `sweep.go` | ✅ Done | T-0102–T-0106 |
 | 6e | Wave G.2 cleanup: removed targets, one `kill`, one `moveOnBattlefield`, event kinds as constants | ✅ Done | T-0107–T-0115 |
-| 6f | Wave C.1 cleanup: board directives #92–#102 | ⏳ Next, no tasks written | — |
+| 6f | Wave C.1 cleanup: one declare sequence, one read of a card's cost, one `deployCard`, one `bufferTrigger`, resource names and policy names in one place, a shared linter scan (board directives #92–#102) | ✅ Done | T-0144–T-0155 |
 | 7 | Ability shapes write-up | ⏳ Planned | — |
 
 Tasks outside the deliverables list:
@@ -230,7 +230,7 @@ Tasks outside the deliverables list:
 
 **Not built yet:** activated abilities, `GainControl` and deck search (wave D), Layer 4 auras and cost reduction (wave E), free deploys and off-battlefield triggers (wave F), damage redirection (wave G), and turn-boundary triggers (board directive #15).
 
-**Gates (re-run by pm-lead, 2026-11-03):**
+**Gates (re-run by pm-lead, 2026-11-04):**
 - `go tool task check` passes, with 1,073 tests (508 `TestFR_*`, 353 `TestCard_*`; counted with `go test -list`).
 - `go tool task sim` passes: 200 Animus vs Path starter games, all invariants hold and no monitor violations. Animus wins 82.5%, Path 17.5%, and the first player 46.5%, with no draws and an average of 31.4 turns.
 - **The Animus skew is not a seat effect.** With the seats swapped Animus still wins 75.5%, and under `-policy random` it wins 85–85.5% from either seat. This is not yet a balance signal: 42 of Animus's 50 main-deck cards execute against 32 of Path's, and the policies don't play strategically. Re-check it at the playtest checkpoint, when both decks run in full.
@@ -289,7 +289,7 @@ flowchart LR
 | [`01_Game_Rules_FRD.md`](frd/01_Game_Rules_FRD.md) | **Active** (Master v3.20 — 71 IDs, 62 active) | M1–M3, and every milestone | Pin the requirements Animus and Path cards reach (M2), then the rest (M3); keep in lockstep with `pkg/engine` tests |
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2 | Reachable items closed; reopen when new cards or keywords make an item reachable |
 | [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | **Active** | M2 | Every ruling through `SVY-R35` is answered and recorded in FRD 01; add new ones as waves D, E and F raise them |
-| [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–5 done; Deliverable 6 in progress: waves B and C done, wave C.1 (board directives #92–#102) next, then D, E and F |
+| [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–5 done; Deliverable 6 in progress: waves B, C and C.1 done, then D, E and F |
 | [`design/outcomes/`](design/outcomes/) (Design Outcome Reports) | **Active** | M2 onward | One file per `game-designer` decision; `pm-frd-drafter` sets each one's `Status:` when applied |
 | [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
 | [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
