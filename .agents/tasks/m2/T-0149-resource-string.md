@@ -4,7 +4,7 @@ title: A resource's name lives in one place, Resource.String (directive #98, par
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0149-resource-string
 depends_on: [T-0148]
 claims: [helper:Resource.String]
