@@ -4,7 +4,7 @@ title: The linters share one scan, pkg/toolchain/specdoc (directive #100, harnes
 kind: harness
 tier: flash
 wave: C.1 (board directive #100, structural review 7, finding 9)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0153-specdoc
 depends_on: []
 claims: [package:pkg/toolchain/specdoc, helper:ReqRegex, helper:DefLineRegex, helper:ReadLines]
