@@ -4,7 +4,7 @@ title: The docs say activated abilities are built, stack.go, doc.go, costs.go an
 kind: harness
 tier: flash
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0160-activated-comments
 depends_on: [T-0158]
 claims: [comments:pkg/engine/stack.go StackAbility Tracked Keyword, comments:pkg/engine/doc.go activated, comments:pkg/engine/costs.go, comments:pkg/engine/effects.go resolveAbility]
@@ -144,3 +144,9 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
     9. go run ./cmd/cardtown lint fences passed (exit 0).
     10. git diff autoloop/m2-wave-d --stat lists only the 4 allowed files and the task file.
     11. go tool task check (fmt-check, vet, test, linter --all) passed; go tool task sim passed clean.
+- 2026-11-04, lead-architect (wave D run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d` as 6fd1401. Flash run `c97165c9-cda9-4a91-9128-e0e627a39340`: exit 0, `status: SUCCESS`, no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d...m2/autoloop-wave-d/T-0160-activated-comments` (c8dcf4f):
+  - Scope: only the four Allowed Files and this file changed. No test file changed.
+  - Comments only, checked by reading the diff: each changed line is this task's text, and each is a whole-line comment or changes only a trailing comment.
+  - Fences and placement: no card name, no new rule, no code.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-10; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d` `[PASS]`.
+  - `go tool task check` and `go tool task sim` also pass on the merged run branch at 6fd1401.
