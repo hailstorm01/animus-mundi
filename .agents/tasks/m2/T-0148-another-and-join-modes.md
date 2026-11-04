@@ -4,7 +4,7 @@ title: One read of "another", anotherOf, and modes joined in one place, joinMode
 kind: harness
 tier: flash
 wave: C.1 (board directive #97, structural review 7, finding 6)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0148-another-and-join-modes
 depends_on: [T-0147]
 claims: [helper:anotherOf, helper:joinModes, helper:shiftSlots]
