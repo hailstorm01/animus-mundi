@@ -4,7 +4,7 @@ title: Delete the TDD packages and their git helpers, and finish directive #103 
 kind: harness
 tier: sonnet
 wave: none (board directive #103, after wave C.1)
-status: in-progress
+status: review
 branch: m2/T-0157-delete-tdd-packages
 depends_on: [T-0156]
 claims: [toolchain:linter/tdd package removed, toolchain:tddslice package removed, git:CommitExists removed, git:GetNewerCommits removed]
@@ -71,3 +71,4 @@ Tests: `pkg/toolchain/linter/tdd/tdd_test.go` (deleted, in the `test(T-0157)` co
 ## Log
 - 2026-11-04, lead: split off T-0156 (D2.4). `queued` until T-0156 is `done`.
 - 2026-11-04, lead: T-0156 is `done` (merge 27139e6). Inputs, cases and files written against `main` at `de9cc0a`, `ready`. Waiting triggers #6, #7, #8, #15, #71 and #91 (2) have not fired. 13 deck cards are still not executable (#14 (e)), and this task doesn't change that.
+- 2026-11-04, kernel-engineer: done, `review`. Commits: `test(T-0157)` 6578688 (git rm tdd_test.go), `feat(toolchain)` e84ac69 (git rm tdd.go, slice.go; git.go lines 69-94 deleted). Reuse search: nothing added. Results in W: (1) `git grep -n -i tdd -- pkg cmd` empty, exit 1. (2) both package dirs absent. (3) `git grep -n -E "CommitExists|GetNewerCommits" -- cmd pkg` empty, exit 1. (4) `cardtown tdd` prints `Unknown command "tdd"`, exit status 1; `cardtown lint --tdd` prints `flag provided but not defined: -tdd`, exit status 2. (5) `cardtown whats-up` exit 0. (6) numstat prints exactly the four lines (26/636/23/555), no go.mod/go.sum. (7) `go tool task sim-compare` printed `[PASS]`. (8) `go tool task check` exit 0, `go tool task sim` exit 0. gofmt -l clean. `go mod tidy` not run, per the lead.
