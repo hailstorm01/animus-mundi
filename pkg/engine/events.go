@@ -148,6 +148,8 @@ func (g *Game) emitAction(a Action) {
 		e.Detail += " " + e.Resource
 	case ActMarch, ActScratch:
 		e.Source = a.Asset
+	case ActActivate:
+		e.Source, e.Amount = a.Asset, a.Ability
 	case ActAttack:
 		e.Source, e.Target = a.Asset, a.Target
 	case ActDeploy:
@@ -214,7 +216,7 @@ type Event struct {
 	Source int    `json:"source,omitempty"` // asset ID
 	Target int    `json:"target,omitempty"` // asset ID
 	Zone   string `json:"zone,omitempty"`   // Zone.String()
-	Amount int    `json:"amount,omitempty"`
+	Amount int    `json:"amount,omitempty"` // a place event: stack depth; an Activate action event: the ability's index
 
 	Resource string `json:"resource,omitempty"` // action events: a Generate's "Requisition" or "Tactics"
 

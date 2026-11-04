@@ -42,7 +42,7 @@ func RandomPolicy(seed uint64, endBias float64) Policy {
 //  1. a play from hand: a Deploy or an Enact, uniform over card and zone;
 //  2. a Generate or Convert that yields the resource a deployable or
 //     enactable hand card is short of;
-//  3. an Attack, March or Scratch (probability 0.9, uniform), else EndTurn;
+//  3. an Attack, March, Scratch or Activate (probability 0.9, uniform), else EndTurn;
 //  4. EndTurn.
 func ProgressPolicy(seed uint64) Policy {
 	r := rand.New(rand.NewPCG(seed, ^seed))
@@ -74,7 +74,7 @@ func ProgressPolicy(seed uint64) Policy {
 				if needTac {
 					closers = append(closers, a)
 				}
-			case engine.ActMarch, engine.ActAttack, engine.ActScratch:
+			case engine.ActMarch, engine.ActAttack, engine.ActScratch, engine.ActActivate:
 				acts = append(acts, a)
 			}
 		}
