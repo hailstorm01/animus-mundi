@@ -36,5 +36,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0150](T-0150-resource-name-readers.md) | Event readers compare with Resource.String, not typed-out names (#98, part 2 of 3) | queued |
+| [T-0150](T-0150-resource-name-readers.md) | Event readers compare with Resource.String, not typed-out names (#98, part 2 of 3) | ready |
 | [T-0151](T-0151-is-scratch-company.md) | One check for a Scratch Company card, IsScratchCompany (#98, part 3 of 3) | queued |
