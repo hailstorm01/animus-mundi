@@ -4,7 +4,7 @@ title: One table of policy names, sim.PolicyByName (directive #99, harness, flas
 kind: harness
 tier: flash
 wave: C.1 (board directive #99, structural review 7, finding 8)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0152-policy-by-name
 depends_on: []
 claims: [helper:PolicyByName, helper:defaultRandomPolicy]
@@ -152,3 +152,10 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     11. `git -C W diff autoloop/m2-wave-c.1 --stat` printed 5 files changed (`.agents/tasks/m2/T-0152-policy-by-name.md`, `cmd/cardtown/play.go`, `cmd/cardtown/sim.go`, `pkg/sim/policy.go`, `pkg/sim/sim.go`).
     12. `go -C W tool task check` passed all stages (fmt-check, vet, test, linter dispatcher); `go -C W tool task sim` passed (`[PASS] Every match terminated with all invariants holding.`, exit 0).
   - Status moved to `review`. Ready for lead review.
+- 2026-11-03, lead-architect (wave C.1 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as c858b13. Flash run `de4b1a4d-6be0-4fa7-9347-4f54d9b3e116`: exit 0, `status: SUCCESS`, 341 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0152-policy-by-name` (cf67cc8):
+  - Scope: only `policy.go`, `pkg/sim/sim.go`, `play.go`, `cmd/cardtown/sim.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the four code files match the task's Edits exactly. Validation stays at the same point in each command, so a bad `-seat` or `-log` still reports first. `-policy random` now sets `opt.Policy` where it used to stay nil, and that is the constructor `SimulateWith` would have filled in. The one visible change is the one the task names: `sim -policy bogus` lists the names as `play` does. The exit code is still 1.
+  - Fences and placement: no card name, no new rule. Policies belong to `pkg/sim`, and `cmd/cardtown` only calls them.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-12; `gofmt -l` clean; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - `sim-compare` runs only the default policy, so the reviewer also compared a build of the task branch with a build of 458ebbf, output and exit code: `sim -policy random` (starter and stress), and scripted `play` with `-policy random` (starter seat 1 seed 7, stress seed 3) and `-policy progress` (starter seat 1 seed 7). All byte-identical.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch.
