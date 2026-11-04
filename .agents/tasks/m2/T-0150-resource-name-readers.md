@@ -4,7 +4,7 @@ title: Event readers compare with Resource.String, not typed-out names (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0150-resource-name-readers
 depends_on: [T-0149]
 claims: [file:pkg/eventlog/replay.go, file:pkg/sim/monitor_resources.go]
