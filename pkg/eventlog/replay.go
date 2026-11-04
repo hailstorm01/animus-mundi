@@ -266,7 +266,7 @@ func actionOf(e engine.Event) (engine.Action, error) {
 	if !found {
 		return a, fmt.Errorf("unknown action %q", e.Detail)
 	}
-	if a.Kind == engine.ActGenerate && e.Resource == "Tactics" {
+	if a.Kind == engine.ActGenerate && e.Resource == engine.Tactics.String() {
 		a.Resource = engine.Tactics
 	}
 	if e.Zone != "" {

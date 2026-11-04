@@ -4,7 +4,7 @@ title: Event readers compare with Resource.String, not typed-out names (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: ready
+status: review
 branch: m2/autoloop-wave-c.1/T-0150-resource-name-readers
 depends_on: [T-0149]
 claims: [file:pkg/eventlog/replay.go, file:pkg/sim/monitor_resources.go]
@@ -90,11 +90,26 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/sim/monitor_resources.go`
 
 ## Done When
-- [ ] Cases 1–11 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–11 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 6): queued with T-0149 (D2.4).
 - 2026-11-03, lead-architect (wave C.1 run, session 7): wrote Inputs, Edits, Acceptance Cases and Allowed Files against the run branch at 307153d; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. The reuse is `Resource.String` itself (T-0149); no other resource-name helper exists. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: T-0151 touches `deck.go` but is a pure move; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (wave C.1 run, Flash): implemented exact edits for T-0150.
+  - Diff: `pkg/eventlog/replay.go:269` now compares `e.Resource == engine.Tactics.String()`. In `pkg/sim/monitor_resources.go:19`, `pool` compares `resource == engine.Requisition.String()`. In `checkGenerate` (lines 49-58), sets `requisition, tactics := engine.Requisition.String(), engine.Tactics.String()`, compares `res == requisition` and `res == tactics`, and uses `requisition` and `tactics` in zone checks `a.Zone == reserves && res != requisition` and `a.Zone != reserves && res != tactics`.
+  - Reused `engine.Requisition.String()` and `engine.Tactics.String()` from T-0149 (`pkg/engine/actions.go`).
+  - Acceptance cases verified:
+    - Case 1: `git -C W diff autoloop/m2-wave-c.1 -- "*_test.go"` output empty; `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` output `[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n "e.Resource == engine.Tactics.String()" -- pkg/eventlog/replay.go` -> line 269.
+    - Case 4: `git -C W grep -n "resource == engine.Requisition.String()" -- pkg/sim/monitor_resources.go` -> line 19.
+    - Case 5: `git -C W grep -n "requisition, tactics := engine.Requisition.String(), engine.Tactics.String()" -- pkg/sim/monitor_resources.go` -> line 49.
+    - Case 6: `git -C W grep -n -E "[^ .]Tactics" -- pkg/eventlog/replay.go pkg/sim/monitor_resources.go` -> exit code 1 (no matches).
+    - Case 7: `git -C W grep -n -E "[^ .]Requisition" -- pkg/eventlog/replay.go pkg/sim/monitor_resources.go` -> exit code 1 (no matches).
+    - Case 8: `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg cmd` -> `1 1 pkg/eventlog/replay.go` and `9 8 pkg/sim/monitor_resources.go`.
+    - Case 9: `go -C W run ./cmd/cardtown lint fences` -> exit code 0 ([PASS]).
+    - Case 10: `git -C W diff autoloop/m2-wave-c.1 --stat` -> only `pkg/eventlog/replay.go`, `pkg/sim/monitor_resources.go`, and task file.
+    - Case 11: `go -C W tool task check` passed all checks; `go -C W tool task sim` passed (200 games clean, P0 82.5% / P1 17.5% / draws 0.0%).
