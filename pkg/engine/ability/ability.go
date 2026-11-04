@@ -28,26 +28,43 @@ type Def struct {
 	// ExtraCosts lists the additional costs paid when the card is declared, in
 	// printed order (FR-TRN-003a). It is zero for a card without one.
 	ExtraCosts []Cost
+	// Activated lists the printed activated abilities, in printed order
+	// (FR-ACT-001).
+	Activated []Activated
+}
+
+// Activated is one printed "[Cost]: [Effect]." ability of a battlefield asset.
+// Its Costs are paid, in printed order, and its targets chosen when it is
+// activated (FR-ACT-001, FR-ACT-002); its Effect resolves from the stack.
+type Activated struct {
+	Costs  []Cost
+	Effect Effect
 }
 
 // CostKind is what an additional cost asks the payer to do. It has no default.
 type CostKind int
 
 const (
-	CostKill    CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
-	CostExhaust                     // exhaust one Readied allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a, SVY-R17)
-	CostDiscard                     // discard up to Cost.UpTo cards of the payer's choice from their own hand, possibly none (FR-TRN-003a)
+	CostKill        CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
+	CostExhaust                         // exhaust one Readied allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a, SVY-R17)
+	CostDiscard                         // discard up to Cost.UpTo cards of the payer's choice from their own hand, possibly none (FR-TRN-003a)
+	CostResources                       // pay Cost.Req Requisition and Cost.Tac Tactics (FR-ACT-001)
+	CostExhaustSelf                     // "exhaust": exhaust the ability's source, which must be Readied (FR-ACT-002, SVY-R17)
+	CostKillSelf                        // "kill this unit": kill the ability's source through the kill path (FR-ACT-001, SVY-R15)
 )
 
-// Cost is one additional cost, paid when its card is declared (FR-TRN-003a).
-// Filter is relative to the payer and is a battlefield filter (never InPile);
-// the kill and exhaust costs read it. UpTo is the most cards the discard cost
-// discards (UpTo > 0); no other cost reads it.
+// Cost is one cost, paid when its card or ability is declared (FR-TRN-003a,
+// FR-ACT-001). Filter is relative to the payer and is a battlefield filter
+// (never InPile); the kill and exhaust costs read it. UpTo is the most cards
+// the discard cost discards (UpTo > 0); no other cost reads it. Req and Tac are
+// the Requisition and Tactics the resources cost pays; no other cost reads them.
 // Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
 type Cost struct {
 	Kind   CostKind
 	Filter Filter
 	UpTo   int
+	Req    int
+	Tac    int
 }
 
 // Would is the event a replacement replaces.
