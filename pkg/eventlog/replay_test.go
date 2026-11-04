@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/ability"
 	"animus-mundi/pkg/eventlog"
 	"animus-mundi/pkg/sim"
 )
@@ -388,4 +389,85 @@ func TestReplay_Case6_InvalidAnswerRefused(t *testing.T) {
 		}
 	}
 	t.Skip("no non-auto decision in the sample games")
+}
+
+// activationDeck is a synthetic deck whose units print three activated
+// abilities, one per cost kind (T-0159).
+func activationDeck() engine.DeckList {
+	hq := &engine.Card{Name: "Act HQ", Type: engine.TypeHeadquarters, Power: 3, Health: 20, ReqYield: 3, TacYield: 2,
+		DeployZones: []engine.Zone{engine.ZoneHeadquarters}}
+	u := &engine.Card{Name: "Act Unit", Type: engine.TypeUnit, Power: 1, Health: 3, ReqCost: 1, ReqYield: 1, TacYield: 1,
+		DeployZones: []engine.Zone{engine.ZoneReserves, engine.ZoneMainTheater},
+		Ability: &ability.Def{Activated: []ability.Activated{
+			{Costs: []ability.Cost{{Kind: ability.CostExhaustSelf}},
+				Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpDraw, Amount: ability.Value{N: 1}}}}},
+			{Costs: []ability.Cost{{Kind: ability.CostKillSelf}},
+				Effect: ability.Effect{
+					Targets: []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing}}},
+					Steps:   []ability.Step{{Op: ability.OpDealDamage, Amount: ability.Value{N: 1}, Subject: ability.SubjectTarget, Target: 0}}}},
+			{Costs: []ability.Cost{{Kind: ability.CostResources, Req: 1}},
+				Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpAddArmor, Amount: ability.Value{N: 1}, Subject: ability.SubjectSelf}}}},
+		}}}
+	main := make([]*engine.Card, 30)
+	for i := range main {
+		main[i] = u
+	}
+	return engine.DeckList{HQ: hq, Main: main}
+}
+
+var activationNames = [2]string{"act", "act"}
+
+func activationResolve(name string) (engine.DeckList, error) {
+	if name != "act" {
+		return engine.DeckList{}, fmt.Errorf("unknown deck %q", name)
+	}
+	return activationDeck(), nil
+}
+
+func activationGames(t *testing.T) [][]engine.Event {
+	t.Helper()
+	d := activationDeck()
+	games, err := play([2]engine.DeckList{d, d}, activationNames, 30, 7)
+	if err != nil {
+		t.Fatalf("activation games: %v", err)
+	}
+	return games
+}
+
+func TestReplay_ActivationsRoundTrip(t *testing.T) {
+	games := activationGames(t)
+	seen := map[int]int{}
+	for gi, evs := range games {
+		for _, e := range evs {
+			if e.Kind == "action" && e.Detail == "Activate" {
+				seen[e.Amount]++
+			}
+		}
+		if _, err := eventlog.Replay(evs, len(evs), activationResolve); err != nil {
+			t.Fatalf("game %d: %v", gi+1, err)
+		}
+	}
+	for i := 0; i < 3; i++ {
+		if seen[i] == 0 {
+			t.Errorf("no Activate action event with Amount %d over 30 games: %v", i, seen)
+		}
+	}
+}
+
+func TestReplay_ActivationWithAnotherIndexDiverges(t *testing.T) {
+	for _, evs := range activationGames(t) {
+		for i, e := range evs {
+			if e.Kind != "action" || e.Detail != "Activate" || e.Amount != 1 {
+				continue
+			}
+			cp := append([]engine.Event{}, evs...)
+			cp[i].Amount = 0
+			_, err := eventlog.Replay(cp, len(cp), activationResolve)
+			if err == nil || !strings.Contains(err.Error(), "replay diverged") {
+				t.Fatalf("Activate index 1 recorded as 0: error %v, want replay diverged", err)
+			}
+			return
+		}
+	}
+	t.Fatal("no game holds an Activate event with Amount 1")
 }

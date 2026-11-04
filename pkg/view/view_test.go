@@ -914,3 +914,73 @@ func TestViewtest_ManeuverOnTheStackIsPublic(t *testing.T) {
 		t.Errorf("HiddenNames includes Maneuver on stack Alpha Volley")
 	}
 }
+
+// T-0159 case 6: an activated ability on the stack, seen through the real
+// action path. The ability's target is chosen on declaration; the source's
+// "whenever this exhausts" trigger then asks for a target of its own while the
+// activated item is on the stack.
+func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
+	killOpposing := ability.Effect{
+		Targets: []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}}},
+		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget, Target: 0}},
+	}
+	src := testUnit("Tapper", 1, 5, engine.Keywords{})
+	src.RulesText = "exhaust: kill chosen opposing unit"
+	src.Ability = &ability.Def{
+		Triggers:  []ability.Trigger{{Hook: ability.HookExhausted, Effect: killOpposing}},
+		Activated: []ability.Activated{{Costs: []ability.Cost{{Kind: ability.CostExhaustSelf}}, Effect: killOpposing}},
+	}
+
+	var picked int
+	var views [2]view.View
+	asked := 0
+	chooser := func(g *engine.Game, d engine.Decision) engine.Answer {
+		asked++
+		if len(g.Stack) == 0 {
+			picked = d.Options[0].Ref
+			return engine.Answer{Picks: []int{0}}
+		}
+		for seat := range views {
+			views[seat] = view.PlayerView(g, engine.PlayerID(seat))
+		}
+		return engine.Answer{Picks: []int{len(d.Options) - 1}}
+	}
+	filler := make([]*engine.Card, 10)
+	for i := range filler {
+		filler[i] = testUnit("Filler", 1, 1, engine.Keywords{})
+	}
+	g, err := engine.NewGame(engine.Config{
+		Seed:      1,
+		Decks:     [2]engine.DeckList{{HQ: testHQ("Alpha HQ"), Main: filler}, {HQ: testHQ("Beta HQ"), Main: filler}},
+		PlayFirst: func(decider engine.PlayerID) bool { return decider == 0 },
+		Choosers:  [2]engine.Chooser{chooser, chooser},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &scene{g: g, nextID: 100000}
+	a := s.put(0, engine.ZoneMainTheater, src)
+	s.put(1, engine.ZoneMainTheater, testUnit("Foe One", 1, 5, engine.Keywords{}))
+	s.put(1, engine.ZoneMainTheater, testUnit("Foe Two", 1, 5, engine.Keywords{}))
+	asked = 0
+	if err := g.Apply(engine.Action{Kind: engine.ActActivate, Player: 0, Asset: a.ID, Ability: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if asked < 2 {
+		t.Fatalf("the chooser was asked %d times, want the declaration and the trigger's target", asked)
+	}
+	for seat, v := range views {
+		var item *view.StackView
+		for i := range v.Stack {
+			if v.Stack[i].Source == a.ID && v.Stack[i].Kind == "Ability" {
+				item = &v.Stack[i]
+			}
+		}
+		if item == nil {
+			t.Fatalf("seat %d: no activated item on the stack view: %+v", seat, v.Stack)
+		}
+		if item.Card != "Tapper" || item.Keyword != "" || !reflect.DeepEqual(item.Chosen, [][]int{{picked}}) {
+			t.Errorf("seat %d: item %+v, want Card Tapper, empty Keyword, Chosen [[%d]]", seat, *item, picked)
+		}
+	}
+}
