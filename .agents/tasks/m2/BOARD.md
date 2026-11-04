@@ -31,4 +31,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0162](T-0162-filter-subtypes-and-maneuver.md) | A filter can ask for any of several subtypes, and for a Maneuver card (wave D shape, sonnet) | tests |

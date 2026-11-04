@@ -165,3 +165,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0159 | The event log, replay and sim policy know an activation (harness, sonnet) | done |
 | T-0160 | The docs say activated abilities are built, stack.go, doc.go, costs.go and effects.go comments (harness, flash, comments only) | done |
 | T-0161 | The play screen names an activation, its asset and printed text (harness, flash) | done |
+| T-0162 | A filter can ask for any of several subtypes, and for a Maneuver card (wave D shape, sonnet) | done |
