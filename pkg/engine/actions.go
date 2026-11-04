@@ -26,11 +26,12 @@ const (
 	ActAttack                     // stack-pushed (FR-CBT-002)
 	ActScratch                    // stack-pushed, HQ only (FR-CAP-001)
 	ActEnact                      // Maneuver from Hand, stack-pushed (FR-MNV-001, FR-TRN-003)
+	ActActivate                   // printed ability of a battlefield asset, stack-pushed (FR-ACT-001)
 	ActEndTurn
 )
 
 func (k ActionKind) String() string {
-	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "Enact", "EndTurn"}[k]
+	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "Enact", "Activate", "EndTurn"}[k]
 }
 
 // Resource selects Requisition or Tactics.
@@ -53,11 +54,12 @@ func (r Resource) String() string {
 type Action struct {
 	Kind     ActionKind
 	Player   PlayerID
-	Asset    int      // acting asset: Generate, March, Attack, Scratch
+	Asset    int      // acting asset: Generate, March, Attack, Scratch, Activate
 	Resource Resource // Generate
 	Card     int      // Deploy, Enact: Instance.ID in hand
 	Zone     Zone     // Deploy: declared battlefield zone
 	Target   int      // Attack: the defender
+	Ability  int      // Activate: index into the asset's Def.Activated
 }
 
 // Apply validates and executes a, then resolves the stack until it is empty.
@@ -94,6 +96,11 @@ func (g *Game) Apply(a Action) error {
 		g.takeCard(inst)
 		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect,
 			&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst})
+	case ActActivate:
+		as := g.Asset(a.Asset)
+		act := as.Printed().Ability.Activated[a.Ability]
+		g.declare(activatedPlacement(a.Player, as, act), act.Effect,
+			&StackItem{Kind: StackAbility, Controller: a.Player, Source: as.ID, Inst: as.Inst})
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
@@ -175,6 +182,18 @@ func (g *Game) check(a Action) error {
 		}
 		if !g.placeable(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect) {
 			return illegal("%s has no legal choice for a required target or enough legal modes (SVY-R29)", inst.Card.Name)
+		}
+	case ActActivate:
+		as := g.Asset(a.Asset)
+		if as == nil || as.Controller != a.Player {
+			return illegal("asset %d is not yours on the battlefield", a.Asset)
+		}
+		def := as.Printed().Ability
+		if def == nil || a.Ability < 0 || a.Ability >= len(def.Activated) {
+			return illegal("%s has no activated ability %d", as, a.Ability)
+		}
+		if !g.costsPayable(activatedPlacement(a.Player, as, def.Activated[a.Ability])) {
+			return illegal("the costs of %s ability %d cannot be paid (FR-ACT-001)", as, a.Ability)
 		}
 	case ActMarch:
 		as, err := g.readyAsset(a)
@@ -284,6 +303,13 @@ func (g *Game) LegalActions() []Action {
 	}
 	for _, inst := range p.Hand {
 		try(Action{Kind: ActEnact, Player: pid, Card: inst.ID})
+	}
+	for _, a := range mine {
+		if def := a.Printed().Ability; def != nil {
+			for i := range def.Activated {
+				try(Action{Kind: ActActivate, Player: pid, Asset: a.ID, Ability: i})
+			}
+		}
 	}
 	if p.HQ != nil {
 		try(Action{Kind: ActScratch, Player: pid, Asset: p.HQ.ID})

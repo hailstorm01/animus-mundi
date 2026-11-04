@@ -27,7 +27,8 @@ func (g *Game) payCost(p *Player, inst *Instance) {
 // so Ward doesn't apply, a timeout takes the first option in fixed order
 // (FR-MOD-001 §6) and a single option is taken unasked (§1). Legality
 // (costsPayable) and payment (payCosts) both build their decision with it. It
-// is never called for a CostDiscard, which takes no asset.
+// is never called for a kind that takes no chosen asset (CostDiscard,
+// CostResources, CostExhaustSelf, CostKillSelf).
 func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 	verb := "kill"
 	if c.Kind == ability.CostExhaust {
@@ -68,8 +69,20 @@ func (g *Game) chooseCostDiscards(pl placement) []*Instance {
 // discarding none pays it.
 func (g *Game) costsPayable(pl placement) bool {
 	for _, c := range pl.costs {
-		if c.Kind == ability.CostDiscard {
-			continue // discarding none pays it
+		switch c.Kind {
+		case ability.CostDiscard, ability.CostKillSelf:
+			continue // discarding none pays it; killing the source always can
+		case ability.CostResources:
+			p := g.Players[pl.controller]
+			if p.Req < c.Req || p.Tac < c.Tac {
+				return false
+			}
+			continue
+		case ability.CostExhaustSelf:
+			if a := g.Asset(pl.source); a == nil || a.Exhausted {
+				return false
+			}
+			continue
 		}
 		if _, opts := g.costDecision(pl, c); len(opts) == 0 {
 			return false
@@ -93,6 +106,19 @@ func (g *Game) payCosts(pl placement) {
 	for _, c := range pl.costs {
 		if c.Kind == ability.CostDiscard {
 			g.discardCards(pl.controller, pl.discards)
+			continue
+		}
+		switch c.Kind {
+		case ability.CostResources:
+			p := g.Players[pl.controller]
+			p.Req -= c.Req
+			p.Tac -= c.Tac
+			continue
+		case ability.CostExhaustSelf:
+			g.exhaust(g.Asset(pl.source))
+			continue
+		case ability.CostKillSelf:
+			g.kill([]*Asset{g.Asset(pl.source)})
 			continue
 		}
 		d, opts := g.costDecision(pl, c)

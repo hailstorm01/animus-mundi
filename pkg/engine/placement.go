@@ -11,7 +11,8 @@ import (
 
 // placement is an effect being placed on the stack, as choosing its modes and
 // targets sees it: who controls it, its source and the label its prompts use.
-// A fired trigger carries one (pendingTrigger); a played Maneuver does too (maneuverPlacement).
+// A fired trigger carries one (pendingTrigger); a played Maneuver does too
+// (maneuverPlacement), and so does an activated ability (activatedPlacement).
 type placement struct {
 	controller PlayerID
 	source     int       // source asset ID
@@ -51,6 +52,12 @@ func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 		pl.costs = inst.Card.Ability.ExtraCosts
 	}
 	return pl
+}
+
+// activatedPlacement is the placement of the printed ability act of asset a,
+// activated by pid, for both its legality check and declaring it.
+func activatedPlacement(pid PlayerID, a *Asset, act ability.Activated) placement {
+	return placement{controller: pid, source: a.ID, inst: a.Inst, label: a.Printed().Name, costs: act.Costs}
 }
 
 // slotsLegal reports whether the exactly-one slots of ts can all be filled at
