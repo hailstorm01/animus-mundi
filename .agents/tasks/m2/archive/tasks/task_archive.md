@@ -157,3 +157,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0151 | One check for a Scratch Company card, IsScratchCompany (directive #98, part 3 of 3, harness, flash, pure move) | done |
 | T-0152 | One table of policy names, sim.PolicyByName (directive #99, harness, flash, pure move) | done |
 | T-0153 | The linters share one scan, pkg/toolchain/specdoc (directive #100, harness, flash, pure move) | done |
+| T-0154 | Zone helpers live with the zones, deployedTo and battlefieldZone move to zones.go (directive #101, harness, flash, pure move) | done |
