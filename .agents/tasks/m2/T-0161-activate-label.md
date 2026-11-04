@@ -4,7 +4,7 @@ title: The play screen names an activation, its asset and printed text (harness,
 kind: harness
 tier: flash
 wave: D
-status: review
+status: changes
 branch: m2/autoloop-wave-d/T-0161-activate-label
 depends_on: [T-0158]
 claims: [view:asset-text, label:activate]
@@ -70,3 +70,13 @@ W is your worktree. Both test packages stop compiling while `AssetView` has no `
     - Case 6: `git diff autoloop/m2-wave-d --stat` -> exactly 5 files changed (.agents/tasks/m2/T-0161-activate-label.md, cmd/cardtown/play_screen.go, cmd/cardtown/play_test.go, pkg/view/view.go, pkg/view/view_test.go)
     - Gate: `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all)
     - Starter sim: `go tool task sim` -> PASS (200 games, all invariants holding)
+- 2026-11-04, lead-architect (wave D run, session 4, D5): **Changes, round 1.** Flash run `cc19d76c-4cad-4e40-8c93-4c6e18d4028e`: exit 0, `status: SUCCESS`, no `denied_actions` key, and the transcript has no step with `"status":"ERROR"` and no `permission check failed` match. Reviewer's re-runs in a scratch worktree of the task branch at e998373: cases 1-6 hold; `go tool task check`, `go tool task sim` and `go tool task sim-compare -- autoloop/m2-wave-d` pass; at 17813c2 both test packages fail to compile on the missing `Text`. The only test-file edit after the test commit is gofmt removing a trailing blank line from each file, and no test changed. The Log's `09719c8` is an earlier hash of the implementation commit, e998373 now.
+  1. **Reuse (`cmd/cardtown/play_screen.go`, the `engine.ActActivate` case):** it writes `findAsset`'s `%s#%d` format and its `Asset#%d` fallback a second time, so a change to how the menu names an asset would need two edits. Replace the case's body with exactly this, and change nothing else:
+     ```go
+     	case engine.ActActivate:
+     		if as := lookupAsset(a.Asset); as != nil {
+     			return fmt.Sprintf("Activate: %s: %s", findAsset(a.Asset), as.Text)
+     		}
+     		return fmt.Sprintf("Activate: %s", findAsset(a.Asset))
+     ```
+     No test changes: `git -C W diff e998373 --stat` lists only `cmd/cardtown/play_screen.go` and this task file. Then run `go -C W tool task check`, `go -C W tool task sim` and `go -C W tool task sim-compare -- autoloop/m2-wave-d`, and record each result in the Log.
