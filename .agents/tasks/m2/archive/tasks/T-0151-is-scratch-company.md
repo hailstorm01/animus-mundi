@@ -4,7 +4,7 @@ title: One check for a Scratch Company card, IsScratchCompany (directive #98, pa
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0151-is-scratch-company
 depends_on: [T-0150]
 claims: [helper:IsScratchCompany]
@@ -113,3 +113,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     8. `git -C W diff autoloop/m2-wave-c.1 --stat` listed only the four allowed files and this task file.
     9. `go -C W tool task check` (fmt, vet, test, lint --all) and `go -C W tool task sim` (200 games, invariants held) both passed.
   - Implementation committed as `feat(engine): IsScratchCompany replaces repeated HasSubtype checks (T-0151)` (9aedbdf). Handed off to review.
+- 2026-11-03, lead-architect (wave C.1 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as d933973. Flash run `0bcd4331-eb1e-4132-aa51-0deecfe5248a`: exit 0, `status: SUCCESS`, 287 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0151-is-scratch-company` (9aedbdf):
+  - Scope: only `card.go`, `targeting.go`, `deck.go`, `sim.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the four code files match the task's Edits exactly. The method only calls `HasSubtype` with the same string, and the `scratchFace` literal stays.
+  - Fences and placement: no card name, no new rule. The one new declaration is on `Card`, in `pkg/engine`, because the engine and `pkg/sim` both read it.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-9; `gofmt -l` clean; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. This was #98's last part, so #98 moves to the directive archive.
