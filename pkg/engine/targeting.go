@@ -32,7 +32,7 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 	chosen := make([][]int, len(targets))
 	for i, t := range targets {
 		d := g.targetDecision(pl, i, t)
-		if k, ok := t.AnotherSlot(); ok && k >= 0 && k < i {
+		if k, ok := anotherOf(targets, i); ok {
 			d = withoutRefs(d, chosen[k], t.UpTo)
 		}
 		if t.UpTo > 0 && len(d.Options) == 0 {
@@ -46,6 +46,13 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 		}
 	}
 	return chosen
+}
+
+// anotherOf returns the index of the earlier slot that slot i of ts must differ
+// from (Target.Another, SVY-R34), and whether it has one.
+func anotherOf(ts []ability.Target, i int) (k int, ok bool) {
+	k, ok = ts[i].AnotherSlot()
+	return k, ok && k < i
 }
 
 // withoutRefs returns d without the options whose Ref is in refs, with its
@@ -253,9 +260,9 @@ func matchesPrinted(ctl PlayerID, f ability.Filter, side PlayerID, c *Card) bool
 	}
 	switch f.Scratch {
 	case ability.ScratchOnly:
-		return c.HasSubtype("Scratch Company")
+		return c.IsScratchCompany()
 	case ability.ScratchExcluded:
-		return !c.HasSubtype("Scratch Company")
+		return !c.IsScratchCompany()
 	}
 	return true
 }

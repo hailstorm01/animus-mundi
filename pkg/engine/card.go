@@ -112,6 +112,11 @@ func (c *Card) HasSubtype(s string) bool {
 	return false
 }
 
+// IsScratchCompany reports whether the card is a Scratch Company (FR-ZON-005).
+func (c *Card) IsScratchCompany() bool {
+	return c.HasSubtype("Scratch Company")
+}
+
 // Supported reports whether the kernel can fully execute this card.
 func (c *Card) Supported() bool {
 	if len(c.Unsupported) != 0 {

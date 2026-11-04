@@ -108,12 +108,18 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			}
 			g.firings[k]++
 		}
-		g.pending = append(g.pending, pendingTrigger{
-			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
-				label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1)},
-			trig: t, pos: posOf(a),
-		})
+		g.bufferTrigger(a, fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), t)
 	}
+}
+
+// bufferTrigger adds the fired trigger t to the buffer: a is its source, a's
+// controller now is its controller, and label names it in the flush's prompts.
+func (g *Game) bufferTrigger(a *Asset, label string, t ability.Trigger) {
+	g.pending = append(g.pending, pendingTrigger{
+		placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller, label: label},
+		trig:      t,
+		pos:       posOf(a),
+	})
 }
 
 // cornered reports whether p is Cornered: the opponent controls strictly more
@@ -123,37 +129,12 @@ func (g *Game) cornered(p PlayerID) bool {
 	return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))
 }
 
-// deployedTo reports whether a is in zone z now, which for a deploy trigger is
-// the zone its deploy put it in. ZoneAny always holds.
-func deployedTo(a *Asset, z ability.Zone) bool {
-	if to, ok := battlefieldZone(z); ok {
-		return a.Zone == to
-	}
-	return true
-}
-
-// battlefieldZone maps a battlefield zone a shape names to the engine's zone.
-// It is false for ZoneAny and ZoneDiscard, which are not battlefield zones.
-func battlefieldZone(z ability.Zone) (Zone, bool) {
-	switch z {
-	case ability.ZoneReserves:
-		return ZoneReserves, true
-	case ability.ZoneMainTheater:
-		return ZoneMainTheater, true
-	}
-	return 0, false
-}
-
 // fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger (an
 // ability.Aggressive trigger, read now, not at card load), if any, then its
 // printed attack triggers (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
-		g.pending = append(g.pending, pendingTrigger{
-			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
-				label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n)},
-			trig: ability.Aggressive(n), pos: posOf(a),
-		})
+		g.bufferTrigger(a, fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), ability.Aggressive(n))
 	}
 	g.fireHook(a, ability.HookAttacks)
 }

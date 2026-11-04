@@ -32,6 +32,17 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 	return e, g.chooseTargets(pl, e)
 }
 
+// declare runs the declare sequence for item, an effect declared by a manual
+// action, in rules order: the discard cost's cards are picked, e's modes and
+// targets are chosen and filled into item, item goes on the stack, and the
+// additional costs are paid (FR-TRN-003, FR-TRN-003a).
+func (g *Game) declare(pl placement, e ability.Effect, item *StackItem) {
+	pl.discards = g.chooseCostDiscards(pl)
+	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
+	g.push(item)
+	g.payCosts(pl)
+}
+
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
 // both its legality check and the choosing of its modes and targets.
 func maneuverPlacement(pid PlayerID, inst *Instance) placement {
@@ -40,93 +51,6 @@ func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 		pl.costs = inst.Card.Ability.ExtraCosts
 	}
 	return pl
-}
-
-// costDecision builds the pick of the allied asset that pays cost c, with the
-// assets it lists in option order. It is an untargeted selection (DecidePick),
-// so Ward doesn't apply, a timeout takes the first option in fixed order
-// (FR-MOD-001 §6) and a single option is taken unasked (§1). Legality
-// (costsPayable) and payment (payCosts) both build their decision with it. It
-// is never called for a CostDiscard, which takes no asset.
-func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
-	verb := "kill"
-	if c.Kind == ability.CostExhaust {
-		verb = "exhaust"
-	}
-	prompt := fmt.Sprintf("%s: choose an asset to %s (additional cost)", pl.label, verb)
-	return g.assetDecision(pl.controller, DecidePick, prompt, 0, func(a *Asset) bool {
-		if c.Kind == ability.CostExhaust && a.Exhausted {
-			return false
-		}
-		return g.matchesFilter(pl.controller, pl.source, c.Filter, a)
-	})
-}
-
-// chooseCostDiscards has pl's controller pick the hand cards its discard cost
-// discards, before the modes and targets are chosen, so the number discarded is
-// known when the targets are (FR-TRN-003a, SVY-R4). It moves nothing: payCosts
-// discards them after the push. Without a discard cost it asks nothing and
-// returns nil. A placement has at most one discard cost.
-func (g *Game) chooseCostDiscards(pl placement) []*Instance {
-	var picked []*Instance
-	found := false
-	for _, c := range pl.costs {
-		if c.Kind != ability.CostDiscard {
-			continue
-		}
-		if found {
-			panic("engine: a placement has two discard costs")
-		}
-		found = true
-		picked = g.chooseDiscards(pl.controller, c.UpTo, true)
-	}
-	return picked
-}
-
-// costsPayable reports whether every additional cost of pl has at least one
-// option now (FR-TRN-003a, SVY-R29). A discard cost is always payable, because
-// discarding none pays it.
-func (g *Game) costsPayable(pl placement) bool {
-	for _, c := range pl.costs {
-		if c.Kind == ability.CostDiscard {
-			continue // discarding none pays it
-		}
-		if _, opts := g.costDecision(pl, c); len(opts) == 0 {
-			return false
-		}
-	}
-	return true
-}
-
-// payCosts pays each additional cost of pl in printed order: its controller
-// picks the asset (costDecision, pickFrom) and it is killed through kill
-// (CostKill) or exhausted through exhaust (CostExhaust), while a discard cost
-// moves the cards picked earlier (CostDiscard). A replaced kill (not the discard
-// cost) still counts as paid (SVY-R15), and the triggers either fires wait in
-// the pending buffer to go above the declared card (FR-TRN-003a). It runs after
-// the Maneuver is pushed, so the card is already on the stack when the cost's
-// triggers are queued (FR-TRN-003), and after its targets were chosen, so they
-// were judged against the state before the cost moved anything (SVY-R2). A
-// discard cost's cards were picked before the modes and targets
-// (chooseCostDiscards) and are moved here, through discardCards.
-func (g *Game) payCosts(pl placement) {
-	for _, c := range pl.costs {
-		if c.Kind == ability.CostDiscard {
-			g.discardCards(pl.controller, pl.discards)
-			continue
-		}
-		d, opts := g.costDecision(pl, c)
-		for _, a := range pickFrom(g, d, opts) {
-			switch c.Kind {
-			case ability.CostKill:
-				g.kill([]*Asset{a})
-			case ability.CostExhaust:
-				g.exhaust(a)
-			default:
-				panic(fmt.Sprintf("engine: unknown cost kind %d", c.Kind))
-			}
-		}
-	}
 }
 
 // slotsLegal reports whether the exactly-one slots of ts can all be filled at
@@ -153,8 +77,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 		if !exactlyOne(ts[i]) {
 			return fill(i + 1)
 		}
-		k, hasPrev := ts[i].AnotherSlot()
-		hasPrev = hasPrev && k >= 0 && k < i && exactlyOne(ts[k])
+		k, hasPrev := anotherOf(ts, i)
+		hasPrev = hasPrev && exactlyOne(ts[k])
 		for _, o := range opts[i] {
 			if hasPrev && o.Ref == assigned[k] {
 				continue
@@ -220,27 +144,45 @@ func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 	}
 	picked := g.choose(d)
 	slices.Sort(picked)
-	// New slices throughout: a mode's own Targets and Steps belong to the
-	// card's definition and must never be appended to.
+	modes := make([]ability.Effect, len(picked))
+	for i, j := range picked {
+		modes[i] = e.Modes[legal[j]]
+	}
+	return joinModes(modes)
+}
+
+// joinModes joins modes, in the order given, into the one effect the stack
+// item resolves: each mode's targets and steps follow the last mode's, with
+// their slot references renumbered for the joined Targets (shiftSlots).
+func joinModes(modes []ability.Effect) ability.Effect {
 	var joined ability.Effect
-	for _, j := range picked {
-		m := e.Modes[legal[j]]
-		shift := len(joined.Targets)
-		for _, t := range m.Targets {
-			if t.Another > 0 {
-				t.Another += shift
-			}
-			joined.Targets = append(joined.Targets, t)
-		}
-		for _, st := range m.Steps {
-			if st.Subject == ability.SubjectTarget {
-				st.Target += shift
-			}
-			if st.Dealer > 0 {
-				st.Dealer += shift
-			}
-			joined.Steps = append(joined.Steps, st)
-		}
+	for _, m := range modes {
+		shifted := shiftSlots(m, len(joined.Targets))
+		joined.Targets = append(joined.Targets, shifted.Targets...)
+		joined.Steps = append(joined.Steps, shifted.Steps...)
 	}
 	return joined
+}
+
+// shiftSlots returns a copy of mode m with every reference to a target slot
+// moved up by shift: a target's Another, and a step's Target and Dealer. New
+// slices: a mode's own Targets and Steps belong to the card's definition and
+// must never be written to.
+func shiftSlots(m ability.Effect, shift int) ability.Effect {
+	out := ability.Effect{Targets: slices.Clone(m.Targets), Steps: slices.Clone(m.Steps)}
+	for i := range out.Targets {
+		if out.Targets[i].Another > 0 {
+			out.Targets[i].Another += shift
+		}
+	}
+	for i := range out.Steps {
+		st := &out.Steps[i]
+		if st.Subject == ability.SubjectTarget {
+			st.Target += shift
+		}
+		if st.Dealer > 0 {
+			st.Dealer += shift
+		}
+	}
+	return out
 }

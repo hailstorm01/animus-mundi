@@ -16,7 +16,7 @@ func (m *Monitors) checkTurnStart(e engine.Event) {
 
 // pool is player p's Requisition or Tactics in s.
 func pool(s engine.Snapshot, p int, resource string) int {
-	if resource == "Requisition" {
+	if resource == engine.Requisition.String() {
 		return s.Players[p].Req
 	}
 	return s.Players[p].Tac
@@ -46,12 +46,13 @@ func (m *Monitors) checkGenerate(e engine.Event) {
 	if a.Exhausted {
 		m.fail(mon, e.Seq, "%s#%d was Exhausted before it generated", a.Card, a.ID)
 	}
-	res, other := e.Resource, "Tactics"
+	requisition, tactics := engine.Requisition.String(), engine.Tactics.String()
+	res, other := e.Resource, tactics
 	yield := c.TacYield
-	if res == "Requisition" {
-		other, yield = "Tactics", c.ReqYield
-	} else if res == "Tactics" {
-		other = "Requisition"
+	if res == requisition {
+		other, yield = tactics, c.ReqYield
+	} else if res == tactics {
+		other = requisition
 	} else {
 		m.fail(mon, e.Seq, "Generate names resource %q", res)
 		return
@@ -61,9 +62,9 @@ func (m *Monitors) checkGenerate(e engine.Event) {
 		switch {
 		case c.Keywords.Versatile:
 			m.count(mon, "FR-KWD-002i")
-		case a.Zone == reserves && res != "Requisition":
+		case a.Zone == reserves && res != requisition:
 			m.fail(mon, e.Seq, "%s#%d in Reserves generated %s, not Requisition", a.Card, a.ID, res)
-		case a.Zone != reserves && res != "Tactics":
+		case a.Zone != reserves && res != tactics:
 			m.fail(mon, e.Seq, "%s#%d in %s generated %s, not Tactics", a.Card, a.ID, a.Zone, res)
 		}
 	}

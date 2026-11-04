@@ -1,10 +1,12 @@
-// Zones: shuffling, drawing and moving cards and assets between zones (FR-ZON-001, FR-ZON-004).
+// Zones: shuffling, drawing, deploying and moving cards and assets between zones, and the zone a shape names (FR-ZON-001, FR-ZON-004).
 
 package engine
 
 import (
 	"fmt"
 	"slices"
+
+	"animus-mundi/pkg/engine/ability"
 )
 
 func (g *Game) shuffle(p *Player) {
@@ -31,6 +33,20 @@ func (g *Game) draw(pid PlayerID, n int) {
 		}
 		g.moveTopToHand(p)
 	}
+}
+
+// deployCard puts inst, already out of its pile, onto the battlefield face-up in
+// zone under controller, with its own deploy event and deploy triggers, and
+// returns the new asset. A free deploy enters this way during resolution, with
+// no stack item and no costs (FR-TRN-003a). scratch has its own path, because it
+// deploys face-down and logs its own event.
+func (g *Game) deployCard(inst *Instance, controller PlayerID, zone Zone) *Asset {
+	a := g.newAsset(inst, controller, false)
+	g.placeOnBattlefield(a, zone)
+	g.logEvent(Event{Kind: EventDeploy, Player: int(controller), Card: inst.Card.Name, Inst: inst.ID, Source: a.ID, Zone: zone.String()},
+		"player %d deploys %s to %s", controller, a, zone)
+	g.fireDeploy(a)
+	return a
 }
 
 // scratch performs Deploy Scratch Company n times (FR-ZON-005, FR-KWD-002m).
@@ -214,6 +230,27 @@ func (g *Game) placeOnBattlefield(a *Asset, zone Zone) {
 	case ZoneHeadquarters:
 		g.Players[a.Controller].HQ = a
 	}
+}
+
+// deployedTo reports whether a is in zone z now, which for a deploy trigger is
+// the zone its deploy put it in. ZoneAny always holds.
+func deployedTo(a *Asset, z ability.Zone) bool {
+	if to, ok := battlefieldZone(z); ok {
+		return a.Zone == to
+	}
+	return true
+}
+
+// battlefieldZone maps a battlefield zone a shape names to the engine's zone.
+// It is false for ZoneAny and ZoneDiscard, which are not battlefield zones.
+func battlefieldZone(z ability.Zone) (Zone, bool) {
+	switch z {
+	case ability.ZoneReserves:
+		return ZoneReserves, true
+	case ability.ZoneMainTheater:
+		return ZoneMainTheater, true
+	}
+	return 0, false
 }
 
 func remove[T comparable](s []T, v T) []T {

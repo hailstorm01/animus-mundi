@@ -1,19 +1,16 @@
 package frd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
+
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 var (
-	reqRegex     = regexp.MustCompile(`FR-[A-Z]{3}-\d{3}[a-z]?`)
-	defLineRegex = regexp.MustCompile(`^(####|###|\*\*FR-|- \*\*FR-|\| \*\*FR-)`)
-
 	ExpectedFiles = []string{
 		"01_Game_Rules_FRD.md",
 		"02_Card_Data_Pipeline_FRD.md",
@@ -98,7 +95,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 	reqDefs := make(map[string]ReqDef)
 	for _, filePath := range existingFrds {
 		fileName := filepath.Base(filePath)
-		lines, err := readLines(filePath)
+		lines, err := specdoc.ReadLines(filePath)
 		if err != nil {
 			fmt.Printf("  [ERROR] Reading file %s: %v\n", fileName, err)
 			hasErrors = true
@@ -106,8 +103,8 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		}
 
 		for i, line := range lines {
-			matches := reqRegex.FindAllString(line, -1)
-			if len(matches) > 0 && defLineRegex.MatchString(line) {
+			matches := specdoc.ReqRegex.FindAllString(line, -1)
+			if len(matches) > 0 && specdoc.DefLineRegex.MatchString(line) {
 				for _, val := range matches {
 					if _, exists := reqDefs[val]; !exists {
 						reqDefs[val] = ReqDef{
@@ -127,7 +124,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 	var reqRefs []ReqRef
 	for _, filePath := range targetFiles {
 		fileName := filepath.Base(filePath)
-		lines, err := readLines(filePath)
+		lines, err := specdoc.ReadLines(filePath)
 		if err != nil {
 			fmt.Printf("  [ERROR] Reading file %s: %v\n", fileName, err)
 			hasErrors = true
@@ -135,7 +132,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 		}
 
 		for i, line := range lines {
-			matches := reqRegex.FindAllString(line, -1)
+			matches := specdoc.ReqRegex.FindAllString(line, -1)
 			for _, val := range matches {
 				reqRefs = append(reqRefs, ReqRef{
 					Req:  val,
@@ -177,7 +174,7 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 	// Step 4: Single source of truth for rules
 	contents := make(map[string][]string)
 	for _, filePath := range existingFrds {
-		if lines, err := readLines(filePath); err == nil {
+		if lines, err := specdoc.ReadLines(filePath); err == nil {
 			contents[filepath.Base(filePath)] = lines
 		}
 	}
@@ -200,22 +197,4 @@ func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
 	fmt.Printf("  [FAIL] Found %d dangling references, missing core FRD files, or ownership violations.\n", len(dangling))
 	fmt.Println("==========================================================")
 	return false, nil
-}
-
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	// Accommodate very long lines if needed (up to 1MB)
-	buf := make([]byte, 64*1024)
-	scanner.Buffer(buf, 1024*1024)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }

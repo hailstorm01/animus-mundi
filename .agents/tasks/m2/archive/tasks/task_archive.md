@@ -147,3 +147,15 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0141 | Make *Ambush Tactics* executable (choose two of kill, return to hand, a chosen unit deals its power to another chosen unit, put on top of its owner's deck; #14 (a), wave C card, flash) | done |
 | T-0142 | Make *Ensnaring Mist* executable (move a chosen unit to its controller's Reserves, then a chosen unit gets -1 power until end of turn; #91 (4), #14 (c), wave C card, flash) | done |
 | T-0143 | Make *Pincer Tactics* executable (1 damage to each of up to 2 chosen allied units, 2 to a chosen non-Scratch asset; #91 (4), #14 (c), wave C card, flash) | done |
+| T-0144 | One declare sequence, (g *Game) declare, and one read of a card's cost, (g *Game) EffectiveCost (directives #92 and #93, harness, flash, pure move) | done |
+| T-0145 | Additional costs and a card's cost get their own file, costs.go (directive #94, harness, flash, pure move) | done |
+| T-0146 | One function deploys a card onto the battlefield, deployCard (directive #95, harness, flash, pure move) | done |
+| T-0147 | One function buffers a fired trigger, bufferTrigger (directive #96, harness, flash, pure move) | done |
+| T-0148 | One read of "another", anotherOf, and modes joined in one place, joinModes (directive #97, harness, flash, pure move) | done |
+| T-0149 | A resource's name lives in one place, Resource.String (directive #98, part 1 of 3, harness, flash, pure move) | done |
+| T-0150 | Event readers compare with Resource.String, not typed-out names (directive #98, part 2 of 3, harness, flash, pure move) | done |
+| T-0151 | One check for a Scratch Company card, IsScratchCompany (directive #98, part 3 of 3, harness, flash, pure move) | done |
+| T-0152 | One table of policy names, sim.PolicyByName (directive #99, harness, flash, pure move) | done |
+| T-0153 | The linters share one scan, pkg/toolchain/specdoc (directive #100, harness, flash, pure move) | done |
+| T-0154 | Zone helpers live with the zones, deployedTo and battlefieldZone move to zones.go (directive #101, harness, flash, pure move) | done |
+| T-0155 | The docs say what wave C built, doc.go, sim.go, ability.go and zones.go comments (directive #102, harness, flash, comments only) | done |

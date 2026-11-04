@@ -235,9 +235,9 @@ const (
 type Subject int
 
 const (
-	SubjectController Subject = iota // the ability's controller (the zero value; Scratch and Draw)
+	SubjectController Subject = iota // the ability's controller (the zero value; OpScratch, OpDraw, OpDiscard)
 	SubjectSelf                      // the ability's own source card, tracked by card instance (FR-ZON-004)
-	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw)
+	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw, OpDiscard)
 	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
 	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)

@@ -20,7 +20,8 @@ import (
 // FactionDeck builds a 50-card simulation deck from the faction's executable
 // cards (plus executable Neutral cards), cycling them to reach 50. The result
 // ignores rarity copy limits, so it is a stress-test deck, not a legal one.
-// The faction's first Headquarters is used with its printed abilities ignored.
+// The faction's first Headquarters is used even if it is not Supported: the
+// abilities its definition implements run, and its other lines are ignored.
 func FactionDeck(cards map[string]*engine.Card, faction string) (engine.DeckList, error) {
 	var names []string
 	for name := range cards {
@@ -35,7 +36,7 @@ func FactionDeck(cards map[string]*engine.Card, faction string) (engine.DeckList
 		switch {
 		case c.Type == engine.TypeHeadquarters && strings.EqualFold(c.Faction, faction) && deck.HQ == nil:
 			deck.HQ = c
-		case c.Supported() && !c.HasSubtype("Scratch Company") &&
+		case c.Supported() && !c.IsScratchCompany() &&
 			(strings.EqualFold(c.Faction, faction) || strings.EqualFold(c.Faction, "NEUTRAL")):
 			pool = append(pool, c)
 		}
@@ -131,7 +132,7 @@ func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int
 		}
 		pol := opt.Policy
 		if pol == nil {
-			pol = func(seed uint64) Policy { return RandomPolicy(seed, DefaultEndBias) }
+			pol = defaultRandomPolicy
 		}
 		res, err := Playout(g, [2]Policy{pol(SeatSeed(s, 0)), pol(SeatSeed(s, 1))}, maxTurns)
 		if mon != nil {

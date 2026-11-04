@@ -150,11 +150,7 @@ func actionLabel(v view.View, a engine.Action) string {
 
 	switch a.Kind {
 	case engine.ActGenerate:
-		res := "Requisition"
-		if a.Resource == engine.Tactics {
-			res = "Tactics"
-		}
-		return fmt.Sprintf("Generate: %s -> %s", findAsset(a.Asset), res)
+		return fmt.Sprintf("Generate: %s -> %s", findAsset(a.Asset), a.Resource)
 	case engine.ActConvert:
 		return "Convert: 2 Requisition -> 1 Tactics"
 	case engine.ActDeploy:

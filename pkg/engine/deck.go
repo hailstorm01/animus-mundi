@@ -68,7 +68,7 @@ func ValidateDeck(d DeckList) error {
 		switch {
 		case c.Type == TypeHeadquarters:
 			errs = append(errs, illegalDeck("Headquarters %s cannot be in the main deck", c.Name))
-		case c.HasSubtype("Scratch Company"):
+		case c.IsScratchCompany():
 			errs = append(errs, illegalDeck("Scratch Company %s cannot be in the main deck", c.Name))
 		}
 		// Without a usable HQ there is no faction to compare against.
