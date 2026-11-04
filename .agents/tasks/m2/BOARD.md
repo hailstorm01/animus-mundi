@@ -31,4 +31,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0161 | The play screen names an activation, its asset and printed text (harness, flash) | ready |

@@ -4,7 +4,7 @@ title: The play screen names an activation, its asset and printed text (harness,
 kind: harness
 tier: flash
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0161-activate-label
 depends_on: [T-0158]
 claims: [view:asset-text, label:activate]
@@ -92,3 +92,10 @@ W is your worktree. Both test packages stop compiling while `AssetView` has no `
     - Case 6: `git diff autoloop/m2-wave-d --stat` -> exactly 5 files changed
     - Gate: `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all)
     - Starter sim: `go tool task sim` -> PASS (200 games, all invariants holding)
+- 2026-11-04, lead-architect (wave D run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d` as 6de8594. Flash run `a9e1931b-ac4f-438d-852a-874f95223109`: exit 0, `status: SUCCESS`, no `denied_actions` key, no step with `"status":"ERROR"`; the transcript's two `permission check failed` matches are this task's own review note, read and then diffed by the engineer, and the `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d...m2/autoloop-wave-d/T-0161-activate-label` (282d788):
+  - Note 1: the `ActActivate` case is the note's text, and `findAsset` is now the one place in `actionLabel` that names an asset.
+  - Scope: only the four Allowed Files and this file changed. Round 2 changed no test. The new tests are the four named, and no existing test changed.
+  - Reuse and placement: one lookup, no second walk; `AssetView.Text` reads `Printed()`, and a face-down asset's text is empty. `formatAsset` also prints `%s#%d`, inside a different line format and from before this task: one format token, not a rule or a scheme, so no directive (D2.0).
+  - Fences: no card name in non-test code; `go run ./cmd/cardtown lint fences` exits 0.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-6; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d` `[PASS]`.
+  - `go tool task check` and `go tool task sim` also pass on the merged run branch at 6de8594.
