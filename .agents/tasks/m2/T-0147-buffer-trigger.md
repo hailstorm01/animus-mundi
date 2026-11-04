@@ -4,7 +4,7 @@ title: One function buffers a fired trigger, bufferTrigger (directive #96, harne
 kind: harness
 tier: flash
 wave: C.1 (board directive #96, structural review 7, finding 5)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0147-buffer-trigger
 depends_on: [T-0146]
 claims: [helper:bufferTrigger]
