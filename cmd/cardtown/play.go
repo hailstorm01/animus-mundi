@@ -43,8 +43,9 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 		fmt.Fprintf(out, "[ERROR] invalid -seat %d: must be 0 or 1\n", *seat)
 		return 1
 	}
-	if *policy != "progress" && *policy != "random" {
-		fmt.Fprintf(out, "[ERROR] unknown -policy %q (want progress or random)\n", *policy)
+	newBotPolicy, err := sim.PolicyByName(*policy)
+	if err != nil {
+		fmt.Fprintf(out, "[ERROR] %v\n", err)
 		return 1
 	}
 
@@ -96,12 +97,7 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 		return 1
 	}
 
-	var botPolicy sim.Policy
-	if *policy == "progress" {
-		botPolicy = sim.ProgressPolicy(botSeed)
-	} else {
-		botPolicy = sim.RandomPolicy(botSeed, sim.DefaultEndBias)
-	}
+	botPolicy := newBotPolicy(botSeed)
 
 	seen := 0
 
