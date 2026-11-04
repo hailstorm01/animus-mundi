@@ -166,9 +166,9 @@ func actionLabel(v view.View, a engine.Action) string {
 		return fmt.Sprintf("Enact: %s", findHandCard(a.Card))
 	case engine.ActActivate:
 		if as := lookupAsset(a.Asset); as != nil {
-			return fmt.Sprintf("Activate: %s#%d: %s", as.Card, as.ID, as.Text)
+			return fmt.Sprintf("Activate: %s: %s", findAsset(a.Asset), as.Text)
 		}
-		return fmt.Sprintf("Activate: Asset#%d", a.Asset)
+		return fmt.Sprintf("Activate: %s", findAsset(a.Asset))
 	case engine.ActMarch:
 		return fmt.Sprintf("March: %s", findAsset(a.Asset))
 	case engine.ActAttack:

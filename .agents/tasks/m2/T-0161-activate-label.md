@@ -4,7 +4,7 @@ title: The play screen names an activation, its asset and printed text (harness,
 kind: harness
 tier: flash
 wave: D
-status: changes
+status: review
 branch: m2/autoloop-wave-d/T-0161-activate-label
 depends_on: [T-0158]
 claims: [view:asset-text, label:activate]
@@ -80,3 +80,15 @@ W is your worktree. Both test packages stop compiling while `AssetView` has no `
      		return fmt.Sprintf("Activate: %s", findAsset(a.Asset))
      ```
      No test changes: `git -C W diff e998373 --stat` lists only `cmd/cardtown/play_screen.go` and this task file. Then run `go -C W tool task check`, `go -C W tool task sim` and `go -C W tool task sim-compare -- autoloop/m2-wave-d`, and record each result in the Log.
+- 2026-11-04 kernel-engineer (T-0161, round 1 changes):
+  - Addressed review note 1 (Reuse in cmd/cardtown/play_screen.go): replaced the body of engine.ActActivate in actionLabel with the exact requested implementation, formatting with `findAsset(a.Asset)` for both branches to eliminate duplicate asset naming logic.
+  - Diff: `git diff e998373 --stat` lists only `cmd/cardtown/play_screen.go` and this task file. `git diff autoloop/m2-wave-d --stat` lists only the 5 allowed files.
+  - Verification & Gates:
+    - Case 1: `go test ./pkg/view -run TestView_AssetTextIsPrinted` -> PASS
+    - Case 2: `go test ./pkg/view -run TestView_FaceDownAssetHidesItsText` -> PASS
+    - Case 3: `go test ./cmd/cardtown -run TestPlay_ActionLabelNamesTheActivation` -> PASS
+    - Case 4: `go test ./cmd/cardtown -run TestPlay_ActionLabelFindsAssetsInEveryZone` -> PASS
+    - Case 5: `go tool task sim-compare -- autoloop/m2-wave-d` -> [PASS] starter and stress sims match autoloop/m2-wave-d byte for byte, exit codes included
+    - Case 6: `git diff autoloop/m2-wave-d --stat` -> exactly 5 files changed
+    - Gate: `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all)
+    - Starter sim: `go tool task sim` -> PASS (200 games, all invariants holding)
