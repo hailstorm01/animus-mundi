@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"fmt"
 	"math/rand/v2"
 
 	"animus-mundi/pkg/engine"
@@ -8,6 +9,21 @@ import (
 
 // Policy picks one of the legal actions for the active player.
 type Policy func(g *engine.Game, legal []engine.Action) engine.Action
+
+// PolicyByName returns the constructor of the policy that a -policy flag
+// names: progress or random.
+func PolicyByName(name string) (func(seed uint64) Policy, error) {
+	switch name {
+	case "progress":
+		return ProgressPolicy, nil
+	case "random":
+		return defaultRandomPolicy, nil
+	}
+	return nil, fmt.Errorf("unknown -policy %q (want progress or random)", name)
+}
+
+// defaultRandomPolicy is RandomPolicy at DefaultEndBias.
+func defaultRandomPolicy(seed uint64) Policy { return RandomPolicy(seed, DefaultEndBias) }
 
 // RandomPolicy picks uniformly among non-EndTurn actions, ending the turn
 // with probability endBias or when nothing else is legal.

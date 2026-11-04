@@ -4,7 +4,7 @@ title: One table of policy names, sim.PolicyByName (directive #99, harness, flas
 kind: harness
 tier: flash
 wave: C.1 (board directive #99, structural review 7, finding 8)
-status: ready
+status: review
 branch: m2/autoloop-wave-c.1/T-0152-policy-by-name
 depends_on: []
 claims: [helper:PolicyByName, helper:defaultRandomPolicy]
@@ -118,10 +118,37 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `cmd/cardtown/sim.go`
 
 ## Done When
-- [ ] Cases 1-12 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-12 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 9): wrote this task against the run branch at 458ebbf; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Reuse search: no name-to-policy helper exists in `pkg/sim` or `cmd/cardtown`; the only other writing of the random constructor is `pkg/sim/sim.go:134`, which this task folds into `defaultRandomPolicy`. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no task touches `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer: implemented the task in scratch worktree.
+  - Changes made:
+    - `pkg/sim/policy.go`: imported `fmt`, defined `PolicyByName(name string) (func(seed uint64) Policy, error)` returning `ProgressPolicy` or `defaultRandomPolicy`, and defined `defaultRandomPolicy(seed uint64) Policy { return RandomPolicy(seed, DefaultEndBias) }`.
+    - `pkg/sim/sim.go`: replaced inline anonymous function in `SimulateWith` nil check with `defaultRandomPolicy`.
+    - `cmd/cardtown/play.go`: validated policy name via `sim.PolicyByName(*policy)` writing `[ERROR] %v\n` to `out`, and instantiated `botPolicy := newBotPolicy(botSeed)`.
+    - `cmd/cardtown/sim.go`: validated policy name via `sim.PolicyByName(*policy)` printing `[ERROR] %v\n` and calling `os.Exit(1)`, and initialized `opt := sim.SimOptions{DeckNames: deckNames, Policy: newPolicy, NoMonitors: !*monitors}`.
+  - Reuse:
+    - Reused `ProgressPolicy`, `RandomPolicy`, and `DefaultEndBias` within `pkg/sim/policy.go`.
+    - Reused `defaultRandomPolicy` across `pkg/sim/policy.go` and `pkg/sim/sim.go`.
+  - Acceptance cases verified:
+    1. `git -C W diff autoloop/m2-wave-c.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed (exit 0).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included` (exit 0).
+    3. `go -C W run ./cmd/cardtown sim -policy bogus` printed `[ERROR] unknown -policy "bogus" (want progress or random)` and `exit status 1` (exit 1).
+    4. `go -C W run ./cmd/cardtown play -policy bogus` printed `[ERROR] unknown -policy "bogus" (want progress or random)` and `exit status 1` (exit 1).
+    5. `go -C W run ./cmd/cardtown sim -policy random -games 20` exited 0 and printed `[PASS] Every match terminated with all invariants holding.`.
+    6. `git -C W grep -n 'PolicyByName' -- cmd pkg` printed exactly 4 lines (`cmd/cardtown/play.go:46`, `cmd/cardtown/sim.go:48`, `pkg/sim/policy.go:13`, `pkg/sim/policy.go:15`).
+    7. `git -C W grep -n -e 'policy [!=]= ' -- cmd` printed nothing (exit 1); `git -C W grep -n -e 'sim.ProgressPolicy' -e 'sim.RandomPolicy' -- cmd/cardtown/play.go cmd/cardtown/sim.go` printed nothing (exit 1).
+    8. `git -C W grep -n 'defaultRandomPolicy' -- cmd pkg` printed exactly 4 lines (`pkg/sim/policy.go:20`, `pkg/sim/policy.go:25`, `pkg/sim/policy.go:26`, `pkg/sim/sim.go:134`).
+    9. `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg cmd` printed:
+       `4	8	cmd/cardtown/play.go`
+       `4	6	cmd/cardtown/sim.go`
+       `16	0	pkg/sim/policy.go`
+       `1	1	pkg/sim/sim.go`
+    10. `go -C W run ./cmd/cardtown lint fences` printed `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit 0).
+    11. `git -C W diff autoloop/m2-wave-c.1 --stat` printed 5 files changed (`.agents/tasks/m2/T-0152-policy-by-name.md`, `cmd/cardtown/play.go`, `cmd/cardtown/sim.go`, `pkg/sim/policy.go`, `pkg/sim/sim.go`).
+    12. `go -C W tool task check` passed all stages (fmt-check, vet, test, linter dispatcher); `go -C W tool task sim` passed (`[PASS] Every match terminated with all invariants holding.`, exit 0).
+  - Status moved to `review`. Ready for lead review.

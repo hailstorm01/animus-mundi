@@ -45,8 +45,9 @@ func runSim(args []string) {
 		*games = 1
 	}
 
-	if *policy != "random" && *policy != "progress" {
-		fmt.Printf("[ERROR] unknown -policy %q (want random or progress)\n", *policy)
+	newPolicy, err := sim.PolicyByName(*policy)
+	if err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
 		os.Exit(1)
 	}
 
@@ -69,10 +70,7 @@ func runSim(args []string) {
 			os.Exit(1)
 		}
 	}
-	opt := sim.SimOptions{DeckNames: deckNames, NoMonitors: !*monitors}
-	if *policy == "progress" {
-		opt.Policy = sim.ProgressPolicy
-	}
+	opt := sim.SimOptions{DeckNames: deckNames, Policy: newPolicy, NoMonitors: !*monitors}
 	var played []*eventCollector // one per game, only when -log or -events asks for events
 	if *logGame || out != nil {
 		opt.Observer = func(game int, seed uint64) engine.Observer {

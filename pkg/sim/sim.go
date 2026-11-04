@@ -131,7 +131,7 @@ func SimulateWith(decks [2]engine.DeckList, games int, seed uint64, maxTurns int
 		}
 		pol := opt.Policy
 		if pol == nil {
-			pol = func(seed uint64) Policy { return RandomPolicy(seed, DefaultEndBias) }
+			pol = defaultRandomPolicy
 		}
 		res, err := Playout(g, [2]Policy{pol(SeatSeed(s, 0)), pol(SeatSeed(s, 1))}, maxTurns)
 		if mon != nil {
