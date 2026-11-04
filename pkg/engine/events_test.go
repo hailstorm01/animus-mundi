@@ -317,7 +317,9 @@ func TestEvents_Case4_EveryActionKind(t *testing.T) {
 		// Enact is covered by TestEvents_Case4_EnactActionEventNamesItsCard,
 		// because a uniform random playout of 10 seeds doesn't reliably
 		// reach a 1-of Maneuver.
-		if k == ActEnact {
+		// No starter card has an executable activated ability yet, and
+		// T-0159 adds Activate's own action-event test.
+		if k == ActEnact || k == ActActivate {
 			continue
 		}
 		if !seen[k.String()] {
