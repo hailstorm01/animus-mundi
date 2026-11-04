@@ -20,7 +20,8 @@ import (
 // FactionDeck builds a 50-card simulation deck from the faction's executable
 // cards (plus executable Neutral cards), cycling them to reach 50. The result
 // ignores rarity copy limits, so it is a stress-test deck, not a legal one.
-// The faction's first Headquarters is used with its printed abilities ignored.
+// The faction's first Headquarters is used even if it is not Supported: the
+// abilities its definition implements run, and its other lines are ignored.
 func FactionDeck(cards map[string]*engine.Card, faction string) (engine.DeckList, error) {
 	var names []string
 	for name := range cards {
