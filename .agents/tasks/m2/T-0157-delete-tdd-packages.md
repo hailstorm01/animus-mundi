@@ -4,7 +4,7 @@ title: Delete the TDD packages and their git helpers, and finish directive #103 
 kind: harness
 tier: sonnet
 wave: none (board directive #103, after wave C.1)
-status: ready
+status: in-progress
 branch: m2/T-0157-delete-tdd-packages
 depends_on: [T-0156]
 claims: [toolchain:linter/tdd package removed, toolchain:tddslice package removed, git:CommitExists removed, git:GetNewerCommits removed]
