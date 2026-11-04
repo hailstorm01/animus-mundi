@@ -4,7 +4,7 @@ title: The event log, replay and sim policy know an activation (harness, sonnet)
 kind: harness
 tier: sonnet
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0159-activate-clients
 depends_on: [T-0158]
 claims: [event:activate, replay:activate, policy:activate]
