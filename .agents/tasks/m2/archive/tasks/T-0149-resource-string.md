@@ -4,7 +4,7 @@ title: A resource's name lives in one place, Resource.String (directive #98, par
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0149-resource-string
 depends_on: [T-0148]
 claims: [helper:Resource.String]
@@ -109,3 +109,10 @@ The reviewer also repeats the event JSON and play screen comparison from Inputs.
     - Case 9: `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `cmd/cardtown/play_screen.go`, `pkg/engine/actions.go`, `pkg/engine/events.go`, and this task file.
     - Case 10: `go -C W tool task check` passed all stages (gofmt, vet, tests, linters, fences); `go -C W tool task sim` passed 200 starter matches cleanly.
   - Ready for review.
+- 2026-11-03, lead-architect (wave C.1 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 2d98782. Flash run `d1df6897-ce7e-48f5-ac56-6bd64673633f`: exit 0, `status: SUCCESS`, 308 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0149-resource-string` (a2d3ae3):
+  - Scope: only `actions.go`, `events.go`, `play_screen.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the three code files match the task's Edits exactly. `String` is the old `if`, so a value other than `Tactics` still reads "Requisition" and cannot panic.
+  - Fences and placement: no card name, no new rule. `String` sits directly below `Resource`'s constants.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-9; `gofmt -l` clean; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The lead's comparison against the run branch at 9dee39d, which `sim-compare` doesn't cover: `cardtown sim -events` for 50 starter and 50 stress games, identical once the `revision` and `modified` provenance fields are set aside (32,150 and 22,068 lines; the starter stream holds 5,827 Requisition and 937 Tactics values), and a scripted `cardtown play -deck starter -p0 ANIMUS -p1 PATH -seed 7` screen, byte-identical (208 Requisition and 19 Tactics Generate labels).
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #98 stays open for T-0150 and T-0151. A note for T-0150's writer: its reviewer should repeat the event JSON comparison only if `actionOf` or the monitors could change what is written; they only read events, so the replay tests and `sim-compare` are the gates that bear on it.
