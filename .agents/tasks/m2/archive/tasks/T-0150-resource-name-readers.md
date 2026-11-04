@@ -4,7 +4,7 @@ title: Event readers compare with Resource.String, not typed-out names (directiv
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0150-resource-name-readers
 depends_on: [T-0149]
 claims: [file:pkg/eventlog/replay.go, file:pkg/sim/monitor_resources.go]
@@ -113,3 +113,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     - Case 9: `go -C W run ./cmd/cardtown lint fences` -> exit code 0 ([PASS]).
     - Case 10: `git -C W diff autoloop/m2-wave-c.1 --stat` -> only `pkg/eventlog/replay.go`, `pkg/sim/monitor_resources.go`, and task file.
     - Case 11: `go -C W tool task check` passed all checks; `go -C W tool task sim` passed (200 games clean, P0 82.5% / P1 17.5% / draws 0.0%).
+- 2026-11-03, lead-architect (wave C.1 run, session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 0a64407. Flash run `0e62721b-6499-42e9-a090-c4dbeb953f14`: exit 0, `status: SUCCESS`, 338 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"`; its one `permission check failed` match is step 22, a `DONE` step quoting the run file; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0150-resource-name-readers` (257e813):
+  - Scope: only `replay.go`, `monitor_resources.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the two code files match the task's Edits exactly. Both only compare strings against what `Resource.String` returns, and neither writes an event, so as T-0149's review noted, the event JSON comparison isn't repeated: the replay tests and `sim-compare` are the gates that bear on it.
+  - Fences and placement: no card name, no new rule, no new declaration.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-10; `gofmt -l` clean; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #98 stays open for T-0151.
