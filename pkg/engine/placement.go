@@ -77,8 +77,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 		if !exactlyOne(ts[i]) {
 			return fill(i + 1)
 		}
-		k, hasPrev := ts[i].AnotherSlot()
-		hasPrev = hasPrev && k >= 0 && k < i && exactlyOne(ts[k])
+		k, hasPrev := anotherOf(ts, i)
+		hasPrev = hasPrev && exactlyOne(ts[k])
 		for _, o := range opts[i] {
 			if hasPrev && o.Ref == assigned[k] {
 				continue
@@ -144,27 +144,45 @@ func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 	}
 	picked := g.choose(d)
 	slices.Sort(picked)
-	// New slices throughout: a mode's own Targets and Steps belong to the
-	// card's definition and must never be appended to.
+	modes := make([]ability.Effect, len(picked))
+	for i, j := range picked {
+		modes[i] = e.Modes[legal[j]]
+	}
+	return joinModes(modes)
+}
+
+// joinModes joins modes, in the order given, into the one effect the stack
+// item resolves: each mode's targets and steps follow the last mode's, with
+// their slot references renumbered for the joined Targets (shiftSlots).
+func joinModes(modes []ability.Effect) ability.Effect {
 	var joined ability.Effect
-	for _, j := range picked {
-		m := e.Modes[legal[j]]
-		shift := len(joined.Targets)
-		for _, t := range m.Targets {
-			if t.Another > 0 {
-				t.Another += shift
-			}
-			joined.Targets = append(joined.Targets, t)
-		}
-		for _, st := range m.Steps {
-			if st.Subject == ability.SubjectTarget {
-				st.Target += shift
-			}
-			if st.Dealer > 0 {
-				st.Dealer += shift
-			}
-			joined.Steps = append(joined.Steps, st)
-		}
+	for _, m := range modes {
+		shifted := shiftSlots(m, len(joined.Targets))
+		joined.Targets = append(joined.Targets, shifted.Targets...)
+		joined.Steps = append(joined.Steps, shifted.Steps...)
 	}
 	return joined
+}
+
+// shiftSlots returns a copy of mode m with every reference to a target slot
+// moved up by shift: a target's Another, and a step's Target and Dealer. New
+// slices: a mode's own Targets and Steps belong to the card's definition and
+// must never be written to.
+func shiftSlots(m ability.Effect, shift int) ability.Effect {
+	out := ability.Effect{Targets: slices.Clone(m.Targets), Steps: slices.Clone(m.Steps)}
+	for i := range out.Targets {
+		if out.Targets[i].Another > 0 {
+			out.Targets[i].Another += shift
+		}
+	}
+	for i := range out.Steps {
+		st := &out.Steps[i]
+		if st.Subject == ability.SubjectTarget {
+			st.Target += shift
+		}
+		if st.Dealer > 0 {
+			st.Dealer += shift
+		}
+	}
+	return out
 }
