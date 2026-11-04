@@ -4,7 +4,7 @@ title: One check for a Scratch Company card, IsScratchCompany (directive #98, pa
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0151-is-scratch-company
 depends_on: [T-0150]
 claims: [helper:IsScratchCompany]
