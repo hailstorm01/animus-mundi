@@ -4,7 +4,7 @@ title: One table of policy names, sim.PolicyByName (directive #99, harness, flas
 kind: harness
 tier: flash
 wave: C.1 (board directive #99, structural review 7, finding 8)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0152-policy-by-name
 depends_on: []
 claims: [helper:PolicyByName, helper:defaultRandomPolicy]
