@@ -41,6 +41,14 @@ const (
 	Tactics
 )
 
+// String names the resource, as events and the play screen write it.
+func (r Resource) String() string {
+	if r == Tactics {
+		return "Tactics"
+	}
+	return "Requisition"
+}
+
 // Action is one manual declaration. Fields not used by Kind are ignored.
 type Action struct {
 	Kind     ActionKind
