@@ -4,7 +4,7 @@ title: A filter can ask for any of several subtypes, and for a Maneuver card (FR
 kind: shape
 tier: sonnet
 wave: D
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-d/T-0162-filter-subtypes-and-maneuver
 depends_on: [T-0158]
 claims: [filter:subtypes, kind:maneuver]
@@ -66,3 +66,4 @@ Synthetic cards only, in a new file `pkg/engine/filter_subtypes_test.go`. Pile c
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 5): no `main` commits to sync (`main` is the merge base, 58a2bc9). Not `WAVE-COMPLETE`: all four header cards are on `NotYetExecutable`. No `open: before` directive; #14 is `open` and orders the cards. Waiting directives checked, none fired: #6, #7 (mode is `serial`); #8 (this task doesn't touch `deck.go`); #15 (no turn-boundary hook); #71, #91 (2) (no such card); #104 (not due, `cards: []`, and neither question bears on a filter). The board's task table was empty, so this is the next wave D shape in T-0158's order. Reuse search: `grep Subtype|KindManeuver|kindOf` finds `HasSubtype` (reused) and no filter criterion; `Filter.Scratch` is kept, see Shape. A probe in the sync worktree, since reverted, showed that a slice field on `Filter` still passes `go build ./...`, and `go vet` of `pkg/engine`, `pkg/view`, `pkg/sim` and `pkg/eventlog` with their tests, so no code there compares a `Filter` with `==`. Two non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-11-04 rules-test-author: tests written in `pkg/engine/filter_subtypes_test.go`, status `tests-review`. Tests: `TestFR_TGT_001_SubtypesMatchAnyOfTheList`, `_EmptySubtypesIsNoCriterion`, `_SubtypesAndKindsAreAConjunction`, `_SubtypesAndAllegianceAreAConjunction`, `_SubtypesAndScratchAreAConjunction` (two subtests), `_SubtypesReadABattlefieldAsset`, `_SubtypesReadAFaceDownAssetsFace`, `_PilePickReadsSubtypes`, `_ManeuverKindListsOnlyManeuverCards`, `_OtherKindsStillRefuseManeuvers` (three subtests: unit, unit or structure, any), `_ManeuverKindMatchesNoAsset`. Helpers requested: none (the file declares its own `fs*` helpers). `go vet` fails only on the missing `Filter.Subtypes` and `ability.KindManeuver`; `cardtown lint rules` passes. Choices: where a slot has several matches the tests read the target question's options; where it has exactly one (Maneuver in a pile) no question is asked (FR-MOD-001 sec. 1). Every exactly-one slot has a legal entity on declaration except the deploy-trigger clause in `ManeuverKindMatchesNoAsset`, so nothing pins #104. Nothing was left out.
