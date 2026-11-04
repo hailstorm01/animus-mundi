@@ -66,32 +66,6 @@ func GetStagedFiles(repoRoot string) ([]string, error) {
 	return results, nil
 }
 
-// CommitExists checks if a commit hash exists in git.
-func CommitExists(repoRoot, commitHash string) bool {
-	cmd := exec.Command("git", "-C", repoRoot, "cat-file", "-e", commitHash+"^{commit}")
-	return cmd.Run() == nil
-}
-
-// GetNewerCommits returns log entries for commits newer than commitHash for targetPath.
-func GetNewerCommits(repoRoot, commitHash, targetRelPath string) []string {
-	cmd := exec.Command("git", "-C", repoRoot, "log", "--format=%h %s", commitHash+"..HEAD", "--", targetRelPath)
-	var stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return nil
-	}
-
-	lines := strings.Split(stdout.String(), "\n")
-	var results []string
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed != "" {
-			results = append(results, trimmed)
-		}
-	}
-	return results
-}
-
 // Lines runs git in repoRoot and returns stdout as trimmed lines, or nil on any error.
 func Lines(repoRoot string, args ...string) []string {
 	out, err := Output(repoRoot, args...)
