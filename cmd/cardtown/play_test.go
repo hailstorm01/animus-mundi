@@ -301,3 +301,90 @@ func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
 		t.Errorf("printScreen output did not contain expected stack section:\n%s\nGot output:\n%s", expectedSection, out)
 	}
 }
+
+// T-0161 Case 3: The play screen labels the Activate action with asset name, id and text.
+func TestPlay_ActionLabelNamesTheActivation(t *testing.T) {
+	v := view.View{
+		You: view.Side{
+			HQ:       &view.AssetView{ID: 1, Card: "Your HQ", Text: "hq text"},
+			Reserves: []view.AssetView{{ID: 2, Card: "Your Unit", Text: "your text"}},
+		},
+		Opponent: view.Side{
+			HQ:       &view.AssetView{ID: 3, Card: "Their HQ", Text: "their hq text"},
+			Reserves: []view.AssetView{{ID: 4, Card: "Their Unit", Text: "their text"}},
+		},
+		Theater: []view.AssetView{{
+			ID:   5,
+			Card: "Cliff of Portents",
+			Text: "R1, T1, exhaust: Search your deck for a card, put it into your hand, then shuffle your deck.",
+		}},
+	}
+
+	tests := []struct {
+		id   int
+		want string
+	}{
+		{1, "Activate: Your HQ#1: hq text"},
+		{2, "Activate: Your Unit#2: your text"},
+		{3, "Activate: Their HQ#3: their hq text"},
+		{4, "Activate: Their Unit#4: their text"},
+		{5, "Activate: Cliff of Portents#5: R1, T1, exhaust: Search your deck for a card, put it into your hand, then shuffle your deck."},
+		{99, "Activate: Asset#99"},
+	}
+
+	for _, tc := range tests {
+		got := actionLabel(v, engine.Action{Kind: engine.ActActivate, Asset: tc.id})
+		if got != tc.want {
+			t.Errorf("actionLabel for Activate asset %d = %q, want %q", tc.id, got, tc.want)
+		}
+	}
+}
+
+// T-0161 Case 4: The play screen's existing asset lookups find assets in every zone.
+func TestPlay_ActionLabelFindsAssetsInEveryZone(t *testing.T) {
+	v := view.View{
+		You: view.Side{
+			HQ:       &view.AssetView{ID: 1, Card: "Your HQ", Text: "hq text"},
+			Reserves: []view.AssetView{{ID: 2, Card: "Your Unit", Text: "your text"}},
+		},
+		Opponent: view.Side{
+			HQ:       &view.AssetView{ID: 3, Card: "Their HQ", Text: "their hq text"},
+			Reserves: []view.AssetView{{ID: 4, Card: "Their Unit", Text: "their text"}},
+		},
+		Theater: []view.AssetView{{
+			ID:   5,
+			Card: "Cliff of Portents",
+			Text: "R1, T1, exhaust: Search your deck for a card, put it into your hand, then shuffle your deck.",
+		}},
+	}
+
+	marchTests := []struct {
+		id   int
+		want string
+	}{
+		{1, "March: Your HQ#1"},
+		{2, "March: Your Unit#2"},
+		{3, "March: Their HQ#3"},
+		{4, "March: Their Unit#4"},
+		{5, "March: Cliff of Portents#5"},
+		{99, "March: Asset#99"},
+	}
+	for _, tc := range marchTests {
+		got := actionLabel(v, engine.Action{Kind: engine.ActMarch, Asset: tc.id})
+		if got != tc.want {
+			t.Errorf("actionLabel for March asset %d = %q, want %q", tc.id, got, tc.want)
+		}
+	}
+
+	gotAttack := actionLabel(v, engine.Action{Kind: engine.ActAttack, Asset: 2, Target: 5})
+	wantAttack := "Attack: Your Unit#2 -> Cliff of Portents#5"
+	if gotAttack != wantAttack {
+		t.Errorf("actionLabel for Attack = %q, want %q", gotAttack, wantAttack)
+	}
+
+	gotScratch := actionLabel(v, engine.Action{Kind: engine.ActScratch, Asset: 1})
+	wantScratch := "Deploy Scratch Company: Your HQ#1"
+	if gotScratch != wantScratch {
+		t.Errorf("actionLabel for Scratch = %q, want %q", gotScratch, wantScratch)
+	}
+}

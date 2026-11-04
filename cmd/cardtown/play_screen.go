@@ -114,27 +114,34 @@ func formatAsset(a view.AssetView) string {
 }
 
 func actionLabel(v view.View, a engine.Action) string {
-	findAsset := func(id int) string {
+	lookupAsset := func(id int) *view.AssetView {
 		if v.You.HQ != nil && v.You.HQ.ID == id {
-			return fmt.Sprintf("%s#%d", v.You.HQ.Card, id)
+			return v.You.HQ
 		}
-		for _, as := range v.You.Reserves {
-			if as.ID == id {
-				return fmt.Sprintf("%s#%d", as.Card, id)
+		for i := range v.You.Reserves {
+			if v.You.Reserves[i].ID == id {
+				return &v.You.Reserves[i]
 			}
 		}
 		if v.Opponent.HQ != nil && v.Opponent.HQ.ID == id {
-			return fmt.Sprintf("%s#%d", v.Opponent.HQ.Card, id)
+			return v.Opponent.HQ
 		}
-		for _, as := range v.Opponent.Reserves {
-			if as.ID == id {
-				return fmt.Sprintf("%s#%d", as.Card, id)
+		for i := range v.Opponent.Reserves {
+			if v.Opponent.Reserves[i].ID == id {
+				return &v.Opponent.Reserves[i]
 			}
 		}
-		for _, as := range v.Theater {
-			if as.ID == id {
-				return fmt.Sprintf("%s#%d", as.Card, id)
+		for i := range v.Theater {
+			if v.Theater[i].ID == id {
+				return &v.Theater[i]
 			}
+		}
+		return nil
+	}
+
+	findAsset := func(id int) string {
+		if as := lookupAsset(id); as != nil {
+			return fmt.Sprintf("%s#%d", as.Card, id)
 		}
 		return fmt.Sprintf("Asset#%d", id)
 	}
@@ -157,6 +164,11 @@ func actionLabel(v view.View, a engine.Action) string {
 		return fmt.Sprintf("Deploy: %s to %s", findHandCard(a.Card), a.Zone)
 	case engine.ActEnact:
 		return fmt.Sprintf("Enact: %s", findHandCard(a.Card))
+	case engine.ActActivate:
+		if as := lookupAsset(a.Asset); as != nil {
+			return fmt.Sprintf("Activate: %s: %s", findAsset(a.Asset), as.Text)
+		}
+		return fmt.Sprintf("Activate: %s", findAsset(a.Asset))
 	case engine.ActMarch:
 		return fmt.Sprintf("March: %s", findAsset(a.Asset))
 	case engine.ActAttack:
