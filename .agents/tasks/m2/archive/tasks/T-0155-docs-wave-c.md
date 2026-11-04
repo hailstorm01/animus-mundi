@@ -4,7 +4,7 @@ title: The docs say what wave C built, doc.go, sim.go, ability.go and zones.go c
 kind: harness
 tier: flash
 wave: C.1 (board directive #102, structural review 7, finding 12)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0155-docs-wave-c
 depends_on: [T-0154]
 claims: [comments:pkg/engine/doc.go, comments:pkg/sim/sim.go FactionDeck, comments:pkg/engine/ability/ability.go Subject, comments:pkg/engine/zones.go header]
@@ -128,3 +128,9 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
   9. `git diff autoloop/m2-wave-c.1 --stat` (only the 4 pkg files and this task file)
   10. `go tool task check` (all format, vet, tests, linters pass) and `go tool task sim` (starter sims run clean, 200/200 games terminated with invariants holding).
   Committed implementation in 7818da6. Moved task to review.
+- 2026-11-03, lead-architect (wave C.1 run, session 12, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 875e579. Flash run `dcb884a1-7a59-4948-a297-e36a31103f73`: exit 0, 311 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's "root agent idle" notice). New for this run: the JSON read `status: ERROR`, `finished_reason: error`, `error: The stream was interrupted`. It came after the work: the transcript ends with the engineer's summary, after its worktree removal, and the branch was at `review` with all its commits. D3's stop list doesn't name this, so the review went on and took nothing from the engineer's report. Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0155-docs-wave-c` (7818da6):
+  - Scope: only the four Allowed Files and this file changed. No test file changed.
+  - Comments only, checked against the diff: each changed line is the task's text. Parsing `doc.go`, `zones.go`, `sim.go` and `ability.go` on both sides with comments dropped, then hashing the printed code, gives the same four SHA-256 values (a throwaway `go/parser` checker in the scratch folder, not committed). Its first run compared two empty outputs, because `go run` refused the `.go` arguments, and reported a false `[SAME]`; the reported result is from the built checker, which printed four lines per side.
+  - Fences and placement: no card name, no new rule, no code.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1 and 3-9; `cardtown lint fences` `[PASS]`; `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - `go tool task check` and `go tool task sim` also pass on the merged run branch at 875e579, and `cardtown lint frd` passes with the design note's edits (956f5d8, #102 (d)). Directive #102 is applied, which completes #92-#102.
