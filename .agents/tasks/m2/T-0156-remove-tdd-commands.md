@@ -4,7 +4,7 @@ title: Remove the TDD commands from cardtown and whats-up (directive #103 (b)-(e
 kind: harness
 tier: flash
 wave: none (board directive #103, after wave C.1)
-status: ready
+status: in-progress
 branch: m2/T-0156-remove-tdd-commands
 depends_on: []
 claims: [cli:tdd command removed, cli:lint tdd removed, cli:tdd flag aliases removed, whats-up:tdd lines removed]
