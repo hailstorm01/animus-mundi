@@ -984,3 +984,97 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 		}
 	}
 }
+
+// T-0161 Case 1: An asset's printed rules text is visible in view.AssetView.
+func TestView_AssetTextIsPrinted(t *testing.T) {
+	s := newScene(t)
+	g := s.g
+	c0 := testUnit("Unit Zero", 2, 2, engine.Keywords{})
+	c0.RulesText = "exhaust: test text"
+	a0 := s.put(0, engine.ZoneReserves, c0)
+
+	c1 := testUnit("Unit One", 3, 3, engine.Keywords{})
+	c1.RulesText = "T1: other text"
+	a1 := s.put(1, engine.ZoneMainTheater, c1)
+
+	for seat := range engine.PlayerID(2) {
+		v := view.PlayerView(g, seat)
+
+		findInReserves := func(side view.Side, id int) *view.AssetView {
+			for i := range side.Reserves {
+				if side.Reserves[i].ID == id {
+					return &side.Reserves[i]
+				}
+			}
+			return nil
+		}
+		findInTheater := func(id int) *view.AssetView {
+			for i := range v.Theater {
+				if v.Theater[i].ID == id {
+					return &v.Theater[i]
+				}
+			}
+			return nil
+		}
+
+		var got0 *view.AssetView
+		if seat == 0 {
+			got0 = findInReserves(v.You, a0.ID)
+		} else {
+			got0 = findInReserves(v.Opponent, a0.ID)
+		}
+		if got0 == nil {
+			t.Fatalf("seat %d: asset 0 not found in reserves", seat)
+		}
+		if got0.Text != "exhaust: test text" {
+			t.Errorf("seat %d: asset 0 Text = %q, want %q", seat, got0.Text, "exhaust: test text")
+		}
+
+		got1 := findInTheater(a1.ID)
+		if got1 == nil {
+			t.Fatalf("seat %d: asset 1 not found in theater", seat)
+		}
+		if got1.Text != "T1: other text" {
+			t.Errorf("seat %d: asset 1 Text = %q, want %q", seat, got1.Text, "T1: other text")
+		}
+	}
+}
+
+// T-0161 Case 2: A face-down asset hides its printed rules text.
+func TestView_FaceDownAssetHidesItsText(t *testing.T) {
+	s := newScene(t)
+	g := s.g
+	hidden := testUnit("Alpha Secret Agent", 2, 2, engine.Keywords{})
+	hidden.RulesText = "Alpha secret text"
+	fd := &engine.Asset{
+		ID:         s.id(),
+		Inst:       &engine.Instance{ID: s.id(), Card: hidden, Owner: 0},
+		Controller: 0,
+		Zone:       engine.ZoneMainTheater,
+		FaceDown:   true,
+	}
+	g.Theater = append(g.Theater, fd)
+
+	for seat := range engine.PlayerID(2) {
+		v := view.PlayerView(g, seat)
+		js := mustJSON(t, v)
+
+		var got *view.AssetView
+		for i := range v.Theater {
+			if v.Theater[i].ID == fd.ID {
+				got = &v.Theater[i]
+				break
+			}
+		}
+		if got == nil {
+			t.Fatalf("seat %d: face-down asset %d missing from theater", seat, fd.ID)
+		}
+		if got.Text != "" {
+			t.Errorf("seat %d: face-down asset Text = %q, want empty string", seat, got.Text)
+		}
+		if strings.Contains(js, "Alpha secret text") {
+			t.Errorf("seat %d's JSON view reveals face-down card's rules text", seat)
+		}
+	}
+}
+
