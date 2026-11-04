@@ -4,7 +4,7 @@ title: Zone helpers live with the zones, deployedTo and battlefieldZone move to 
 kind: harness
 tier: flash
 wave: C.1 (board directive #101, structural review 7, finding 11)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0154-zone-helpers
 depends_on: [T-0153]
 claims: [helper:deployedTo, helper:battlefieldZone]
