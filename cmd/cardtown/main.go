@@ -40,8 +40,6 @@ func main() {
 		runLint(os.Args[2:])
 	case "hook":
 		runHook(os.Args[2:])
-	case "tdd":
-		runTdd(os.Args[2:])
 	case "replay":
 		runReplay(os.Args[2:])
 	case "sim":
@@ -65,9 +63,8 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("Available Commands:")
 	fmt.Println("  play      Play a text-mode match against a sim policy, drawn only from PlayerView")
-	fmt.Println("  lint      Unified developer linter suite (FRD, TDD, executable rules, CSV sheets, rules syntax, fences)")
+	fmt.Println("  lint      Unified developer linter suite (FRD, executable rules, CSV sheets, rules syntax, fences)")
 	fmt.Println("  hook      Manage Git lifecycle hooks (install pre-commit)")
-	fmt.Println("  tdd       Technical Design Document tools (slicing & GitHub issue publishing)")
 	fmt.Println("  sim       Random-policy playouts on the rules kernel (termination, invariants, win rates)")
 	fmt.Println("  replay    Rebuild a recorded game from a sim -events file and print its state at any event")
 	fmt.Println("  whats-up  Live capability and state snapshot for the docs workflow")
@@ -79,10 +76,6 @@ func printUsage() {
 // Every other flag name is only lowercased.
 var flagAliases = map[string]string{
 	"reporoot":       "repo-root",
-	"dryrun":         "dry-run",
-	"updateexisting": "update-existing",
-	"showbodies":     "show-bodies",
-	"tddfile":        "tdd-file",
 	"commitmessage":  "msg",
 	"commit-message": "msg",
 	"maxturns":       "max-turns",
