@@ -3,6 +3,7 @@ package sim
 import (
 	"bytes"
 	"reflect"
+	"slices"
 	"sort"
 	"testing"
 
@@ -244,5 +245,51 @@ func TestProgress_Case5_TerminatesAndHolds(t *testing.T) {
 	}
 	if st.Games != 200 {
 		t.Errorf("stress: played %d games, want 200", st.Games)
+	}
+}
+
+func TestProgress_ActivationIsAnAct(t *testing.T) {
+	activator := func() *engine.Card {
+		c := unit("Engine", 1, 3, engine.Keywords{})
+		c.Ability = &ability.Def{Activated: []ability.Activated{{
+			Costs:  []ability.Cost{{Kind: ability.CostResources, Req: 1}},
+			Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpDraw, Amount: ability.Value{N: 1}}}},
+		}}}
+		return c
+	}
+	scene := func(withHand bool) *scene {
+		s := newScene(t)
+		s.g.Players[0].Hand = nil
+		s.put(0, engine.ZoneReserves, activator())
+		if withHand {
+			s.give(0, unit("Free", 0, 1, engine.Keywords{}))
+		}
+		for _, a := range s.g.Assets() {
+			a.Exhausted = true
+		}
+		s.g.Players[0].Req, s.g.Players[0].Tac = 1, 0
+		return s
+	}
+	activations := 0
+	for seed := uint64(1); seed <= 16; seed++ {
+		s := scene(false)
+		legal := s.g.LegalActions()
+		got := ProgressPolicy(seed)(s.g, legal)
+		if got.Kind != engine.ActActivate && got.Kind != engine.ActEndTurn {
+			t.Errorf("seed %d: got %s, want Activate or EndTurn", seed, got.Kind)
+		}
+		if got.Kind == engine.ActActivate {
+			activations++
+		}
+		if !slices.Contains(legal, got) {
+			t.Errorf("seed %d: %+v is not in LegalActions", seed, got)
+		}
+		s = scene(true)
+		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != engine.ActDeploy {
+			t.Errorf("seed %d: a play from hand comes first, got %s", seed, got.Kind)
+		}
+	}
+	if activations == 0 {
+		t.Errorf("the policy never activated over 16 seeds")
 	}
 }

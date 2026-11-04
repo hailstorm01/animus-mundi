@@ -317,8 +317,8 @@ func TestEvents_Case4_EveryActionKind(t *testing.T) {
 		// Enact is covered by TestEvents_Case4_EnactActionEventNamesItsCard,
 		// because a uniform random playout of 10 seeds doesn't reliably
 		// reach a 1-of Maneuver.
-		// No starter card has an executable activated ability yet, and
-		// T-0159 adds Activate's own action-event test.
+		// Activate is covered by TestEvents_Case4_ActivateActionEventNamesItsAsset,
+		// because no starter card has an executable activated ability yet.
 		if k == ActEnact || k == ActActivate {
 			continue
 		}
@@ -354,6 +354,30 @@ func TestEvents_Case4_EnactActionEventNamesItsCard(t *testing.T) {
 	}
 	if placeIdx < 0 {
 		t.Errorf("no place event for the Maneuver")
+	}
+}
+
+func TestEvents_Case4_ActivateActionEventNamesItsAsset(t *testing.T) {
+	for _, idx := range []int{1, 0} {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility(nil, drawN(1)), actAbility(nil, drawN(1))))
+		s.do(activate(a, idx))
+		acts := eventsOfKind(s.g.Log, "action")
+		if len(acts) != 1 || acts[0].Detail != "Activate" {
+			t.Fatalf("index %d: want one Activate action event, got %+v", idx, acts)
+		}
+		e := acts[0]
+		if e.Player != 0 || e.Source != a.ID || e.Amount != idx {
+			t.Errorf("index %d: Activate event player %d source %d amount %d, want 0, %d, %d", idx, e.Player, e.Source, e.Amount, a.ID, idx)
+		}
+		if e.Card != "" || e.Inst != 0 || e.Target != 0 || e.Zone != "" {
+			t.Errorf("index %d: Card, Inst, Target and Zone must be empty: %+v", idx, e)
+		}
+		actAt := slices.IndexFunc(s.g.Log, func(e Event) bool { return e.Kind == "action" })
+		placeAt := slices.IndexFunc(s.g.Log, func(e Event) bool { return e.Kind == "place" })
+		if placeAt < 0 || actAt > placeAt {
+			t.Errorf("index %d: action at %d must precede place at %d", idx, actAt, placeAt)
+		}
 	}
 }
 
