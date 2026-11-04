@@ -4,7 +4,7 @@ title: The docs say activated abilities are built, stack.go, doc.go, costs.go an
 kind: harness
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0160-activated-comments
 depends_on: [T-0158]
 claims: [comments:pkg/engine/stack.go StackAbility Tracked Keyword, comments:pkg/engine/doc.go activated, comments:pkg/engine/costs.go, comments:pkg/engine/effects.go resolveAbility]
