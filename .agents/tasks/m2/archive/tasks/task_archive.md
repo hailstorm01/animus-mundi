@@ -154,3 +154,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0148 | One read of "another", anotherOf, and modes joined in one place, joinModes (directive #97, harness, flash, pure move) | done |
 | T-0149 | A resource's name lives in one place, Resource.String (directive #98, part 1 of 3, harness, flash, pure move) | done |
 | T-0150 | Event readers compare with Resource.String, not typed-out names (directive #98, part 2 of 3, harness, flash, pure move) | done |
+| T-0151 | One check for a Scratch Company card, IsScratchCompany (directive #98, part 3 of 3, harness, flash, pure move) | done |
