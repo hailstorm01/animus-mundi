@@ -24,7 +24,7 @@ Six game packages, plus developer tooling under `pkg/toolchain` that no game pac
 | `pkg/sim` | Match driving: `Policy`, `RandomPolicy`, `ProgressPolicy`, `Playout`, `Simulate`/`SimulateWith`, `FactionDeck` and `SimDecks`, and the rule monitors (`Monitors`, `Violation`, `Coverage`, `ReplayCommand`). `CheckInvariants` stays in `engine`. | No (fenced) | `harness` tasks |
 | `pkg/eventlog` | Event output: `FormatEvent`, `WriteEventsJSONL`, and the reader and replay glue (T-0023). The event and record types stay in `engine` (ADR-0005). | No (fenced) | `harness` tasks |
 | `pkg/view` | One seat's view: `PlayerView` (own hand, counts for the opponent's hand and both decks, public zones, face-down assets as Scratch Company to both seats) and `LogLines` (the event log that seat may read). It imports `engine` and `eventlog` only (board directive #24, T-0036). | No (fenced) | `harness` tasks |
-| `pkg/toolchain` | The linters, pre-commit hook, git helper and docs status behind the CLI. `specdoc`, once board directive #100 builds it, holds what the FRD and rules linters share. | Not fenced | `harness` tasks |
+| `pkg/toolchain` | The linters, pre-commit hook, git helper and docs status behind the CLI. `specdoc` holds what the FRD, rules and fences linters share when they scan a file. | Not fenced | `harness` tasks |
 
 **Key types in `ability`** (one line each; fields are decided in code):
 

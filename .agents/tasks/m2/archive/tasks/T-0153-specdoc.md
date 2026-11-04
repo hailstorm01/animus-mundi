@@ -4,7 +4,7 @@ title: The linters share one scan, pkg/toolchain/specdoc (directive #100, harnes
 kind: harness
 tier: flash
 wave: C.1 (board directive #100, structural review 7, finding 9)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0153-specdoc
 depends_on: []
 claims: [package:pkg/toolchain/specdoc, helper:ReqRegex, helper:DefLineRegex, helper:ReadLines]
@@ -161,3 +161,11 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     - Case 10: `git -C W diff autoloop/m2-wave-c.1 --stat` listed only those four toolchain files and the task file.
     - Case 11: `go -C W tool task check` passed all stages (fmt-check, vet, test, build, lint --all); `go -C W tool task sim` ran clean on starter decks (200 matches, all invariants held).
   - Reviewer note: `git grep -n 'ReqRegex = '` matched `headingReqRegex = ` in `tdd.go` due to substring match; `tdd.go` was kept intact per directive #100.
+- 2026-11-03, lead-architect (wave C.1 run, session 10, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as e2c4313. Flash run `f79ec8f5-4a3e-4ca6-969b-45ad447b6aa1`: exit 0, `status: SUCCESS`, 406 s, no refusals (no `denied_actions` key; no `permission check failed` match; the transcript's one step with `"status":"ERROR"` is an edit whose target text did not match, which the engineer redid; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0153-specdoc` (97f7031):
+  - Scope: only the four Allowed Files and this file changed. No test file changed.
+  - Pure move, checked against the diff: `specdoc.go` holds the two regexes and `readLines` as they were, and the linters' added lines are only the import and the renamed calls. The numstat matches the lead's dry run.
+  - **A slip in this task, not in the code:** case 5 said `git grep -n 'ReqRegex = ' -- pkg` prints one line, but it also matches `headingReqRegex = ` at `pkg/toolchain/linter/tdd/tdd.go:18`, a different regex that #103 deletes. The engineer reported this rather than changing anything. The reviewer checked with `git grep -n -w 'ReqRegex' -- pkg/toolchain/specdoc`: one definition, at line 12.
+  - Fences and placement: no card name, no new rule. `specdoc` sits where the design note's Boundaries row puts it, and imports only the standard library.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-11 (case 5 as above); `gofmt -l` clean; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`, though this task doesn't require it.
+  - #100's check: a build of the task branch and a build of 4c2677b, run from the same directory, print the same bytes with the same exit codes for `lint frd`, `lint rules` and `lint fences` (all exit 0), and for the error path `lint frd nosuch.md` (exit 1).
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch.
