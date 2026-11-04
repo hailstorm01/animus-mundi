@@ -108,12 +108,18 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			}
 			g.firings[k]++
 		}
-		g.pending = append(g.pending, pendingTrigger{
-			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
-				label: fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1)},
-			trig: t, pos: posOf(a),
-		})
+		g.bufferTrigger(a, fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), t)
 	}
+}
+
+// bufferTrigger adds the fired trigger t to the buffer: a is its source, a's
+// controller now is its controller, and label names it in the flush's prompts.
+func (g *Game) bufferTrigger(a *Asset, label string, t ability.Trigger) {
+	g.pending = append(g.pending, pendingTrigger{
+		placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller, label: label},
+		trig:      t,
+		pos:       posOf(a),
+	})
 }
 
 // cornered reports whether p is Cornered: the opponent controls strictly more
@@ -149,11 +155,7 @@ func battlefieldZone(z ability.Zone) (Zone, bool) {
 // printed attack triggers (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
-		g.pending = append(g.pending, pendingTrigger{
-			placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller,
-				label: fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n)},
-			trig: ability.Aggressive(n), pos: posOf(a),
-		})
+		g.bufferTrigger(a, fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), ability.Aggressive(n))
 	}
 	g.fireHook(a, ability.HookAttacks)
 }
