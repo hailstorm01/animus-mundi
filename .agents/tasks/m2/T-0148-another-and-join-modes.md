@@ -4,7 +4,7 @@ title: One read of "another", anotherOf, and modes joined in one place, joinMode
 kind: harness
 tier: flash
 wave: C.1 (board directive #97, structural review 7, finding 6)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0148-another-and-join-modes
 depends_on: [T-0147]
 claims: [helper:anotherOf, helper:joinModes, helper:shiftSlots]
@@ -124,10 +124,28 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
 - `pkg/engine/targeting.go`
 
 ## Done When
-- [ ] Cases 1–11 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–11 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 5): wrote this task from directive #97 against the run branch at eb11d8e; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `anotherOf`, `joinModes` or `shiftSlots`; `AnotherSlot` is read only at the two sites this task replaces, and `chooseModes` is the only place that renumbers slot fields. The directive named `anotherOf` and `joinModes` and left the renumbering helper's name open: it is `shiftSlots`, taking a whole mode, so one function holds all three slot fields. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (session 1): implemented pure move of "another" read to anotherOf in pkg/engine/targeting.go, and mode joining and renumbering to joinModes and shiftSlots in pkg/engine/placement.go (#97).
+  - Diff shows:
+    - pkg/engine/targeting.go: replaced inline AnotherSlot read in chooseTargets with anotherOf(targets, i); declared anotherOf helper above withoutRefs.
+    - pkg/engine/placement.go: replaced inline AnotherSlot read in slotsLegal with anotherOf(ts, i) and simplified hasPrev; refactored mode joining at end of chooseModes to return joinModes(modes); declared joinModes and shiftSlots helpers.
+  - Reuse: anotherOf unifies reading an earlier slot reference between chooseTargets and slotsLegal. joinModes and shiftSlots unify mode concatenation and slot index renumbering.
+  - Acceptance cases verified:
+    - Case 1: git -C W diff autoloop/m2-wave-c.1 -- "*_test.go" printed nothing; go -C W test ./... passed (exit 0).
+    - Case 2: go -C W tool task sim-compare -- autoloop/m2-wave-c.1 printed "[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included".
+    - Case 3: git -C W grep -n 'anotherOf(' -- pkg/engine printed exactly 3 lines: pkg/engine/placement.go:80, pkg/engine/targeting.go:35, and pkg/engine/targeting.go:53.
+    - Case 4: git -C W grep -n 'AnotherSlot()' -- pkg/engine printed exactly 2 lines: pkg/engine/ability/ability.go:171 and pkg/engine/targeting.go:54.
+    - Case 5: git -C W grep -n 'k >= 0' -- pkg/engine/placement.go pkg/engine/targeting.go printed nothing (exit 1).
+    - Case 6: git -C W grep -n 'joinModes(' -- pkg/engine printed exactly 2 lines: pkg/engine/placement.go:151 and pkg/engine/placement.go:157.
+    - Case 7: git -C W grep -n 'shiftSlots(' -- pkg/engine printed exactly 2 lines: pkg/engine/placement.go:160 and pkg/engine/placement.go:171; git -C W grep -n 'Another += ' -- pkg/engine printed exactly 1 line at pkg/engine/placement.go:175.
+    - Case 8: git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg printed "39\t21\tpkg/engine/placement.go" and "8\t1\tpkg/engine/targeting.go".
+    - Case 9: go -C W run ./cmd/cardtown lint fences exited 0 ("[PASS]").
+    - Case 10: git -C W diff autoloop/m2-wave-c.1 --stat listed only pkg/engine/placement.go, pkg/engine/targeting.go, and this task file.
+    - Case 11: go -C W tool task check and go -C W tool task sim passed all checks.
+  - Handoff commit feat(engine): anotherOf, joinModes and shiftSlots helpers (T-0148). Task status set to review.
