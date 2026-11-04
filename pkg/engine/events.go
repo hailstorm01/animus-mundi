@@ -144,10 +144,7 @@ func (g *Game) emitAction(a Action) {
 	switch a.Kind {
 	case ActGenerate:
 		e.Source = a.Asset
-		e.Resource = "Requisition"
-		if a.Resource == Tactics {
-			e.Resource = "Tactics"
-		}
+		e.Resource = a.Resource.String()
 		e.Detail += " " + e.Resource
 	case ActMarch, ActScratch:
 		e.Source = a.Asset
