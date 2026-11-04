@@ -4,7 +4,7 @@ title: The docs say what wave C built, doc.go, sim.go, ability.go and zones.go c
 kind: harness
 tier: flash
 wave: C.1 (board directive #102, structural review 7, finding 12)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-c.1/T-0155-docs-wave-c
 depends_on: [T-0154]
 claims: [comments:pkg/engine/doc.go, comments:pkg/sim/sim.go FactionDeck, comments:pkg/engine/ability/ability.go Subject, comments:pkg/engine/zones.go header]
