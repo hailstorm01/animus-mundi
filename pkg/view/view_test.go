@@ -1077,4 +1077,3 @@ func TestView_FaceDownAssetHidesItsText(t *testing.T) {
 		}
 	}
 }
-

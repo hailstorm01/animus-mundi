@@ -70,6 +70,7 @@ type AssetView struct {
 	Power             int
 	MaxHealth         int
 	Keywords          []string // none for a face-down asset
+	Text              string   // printed rules text
 }
 
 // StackView is one Resolution Stack item.
@@ -146,6 +147,7 @@ func assetView(g *engine.Game, a *engine.Asset) AssetView {
 		ID: a.ID, Card: a.Printed().Name, Controller: int(a.Controller), Owner: int(a.Inst.Owner),
 		Zone: a.Zone.String(), Exhausted: a.Exhausted, FaceDown: a.FaceDown, Damage: a.Damage, Armor: a.Armor,
 		Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a).Lines(),
+		Text: a.Printed().RulesText,
 	}
 }
 

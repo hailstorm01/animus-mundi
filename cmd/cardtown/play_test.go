@@ -388,4 +388,3 @@ func TestPlay_ActionLabelFindsAssetsInEveryZone(t *testing.T) {
 		t.Errorf("actionLabel for Scratch = %q, want %q", gotScratch, wantScratch)
 	}
 }
-

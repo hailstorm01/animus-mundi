@@ -4,7 +4,7 @@ title: The play screen names an activation, its asset and printed text (harness,
 kind: harness
 tier: flash
 wave: D
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d/T-0161-activate-label
 depends_on: [T-0158]
 claims: [view:asset-text, label:activate]
@@ -49,11 +49,24 @@ W is your worktree. Both test packages stop compiling while `AssetView` has no `
 - `cmd/cardtown/play_test.go` (the two new tests only; no existing test changes)
 
 ## Done When
-- [ ] Cases 1-6 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d` passes
+- [x] Cases 1-6 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d` passes
 
 ## Log
 - 2026-11-04 lead-architect: split off T-0159 under the D2 size rule (D2.4), because the label needs a text the `View` doesn't carry, which made T-0159 five files. Written `queued`.
 - 2026-11-04 lead-architect (wave D run, session 4): wrote Inputs, Shape, Acceptance Cases, Allowed Files and Done When against the run branch at f51bc7d; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the shape is one field and one lookup. Every command here is on the headless allow-list, one per line. Narrowed the stub's claim about rules text to M2's factions (see Inputs). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2): no such card; #104: not due, this task has no `cards:`). Next: `kernel-engineer` on Flash.
+- 2026-11-04 kernel-engineer (T-0161):
+  - Pre-implementation tests: added TestView_AssetTextIsPrinted and TestView_FaceDownAssetHidesItsText in pkg/view/view_test.go, and TestPlay_ActionLabelNamesTheActivation and TestPlay_ActionLabelFindsAssetsInEveryZone in cmd/cardtown/play_test.go. Confirmed compilation failed due to missing AssetView.Text. Committed test(T-0161) (17813c2).
+  - Reuse: CardView.Text already held printed rules text; added Text string to view.AssetView populated from a.Printed().RulesText in assetView (face-down assets receive empty string via scratchFace). In cmd/cardtown/play_screen.go, refactored existing findAsset traversal into a shared lookupAsset helper returning *view.AssetView, used by both findAsset and engine.ActActivate.
+  - Implementation committed as feat(engine): the play screen names an activation, its asset and printed text (T-0161) (09719c8).
+  - Commands & Verification:
+    - Case 1: `go test ./pkg/view -run TestView_AssetTextIsPrinted` -> PASS
+    - Case 2: `go test ./pkg/view -run TestView_FaceDownAssetHidesItsText` -> PASS
+    - Case 3: `go test ./cmd/cardtown -run TestPlay_ActionLabelNamesTheActivation` -> PASS
+    - Case 4: `go test ./cmd/cardtown -run TestPlay_ActionLabelFindsAssetsInEveryZone` -> PASS
+    - Case 5: `go tool task sim-compare -- autoloop/m2-wave-d` -> [PASS] starter and stress sims match autoloop/m2-wave-d byte for byte, exit codes included
+    - Case 6: `git diff autoloop/m2-wave-d --stat` -> exactly 5 files changed (.agents/tasks/m2/T-0161-activate-label.md, cmd/cardtown/play_screen.go, cmd/cardtown/play_test.go, pkg/view/view.go, pkg/view/view_test.go)
+    - Gate: `go tool task check` -> PASS (gofmt, go vet, all package tests, cardtown lint --all)
+    - Starter sim: `go tool task sim` -> PASS (200 games, all invariants holding)
