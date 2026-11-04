@@ -150,3 +150,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0144 | One declare sequence, (g *Game) declare, and one read of a card's cost, (g *Game) EffectiveCost (directives #92 and #93, harness, flash, pure move) | done |
 | T-0145 | Additional costs and a card's cost get their own file, costs.go (directive #94, harness, flash, pure move) | done |
 | T-0146 | One function deploys a card onto the battlefield, deployCard (directive #95, harness, flash, pure move) | done |
+| T-0147 | One function buffers a fired trigger, bufferTrigger (directive #96, harness, flash, pure move) | done |

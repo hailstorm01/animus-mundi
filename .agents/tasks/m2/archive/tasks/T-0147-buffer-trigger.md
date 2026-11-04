@@ -4,7 +4,7 @@ title: One function buffers a fired trigger, bufferTrigger (directive #96, harne
 kind: harness
 tier: flash
 wave: C.1 (board directive #96, structural review 7, finding 5)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0147-buffer-trigger
 depends_on: [T-0146]
 claims: [helper:bufferTrigger]
@@ -97,3 +97,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     - Case 8: git -C W diff autoloop/m2-wave-c.1 --stat lists only pkg/engine/trigger.go and this task file.
     - Case 9: go -C W tool task check and go -C W tool task sim passed all checks.
   - Handoff commit feat(engine): bufferTrigger helper buffers pending triggers (T-0147). Task status set to review.
+- 2026-11-03, lead-architect (wave C.1 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as 30fb0e5. Flash run `4178b53b-9cd5-4ce2-9a91-0ea34fc98ba5`: exit 0, `status: SUCCESS`, 289 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0147-buffer-trigger` (cbce983):
+  - Scope: only `trigger.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: `trigger.go` matches the task's Edits exactly. Both callers pass the same `Sprintf` label and the same trigger, and `fireHook`'s gates and `fireCombatKill`'s `awaits` are untouched. Only this file's status, Log and Done When boxes changed besides.
+  - Fences and placement: no card name, no new rule. `bufferTrigger` sits below `fireHook`, in the file that owns the buffer.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-8; `cardtown lint fences` `[PASS]`; `go tool task check` passes (it runs every test); `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` matches the task tip's, so the gates hold on the run branch. Directive #96 is applied. Nothing is queued now; the next session takes #97 from the board.
