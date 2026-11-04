@@ -4,7 +4,7 @@ title: A resource's name lives in one place, Resource.String (directive #98, par
 kind: harness
 tier: flash
 wave: C.1 (board directive #98, structural review 7, finding 7)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-c.1/T-0149-resource-string
 depends_on: [T-0148]
 claims: [helper:Resource.String]
@@ -84,10 +84,28 @@ The reviewer also repeats the event JSON and play screen comparison from Inputs.
 - `cmd/cardtown/play_screen.go`
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-c.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-03, lead-architect (wave C.1 run, session 6): wrote this task from directive #98 against the run branch at 17c4d50; `main` had no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `Resource.String` and no other resource-name helper. #98 is nine non-test files, so it splits into this task, T-0150 and T-0151, both `queued` with board rows (D2.4). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: T-0151 touches `deck.go` but is a pure move; #15: no turn-boundary hook; #71, #91 (2): no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-03, kernel-engineer (T-0149): implemented pure move of resource names into `Resource.String()`.
+  - Diff shows:
+    - `pkg/engine/actions.go`: added `func (r Resource) String() string` method on `Resource`.
+    - `pkg/engine/events.go`: replaced manual `if a.Resource == Tactics` block with `e.Resource = a.Resource.String()`.
+    - `cmd/cardtown/play_screen.go`: replaced manual `res` string assignment with direct `a.Resource` formatting in `actionLabel`.
+  - Searched `pkg/engine` for reuse; confirmed no existing `Resource.String()` or equivalent resource-naming helper.
+  - Acceptance cases verified:
+    - Case 1: `git -C W diff autoloop/m2-wave-c.1 -- "*_test.go"` printed nothing; `go -C W test ./...` passed (all packages ok).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-c.1` passed (`[PASS] starter and stress sims match autoloop/m2-wave-c.1 byte for byte, exit codes included`).
+    - Case 3: `git -C W grep -n "Resource) String()" -- pkg/engine` printed `pkg/engine/actions.go:45:func (r Resource) String() string {`.
+    - Case 4: `git -C W grep -n "a.Resource.String()" -- pkg cmd` printed `pkg/engine/events.go:147:		e.Resource = a.Resource.String()`.
+    - Case 5: `git -C W grep -n "findAsset(a.Asset), a.Resource" -- cmd/cardtown/play_screen.go` printed `cmd/cardtown/play_screen.go:153:		return fmt.Sprintf("Generate: %s -> %s", findAsset(a.Asset), a.Resource)`.
+    - Case 6: `git -C W grep -n "a.Resource == " -- pkg/engine/events.go cmd/cardtown/play_screen.go` returned exit code 1 with no output.
+    - Case 7: `git -C W diff autoloop/m2-wave-c.1 --numstat -- pkg cmd` printed `1	5	cmd/cardtown/play_screen.go`, `8	0	pkg/engine/actions.go`, and `1	4	pkg/engine/events.go`.
+    - Case 8: `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
+    - Case 9: `git -C W diff autoloop/m2-wave-c.1 --stat` lists only `cmd/cardtown/play_screen.go`, `pkg/engine/actions.go`, `pkg/engine/events.go`, and this task file.
+    - Case 10: `go -C W tool task check` passed all stages (gofmt, vet, tests, linters, fences); `go -C W tool task sim` passed 200 starter matches cleanly.
+  - Ready for review.
