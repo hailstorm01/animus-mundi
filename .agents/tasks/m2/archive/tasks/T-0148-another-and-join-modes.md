@@ -4,7 +4,7 @@ title: One read of "another", anotherOf, and modes joined in one place, joinMode
 kind: harness
 tier: flash
 wave: C.1 (board directive #97, structural review 7, finding 6)
-status: review
+status: done
 branch: m2/autoloop-wave-c.1/T-0148-another-and-join-modes
 depends_on: [T-0147]
 claims: [helper:anotherOf, helper:joinModes, helper:shiftSlots]
@@ -149,3 +149,9 @@ No new tests: a pure move. W is your worktree. Run each command on its own, poin
     - Case 10: git -C W diff autoloop/m2-wave-c.1 --stat listed only pkg/engine/placement.go, pkg/engine/targeting.go, and this task file.
     - Case 11: go -C W tool task check and go -C W tool task sim passed all checks.
   - Handoff commit feat(engine): anotherOf, joinModes and shiftSlots helpers (T-0148). Task status set to review.
+- 2026-11-03, lead-architect (wave C.1 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-c.1` as cca2a9b. Flash run `bce46ea5-77a5-47ab-b7f7-4cfe7c83eb0c`: exit 0, `status: SUCCESS`, 369 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file is empty). Review of `git diff autoloop/m2-wave-c.1...m2/autoloop-wave-c.1/T-0148-another-and-join-modes` (0333de6):
+  - Scope: only `placement.go`, `targeting.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: both code files match the task's Edits exactly. `anotherOf`'s `ok` is the old condition without `k >= 0`, `slotsLegal` still tests `exactlyOne(ts[k])` only when it holds, and `shiftSlots` shifts the same three fields under the same conditions on copies of the card's slices. Only this file's status, Log and Done When boxes changed besides.
+  - Fences and placement: no card name, no new rule. `anotherOf` sits in `targeting.go`; `joinModes` and `shiftSlots` sit below `chooseModes` in `placement.go`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-10; `cardtown lint fences` `[PASS]`; `gofmt -l` clean; `go test ./...` passes; `go tool task check` passes; `go tool task sim` clean, 200 games, P0 82.5% / P1 17.5% / draws 0.0%, 42/50 and 32/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-c.1` `[PASS]`.
+  - The merge's `pkg/` matches the task tip's, so the gates hold on the run branch. Directive #97 is applied. Nothing is queued now; the next session takes #98 from the board.
