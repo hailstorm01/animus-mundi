@@ -4,7 +4,7 @@ title: The resource economy gets its own file, resources.go, and exhaust moves t
 kind: harness
 tier: flash
 wave: D.1 (board directive #114, structural review 8, finding 11)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0176-resources-file
 depends_on: [T-0175]
 claims: [file:pkg/engine/resources.go]
@@ -172,10 +172,19 @@ No new tests: a pure move, so no `test(T-0176)` commit. W is your worktree. Run 
 - `pkg/engine/state.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 7): no `main` commits to sync. Wrote this task from board directive #114, next in board order. Not `WAVE-COMPLETE`: #114–#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: the finds are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (wave D.1 run): pure move implemented in feat(engine) commit 3ef5f96. Extracted Resource, convertReq, generate, convert, canYield, canPay, and pay into new pkg/engine/resources.go. In pkg/engine/actions.go, replaced ActGenerate and ActConvert bodies with g.generate(a) and p.convert(), removed canYield and exhaust, and used convertReq in check. Moved exhaust to pkg/engine/state.go and updated its file comment. In pkg/engine/costs.go, removed canPay and pay. All acceptance cases verified:
+  - Case 1: `git -C W diff autoloop/m2-wave-d.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed.
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 3: `git -C W grep -n -e 'type Resource int' -e 'convertReq = 2' -e ') generate(' -e ') convert(' -e ') canYield(' -e ') canPay(' -e ') pay(' -e ') exhaust(' -e ') payCost(' -e ') EffectiveCost(' -- pkg/engine` printed exactly the expected 10 lines (costs.go:14, 19; resources.go:6, 22, 26, 42, 49, 61, 66; state.go:324).
+  - Case 4: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed exactly: `4 54 pkg/engine/actions.go`, `0 12 pkg/engine/costs.go`, `69 0 pkg/engine/resources.go`, `12 1 pkg/engine/state.go`.
+  - Case 5: `go -C W run ./cmd/cardtown lint fences` exited 0 with all checks passing.
+  - Case 6: `git -C W diff autoloop/m2-wave-d.1 --stat` confirmed only those 4 files and this task file changed.
+  - Case 7: `gofmt -l W/pkg/engine` printed nothing; `go -C W tool task check` and `go -C W tool task sim` both passed cleanly.
+  - Ready for lead-architect review.

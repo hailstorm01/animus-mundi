@@ -15,18 +15,6 @@ func (g *Game) EffectiveCost(inst *Instance) (req, tac int) {
 	return inst.Card.ReqCost, inst.Card.TacCost
 }
 
-// canPay reports whether p holds req Requisition and tac Tactics, the one read
-// of "can pay".
-func (p *Player) canPay(req, tac int) bool {
-	return p.Req >= req && p.Tac >= tac
-}
-
-// pay takes req Requisition and tac Tactics from p, the one payment.
-func (p *Player) pay(req, tac int) {
-	p.Req -= req
-	p.Tac -= tac
-}
-
 // payCost takes inst's cost (EffectiveCost) from p.
 func (g *Game) payCost(p *Player, inst *Instance) {
 	req, tac := g.EffectiveCost(inst)
