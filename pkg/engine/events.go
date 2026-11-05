@@ -256,6 +256,7 @@ const (
 	EventLeave         = "leave"
 	EventDraw          = "draw"
 	EventDiscard       = "discard"
+	EventShuffle       = "shuffle" // a search shuffled a deck (FR-DEK-001): names the player and the zone, no card
 	EventResult        = "result"
 	EventMatchEnd      = "match-end"
 )
