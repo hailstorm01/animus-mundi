@@ -172,3 +172,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0166 | Make Boneyard Scavenger and Ruin Partisans executable (wave D card, flash) | done |
 | T-0167 | A step can search its controller's deck for a card (wave D shape, sonnet) | done |
 | T-0168 | The play log hides an opponent's deck search pick, and a search replays (harness, flash) | done |
+| T-0169 | Make Cliff of Portents executable (wave D card, flash) | done |

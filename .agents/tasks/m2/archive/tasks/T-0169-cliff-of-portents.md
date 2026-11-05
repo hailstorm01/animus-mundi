@@ -4,7 +4,7 @@ title: Make Cliff of Portents executable (R1, T1, exhaust, search your deck for 
 kind: card
 tier: flash
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0169-cliff-of-portents
 depends_on: [T-0158, T-0163, T-0167, T-0168]
 claims: [card:Cliff of Portents]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/cards_animus_cliff_test.go`, from the CSV text, loadin
 - 2026-11-05 rules-test-author: note 1 fixed: EmptyDeckStillActivatesAndShuffles now calls s.script(0) before activating, so "asks nothing" can fail; dropped the redundant Deck = nil. Nothing else changed.
 - 2026-11-05 lead-architect: tests approved (D4, round 2). `26c415d` is the note's change and nothing else, and the test file changed only in `test(T-0169)` commits. Before the definition, seven of the eight fail; `NeedsOneRequisitionAndOneTactics` passes until the card has its ability, and guards against over-offering after. Board re-read, no new directive. Set to `ready`.
 - 2026-11-05 kernel-engineer: defined Cliff of Portents in pkg/engine/cards/animus.go with activated ability (costs: Req 1, Tac 1, CostExhaustSelf; effect step: OpSearchDeck) and removed Cliff of Portents from NotYetExecutable in pkg/engine/cards/cards.go (commit 8e5823d). Reused ability.CostResources, ability.CostExhaustSelf, and ability.OpSearchDeck. Ran go test ./pkg/engine -run "TestCard_CliffOfPortents" (pass), go tool task check (pass: fmt, vet, tests, all linters clean), and go tool task sim (pass: 47/50 Animus executable, 200 games clean). Set to review.
+- 2026-11-05 lead-architect (wave D run, session 15): approved (D5, round 1), merged as 778c1ff. The diff is the task's Definition and the one name off `NotYetExecutable`, inside `Allowed Files`, and the test file changed only in `7fade40` and `26c415d`. Flash run `7d9bb385-00a2-4bf3-898e-d2624d1ab2a2` exited 0 with no denied action. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_CliffOfPortents`, `TestStarterSet_Executable`, `go tool task check`, `go tool task sim`, all 0; `go tool task check` and `go tool task sim` again on the merge, both 0. The sim matches the lead's probe: 47/50 Animus main cards executable, P0 84.0% / P1 15.0% / draws 1.0%. #105 is closed by this merge.
