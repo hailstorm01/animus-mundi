@@ -166,3 +166,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0160 | The docs say activated abilities are built, stack.go, doc.go, costs.go and effects.go comments (harness, flash, comments only) | done |
 | T-0161 | The play screen names an activation, its asset and printed text (harness, flash) | done |
 | T-0162 | A filter can ask for any of several subtypes, and for a Maneuver card (wave D shape, sonnet) | done |
+| T-0163 | An activated ability can be activated only if its required targets exist (wave D shape, sonnet) | done |
