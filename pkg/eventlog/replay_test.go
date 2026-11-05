@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -470,4 +471,111 @@ func TestReplay_ActivationWithAnotherIndexDiverges(t *testing.T) {
 		}
 	}
 	t.Fatal("no game holds an Activate event with Amount 1")
+}
+
+// searchDeck is a synthetic deck whose units search the deck on exhaust (T-0168).
+func searchDeck() engine.DeckList {
+	hq := &engine.Card{Name: "Search HQ", Type: engine.TypeHeadquarters, Power: 3, Health: 20, ReqYield: 3, TacYield: 2,
+		DeployZones: []engine.Zone{engine.ZoneHeadquarters}}
+	u := &engine.Card{Name: "Search Unit", Type: engine.TypeUnit, Power: 1, Health: 3, ReqCost: 1, ReqYield: 1, TacYield: 1,
+		DeployZones: []engine.Zone{engine.ZoneReserves, engine.ZoneMainTheater},
+		Ability: &ability.Def{Activated: []ability.Activated{
+			{Costs: []ability.Cost{{Kind: ability.CostExhaustSelf}},
+				Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpSearchDeck}}}},
+		}}}
+	main := make([]*engine.Card, 30)
+	for i := range main {
+		main[i] = u
+	}
+	return engine.DeckList{HQ: hq, Main: main}
+}
+
+var searchNames = [2]string{"search", "search"}
+
+func searchResolve(name string) (engine.DeckList, error) {
+	if name != "search" {
+		return engine.DeckList{}, fmt.Errorf("unknown deck %q", name)
+	}
+	return searchDeck(), nil
+}
+
+func searchGames(t *testing.T) [][]engine.Event {
+	t.Helper()
+	d := searchDeck()
+	games, err := play([2]engine.DeckList{d, d}, searchNames, 30, 7)
+	if err != nil {
+		t.Fatalf("search games: %v", err)
+	}
+	return games
+}
+
+func TestReplay_SearchesRoundTrip(t *testing.T) {
+	games := searchGames(t)
+	searchCount := 0
+	shuffledSearches := 0
+	for gi, evs := range games {
+		var searches [2][]*engine.DecisionRecord
+		for _, e := range evs {
+			if e.Decision != nil && e.Decision.Kind == engine.DecideSearch.String() {
+				searchCount++
+				searches[e.Decision.Player] = append(searches[e.Decision.Player], e.Decision)
+			}
+		}
+		for seat := 0; seat < 2; seat++ {
+			sList := searches[seat]
+			if len(sList) >= 2 {
+				d1 := sList[0]
+				d2 := sList[1]
+				pickedSet := map[int]bool{}
+				for _, p := range d1.Picks {
+					if p >= 0 && p < len(d1.Refs) {
+						pickedSet[d1.Refs[p]] = true
+					}
+				}
+				d2Set := map[int]bool{}
+				for _, ref := range d2.Refs {
+					d2Set[ref] = true
+				}
+				var filtered1 []int
+				for _, ref := range d1.Refs {
+					if !pickedSet[ref] && d2Set[ref] {
+						filtered1 = append(filtered1, ref)
+					}
+				}
+				if !slices.Equal(filtered1, d2.Refs) {
+					shuffledSearches++
+				}
+			}
+		}
+		if _, err := eventlog.Replay(evs, len(evs), searchResolve); err != nil {
+			t.Fatalf("game %d: %v", gi+1, err)
+		}
+	}
+	if searchCount == 0 {
+		t.Fatal("no decision has Kind DecideSearch over 30 games")
+	}
+	if shuffledSearches == 0 {
+		t.Fatal("no seat searched twice with a shuffled order between over 30 games")
+	}
+}
+
+func TestReplay_SearchWithSwappedOptionsDiverges(t *testing.T) {
+	for _, evs := range searchGames(t) {
+		for i, e := range evs {
+			if e.Decision == nil || e.Decision.Kind != engine.DecideSearch.String() || len(e.Decision.Refs) < 2 {
+				continue
+			}
+			cp := append([]engine.Event{}, evs...)
+			decCopy := *e.Decision
+			decCopy.Refs = append([]int{}, e.Decision.Refs...)
+			decCopy.Refs[0], decCopy.Refs[1] = decCopy.Refs[1], decCopy.Refs[0]
+			cp[i].Decision = &decCopy
+			_, err := eventlog.Replay(cp, len(cp), searchResolve)
+			if err == nil || !strings.Contains(err.Error(), "replay diverged") {
+				t.Fatalf("search with swapped refs: error %v, want replay diverged", err)
+			}
+			return
+		}
+	}
+	t.Fatal("no game holds a search decision with at least two refs")
 }
