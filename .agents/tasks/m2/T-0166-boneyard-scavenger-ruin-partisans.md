@@ -4,7 +4,7 @@ title: Make Boneyard Scavenger and Ruin Partisans executable (Tactics, exhaust, 
 kind: card
 tier: flash
 wave: D
-status: tests
+status: review
 branch: m2/autoloop-wave-d/T-0166-boneyard-scavenger-ruin-partisans
 depends_on: [T-0158, T-0162, T-0163, T-0165]
 claims: [card:Boneyard Scavenger, card:Ruin Partisans]
@@ -68,11 +68,14 @@ In a new file `pkg/engine/cards_path_reclaim_test.go`, from the CSV text, loadin
 - `pkg/engine/cards/cards.go` (remove the names from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_BoneyardScavenger`
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_RuinPartisans`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The cards load with no unsupported lines (`TestStarterSet_Executable` passes with the names removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_BoneyardScavenger`
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_RuinPartisans`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The cards load with no unsupported lines (`TestStarterSet_Executable` passes with the names removed)
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 11): written against 69de466, with the lead's probe above. #105's part (1) is applied, and parts (2), (3) go with *Cliff of Portents*, which also needs `SEARCH_DECK`, so this card task goes first. Searched `pkg/engine` and the task archive: `KindManeuver`, `KindUnit`, the discard-pile target and the three cost kinds all exist, so nothing here is a new shape. Board re-read, no new directive. Set to `tests`.
+- 2026-11-04 rules-test-author: wrote 13 tests in pkg/engine/cards_path_reclaim_test.go, all the cases listed under Tests: TestCard_BoneyardScavenger_{ReturnsTheChosenManeuver, ListsOnlyManeuverCards, NeedsAManeuverInThePile, OpponentsPileDoesNotCount, NeedsOneTactics, NeedsToBeReadied, WorksFromReserves} and TestCard_RuinPartisans_{ReturnsTheChosenUnit, ListsOnlyUnitCards, OwnCardCannotBeChosen, AnotherCopyCanReturnTheFirst, NeedsTwoTactics, NeedsToBeReadied}. The file has two local helpers (reclaimScene, reclaimExhaustedNotOffered; the latter because actNotOffered requires the unit to end Readied). Helpers requested: none. Cases left out: none. Vet and gofmt clean; the 6 positive tests fail until the cards are defined, the not-offered tests pass trivially for now.
+- 2026-11-04 lead-architect: tests approved (D4, round 1), each checked against `FR-ACT-001`, `FR-ACT-002`, `SVY-R2`, `SVY-R36` and `FR-TGT-001`. Six fail before the definitions. A lead probe with the Definition above, since reverted, passes all thirteen; dropping `CostExhaustSelf` from that probe fails both `NeedsToBeReadied` tests. Set to `ready`.
+- 2026-11-04 kernel-engineer: added card definitions for Boneyard Scavenger and Ruin Partisans to pkg/engine/cards/path.go, each with an activated ability using CostResources, CostExhaustSelf, CostKillSelf, discard pile targeting (Filter: AllegianceAllied, ZoneDiscard, Kinds: KindManeuver for Boneyard Scavenger and KindUnit for Ruin Partisans), and OpReturnToHand. Removed both card names from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing activated ability mechanisms and filter kinds without adding new shapes. Verified: go test ./pkg/engine -run TestCard_BoneyardScavenger (pass), go test ./pkg/engine -run TestCard_RuinPartisans (pass), go test ./pkg/engine -run TestStarterSet_Executable (pass), go tool task check (pass: fmt, vet, tests, all linter passes), and go tool task sim (pass: 200 games, P0 83.0% / P1 15.5% / draws 1.5%, all invariants holding). Set to review.

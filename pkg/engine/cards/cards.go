@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Blind Defile",
 	"Blindside",
 	"Boneyard Amalgam",
-	"Boneyard Scavenger",
 	"Brigand Highlander",
 	"Broken Horn Armorer",
 	"Chainbreaker Phalanx",
@@ -36,7 +35,6 @@ var NotYetExecutable = []string{
 	"Poisoned Rations",
 	"Reaver's Rush",
 	"Rhapsody's Hollow",
-	"Ruin Partisans",
 	"Solarheart Monk",
 	"Veil Render",
 }

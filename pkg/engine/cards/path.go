@@ -148,6 +148,36 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Boneyard Scavenger": {
+		Text: []string{"T1, exhaust, kill this unit: Return chosen maneuver card from your discard pile to your hand."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 1},
+					{Kind: ability.CostExhaustSelf},
+					{Kind: ability.CostKillSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Zone:       ability.ZoneDiscard,
+								Kinds:      ability.KindManeuver,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Irregulars": {
 		Text: []string{"Unbowed: Draw a card, then discard a card."},
 		Triggers: []ability.Trigger{
@@ -490,6 +520,36 @@ var pathDefs = map[string]*ability.Def{
 									Target:  0,
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+	},
+	"Ruin Partisans": {
+		Text: []string{"T2, exhaust, kill this unit: Return chosen unit card from your discard pile to your hand."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 2},
+					{Kind: ability.CostExhaustSelf},
+					{Kind: ability.CostKillSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Zone:       ability.ZoneDiscard,
+								Kinds:      ability.KindUnit,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
 						},
 					},
 				},
