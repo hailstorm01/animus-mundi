@@ -4,7 +4,7 @@ title: Make Cliff of Portents executable (R1, T1, exhaust, search your deck for 
 kind: card
 tier: flash
 wave: D
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-d/T-0169-cliff-of-portents
 depends_on: [T-0158, T-0163, T-0167, T-0168]
 claims: [card:Cliff of Portents]
@@ -64,3 +64,4 @@ In a new file `pkg/engine/cards_animus_cliff_test.go`, from the CSV text, loadin
 - 2026-11-05 lead-architect: tests returned (D4, round 1), one note. The other seven tests read right against `FR-ACT-001`, `FR-ACT-002`, `FR-DEK-001`, `SVY-R36`, `SVY-R37` and `SVY-R38`. A lead probe with the Definition above, since reverted, passes all eight and `go tool task check`; dropping `CostExhaustSelf`, the Requisition or the Tactics from it fails `NeedsToBeReadied` or `NeedsOneRequisitionAndOneTactics`. Note:
   1. `TestCard_CliffOfPortents_EmptyDeckStillActivatesAndShuffles` never calls `s.script(0)`, so `s.asked(0)` is empty whatever the engine does: `asks` is filled only by a scripted chooser (`scenario_test.go:175`), and "an empty deck asks nothing" (`SVY-R37`) can't fail. Add `s.script(0)` before the activation, as `TestFR_DEK_001_EmptyDeckStillShuffles` does. Also drop the line `s.g.Players[0].Deck = nil`, since `cliffScene(t, 0)` already leaves the deck empty.
 - 2026-11-05 rules-test-author: note 1 fixed: EmptyDeckStillActivatesAndShuffles now calls s.script(0) before activating, so "asks nothing" can fail; dropped the redundant Deck = nil. Nothing else changed.
+- 2026-11-05 lead-architect: tests approved (D4, round 2). `26c415d` is the note's change and nothing else, and the test file changed only in `test(T-0169)` commits. Before the definition, seven of the eight fail; `NeedsOneRequisitionAndOneTactics` passes until the card has its ability, and guards against over-offering after. Board re-read, no new directive. Set to `ready`.
