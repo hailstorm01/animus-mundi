@@ -4,7 +4,7 @@ title: Make Cliff of Portents executable (R1, T1, exhaust, search your deck for 
 kind: card
 tier: flash
 wave: D
-status: tests-review
+status: tests
 branch: m2/autoloop-wave-d/T-0169-cliff-of-portents
 depends_on: [T-0158, T-0163, T-0167, T-0168]
 claims: [card:Cliff of Portents]
@@ -61,3 +61,5 @@ In a new file `pkg/engine/cards_animus_cliff_test.go`, from the CSV text, loadin
 - 2026-11-04 lead-architect (wave D run, session 12): split off T-0167 (D2.4). Queued.
 - 2026-11-05 lead-architect (wave D run, session 15): written against 0b83a30. The card's CSV text, `FR-DEK-001`, `FR-DEK-002`, `FR-ACT-001`, `SVY-R36`, `FR-ACT-002` and `FR-MOD-001` (FRD 01 v3.21), and the shapes in the Definition all read as written. Searched `pkg/engine` and the task archive: `OpSearchDeck`, `CostResources` and `CostExhaustSelf` exist, so nothing here is a new shape. Board re-read, no new directive. Set to `tests`.
 - 2026-11-05 rules-test-author: wrote pkg/engine/cards_animus_cliff_test.go: TestCard_CliffOfPortents_{PutsTheChosenCardIntoHand,ListsTheWholeDeckTopFirst,MustChooseACard,AsksEvenWithOneCardInDeck,TimeoutTakesTheTopCard,EmptyDeckStillActivatesAndShuffles,NeedsOneRequisitionAndOneTactics,NeedsToBeReadied}. Helpers requested: none. Nothing left out. go vet clean; lint rules passes.
+- 2026-11-05 lead-architect: tests returned (D4, round 1), one note. The other seven tests read right against `FR-ACT-001`, `FR-ACT-002`, `FR-DEK-001`, `SVY-R36`, `SVY-R37` and `SVY-R38`. A lead probe with the Definition above, since reverted, passes all eight and `go tool task check`; dropping `CostExhaustSelf`, the Requisition or the Tactics from it fails `NeedsToBeReadied` or `NeedsOneRequisitionAndOneTactics`. Note:
+  1. `TestCard_CliffOfPortents_EmptyDeckStillActivatesAndShuffles` never calls `s.script(0)`, so `s.asked(0)` is empty whatever the engine does: `asks` is filled only by a scripted chooser (`scenario_test.go:175`), and "an empty deck asks nothing" (`SVY-R37`) can't fail. Add `s.script(0)` before the activation, as `TestFR_DEK_001_EmptyDeckStillShuffles` does. Also drop the line `s.g.Players[0].Deck = nil`, since `cliffScene(t, 0)` already leaves the deck empty.
