@@ -4,7 +4,7 @@ title: One "first picks in this order", firstPicks, and one listedOrder (directi
 kind: harness
 tier: flash
 wave: D.1 (board directive #110, structural review 8, finding 7)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0173-first-picks
 depends_on: [T-0172]
 claims: [helper:firstPicks, helper:listedOrder]
