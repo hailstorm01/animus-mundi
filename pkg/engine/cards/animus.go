@@ -476,6 +476,35 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Sinuous Growth": {
+		Text: []string{"T1, kill this unit: Return chosen Fungus or Plant card from your discard pile to your hand."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 1},
+					{Kind: ability.CostKillSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Zone:       ability.ZoneDiscard,
+								Subtypes:   []string{"Fungus", "Plant"},
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Spoil Forest Colossus": {
 		Text: []string{"Whenever this unit deploys or attacks, chosen asset heals 2."},
 		Triggers: []ability.Trigger{

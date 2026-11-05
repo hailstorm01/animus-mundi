@@ -4,7 +4,7 @@ title: Make Sinuous Growth executable (T1, kill this unit, return chosen Fungus 
 kind: card
 tier: flash
 wave: D
-status: tests
+status: review
 branch: m2/autoloop-wave-d/T-0165-sinuous-growth
 depends_on: [T-0158, T-0162, T-0163, T-0164]
 claims: [card:Sinuous Growth]
@@ -54,11 +54,14 @@ In a new file `pkg/engine/cards_animus_sinuous_test.go`, from the CSV text, load
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_SinuousGrowth`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_SinuousGrowth`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 8): queued behind T-0164, with T-0164's task commit (D2.4). Written against b7a0778, with the lead's probe above. Check it against the code of the day, and read the board's directives again, before it leaves `queued`. *Boneyard Scavenger* and *Ruin Partisans* stay a card task of their own, as the run file's `Kept` line says.
 - 2026-11-04 lead-architect (wave D run, session 9): checked against 59475b0. The card's CSV text, the subtypes of the cards the tests name, `FR-ACT-001`, `SVY-R36` and `FR-ACT-002` (FRD 01 v3.21), and the shapes in the Definition all read as written; #105's part (1) is applied, and parts (2), (3) go with *Cliff of Portents*. Board re-read, no new directive. Set to `tests`.
+- 2026-11-04 rules-test-author: wrote `pkg/engine/cards_animus_sinuous_test.go`: TestCard_SinuousGrowth_ReturnsTheChosenCard, _ListsFungusOrPlantCardsOfAnyType, _OwnCardCannotBeChosen (empty pile; non-matching pile), _AnotherCopyCanReturnTheFirst, _OpponentsPileDoesNotCount, _NeedsOneTactics, _WorksWhileExhausted. Helpers requested: none (reuses `activate`, `offersActivate`, `actNotOffered`, `setPool`, `refs`). Run now: the four positive tests fail with "no activated ability 0" (no definition yet); the three "not offered" tests pass trivially until the definition exists, and guard against over-offering after. No cases left out.
+- 2026-11-04 lead-architect: tests approved (D4, round 1), each checked against `FR-ACT-001`, `SVY-R36`, `SVY-R2`, `FR-ACT-002` and `FR-TGT-001`. A lead probe with the Definition above, since reverted, passes all seven and every package. Set to `ready`.
+- 2026-11-04 kernel-engineer: added Sinuous Growth ability definition to pkg/engine/cards/animus.go using CostResources (Tac: 1), CostKillSelf, Target filter (AllegianceAllied, ZoneDiscard, Subtypes: Fungus/Plant), and OpReturnToHand. Removed Sinuous Growth from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing ability primitives and cost structures without adding new shapes. Verified: go test ./pkg/engine -run TestCard_SinuousGrowth passed; go test ./pkg/engine -run TestStarterSet_Executable passed; go tool task check passed clean; go tool task sim ran clean on starter decks (P0 main cards executable 46/50, 200 games 0 invariant violations). Set to review.
