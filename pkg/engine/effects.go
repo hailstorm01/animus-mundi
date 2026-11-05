@@ -95,8 +95,38 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepRelocate(r, st)
 	case ability.OpMoveZone:
 		return g.stepMoveZone(r, st)
+	case ability.OpSearchDeck:
+		return g.stepSearchDeck(r, st)
 	}
 	return 0
+}
+
+// stepSearchDeck has each step player choose a card from their deck, shuffle
+// the rest and put the chosen card into their hand (FR-DEK-001). The decision
+// is hidden and must pick one (SVY-R37); an empty deck is unsatisfiable, so
+// nothing is asked, but it is still shuffled and the shuffle logged. A search
+// is not a draw (FR-WIN-001). It returns how many cards moved to a hand.
+func (g *Game) stepSearchDeck(r *resolution, st ability.Step) int {
+	n := 0
+	for _, pid := range stepPlayers(r.it, st) {
+		p := g.Players[pid]
+		d := Decision{Player: pid, Kind: DecideSearch, Prompt: "Search your deck for a card", Min: 1, Max: 1, Hidden: true}
+		for _, inst := range p.Deck {
+			d.Options = append(d.Options, Option{Label: inst.Card.Name, Ref: inst.ID})
+		}
+		var found *Instance
+		if picks := g.choose(d); len(picks) > 0 {
+			found = p.Deck[picks[0]]
+			g.takeCard(found)
+		}
+		g.shuffle(p)
+		g.logEvent(Event{Kind: EventShuffle, Player: int(pid), Zone: ZoneDeck.String()}, "player %d shuffles their deck", pid)
+		if found != nil {
+			g.putCard(found, ZoneHand, false)
+			n++
+		}
+	}
+	return n
 }
 
 // stepMoveZone moves each unit of stepAssets to st.To in its controller's

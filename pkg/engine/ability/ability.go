@@ -248,6 +248,7 @@ const (
 	OpModifyStat                 // the Subject gets +Amount power until end of turn (Layer 5, FR-LAY-001; expires in Sub-Phase 4c, FR-LAY-003). Other stats and durations come later
 	OpKill                       // destroy the Subject at once, into its owner's discard pile (FR-LAY-002, FR-ZON-002); a Headquarters is skipped (no M2 card kills one)
 	OpMoveZone                   // move each Subject unit to Step.To, in its controller's battlefield, keeping its state (FR-ZON-002, FR-ZON-004). A unit already there, a Structure and a Headquarters don't move
+	OpSearchDeck                 // its controller chooses a card from their deck, the rest is shuffled and the card goes to their hand (FR-DEK-001, SVY-R37, SVY-R38). An empty deck is still shuffled
 )
 
 // Subject is what a step acts on.
