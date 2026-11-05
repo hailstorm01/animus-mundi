@@ -4,7 +4,7 @@ title: One function plays a card from hand, playFromHand, and one emitAction cas
 kind: harness
 tier: flash
 wave: D.1 (board directive #108, structural review 8, finding 5)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0171-play-from-hand
 depends_on: [T-0170]
 claims: [helper:Game.playFromHand]
