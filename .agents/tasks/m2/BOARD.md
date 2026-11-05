@@ -32,4 +32,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0169 | Make Cliff of Portents executable (wave D card, flash) | queued |
+| T-0169 | Make Cliff of Portents executable (wave D card, flash) | tests |
