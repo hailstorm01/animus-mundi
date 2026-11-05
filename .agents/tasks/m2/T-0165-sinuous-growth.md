@@ -4,7 +4,7 @@ title: Make Sinuous Growth executable (T1, kill this unit, return chosen Fungus 
 kind: card
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0165-sinuous-growth
 depends_on: [T-0158, T-0162, T-0163, T-0164]
 claims: [card:Sinuous Growth]
