@@ -4,7 +4,7 @@ title: Make Boneyard Scavenger and Ruin Partisans executable (Tactics, exhaust, 
 kind: card
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0166-boneyard-scavenger-ruin-partisans
 depends_on: [T-0158, T-0162, T-0163, T-0165]
 claims: [card:Boneyard Scavenger, card:Ruin Partisans]
