@@ -39,7 +39,6 @@ func (r *scriptedReader) Read(p []byte) (int, error) {
 //     stream that answers 1 to every prompt and y to every yes/no question,
 //     finishes the match and returns 0.
 //   - Its output ends with the result line.
-//   - It contains [not executable yet] at least once (the starter decks hold such cards).
 //   - It is byte-identical across two runs.
 func TestPlay_Case1_ScriptedSessionFinishes(t *testing.T) {
 	args := []string{"-deck", "starter", "-p0", "ANIMUS", "-p1", "PATH", "-seat", "0", "-seed", "3"}
@@ -59,10 +58,6 @@ func TestPlay_Case1_ScriptedSessionFinishes(t *testing.T) {
 	trimmed1 := strings.TrimSpace(out1)
 	if !strings.HasPrefix(trimmed1[strings.LastIndex(trimmed1, "\n")+1:], "Result:") {
 		t.Errorf("output does not end with result line; last lines:\n%s", trimmed1[max(0, len(trimmed1)-200):])
-	}
-
-	if !strings.Contains(out1, "[not executable yet]") {
-		t.Errorf("output does not contain %q", "[not executable yet]")
 	}
 
 	code2, out2 := runOnce()
@@ -299,6 +294,23 @@ func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
 	expectedSection := "Resolution Stack:\n  Maneuver: Alpha Volley (Player 0)\n  Attack (Player 1, Source 7)\n"
 	if !strings.Contains(out, expectedSection) {
 		t.Errorf("printScreen output did not contain expected stack section:\n%s\nGot output:\n%s", expectedSection, out)
+	}
+}
+
+// T-0164: the screen tags a hand card the kernel can't run yet, and no other.
+func TestPlay_PrintScreenTagsANotExecutableHandCard(t *testing.T) {
+	var v view.View
+	v.You.Hand = []view.CardView{
+		{Card: "Ready Card", ReqCost: 1, TacCost: 2, Power: 3, Health: 4, Executable: true},
+		{Card: "Stub Card", ReqCost: 5, TacCost: 6, Power: 7, Health: 8},
+	}
+	var buf bytes.Buffer
+	printScreen(&buf, v, nil)
+	out := buf.String()
+
+	want := "Your Hand:\n  [1] Ready Card (R1 T2, 3/4)\n  [2] Stub Card (R5 T6, 7/8) [not executable yet]\n"
+	if !strings.Contains(out, want) {
+		t.Errorf("printScreen output did not contain expected hand section:\n%s\nGot output:\n%s", want, out)
 	}
 }
 
