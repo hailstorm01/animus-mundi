@@ -15,11 +15,22 @@ func (g *Game) EffectiveCost(inst *Instance) (req, tac int) {
 	return inst.Card.ReqCost, inst.Card.TacCost
 }
 
+// canPay reports whether p holds req Requisition and tac Tactics, the one read
+// of "can pay".
+func (p *Player) canPay(req, tac int) bool {
+	return p.Req >= req && p.Tac >= tac
+}
+
+// pay takes req Requisition and tac Tactics from p, the one payment.
+func (p *Player) pay(req, tac int) {
+	p.Req -= req
+	p.Tac -= tac
+}
+
 // payCost takes inst's cost (EffectiveCost) from p.
 func (g *Game) payCost(p *Player, inst *Instance) {
 	req, tac := g.EffectiveCost(inst)
-	p.Req -= req
-	p.Tac -= tac
+	p.pay(req, tac)
 }
 
 // costDecision builds the pick of the allied asset that pays cost c, with the
@@ -76,8 +87,7 @@ func (g *Game) costsPayable(pl placement) bool {
 		case ability.CostDiscard, ability.CostKillSelf:
 			continue // discarding none pays it; killing the source always can
 		case ability.CostResources:
-			p := g.Players[pl.controller]
-			if p.Req < c.Req || p.Tac < c.Tac {
+			if !g.Players[pl.controller].canPay(c.Req, c.Tac) {
 				return false
 			}
 			continue
@@ -115,9 +125,7 @@ func (g *Game) payCosts(pl placement) {
 		}
 		switch c.Kind {
 		case ability.CostResources:
-			p := g.Players[pl.controller]
-			p.Req -= c.Req
-			p.Tac -= c.Tac
+			g.Players[pl.controller].pay(c.Req, c.Tac)
 			continue
 		case ability.CostExhaustSelf:
 			g.exhaust(g.Asset(pl.source))
