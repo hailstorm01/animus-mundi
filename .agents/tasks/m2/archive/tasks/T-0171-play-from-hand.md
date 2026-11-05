@@ -4,7 +4,7 @@ title: One function plays a card from hand, playFromHand, and one emitAction cas
 kind: harness
 tier: flash
 wave: D.1 (board directive #108, structural review 8, finding 5)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0171-play-from-hand
 depends_on: [T-0170]
 claims: [helper:Game.playFromHand]
@@ -114,3 +114,9 @@ No new tests: a pure move, so no `test(T-0171)` commit. W is your worktree. Run 
   - Case 9: git -C W diff autoloop/m2-wave-d.1 --stat lists only pkg/engine/actions.go, pkg/engine/events.go, and this task file.
   - Case 10: go -C W tool task check and go -C W tool task sim passed.
   Reviewer note: Enact event leaves Zone empty (guarded by a.Kind == ActDeploy). All starter and stress simulations remain byte-identical.
+- 2026-11-05, lead-architect (wave D.1 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as e506349. Flash run `505e6126-f52f-45f4-b8d0-ca9b36d756f4`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0171-play-from-hand` (60e1345):
+  - Scope: only `actions.go`, `events.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1-4. `playFromHand` makes the same three calls in the same order. In `emitAction`, only a Deploy sets `Zone`, so an Enact event still leaves it empty, which no test pins (see Inputs).
+  - Fences and placement: no card name, no new rule. `playFromHand` sits right after `handPlay`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-9; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #108 is applied. #109 is next.
