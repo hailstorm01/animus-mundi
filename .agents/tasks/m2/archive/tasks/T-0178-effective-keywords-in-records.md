@@ -4,7 +4,7 @@ title: Snapshots and damage events report effective keywords (directive #116 (a)
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (a), structural review 8, finding 1)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0178-effective-keywords-in-records
 depends_on: [T-0177]
 claims: [field:AssetSnap.Keywords, field:Event.Resistant, field:Event.Stalwart, json:Keywords, test:TestEffectiveKeywords_Case1_FaceUp, test:TestEffectiveKeywords_Case2_FaceDownDiffersFromTheCard, test:TestEffectiveKeywords_Case3_JSON]
@@ -256,3 +256,10 @@ Edit 1 is the whole of the test commit: commit it as `test(T-0178): snapshots an
     - `chore(tasks): T-0178 in-progress`
     - `test(T-0178): snapshots and damage events report effective keywords`
     - `feat(engine): snapshots and damage events report effective keywords (T-0178)`
+- 2026-11-05, lead-architect (wave D.1 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as ff92268. Flash run `6976769c-96f4-4c4f-a2fa-04737c734230`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0178-effective-keywords-in-records`, not the Log:
+  - Scope: only the five Allowed Files and this file changed, and all five are byte-identical to the lead's dry run. The test file was added in b584247, the `test(T-0178)` commit, and no `_test.go` changed after it. No existing test was edited.
+  - Failed before: at b584247, in a scratch worktree, `go test ./pkg/engine -run TestEffectiveKeywords` exits 1 on `has no field or method Keywords`.
+  - Fences and placement: no card name and no `OPEN(` marker. `g.Keywords` stays the one read of effective keywords, and `dealDamage` reuses its `kw`. No monitor reads the new fields yet: T-0179 (#116 (b)) does that, and #116 stays on the board until it merges.
+  - A limit of Case 2, known and stated in Inputs: nothing grants a keyword until #117, so the only effective keywords a test can vary are a face-down asset's. #117's tests carry the first real grant.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 2-6; `gofmt -l pkg` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. T-0179 is next.
