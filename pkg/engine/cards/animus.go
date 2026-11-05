@@ -58,6 +58,24 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Cliff of Portents": {
+		Text: []string{
+			"R1, T1, exhaust: Search your deck for a card, put it into your hand, then shuffle your deck.",
+		},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Req: 1, Tac: 1},
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{Op: ability.OpSearchDeck},
+					},
+				},
+			},
+		},
+	},
 	"Craterfall Ancient": {
 		Text: []string{
 			"Whenever this unit attacks, you may deal damage equal to its power to each of up to 2 other chosen assets.",
