@@ -11,21 +11,22 @@ type CardSnap struct {
 }
 
 // AssetSnap is a battlefield asset. Card is always the real card name, even
-// when the asset is face-down; Power and MaxHealth are effective (Layer 6).
+// when the asset is face-down; Power, MaxHealth and Keywords are effective.
 type AssetSnap struct {
-	ID         int    `json:"id"`
-	Inst       int    `json:"inst"`
-	Card       string `json:"card"`
-	Owner      int    `json:"owner"`
-	Controller int    `json:"controller"`
-	Zone       string `json:"zone"`
-	Exhausted  bool   `json:"exhausted"`
-	FaceDown   bool   `json:"faceDown"`
-	Damage     int    `json:"damage"`
-	Armor      int    `json:"armor"`
-	TempPower  int    `json:"tempPower"`
-	Power      int    `json:"power"`
-	MaxHealth  int    `json:"maxHealth"`
+	ID         int      `json:"id"`
+	Inst       int      `json:"inst"`
+	Card       string   `json:"card"`
+	Owner      int      `json:"owner"`
+	Controller int      `json:"controller"`
+	Zone       string   `json:"zone"`
+	Exhausted  bool     `json:"exhausted"`
+	FaceDown   bool     `json:"faceDown"`
+	Damage     int      `json:"damage"`
+	Armor      int      `json:"armor"`
+	TempPower  int      `json:"tempPower"`
+	Power      int      `json:"power"`
+	MaxHealth  int      `json:"maxHealth"`
+	Keywords   Keywords `json:"keywords"`
 }
 
 // PlayerSnap is one seat in a Snapshot.
@@ -60,7 +61,7 @@ func (g *Game) assetSnap(a *Asset) AssetSnap {
 		ID: a.ID, Inst: a.Inst.ID, Card: a.Inst.Card.Name,
 		Owner: int(a.Inst.Owner), Controller: int(a.Controller), Zone: a.Zone.String(),
 		Exhausted: a.Exhausted, FaceDown: a.FaceDown, Damage: a.Damage, Armor: a.Armor,
-		TempPower: a.TempPower, Power: g.Power(a), MaxHealth: g.MaxHealth(a),
+		TempPower: a.TempPower, Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a),
 	}
 }
 

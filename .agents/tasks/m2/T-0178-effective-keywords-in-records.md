@@ -4,7 +4,7 @@ title: Snapshots and damage events report effective keywords (directive #116 (a)
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (a), structural review 8, finding 1)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0178-effective-keywords-in-records
 depends_on: [T-0177]
 claims: [field:AssetSnap.Keywords, field:Event.Resistant, field:Event.Stalwart, json:Keywords, test:TestEffectiveKeywords_Case1_FaceUp, test:TestEffectiveKeywords_Case2_FaceDownDiffersFromTheCard, test:TestEffectiveKeywords_Case3_JSON]
@@ -234,10 +234,25 @@ Edit 1 is the whole of the test commit: commit it as `test(T-0178): snapshots an
 - `pkg/engine/effective_keywords_test.go` (new, edit 1 only)
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 9): no `main` commits to sync. Wrote this task from board directive #116 (a), next in board order, and T-0179 `queued` for (b) (D2.4). Not `WAVE-COMPLETE`: #116–#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: the finds are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0178):
+  - Implementation: Added `pkg/engine/effective_keywords_test.go` with 3 acceptance test cases. Added lower-camel JSON tags to `Keywords` in `card.go`. Added `Keywords` field to `AssetSnap` in `snapshot.go` populated via `g.Keywords(a)`. Added `Resistant` and `Stalwart` fields to damage `Event` in `events.go` and populated them in `dealDamage` in `damage.go`.
+  - Reuse: Used `g.Keywords(a)` (`layers.go`) in `assetSnap`, and existing `kw` calculation in `dealDamage`.
+  - Verification:
+    - Case 1: `go -C W test ./pkg/engine -run TestEffectiveKeywords` exited 1 (`AssetSnap has no field or method Keywords`).
+    - Case 2: `go -C W test ./pkg/engine -run TestEffectiveKeywords -v` exited 0 (all 3 cases PASS).
+    - Case 3: `go -C W test ./pkg/eventlog ./pkg/sim` exited 0.
+    - Case 4: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` matched the exact expected numstat (5 files).
+    - Case 5: `git -C W diff autoloop/m2-wave-d.1 --stat` matched only the 5 code files and task file.
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 (`[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`).
+    - Case 7: `gofmt -l W/pkg/engine` clean; `go -C W tool task check` exited 0; `go -C W tool task sim` exited 0.
+  - Commits:
+    - `chore(tasks): T-0178 in-progress`
+    - `test(T-0178): snapshots and damage events report effective keywords`
+    - `feat(engine): snapshots and damage events report effective keywords (T-0178)`

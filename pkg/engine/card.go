@@ -27,15 +27,15 @@ func (t CardType) String() string {
 // Keywords holds the standalone keyword values printed on (or granted to) an
 // entity. Numeric keywords use 0 for "absent"; Resistant may be negative.
 type Keywords struct {
-	Resistant        int
-	Stalwart         bool
-	Aggressive       int
-	Ethereal         bool
-	Ward             bool
-	Versatile        bool
-	Guardian         bool
-	Armor            int
-	DeploysExhausted bool
+	Resistant        int  `json:"resistant,omitempty"`
+	Stalwart         bool `json:"stalwart,omitempty"`
+	Aggressive       int  `json:"aggressive,omitempty"`
+	Ethereal         bool `json:"ethereal,omitempty"`
+	Ward             bool `json:"ward,omitempty"`
+	Versatile        bool `json:"versatile,omitempty"`
+	Guardian         bool `json:"guardian,omitempty"`
+	Armor            int  `json:"armor,omitempty"`
+	DeploysExhausted bool `json:"deploysExhausted,omitempty"`
 }
 
 // keywordDef is one standalone keyword: its printed name and its Keywords
