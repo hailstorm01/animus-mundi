@@ -4,7 +4,7 @@ title: One "this asset is yours" check, ownAsset, and "Aggressive" spelled once 
 kind: harness
 tier: flash
 wave: D.1 (board directives #111 and #112, structural review 8, findings 8 and 9)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0174-own-asset-and-aggressive-name
 depends_on: [T-0173]
 claims: [helper:ownAsset]
