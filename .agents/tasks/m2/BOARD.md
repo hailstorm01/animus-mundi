@@ -5,7 +5,7 @@
 - **Design note:** [`docs/architecture/m2-ability-model.md`](../../../docs/architecture/m2-ability-model.md) (written 2026-10-19). Shape and card tasks follow its Deliverables order.
 - **Scope:** every Animus and Path card plus the starter Headquarters *Animoceps Rager* and *Eternal Watchman*. *Rift* and *Encampment* moved to M3 on 2026-10-19.
 - **Last directive:** `#122` (applied directives live in [`archive/directives/directive_archive.md`](archive/directives/directive_archive.md))
-- **Last task:** `T-0175` (done tasks and their files live in [`archive/tasks/`](archive/tasks/task_archive.md))
+- **Last task:** `T-0176` (done tasks and their files live in [`archive/tasks/`](archive/tasks/task_archive.md))
 
 Task files are the source of truth. This board is an index of active and waiting work.
 
@@ -39,3 +39,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
+| T-0176 | The resource economy gets its own file, `resources.go`, and `exhaust` moves to `state.go` (directive #114, harness, flash, pure move) | ready |
