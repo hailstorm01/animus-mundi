@@ -139,6 +139,22 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #102: the docs say what wave C built.
 
    Every code task is a pure move, and #102 is comments and docs only. Done when #92–#102 are `applied`, every task's `go tool task sim-compare` passed (for #100, unchanged lint output), and `go tool task check` and `go tool task sim` pass.
+6g. **Wave D.1, cleanup, added 2026-11-05 from structural review 8 (board directives #107–#121).** It goes after wave D and before wave E, which builds on it (user, 2026-11-05). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave D.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #107: one read of "can pay", and one payment.
+   - #108: one function plays a card from hand.
+   - #109: the placement builds its stack item.
+   - #110: one "first picks in this order".
+   - #111 and #112: one "this asset is yours" check, and "Aggressive" spelled once. They may share a task.
+   - #113: `filter.go`.
+   - #114: `resources.go`, and `exhaust` moves to `state.go`.
+   - #115: the fences check the engine's imports.
+   - #116: rule monitors read effective keywords, in two tasks under the size rule.
+   - #117 (a `shape` task, tier `sonnet`): "Cornered: keyword" is one continuous shape, the first piece of Layer 3, and Allshan moves to it.
+   - #118 (a): the hand view shows what a card costs now.
+   - #119: a hidden decision stays hidden by its flag.
+   - #121: the docs say what wave D built.
+
+   #120 has no task: it is a `waiting:` row for a cost no M2 card prints, and #118 (b) waits for *Boneyard Amalgam*. #107–#114 are pure moves, and #121 is comments and docs only. #115, #116, #117, #118 and #119 add tests and don't change how any executable card plays. Done when no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
@@ -167,6 +183,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - **(a) Legality:** with exactly one unit on the battlefield, is the mode legal? Each slot alone has a legal entity, but the two can't both be filled. Cards affected: *Ambush Tactics*, and so whether it can be enacted (`SVY-R29`) when one other mode is legal. Recommendation: not legal. A mode is legal only if all its exactly-one slots can be filled at once with different entities.
    - **(b) Choosing and timeouts:** when only some picks for the first slot leave the second slot a legal entity (the first slot is "chosen unit" and the second "another chosen opposing unit" with one opposing unit), may the player pick the first slot so that the second can't be filled, and what does a timeout pick (`SVY-R16`)? Recommendation: the first slot offers only picks that leave every later exactly-one slot fillable, and the timeout takes the first of those in fixed order.
 17. **Activating with no legal target, and a deck search's choice and timeout: answered 2026-11-04 (user; `SVY-R36`–`SVY-R38`; [outcome](../design/outcomes/2026-11-04-wave-d-activation-without-target-and-deck-search.md); FRD 01 v3.21 `FR-ACT-001`, `FR-DEK-001`, `FR-MOD-001` §6; board directive #105).** An activated ability can be activated only if its required targets exist, under the same conditions as a Maneuver, so this note's Actions paragraph stands: built by T-0163. A search for "a card" must choose one if the deck has any, a search with criteria may choose no card, a search lists the deck in deck order, top first, and a timeout takes the first eligible card: built with *Cliff of Portents*.
+18. **Forcing specific cases in the sim (structural review 8, finding 15; deferred by the user, 2026-11-05).** The starter sim barely reaches some shapes, so "runs clean" says little about them: in 200 games, 99 of 49,665 actions were activations and 1 was a deck search. `ProgressPolicy` only generates resources for hand cards ([policy.go:53-62](../../pkg/sim/policy.go)), and no monitor names `FR-ACT` or `FR-DEK`. The scenario tests do cover these shapes. Rather than tune the policy, which shifts the win-rate baseline, the user proposes a way to force a case: start a bot with chosen cards in hand or in play. Still open: what a scenario can set up (hand, battlefield, resource pools), and how the policy is made to use it, since a seeded card still needs a bot that plays it. Any setup must be recorded in `MatchStart` so that `cardtown replay` can rebuild the game, and it must stay out of the rules (`pkg/engine` gains nothing the rules don't need). The lead's starting point: stack chosen cards on top of the deck after the setup shuffle, so a game still begins through the normal draw, and add a policy in `pkg/sim` that prefers the named cards. Design it before wave F, whose free deploys and look-at-the-top decisions are as rare as a deck search.
 
 ## Starter Decks
 
