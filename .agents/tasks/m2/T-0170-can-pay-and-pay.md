@@ -4,7 +4,7 @@ title: One read of "can pay" and one payment, (*Player).canPay and (*Player).pay
 kind: harness
 tier: flash
 wave: D.1 (board directive #107, structural review 8, finding 4)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0170-can-pay-and-pay
 depends_on: []
 claims: [helper:Player.canPay, helper:Player.pay]
