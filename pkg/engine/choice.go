@@ -85,11 +85,7 @@ func (d Decision) soleAnswer() ([]int, bool) {
 	}
 	switch {
 	case !d.Repeats && d.Min == len(d.Options):
-		picks := make([]int, len(d.Options))
-		for i := range picks {
-			picks[i] = i
-		}
-		return picks, true
+		return listedOrder(d), true
 	case d.Repeats && len(d.Options) == 1:
 		return make([]int, d.Min), true // Min copies of option 0
 	}
@@ -137,26 +133,36 @@ func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
 	case DecideTarget, DecidePick, DecideReplacement:
 		return g.fixedOrderPicks(d)
-	case DecideOrder:
-		picks := make([]int, d.Min)
-		for i := range picks {
-			picks[i] = i
-		}
-		return picks
+	case DecideOrder, DecideMode, DecideSearch:
+		return firstPicks(d, listedOrder(d))
 	case DecideHand:
 		return g.handPicks(d)
-	case DecideMode, DecideSearch:
-		picks := make([]int, d.Min)
-		for i := range picks {
-			if d.Repeats {
-				picks[i] = 0 // every repetition takes the first listed (directive #91)
-			} else {
-				picks[i] = i
-			}
-		}
-		return picks
 	}
 	return nil
+}
+
+// listedOrder returns d's option indexes in the order d lists them.
+func listedOrder(d Decision) []int {
+	order := make([]int, len(d.Options))
+	for i := range order {
+		order[i] = i
+	}
+	return order
+}
+
+// firstPicks returns the first d.Min options in order, which holds d's option
+// indexes. For a Repeats decision every one of the d.Min picks is the first
+// option in that order, never a cycle (SVY-R32).
+func firstPicks(d Decision, order []int) []int {
+	picks := make([]int, d.Min)
+	for i := range picks {
+		if d.Repeats {
+			picks[i] = order[0]
+		} else {
+			picks[i] = order[i]
+		}
+	}
+	return picks
 }
 
 // handPicks returns the indexes of the d.Min options whose cards come latest in
@@ -168,10 +174,7 @@ func (g *Game) handPicks(d Decision) []int {
 	for i, inst := range hand {
 		pos[inst.ID] = i
 	}
-	idx := make([]int, len(d.Options))
-	for i := range idx {
-		idx[i] = i
-	}
+	idx := listedOrder(d)
 	rank := func(i int) int {
 		if r, ok := pos[d.Options[i].Ref]; ok {
 			return r
@@ -179,22 +182,17 @@ func (g *Game) handPicks(d Decision) []int {
 		return -1 // not in hand: after all that are
 	}
 	slices.SortStableFunc(idx, func(a, b int) int { return rank(b) - rank(a) })
-	return idx[:min(d.Min, len(idx))]
+	return firstPicks(d, idx)
 }
 
 // fixedOrderPicks returns the indexes of the first d.Min options in the FR-MOD-001
-// §6 fixed order (SVY-R16), in that order. For a Repeats decision every one of
-// the d.Min picks is the first option in that order, never a cycle (SVY-R32).
-// It draws nothing from g.rng.
+// §6 fixed order (SVY-R16), in that order. It draws nothing from g.rng.
 func (g *Game) fixedOrderPicks(d Decision) []int {
 	if d.Min == 0 {
 		return nil
 	}
 	pos := g.fixedOrderPositions(d.Player)
-	idx := make([]int, len(d.Options))
-	for i := range idx {
-		idx[i] = i
-	}
+	idx := listedOrder(d)
 	rank := func(i int) int {
 		if r, ok := pos[d.Options[i].Ref]; ok {
 			return r
@@ -202,15 +200,7 @@ func (g *Game) fixedOrderPicks(d Decision) []int {
 		return len(pos) // not a battlefield asset: after all that are
 	}
 	slices.SortStableFunc(idx, func(a, b int) int { return rank(a) - rank(b) })
-	picks := make([]int, d.Min)
-	for i := range picks {
-		if d.Repeats {
-			picks[i] = idx[0] // every repetition lands on the first (SVY-R32)
-		} else {
-			picks[i] = idx[i]
-		}
-	}
-	return picks
+	return firstPicks(d, idx)
 }
 
 // randomPicks returns n uniformly random picks for d: distinct unless d.Repeats.
@@ -225,10 +215,7 @@ func randomPicks(r *rand.Rand, d Decision, n int) []int {
 		}
 		return picks
 	}
-	idx := make([]int, len(d.Options))
-	for i := range idx {
-		idx[i] = i
-	}
+	idx := listedOrder(d)
 	for i := 0; i < n; i++ { // partial Fisher-Yates
 		j := i + r.IntN(len(idx)-i)
 		idx[i], idx[j] = idx[j], idx[i]
