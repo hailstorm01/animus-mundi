@@ -15,7 +15,7 @@ FRD 01 is the rules source. This document names requirement IDs and never restat
 - **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems were about *when* targets are chosen (§4, R3–R4); since 2026-10-20 every target is locked on placement.
 - **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
 - **FRD 01 reach:** the starter set reaches **27 of the 30** unpinned FRD 01 requirements, including `FR-SET-001` because starter decks must be construction-legal (Q1). It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers).
-- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19, R7 on 2026-10-20, R8–R11 on 2026-10-21, R13–R17 on 2026-10-23, R18 on 2026-10-26, R12 and R19 on 2026-10-28, R20–R24 on 2026-10-29, R25–R31 on 2026-10-30, and R32–R35 on 2026-11-02; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain), and R5 on 2026-10-29. They are recorded in FRD 01 as `SVY-R1`–`SVY-R35`; R12 (Berserk is replaced by Overkill) is in v3.14. Nothing in the starter set is blocked.
+- **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19, R7 on 2026-10-20, R8–R11 on 2026-10-21, R13–R17 on 2026-10-23, R18 on 2026-10-26, R12 and R19 on 2026-10-28, R20–R24 on 2026-10-29, R25–R31 on 2026-10-30, R32–R35 on 2026-11-02, and R36–R38 on 2026-11-04; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain), and R5 on 2026-10-29. They are recorded in FRD 01 as `SVY-R1`–`SVY-R38`; R12 (Berserk is replaced by Overkill) is in v3.14. Nothing in the starter set is blocked.
 
 ---
 
@@ -92,6 +92,9 @@ Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are 
 | **R33** | A mode is legal only if its targets exist **and** its costs can be paid; the mode, its targets and its costs lock together on placement; all chosen modes are one stack item | Ambush Tactics, Rogue Fleshshaper (no M2 mode has a cost) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R33` (`FR-MOD-001` §5, `FR-TGT-001`). |
 | **R34** | "Another chosen X" must be a different entity: from the earlier slot it follows in the same clause, or from the source when there is none. A mode or Maneuver is legal only if enough different entities exist; a timeout takes the next different one | Ambush Tactics; Tempest Runner (M3) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R34` (`FR-TGT-002`, `FR-MNV-001`, `FR-MOD-001` §5, §6). |
 | **R35** | Each separate "chosen X" clause is its own target slot, and two slots may pick the same entity. Only a clause that points back ("it", "that unit", "the chosen unit") reuses an earlier target | Ensnaring Mist, Pincer Tactics; MAX-8 Autonomous Warsuit, Frostfire Breath, Piston Fist (outside M2) | **Ruled (user, 2026-11-02).** Recorded in FRD 01 v3.20 as `SVY-R35` (`FR-TGT-002`, `FR-TGT-001`). |
+| **R36** | An activated ability can be activated only if its required targets exist, under the same conditions as a Maneuver | Sinuous Growth, Boneyard Scavenger, Ruin Partisans, Rhapsody's Hollow; Dolus Macrocannon, Cathedral of Self, Tempest City Ray (outside M2) | **Ruled (user, 2026-11-04).** Recorded in FRD 01 v3.21 as `SVY-R36` (`FR-ACT-001`). |
+| **R37** | A search for "a card" must choose one if the deck has any. A search with criteria may choose no card, even when a match exists | Cliff of Portents; World Soul Messenger (outside M2) | **Ruled (user, 2026-11-04).** Recorded in FRD 01 v3.21 as `SVY-R37` (`FR-DEK-001`). |
+| **R38** | A search shows the deck in deck order, top first, and a timeout takes the first valid card | Cliff of Portents; World Soul Messenger (outside M2) | **Ruled (user, 2026-11-04).** Recorded in FRD 01 v3.21 as `SVY-R38` (`FR-DEK-001`, `FR-MOD-001` §6). |
 
 **Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
 
@@ -136,9 +139,9 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Despoiler's Emergence | C | Maneuver | `DEAL_DAMAGE 4` all opposing assets in Main Theater; `DEAL_DAMAGE 2` all opposing non-Scratch assets in Reserves | | |
 | Rapturous Sermon | C | Maneuver | `MOVE_ZONE` all allied Scratch Company → Main Theater; `MODIFY_STAT` +2 until end of turn | `FR-LAY-001` snapshot locking | Named in FRD 01 |
 | Animoceps Spores | C | Maneuver | `SCRATCH 2`, then `RETURN_TO_HAND` an allied Scratch Company (untargeted) | `FR-TGT-001` (`SVY-R3`) | Untargeted pick after the Scratch; any allied Scratch Company; timeout picks the first in fixed order (`SVY-R16`) |
-| Rhapsody's Hollow | D | Activated | T3 + exhaust + kill self → `GAIN_CONTROL` chosen opposing unit in Main Theater | `FR-ACT-001`, `FR-ZON-002`, `FR-ZON-003` | |
-| Sinuous Growth | D | Activated | T1 + kill self → `RETURN_TO_HAND` chosen Fungus or Plant card from discard | `FR-ACT-001` | R2 |
-| Cliff of Portents | D | Activated | R1 + T1 + exhaust → `SEARCH_DECK` any → hand, shuffle | `FR-DEK-001`, `FR-DEK-002` | |
+| Rhapsody's Hollow | D | Activated | T3 + exhaust + kill self → `GAIN_CONTROL` chosen opposing unit in Main Theater | `FR-ACT-001`, `FR-ZON-002`, `FR-ZON-003` | R36 |
+| Sinuous Growth | D | Activated | T1 + kill self → `RETURN_TO_HAND` chosen Fungus or Plant card from discard | `FR-ACT-001` | R2, R36 |
+| Cliff of Portents | D | Activated | R1 + T1 + exhaust → `SEARCH_DECK` any → hand, shuffle | `FR-DEK-001`, `FR-DEK-002` | R37, R38 |
 | Rift (HQ) | M3 | Activated | discard a card + exhaust → `SCRATCH 2`, `DEAL_DAMAGE 5` to self HQ | `FR-ACT-001`, `FR-CBT-003` | |
 | Animoceps Stalk | E | Continuous | other allied assets in same zone +1 power | `FR-LAY-001` | `excludeSelf` |
 | Animoceps Node | E | Continuous | allied units in same zone +1 power | `FR-LAY-001` | Structure; does not buff itself |
@@ -178,8 +181,8 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Poisoned Rations | C | Maneuver | `MODIFY_STAT` −3 max health until end of turn | `FR-LAY-002` | |
 | Ambush Tactics | C | Maneuver, modal | choose two of: `KILL`, `RETURN_TO_HAND`, delegated `DEAL_DAMAGE` = power, `PUT_CARD_ON_DECK` top | `FR-MOD-001`, `FR-TGT-003` | R6, R25, R27–R29, R31, R33, R34; delegated source as on Soul Whip |
 | Steel Rain | C | Maneuver + additional cost | discard up to 3; `DEAL_DAMAGE 2` chosen asset per discarded card; if hand empty, `DRAW_CARD 2` | `FR-TRN-003a`, `FR-TGT-001` (`SVY-R3`, `SVY-R4`) | Targets chosen with the discard; repeats allowed; timeout concentrates on one asset (R32) |
-| Boneyard Scavenger | D | Activated | T1 + exhaust + kill self → `RETURN_TO_HAND` chosen Maneuver card from discard | `FR-ACT-001` | |
-| Ruin Partisans | D | Activated | T2 + exhaust + kill self → `RETURN_TO_HAND` chosen unit card from discard | `FR-ACT-001` | R2 |
+| Boneyard Scavenger | D | Activated | T1 + exhaust + kill self → `RETURN_TO_HAND` chosen Maneuver card from discard | `FR-ACT-001` | R36 |
+| Ruin Partisans | D | Activated | T2 + exhaust + kill self → `RETURN_TO_HAND` chosen unit card from discard | `FR-ACT-001` | R2, R36 |
 | Encampment (HQ) | M3 | Activated | discard a card + exhaust → `DEAL_DAMAGE 1` to each of up to 2 chosen non-Scratch units | `FR-ACT-001`, `FR-TGT-002` | |
 | Brigand Highlander | E | Continuous (Cornered) | self +2 power while Cornered | `FR-KWD-002e`, `FR-LAY-003` | |
 | Macabre Dancers | E | Unbowed + continuous (Cornered) | Unbowed → `HEAL 2` self; Cornered → Resistant 1 | `FR-KWD-002a`, `FR-KWD-002e` | Heal fizzles if lethal (FRD 01) |
