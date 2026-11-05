@@ -13,8 +13,8 @@ import (
 // printed "[Cost]: [Effect]." ability of a battlefield asset. Its costs are
 // paid and its targets chosen on declaration, and it resolves as a stack item.
 // Cards are synthetic. Every exactly-one target slot below has a legal entity
-// on declaration: what happens when it has none is open (board directive #104)
-// and no test here pins it. Player 0 is the active player.
+// on declaration, except in the SVY-R36 cases (T-0163), which name it. Player 0
+// is the active player.
 
 var (
 	actExhaust = ability.Cost{Kind: ability.CostExhaustSelf}
@@ -489,4 +489,242 @@ func TestFR_TGT_003_FizzledAbilityLeavesSourceOnBattlefield(t *testing.T) {
 		t.Errorf("when an ability on a battlefield asset fizzles the asset remains on the battlefield (FR-TGT-003)")
 	}
 	s.wantSettled("a fizzled activated ability")
+}
+
+// --- T-0163: an activated ability needs its required targets (SVY-R36) ---
+
+// actPileFilter is "chosen allied Fungus unit card in your discard pile".
+var actPileFilter = ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit,
+	Subtypes: []string{"Fungus"}, Zone: ability.ZoneDiscard}
+
+// actRecaller is a Fungus unit whose ability is "Kill this unit: return chosen
+// allied Fungus unit card in your discard pile to your hand". Its own card
+// carries the filter's subtype, so it would match if it counted (SVY-R2).
+func actRecaller() *Card {
+	c := actUnit("Recaller", nil, ability.Activated{
+		Costs:  []ability.Cost{actKill},
+		Effect: ability.Effect{Targets: []ability.Target{{Filter: actPileFilter}}, Steps: []ability.Step{ptStep(ability.OpReturnToHand, 0)}},
+	})
+	c.Subtypes = []string{"Fungus"}
+	return c
+}
+
+// actNotOffered checks ability i of a is neither offered nor accepted, and that
+// the rejection changes nothing the cost would have changed.
+func actNotOffered(t *testing.T, s *scene, a *Asset, i int, why string) {
+	t.Helper()
+	p := s.g.Players[a.Controller]
+	req, tac, pile, hand := p.Req, p.Tac, len(p.Discard), len(p.Hand)
+	if offersActivate(s.g, a, i) {
+		t.Errorf("%s: the ability is not offered (SVY-R36, FR-ACT-001)", why)
+	}
+	s.reject(activate(a, i))
+	if !s.alive(a) || a.Exhausted || p.Req != req || p.Tac != tac || len(p.Discard) != pile || len(p.Hand) != hand {
+		t.Errorf("%s: a rejected Activate pays nothing and moves nothing: alive %v exhausted %v R%d T%d pile %d hand %d (SVY-R36)",
+			why, s.alive(a), a.Exhausted, p.Req, p.Tac, len(p.Discard), len(p.Hand))
+	}
+	if n := len(s.asked(a.Controller)); n != 0 {
+		t.Errorf("%s: no decision is asked, got %d (SVY-R36)", why, n)
+	}
+}
+
+func TestFR_ACT_001_NoLegalTargetCannotActivate(t *testing.T) {
+	// Covers: SVY-R36, SVY-R2, FR-TGT-001
+	t.Run("empty pile", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actRecaller())
+		actNotOffered(t, s, a, 0, "an empty discard pile, the source's own card not counting")
+	})
+	t.Run("only non-matching cards", func(t *testing.T) {
+		s := newScene(t)
+		s.inDiscard(0, unit("Plain", 1, 1, Keywords{}))
+		a := s.put(0, ZoneMainTheater, actRecaller())
+		actNotOffered(t, s, a, 0, "a pile holding only a card that is not a Fungus")
+	})
+	t.Run("a cost that would otherwise be paid", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
+			Costs: []ability.Cost{actRes(1, 1), actExhaust}, Effect: killChosenOpposing()}))
+		s.setPool(0, 1, 1)
+		actNotOffered(t, s, a, 0, "no opposing unit on the battlefield")
+		if p := s.g.Players[0]; p.Req != 1 || p.Tac != 1 {
+			t.Errorf("the pool stays R1 T1, got R%d T%d (SVY-R36)", p.Req, p.Tac)
+		}
+	})
+	t.Run("a legal entity appears", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actRecaller())
+		actNotOffered(t, s, a, 0, "an empty discard pile")
+		fungus := s.inDiscard(0, fsSub(unit("Spore", 1, 1, Keywords{}), "Fungus"))[0]
+		if !offersActivate(s.g, a, 0) {
+			t.Fatalf("with a matching card in the pile the ability is offered (SVY-R36)")
+		}
+		s.script(0, Answer{Picks: []int{0}})
+		s.do(activate(a, 0))
+		p := s.g.Players[0]
+		if !inHand(p, fungus) || inDiscardPile(p, fungus) {
+			t.Errorf("the matching card returns to hand (FR-ACT-001)")
+		}
+		if s.alive(a) || !inDiscardPile(p, a.Inst) {
+			t.Errorf("the source is in the discard pile (FR-ACT-001)")
+		}
+	})
+}
+
+func TestFR_ACT_001_UpToSlotStillActivates(t *testing.T) {
+	// Covers: SVY-R36, SVY-R11
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, actUnit("Tapper", nil, ability.Activated{
+		Costs: []ability.Cost{actRes(1, 0), actExhaust},
+		Effect: ability.Effect{
+			Targets: []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}, UpTo: 2}},
+			Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget}},
+		}}))
+	s.setPool(0, 1, 0)
+	if !offersActivate(s.g, a, 0) {
+		t.Fatalf("an \"up to 2\" slot with no legal entity does not stop the ability (SVY-R36)")
+	}
+	s.do(activate(a, 0))
+	if p := s.g.Players[0]; p.Req != 0 || !a.Exhausted {
+		t.Errorf("its costs are paid: R%d exhausted %v, want R0 true (FR-ACT-001)", p.Req, a.Exhausted)
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("nothing is asked with no legal entity, got %d decisions (SVY-R36)", n)
+	}
+	if !s.alive(a) {
+		t.Errorf("the ability resolved with no target affected and the source stays (FR-TGT-003)")
+	}
+	s.wantSettled("an up-to activation with no target")
+}
+
+func TestFR_ACT_001_WardedOnlyTargetCannotActivate(t *testing.T) {
+	// Covers: SVY-R36, FR-KWD-002h, FR-TGT-001
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
+		Costs: []ability.Cost{actRes(0, 1)}, Effect: killChosenOpposing()}))
+	w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.setPool(0, 0, 1)
+	actNotOffered(t, s, a, 0, "the only opposing unit is Warded")
+	if !s.alive(w) {
+		t.Errorf("the Warded unit is untouched (FR-KWD-002h)")
+	}
+}
+
+func TestFR_ACT_001_AnotherSlotNeedsTwoEntities(t *testing.T) {
+	// Covers: SVY-R36, SVY-R34, FR-TGT-002
+	card := func() *Card {
+		anyOpp := tgt(ability.AllegianceOpposing, ability.KindUnit, false)
+		another := anyOpp
+		another.Another = 1
+		return actUnit("Ambusher", nil, ability.Activated{
+			Costs:  []ability.Cost{actExhaust},
+			Effect: ability.Effect{Targets: []ability.Target{anyOpp, another}, Steps: []ability.Step{dealerStep(1, 1)}},
+		})
+	}
+	t.Run("one legal entity", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, card())
+		s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
+		actNotOffered(t, s, a, 0, "one unit cannot fill two slots that must differ")
+	})
+	t.Run("two legal entities", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, card())
+		x := s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
+		y := s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{}))
+		if !offersActivate(s.g, a, 0) {
+			t.Fatalf("two units can fill the two slots, so the ability is offered (SVY-R34)")
+		}
+		s.scriptModal(0, nil, nil, nil, pick(x), pick(y))
+		s.do(activate(a, 0))
+		if y.Damage != 4 || x.Damage != 0 {
+			t.Errorf("the two slots took different units, X dealing its power 4 to Y: X damage %d, Y damage %d, want 0, 4 (SVY-R34)", x.Damage, y.Damage)
+		}
+	})
+}
+
+func TestFR_ACT_001_ChooseNNeedsEnoughLegalModes(t *testing.T) {
+	// Covers: SVY-R36, FR-MOD-001, SVY-R28
+	// Mode 0 is "kill chosen opposing unit", mode 1 "kill chosen other allied unit".
+	killOpp := mode([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
+		ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget})
+	otherAlly := tgt(ability.AllegianceAllied, ability.KindUnit, false)
+	otherAlly.Filter.Other = true
+	killAlly := mode([]ability.Target{otherAlly}, ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget})
+	tests := []struct {
+		name      string
+		n         int
+		foe, ally bool
+		offered   bool
+		modes     []int
+	}{
+		{"choose one, no legal mode", 1, false, false, false, nil},
+		{"choose one, one legal mode", 1, true, false, true, []int{0}},
+		{"choose two, one legal mode", 2, true, false, false, nil},
+		{"choose two, two legal modes", 2, true, true, true, []int{0, 1}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newScene(t)
+			a := s.put(0, ZoneMainTheater, actUnit("Chooser", nil, ability.Activated{
+				Costs:  []ability.Cost{actExhaust},
+				Effect: ability.Effect{Modes: []ability.Effect{killOpp, killAlly}, ChooseN: tc.n},
+			}))
+			var foe, ally *Asset
+			if tc.foe {
+				foe = s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+			}
+			if tc.ally {
+				ally = s.put(0, ZoneMainTheater, unit("Friend", 1, 1, Keywords{}))
+			}
+			if !tc.offered {
+				actNotOffered(t, s, a, 0, tc.name)
+				return
+			}
+			if !offersActivate(s.g, a, 0) {
+				t.Fatalf("%s: enough legal modes, so the ability is offered (SVY-R36)", tc.name)
+			}
+			var picks []tpick
+			for _, m := range tc.modes {
+				if m == 0 {
+					picks = append(picks, pick(foe))
+				} else {
+					picks = append(picks, pick(ally))
+				}
+			}
+			s.scriptModal(0, nil, nil, []Answer{modeAnswer(tc.modes...)}, picks...)
+			s.do(activate(a, 0))
+			if foe != nil && s.alive(foe) != !actHasMode(tc.modes, 0) {
+				t.Errorf("%s: the opposing unit dies exactly when mode 0 was chosen (FR-MOD-001)", tc.name)
+			}
+			if ally != nil && s.alive(ally) != !actHasMode(tc.modes, 1) {
+				t.Errorf("%s: the allied unit dies exactly when mode 1 was chosen (FR-MOD-001)", tc.name)
+			}
+			if !a.Exhausted {
+				t.Errorf("%s: the cost was paid (FR-ACT-001)", tc.name)
+			}
+		})
+	}
+}
+
+func actHasMode(xs []int, x int) bool {
+	for _, y := range xs {
+		if y == x {
+			return true
+		}
+	}
+	return false
+}
+
+func TestFR_ACT_001_LegalTargetDoesNotExcuseACost(t *testing.T) {
+	// Covers: SVY-R36, FR-TGT-001
+	s := newScene(t)
+	a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
+		Costs: []ability.Cost{actRes(2, 0)}, Effect: killChosenOpposing()}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+	s.setPool(0, 1, 0)
+	actNotOffered(t, s, a, 0, "a legal target exists but R2 cannot be paid")
+	if !s.alive(foe) {
+		t.Errorf("the legal target is untouched (SVY-R36)")
+	}
 }
