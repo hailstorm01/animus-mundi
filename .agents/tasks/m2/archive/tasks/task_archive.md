@@ -182,3 +182,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0176 | The resource economy gets its own file, `resources.go`, and `exhaust` moves to `state.go` (directive #114, harness, flash, pure move) | done |
 | T-0177 | The fences check the engine's imports (directive #115, harness, flash) | done |
 | T-0178 | Snapshots and damage events report effective keywords (directive #116 (a), harness, flash) | done |
+| T-0179 | Rule monitors read effective keywords (directive #116 (b), harness, flash) | done |

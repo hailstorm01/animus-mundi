@@ -4,7 +4,7 @@ title: Rule monitors read effective keywords (directive #116 (b))
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (b), structural review 8, finding 1)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0179-monitors-read-effective-keywords
 depends_on: [T-0178]
 claims: [monitor:effective keywords, test:TestMonitorKeywords_Case1_Attack, test:TestMonitorKeywords_Case2_Versatile, test:TestMonitorKeywords_Case3_Ward, test:TestMonitorKeywords_Case4_Damage, test:TestMonitorKeywords_Case5_TargetInNoSnapshot]
@@ -291,3 +291,10 @@ Edits 1–3 are the whole of the test commit: commit them as `test(T-0179): the 
     - Case 7: `go tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 with `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
     - Case 8: `gofmt -l pkg/sim` clean; `go tool task check` passed all checks; `go tool task sim` finished cleanly with 0 monitor violations.
   - Status moved to `review`.
+- 2026-11-05, lead-architect (wave D.1 run, session 10, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as dbc0f5e. Flash run `7ae3e3f7-b8ae-4dd3-8b8b-696839f08559`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0179-monitors-read-effective-keywords`, not the Log:
+  - Scope: only the seven Allowed Files and this file changed, and all seven are byte-identical to the lead's dry run. The three test files changed only in e2dcb06, the `test(T-0179)` commit, and the four monitor files only in a9cec9e. The only edits to existing test code are the two setup helpers this task names; no test body changed.
+  - Failed before: at e2dcb06, in a scratch worktree, `go test ./pkg/sim -run TestMonitorKeywords` exits 1 with `--- FAIL` for all five, and `TestMonitor_Case1` and `TestDamage_Case3` pass.
+  - Fences and placement: no card name and no `OPEN(` marker. `monitor_entry.go` is untouched, so the entry-state monitor still reads printed keywords. `m.card` stays for type and yields.
+  - A limit, known and stated in Inputs: the damage check now takes Resistant and Stalwart from the same `kw` `dealDamage` uses, as #116 asks, so it checks the sequence's arithmetic and not which keywords the engine read. Nothing grants a keyword until #117, whose tests carry the first real grant through a real game.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 2-7; `gofmt -l pkg` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`, coverage table included.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #116 is fully applied and archived. The lead updated the design note's Rule monitors paragraph in this commit. #117 is next.
