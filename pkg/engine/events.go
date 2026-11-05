@@ -152,14 +152,12 @@ func (g *Game) emitAction(a Action) {
 		e.Source, e.Amount = a.Asset, a.Ability
 	case ActAttack:
 		e.Source, e.Target = a.Asset, a.Target
-	case ActDeploy:
+	case ActDeploy, ActEnact:
 		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
 		}
-		e.Zone = a.Zone.String()
-	case ActEnact:
-		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
-			e.Card, e.Inst = inst.Card.Name, inst.ID
+		if a.Kind == ActDeploy { // Zone's zero value is ZoneDeck: an Enact leaves it empty
+			e.Zone = a.Zone.String()
 		}
 	}
 	g.emit(e)
