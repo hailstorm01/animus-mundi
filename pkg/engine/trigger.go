@@ -177,10 +177,10 @@ func (g *Game) flushTriggers() {
 			if p.trig.Optional && !g.accepts(p) {
 				continue
 			}
-			eff, chosen := g.chooseOnPlacement(p.placement, p.trig.Effect)
-			g.push(&StackItem{Kind: StackAbility, Controller: p.controller, Source: p.source, Inst: p.inst,
-				Effect: eff, Tracked: p.trig.Hook == ability.HookKilled, Keyword: p.trig.Keyword,
-				Chosen: chosen})
+			item := p.stackItem(StackAbility)
+			item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
+			item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled, p.trig.Keyword
+			g.push(item)
 		}
 	}
 }
