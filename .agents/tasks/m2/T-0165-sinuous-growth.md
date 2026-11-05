@@ -4,7 +4,7 @@ title: Make Sinuous Growth executable (T1, kill this unit, return chosen Fungus 
 kind: card
 tier: flash
 wave: D
-status: queued
+status: tests
 branch: m2/autoloop-wave-d/T-0165-sinuous-growth
 depends_on: [T-0158, T-0162, T-0163, T-0164]
 claims: [card:Sinuous Growth]
@@ -61,3 +61,4 @@ In a new file `pkg/engine/cards_animus_sinuous_test.go`, from the CSV text, load
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 8): queued behind T-0164, with T-0164's task commit (D2.4). Written against b7a0778, with the lead's probe above. Check it against the code of the day, and read the board's directives again, before it leaves `queued`. *Boneyard Scavenger* and *Ruin Partisans* stay a card task of their own, as the run file's `Kept` line says.
+- 2026-11-04 lead-architect (wave D run, session 9): checked against 59475b0. The card's CSV text, the subtypes of the cards the tests name, `FR-ACT-001`, `SVY-R36` and `FR-ACT-002` (FRD 01 v3.21), and the shapes in the Definition all read as written; #105's part (1) is applied, and parts (2), (3) go with *Cliff of Portents*. Board re-read, no new directive. Set to `tests`.
