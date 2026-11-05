@@ -4,7 +4,7 @@ title: One read of "can pay" and one payment, (*Player).canPay and (*Player).pay
 kind: harness
 tier: flash
 wave: D.1 (board directive #107, structural review 8, finding 4)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0170-can-pay-and-pay
 depends_on: []
 claims: [helper:Player.canPay, helper:Player.pay]
@@ -131,3 +131,9 @@ No new tests: a pure move, so no `test(T-0170)` commit. W is your worktree. Run 
   - Case 8: `git diff autoloop/m2-wave-d.1 --stat` lists only `actions.go`, `costs.go`, and this task file.
   - Case 9: `go tool task check` passed (gofmt, vet, tests, and all linters passed); `go tool task sim` ran 200 games clean with all invariants holding.
   Status moved to `review`. Next: `lead-architect` review.
+- 2026-11-05, lead-architect (wave D.1 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 4dad5e1. Flash run `44bbcd48-17ae-40ce-8ef4-aad0e13d65bf`: exit 0, `status: SUCCESS`, 504 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's line about waiting on a background task). Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0170-can-pay-and-pay` (ba4d701):
+  - Scope: only `actions.go`, `costs.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1-6. `canPay` is the negation of the old check, `pay` subtracts in the old order, and Convert's `p.Tac++` and message stay.
+  - Fences and placement: no card name, no new rule. Both methods sit beside `payCost` until #114 moves them to `resources.go`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-8; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #107 is applied, with Convert folded in beyond its four sites (D2.3). #108 is next.
