@@ -55,7 +55,7 @@ func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageRes
 		from = source.String()
 	}
 	g.logEvent(Event{Kind: EventDamage, Player: -1, Source: assetID(source), Target: target.ID, Amount: r.Committed,
-		Raw: raw, Combat: combat, Armor: armorBefore, Absorbed: r.Absorbed},
+		Raw: raw, Combat: combat, Armor: armorBefore, Absorbed: r.Absorbed, Resistant: kw.Resistant, Stalwart: kw.Stalwart},
 		"%s deals %d %s damage to %s (resist->%d, cap->%d, armor %d, health %d)",
 		from, raw, kind, target, r.AfterRes, r.AfterCap, r.Absorbed, r.Committed)
 	if r.Taken() {

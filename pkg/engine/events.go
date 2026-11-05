@@ -219,10 +219,12 @@ type Event struct {
 	Resource string `json:"resource,omitempty"` // action events: a Generate's "Requisition" or "Tactics"
 
 	// Damage events only. Amount is the damage committed to Health (Stage 5).
-	Raw      int  `json:"raw,omitempty"`      // the incoming damage before Stage 2
-	Combat   bool `json:"combat,omitempty"`   // combat damage (Stalwart applies)
-	Armor    int  `json:"armor,omitempty"`    // the target's Armor pool before this damage
-	Absorbed int  `json:"absorbed,omitempty"` // Stage 4: damage absorbed by Armor
+	Raw       int  `json:"raw,omitempty"`       // the incoming damage before Stage 2
+	Combat    bool `json:"combat,omitempty"`    // combat damage (Stalwart applies)
+	Armor     int  `json:"armor,omitempty"`     // the target's Armor pool before this damage
+	Absorbed  int  `json:"absorbed,omitempty"`  // Stage 4: damage absorbed by Armor
+	Resistant int  `json:"resistant,omitempty"` // the target's effective Resistant as the damage lands
+	Stalwart  bool `json:"stalwart,omitempty"`  // the target's effective Stalwart as the damage lands
 
 	Decision *DecisionRecord `json:"decision,omitempty"`
 	Start    *MatchStart     `json:"start,omitempty"`    // Kind "match-start"
