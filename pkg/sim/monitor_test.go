@@ -41,8 +41,21 @@ func monitorDecks() [2]engine.DeckList {
 	return [2]engine.DeckList{{HQ: hq(3, 20), Main: pool}, {HQ: hq(3, 20), Main: pool}}
 }
 
+// cardKeywords is the keywords of the card with this name in the test pools.
+func cardKeywords(card string) engine.Keywords {
+	for _, d := range [][2]engine.DeckList{monitorDecks(), damageDecks()} {
+		for _, c := range d[0].Main {
+			if c.Name == card {
+				return c.Keywords
+			}
+		}
+	}
+	return engine.Keywords{}
+}
+
+// snapAsset is a face-up asset with its card's keywords, as the engine reports them.
 func snapAsset(id int, card string, owner int, zone string) engine.AssetSnap {
-	return engine.AssetSnap{ID: id, Inst: id + 1000, Card: card, Owner: owner, Controller: owner, Zone: zone}
+	return engine.AssetSnap{ID: id, Inst: id + 1000, Card: card, Owner: owner, Controller: owner, Zone: zone, Keywords: cardKeywords(card)}
 }
 
 // baseSnap is a Main Phase of player 0's turn with both HQs Readied and the
