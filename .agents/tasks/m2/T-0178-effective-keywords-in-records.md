@@ -4,7 +4,7 @@ title: Snapshots and damage events report effective keywords (directive #116 (a)
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (a), structural review 8, finding 1)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0178-effective-keywords-in-records
 depends_on: [T-0177]
 claims: [field:AssetSnap.Keywords, field:Event.Resistant, field:Event.Stalwart, json:Keywords, test:TestEffectiveKeywords_Case1_FaceUp, test:TestEffectiveKeywords_Case2_FaceDownDiffersFromTheCard, test:TestEffectiveKeywords_Case3_JSON]
