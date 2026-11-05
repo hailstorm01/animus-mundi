@@ -4,7 +4,7 @@ title: The play screen's not-executable tag is pinned on its own, not through on
 kind: harness
 tier: flash
 wave: D
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d/T-0164-play-tag-test
 depends_on: [T-0037]
 claims: [test:TestPlay_Case1 tag assertion, test:TestPlay_PrintScreenTagsANotExecutableHandCard, comment:TestView_Case8]
@@ -84,10 +84,17 @@ These edits are the whole change. The new test pins behavior that exists since T
 - `pkg/view/executable_test.go`
 
 ## Done When
-- [ ] Cases 1-6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 8): no `main` commits to sync (`git log autoloop/m2-wave-d..main` is empty). Not `WAVE-COMPLETE`: all four header cards are on `NotYetExecutable`. #105 is `open`, and its part (1) is applied, the part that goes before the card tasks; parts (2) and (3) go with *Cliff of Portents*. Waiting directives checked, none fired: #6, #7 (mode is `serial`); #8 (no task touches `deck.go`); #15 (no turn-boundary hook); #71, #91 (2) (no such card). The next card is *Sinuous Growth*, a deck card first on the run file's `Cards` line, and the probe above found that it breaks `TestPlay_Case1_ScriptedSessionFinishes`. `rules-test-author` writes only under `pkg/engine`, so this edit is a harness task of its own, ahead of the card, and T-0165 is `queued` behind it (D2.4). Status `ready`.
+- 2026-11-04 kernel-engineer: edits committed in test(T-0164) ff1ade5 (`cmd/cardtown/play_test.go` and `pkg/view/executable_test.go`). No engine shape or card code added. Cases 1-6 verified in W:
+  - Case 1: `go test ./cmd/cardtown -run TestPlay_ -v` exited 0; both `TestPlay_PrintScreenTagsANotExecutableHandCard` and `TestPlay_Case1_ScriptedSessionFinishes` reported PASS.
+  - Case 2: `git grep -n -F 'not executable yet' -- cmd/cardtown/play_test.go` printed exactly line 311 (`want := ...`).
+  - Case 3: `git grep -n -e 'Shifting Impossibility' -e 'Sinuous Growth' -- pkg/view/executable_test.go` printed nothing (exit 1), and `go test ./pkg/view -run TestView_Case8_ExecutableFlag` exited 0.
+  - Case 4: `git diff autoloop/m2-wave-d --stat` listed only `cmd/cardtown/play_test.go`, `pkg/view/executable_test.go`, and `.agents/tasks/m2/T-0164-play-tag-test.md`.
+  - Case 5: `go tool task sim-compare -- autoloop/m2-wave-d` printed `[PASS] starter and stress sims match autoloop/m2-wave-d byte for byte, exit codes included`.
+  - Case 6: `go tool task check` passed clean (fmt-check, vet, tests, all linter suites passed), and `go tool task sim` passed (200 games, seed 1..200, all invariants holding). Status `review`.
