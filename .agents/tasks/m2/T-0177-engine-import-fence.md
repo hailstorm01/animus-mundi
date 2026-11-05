@@ -4,7 +4,7 @@ title: The fences check the engine's imports (directive #115, harness, flash)
 kind: harness
 tier: flash
 wave: D.1 (board directive #115, structural review 8, finding 14)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0177-engine-import-fence
 depends_on: [T-0176]
 claims: [fence:pkg/engine imports, test:TestFences_Case34 engine fixture, test:TestFences_Case39_EngineImports]
