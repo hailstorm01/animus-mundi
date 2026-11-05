@@ -4,7 +4,7 @@ title: The play log hides an opponent's deck search pick, and a search replays (
 kind: harness
 tier: flash
 wave: D
-status: ready
+status: review
 branch: m2/autoloop-wave-d/T-0168-search-stays-private
 depends_on: [T-0167]
 claims: [view:LogLines search redaction, comment:doc.go OpSearchDeck]
@@ -57,12 +57,13 @@ The search record in cases 1 to 3 is an `engine.Event{Seq: 40, Turn: 3, Phase: "
 - `pkg/eventlog/replay_test.go` (the two new tests and their helpers only; no existing test changes)
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d` passes
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d` passes
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 12): split off T-0167 (D2.4). Queued.
 - 2026-11-04 lead-architect (wave D run, session 13): wrote Inputs, Shape, Acceptance Cases, Allowed Files and Done When against the run branch at `29391a7`; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the shape is one `case` and the tests are named line by line. Every command here is on the headless allow-list, one per line. Probed the replay cases on a synthetic deck (see Inputs). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106: no such card). #105's parts (2), (3) stay with T-0169. Next: `kernel-engineer` on Flash.
 - 2026-11-05 lead-architect (wave D run, session 14): session 13 hit the usage limit before committing this file, so its text was still uncommitted in its worktree. Checked it against the run branch at `29391a7` and committed it; the one change is Case 8's quote, whose old form spanned a line break in `doc.go`. `main` has no commits to sync, and the directives check above still holds.
+- 2026-11-05 kernel-engineer: added acceptance tests in `pkg/view/view_test.go` (Cases 1-4) and `pkg/eventlog/replay_test.go` (Cases 5-6). Initial run verified Cases 1, 3, and 4 failed while Cases 2, 5, and 6 passed, committed under `test(T-0168)`. Implemented Shape: `pkg/view/log.go` gains a redaction case in `LogLines` ahead of `default` for `e.Decision != nil && e.Decision.Kind == engine.DecideSearch.String() && e.Decision.Player != int(seat)` using `redact(e, detail)` announcing whether a card was found (`"player %d searches their deck and finds a card"` vs `"player %d searches their deck and finds no card"`), and updated the doc comment. Updated `pkg/engine/doc.go` comment bullets for Chooser and Steps to document `DecideSearch` and `OpSearchDeck`. Reused existing `redact` helper and `eventlog.FormatEvent`. Ran: `go test ./pkg/view -run TestView_SearchLineHidesThePickFromTheOpponent` (exit 0), `go test ./pkg/view -run TestView_SearchLineShowsThePickToTheSearcher` (exit 0), `go test ./pkg/view -run TestView_SearchLineSaysNoCardWasFound` (exit 0), `go test ./pkg/view -run TestView_SearchInAGameStaysPrivate` (exit 0), `go test ./pkg/eventlog -run TestReplay_SearchesRoundTrip` (exit 0), `go test ./pkg/eventlog -run TestReplay_SearchWithSwappedOptionsDiverges` (exit 0), `go tool task sim` (exit 0), `go tool task sim-compare -- autoloop/m2-wave-d` (exit 0, `[PASS] starter and stress sims match autoloop/m2-wave-d byte for byte, exit codes included`), `go tool task check` (exit 0; gofmt, vet, all package tests, cardtown lint --all passed), `git diff autoloop/m2-wave-d --stat` confirmed only the 5 allowed files changed. Status `review`.

@@ -25,9 +25,9 @@
 //     may be modal ("choose N" modes, chosen on placement before its targets,
 //     FR-MOD-001 §5).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
-//     choosing from your own hand (DecideHand, SVY-R16).
+//     choosing from your own hand (DecideHand, SVY-R16) and from your own deck (DecideSearch, SVY-R37, SVY-R38).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
-//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction) and OpMoveZone, with "all" steps, source-power values, the
+//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone and OpSearchDeck, with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. SubjectPick is an untargeted pick made as the
 //     step resolves (SVY-R3), asked as a DecidePick and not a target, and a step with IfDone

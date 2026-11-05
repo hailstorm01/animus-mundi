@@ -11,10 +11,12 @@ import (
 // LogLines formats events for seat, one line per event, in order, hiding what
 // seat may not see. It is the play screen's event log.
 //
-// Every line is eventlog.FormatEvent's, except two records:
+// Every line is eventlog.FormatEvent's, except three records:
 //   - match-start drops the seed (it reveals every shuffle) and names only
 //     seat's own mulliganed cards, with a count for the opponent's;
-//   - turn-start shows the turn and the active player, never its snapshot.
+//   - turn-start shows the turn and the active player, never its snapshot;
+//   - an opponent's deck search decision names whether a card was found,
+//     never the card picked.
 //
 // Event Detail text already hides face-down identities, so no other line
 // changes.
@@ -26,6 +28,12 @@ func LogLines(events []engine.Event, seat engine.PlayerID) []string {
 			out = append(out, eventlog.FormatEvent(redact(e, matchStart(e.Start, seat))))
 		case e.Kind == engine.EventTurnStart:
 			out = append(out, eventlog.FormatEvent(redact(e, fmt.Sprintf("turn %d, player %d is active", e.Turn, e.Player))))
+		case e.Decision != nil && e.Decision.Kind == engine.DecideSearch.String() && e.Decision.Player != int(seat):
+			detail := fmt.Sprintf("player %d searches their deck and finds no card", e.Decision.Player)
+			if len(e.Decision.Picks) > 0 {
+				detail = fmt.Sprintf("player %d searches their deck and finds a card", e.Decision.Player)
+			}
+			out = append(out, eventlog.FormatEvent(redact(e, detail)))
 		default:
 			out = append(out, eventlog.FormatEvent(e))
 		}

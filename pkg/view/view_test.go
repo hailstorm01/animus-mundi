@@ -1077,3 +1077,208 @@ func TestView_FaceDownAssetHidesItsText(t *testing.T) {
 		}
 	}
 }
+
+// T-0168 Cases 1-4: The play log hides an opponent's deck search pick.
+
+func TestView_SearchLineHidesThePickFromTheOpponent(t *testing.T) {
+	for p := range engine.PlayerID(2) {
+		ev := engine.Event{
+			Seq:    40,
+			Turn:   3,
+			Phase:  "main",
+			Kind:   engine.EventDecision,
+			Player: int(p),
+			Decision: &engine.DecisionRecord{
+				Kind:    engine.DecideSearch.String(),
+				Player:  int(p),
+				Prompt:  "Search your deck for a card",
+				How:     "answer",
+				Options: []string{"Alpha Secret", "Beta Secret"},
+				Refs:    []int{7, 8},
+				Picks:   []int{1},
+			},
+		}
+		opp := p.Opponent()
+		got := view.LogLines([]engine.Event{ev}, opp)
+		want := fmt.Sprintf("40 T3 main decision: player %d searches their deck and finds a card", p)
+		if len(got) != 1 || got[0] != want {
+			t.Errorf("seat %d seeing player %d search: got %v, want [%s]", opp, p, got, want)
+		}
+	}
+}
+
+func TestView_SearchLineShowsThePickToTheSearcher(t *testing.T) {
+	for p := range engine.PlayerID(2) {
+		ev := engine.Event{
+			Seq:    40,
+			Turn:   3,
+			Phase:  "main",
+			Kind:   engine.EventDecision,
+			Player: int(p),
+			Decision: &engine.DecisionRecord{
+				Kind:    engine.DecideSearch.String(),
+				Player:  int(p),
+				Prompt:  "Search your deck for a card",
+				How:     "answer",
+				Options: []string{"Alpha Secret", "Beta Secret"},
+				Refs:    []int{7, 8},
+				Picks:   []int{1},
+			},
+		}
+		got := view.LogLines([]engine.Event{ev}, p)
+		want := eventlog.FormatEvent(ev)
+		if len(got) != 1 || got[0] != want {
+			t.Errorf("searcher seat %d: got %v, want [%s]", p, got, want)
+		}
+		if len(got) > 0 && !strings.Contains(got[0], "Beta Secret") {
+			t.Errorf("searcher seat %d: line %q does not contain Beta Secret", p, got[0])
+		}
+	}
+
+	handEv := engine.Event{
+		Seq:    40,
+		Turn:   3,
+		Phase:  "main",
+		Kind:   engine.EventDecision,
+		Player: 0,
+		Decision: &engine.DecisionRecord{
+			Kind:    engine.DecideHand.String(),
+			Player:  0,
+			Prompt:  "Search your deck for a card",
+			How:     "answer",
+			Options: []string{"Alpha Secret", "Beta Secret"},
+			Refs:    []int{7, 8},
+			Picks:   []int{1},
+		},
+	}
+	wantHand := eventlog.FormatEvent(handEv)
+	for seat := range engine.PlayerID(2) {
+		got := view.LogLines([]engine.Event{handEv}, seat)
+		if len(got) != 1 || got[0] != wantHand {
+			t.Errorf("seat %d seeing DecideHand: got %v, want [%s]", seat, got, wantHand)
+		}
+	}
+}
+
+func TestView_SearchLineSaysNoCardWasFound(t *testing.T) {
+	ev := engine.Event{
+		Seq:    40,
+		Turn:   3,
+		Phase:  "main",
+		Kind:   engine.EventDecision,
+		Player: 0,
+		Decision: &engine.DecisionRecord{
+			Kind:    engine.DecideSearch.String(),
+			Player:  0,
+			Prompt:  "Search your deck for a card",
+			How:     "answer",
+			Options: []string{"Alpha Secret", "Beta Secret"},
+			Refs:    []int{7, 8},
+			Picks:   []int{},
+		},
+	}
+	got := view.LogLines([]engine.Event{ev}, 1)
+	want := "40 T3 main decision: player 0 searches their deck and finds no card"
+	if len(got) != 1 || got[0] != want {
+		t.Errorf("seat 1 seeing empty search: got %v, want [%s]", got, want)
+	}
+}
+
+func TestView_SearchInAGameStaysPrivate(t *testing.T) {
+	chooser := func(g *engine.Game, d engine.Decision) engine.Answer {
+		return engine.Answer{Picks: []int{1}}
+	}
+	filler := make([]*engine.Card, 10)
+	for i := range filler {
+		filler[i] = testUnit("Filler", 1, 1, engine.Keywords{})
+	}
+	g, err := engine.NewGame(engine.Config{
+		Seed:      1,
+		Decks:     [2]engine.DeckList{{HQ: testHQ("Alpha HQ"), Main: filler}, {HQ: testHQ("Beta HQ"), Main: filler}},
+		PlayFirst: func(decider engine.PlayerID) bool { return decider == 0 },
+		Choosers:  [2]engine.Chooser{chooser, chooser},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &scene{g: g, nextID: 100000}
+	g.Players[0].Deck = []*engine.Instance{
+		s.inst(0, testUnit("Alpha Search One", 1, 1, engine.Keywords{})),
+		s.inst(0, testUnit("Alpha Search Two", 1, 1, engine.Keywords{})),
+		s.inst(0, testUnit("Alpha Search Three", 1, 1, engine.Keywords{})),
+	}
+	src := testUnit("Search Unit", 1, 5, engine.Keywords{})
+	src.Ability = &ability.Def{
+		Activated: []ability.Activated{
+			{
+				Costs:  []ability.Cost{{Kind: ability.CostExhaustSelf}},
+				Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpSearchDeck}}},
+			},
+		},
+	}
+	a := s.put(0, engine.ZoneMainTheater, src)
+
+	if err := g.Apply(engine.Action{Kind: engine.ActActivate, Player: 0, Asset: a.ID, Ability: 0}); err != nil {
+		t.Fatal(err)
+	}
+
+	foundInHand := false
+	for _, inst := range g.Players[0].Hand {
+		if inst.Card.Name == "Alpha Search Two" {
+			foundInHand = true
+			break
+		}
+	}
+	if !foundInHand {
+		t.Fatalf("Alpha Search Two not found in player 0's hand")
+	}
+
+	lines1 := view.LogLines(g.Log, 1)
+	secretNames := []string{"Alpha Search One", "Alpha Search Two", "Alpha Search Three"}
+	for _, line := range lines1 {
+		for _, name := range secretNames {
+			if strings.Contains(line, name) {
+				t.Errorf("seat 1 log line contains leaked secret name %q: %s", name, line)
+			}
+		}
+	}
+
+	lines0 := view.LogLines(g.Log, 0)
+	searchDecIdx := -1
+	shuffleIdx := -1
+	for i, e := range g.Log {
+		if e.Decision != nil && e.Decision.Kind == engine.DecideSearch.String() {
+			searchDecIdx = i
+		}
+		if e.Kind == engine.EventShuffle && e.Player == 0 {
+			shuffleIdx = i
+		}
+	}
+	if searchDecIdx == -1 {
+		t.Fatal("no search decision event found in game log")
+	}
+	if shuffleIdx == -1 {
+		t.Fatal("no shuffle event found in game log")
+	}
+
+	decEv := g.Log[searchDecIdx]
+	if lines0[searchDecIdx] != eventlog.FormatEvent(decEv) {
+		t.Errorf("seat 0 search decision line: got %q, want %q", lines0[searchDecIdx], eventlog.FormatEvent(decEv))
+	}
+	if !strings.Contains(lines0[searchDecIdx], "Alpha Search Two") {
+		t.Errorf("seat 0 search decision line does not contain 'Alpha Search Two': %q", lines0[searchDecIdx])
+	}
+	wantSuffix := "player 0 searches their deck and finds a card"
+	if !strings.HasSuffix(lines1[searchDecIdx], wantSuffix) {
+		t.Errorf("seat 1 search decision line does not end with %q: got %q", wantSuffix, lines1[searchDecIdx])
+	}
+
+	shufEv := g.Log[shuffleIdx]
+	wantShuf := eventlog.FormatEvent(shufEv)
+	if lines0[shuffleIdx] != wantShuf || !strings.Contains(lines0[shuffleIdx], "player 0 shuffles their deck") {
+		t.Errorf("seat 0 shuffle line: got %q, want %q", lines0[shuffleIdx], wantShuf)
+	}
+	if lines1[shuffleIdx] != wantShuf || !strings.Contains(lines1[shuffleIdx], "player 0 shuffles their deck") {
+		t.Errorf("seat 1 shuffle line: got %q, want %q", lines1[shuffleIdx], wantShuf)
+	}
+}
