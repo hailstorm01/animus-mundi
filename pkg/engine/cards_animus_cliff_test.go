@@ -118,7 +118,7 @@ func TestCard_CliffOfPortents_TimeoutTakesTheTopCard(t *testing.T) {
 func TestCard_CliffOfPortents_EmptyDeckStillActivatesAndShuffles(t *testing.T) {
 	// Covers: SVY-R36, SVY-R37, FR-DEK-001
 	s, a, _ := cliffScene(t, 0)
-	s.g.Players[0].Deck = nil
+	s.script(0)
 	hand := instIDs(s.g.Players[0].Hand)
 	if !offersActivate(s.g, a, 0) {
 		t.Fatalf("with an empty deck the ability is offered: it has no target slot (SVY-R36)")
