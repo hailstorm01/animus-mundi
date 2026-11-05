@@ -4,7 +4,7 @@ title: The placement builds its stack item, placement.stackItem, and declare tak
 kind: harness
 tier: flash
 wave: D.1 (board directive #109, structural review 8, finding 6)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.1/T-0172-placement-stack-item
 depends_on: [T-0171]
 claims: [helper:placement.stackItem, signature:Game.declare]
@@ -103,10 +103,22 @@ No new tests: a pure move, so no `test(T-0172)` commit. W is your worktree. Run 
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 3): wrote this task from board directive #109, next in board order, against the run branch at f301c42. No `main` commits to sync. Not `WAVE-COMPLETE`: #109–#119 and #121 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: `placement` has no methods, and nothing else builds a `StackItem` from one. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0172): added (pl placement).stackItem(kind StackKind) *StackItem method and updated declare signature to take kind StackKind in pkg/engine/placement.go; updated ActEnact and ActActivate calls to declare in pkg/engine/actions.go; updated flushTriggers in pkg/engine/trigger.go to use p.stackItem(StackAbility) and set Tracked and Keyword directly. Reused placement fields (controller, source, inst) and existing chooseOnPlacement / push. Acceptance cases 1–10 executed and verified:
+  - Case 1: git -C W diff autoloop/m2-wave-d.1 -- '*_test.go' printed nothing; go -C W test ./... passed (exit 0).
+  - Case 2: go -C W tool task sim-compare -- autoloop/m2-wave-d.1 passed ([PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included).
+  - Case 3: git -C W grep -n -e 'stackItem(' -- pkg/engine returned pkg/engine/placement.go:27, pkg/engine/placement.go:48, pkg/engine/trigger.go:180.
+  - Case 4: git -C W grep -n -e 'g.declare(' -e 'func (g [*]Game) declare(' -- pkg/engine returned pkg/engine/actions.go:93, pkg/engine/actions.go:97, pkg/engine/placement.go:46.
+  - Case 5: git -C W grep -n -e 'StackItem{' -- pkg/engine/actions.go pkg/engine/placement.go pkg/engine/trigger.go pkg/engine/replace.go returned pkg/engine/actions.go:90, pkg/engine/actions.go:101, pkg/engine/actions.go:106, pkg/engine/placement.go:28, pkg/engine/replace.go:112.
+  - Case 6: git -C W grep -n -e 'item.Tracked, item.Keyword = ' -- pkg/engine returned pkg/engine/trigger.go:182.
+  - Case 7: git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd returned 2 4 pkg/engine/actions.go, 12 5 pkg/engine/placement.go, 4 4 pkg/engine/trigger.go.
+  - Case 8: go -C W run ./cmd/cardtown lint fences passed (exit 0).
+  - Case 9: git -C W diff autoloop/m2-wave-d.1 --stat lists only pkg/engine/actions.go, pkg/engine/placement.go, pkg/engine/trigger.go, and this task file.
+  - Case 10: go -C W tool task check and go -C W tool task sim passed.
+  Reviewer note: placement.stackItem constructs the StackItem with pl.controller, pl.source, and pl.inst; replaceDeath in replace.go remains untouched as it never enters the stack. Sims remain byte-identical to autoloop/m2-wave-d.1.
