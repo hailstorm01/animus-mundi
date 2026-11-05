@@ -4,7 +4,7 @@ title: The placement builds its stack item, placement.stackItem, and declare tak
 kind: harness
 tier: flash
 wave: D.1 (board directive #109, structural review 8, finding 6)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0172-placement-stack-item
 depends_on: [T-0171]
 claims: [helper:placement.stackItem, signature:Game.declare]
