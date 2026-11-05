@@ -31,6 +31,18 @@ type Def struct {
 	// Activated lists the printed activated abilities, in printed order
 	// (FR-ACT-001).
 	Activated []Activated
+	// Cornered lists the keywords the card has while its controller is Cornered,
+	// as in "Cornered: Aggressive 3." (SVY-R18, FR-KWD-002e). It is zero for a
+	// card without one.
+	Cornered CorneredKeywords
+}
+
+// CorneredKeywords are the keywords a card has only while its controller is
+// Cornered, 0 for absent. g.Keywords adds them as a Layer 3 grant on a face-up
+// asset (FR-LAY-001); their gate is locked for a simultaneous step (FR-LAY-003).
+type CorneredKeywords struct {
+	Aggressive int
+	Resistant  int
 }
 
 // Activated is one printed "[Cost]: [Effect]." ability of a battlefield asset.
