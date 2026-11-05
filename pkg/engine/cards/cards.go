@@ -22,7 +22,6 @@ var NotYetExecutable = []string{
 	"Brigand Highlander",
 	"Broken Horn Armorer",
 	"Chainbreaker Phalanx",
-	"Cliff of Portents",
 	"Devilhorn Scouting Party",
 	"Drifting Concept",
 	"Eerie Remnant",

@@ -4,7 +4,7 @@ title: Make Cliff of Portents executable (R1, T1, exhaust, search your deck for 
 kind: card
 tier: flash
 wave: D
-status: tests
+status: review
 branch: m2/autoloop-wave-d/T-0169-cliff-of-portents
 depends_on: [T-0158, T-0163, T-0167, T-0168]
 claims: [card:Cliff of Portents]
@@ -52,11 +52,17 @@ In a new file `pkg/engine/cards_animus_cliff_test.go`, from the CSV text, loadin
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_CliffOfPortents`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_CliffOfPortents`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 12): split off T-0167 (D2.4). Queued.
 - 2026-11-05 lead-architect (wave D run, session 15): written against 0b83a30. The card's CSV text, `FR-DEK-001`, `FR-DEK-002`, `FR-ACT-001`, `SVY-R36`, `FR-ACT-002` and `FR-MOD-001` (FRD 01 v3.21), and the shapes in the Definition all read as written. Searched `pkg/engine` and the task archive: `OpSearchDeck`, `CostResources` and `CostExhaustSelf` exist, so nothing here is a new shape. Board re-read, no new directive. Set to `tests`.
+- 2026-11-05 rules-test-author: wrote pkg/engine/cards_animus_cliff_test.go: TestCard_CliffOfPortents_{PutsTheChosenCardIntoHand,ListsTheWholeDeckTopFirst,MustChooseACard,AsksEvenWithOneCardInDeck,TimeoutTakesTheTopCard,EmptyDeckStillActivatesAndShuffles,NeedsOneRequisitionAndOneTactics,NeedsToBeReadied}. Helpers requested: none. Nothing left out. go vet clean; lint rules passes.
+- 2026-11-05 lead-architect: tests returned (D4, round 1), one note. The other seven tests read right against `FR-ACT-001`, `FR-ACT-002`, `FR-DEK-001`, `SVY-R36`, `SVY-R37` and `SVY-R38`. A lead probe with the Definition above, since reverted, passes all eight and `go tool task check`; dropping `CostExhaustSelf`, the Requisition or the Tactics from it fails `NeedsToBeReadied` or `NeedsOneRequisitionAndOneTactics`. Note:
+  1. `TestCard_CliffOfPortents_EmptyDeckStillActivatesAndShuffles` never calls `s.script(0)`, so `s.asked(0)` is empty whatever the engine does: `asks` is filled only by a scripted chooser (`scenario_test.go:175`), and "an empty deck asks nothing" (`SVY-R37`) can't fail. Add `s.script(0)` before the activation, as `TestFR_DEK_001_EmptyDeckStillShuffles` does. Also drop the line `s.g.Players[0].Deck = nil`, since `cliffScene(t, 0)` already leaves the deck empty.
+- 2026-11-05 rules-test-author: note 1 fixed: EmptyDeckStillActivatesAndShuffles now calls s.script(0) before activating, so "asks nothing" can fail; dropped the redundant Deck = nil. Nothing else changed.
+- 2026-11-05 lead-architect: tests approved (D4, round 2). `26c415d` is the note's change and nothing else, and the test file changed only in `test(T-0169)` commits. Before the definition, seven of the eight fail; `NeedsOneRequisitionAndOneTactics` passes until the card has its ability, and guards against over-offering after. Board re-read, no new directive. Set to `ready`.
+- 2026-11-05 kernel-engineer: defined Cliff of Portents in pkg/engine/cards/animus.go with activated ability (costs: Req 1, Tac 1, CostExhaustSelf; effect step: OpSearchDeck) and removed Cliff of Portents from NotYetExecutable in pkg/engine/cards/cards.go (commit 8e5823d). Reused ability.CostResources, ability.CostExhaustSelf, and ability.OpSearchDeck. Ran go test ./pkg/engine -run "TestCard_CliffOfPortents" (pass), go tool task check (pass: fmt, vet, tests, all linters clean), and go tool task sim (pass: 47/50 Animus executable, 200 games clean). Set to review.
