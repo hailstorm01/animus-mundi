@@ -4,7 +4,7 @@ title: One "this asset is yours" check, ownAsset, and "Aggressive" spelled once 
 kind: harness
 tier: flash
 wave: D.1 (board directives #111 and #112, structural review 8, findings 8 and 9)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0174-own-asset-and-aggressive-name
 depends_on: [T-0173]
 claims: [helper:ownAsset]
@@ -131,3 +131,9 @@ No new tests: a pure move, so no `test(T-0174)` commit. W is your worktree. Run 
     - Case 10: `git -C W diff autoloop/m2-wave-d.1 --stat` printed only the 3 pkg files and the task file.
     - Case 11: `go -C W tool task check` passed all stages; `go -C W tool task sim` passed (200 games, all invariants holding).
   - Status set to `review`.
+- 2026-11-05, lead-architect (wave D.1 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as f349153. Flash run `19692380-5ec8-4358-8ca4-701c34eac32b`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's notice `root agent idle; waiting for 1 background task(s) to finish`, which PowerShell wraps as a `NativeCommandError`; it is not a refusal. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0174-own-asset-and-aggressive-name` (1888909):
+  - Scope: only the three Allowed Files and this file changed. No test file changed, and no commit on the branch touches one.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1-5. The conditions and the message of the ownership check are unchanged, and `readyAsset` still checks ownership before `Exhausted`.
+  - Fences and placement: no card name, no new rule. `ownAsset` sits beside `readyAsset` in `actions.go`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-10; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directives #111 and #112 are applied. #113 is next. `main` gained 17fbf28 during this session (directive #122, `open: after Wave D.1 (#121), before Wave E`); it touches no code here, and the next session's sync brings it in.

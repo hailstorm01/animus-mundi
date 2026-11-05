@@ -177,3 +177,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0171 | One function plays a card from hand, `playFromHand`, and one `emitAction` case (directive #108, harness, flash, pure move) | done |
 | T-0172 | The placement builds its stack item, `placement.stackItem`, and `declare` takes a kind (directive #109, harness, flash, pure move) | done |
 | T-0173 | One "first picks in this order", `firstPicks`, and one `listedOrder` (directive #110, harness, flash, pure move) | done |
+| T-0174 | One "this asset is yours" check, `ownAsset`, and "Aggressive" spelled once (directives #111 and #112, harness, flash, pure move) | done |
