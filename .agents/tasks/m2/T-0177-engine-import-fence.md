@@ -4,7 +4,7 @@ title: The fences check the engine's imports (directive #115, harness, flash)
 kind: harness
 tier: flash
 wave: D.1 (board directive #115, structural review 8, finding 14)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0177-engine-import-fence
 depends_on: [T-0176]
 claims: [fence:pkg/engine imports, test:TestFences_Case34 engine fixture, test:TestFences_Case39_EngineImports]
@@ -81,10 +81,23 @@ Edit 1 is the whole of the test commit: commit it as `test(T-0177): the fences c
 - `pkg/toolchain/linter/fences/fences_test.go` (edit 1 only)
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 8): no `main` commits to sync. Wrote this task from board directive #115, next in board order. Not `WAVE-COMPLETE`: #115–#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: the finds are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0177, Flash): implemented directive #115 import fence for pkg/engine.
+  - Reused `allowedImports` map in `pkg/toolchain/linter/fences/fences.go`.
+  - Edit 1 (`fences_test.go`): removed `pkg/engine/x.go` from `TestFences_Case34_AllowedImportsPass` and added `TestFences_Case39_EngineImports` testing disallowed imports (`pkg/toolchain/git`, `pkg/sim`) and allowed imports (`pkg/engine/ability`, `pkg/engine/cards`). Committed in `5edbb5a` as `test(T-0177): the fences check the engine's imports`.
+  - Case 1: `go -C W test ./pkg/toolchain/linter/fences -run TestFences_Case39_EngineImports` exited 1 (`expected failure, got true`).
+  - Edit 2 (`fences.go`): added `"pkg/engine": {"pkg/engine/ability", "pkg/engine/cards"}` to `allowedImports`. Committed in `940eec1` as `feat(toolchain): the fences check the engine's imports (T-0177)`.
+  - Case 2: `go -C W test ./pkg/toolchain/linter/fences` passed (exit 0).
+  - Case 3: `go -C W run ./cmd/cardtown lint fences` passed (exit 0).
+  - Case 4: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed exactly:
+    `1	0	pkg/toolchain/linter/fences/fences.go`
+    `21	1	pkg/toolchain/linter/fences/fences_test.go`
+  - Case 5: `git -C W diff autoloop/m2-wave-d.1 --stat` lists only those two files and this task file.
+  - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 7: `gofmt -l W/pkg/toolchain` printed nothing; `go -C W tool task check` passed (all vet, tests, lint --all); `go -C W tool task sim` passed.

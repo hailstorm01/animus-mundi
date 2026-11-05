@@ -34,6 +34,7 @@ const modulePath = "animus-mundi"
 // allowedImports maps a package directory to the in-module import paths (relative to
 // the module root) its non-test files may use. Packages not listed are not checked.
 var allowedImports = map[string][]string{
+	"pkg/engine":         {"pkg/engine/ability", "pkg/engine/cards"},
 	"pkg/engine/ability": {},
 	"pkg/engine/cards":   {"pkg/engine/ability"},
 	"pkg/sim":            {"pkg/engine"},

@@ -935,7 +935,6 @@ func TestFences_Case34_AllowedImportsPass(t *testing.T) {
 	writePkgFile(t, repo, "pkg/view/x.go", "package view\n\nimport (\n\t\"fmt\"\n\t\"animus-mundi/pkg/engine\"\n\t\"animus-mundi/pkg/eventlog\"\n)\n\nvar _, _, _ = fmt.Sprint, engine.Clean, eventlog.X\n")
 	writePkgFile(t, repo, "pkg/engine/cards/x.go", "package cards\n\nimport _ \"animus-mundi/pkg/engine/ability\"\n")
 	writePkgFile(t, repo, "pkg/sim/x_test.go", "package sim\n\nimport _ \"animus-mundi/pkg/view\"\n")
-	writePkgFile(t, repo, "pkg/engine/x.go", "package engine\n\nimport _ \"animus-mundi/pkg/sim\"\n")
 	writePkgFile(t, repo, "pkg/foo/x.go", "package foo\n\nimport _ \"animus-mundi/pkg/sim\"\n")
 	expectPass(t, repo)
 }
@@ -974,5 +973,26 @@ func TestFences_Case38_UnreadableImportsMessage(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected line %q, got:\n%s", want, out)
+	}
+}
+
+// 39. pkg/engine may import its two core packages and nothing else in the module.
+func TestFences_Case39_EngineImports(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/engine/x.go", "package engine\n\nimport _ \"animus-mundi/pkg/toolchain/git\"\n")
+	writePkgFile(t, repo, "pkg/engine/y.go", "package engine\n\nimport _ \"animus-mundi/pkg/sim\"\n")
+	writePkgFile(t, repo, "pkg/engine/z.go", "package engine\n\nimport (\n\t_ \"animus-mundi/pkg/engine/ability\"\n\t_ \"animus-mundi/pkg/engine/cards\"\n)\n")
+	out := expectFail(t, repo)
+	if strings.Count(out, "[ERROR]") != 2 {
+		t.Fatalf("expected two errors, got:\n%s", out)
+	}
+	rule := "pkg/engine may import only pkg/engine/ability, pkg/engine/cards"
+	for _, want := range []string{
+		"pkg/engine/x.go:3: imports animus-mundi/pkg/toolchain/git; " + rule,
+		"pkg/engine/y.go:3: imports animus-mundi/pkg/sim; " + rule,
+	} {
+		if !strings.Contains(out, "[ERROR] "+want) {
+			t.Fatalf("expected %q, got:\n%s", want, out)
+		}
 	}
 }
