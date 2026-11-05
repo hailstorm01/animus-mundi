@@ -4,7 +4,7 @@ title: Filters get their own file, filter.go (directive #113, harness, flash, pu
 kind: harness
 tier: flash
 wave: D.1 (board directive #113, structural review 8, finding 10)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0175-filter-file
 depends_on: [T-0174]
 claims: [file:pkg/engine/filter.go]
@@ -172,3 +172,9 @@ No new tests: a pure move, so no `test(T-0175)` commit. W is your worktree. Run 
   - Case 6: `git -C W diff autoloop/m2-wave-d.1 --stat` confirmed only filter.go, targeting.go, and this task file changed.
   - Case 7: `gofmt -l W/pkg/engine` printed nothing; `go -C W tool task check` and `go -C W tool task sim` both passed cleanly.
   - Ready for lead-architect review.
+- 2026-11-05, lead-architect (wave D.1 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 3803242. Flash run `a7f49b44-d813-447a-9587-8d2b4e914311`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's notice `root agent idle; waiting for 1 background task(s) to finish`. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0175-filter-file` (301c13c):
+  - Scope: only the two Allowed Files and this file changed. No test file changed, and no commit on the branch touches one. The main checkout is clean and has no `filter.go`, although the engineer's summary links there.
+  - Pure move, checked by bytes, not only by the diff: `filter.go` is byte-identical to the lead's dry run, and its body from `// kindOf maps` on is byte-identical to `targeting.go`'s lines 210-296 at the base. `targeting.go`'s lines 2-208 are unchanged, and line 1 is Edit 3.
+  - Fences and placement: no card name, no new rule, and `filter.go` stays in package `engine`. `pileTarget` stays in `targeting.go`, as #113 says.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-6; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #113 is applied. `doc.go`'s file map stays stale until #121 (c), as planned. #114 is next.
