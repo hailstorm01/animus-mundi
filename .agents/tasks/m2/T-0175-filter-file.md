@@ -4,7 +4,7 @@ title: Filters get their own file, filter.go (directive #113, harness, flash, pu
 kind: harness
 tier: flash
 wave: D.1 (board directive #113, structural review 8, finding 10)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0175-filter-file
 depends_on: [T-0174]
 claims: [file:pkg/engine/filter.go]
