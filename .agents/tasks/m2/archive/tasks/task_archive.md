@@ -179,3 +179,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0173 | One "first picks in this order", `firstPicks`, and one `listedOrder` (directive #110, harness, flash, pure move) | done |
 | T-0174 | One "this asset is yours" check, `ownAsset`, and "Aggressive" spelled once (directives #111 and #112, harness, flash, pure move) | done |
 | T-0175 | Filters get their own file, `filter.go` (directive #113, harness, flash, pure move) | done |
+| T-0176 | The resource economy gets its own file, `resources.go`, and `exhaust` moves to `state.go` (directive #114, harness, flash, pure move) | done |
