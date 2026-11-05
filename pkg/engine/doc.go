@@ -45,7 +45,8 @@
 //     "[Cost]: [Effect]." ability of a battlefield asset (Def.Activated), activated
 //     on an empty stack. On declaration its targets are chosen, it goes on the stack
 //     as a StackAbility item and its costs are paid, including CostResources,
-//     CostExhaustSelf and CostKillSelf (declare, SVY-R2).
+//     CostExhaustSelf and CostKillSelf (declare, SVY-R2). It is offered only if placeable holds: its
+//     costs are payable and each required target or mode has a legal choice (SVY-R36).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be

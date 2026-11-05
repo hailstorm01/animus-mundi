@@ -192,8 +192,9 @@ func (g *Game) check(a Action) error {
 		if def == nil || a.Ability < 0 || a.Ability >= len(def.Activated) {
 			return illegal("%s has no activated ability %d", as, a.Ability)
 		}
-		if !g.costsPayable(activatedPlacement(a.Player, as, def.Activated[a.Ability])) {
-			return illegal("the costs of %s ability %d cannot be paid (FR-ACT-001)", as, a.Ability)
+		act := def.Activated[a.Ability]
+		if !g.placeable(activatedPlacement(a.Player, as, act), act.Effect) {
+			return illegal("a cost of %s ability %d cannot be paid, or a required target or mode has no legal choice (FR-ACT-001, SVY-R36)", as, a.Ability)
 		}
 	case ActMarch:
 		as, err := g.readyAsset(a)

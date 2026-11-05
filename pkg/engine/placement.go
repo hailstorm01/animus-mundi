@@ -103,8 +103,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 // placeable reports whether e can be placed with everything it requires
 // (SVY-R29): every additional cost payable (costsPayable), then at least
 // ChooseN legal modes, or a legal entity for each exactly-one slot. It applies
-// to enacting a Maneuver only: a trigger is placed whatever it finds (SVY-R30,
-// FR-TGT-003).
+// to enacting a Maneuver and to activating an ability (SVY-R29, SVY-R36). A
+// trigger is still placed whatever it finds (SVY-R30, FR-TGT-003).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
 		return false
@@ -133,8 +133,9 @@ func (g *Game) legalModes(pl placement, e ability.Effect) []int {
 // (legalModes) are offered, so a timeout takes the first listed legal ones
 // (§6) and a single legal mode is answered automatically (§1). With no legal
 // mode nothing is asked and the effect is empty. With fewer legal modes than
-// ChooseN all of them are chosen; an enacted Maneuver never gets here with
-// fewer than ChooseN (placeable, SVY-R29), only a trigger does (SVY-R30).
+// ChooseN all of them are chosen; an enacted Maneuver or an activated ability
+// never gets here with fewer than ChooseN (placeable, SVY-R29, SVY-R36). Only
+// a trigger does (SVY-R30).
 func (g *Game) chooseModes(pl placement, e ability.Effect) ability.Effect {
 	legal := g.legalModes(pl, e)
 	if len(legal) == 0 {
