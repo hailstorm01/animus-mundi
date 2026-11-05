@@ -8,8 +8,6 @@ func init() {
 	}
 }
 
-func cornered(t ability.Trigger) ability.Trigger { t.Cornered = true; return t }
-
 // pathDefs holds ability definitions for Path cards.
 var pathDefs = map[string]*ability.Def{
 	"Allshan, Chainbreaker Revenant": {
@@ -30,8 +28,8 @@ var pathDefs = map[string]*ability.Def{
 					},
 				},
 			},
-			cornered(ability.Aggressive(3)),
 		},
+		Cornered: ability.CorneredKeywords{Aggressive: 3},
 	},
 	"Ambush Tactics": {
 		Text: []string{
