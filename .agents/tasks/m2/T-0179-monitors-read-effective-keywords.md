@@ -4,7 +4,7 @@ title: Rule monitors read effective keywords (directive #116 (b))
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (b), structural review 8, finding 1)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0179-monitors-read-effective-keywords
 depends_on: [T-0178]
 claims: [monitor:effective keywords, test:TestMonitorKeywords_Case1_Attack, test:TestMonitorKeywords_Case2_Versatile, test:TestMonitorKeywords_Case3_Ward, test:TestMonitorKeywords_Case4_Damage, test:TestMonitorKeywords_Case5_TargetInNoSnapshot]
