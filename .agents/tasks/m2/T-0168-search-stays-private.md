@@ -4,7 +4,7 @@ title: The play log hides an opponent's deck search pick, and a search replays (
 kind: harness
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0168-search-stays-private
 depends_on: [T-0167]
 claims: [view:LogLines search redaction, comment:doc.go OpSearchDeck]
