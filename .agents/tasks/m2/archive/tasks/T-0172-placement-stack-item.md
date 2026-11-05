@@ -4,7 +4,7 @@ title: The placement builds its stack item, placement.stackItem, and declare tak
 kind: harness
 tier: flash
 wave: D.1 (board directive #109, structural review 8, finding 6)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0172-placement-stack-item
 depends_on: [T-0171]
 claims: [helper:placement.stackItem, signature:Game.declare]
@@ -122,3 +122,9 @@ No new tests: a pure move, so no `test(T-0172)` commit. W is your worktree. Run 
   - Case 9: git -C W diff autoloop/m2-wave-d.1 --stat lists only pkg/engine/actions.go, pkg/engine/placement.go, pkg/engine/trigger.go, and this task file.
   - Case 10: go -C W tool task check and go -C W tool task sim passed.
   Reviewer note: placement.stackItem constructs the StackItem with pl.controller, pl.source, and pl.inst; replaceDeath in replace.go remains untouched as it never enters the stack. Sims remain byte-identical to autoloop/m2-wave-d.1.
+- 2026-11-05, lead-architect (wave D.1 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 4b7af98. Flash run `0a2d0246-bd19-4f2d-a1fd-6dcb4049bcef`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file is empty). Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0172-placement-stack-item` (d50d8cb):
+  - Scope: only `actions.go`, `placement.go`, `trigger.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1-5. All three items carry the same controller, source and instance as before (see Inputs), the trigger still sets `Tracked` and `Keyword`, and the choice still comes before the push. `replaceDeath`'s item is unchanged.
+  - Fences and placement: no card name, no new rule. `stackItem` sits right after the `placement` type.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-9; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #109 is applied. #110 is next.
