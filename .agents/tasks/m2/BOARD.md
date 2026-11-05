@@ -37,4 +37,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0179 | Rule monitors read effective keywords (directive #116 (b)) | queued |
+| T-0179 | Rule monitors read effective keywords (directive #116 (b)) | ready |
