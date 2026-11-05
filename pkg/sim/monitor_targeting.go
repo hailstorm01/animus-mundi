@@ -30,10 +30,7 @@ func (m *Monitors) checkTargetDecision(e engine.Event) {
 	player := e.Decision.Player
 	warded := map[int]bool{}
 	for _, a := range battlefield(*m.last) {
-		if a.Controller == player {
-			continue
-		}
-		if c := m.card(a); c != nil && c.Keywords.Ward {
+		if a.Controller != player && a.Keywords.Ward {
 			warded[a.ID] = true
 		}
 	}

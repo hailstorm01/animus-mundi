@@ -52,7 +52,8 @@ func (m *Monitors) checkCombatDamage(e engine.Event) {
 }
 
 // checkDamage checks one damage event against the five-stage sequence
-// (FR-REP-004) using the target's printed characteristics.
+// (FR-REP-004), using the target's effective Resistant and Stalwart as the
+// event reports them, because they can change after a settled snapshot.
 func (m *Monitors) checkDamage(e engine.Event) {
 	const mon = monDamage
 	m.count(mon, "FR-REP-004")
@@ -74,40 +75,23 @@ func (m *Monitors) checkDamage(e engine.Event) {
 		m.fail(mon, e.Seq, "damage to %d saw an Armor pool of %d, want %d from the settled state", e.Target, e.Armor, wantArmor)
 	}
 
-	check := func(s engine.Snapshot) bool {
-		t := find(s, e.Target)
-		if t == nil {
-			return false
-		}
-		c := m.card(*t)
-		if c == nil {
-			m.fail(mon, e.Seq, "%s is not in its owner's decklist", t.Card)
-			return true
-		}
-		kw := c.Keywords
-		if kw.Resistant != 0 {
-			m.count(mon, "FR-KWD-002b")
-		}
-		if kw.Stalwart {
-			m.count(mon, "FR-KWD-002c")
-		}
-		if e.Armor > 0 {
-			m.count(mon, "FR-KWD-002k")
-		}
-		r := max(0, e.Raw-kw.Resistant)
-		capped := r
-		if e.Combat && kw.Stalwart {
-			capped = min(r, 1)
-		}
-		absorbed := min(capped, e.Armor)
-		if e.Absorbed != absorbed || e.Amount != capped-absorbed {
-			m.fail(mon, e.Seq, "damage %d (combat %t) to %s#%d (Resistant %d, Stalwart %t, Armor %d) absorbed %d and committed %d, want %d and %d",
-				e.Raw, e.Combat, t.Card, t.ID, kw.Resistant, kw.Stalwart, e.Armor, e.Absorbed, e.Amount, absorbed, capped-absorbed)
-		}
-		return true
+	if e.Resistant != 0 {
+		m.count(mon, "FR-KWD-002b")
 	}
-	if m.last != nil && check(*m.last) {
-		return
+	if e.Stalwart {
+		m.count(mon, "FR-KWD-002c")
 	}
-	m.pending = append(m.pending, pendingCheck{seq: e.Seq, run: func(after engine.Snapshot, _ bool) { check(after) }})
+	if e.Armor > 0 {
+		m.count(mon, "FR-KWD-002k")
+	}
+	r := max(0, e.Raw-e.Resistant)
+	capped := r
+	if e.Combat && e.Stalwart {
+		capped = min(r, 1)
+	}
+	absorbed := min(capped, e.Armor)
+	if e.Absorbed != absorbed || e.Amount != capped-absorbed {
+		m.fail(mon, e.Seq, "damage %d (combat %t) to %d (Resistant %d, Stalwart %t, Armor %d) absorbed %d and committed %d, want %d and %d",
+			e.Raw, e.Combat, e.Target, e.Resistant, e.Stalwart, e.Armor, e.Absorbed, e.Amount, absorbed, capped-absorbed)
+	}
 }

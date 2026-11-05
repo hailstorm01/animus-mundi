@@ -69,17 +69,13 @@ func (m *Monitors) checkAttack(e engine.Event) {
 
 	var guardians []int
 	for _, o := range opponentAssets(*b, e.Player) {
-		oc := m.card(o)
-		if oc == nil {
-			continue
-		}
-		if oc.Keywords.Ethereal {
+		if o.Keywords.Ethereal {
 			m.count(mon, "FR-KWD-002g")
-		} else if oc.Keywords.Guardian && o.Zone == theater {
+		} else if o.Keywords.Guardian && o.Zone == theater {
 			guardians = append(guardians, o.ID)
 		}
 	}
-	if dc.Keywords.Ethereal {
+	if def.Keywords.Ethereal {
 		m.fail(mon, e.Seq, "defender %s#%d is Ethereal", def.Card, def.ID)
 	}
 	if len(guardians) > 0 {
