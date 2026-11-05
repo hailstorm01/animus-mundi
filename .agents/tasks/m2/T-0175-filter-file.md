@@ -4,7 +4,7 @@ title: Filters get their own file, filter.go (directive #113, harness, flash, pu
 kind: harness
 tier: flash
 wave: D.1 (board directive #113, structural review 8, finding 10)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0175-filter-file
 depends_on: [T-0174]
 claims: [file:pkg/engine/filter.go]
@@ -156,10 +156,19 @@ No new tests: a pure move, so no `test(T-0175)` commit. W is your worktree. Run 
 - `pkg/engine/targeting.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 6): synced `main` into the run branch first (27a83dd, bringing 17fbf28 and directive #122; the only conflict was `BOARD.md`'s counters, resolved to `#122` and `T-0174`). Wrote this task from board directive #113, next in board order. Not `WAVE-COMPLETE`: #113–#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: the finds are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (wave D.1 run): pure move implemented in feat(engine) commit 301c13c. Moved kindOf, matchesCard, legalTarget, matchesPrinted, and matchesFilter to pkg/engine/filter.go with required header. In pkg/engine/targeting.go, updated header to note Filters are filter.go's and removed the five moved functions (lines 209-296), keeping pileTarget. All acceptance cases verified:
+  - Case 1: `git -C W diff autoloop/m2-wave-d.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed.
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 3: `git -C W grep -n -e 'func kindOf' -e ') matchesCard' -e ') legalTarget' -e 'func matchesPrinted' -e ') matchesFilter' -e ') pileTarget' -- pkg/engine` printed exactly the expected 6 declaration lines (5 in filter.go:8, 26, 36, 46, 85 and 1 in targeting.go:203).
+  - Case 4: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed exactly 93 0 for filter.go and 1 89 for targeting.go.
+  - Case 5: `go -C W run ./cmd/cardtown lint fences` exited 0 with all checks passing.
+  - Case 6: `git -C W diff autoloop/m2-wave-d.1 --stat` confirmed only filter.go, targeting.go, and this task file changed.
+  - Case 7: `gofmt -l W/pkg/engine` printed nothing; `go -C W tool task check` and `go -C W tool task sim` both passed cleanly.
+  - Ready for lead-architect review.
