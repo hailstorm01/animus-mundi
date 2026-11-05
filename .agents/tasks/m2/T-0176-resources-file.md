@@ -4,7 +4,7 @@ title: The resource economy gets its own file, resources.go, and exhaust moves t
 kind: harness
 tier: flash
 wave: D.1 (board directive #114, structural review 8, finding 11)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0176-resources-file
 depends_on: [T-0175]
 claims: [file:pkg/engine/resources.go]
