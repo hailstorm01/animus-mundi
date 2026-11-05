@@ -4,7 +4,7 @@ title: One "first picks in this order", firstPicks, and one listedOrder (directi
 kind: harness
 tier: flash
 wave: D.1 (board directive #110, structural review 8, finding 7)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.1/T-0173-first-picks
 depends_on: [T-0172]
 claims: [helper:firstPicks, helper:listedOrder]
@@ -141,10 +141,21 @@ No new tests: a pure move, so no `test(T-0173)` commit. W is your worktree. Run 
 - `pkg/engine/choice.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 4): wrote this task from board directive #110, next in board order, against the run branch at 8e7edc4. No `main` commits to sync. Not `WAVE-COMPLETE`: #110–#119 and #121 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: nothing in `pkg/` or `cmd/` takes first picks outside `choice.go`, and the two finds there are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (wave D.1 run, session 4): implemented T-0173 in `pkg/engine/choice.go`. Replaced inline identity loops with `listedOrder(d)` across `soleAnswer`, `fallbackPicks`, `handPicks`, `fixedOrderPicks`, and `randomPicks`. Replaced fallback first-picks and repetition logic across `fallbackPicks`, `handPicks`, and `fixedOrderPicks` with `firstPicks(d, order)`. Searched `pkg/` and `cmd/` for existing reuse: no other occurrences outside `choice.go`. Verified Cases 1–9:
+  - Case 1: `git -C W diff autoloop/m2-wave-d.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed.
+  - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 3: `git -C W grep -n -e 'firstPicks(' -e 'listedOrder(' -- pkg/engine` returned exactly 9 matches (`choice.go:88`, `:137`, `:145`, `:156`, `:177`, `:185`, `:195`, `:203`, `:218`).
+  - Case 4: `git -C W grep -n -e 'idx.i. = i' -e 'picks.i. = i' -e 'picks.i. = idx' -e 'idx.:min' -- pkg/engine/choice.go` returned nothing (exit 1).
+  - Case 5: `git -C W grep -n -e 'd.Min == 0' -- pkg/engine/choice.go` returned lines :75 and :191.
+  - Case 6: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` returned `33 46 pkg/engine/choice.go`.
+  - Case 7: `go -C W run ./cmd/cardtown lint fences` exited 0.
+  - Case 8: `git -C W diff autoloop/m2-wave-d.1 --stat` showed only `pkg/engine/choice.go` and task file.
+  - Case 9: `go -C W tool task check` and `go -C W tool task sim` passed.
+  Status moved to review.
