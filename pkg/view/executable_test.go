@@ -11,8 +11,7 @@ import (
 // A new test builds a game from the starter decks with a fixed seed.
 // Every CardView in the seat's hand has Executable == c.Supported() for that card.
 // Seed 1 is chosen: seat 0's initial hand contains Despoiler Larva (supported)
-// as well as Shifting Impossibility, Veil Render, Rapturous Sermon, Sinuous Growth,
-// and Animoceps Spores (unsupported).
+// as well as Veil Render (unsupported).
 func TestView_Case8_ExecutableFlag(t *testing.T) {
 	decks := starterDecks(t)
 	g, err := engine.NewGame(engine.Config{
