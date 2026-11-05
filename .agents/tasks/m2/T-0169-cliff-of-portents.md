@@ -4,7 +4,7 @@ title: Make Cliff of Portents executable (R1, T1, exhaust, search your deck for 
 kind: card
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0169-cliff-of-portents
 depends_on: [T-0158, T-0163, T-0167, T-0168]
 claims: [card:Cliff of Portents]
