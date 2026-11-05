@@ -31,4 +31,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0166](T-0166-boneyard-scavenger-ruin-partisans.md) | Make Boneyard Scavenger and Ruin Partisans executable | tests |
