@@ -4,7 +4,7 @@ title: Rule monitors read effective keywords (directive #116 (b))
 kind: harness
 tier: flash
 wave: D.1 (board directive #116 (b), structural review 8, finding 1)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0179-monitors-read-effective-keywords
 depends_on: [T-0178]
 claims: [monitor:effective keywords, test:TestMonitorKeywords_Case1_Attack, test:TestMonitorKeywords_Case2_Versatile, test:TestMonitorKeywords_Case3_Ward, test:TestMonitorKeywords_Case4_Damage, test:TestMonitorKeywords_Case5_TargetInNoSnapshot]
@@ -269,11 +269,25 @@ Edits 1–3 are the whole of the test commit: commit them as `test(T-0179): the 
 - `pkg/sim/monitor_keywords_test.go` (new, edit 1 only)
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 9): split from #116 under the size rule; T-0178 builds (a). `queued` until T-0178 is `done`.
 - 2026-11-05, lead-architect (wave D.1 run, session 10): no `main` commits to sync. Wrote Inputs, Edits, Acceptance Cases and Allowed Files against the run branch at 5de081f. Not `WAVE-COMPLETE`: #116–#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0179): implemented rule monitors reading effective keywords.
+  - Test commit (e2dcb06): added `pkg/sim/monitor_keywords_test.go` covering Acceptance Cases 1-5; updated `pkg/sim/monitor_test.go` (`cardKeywords`, `snapAsset`) and `pkg/sim/monitor_damage_test.go` (`damageCase`) to populate keywords on hand-built test records.
+  - Feat commit (a9cec9e): updated `pkg/sim/monitor_attack.go` (`checkAttack` reads `o.Keywords.Ethereal`/`Guardian` and `def.Keywords.Ethereal`), `pkg/sim/monitor_resources.go` (`checkGenerate` reads `a.Keywords.Versatile`), `pkg/sim/monitor_targeting.go` (`checkTargetDecision` reads `a.Keywords.Ward`), and `pkg/sim/monitor_damage.go` (`checkDamage` reads `e.Resistant` and `e.Stalwart` immediately from event).
+  - Reuse: reused existing `Keywords` on `AssetSnap` and `Event` without adding new shapes.
+  - Acceptance verification:
+    - Case 1: `go test ./pkg/sim -run TestMonitorKeywords` exited 1 before edits 4-7 with failures across all 5 test cases; `TestMonitor_Case1` and `TestDamage_Case3` exited 0.
+    - Case 2: `go test ./pkg/sim -run TestMonitorKeywords -v` passed all 5 cases (exit 0).
+    - Case 3: `go test ./pkg/sim -run TestMonitor_Case1` and `TestDamage_Case3` passed (exit 0).
+    - Case 4: `go test ./pkg/eventlog ./pkg/sim` passed (exit 0).
+    - Case 5: `git diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` matched the exact 7 expected file numstats.
+    - Case 6: `git diff autoloop/m2-wave-d.1 --stat` changed only the 7 allowed files and this task file.
+    - Case 7: `go tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 with `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+    - Case 8: `gofmt -l pkg/sim` clean; `go tool task check` passed all checks; `go tool task sim` finished cleanly with 0 monitor violations.
+  - Status moved to `review`.

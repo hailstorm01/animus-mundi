@@ -60,7 +60,7 @@ func (m *Monitors) checkGenerate(e engine.Event) {
 	if c.Type == engine.TypeUnit {
 		reserves := engine.ZoneReserves.String()
 		switch {
-		case c.Keywords.Versatile:
+		case a.Keywords.Versatile:
 			m.count(mon, "FR-KWD-002i")
 		case a.Zone == reserves && res != requisition:
 			m.fail(mon, e.Seq, "%s#%d in Reserves generated %s, not Requisition", a.Card, a.ID, res)

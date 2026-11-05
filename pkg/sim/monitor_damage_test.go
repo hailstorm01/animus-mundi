@@ -52,12 +52,16 @@ func combatEvent(att, def int) engine.Event {
 }
 
 // damageCase feeds a snapshot, then events, and returns the feed and the Seq
-// of the last event sent.
+// of the last event sent. A damage event reports its target's keywords in the
+// snapshot, as the engine does.
 func damageCase(snap engine.Snapshot, evs ...engine.Event) (*feed, int) {
 	f := damageFeed()
 	f.settle(snap)
 	seq := 0
 	for _, e := range evs {
+		if t := find(snap, e.Target); t != nil && e.Kind == "damage" {
+			e.Resistant, e.Stalwart = t.Keywords.Resistant, t.Keywords.Stalwart
+		}
 		seq = f.event(e)
 	}
 	return f, seq
