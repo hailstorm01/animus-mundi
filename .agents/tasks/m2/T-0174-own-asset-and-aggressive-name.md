@@ -4,7 +4,7 @@ title: One "this asset is yours" check, ownAsset, and "Aggressive" spelled once 
 kind: harness
 tier: flash
 wave: D.1 (board directives #111 and #112, structural review 8, findings 8 and 9)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0174-own-asset-and-aggressive-name
 depends_on: [T-0173]
 claims: [helper:ownAsset]
@@ -108,10 +108,26 @@ No new tests: a pure move, so no `test(T-0174)` commit. W is your worktree. Run 
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1–11 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–11 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 5): wrote this task from board directives #111 and #112, next in board order, against the run branch at a26fcd5. No `main` commits to sync. Not `WAVE-COMPLETE`: #111–#119 and #121 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: the finds are in Inputs. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (flash): implemented directives #111 and #112 per spec.
+  - Changes: Added `ownAsset` in `pkg/engine/actions.go` and called it in `readyAsset` and `ActActivate`. In `pkg/engine/card.go`, updated `keywordDefs` and comment to use `ability.KeywordAggressive.String()`. In `pkg/engine/trigger.go`, updated `fireAttacks` buffer trigger label format to use `ability.KeywordAggressive.String()`.
+  - Reuse: Reused `ability.KeywordAggressive.String()` and unified asset ownership verification into `ownAsset`.
+  - Verification results:
+    - Case 1: `git -C W diff autoloop/m2-wave-d.1 -- '*_test.go'` printed nothing; `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -e 'is not yours' -- pkg/engine` printed single match at `pkg/engine/actions.go:249`.
+    - Case 4: `git -C W grep -n -e 'ownAsset(' -- pkg` printed 3 matches: `actions.go:181`, `actions.go:246`, `actions.go:255`.
+    - Case 5: `git -C W grep -n -e 'readyAsset(' -- pkg/engine` printed 4 matches: `actions.go:146`, `actions.go:194`, `actions.go:254`, `combat.go:12`.
+    - Case 6: `git -C W grep -n -e 'name: .Aggressive' -e ': Aggressive %d' -- pkg/engine` printed nothing and exited 1.
+    - Case 7: `git -C W grep -n -e 'KeywordAggressive.String' -- pkg/engine/card.go pkg/engine/trigger.go` printed `card.go:56` and `trigger.go:137`.
+    - Case 8: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed `13 4 pkg/engine/actions.go`, `3 2 pkg/engine/card.go`, `1 1 pkg/engine/trigger.go`.
+    - Case 9: `go -C W run ./cmd/cardtown lint fences` passed (exit 0).
+    - Case 10: `git -C W diff autoloop/m2-wave-d.1 --stat` printed only the 3 pkg files and the task file.
+    - Case 11: `go -C W tool task check` passed all stages; `go -C W tool task sim` passed (200 games, all invariants holding).
+  - Status set to `review`.
