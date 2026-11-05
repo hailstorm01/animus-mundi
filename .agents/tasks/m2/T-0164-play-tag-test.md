@@ -4,7 +4,7 @@ title: The play screen's not-executable tag is pinned on its own, not through on
 kind: harness
 tier: flash
 wave: D
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d/T-0164-play-tag-test
 depends_on: [T-0037]
 claims: [test:TestPlay_Case1 tag assertion, test:TestPlay_PrintScreenTagsANotExecutableHandCard, comment:TestView_Case8]
