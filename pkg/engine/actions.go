@@ -86,14 +86,10 @@ func (g *Game) Apply(a Action) error {
 		p.pay(2, 0)
 		p.Tac++
 	case ActDeploy:
-		inst := handCard(p, a.Card)
-		g.payCost(p, inst)
-		g.takeCard(inst)
+		inst := g.playFromHand(p, a.Card)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
 	case ActEnact:
-		inst := handCard(p, a.Card)
-		g.payCost(p, inst)
-		g.takeCard(inst)
+		inst := g.playFromHand(p, a.Card)
 		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect,
 			&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst})
 	case ActActivate:
@@ -237,6 +233,15 @@ func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
 		return nil, illegal("cannot pay for %s (needs R%d T%d)", c.Name, req, tac)
 	}
 	return inst, nil
+}
+
+// playFromHand finds the card handPlay approved, pays its cost and takes it from
+// hand: what Deploy and Enact do before each goes on in its own way.
+func (g *Game) playFromHand(p *Player, id int) *Instance {
+	inst := handCard(p, id)
+	g.payCost(p, inst)
+	g.takeCard(inst)
+	return inst
 }
 
 func (g *Game) readyAsset(a Action) (*Asset, error) {

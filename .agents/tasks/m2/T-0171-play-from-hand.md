@@ -4,7 +4,7 @@ title: One function plays a card from hand, playFromHand, and one emitAction cas
 kind: harness
 tier: flash
 wave: D.1 (board directive #108, structural review 8, finding 5)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0171-play-from-hand
 depends_on: [T-0170]
 claims: [helper:Game.playFromHand]
@@ -95,10 +95,22 @@ No new tests: a pure move, so no `test(T-0171)` commit. W is your worktree. Run 
 - `pkg/engine/events.go`
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 2): wrote this task from board directive #108, next in board order, against the run branch at 35cd48c. No `main` commits to sync. Not `WAVE-COMPLETE`: #108–#119 and #121 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no function that finds, pays and takes; `handPlay` checks and changes nothing; `setup.go`'s mulligan takes without paying (see Inputs). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0171): implemented playFromHand helper in pkg/engine/actions.go and called it in Apply for ActDeploy and ActEnact; consolidated ActDeploy and ActEnact into a single switch case in emitAction in pkg/engine/events.go. Reused existing handCard, g.payCost, and g.takeCard. Acceptance cases 1–10 executed and verified:
+  - Case 1: git -C W diff autoloop/m2-wave-d.1 -- '*_test.go' printed nothing; go -C W test ./... passed (exit 0).
+  - Case 2: go -C W tool task sim-compare -- autoloop/m2-wave-d.1 passed ([PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included).
+  - Case 3: git -C W grep -n -e 'playFromHand(' -- pkg/engine returned pkg/engine/actions.go:89, pkg/engine/actions.go:92, pkg/engine/actions.go:240.
+  - Case 4: git -C W grep -n -e 'g.payCost(' -e 'g.takeCard(' -- pkg/engine/actions.go returned pkg/engine/actions.go:242, pkg/engine/actions.go:243.
+  - Case 5: git -C W grep -n -e 'handCard(' -- pkg/engine/events.go returned pkg/engine/events.go:156.
+  - Case 6: git -C W grep -n -e 'case ActDeploy' -e 'case ActEnact' -e 'a.Kind == ActDeploy' -e 'e.Zone = a.Zone' -- pkg/engine/events.go returned pkg/engine/events.go:155, pkg/engine/events.go:159, pkg/engine/events.go:160.
+  - Case 7: git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd returned 11 6 pkg/engine/actions.go and 3 5 pkg/engine/events.go.
+  - Case 8: go -C W run ./cmd/cardtown lint fences passed (exit 0).
+  - Case 9: git -C W diff autoloop/m2-wave-d.1 --stat lists only pkg/engine/actions.go, pkg/engine/events.go, and this task file.
+  - Case 10: go -C W tool task check and go -C W tool task sim passed.
+  Reviewer note: Enact event leaves Zone empty (guarded by a.Kind == ActDeploy). All starter and stress simulations remain byte-identical.
