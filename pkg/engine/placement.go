@@ -22,6 +22,12 @@ type placement struct {
 	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
 }
 
+// stackItem builds the item pl goes on the stack as: its kind, and the
+// controller, source and instance pl already holds.
+func (pl placement) stackItem(kind StackKind) *StackItem {
+	return &StackItem{Kind: kind, Controller: pl.controller, Source: pl.source, Inst: pl.inst}
+}
+
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
 // modes first, if it has any, then the targets of the effect that leaves
 // (FR-MOD-001 §5, SVY-R3). It returns the effect the stack item resolves and
@@ -33,12 +39,13 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 	return e, g.chooseTargets(pl, e)
 }
 
-// declare runs the declare sequence for item, an effect declared by a manual
-// action, in rules order: the discard cost's cards are picked, e's modes and
-// targets are chosen and filled into item, item goes on the stack, and the
-// additional costs are paid (FR-TRN-003, FR-TRN-003a).
-func (g *Game) declare(pl placement, e ability.Effect, item *StackItem) {
+// declare runs the declare sequence for an effect declared by a manual action,
+// in rules order: the discard cost's cards are picked, e's modes and targets are
+// chosen and filled into a stack item of this kind, the item goes on the stack,
+// and the additional costs are paid (FR-TRN-003, FR-TRN-003a).
+func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 	pl.discards = g.chooseCostDiscards(pl)
+	item := pl.stackItem(kind)
 	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
 	g.push(item)
 	g.payCosts(pl)

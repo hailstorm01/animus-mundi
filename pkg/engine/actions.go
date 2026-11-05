@@ -90,13 +90,11 @@ func (g *Game) Apply(a Action) error {
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
 	case ActEnact:
 		inst := g.playFromHand(p, a.Card)
-		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect,
-			&StackItem{Kind: StackManeuver, Controller: a.Player, Inst: inst})
+		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect, StackManeuver)
 	case ActActivate:
 		as := g.Asset(a.Asset)
 		act := as.Printed().Ability.Activated[a.Ability]
-		g.declare(activatedPlacement(a.Player, as, act), act.Effect,
-			&StackItem{Kind: StackAbility, Controller: a.Player, Source: as.ID, Inst: as.Inst})
+		g.declare(activatedPlacement(a.Player, as, act), act.Effect, StackAbility)
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
