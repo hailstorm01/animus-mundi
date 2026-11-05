@@ -34,22 +34,6 @@ func (k ActionKind) String() string {
 	return [...]string{"Generate", "Convert", "Deploy", "March", "Attack", "Scratch", "Enact", "Activate", "EndTurn"}[k]
 }
 
-// Resource selects Requisition or Tactics.
-type Resource int
-
-const (
-	Requisition Resource = iota
-	Tactics
-)
-
-// String names the resource, as events and the play screen write it.
-func (r Resource) String() string {
-	if r == Tactics {
-		return "Tactics"
-	}
-	return "Requisition"
-}
-
 // Action is one manual declaration. Fields not used by Kind are ignored.
 type Action struct {
 	Kind     ActionKind
@@ -71,20 +55,9 @@ func (g *Game) Apply(a Action) error {
 	p := g.Players[a.Player]
 	switch a.Kind {
 	case ActGenerate:
-		as := g.Asset(a.Asset)
-		g.exhaust(as)
-		yield := as.Printed().TacYield
-		if a.Resource == Requisition {
-			yield = as.Printed().ReqYield
-			p.Req += yield
-		} else {
-			p.Tac += yield
-		}
-		g.logEvent(Event{Kind: EventGenerate, Player: int(a.Player), Source: as.ID, Amount: yield},
-			"%s exhausts for resources (R%d T%d)", as, p.Req, p.Tac)
+		g.generate(a)
 	case ActConvert:
-		p.pay(2, 0)
-		p.Tac++
+		p.convert()
 	case ActDeploy:
 		inst := g.playFromHand(p, a.Card)
 		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
@@ -114,17 +87,6 @@ func (g *Game) Apply(a Action) error {
 	return nil
 }
 
-// exhaust is the one place a Readied asset becomes Exhausted, for any reason
-// (SVY-R17). Entering the battlefield Exhausted is not an exhaust. Exhausting
-// an asset that is already Exhausted changes nothing and fires nothing.
-func (g *Game) exhaust(a *Asset) {
-	if a.Exhausted {
-		return
-	}
-	a.Exhausted = true
-	g.fireExhausted(a)
-}
-
 // check returns nil if a is legal right now.
 func (g *Game) check(a Action) error {
 	if g.Outcome.Over {
@@ -151,8 +113,8 @@ func (g *Game) check(a Action) error {
 			return illegal("%s cannot generate that resource in %s (FR-CAP-001)", as, as.Zone)
 		}
 	case ActConvert:
-		if !p.canPay(2, 0) {
-			return illegal("conversion needs 2 Requisition")
+		if !p.canPay(convertReq, 0) {
+			return illegal("conversion needs %d Requisition", convertReq)
 		}
 	case ActDeploy:
 		inst, err := g.handPlay(p, a.Card)
@@ -260,18 +222,6 @@ func (g *Game) readyAsset(a Action) (*Asset, error) {
 		return nil, illegal("%s is exhausted", as)
 	}
 	return as, nil
-}
-
-// canYield implements the Generate Resources rows of FR-CAP-001. A zero yield
-// is still a legal choice (Design Rationale KIM-S03).
-func (g *Game) canYield(a *Asset, r Resource) bool {
-	if a.Printed().Type != TypeUnit || g.Keywords(a).Versatile {
-		return true
-	}
-	if a.Zone == ZoneReserves {
-		return r == Requisition
-	}
-	return r == Tactics
 }
 
 // LegalActions enumerates every legal action for the active player.

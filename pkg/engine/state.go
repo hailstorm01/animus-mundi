@@ -1,4 +1,4 @@
-// Core state: the game, player and asset types and their lookups, with last-known information (FR-ZON-004).
+// Core state: the game, player and asset types and their lookups, with last-known information (FR-ZON-004), and exhausting an asset.
 
 package engine
 
@@ -316,4 +316,15 @@ func (g *Game) TheaterOf(p PlayerID) []*Asset {
 		}
 	}
 	return out
+}
+
+// exhaust is the one place a Readied asset becomes Exhausted, for any reason
+// (SVY-R17). Entering the battlefield Exhausted is not an exhaust. Exhausting
+// an asset that is already Exhausted changes nothing and fires nothing.
+func (g *Game) exhaust(a *Asset) {
+	if a.Exhausted {
+		return
+	}
+	a.Exhausted = true
+	g.fireExhausted(a)
 }
