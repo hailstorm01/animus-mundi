@@ -32,5 +32,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0168 | The play log hides an opponent's deck search pick, and a search replays (harness, flash) | ready |
 | T-0169 | Make Cliff of Portents executable (wave D card, flash) | queued |
