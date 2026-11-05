@@ -4,7 +4,7 @@ title: Make Boneyard Scavenger and Ruin Partisans executable (Tactics, exhaust, 
 kind: card
 tier: flash
 wave: D
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-d/T-0166-boneyard-scavenger-ruin-partisans
 depends_on: [T-0158, T-0162, T-0163, T-0165]
 claims: [card:Boneyard Scavenger, card:Ruin Partisans]
@@ -77,3 +77,4 @@ In a new file `pkg/engine/cards_path_reclaim_test.go`, from the CSV text, loadin
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 11): written against 69de466, with the lead's probe above. #105's part (1) is applied, and parts (2), (3) go with *Cliff of Portents*, which also needs `SEARCH_DECK`, so this card task goes first. Searched `pkg/engine` and the task archive: `KindManeuver`, `KindUnit`, the discard-pile target and the three cost kinds all exist, so nothing here is a new shape. Board re-read, no new directive. Set to `tests`.
 - 2026-11-04 rules-test-author: wrote 13 tests in pkg/engine/cards_path_reclaim_test.go, all the cases listed under Tests: TestCard_BoneyardScavenger_{ReturnsTheChosenManeuver, ListsOnlyManeuverCards, NeedsAManeuverInThePile, OpponentsPileDoesNotCount, NeedsOneTactics, NeedsToBeReadied, WorksFromReserves} and TestCard_RuinPartisans_{ReturnsTheChosenUnit, ListsOnlyUnitCards, OwnCardCannotBeChosen, AnotherCopyCanReturnTheFirst, NeedsTwoTactics, NeedsToBeReadied}. The file has two local helpers (reclaimScene, reclaimExhaustedNotOffered; the latter because actNotOffered requires the unit to end Readied). Helpers requested: none. Cases left out: none. Vet and gofmt clean; the 6 positive tests fail until the cards are defined, the not-offered tests pass trivially for now.
+- 2026-11-04 lead-architect: tests approved (D4, round 1), each checked against `FR-ACT-001`, `FR-ACT-002`, `SVY-R2`, `SVY-R36` and `FR-TGT-001`. Six fail before the definitions. A lead probe with the Definition above, since reverted, passes all thirteen; dropping `CostExhaustSelf` from that probe fails both `NeedsToBeReadied` tests. Set to `ready`.
