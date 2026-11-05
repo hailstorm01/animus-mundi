@@ -4,7 +4,7 @@ title: One "first picks in this order", firstPicks, and one listedOrder (directi
 kind: harness
 tier: flash
 wave: D.1 (board directive #110, structural review 8, finding 7)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0173-first-picks
 depends_on: [T-0172]
 claims: [helper:firstPicks, helper:listedOrder]
@@ -159,3 +159,9 @@ No new tests: a pure move, so no `test(T-0173)` commit. W is your worktree. Run 
   - Case 8: `git -C W diff autoloop/m2-wave-d.1 --stat` showed only `pkg/engine/choice.go` and task file.
   - Case 9: `go -C W tool task check` and `go -C W tool task sim` passed.
   Status moved to review.
+- 2026-11-05, lead-architect (wave D.1 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as b0b0e65. Flash run `6feaff0c-55b2-4cca-969e-a9966064016c`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's notice `root agent idle; waiting for 1 background task(s) to finish`, which PowerShell wraps as a `NativeCommandError`; it is not a refusal. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0173-first-picks` (a5c9ec7):
+  - Scope: only `choice.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1-8. The bounds, `Min` 0 and `DecideOrder` reasoning in Inputs holds: `fallbackPicks` is called only from `choose`, after `satisfiable`, and `fixedOrderPicks`' guard stays.
+  - Fences and placement: no card name, no new rule. Both helpers sit with the fallbacks in `choice.go`.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-8; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #110 is applied. #111 is next.
