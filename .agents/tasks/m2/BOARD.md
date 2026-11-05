@@ -31,5 +31,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0164 | The play screen's not-executable tag is pinned on its own, not through one seat's starter session (harness, flash, tests only) | ready |
 | T-0165 | Make Sinuous Growth executable (wave D card, flash) | queued |

@@ -4,7 +4,7 @@ title: The play screen's not-executable tag is pinned on its own, not through on
 kind: harness
 tier: flash
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0164-play-tag-test
 depends_on: [T-0037]
 claims: [test:TestPlay_Case1 tag assertion, test:TestPlay_PrintScreenTagsANotExecutableHandCard, comment:TestView_Case8]
@@ -98,3 +98,4 @@ These edits are the whole change. The new test pins behavior that exists since T
   - Case 4: `git diff autoloop/m2-wave-d --stat` listed only `cmd/cardtown/play_test.go`, `pkg/view/executable_test.go`, and `.agents/tasks/m2/T-0164-play-tag-test.md`.
   - Case 5: `go tool task sim-compare -- autoloop/m2-wave-d` printed `[PASS] starter and stress sims match autoloop/m2-wave-d byte for byte, exit codes included`.
   - Case 6: `go tool task check` passed clean (fmt-check, vet, tests, all linter suites passed), and `go tool task sim` passed (200 games, seed 1..200, all invariants holding). Status `review`.
+- 2026-11-04 lead-architect (wave D run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d` as e8b3d95. Flash run `2780291f-664e-4b75-b2d2-003148c83ca8`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; the `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d...m2/autoloop-wave-d/T-0164-play-tag-test`, not the Log: the three edits are the ones under Edits, only the two Allowed Files and this file changed, and no `_test.go` changed after ff1ade5. A test-only task has no `failed before` to check, so the reviewer emptied the tag in `play_screen.go`, since reverted, and `TestPlay_PrintScreenTagsANotExecutableHandCard` fails. With T-0165's definition, also reverted, `go test ./cmd/cardtown ./pkg/view ./pkg/engine ./pkg/sim` passes, which is what this task was for. Re-run by the reviewer in a scratch worktree of the task branch, with exit codes: Cases 1-3, `go tool task sim-compare -- autoloop/m2-wave-d` `[PASS]`, `go tool task check`, `go tool task sim` and `go run ./cmd/cardtown lint fences`, all exit 0. `go tool task check` and `go tool task sim` also exit 0 on the merged run branch: 200 games, P0 82.5% / P1 17.5% / draws 0.0%, no monitor violation. Left as they are: `TestView_Case8_ExecutableFlag` and T-0165 both rest on *Veil Render* being unsupported, so that test needs its own look when *Veil Render*'s task is written.
