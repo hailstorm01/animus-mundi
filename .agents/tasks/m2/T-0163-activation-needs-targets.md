@@ -4,7 +4,7 @@ title: An activated ability can be activated only if its required targets exist 
 kind: shape
 tier: sonnet
 wave: D
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-d/T-0163-activation-needs-targets
 depends_on: [T-0158, T-0162]
 claims: [check:activate-placeable]
@@ -70,3 +70,4 @@ Existing tests already cover an ability with no target slot needing only its cos
 
 ## Log
 - 2026-11-04 lead-architect (wave D run, session 7): synced `main` into the run branch (958db4a, two commits: outcome and FRD 01 v3.21). `BOARD.md` conflicted only in the counters and next to the new row; kept #104, added #105, `Last directive` #105, `Last task` T-0162, and no number is duplicated or missing. #105's trigger fired: the outcome reads `Status: applied: FRD 01 v3.21, 2026-11-04`. Set to `open`, and part (1) goes first as this task. #104 is `applied: answered by #105` and archived, as #105 asks. Design note Open Question 17 closed. Other waiting directives checked, none fired: #6, #7 (mode is `serial`); #8 (this task doesn't touch `deck.go`); #15 (no turn-boundary hook); #71, #91 (2) (no such card). Not `WAVE-COMPLETE`: all four header cards are on `NotYetExecutable`. Three non-test files. Status `tests`; dispatching `rules-test-author`.
+- 2026-11-04 rules-test-author: tests written in `pkg/engine/activated_test.go` (header comment rewritten as authorized; no existing test changed). `go vet` clean, `cardtown lint rules` passes. Against the current kernel the following fail as expected: `NoLegalTargetCannotActivate` (all four subtests), `WardedOnlyTargetCannotActivate`, `AnotherSlotNeedsTwoEntities/one_legal_entity`, `ChooseNNeedsEnoughLegalModes` ("choose one, no legal mode", "choose two, one legal mode"). These pass already and guard the other side: `UpToSlotStillActivates`, `LegalTargetDoesNotExcuseACost`, `AnotherSlotNeedsTwoEntities/two_legal_entities`, the "one legal mode" and "two legal modes" ChooseN rows. Tests: TestFR_ACT_001_NoLegalTargetCannotActivate (empty pile, only non-matching cards, a cost that would otherwise be paid, a legal entity appears), TestFR_ACT_001_UpToSlotStillActivates, TestFR_ACT_001_WardedOnlyTargetCannotActivate, TestFR_ACT_001_AnotherSlotNeedsTwoEntities, TestFR_ACT_001_ChooseNNeedsEnoughLegalModes (4 rows), TestFR_ACT_001_LegalTargetDoesNotExcuseACost. Ward: FR-KWD-002h makes an opposing Warded unit not choosable by activated abilities, so the case is included. Helpers requested: none (file-local `actRecaller`, `actNotOffered`, `actHasMode`, `actPileFilter`). Cases left out: none.
