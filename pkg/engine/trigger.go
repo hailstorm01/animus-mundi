@@ -134,7 +134,7 @@ func (g *Game) cornered(p PlayerID) bool {
 // printed attack triggers (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
-		g.bufferTrigger(a, fmt.Sprintf("%s: Aggressive %d", a.Printed().Name, n), ability.Aggressive(n))
+		g.bufferTrigger(a, fmt.Sprintf("%s: %s %d", a.Printed().Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
 	}
 	g.fireHook(a, ability.HookAttacks)
 }

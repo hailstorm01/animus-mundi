@@ -178,9 +178,9 @@ func (g *Game) check(a Action) error {
 			return illegal("%s has no legal choice for a required target or enough legal modes (SVY-R29)", inst.Card.Name)
 		}
 	case ActActivate:
-		as := g.Asset(a.Asset)
-		if as == nil || as.Controller != a.Player {
-			return illegal("asset %d is not yours on the battlefield", a.Asset)
+		as, err := g.ownAsset(a)
+		if err != nil {
+			return err
 		}
 		def := as.Printed().Ability
 		if def == nil || a.Ability < 0 || a.Ability >= len(def.Activated) {
@@ -242,10 +242,19 @@ func (g *Game) playFromHand(p *Player, id int) *Instance {
 	return inst
 }
 
-func (g *Game) readyAsset(a Action) (*Asset, error) {
+// ownAsset returns the battlefield asset a names, if a.Player controls it.
+func (g *Game) ownAsset(a Action) (*Asset, error) {
 	as := g.Asset(a.Asset)
 	if as == nil || as.Controller != a.Player {
 		return nil, illegal("asset %d is not yours on the battlefield", a.Asset)
+	}
+	return as, nil
+}
+
+func (g *Game) readyAsset(a Action) (*Asset, error) {
+	as, err := g.ownAsset(a)
+	if err != nil {
+		return nil, err
 	}
 	if as.Exhausted {
 		return nil, illegal("%s is exhausted", as)
