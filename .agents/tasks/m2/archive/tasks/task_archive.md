@@ -168,3 +168,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0162 | A filter can ask for any of several subtypes, and for a Maneuver card (wave D shape, sonnet) | done |
 | T-0163 | An activated ability can be activated only if its required targets exist (wave D shape, sonnet) | done |
 | T-0164 | The play screen's not-executable tag is pinned on its own, not through one seat's starter session (harness, flash, tests only) | done |
+| T-0165 | Make Sinuous Growth executable (wave D card, flash) | done |

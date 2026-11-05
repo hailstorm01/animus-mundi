@@ -4,7 +4,7 @@ title: Make Sinuous Growth executable (T1, kill this unit, return chosen Fungus 
 kind: card
 tier: flash
 wave: D
-status: review
+status: done
 branch: m2/autoloop-wave-d/T-0165-sinuous-growth
 depends_on: [T-0158, T-0162, T-0163, T-0164]
 claims: [card:Sinuous Growth]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/cards_animus_sinuous_test.go`, from the CSV text, load
 - 2026-11-04 rules-test-author: wrote `pkg/engine/cards_animus_sinuous_test.go`: TestCard_SinuousGrowth_ReturnsTheChosenCard, _ListsFungusOrPlantCardsOfAnyType, _OwnCardCannotBeChosen (empty pile; non-matching pile), _AnotherCopyCanReturnTheFirst, _OpponentsPileDoesNotCount, _NeedsOneTactics, _WorksWhileExhausted. Helpers requested: none (reuses `activate`, `offersActivate`, `actNotOffered`, `setPool`, `refs`). Run now: the four positive tests fail with "no activated ability 0" (no definition yet); the three "not offered" tests pass trivially until the definition exists, and guard against over-offering after. No cases left out.
 - 2026-11-04 lead-architect: tests approved (D4, round 1), each checked against `FR-ACT-001`, `SVY-R36`, `SVY-R2`, `FR-ACT-002` and `FR-TGT-001`. A lead probe with the Definition above, since reverted, passes all seven and every package. Set to `ready`.
 - 2026-11-04 kernel-engineer: added Sinuous Growth ability definition to pkg/engine/cards/animus.go using CostResources (Tac: 1), CostKillSelf, Target filter (AllegianceAllied, ZoneDiscard, Subtypes: Fungus/Plant), and OpReturnToHand. Removed Sinuous Growth from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing ability primitives and cost structures without adding new shapes. Verified: go test ./pkg/engine -run TestCard_SinuousGrowth passed; go test ./pkg/engine -run TestStarterSet_Executable passed; go tool task check passed clean; go tool task sim ran clean on starter decks (P0 main cards executable 46/50, 200 games 0 invariant violations). Set to review.
+- 2026-11-04 lead-architect (wave D run, session 10): approved (D5, round 1), merged as b3cafe4. The diff is the task's Definition and the one name off `NotYetExecutable`, inside `Allowed Files`, and the test file changed only in `c166f7a`. Re-run by the reviewer on the task branch and again on the merge, with exit codes: `go test ./pkg/engine -run TestCard_SinuousGrowth` (task branch only), `go tool task check`, `go tool task sim`, all 0. The sim matches the lead's earlier probe: 46/50 Animus main cards executable, P0 84.5% / P1 14.0% / draws 1.5%. The first Flash run was refused at step 26 and resumed once in the same conversation (D3), and it left no denied action. Its Log entry reports no refusal, so this one does.

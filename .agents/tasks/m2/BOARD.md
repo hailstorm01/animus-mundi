@@ -31,4 +31,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0165 | Make Sinuous Growth executable (wave D card, flash) | in-progress |
