@@ -4,7 +4,7 @@ title: One read of "can pay" and one payment, (*Player).canPay and (*Player).pay
 kind: harness
 tier: flash
 wave: D.1 (board directive #107, structural review 8, finding 4)
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0170-can-pay-and-pay
 depends_on: []
 claims: [helper:Player.canPay, helper:Player.pay]
@@ -113,10 +113,21 @@ No new tests: a pure move, so no `test(T-0170)` commit. W is your worktree. Run 
 - `pkg/engine/costs.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 1): created the run file and wrote this task from board directive #107, first in board order, against the run branch at 1062867. No `main` commits to sync. Not `WAVE-COMPLETE`: #107–#119 and #121 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Searched for existing equivalents: `pkg/engine` has no `canPay` or `pay` and no `Player` methods; the only other "can pay" and payment for resources is Convert's, which this task folds in (D2.3, see Inputs). Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (session 1): implemented (*Player).canPay and (*Player).pay pure move per Edits 1–6. Searched for reuse: confirmed `pkg/engine` had no existing methods on `*Player` and no existing `canPay` or `pay`. Diff shows: added `(*Player).canPay` and `(*Player).pay` in `pkg/engine/costs.go`, updated `payCost`, `costsPayable`, and `payCosts` in `costs.go`, and updated Convert's payment in `Apply`, Convert's check in `check`, and `handPlay` in `pkg/engine/actions.go`. Committed engine changes as `feat(engine): (*Player).canPay and (*Player).pay (T-0170)`. Verification commands and results:
+  - Case 1: `git diff autoloop/m2-wave-d.1 -- '*_test.go'` printed nothing; `go test ./...` passed.
+  - Case 2: `go tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 3: `git grep -n -e 'func (p \*Player) canPay(' -e 'func (p \*Player) pay(' -- pkg/engine` printed exactly two lines at `costs.go:20` and `costs.go:25`.
+  - Case 4: `git grep -n -e 'canPay(' -e '\.pay(' -- pkg/engine` printed exactly seven lines (`actions.go:86, 160, 236` and `costs.go:20, 33, 90, 128`).
+  - Case 5: `git grep -n -e 'p.Req <' -e 'p.Tac <' -e 'p.Req -=' -e 'p.Tac -=' -- pkg/engine/costs.go pkg/engine/actions.go` printed exactly two lines inside `pay` (`costs.go:26, 27`).
+  - Case 6: `git diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed `3 3 pkg/engine/actions.go` and `15 7 pkg/engine/costs.go`.
+  - Case 7: `go run ./cmd/cardtown lint fences` passed (exit code 0).
+  - Case 8: `git diff autoloop/m2-wave-d.1 --stat` lists only `actions.go`, `costs.go`, and this task file.
+  - Case 9: `go tool task check` passed (gofmt, vet, tests, and all linters passed); `go tool task sim` ran 200 games clean with all invariants holding.
+  Status moved to `review`. Next: `lead-architect` review.

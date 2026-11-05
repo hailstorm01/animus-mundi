@@ -83,7 +83,7 @@ func (g *Game) Apply(a Action) error {
 		g.logEvent(Event{Kind: EventGenerate, Player: int(a.Player), Source: as.ID, Amount: yield},
 			"%s exhausts for resources (R%d T%d)", as, p.Req, p.Tac)
 	case ActConvert:
-		p.Req -= 2
+		p.pay(2, 0)
 		p.Tac++
 	case ActDeploy:
 		inst := handCard(p, a.Card)
@@ -157,7 +157,7 @@ func (g *Game) check(a Action) error {
 			return illegal("%s cannot generate that resource in %s (FR-CAP-001)", as, as.Zone)
 		}
 	case ActConvert:
-		if p.Req < 2 {
+		if !p.canPay(2, 0) {
 			return illegal("conversion needs 2 Requisition")
 		}
 	case ActDeploy:
@@ -233,7 +233,7 @@ func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
 		return nil, illegal("%s needs rules the kernel does not implement yet", c.Name)
 	}
 	req, tac := g.EffectiveCost(inst)
-	if p.Req < req || p.Tac < tac {
+	if !p.canPay(req, tac) {
 		return nil, illegal("cannot pay for %s (needs R%d T%d)", c.Name, req, tac)
 	}
 	return inst, nil
