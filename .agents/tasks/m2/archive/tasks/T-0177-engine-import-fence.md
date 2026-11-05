@@ -4,7 +4,7 @@ title: The fences check the engine's imports (directive #115, harness, flash)
 kind: harness
 tier: flash
 wave: D.1 (board directive #115, structural review 8, finding 14)
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0177-engine-import-fence
 depends_on: [T-0176]
 claims: [fence:pkg/engine imports, test:TestFences_Case34 engine fixture, test:TestFences_Case39_EngineImports]
@@ -101,3 +101,10 @@ Edit 1 is the whole of the test commit: commit it as `test(T-0177): the fences c
   - Case 5: `git -C W diff autoloop/m2-wave-d.1 --stat` lists only those two files and this task file.
   - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
   - Case 7: `gofmt -l W/pkg/toolchain` printed nothing; `go -C W tool task check` passed (all vet, tests, lint --all); `go -C W tool task sim` passed.
+- 2026-11-05, lead-architect (wave D.1 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 3b9d809. Flash run `99bb23c0-8458-4164-81a9-d38a6864199a`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0177-engine-import-fence`, not the Log:
+  - Scope: only the two Allowed Files and this file changed. `fences.go` gains the one row (940eec1). `fences_test.go` changed only in 5edbb5a, the `test(T-0177)` commit, with the one named deletion in `TestFences_Case34_AllowedImportsPass` and the new `TestFences_Case39_EngineImports`, and no `_test.go` changed after it.
+  - Failed before: at 5edbb5a, in a scratch worktree, `go test ./pkg/toolchain/linter/fences -run TestFences_Case39_EngineImports` exits 1 on `expected failure, got true`.
+  - Fences and placement: no engine code changed, so no card name, no new rule and no `OPEN(` marker. The row sits in the one import table, and `checkImports` is reused unchanged.
+  - Live probe, since removed: a scratch `pkg/engine/zz_probe.go` importing `animus-mundi/pkg/toolchain/git` makes `cardtown lint fences` print `[ERROR] pkg/engine/zz_probe.go:3: imports animus-mundi/pkg/toolchain/git; pkg/engine may import only pkg/engine/ability, pkg/engine/cards`, and exit 1. The worktree was clean afterwards.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 2-6; `gofmt -l` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. Directive #115 is applied. #116 is next.
