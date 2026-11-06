@@ -184,3 +184,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0178 | Snapshots and damage events report effective keywords (directive #116 (a), harness, flash) | done |
 | T-0179 | Rule monitors read effective keywords (directive #116 (b), harness, flash) | done |
 | T-0180 | A keyword behind Cornered is one continuous shape (directive #117, shape, sonnet) | done |
+| T-0181 | The view shows a keyword behind Cornered, and the monitors stay clean on it (directive #117, harness, flash) | done |

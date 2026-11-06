@@ -4,7 +4,7 @@ title: The view shows a keyword behind Cornered, and the monitors stay clean on 
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0181-cornered-keywords-in-clients
 depends_on: [T-0180]
 claims: [test:TestView_KeywordBehindCorneredShowsOnlyWhileCornered, test:TestMonitorKeywords_CorneredResistantInRealGames]
@@ -16,7 +16,7 @@ requirements: []
 The two cases of #117 that `rules-test-author` can't write, because it writes only under `pkg/engine` (D2.4, as for T-0164). A seat's view lists a keyword behind Cornered only while Cornered, and real games with a `Cornered: Resistant 1` card break no rule monitor. No non-test code changes: same declarations, same sim output.
 
 ## Inputs
-- Board directive #117 (a) and (c). T-0180 (merge 995fb2f) built the shape and its engine tests: `ability.CorneredKeywords`, `Def.Cornered` and the grant in `g.Keywords` ([layers.go](../../../pkg/engine/layers.go)).
+- Board directive #117 (a) and (c). T-0180 (merge 995fb2f) built the shape and its engine tests: `ability.CorneredKeywords`, `Def.Cornered` and the grant in `g.Keywords` ([layers.go](../../../../../pkg/engine/layers.go)).
 - `pkg/view/view.go:149`: `AssetView.Keywords` reads `g.Keywords(a)`. `pkg/view/view_test.go`'s `newScene`, `put` and `testUnit` are the setup, and `TestView_Case2_FaceDown` is the model for finding an asset in `v.Theater`.
 - `pkg/sim/monitor_damage.go`: `checkDamage` reads Resistant from the damage event (T-0179) and counts `FR-KWD-002b` when it isn't 0. `pkg/engine/damage.go:58` writes the event's `Resistant` from `g.Keywords(target)`.
 - **Why the sim test reads coverage.** No other card in its decks has Resistant, and its own card prints none. So a non-zero `FR-KWD-002b` count means a damage event reported the grant in a real game, and the test can't pass on games where Cornered never matters.
@@ -136,3 +136,9 @@ These edits are the whole change. Both tests pin behavior T-0180 and T-0179 alre
     5. `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` passed (`[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`).
     6. `gofmt -l W/pkg/sim W/pkg/view` printed nothing. `go -C W tool task check` passed (fmt-check, vet, all tests across repo, and all cardtown linters clean). `go -C W tool task sim` passed (200 matches terminated clean with all invariants holding).
   - Committed edits as `test(T-0181): the view and the monitors on a keyword behind Cornered` (da7309f). Status `review`.
+- 2026-11-05 lead-architect (wave D.1 run, new runner, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 8d58cb3. Flash run `062a68ed-abc0-4bfa-8748-8ba3b3e62731`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file was empty. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0181-cornered-keywords-in-clients`, not the Log:
+  - Scope: only the two Allowed Files and this file changed, both test files are byte-identical to the lead's dry run, and they changed only in da7309f, the `test(T-0181)` commit. No existing test changed. No non-test code changed.
+  - Fences: no card name and no `OPEN(` marker in the additions.
+  - A test-only task has no `failed before`, so the reviewer made the three mutations in Inputs in a scratch worktree of the task branch, each reverted: `view.go` reading `a.Printed().Keywords` fails the view test; removing the grant in `g.Keywords` fails both tests (the sim test with "no damage event reported the Resistant behind Cornered"); `Resistant: 0` in `damage.go`'s event fails the sim test with a `damage-sequence` violation in game 1 under both policies.
+  - Re-run by the reviewer in that worktree, all as expected: cases 1-5; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #117 is fully applied and archived. #118 (a) is next. The design note's `Static` line and Layers paragraph wait for #121 (d), as that directive says.
