@@ -69,7 +69,7 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 			if !c.Executable {
 				notExec = " [not executable yet]"
 			}
-			fmt.Fprintf(out, "  [%d] %s (R%d T%d, %d/%d)%s\n", i+1, c.Card, c.ReqCost, c.TacCost, c.Power, c.Health, notExec)
+			fmt.Fprintf(out, "  [%d] %s (R%d T%d, %d/%d)%s\n", i+1, c.Card, c.ReqNow, c.TacNow, c.Power, c.Health, notExec)
 		}
 	} else {
 		fmt.Fprintln(out, "Your Hand: (empty)")
