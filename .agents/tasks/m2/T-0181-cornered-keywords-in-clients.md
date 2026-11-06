@@ -4,7 +4,7 @@ title: The view shows a keyword behind Cornered, and the monitors stay clean on 
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0181-cornered-keywords-in-clients
 depends_on: [T-0180]
 claims: [test:TestView_KeywordBehindCorneredShowsOnlyWhileCornered, test:TestMonitorKeywords_CorneredResistantInRealGames]
