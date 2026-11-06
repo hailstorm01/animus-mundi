@@ -4,7 +4,7 @@ title: A hidden decision stays hidden by its flag (directive #119, harness, flas
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0183-hidden-decision-flag
 depends_on: [T-0182]
 claims: [field:DecisionRecord.Hidden, view:LogLines hidden redaction, func:hiddenDecision, test:TestView_HiddenDecisionLineNamesNoOptionAndNoPick, test:TestView_FlaggedSearchKeepsItsWording, test:TestView_OpenDecisionLinePrintsToBothSeats, test:TestReplay_OnlySearchRecordsAreHidden, test:TestReplay_SearchWithoutItsHiddenFlagDiverges]
@@ -284,3 +284,10 @@ Edits 1 and 2 are the whole of the test commit: commit them as `test(T-0183): a 
   - Case 9: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 with `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
   - Case 10: `gofmt -l` clean, `go -C W tool task check` passed all stages (fmt, vet, tests, build, lint), `go -C W tool task sim` passed 200 matches with all invariants holding.
   Handoff for review.
+- 2026-11-05 lead-architect (wave D.1 run, session 14, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 6f97907. Flash run `e5e67925-8a9c-4643-81b5-a4be5b0355ec`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0183-hidden-decision-flag`, not the Log:
+  - Scope: only the six Allowed Files and this file changed, and all six are byte-identical to the lead's dry run. The test files changed only in 585323d, the `test(T-0183)` commit, which deletes no line, so T-0168's tests are unedited (#119 (a)).
+  - Failed before: at 585323d, in a scratch worktree, `go test ./pkg/view -run TestView_HiddenDecisionLineNamesNoOptionAndNoPick` exits 1 on `unknown field Hidden`, and `go test ./pkg/eventlog -run TestReplay_OnlySearchRecordsAreHidden` exits 1 on `e.Decision.Hidden undefined`.
+  - Fences and reuse: no card name and no `OPEN(` marker in the additions. `hiddenDecision` goes through the existing `redact`. The search clause in `LogLines` is the one thing the plan keeps, and #123 holds it (D2.3).
+  - The eight mutations in Inputs were made on the dry run, whose files these are. Each fails a test. One first survived: dropping `omitempty` passed, because `searchGames` holds only search decisions, so `TestReplay_OnlySearchRecordsAreHidden` was changed before this task was written to read `allGames` as well and to require both kinds of decision.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 2-6; `gofmt -l` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #119 is `applied` and archived. #123 waits on the user. #121 is next.
