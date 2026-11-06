@@ -36,4 +36,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0181 | The view shows a keyword behind Cornered, and the monitors stay clean on it (directive #117, harness, flash) | queued |
+| T-0181 | The view shows a keyword behind Cornered, and the monitors stay clean on it (directive #117, harness, flash) | ready |
