@@ -579,3 +579,63 @@ func TestReplay_SearchWithSwappedOptionsDiverges(t *testing.T) {
 	}
 	t.Fatal("no game holds a search decision with at least two refs")
 }
+
+// T-0183 (directive #119): in real games every search record is flagged hidden
+// and no other record is, in the record and in its JSON, where an open decision
+// has no hidden key.
+func TestReplay_OnlySearchRecordsAreHidden(t *testing.T) {
+	searches, open := 0, 0
+	for gi, evs := range slices.Concat(searchGames(t), allGames(t)) {
+		flagged := 0
+		for _, e := range evs {
+			if e.Decision == nil {
+				continue
+			}
+			isSearch := e.Decision.Kind == engine.DecideSearch.String()
+			if e.Decision.Hidden != isSearch {
+				t.Fatalf("game %d: decision %+v, want Hidden only on a search", gi+1, *e.Decision)
+			}
+			if isSearch {
+				flagged++
+			} else {
+				open++
+			}
+		}
+		searches += flagged
+		var buf bytes.Buffer
+		if err := eventlog.WriteEventsJSONL(&buf, gi+1, evs); err != nil {
+			t.Fatal(err)
+		}
+		js := buf.String()
+		if got := strings.Count(js, `"hidden":`); got != flagged {
+			t.Errorf("game %d: JSON has %d hidden keys, want %d, one per search", gi+1, got, flagged)
+		}
+		if got := strings.Count(js, `"hidden":true`); got != flagged {
+			t.Errorf("game %d: JSON has %d hidden:true, want %d", gi+1, got, flagged)
+		}
+	}
+	if searches == 0 || open == 0 {
+		t.Fatalf("%d searches and %d other decisions, want some of each", searches, open)
+	}
+}
+
+// T-0183 (directive #119): the flag is part of the record a replay compares.
+func TestReplay_SearchWithoutItsHiddenFlagDiverges(t *testing.T) {
+	for _, evs := range searchGames(t) {
+		for i, e := range evs {
+			if e.Decision == nil || e.Decision.Kind != engine.DecideSearch.String() {
+				continue
+			}
+			cp := append([]engine.Event{}, evs...)
+			decCopy := *e.Decision
+			decCopy.Hidden = false
+			cp[i].Decision = &decCopy
+			_, err := eventlog.Replay(cp, len(cp), searchResolve)
+			if err == nil || !strings.Contains(err.Error(), "replay diverged") {
+				t.Fatalf("search with no flag: error %v, want replay diverged", err)
+			}
+			return
+		}
+	}
+	t.Fatal("no game holds a search decision")
+}
