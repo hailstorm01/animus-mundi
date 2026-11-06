@@ -4,7 +4,7 @@ title: Drop the search clause from the hidden-decision check (directive #123, ha
 kind: harness
 tier: flash
 wave: D.1
-status: in-progress
+status: review
 branch: m2/T-0186-hidden-flag-only
 depends_on: [T-0183]
 claims: [view:LogLines hidden check, test:TestView_SearchWithoutTheFlagPrintsWhole]
@@ -81,10 +81,11 @@ Delete the two comment lines that begin `// The search clause is only for T-0168
 - `pkg/view/view_test.go` (Edit 1 only, in the test commit)
 
 ## Done When
-- [ ] `go test ./pkg/view ./pkg/eventlog` passes
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
+- [x] `go test ./pkg/view ./pkg/eventlog` passes
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to the integration branch)
 
 ## Log
 - 2026-11-06 (lead-architect): Written for #123, `ready`. The user opened the directive on 2026-11-06.
+- 2026-11-06 (kernel-engineer): Implemented for #123. Edit 1 added Hidden: true to TestView_SearchLineHidesThePickFromTheOpponent and TestView_SearchLineSaysNoCardWasFound in pkg/view/view_test.go, plus new test TestView_SearchWithoutTheFlagPrintsWhole (confirmed failing on unchanged log.go, committed as test(T-0186)). Edit 2 removed the search clause and comment in pkg/view/log.go so LogLines checks e.Decision.Hidden alone. Verification: go test ./pkg/view ./pkg/eventlog, go tool task check, go tool task sim, and go tool task sim-compare all passed cleanly. Set status to review.
