@@ -48,7 +48,7 @@ Everything else belongs to another persona: FRDs, the matrix, the survey, design
 5. Report a table of claims, each verified ✅ or wrong ❌, then the problems in order of impact, and a suggested fix for both the output and the persona. Change nothing until the user says to.
 
 ### B. Change a persona
-1. Read the whole skill file and every file that routes to it or receives its handoffs (`.agents/rules/AGENTS.md`, other skills that mention it, `docs/AGENTS.md`).
+1. Read the whole skill file and every skill that receives its handoffs. In files that only route to it or mention it (`.agents/rules/AGENTS.md`, `docs/AGENTS.md`, other skills), search for the persona's name and read those passages.
 2. Make sure each new duty has a receiver that is **allowed** to act on it, and that **can get its input**: a committed file the prompt names, never a chat message, because personas run in separate sessions. (Examples: game-designer's FRD handoff needed `pm-frd-drafter` to gain survey and card-text permissions, or it would have stalled. Later, its Design Outcome Report lived only in chat, and the drafter could not find it until outcomes became files in `docs/design/outcomes/`.)
 3. Edit, keep the routing line and doc map in step, and commit on the integration branch as `chore(agents): <summary>`.
 4. Summarize what the persona will now do differently, and any permission change the user agreed to.
