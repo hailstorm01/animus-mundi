@@ -4,7 +4,7 @@ title: Unstarve ProgressPolicy without scenario seeding (directive #122, harness
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: review
 branch: m2/T-0185-unstarve-progress-policy
 depends_on: [T-0184]
 claims: [func:sim.ProgressPolicy, const:sim.marchPast, const:engine.ConvertReq, fence:pkg/sim imports pkg/engine/ability, test:TestProgress_UnreachableCardTapsNothing, test:TestProgress_ReachRespectsTheZoneLimit, test:TestProgress_ReachCountsConversion, test:TestProgress_NoTapBreaksReach, test:TestProgress_ActivationBudgetsAndActivates, test:TestProgress_ActivationIsNotEager, test:TestProgress_SavingHoldsMarchesOutOfReserves, test:TestProgress_StarterGamesFireActivations]
@@ -568,11 +568,17 @@ func reachable(pool resources, taps []tap, c resources) bool {
 The lead edits `docs/architecture/m2-ability-model.md` at close: #122 (c), closing Open Question 18 as provisional with the user's reopen trigger, and the import table's new entry. Don't edit it.
 
 ## Done When
-- [ ] `go test ./pkg/sim -run TestProgress` passes
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] `go test ./pkg/sim -run TestProgress` passes
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 `go tool task sim-compare` is expected to differ (Revision item 3), so don't run it.
 
 ## Log
 - 2026-11-06 (lead-architect): Written for #122, `ready`. The Wave D.1 directives ahead of it are applied, and #123 still waits on the user. After the merge the lead re-measures with `go tool task sim-events` against the user's reopen trigger (Revision item 4) and records (c).
+- 2026-11-06 (kernel-engineer): Implemented for #122, `review`.
+  - Added 8 acceptance tests to `pkg/sim/policy_test.go` in commit `1df9059`, confirmed all 8 failed on baseline.
+  - Exported `ConvertReq` in `pkg/engine/resources.go` and updated call sites in `pkg/engine/actions.go`.
+  - Widened `allowedImports` in `pkg/toolchain/linter/fences/fences.go` to permit `pkg/sim` -> `pkg/engine/ability`.
+  - Rewrote `ProgressPolicy` in `pkg/sim/policy.go` with reachable cost checks, `marchPast = 0.25`, activation budgeting into `acts`, and legal tap filtering.
+  - Verification: `go test ./pkg/sim -run TestProgress` passed; `go tool task check` passed all vet, test, and linters; `go tool task sim` ran clean with matching metrics (P0 78.5% / P1 19.0% / draws 2.5%, avg 24.7 turns, 2778 attacks).
