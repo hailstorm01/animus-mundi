@@ -1252,6 +1252,7 @@ func TestView_SearchLineHidesThePickFromTheOpponent(t *testing.T) {
 				Options: []string{"Alpha Secret", "Beta Secret"},
 				Refs:    []int{7, 8},
 				Picks:   []int{1},
+				Hidden:  true,
 			},
 		}
 		opp := p.Opponent()
@@ -1331,12 +1332,40 @@ func TestView_SearchLineSaysNoCardWasFound(t *testing.T) {
 			Options: []string{"Alpha Secret", "Beta Secret"},
 			Refs:    []int{7, 8},
 			Picks:   []int{},
+			Hidden:  true,
 		},
 	}
 	got := view.LogLines([]engine.Event{ev}, 1)
 	want := "40 T3 main decision: player 0 searches their deck and finds no card"
 	if len(got) != 1 || got[0] != want {
 		t.Errorf("seat 1 seeing empty search: got %v, want [%s]", got, want)
+	}
+}
+
+// T-0186 (directive #123): the flag alone hides a decision, so a search record
+// without it prints whole, like any other record. Whether a search is secret is
+// said once, where the engine sets the flag.
+func TestView_SearchWithoutTheFlagPrintsWhole(t *testing.T) {
+	ev := engine.Event{
+		Seq:    40,
+		Turn:   3,
+		Phase:  "main",
+		Kind:   engine.EventDecision,
+		Player: 0,
+		Decision: &engine.DecisionRecord{
+			Kind:    engine.DecideSearch.String(),
+			Player:  0,
+			Prompt:  "Search your deck for a card",
+			How:     "answer",
+			Options: []string{"Alpha Secret", "Beta Secret"},
+			Refs:    []int{7, 8},
+			Picks:   []int{1},
+		},
+	}
+	got := view.LogLines([]engine.Event{ev}, 1)
+	want := eventlog.FormatEvent(ev)
+	if len(got) != 1 || got[0] != want {
+		t.Errorf("seat 1 seeing a search with no flag: got %v, want [%s]", got, want)
 	}
 }
 
