@@ -107,6 +107,11 @@ func main() {
 		"--permission-prompts", "none",
 		"--max-budget-usd", strconv.FormatFloat(*maxUsdPerTask, 'f', -1, 64),
 		"--output-format", "json",
+		// Lead sessions have never called a skill or an MCP tool, and listing
+		// them adds about 8k tokens to every call. A session that wants one sees
+		// it as unavailable: nothing is refused, so nothing stops the run.
+		"--disable-slash-commands",
+		"--strict-mcp-config",
 	}
 	if *effort != "" {
 		cliArgs = append(cliArgs, "--effort", *effort)
@@ -147,7 +152,9 @@ func main() {
 		if err := os.MkdirAll(scratch, 0o755); err != nil {
 			r.stop(fmt.Sprintf("could not create the scratch folder: %v", err), 1)
 		}
-		prompt := fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s, scratch %s)", *wave, r.branch, r.runFile, filepath.ToSlash(scratch))
+		// The path saves a search: nothing in a session's context says what
+		// @lead-architect means, and every session looked for it first.
+		prompt := fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s, scratch %s). Your instructions are in .agents/skills/lead-architect/SKILL.md; read that first.", *wave, r.branch, r.runFile, filepath.ToSlash(scratch))
 		logPath := filepath.Join(r.logDir, session+".json")
 		fmt.Printf("[%d/%d] %s lead session on %s (log: %s)\n", n, *tasks, time.Now().Format("15:04"), r.branch, logPath)
 
