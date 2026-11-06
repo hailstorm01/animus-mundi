@@ -1138,6 +1138,102 @@ func TestView_HandCardCarriesItsCostNow(t *testing.T) {
 	}
 }
 
+// T-0183 (directive #119): a hidden decision of any kind names no option and no
+// pick to the other seat, and its own seat sees the whole line.
+func TestView_HiddenDecisionLineNamesNoOptionAndNoPick(t *testing.T) {
+	for p := range engine.PlayerID(2) {
+		ev := engine.Event{
+			Seq:    40,
+			Turn:   3,
+			Phase:  "main",
+			Kind:   engine.EventDecision,
+			Player: int(p),
+			Decision: &engine.DecisionRecord{
+				Kind:    engine.DecideTarget.String(),
+				Player:  int(p),
+				Prompt:  "Look at Alpha Secret",
+				How:     "answer",
+				Hidden:  true,
+				Options: []string{"Alpha Secret", "Beta Secret"},
+				Refs:    []int{7, 8},
+				Picks:   []int{1},
+			},
+		}
+		opp := p.Opponent()
+		got := view.LogLines([]engine.Event{ev}, opp)
+		want := fmt.Sprintf("40 T3 main decision: player %d makes a hidden choice", p)
+		if len(got) != 1 || got[0] != want {
+			t.Errorf("seat %d seeing player %d's hidden choice: got %v, want [%s]", opp, p, got, want)
+		}
+		own := view.LogLines([]engine.Event{ev}, p)
+		wantOwn := eventlog.FormatEvent(ev)
+		if len(own) != 1 || own[0] != wantOwn || !strings.Contains(own[0], "Beta Secret") {
+			t.Errorf("seat %d seeing its own hidden choice: got %v, want [%s]", p, own, wantOwn)
+		}
+	}
+}
+
+// T-0183 (directive #119): a search record with the flag keeps its wording.
+func TestView_FlaggedSearchKeepsItsWording(t *testing.T) {
+	for _, tc := range []struct {
+		picks []int
+		want  string
+	}{
+		{[]int{1}, "40 T3 main decision: player 0 searches their deck and finds a card"},
+		{[]int{}, "40 T3 main decision: player 0 searches their deck and finds no card"},
+	} {
+		ev := engine.Event{
+			Seq:    40,
+			Turn:   3,
+			Phase:  "main",
+			Kind:   engine.EventDecision,
+			Player: 0,
+			Decision: &engine.DecisionRecord{
+				Kind:    engine.DecideSearch.String(),
+				Player:  0,
+				Prompt:  "Search your deck for a card",
+				How:     "answer",
+				Hidden:  true,
+				Options: []string{"Alpha Secret", "Beta Secret"},
+				Refs:    []int{7, 8},
+				Picks:   tc.picks,
+			},
+		}
+		got := view.LogLines([]engine.Event{ev}, 1)
+		if len(got) != 1 || got[0] != tc.want {
+			t.Errorf("picks %v: got %v, want [%s]", tc.picks, got, tc.want)
+		}
+	}
+}
+
+// T-0183 (directive #119): a decision that isn't hidden prints as before, to both
+// seats.
+func TestView_OpenDecisionLinePrintsToBothSeats(t *testing.T) {
+	ev := engine.Event{
+		Seq:    40,
+		Turn:   3,
+		Phase:  "main",
+		Kind:   engine.EventDecision,
+		Player: 0,
+		Decision: &engine.DecisionRecord{
+			Kind:    engine.DecideTarget.String(),
+			Player:  0,
+			Prompt:  "Choose a target",
+			How:     "answer",
+			Options: []string{"Alpha Open", "Beta Open"},
+			Refs:    []int{7, 8},
+			Picks:   []int{1},
+		},
+	}
+	want := eventlog.FormatEvent(ev)
+	for seat := range engine.PlayerID(2) {
+		got := view.LogLines([]engine.Event{ev}, seat)
+		if len(got) != 1 || got[0] != want || !strings.Contains(got[0], "Beta Open") {
+			t.Errorf("seat %d: got %v, want [%s]", seat, got, want)
+		}
+	}
+}
+
 // T-0168 Cases 1-4: The play log hides an opponent's deck search pick.
 
 func TestView_SearchLineHidesThePickFromTheOpponent(t *testing.T) {
