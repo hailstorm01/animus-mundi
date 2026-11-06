@@ -4,7 +4,7 @@ title: A hidden decision stays hidden by its flag (directive #119, harness, flas
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0183-hidden-decision-flag
 depends_on: [T-0182]
 claims: [field:DecisionRecord.Hidden, view:LogLines hidden redaction, func:hiddenDecision, test:TestView_HiddenDecisionLineNamesNoOptionAndNoPick, test:TestView_FlaggedSearchKeepsItsWording, test:TestView_OpenDecisionLinePrintsToBothSeats, test:TestReplay_OnlySearchRecordsAreHidden, test:TestReplay_SearchWithoutItsHiddenFlagDiverges]
