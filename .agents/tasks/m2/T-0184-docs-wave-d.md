@@ -4,7 +4,7 @@ title: The docs say what wave D built, doc.go, placement.go and ability.go comme
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0184-docs-wave-d
 depends_on: [T-0183]
 claims: [comments:pkg/engine/doc.go, comments:pkg/engine/placement.go costs, comments:pkg/engine/ability/ability.go CostKind and Subject]
