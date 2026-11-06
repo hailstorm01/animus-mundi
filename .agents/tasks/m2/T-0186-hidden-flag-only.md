@@ -4,7 +4,7 @@ title: Drop the search clause from the hidden-decision check (directive #123, ha
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/T-0186-hidden-flag-only
 depends_on: [T-0183]
 claims: [view:LogLines hidden check, test:TestView_SearchWithoutTheFlagPrintsWhole]
