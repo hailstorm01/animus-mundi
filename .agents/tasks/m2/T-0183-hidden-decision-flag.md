@@ -4,7 +4,7 @@ title: A hidden decision stays hidden by its flag (directive #119, harness, flas
 kind: harness
 tier: flash
 wave: D.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.1/T-0183-hidden-decision-flag
 depends_on: [T-0182]
 claims: [field:DecisionRecord.Hidden, view:LogLines hidden redaction, func:hiddenDecision, test:TestView_HiddenDecisionLineNamesNoOptionAndNoPick, test:TestView_FlaggedSearchKeepsItsWording, test:TestView_OpenDecisionLinePrintsToBothSeats, test:TestReplay_OnlySearchRecordsAreHidden, test:TestReplay_SearchWithoutItsHiddenFlagDiverges]
@@ -265,10 +265,22 @@ Edits 1 and 2 are the whole of the test commit: commit them as `test(T-0183): a 
 - `pkg/eventlog/replay_test.go` (edit 2 only)
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05 lead-architect (wave D.1 run, session 14): no `main` commits to sync. Not `WAVE-COMPLETE`: #119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Wrote this task from #119, next in board order, and #123 for the clause it keeps (D2.3; see Inputs). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05 kernel-engineer: implemented directive #119. Added tests to pkg/view/view_test.go and pkg/eventlog/replay_test.go, committed as `test(T-0183)`. Verified Case 1 failure (unknown field Hidden / e.Decision.Hidden undefined). Implemented Edits 3-6: added Hidden bool with json:"hidden,omitempty" to DecisionRecord in events.go, copied flag in emitDecision, updated comment in choice.go, added a.Hidden == b.Hidden to decisionEqual in replay.go, updated doc comment in log.go, updated switch case in LogLines and added hiddenDecision helper in log.go. Committed as `feat(view): a hidden decision stays hidden by its flag (T-0183)`. Verified Cases 1-10:
+  - Case 1: `go -C W test ./pkg/view -run TestView_HiddenDecisionLineNamesNoOptionAndNoPick` exited 1 (`unknown field Hidden in struct literal of type engine.DecisionRecord`), `go -C W test ./pkg/eventlog -run TestReplay_OnlySearchRecordsAreHidden` exited 1 (`e.Decision.Hidden undefined`).
+  - Case 2: `go -C W test ./pkg/eventlog -run TestReplay_OnlySearchRecordsAreHidden -v` passed (`--- PASS: TestReplay_OnlySearchRecordsAreHidden (0.79s)`).
+  - Case 3: `go -C W test ./pkg/view -run TestView_HiddenDecisionLineNamesNoOptionAndNoPick -v` passed (`--- PASS: TestView_HiddenDecisionLineNamesNoOptionAndNoPick (0.00s)`).
+  - Case 4: `go -C W test ./pkg/view -run TestView_OpenDecisionLinePrintsToBothSeats -v` passed (`--- PASS: TestView_OpenDecisionLinePrintsToBothSeats (0.00s)`).
+  - Case 5: `go -C W test ./pkg/view -run TestView_FlaggedSearchKeepsItsWording -v` passed (`--- PASS: TestView_FlaggedSearchKeepsItsWording (0.00s)`), `go -C W test ./pkg/view -run TestView_SearchLine -v` passed (`TestView_SearchLineHidesThePickFromTheOpponent`, `TestView_SearchLineShowsThePickToTheSearcher`, `TestView_SearchLineSaysNoCardWasFound`).
+  - Case 6: `go -C W test ./pkg/eventlog -run TestReplay_Search -v` passed (`TestReplay_SearchesRoundTrip`, `TestReplay_SearchWithSwappedOptionsDiverges`, `TestReplay_SearchWithoutItsHiddenFlagDiverges`).
+  - Case 7: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` matched the exact expected numstat (1 1 choice.go, 6 5 events.go, 1 1 replay.go, 60 0 replay_test.go, 18 8 log.go, 96 0 view_test.go).
+  - Case 8: `git -C W diff autoloop/m2-wave-d.1 --stat` matched the 6 code/test files plus the task file.
+  - Case 9: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 with `[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`.
+  - Case 10: `gofmt -l` clean, `go -C W tool task check` passed all stages (fmt, vet, tests, build, lint), `go -C W tool task sim` passed 200 matches with all invariants holding.
+  Handoff for review.
