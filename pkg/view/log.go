@@ -29,9 +29,7 @@ func LogLines(events []engine.Event, seat engine.PlayerID) []string {
 			out = append(out, eventlog.FormatEvent(redact(e, matchStart(e.Start, seat))))
 		case e.Kind == engine.EventTurnStart:
 			out = append(out, eventlog.FormatEvent(redact(e, fmt.Sprintf("turn %d, player %d is active", e.Turn, e.Player))))
-		// The search clause is only for T-0168's hand-built records, which don't set
-		// the flag: every search in a game does. Directive #123 drops it.
-		case e.Decision != nil && e.Decision.Player != int(seat) && (e.Decision.Hidden || e.Decision.Kind == engine.DecideSearch.String()):
+		case e.Decision != nil && e.Decision.Player != int(seat) && e.Decision.Hidden:
 			out = append(out, eventlog.FormatEvent(redact(e, hiddenDecision(e.Decision))))
 		default:
 			out = append(out, eventlog.FormatEvent(e))
