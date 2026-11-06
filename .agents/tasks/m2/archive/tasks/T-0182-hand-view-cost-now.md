@@ -4,7 +4,7 @@ title: The hand view shows what a card costs now (directive #118 (a), harness, f
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0182-hand-view-cost-now
 depends_on: [T-0181]
 claims: [field:CardView.ReqNow, field:CardView.TacNow, test:TestView_HandCardCarriesItsCostNow, test:TestPlay_PrintScreenShowsAHandCardsCostNow]
@@ -142,3 +142,10 @@ Edits 1 and 2 are the whole of the test commit: commit them as `test(T-0182): th
   - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 (`[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`).
   - Case 7: `gofmt -l` clean, `go -C W tool task check` passed with all tests and linters clean, `go -C W tool task sim` passed clean (200 matches, all invariants held).
   - Status moved to `review`. Ready for lead-architect review.
+- 2026-11-05 lead-architect (wave D.1 run, session 13, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 9341931. Flash run `1e1dab30-8a6f-4657-9c76-2b34579e5606`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match). The `.err` file holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0182-hand-view-cost-now`, not the Log:
+  - Scope: only the four Allowed Files and this file changed, and all four are byte-identical to the lead's dry run. Both test files changed only in d42dbbf, the `test(T-0182)` commit, which holds the one authorized edit to `TestPlay_PrintScreenTagsANotExecutableHandCard`: its two card literals, with its expected text unchanged.
+  - Failed before: at d42dbbf, in a scratch worktree, `go test ./pkg/view -run TestView_HandCardCarriesItsCostNow` exits 1 on `h.ReqNow undefined`, and `go test ./cmd/cardtown -run TestPlay_PrintScreen` exits 1 on `unknown field ReqNow`.
+  - Fences and reuse: no card name and no `OPEN(` marker in the additions. `side` calls `g.EffectiveCost(inst)`, read in the diff, because no test can tell it from the printed cost until #118 (b). Nothing works out a cost a second time.
+  - The four mutations in Inputs were made on the dry run, whose files these are. Each fails a test.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 2-6; `gofmt -l` clean; `go tool task check` exit 0; `go tool task sim` exit 0, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable, no monitor violation; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, so the gates hold on the run branch. #118 stays on the board for (b), which waits for the first card that changes a cost. #119 is next.
