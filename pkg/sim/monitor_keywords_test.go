@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"animus-mundi/pkg/engine"
+	"animus-mundi/pkg/engine/ability"
 )
 
 // Tests for T-0179: the monitors read the effective keywords the engine
@@ -111,4 +112,30 @@ func TestMonitorKeywords_Case4_Damage(t *testing.T) {
 func TestMonitorKeywords_Case5_TargetInNoSnapshot(t *testing.T) {
 	f, seq := damageCase(baseSnap(0, 0), dmgEvent(10, 99, 3, false, 0, 0, 1))
 	wantViolation(t, "wrong amount, target in no snapshot", f.m, "damage-sequence", damageRules, seq)
+}
+
+// T-0181 (directive #117 (c)): real games with a keyword behind Cornered break
+// no monitor. Its card prints no Resistant and no other card has it, so each
+// FR-KWD-002b check is a damage event that reports the grant.
+func TestMonitorKeywords_CorneredResistantInRealGames(t *testing.T) {
+	hide := unit("Hide", 2, 4, engine.Keywords{})
+	hide.Ability = &ability.Def{Cornered: ability.CorneredKeywords{Resistant: 1}}
+	var main []*engine.Card
+	for range 10 {
+		main = append(main, hide, unit("Vanilla", 3, 2, engine.Keywords{}))
+	}
+	decks := [2]engine.DeckList{{HQ: hq(3, 20), Main: main}, {HQ: hq(3, 20), Main: main}}
+	for _, p := range []struct {
+		name   string
+		policy func(seed uint64) Policy
+	}{{"RandomPolicy", nil}, {"ProgressPolicy", ProgressPolicy}} {
+		st, err := SimulateWith(decks, 50, 1, 400, SimOptions{Policy: p.policy})
+		if err != nil {
+			t.Errorf("%s: %v", p.name, err)
+			continue
+		}
+		if st.Coverage["damage-sequence"]["FR-KWD-002b"] == 0 {
+			t.Errorf("%s: no damage event reported the Resistant behind Cornered", p.name)
+		}
+	}
 }
