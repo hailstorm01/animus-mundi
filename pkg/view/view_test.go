@@ -1115,6 +1115,29 @@ func TestView_KeywordBehindCorneredShowsOnlyWhileCornered(t *testing.T) {
 	want("back to 1 against 1, not Cornered", nil)
 }
 
+// T-0182 (directive #118 (a)): each seat's own hand cards carry what they cost
+// now, beside the printed cost. A discard card carries the printed cost and no
+// cost now. No card changes a cost yet, so now equals printed until #118 (b).
+func TestView_HandCardCarriesItsCostNow(t *testing.T) {
+	s := newContentScene(t)
+	for seat := range engine.PlayerID(2) {
+		v := view.PlayerView(s.g, seat)
+		if len(v.You.Hand) == 0 || len(v.You.Discard) == 0 || len(v.Opponent.Discard) == 0 {
+			t.Fatalf("seat %d: hand %+v, discards %+v and %+v, want a card in each", seat, v.You.Hand, v.You.Discard, v.Opponent.Discard)
+		}
+		for _, h := range v.You.Hand {
+			if h.ReqNow != 2 || h.TacNow != 1 || h.ReqCost != 2 || h.TacCost != 1 {
+				t.Errorf("seat %d: hand card %+v, want R2 T1 now and printed", seat, h)
+			}
+		}
+		for _, c := range append(slices.Clone(v.You.Discard), v.Opponent.Discard...) {
+			if c.ReqNow != 0 || c.TacNow != 0 || c.ReqCost != 2 || c.TacCost != 1 {
+				t.Errorf("seat %d: discard card %+v, want printed R2 T1 and no cost now", seat, c)
+			}
+		}
+	}
+}
+
 // T-0168 Cases 1-4: The play log hides an opponent's deck search pick.
 
 func TestView_SearchLineHidesThePickFromTheOpponent(t *testing.T) {

@@ -301,14 +301,31 @@ func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
 func TestPlay_PrintScreenTagsANotExecutableHandCard(t *testing.T) {
 	var v view.View
 	v.You.Hand = []view.CardView{
-		{Card: "Ready Card", ReqCost: 1, TacCost: 2, Power: 3, Health: 4, Executable: true},
-		{Card: "Stub Card", ReqCost: 5, TacCost: 6, Power: 7, Health: 8},
+		{Card: "Ready Card", ReqNow: 1, TacNow: 2, Power: 3, Health: 4, Executable: true},
+		{Card: "Stub Card", ReqNow: 5, TacNow: 6, Power: 7, Health: 8},
 	}
 	var buf bytes.Buffer
 	printScreen(&buf, v, nil)
 	out := buf.String()
 
 	want := "Your Hand:\n  [1] Ready Card (R1 T2, 3/4)\n  [2] Stub Card (R5 T6, 7/8) [not executable yet]\n"
+	if !strings.Contains(out, want) {
+		t.Errorf("printScreen output did not contain expected hand section:\n%s\nGot output:\n%s", want, out)
+	}
+}
+
+// T-0182 (directive #118 (a)): the screen prints what a hand card costs now, not
+// its printed cost.
+func TestPlay_PrintScreenShowsAHandCardsCostNow(t *testing.T) {
+	var v view.View
+	v.You.Hand = []view.CardView{
+		{Card: "Cheap Now", ReqCost: 10, TacCost: 3, ReqNow: 4, TacNow: 1, Power: 5, Health: 6, Executable: true},
+	}
+	var buf bytes.Buffer
+	printScreen(&buf, v, nil)
+	out := buf.String()
+
+	want := "Your Hand:\n  [1] Cheap Now (R4 T1, 5/6)\n"
 	if !strings.Contains(out, want) {
 		t.Errorf("printScreen output did not contain expected hand section:\n%s\nGot output:\n%s", want, out)
 	}
