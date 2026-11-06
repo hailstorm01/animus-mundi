@@ -4,7 +4,7 @@ title: The hand view shows what a card costs now (directive #118 (a), harness, f
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.1/T-0182-hand-view-cost-now
 depends_on: [T-0181]
 claims: [field:CardView.ReqNow, field:CardView.TacNow, test:TestView_HandCardCarriesItsCostNow, test:TestPlay_PrintScreenShowsAHandCardsCostNow]
