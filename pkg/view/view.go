@@ -4,7 +4,8 @@
 // It is a client of the engine's exported API, like sim and eventlog: it
 // imports engine and eventlog only, and engine never imports it. It is the
 // first draft of the M4/M5 client boundary. What a seat sees:
-//   - its own hand: card names, printed characteristics and instance IDs;
+//   - its own hand: card names, printed characteristics, what each costs now
+//     and instance IDs;
 //   - the opponent's hand and both decks: counts only;
 //   - public: both discard piles, HQs, Reserves and resource pools, the Main
 //     Theater, the stack, the turn, the phase, the active player and the outcome.
@@ -49,6 +50,8 @@ type CardView struct {
 	Type       string
 	ReqCost    int
 	TacCost    int
+	ReqNow     int // only for the seat's own hand cards: what playing it costs now (Game.EffectiveCost); 0 elsewhere
+	TacNow     int // as ReqNow
 	Power      int
 	Health     int
 	Keywords   []string // printed
@@ -123,6 +126,7 @@ func side(g *engine.Game, p *engine.Player, own bool) Side {
 		for _, inst := range p.Hand {
 			c := cardView(inst.Card)
 			c.Inst = inst.ID
+			c.ReqNow, c.TacNow = g.EffectiveCost(inst)
 			s.Hand = append(s.Hand, c)
 		}
 	}
