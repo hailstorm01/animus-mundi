@@ -47,6 +47,9 @@
 //     as a StackAbility item and its costs are paid, including CostResources,
 //     CostExhaustSelf and CostKillSelf (declare, SVY-R2). It is offered only if placeable holds: its
 //     costs are payable and each required target or mode has a legal choice (SVY-R36).
+//   - A card's own Cornered keywords ("Cornered: Aggressive 3.", Def.Cornered):
+//     g.Keywords adds them as a Layer 3 grant on a face-up asset while its controller
+//     is Cornered (FR-LAY-001, FR-KWD-002e, SVY-R18).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
@@ -58,7 +61,8 @@
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Continuous abilities, continuous Cornered,
+//   - Continuous abilities other than a card's own Cornered keywords (auras, and
+//     "Cornered: This unit has +2 power."),
 //     Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
@@ -72,9 +76,11 @@
 //     legality and combat resolution. stack.go: the Resolution Stack.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
 //     an effect, its modes and then its targets. costs.go: a card's cost and
-//     a placement's costs. targeting.go: target choice and filters. effects.go:
-//     running a resolved ability's steps.
-//   - state.go: core state types and lookups. card.go: card types.
+//     a placement's costs. resources.go: Requisition and Tactics, generating and
+//     converting them, and paying with them. targeting.go: target choice and
+//     untargeted picks. filter.go: checking assets and discard-pile cards against
+//     an ability's filter. effects.go: running a resolved ability's steps.
+//   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
