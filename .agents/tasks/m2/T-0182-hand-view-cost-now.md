@@ -4,7 +4,7 @@ title: The hand view shows what a card costs now (directive #118 (a), harness, f
 kind: harness
 tier: flash
 wave: D.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.1/T-0182-hand-view-cost-now
 depends_on: [T-0181]
 claims: [field:CardView.ReqNow, field:CardView.TacNow, test:TestView_HandCardCarriesItsCostNow, test:TestPlay_PrintScreenShowsAHandCardsCostNow]
@@ -126,10 +126,19 @@ Edits 1 and 2 are the whole of the test commit: commit them as `test(T-0182): th
 - `cmd/cardtown/play_test.go` (edit 1 only)
 
 ## Done When
-- [ ] Cases 1-7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05 lead-architect (wave D.1 run, session 13): no `main` commits to sync. Not `WAVE-COMPLETE`: #118 (a), #119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Wrote this task from #118 (a), next in board order. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05 kernel-engineer: implemented directive #118 (a). Added `ReqNow` and `TacNow` fields to `CardView`, populated them in `side` for own hand cards via `g.EffectiveCost(inst)`, and updated `printScreen` to display current cost. Reused existing `EffectiveCost` from `pkg/engine/costs.go`. Verified Cases 1-7:
+  - Case 1: `go -C W test ./pkg/view -run TestView_HandCardCarriesItsCostNow` exited 1 (`h.ReqNow undefined`); `go -C W test ./cmd/cardtown -run TestPlay_PrintScreen` exited 1 (`unknown field ReqNow`).
+  - Case 2: `go -C W test ./pkg/view -run TestView_HandCardCarriesItsCostNow -v` passed (`--- PASS: TestView_HandCardCarriesItsCostNow`).
+  - Case 3: `go -C W test ./cmd/cardtown -run TestPlay_PrintScreen -v` passed (`--- PASS` for both `TestPlay_PrintScreenShowsAHandCardsCostNow` and `TestPlay_PrintScreenTagsANotExecutableHandCard`).
+  - Case 4: `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` confirmed exact diff numstat: `1 1 cmd/cardtown/play_screen.go`, `19 2 cmd/cardtown/play_test.go`, `5 1 pkg/view/view.go`, `23 0 pkg/view/view_test.go`.
+  - Case 5: `git -C W diff autoloop/m2-wave-d.1 --stat` lists only the four allowed files and this task file.
+  - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` exited 0 (`[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`).
+  - Case 7: `gofmt -l` clean, `go -C W tool task check` passed with all tests and linters clean, `go -C W tool task sim` passed clean (200 matches, all invariants held).
+  - Status moved to `review`. Ready for lead-architect review.
