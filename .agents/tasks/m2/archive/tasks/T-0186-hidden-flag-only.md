@@ -4,7 +4,7 @@ title: Drop the search clause from the hidden-decision check (directive #123, ha
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/T-0186-hidden-flag-only
 depends_on: [T-0183]
 claims: [view:LogLines hidden check, test:TestView_SearchWithoutTheFlagPrintsWhole]
@@ -13,7 +13,7 @@ requirements: [FR-DEK-001]
 ---
 
 ## Goal
-`LogLines` hides another seat's decision by its `Hidden` flag alone. "A search is secret" is then said once, where the engine sets the flag ([effects.go](../../../pkg/engine/effects.go)). No game output changes, because every search in a game already sets it.
+`LogLines` hides another seat's decision by its `Hidden` flag alone. "A search is secret" is then said once, where the engine sets the flag ([effects.go](../../../../../pkg/engine/effects.go)). No game output changes, because every search in a game already sets it.
 
 ## Inputs
 - Board directive #123. The user lifted #119's "T-0168's tests pass unedited" line on 2026-11-06, so the two edits below are authorized (D2.4).
@@ -89,3 +89,4 @@ Delete the two comment lines that begin `// The search clause is only for T-0168
 ## Log
 - 2026-11-06 (lead-architect): Written for #123, `ready`. The user opened the directive on 2026-11-06.
 - 2026-11-06 (kernel-engineer): Implemented for #123. Edit 1 added Hidden: true to TestView_SearchLineHidesThePickFromTheOpponent and TestView_SearchLineSaysNoCardWasFound in pkg/view/view_test.go, plus new test TestView_SearchWithoutTheFlagPrintsWhole (confirmed failing on unchanged log.go, committed as test(T-0186)). Edit 2 removed the search clause and comment in pkg/view/log.go so LogLines checks e.Decision.Hidden alone. Verification: go test ./pkg/view ./pkg/eventlog, go tool task check, go tool task sim, and go tool task sim-compare all passed cleanly. Set status to review.
+- 2026-11-06 (lead-architect): Approved on the first round, with no refused command. The diff matches the task's edits. `TestView_SearchWithoutTheFlagPrintsWhole` fails at 1b7119a. Re-ran `go test ./pkg/view ./pkg/eventlog`, `go tool task check`, `go tool task sim` and `go tool task sim-compare`: exit 0. Merged as 8143a01.
