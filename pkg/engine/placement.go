@@ -18,7 +18,7 @@ type placement struct {
 	source     int       // source asset ID
 	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	label      string
-	costs      []ability.Cost // additional costs paid with this placement (FR-TRN-003a); a trigger has none
+	costs      []ability.Cost // costs paid with this placement: a Maneuver's additional costs (FR-TRN-003a) or an activated ability's (FR-ACT-001); a trigger has none
 	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
 }
 
@@ -42,7 +42,7 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 // declare runs the declare sequence for an effect declared by a manual action,
 // in rules order: the discard cost's cards are picked, e's modes and targets are
 // chosen and filled into a stack item of this kind, the item goes on the stack,
-// and the additional costs are paid (FR-TRN-003, FR-TRN-003a).
+// and the costs are paid (FR-TRN-003, FR-TRN-003a, FR-ACT-001).
 func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 	pl.discards = g.chooseCostDiscards(pl)
 	item := pl.stackItem(kind)
@@ -108,7 +108,7 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 }
 
 // placeable reports whether e can be placed with everything it requires
-// (SVY-R29): every additional cost payable (costsPayable), then at least
+// (SVY-R29): every cost payable (costsPayable), then at least
 // ChooseN legal modes, or a legal entity for each exactly-one slot. It applies
 // to enacting a Maneuver and to activating an ability (SVY-R29, SVY-R36). A
 // trigger is still placed whatever it finds (SVY-R30, FR-TGT-003).
