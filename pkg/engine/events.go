@@ -19,10 +19,11 @@ type DecisionRecord struct {
 	Kind    string   `json:"kind"` // DecisionKind name
 	Player  int      `json:"player"`
 	Prompt  string   `json:"prompt"`
-	Options []string `json:"options"` // the option labels offered, in order
-	Refs    []int    `json:"refs"`    // the option refs, in order
-	Picks   []int    `json:"picks"`   // indexes into Options, as applied
-	How     string   `json:"how"`     // "answer", "auto" (fast path), "timeout" (fallback), "invalid" (fallback after an invalid answer)
+	Options []string `json:"options"`          // the option labels offered, in order
+	Refs    []int    `json:"refs"`             // the option refs, in order
+	Picks   []int    `json:"picks"`            // indexes into Options, as applied
+	How     string   `json:"how"`              // "answer", "auto" (fast path), "timeout" (fallback), "invalid" (fallback after an invalid answer)
+	Hidden  bool     `json:"hidden,omitempty"` // Decision.Hidden: a seat's view keeps the options and picks from the other seat
 }
 
 // MatchStart is the first event of a game.
@@ -124,7 +125,7 @@ func (e Event) clone() Event {
 // emitDecision records the picks choose is about to return for d.
 func (g *Game) emitDecision(d Decision, picks []int, how string) {
 	rec := &DecisionRecord{
-		Kind: d.Kind.String(), Player: int(d.Player), Prompt: d.Prompt, How: how,
+		Kind: d.Kind.String(), Player: int(d.Player), Prompt: d.Prompt, How: how, Hidden: d.Hidden,
 		Options: make([]string, len(d.Options)), Refs: make([]int, len(d.Options)),
 		Picks: slices.Clone(picks),
 	}

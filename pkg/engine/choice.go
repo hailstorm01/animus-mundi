@@ -38,7 +38,7 @@ type Decision struct {
 	Prompt   string
 	Options  []Option
 	Min, Max int  // how many picks a valid answer has
-	Hidden   bool // the choice inspects hidden cards in a Hand or Deck (no fast path)
+	Hidden   bool // the choice inspects hidden cards in a Hand or Deck (no fast path, and the play log keeps it from the other seat)
 	Repeats  bool // the same option may be picked more than once (FR-MOD-001 §5)
 }
 
