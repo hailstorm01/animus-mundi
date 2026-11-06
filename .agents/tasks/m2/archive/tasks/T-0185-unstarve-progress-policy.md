@@ -4,7 +4,7 @@ title: Unstarve ProgressPolicy without scenario seeding (directive #122, harness
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/T-0185-unstarve-progress-policy
 depends_on: [T-0184]
 claims: [func:sim.ProgressPolicy, const:sim.marchPast, const:engine.ConvertReq, fence:pkg/sim imports pkg/engine/ability, test:TestProgress_UnreachableCardTapsNothing, test:TestProgress_ReachRespectsTheZoneLimit, test:TestProgress_ReachCountsConversion, test:TestProgress_NoTapBreaksReach, test:TestProgress_ActivationBudgetsAndActivates, test:TestProgress_ActivationIsNotEager, test:TestProgress_SavingHoldsMarchesOutOfReserves, test:TestProgress_StarterGamesFireActivations]
@@ -16,7 +16,7 @@ requirements: []
 `ProgressPolicy` stops tapping every asset for a hand card it can't pay for this turn, so units attack and march, and activated abilities and the deck search fire in real starter games. No scenario seeding: `pkg/engine` and `MatchStart` gain no setup or deck-stacking fields. The rules are general and name no card.
 
 ## Inputs
-- Board directive #122 and its [outcome](../../../docs/design/outcomes/2026-11-05-oq18-sim-policy-without-scenario-seeding.md), including the outcome's Revision, which replaces its body where they differ. This task takes the "soften the wall" route of its item 5. (a) is not taken as written: `ActActivate` stays in `acts`, and `TestProgress_ActivationIsAnAct` passes unedited.
+- Board directive #122 and its [outcome](../../../../../docs/design/outcomes/2026-11-05-oq18-sim-policy-without-scenario-seeding.md), including the outcome's Revision, which replaces its body where they differ. This task takes the "soften the wall" route of its item 5. (a) is not taken as written: `ActActivate` stays in `acts`, and `TestProgress_ActivationIsAnAct` passes unedited.
 - `pkg/sim/policy.go:47-91`: the policy this replaces.
 - `pkg/engine/actions.go:247-250`: `LegalActions` offers Generate only where `canYield` allows it, so the policy reads the zone limit (FR-CAP-001) from `legal` and doesn't copy it.
 - Reuse search (D2.3): nothing in `pkg/sim`, `pkg/view` or `pkg/engine` works out what a player can reach this turn. `canYield` and `canPay` are unexported, and `legal` and the plain comparison stand in for them. `convertReq` is the one copy of the conversion rate, so it is exported and not written a second time.
@@ -582,3 +582,4 @@ The lead edits `docs/architecture/m2-ability-model.md` at close: #122 (c), closi
   - Widened `allowedImports` in `pkg/toolchain/linter/fences/fences.go` to permit `pkg/sim` -> `pkg/engine/ability`.
   - Rewrote `ProgressPolicy` in `pkg/sim/policy.go` with reachable cost checks, `marchPast = 0.25`, activation budgeting into `acts`, and legal tap filtering.
   - Verification: `go test ./pkg/sim -run TestProgress` passed; `go tool task check` passed all vet, test, and linters; `go tool task sim` ran clean with matching metrics (P0 78.5% / P1 19.0% / draws 2.5%, avg 24.7 turns, 2778 attacks).
+- 2026-11-06 (lead-architect): Approved. Run: one resume, after `git branch -a` was refused while hunting for the task file (the prompt didn't name its location; the resume did). The diff's `policy.go` and tests match the dry run byte for byte, and only `Allowed Files` changed. All 8 tests fail at 1df9059. Re-ran `go test ./pkg/sim -run TestProgress`, `go tool task check` and `go tool task sim`: exit 0. Merged as 3b92cc0. Re-measured on the merge, 200 games, `-seed 1`: P0 78.5%, P1 19.0%, draws 2.5%, 24.7 turns; *Sinuous Growth* 232, *Cliff of Portents* 20, *Boneyard Scavenger* 14, deck searches 20. The reopen trigger (Revision item 4) doesn't fire. #122 (c) recorded in the design note.

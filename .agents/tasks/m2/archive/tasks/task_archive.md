@@ -188,3 +188,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0182 | The hand view shows what a card costs now (directive #118 (a), harness, flash) | done |
 | T-0183 | A hidden decision stays hidden by its flag (directive #119, harness, flash) | done |
 | T-0184 | The docs say what wave D built, doc.go, placement.go and ability.go comments (directive #121, harness, flash, comments only) | done |
+| T-0185 | Unstarve ProgressPolicy without scenario seeding (directive #122, harness, flash) | done |
