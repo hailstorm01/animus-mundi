@@ -4,7 +4,7 @@ title: The docs say what wave D built, doc.go, placement.go and ability.go comme
 kind: harness
 tier: flash
 wave: D.1
-status: review
+status: done
 branch: m2/autoloop-wave-d.1/T-0184-docs-wave-d
 depends_on: [T-0183]
 claims: [comments:pkg/engine/doc.go, comments:pkg/engine/placement.go costs, comments:pkg/engine/ability/ability.go CostKind and Subject]
@@ -144,3 +144,9 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
   - `go -C W tool task check`: PASS (gofmt, go vet, all tests, cardtown lint --all passed)
   - `go -C W tool task sim`: PASS (200 games, all invariants held)
   Moved task to `status: review`.
+- 2026-11-05, lead-architect (wave D.1 run, session 15, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.1` as 587cc92. Flash run `df54bbea-2f7f-4cf8-b121-3ca9a3b1bb7f`: exit 0, 225 s, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; the `.err` file holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.1...m2/autoloop-wave-d.1/T-0184-docs-wave-d` (23a71c3):
+  - Scope: only the three Allowed Files and this file changed, and this file's only other changes are its status, Log and ticked boxes. No test file changed.
+  - Comments only, checked against the diff: all three files are byte-identical to the lead's dry run. Parsing each on both sides with comments dropped and hashing the printed code gives the same three SHA-256 values (a throwaway `go/parser` checker in the scratch folder, not committed).
+  - Fences and placement: no card name in engine code, no new rule, no code.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1 and 3-9; `go test ./...` passes; `cardtown lint fences` `[PASS]`; `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 84.0% / P1 15.0% / draws 1.0%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.1` `[PASS]`.
+  - `go tool task check` and `go tool task sim` also pass on the merged run branch at 587cc92, and `cardtown lint frd` passes with the design note's edits (18c12fe, #121 (d)). Directive #121 is applied.
