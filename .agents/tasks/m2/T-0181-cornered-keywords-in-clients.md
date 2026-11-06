@@ -4,7 +4,7 @@ title: The view shows a keyword behind Cornered, and the monitors stay clean on 
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: review
 branch: m2/autoloop-wave-d.1/T-0181-cornered-keywords-in-clients
 depends_on: [T-0180]
 claims: [test:TestView_KeywordBehindCorneredShowsOnlyWhileCornered, test:TestMonitorKeywords_CorneredResistantInRealGames]
@@ -116,11 +116,23 @@ These edits are the whole change. Both tests pin behavior T-0180 and T-0179 alre
 - `pkg/sim/monitor_keywords_test.go` (edit 2 only)
 
 ## Done When
-- [ ] Cases 1-6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05 lead-architect (wave D.1 run, session 11): split from T-0180 (D2.4). Status `queued`.
 - 2026-11-05 lead-architect (wave D.1 run, new runner, session 1): synced `main` first as c759280, bringing d641da3 and 58a938a (the #122 revision), with no conflict. The previous runner's session 12 hit the usage limit with no commit and left a clean worktree holding the run branch, which this session removed. Not `WAVE-COMPLETE`: #117-#119 and #121 are `open: before the next Deliverables task`. #122 is `open: after Wave D.1 (#121), before Wave E`, so it doesn't apply yet. Wrote Inputs, Edits, Acceptance Cases and Allowed Files against c759280. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #8: no `deck.go`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-05 kernel-engineer: status `in-progress`. Implemented acceptance tests for directive #117 (a) and (c) as prescribed:
+  - `pkg/view/view_test.go`: added `TestView_KeywordBehindCorneredShowsOnlyWhileCornered` asserting AssetView.Keywords displays granted Cornered keywords only while controller is Cornered (SVY-R18, directive #117 (a)).
+  - `pkg/sim/monitor_keywords_test.go`: added import `animus-mundi/pkg/engine/ability` and test `TestMonitorKeywords_CorneredResistantInRealGames` running 50 simulated games on RandomPolicy and ProgressPolicy with `Cornered: Resistant 1`, verifying zero monitor violations and `damage-sequence` coverage for `FR-KWD-002b` (directive #117 (c)).
+  - Reuse: `ability.CorneredKeywords`, `Def.Cornered`, `g.Keywords(a)`, `newScene`, `put`, `testUnit`, `SimulateWith`, `ProgressPolicy`.
+  - Commands and results:
+    1. `go -C W test ./pkg/view -run TestView_KeywordBehindCorneredShowsOnlyWhileCornered -v` passed (`--- PASS: TestView_KeywordBehindCorneredShowsOnlyWhileCornered (0.00s)`).
+    2. `go -C W test ./pkg/sim -run TestMonitorKeywords_CorneredResistantInRealGames -v` passed (`--- PASS: TestMonitorKeywords_CorneredResistantInRealGames (0.30s)`).
+    3. `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg cmd` printed exactly `27 0 pkg/sim/monitor_keywords_test.go` and `37 0 pkg/view/view_test.go`.
+    4. `git -C W diff autoloop/m2-wave-d.1 --stat` printed only those 2 files plus this task file (`3 files changed, 65 insertions(+), 1 deletion(-)`).
+    5. `go -C W tool task sim-compare -- autoloop/m2-wave-d.1` passed (`[PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included`).
+    6. `gofmt -l W/pkg/sim W/pkg/view` printed nothing. `go -C W tool task check` passed (fmt-check, vet, all tests across repo, and all cardtown linters clean). `go -C W tool task sim` passed (200 matches terminated clean with all invariants holding).
+  - Committed edits as `test(T-0181): the view and the monitors on a keyword behind Cornered` (da7309f). Status `review`.

@@ -1078,6 +1078,43 @@ func TestView_FaceDownAssetHidesItsText(t *testing.T) {
 	}
 }
 
+// T-0181 (directive #117 (a)): an asset's view shows a keyword behind Cornered
+// to both seats, and only while its controller is Cornered (SVY-R18).
+func TestView_KeywordBehindCorneredShowsOnlyWhileCornered(t *testing.T) {
+	s := newScene(t)
+	g := s.g
+	c := testUnit("Alpha Brawler", 2, 2, engine.Keywords{})
+	c.Ability = &ability.Def{Cornered: ability.CorneredKeywords{Aggressive: 3}}
+	brawler := s.put(0, engine.ZoneMainTheater, c)
+	s.put(1, engine.ZoneMainTheater, testUnit("Beta One", 1, 1, engine.Keywords{}))
+
+	keywords := func(seat engine.PlayerID) []string {
+		t.Helper()
+		v := view.PlayerView(g, seat)
+		for _, a := range v.Theater {
+			if a.ID == brawler.ID {
+				return a.Keywords
+			}
+		}
+		t.Fatalf("seat %d: asset %d missing from the theater %+v", seat, brawler.ID, v.Theater)
+		return nil
+	}
+	want := func(when string, kw []string) {
+		t.Helper()
+		for seat := range engine.PlayerID(2) {
+			if got := keywords(seat); !slices.Equal(got, kw) {
+				t.Errorf("%s: seat %d sees keywords %v, want %v", when, seat, got, kw)
+			}
+		}
+	}
+
+	want("1 against 1, not Cornered", nil)
+	second := s.put(1, engine.ZoneMainTheater, testUnit("Beta Two", 1, 1, engine.Keywords{}))
+	want("1 against 2, Cornered", []string{"Aggressive 3"})
+	g.Theater = slices.DeleteFunc(g.Theater, func(a *engine.Asset) bool { return a == second })
+	want("back to 1 against 1, not Cornered", nil)
+}
+
 // T-0168 Cases 1-4: The play log hides an opponent's deck search pick.
 
 func TestView_SearchLineHidesThePickFromTheOpponent(t *testing.T) {
