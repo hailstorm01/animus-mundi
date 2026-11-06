@@ -113,8 +113,8 @@ func (g *Game) check(a Action) error {
 			return illegal("%s cannot generate that resource in %s (FR-CAP-001)", as, as.Zone)
 		}
 	case ActConvert:
-		if !p.canPay(convertReq, 0) {
-			return illegal("conversion needs %d Requisition", convertReq)
+		if !p.canPay(ConvertReq, 0) {
+			return illegal("conversion needs %d Requisition", ConvertReq)
 		}
 	case ActDeploy:
 		inst, err := g.handPlay(p, a.Card)

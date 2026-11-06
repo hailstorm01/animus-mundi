@@ -37,7 +37,7 @@ var allowedImports = map[string][]string{
 	"pkg/engine":         {"pkg/engine/ability", "pkg/engine/cards"},
 	"pkg/engine/ability": {},
 	"pkg/engine/cards":   {"pkg/engine/ability"},
-	"pkg/sim":            {"pkg/engine"},
+	"pkg/sim":            {"pkg/engine", "pkg/engine/ability"},
 	"pkg/eventlog":       {"pkg/engine"},
 	"pkg/view":           {"pkg/engine", "pkg/eventlog"},
 	"pkg/view/viewtest":  {"pkg/engine"},
