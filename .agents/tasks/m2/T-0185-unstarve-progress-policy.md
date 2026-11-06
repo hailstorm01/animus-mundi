@@ -4,7 +4,7 @@ title: Unstarve ProgressPolicy without scenario seeding (directive #122, harness
 kind: harness
 tier: flash
 wave: D.1
-status: ready
+status: in-progress
 branch: m2/T-0185-unstarve-progress-policy
 depends_on: [T-0184]
 claims: [func:sim.ProgressPolicy, const:sim.marchPast, const:engine.ConvertReq, fence:pkg/sim imports pkg/engine/ability, test:TestProgress_UnreachableCardTapsNothing, test:TestProgress_ReachRespectsTheZoneLimit, test:TestProgress_ReachCountsConversion, test:TestProgress_NoTapBreaksReach, test:TestProgress_ActivationBudgetsAndActivates, test:TestProgress_ActivationIsNotEager, test:TestProgress_SavingHoldsMarchesOutOfReserves, test:TestProgress_StarterGamesFireActivations]
