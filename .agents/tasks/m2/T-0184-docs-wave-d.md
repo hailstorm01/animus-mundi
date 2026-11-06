@@ -4,7 +4,7 @@ title: The docs say what wave D built, doc.go, placement.go and ability.go comme
 kind: harness
 tier: flash
 wave: D.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.1/T-0184-docs-wave-d
 depends_on: [T-0183]
 claims: [comments:pkg/engine/doc.go, comments:pkg/engine/placement.go costs, comments:pkg/engine/ability/ability.go CostKind and Subject]
@@ -121,10 +121,26 @@ No new tests: comments only. W is your worktree. Run each command on its own, po
 - `pkg/engine/ability/ability.go`
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-05, lead-architect (wave D.1 run, session 15): wrote this task from directive #121 against the run branch at 18c12fe; `main` has no commits to sync. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$` or unquoted parentheses. Checked each claim against the code: `CorneredKeywords` is read in `g.Keywords`, `stepSearchDeck` goes through `stepPlayers`, and `filter.go`'s, `resources.go`'s, `targeting.go`'s and `state.go`'s headers say what the Files entries now say. #121 (d) landed in 18c12fe, which also lists `Cornered` on the design note's `Def` line. Next: `kernel-engineer` on Flash.
+- 2026-11-05, kernel-engineer (T-0184): implemented comment updates for directive #121 ((a), (b), (c)) in `pkg/engine/doc.go`, `pkg/engine/placement.go`, and `pkg/engine/ability/ability.go`. Diff shows comments-only updates: doc.go adds Cornered keywords under "What runs now", refines continuous abilities under "Not built yet", and lists `resources.go`, `filter.go`, `targeting.go` and `state.go` accurately; placement.go updates costs comments for activated abilities and placements; ability.go updates CostKind and mentions OpSearchDeck for SubjectController and SubjectOpponents.
+  Reused: existing documentation structures and wave D/D.1 shapes; zero code or behavior changes.
+  Commands executed:
+  - `git -C W diff autoloop/m2-wave-d.1 -- "*_test.go"`: PASS (no output, tests unchanged)
+  - `go -C W test ./...`: PASS (all tests pass)
+  - `go -C W tool task sim-compare -- autoloop/m2-wave-d.1`: PASS ([PASS] starter and stress sims match autoloop/m2-wave-d.1 byte for byte, exit codes included)
+  - `git -C W diff autoloop/m2-wave-d.1 --numstat -- pkg`: PASS (3 3 pkg/engine/ability/ability.go, 10 4 pkg/engine/doc.go, 3 3 pkg/engine/placement.go)
+  - `git -C W grep -n -F "additional cost" -- pkg/engine/placement.go pkg/engine/ability/ability.go`: PASS (lines ability.go:28 and placement.go:21)
+  - `git -C W grep -n -F "OpDiscard, OpSearchDeck)" -- pkg/engine/ability/ability.go`: PASS (lines ability.go:270 and ability.go:272)
+  - `git -C W grep -n -e filter.go -e resources.go -e Def.Cornered -e "exhausting an asset" -- pkg/engine/doc.go`: PASS (lines doc.go:50, :79, :81, :83)
+  - `git -C W grep -n -e "continuous Cornered" -e "choice and filters" -- pkg/engine/doc.go`: PASS (exit code 1, 0 matches)
+  - `go -C W run ./cmd/cardtown lint fences`: PASS ([PASS] Package code is free of card names, invalid markers and disallowed imports)
+  - `git -C W diff autoloop/m2-wave-d.1 --stat`: PASS (lists only the 3 pkg files and the task file)
+  - `go -C W tool task check`: PASS (gofmt, go vet, all tests, cardtown lint --all passed)
+  - `go -C W tool task sim`: PASS (200 games, all invariants held)
+  Moved task to `status: review`.
