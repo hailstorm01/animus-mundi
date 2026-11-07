@@ -4,7 +4,7 @@ title: One read of "the source, or its last-known record", `resolveAttack` calls
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0193-one-read-of-source-or-last-known
 depends_on: [T-0192]
 claims: [engine:resolveAttack-source-lookup, engine:itemSource-comment]
