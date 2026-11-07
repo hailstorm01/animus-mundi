@@ -4,7 +4,7 @@ title: The text says what the code does (directive #135, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0198-text-says-what-code-does
 depends_on: [T-0190]
 claims: []
