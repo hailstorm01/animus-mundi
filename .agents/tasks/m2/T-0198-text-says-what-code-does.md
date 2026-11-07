@@ -4,7 +4,7 @@ title: The text says what the code does (directive #135, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0198-text-says-what-code-does
 depends_on: [T-0190]
 claims: []
@@ -53,10 +53,53 @@ No other file changes. Run `gofmt -l pkg cmd` after the edits; it must print not
 - `pkg/toolchain/docs/whatsup.go`
 
 ## Done When
-- [ ] Cases 1-5 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` shows only the header line changed, in the starter and the stress output (case 4)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-5 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` shows only the header line changed, in the starter and the stress output (case 4)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 12): wrote this task from board directive #135 against the run branch at 8e0e402. No `main` commits to sync. Not `WAVE-COMPLETE`: #135 is `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Three non-test files, within the D2.4 limit. Part (a) needs no edit (Inputs). Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (T-0198):
+  - Status moved to in-progress (41f44ae), then review.
+  - Implemented lead directive #135 edits across three allowed files: `cmd/cardtown/main.go`, `cmd/cardtown/sim.go`, and `pkg/toolchain/docs/whatsup.go`.
+  - Replaced "Random-policy playouts" with "Playouts" in usage and whatsup strings.
+  - In `cmd/cardtown/sim.go:137`, updated header banner string to `"  CARD TOWN RULES KERNEL: PLAYOUTS                         "` keeping 61 character width intact.
+  - Verified `gofmt -l pkg cmd` prints nothing.
+  - Verified Acceptance Cases 1-5:
+    - Case 1: `git -C W grep -n -i -e 'random-policy' -- cmd pkg/toolchain` returned exit status 1 with no output.
+    - Case 2: `git -C W grep -n -e 'Playouts on the rules kernel' -e 'RULES KERNEL: PLAYOUTS' -- cmd pkg` printed exactly four lines:
+      `cmd/cardtown/main.go:68:	fmt.Println("  sim       Playouts on the rules kernel (termination, invariants, win rates)")`
+      `cmd/cardtown/sim.go:32:		fmt.Println("Playouts on the rules kernel (termination, invariants, win rates)")`
+      `cmd/cardtown/sim.go:137:	fmt.Println("  CARD TOWN RULES KERNEL: PLAYOUTS                         ")`
+      `pkg/toolchain/docs/whatsup.go:99:	fmt.Println("- cardtown sim [flags] : Playouts on the rules kernel; fails on non-termination or broken invariants")`
+    - Case 3: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed:
+      1	1	cmd/cardtown/main.go
+      2	2	cmd/cardtown/sim.go
+      1	1	pkg/toolchain/docs/whatsup.go
+      `git -C W diff autoloop/m2-wave-d.2 --stat` listed only those three files and the task file.
+    - Case 4: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` exited non-zero with no `[PASS]` line, outputting two single-hunk diffs modifying only the header line:
+      ```diff
+      diff --git "a/bin/sim-compare/base-starter.txt" "b/bin/sim-compare/new-starter.txt"
+      index 60b2717..6b4a199 100644
+      --- "a/bin/sim-compare/base-starter.txt"
+      +++ "b/bin/sim-compare/new-starter.txt"
+      @@ -1,5 +1,5 @@
+       ==========================================================
+      -  CARD TOWN RULES KERNEL: RANDOM-POLICY PLAYOUTS           
+      +  CARD TOWN RULES KERNEL: PLAYOUTS                         
+       ==========================================================
+      ```
+      ```diff
+      diff --git "a/bin/sim-compare/base-stress.txt" "b/bin/sim-compare/new-stress.txt"
+      index 801c884..dce2bb0 100644
+      --- "a/bin/sim-compare/base-stress.txt"
+      +++ "b/bin/sim-compare/new-stress.txt"
+      @@ -1,5 +1,5 @@
+       ==========================================================
+      -  CARD TOWN RULES KERNEL: RANDOM-POLICY PLAYOUTS           
+      +  CARD TOWN RULES KERNEL: PLAYOUTS                         
+       ==========================================================
+      ```
+    - Case 5: `go -C W tool task check` passed all stages (gofmt, vet, test, linter --all). `go -C W tool task sim` passed clean (P0 78.5%, P1 19.0%, draws 2.5%).
+  - Committed implementation as `feat(toolchain): the text says what the code does (T-0198)` (731e20e).
