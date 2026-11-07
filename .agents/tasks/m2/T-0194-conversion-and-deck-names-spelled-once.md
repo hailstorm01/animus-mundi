@@ -4,7 +4,7 @@ title: Conversion and deck names, each spelled once (directive #132 (a), (b), ha
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0194-conversion-and-deck-names-spelled-once
 depends_on: [T-0193]
 claims: [engine:ConvertTac, sim:decklistDir, sim:stressPrefix, cardtown:convert-label]
