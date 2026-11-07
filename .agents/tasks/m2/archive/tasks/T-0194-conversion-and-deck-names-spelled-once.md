@@ -4,7 +4,7 @@ title: Conversion and deck names, each spelled once (directive #132 (a), (b), ha
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0194-conversion-and-deck-names-spelled-once
 depends_on: [T-0193]
 claims: [engine:ConvertTac, sim:decklistDir, sim:stressPrefix, cardtown:convert-label]
@@ -127,3 +127,9 @@ No other file changes.
     7. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
     8. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly (200 games, P0 78.5% / P1 19.0% / draws 2.5%, all invariants held).
   - Reviewer notice: pure move; sim outputs and tests byte-identical to run branch.
+- 2026-11-07, lead-architect (wave D.2 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as 84c7dd2. Flash run `0f0f5a03-cb85-422c-9409-f8b55881ff73`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; no `"status":"ERROR"` step in the transcript; its one `permission check failed` match is the engineer reading an earlier run-file row that quotes the phrase, and `cli.log` has no `soft-denying` line; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0194-conversion-and-deck-names-spelled-once` (ff9c21e):
+  - Scope: only the Allowed Files and this file changed. No test file changed, and there is no `test(T-0194)` commit, as a pure move asks.
+  - Checked against the diff: the hunks are exactly Edits 1-4, and the numstat matches the dry run. `%d` of the constants 2 and 1 prints the old label. `(s.req-c.req)/ConvertReq*ConvertTac` groups left to right, so the integer division still comes first. `filepath.Join` cleans `decklistDir`'s trailing slash, so `MatchDecks` builds the same path. `monitor_resources.go` keeps its literals, as #132 says.
+  - Fences and placement: no card name. `ConvertTac` sits beside `ConvertReq` in `engine`, and both deck-name constants are unexported in `sim`, whose only file that spells them is `decks.go`. Rules fidelity: nothing rule-related changes (`FR-RES-003` reads the same).
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: case 1 prints nothing and `go test ./...` exits 0; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`; case 3 prints nothing, exit 1; case 4 one line at `:162`; case 5 lines 13, 15 and 56; the numstat exact; the stat lists the four files and this file; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing but this task's own commit after the branch point, so the gates hold on the run branch. #132 (a), (b) are applied; the directive stays on the board for (c), (d). T-0195 is next.
