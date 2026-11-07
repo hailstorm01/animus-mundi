@@ -4,7 +4,7 @@ title: One classifier of changed files, and "all linters" means all (directive #
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0197-one-change-classifier
 depends_on: [T-0196]
 claims: [cardtown:lintSelection, cardtown:allLinters, cardtown:changedFiles, cardtown:selectChanged, fences:SurveyFile]
@@ -282,3 +282,9 @@ No other file changes. Run `gofmt -l pkg cmd` after the edits; it must print not
     - Case 10: `go -C W tool task check` passed (fmt-check, vet, all tests, all linters clean); `go -C W tool task sim` passed clean on starter decks.
   - Committed implementation as `feat(toolchain): one classifier of changed files, all linters means all (T-0197)` (commit `6cbf113`).
   - Status -> review. Handing off for review.
+- 2026-11-07, lead-architect (wave D.2 run, session 11, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as c287be3. Flash run `ece51d82-ae1f-4e94-837f-2bbf74dcf24d`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; no `permission check failed` match in the transcript, whose one `"status":"ERROR"` step is a read of a file that doesn't exist; `.err` holds only agy's "root agent idle" notice). The engineer's Log calls this session 12; it is session 11. Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0197-one-change-classifier` (d8b7d45):
+  - Scope: only the Allowed Files and this file changed. `lint_test.go` changes only in the `test(T-0197)` commit (8b36810), which adds 132 lines and deletes none; no earlier test changed.
+  - Checked against the diff: `lint.go`, `fences.go` and `ownership.go` are byte-identical to the lead's dry run, so the hunks are exactly Edits 1-3. The three tests cover cases 1-3 as written, and at 8b36810 `go test ./cmd/cardtown` fails to compile (`undefined: lintSelection`). Nit, not a note: the tests add a second `import (...)` block below `import "testing"` rather than merging the two, because case 4 asked for no deleted lines; gofmt accepts it.
+  - Reuse: one classifier (`selectChanged`) and one "all" (`allLinters`) remain; each matrix and survey file name is spelled once in code (case 8). Fences and placement: nothing in `pkg/engine` changes; the new type and functions sit in `cmd/cardtown`, which owns lint dispatch. Rules fidelity: nothing rule-related changes.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: `gofmt -l pkg cmd` clean; case 4 three `--- PASS` and the two diffs as stated; cases 6-9 exact; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's `pkg/` and `cmd/` match the task tip's (`git diff` prints nothing), so the gates hold on the run branch. #134 is fully applied and archived. #135 is next.
