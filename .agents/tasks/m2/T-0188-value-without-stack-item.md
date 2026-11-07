@@ -4,7 +4,7 @@ title: A value doesn't need a stack item, `value` takes the controller, source a
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0188-value-without-stack-item
 depends_on: [T-0187]
 claims: [signature:Game.value]
