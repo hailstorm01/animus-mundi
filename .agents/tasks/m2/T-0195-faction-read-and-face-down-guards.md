@@ -4,7 +4,7 @@ title: One read of "this faction or Neutral", and no face-down guard that can't 
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0195-faction-read-and-face-down-guards
 depends_on: [T-0194]
 claims: [engine:Card-InFactionOrNeutral, engine:fireHook-face-down-guard, engine:replacementsFor-face-down-guard]
