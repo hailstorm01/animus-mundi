@@ -4,7 +4,7 @@ title: Effects log what they do (directive #129, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0191-effects-log-what-they-do
 depends_on: [T-0190]
 claims: [event:EventHeal, event:EventArmor, event:EventPower, event:EventCardMove, engine:stepHeal, engine:stepAddArmor, engine:stepModifyStat, engine:stepRelocate, test:TestEffectEvents_*, test:TestView_HealLineShowsToBothSeats, test:TestReplay_EffectEventsRoundTrip]
@@ -444,3 +444,10 @@ No other file changes.
     - Case 8: `git diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` -> exactly matches the 6 lines (193 0, 18 8, 4 0, 5 1, 38 0, 38 0).
     - Case 9: `go tool task check` and `go tool task sim` both passed clean.
   - Reviewer note: `DiscardCard` safely checks that the target card remains in the discard pile prior to card-move event emission and relocation, ensuring no face-down/private leak. Ready for review.
+- 2026-11-07, lead-architect (wave D.2 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as f8d0269. Flash run `776e9df2-a362-4af5-8f98-4748e685d889`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` value; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0191-effects-log-what-they-do` (8e9e113):
+  - Scope: only the Allowed Files and this file changed. `c7b9db5` holds only the four test files, and no test file changed after it. The one existing test edited is `TestEventKinds_ValuesAreTheSchema`, as this task names. `TestView_Case4_NoLeak` is unedited.
+  - Checked against the diff: the branch's `pkg/` and `cmd/` trees are identical to the lead's dry run. Each step logs one event per asset or card, and a heal's `Amount` is the damage actually removed. Asset text goes through `a.String()`, and the card-move event is logged before the card leaves the discard pile.
+  - Fences and placement: no card name; the kinds sit with the others in `events.go`. Rules fidelity: no special case. The `DiscardCard` guard applies `FR-TGT-003` to a card as `stepAssets` does to an asset, and `sim-compare` shows no played game depended on the old guard.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: at `c7b9db5` the three `go vet` commands print the `undefined` errors; at the tip cases 2-8 hold (replay counts heal 98, armor 18, power 43, card-move 72; numstat exact); `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`.
+  - Seen in a sample log: `Despoiler Larva#111 heals 0`, the zero-amount line this task chose because #129 asks for one event per asset acted on. If the playtest finds it noisy, a client can hide it, since `Amount` says so.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing after the branch point, so the gates hold on the run branch. ADR-0005's addendum is in this commit, as #129 asks. Directive #129 is applied. #130 is next.

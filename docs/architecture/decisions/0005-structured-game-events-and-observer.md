@@ -29,6 +29,8 @@ Every accepted action emits one `action` event.
 
 **Addendum (T-0026).** Damage events carry the mitigation facts as well as the committed `Amount`: `Raw` (before Stage 2), `Combat`, `Armor` (the target's pool before the damage) and `Absorbed` (Stage 4). Every item put on the Resolution Stack emits one `place` event right after it is pushed: `Player` is its controller, `Source`, `Target`, `Secondary`, `Card` and `Inst` describe the item, and `Amount` is the stack depth after the push. The `combat` event now also carries the attacker as `Source` and the defender as `Target`. All of these are additive and omitted when unused.
 
+**Addendum (T-0191, directive #129).** Effects that logged nothing now log one event per asset or card they act on. `heal`, `armor` and `power` carry `Target` and `Amount` (the damage actually removed, which may be 0; the Armor added; the power change), with `Player` -1 and no `Card`. Their text goes through the asset's `String`, so a face-down asset stays hidden. `card-move` is a card leaving a discard pile: `Card`, `Inst` and `Zone` (where it goes), with `Player` -1, logged before it moves, while it is still public. Deck searches and draws still name no card. All of these are additive.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences

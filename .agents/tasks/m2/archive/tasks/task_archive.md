@@ -194,3 +194,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0188 | A value doesn't need a stack item, `value` takes the controller, source and instance (directive #125, harness, flash, pure move) | done |
 | T-0189 | Effective reads live in `layers.go`, `cornered`, `EffectiveState` and `effectiveState` move there (directive #126, harness, flash, pure move) | done |
 | T-0190 | The policy asks the engine what an activated ability costs (directive #127, harness, flash) | done |
+| T-0191 | Effects log what they do (directive #129, harness, flash) | done |
