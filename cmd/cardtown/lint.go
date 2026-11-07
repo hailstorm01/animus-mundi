@@ -15,6 +15,7 @@ import (
 	"animus-mundi/pkg/toolchain/linter/frd"
 	"animus-mundi/pkg/toolchain/linter/rules"
 	"animus-mundi/pkg/toolchain/linter/syntax"
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 func runLint(args []string) {
@@ -101,102 +102,38 @@ func runLint(args []string) {
 	fmt.Println("Repo Root:", repoRoot)
 	fmt.Println()
 
-	runFrd := false
-	runRules := false
-	runSheets := false
-	runSyntax := false
-	runFences := false
-
-	var changedFrds []string
-	var changedCsvs []string
-
+	var sel lintSelection
 	if *allFlag {
-		runFrd = true
-		runRules = true
-		runSheets = true
-		runSyntax = true
-		runFences = true
+		sel = allLinters()
 	} else if *frdFlag || *rulesFlag || *cardsFlag || *sheetsFlag || *syntaxFlag || *fencesFlag {
-		if *frdFlag {
-			runFrd = true
-		}
-		if *rulesFlag {
-			runRules = true
-		}
-		if *cardsFlag || *sheetsFlag {
-			runSheets = true
-		}
-		if *cardsFlag || *syntaxFlag {
-			runSyntax = true
-		}
-		if *fencesFlag {
-			runFences = true
-		}
+		sel.frd = *frdFlag
+		sel.rules = *rulesFlag
+		sel.sheets = *cardsFlag || *sheetsFlag
+		sel.syntax = *cardsFlag || *syntaxFlag
+		sel.fences = *fencesFlag
 	} else {
 		// Smart change detection
 		if *stagedFlag {
 			fmt.Println("[Detecting Staged Files via Git...]")
-			staged, err := git.GetStagedFiles(repoRoot)
-			if err != nil {
-				fmt.Printf("Git staged diff unavailable: %v. Running all linters...\n", err)
-				runFrd = true
-				runRules = true
-				runSheets = true
-				runSyntax = true
-			} else {
-				for _, path := range staged {
-					pLower := strings.ToLower(filepath.ToSlash(path))
-					if isRulesPath(pLower) {
-						runRules = true
-					}
-					if isFencesPath(pLower) {
-						runFences = true
-					}
-					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
-						changedFrds = append(changedFrds, path)
-					} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
-						changedCsvs = append(changedCsvs, path)
-					}
-				}
-			}
 		} else {
 			fmt.Println("[Detecting Changed Files via Git...]")
-			statusFiles, err := git.GetStatus(repoRoot)
-			if err != nil {
-				fmt.Println("  Git change detection unavailable. Running all linters...")
-				runFrd = true
-				runRules = true
-				runSheets = true
-				runSyntax = true
-			} else {
-				for _, sf := range statusFiles {
-					pLower := strings.ToLower(filepath.ToSlash(sf.Path))
-					if isRulesPath(pLower) {
-						runRules = true
-					}
-					if isFencesPath(pLower) {
-						runFences = true
-					}
-					if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
-						changedFrds = append(changedFrds, sf.Path)
-					} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
-						changedCsvs = append(changedCsvs, sf.Path)
-					}
-				}
-			}
+		}
+		paths, err := changedFiles(repoRoot, *stagedFlag)
+		if err != nil && *stagedFlag {
+			fmt.Printf("Git staged diff unavailable: %v. Running all linters...\n", err)
+		} else if err != nil {
+			fmt.Println("  Git change detection unavailable. Running all linters...")
+		}
+		sel = selectChanged(paths, err)
+
+		if len(sel.changedFrds) > 0 {
+			fmt.Printf("  Detected %d modified/added FRD document(s).\n", len(sel.changedFrds))
+		}
+		if len(sel.changedCsvs) > 0 {
+			fmt.Printf("  Detected %d modified/added Card CSV sheet(s).\n", len(sel.changedCsvs))
 		}
 
-		if len(changedFrds) > 0 {
-			fmt.Printf("  Detected %d modified/added FRD document(s).\n", len(changedFrds))
-			runFrd = true
-		}
-		if len(changedCsvs) > 0 {
-			fmt.Printf("  Detected %d modified/added Card CSV sheet(s).\n", len(changedCsvs))
-			runSheets = true
-			runSyntax = true
-		}
-
-		if !runFrd && !runRules && !runSheets && !runSyntax && !runFences {
+		if sel.empty() {
 			fmt.Println("  No changes detected in docs/frd/, pkg/, or data/cards/.")
 			fmt.Println("  Nothing to lint! (Use --all to force full audit across all files)")
 			fmt.Println()
@@ -208,11 +145,11 @@ func runLint(args []string) {
 	anyFailed := false
 
 	// 1. FRD Linter
-	if runFrd {
+	if sel.frd {
 		fmt.Println("\n>>> Running FRD Requirements Linter...")
 		files := parsedFiles
-		if len(files) == 0 && len(changedFrds) > 0 && !*allFlag {
-			files = changedFrds
+		if len(files) == 0 && len(sel.changedFrds) > 0 && !*allFlag {
+			files = sel.changedFrds
 		}
 		ok, err := frd.Lint(repoRoot, files)
 		if err != nil || !ok {
@@ -221,7 +158,7 @@ func runLint(args []string) {
 	}
 
 	// 2. Executable Rules Traceability Linter
-	if runRules {
+	if sel.rules {
 		fmt.Println("\n>>> Running Executable Rules Traceability Linter...")
 		ok, err := rules.Lint(repoRoot, nil)
 		if err != nil || !ok {
@@ -230,11 +167,11 @@ func runLint(args []string) {
 	}
 
 	// 3. Card Sheet CSV Integrity Linter
-	if runSheets {
+	if sel.sheets {
 		fmt.Println("\n>>> Running Card Sheet CSV Integrity Linter...")
 		files := parsedFiles
-		if len(files) == 0 && len(changedCsvs) > 0 && !*allFlag {
-			files = changedCsvs
+		if len(files) == 0 && len(sel.changedCsvs) > 0 && !*allFlag {
+			files = sel.changedCsvs
 		}
 		ok, err := cards.Lint(repoRoot, files)
 		if err != nil || !ok {
@@ -243,11 +180,11 @@ func runLint(args []string) {
 	}
 
 	// 4. Card Rules Syntax & Terminology Linter
-	if runSyntax {
+	if sel.syntax {
 		fmt.Println("\n>>> Running Card Rules Syntax & Terminology Linter...")
 		files := parsedFiles
-		if len(files) == 0 && len(changedCsvs) > 0 && !*allFlag {
-			files = changedCsvs
+		if len(files) == 0 && len(sel.changedCsvs) > 0 && !*allFlag {
+			files = sel.changedCsvs
 		}
 		ok, err := syntax.Lint(repoRoot, files, true)
 		if err != nil || !ok {
@@ -256,7 +193,7 @@ func runLint(args []string) {
 	}
 
 	// 5. Engine Architecture Fences Linter
-	if runFences {
+	if sel.fences {
 		fmt.Println("\n>>> Running Engine Architecture Fences Linter...")
 		ok, err := fences.Lint(repoRoot, nil)
 		if err != nil || !ok {
@@ -281,10 +218,71 @@ func isRulesPath(pLower string) bool {
 	return pLower == "docs/frd/01_game_rules_frd.md" || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
 }
 
+// lintSelection is which linters a lint run runs, and the changed FRD documents and card
+// sheets that the FRD, sheet and syntax linters then read.
+type lintSelection struct {
+	frd, rules, sheets, syntax, fences bool
+	changedFrds, changedCsvs           []string
+}
+
+// allLinters selects every linter.
+func allLinters() lintSelection {
+	return lintSelection{frd: true, rules: true, sheets: true, syntax: true, fences: true}
+}
+
+// empty reports whether s selects no linter.
+func (s lintSelection) empty() bool {
+	return !s.frd && !s.rules && !s.sheets && !s.syntax && !s.fences
+}
+
+// changedFiles lists the changed paths git reports: the staged files when staged is set,
+// otherwise every path git status shows.
+func changedFiles(repoRoot string, staged bool) ([]string, error) {
+	if staged {
+		return git.GetStagedFiles(repoRoot)
+	}
+	statusFiles, err := git.GetStatus(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, sf := range statusFiles {
+		paths = append(paths, sf.Path)
+	}
+	return paths, nil
+}
+
+// selectChanged selects the linters that changes to paths can affect, or every linter when
+// git couldn't list the changes (gitErr is not nil).
+func selectChanged(paths []string, gitErr error) lintSelection {
+	if gitErr != nil {
+		return allLinters()
+	}
+	var s lintSelection
+	for _, path := range paths {
+		pLower := strings.ToLower(filepath.ToSlash(path))
+		if isRulesPath(pLower) {
+			s.rules = true
+		}
+		if isFencesPath(pLower) {
+			s.fences = true
+		}
+		if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
+			s.changedFrds = append(s.changedFrds, path)
+		} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
+			s.changedCsvs = append(s.changedCsvs, path)
+		}
+	}
+	s.frd = len(s.changedFrds) > 0
+	s.sheets = len(s.changedCsvs) > 0
+	s.syntax = s.sheets
+	return s
+}
+
 // isFencesPath reports whether a change can affect the package fences.
 func isFencesPath(pLower string) bool {
 	return (strings.HasPrefix(pLower, "pkg/") && !strings.HasPrefix(pLower, "pkg/toolchain/") && strings.HasSuffix(pLower, ".go")) ||
 		(strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv")) ||
-		pLower == "docs/frd/keyword_interaction_matrix.md" ||
-		pLower == "docs/design/m2_starter_set_ability_survey.md"
+		pLower == "docs/frd/"+specdoc.MatrixFile ||
+		pLower == "docs/design/"+fences.SurveyFile
 }

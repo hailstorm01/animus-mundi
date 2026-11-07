@@ -5,13 +5,15 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 const (
 	// RulesFRD owns every game rule and the keyword dictionary.
 	RulesFRD = "01_Game_Rules_FRD.md"
 	// KeywordMatrix quotes keyword rules on purpose to pose questions about them.
-	KeywordMatrix = "keyword_interaction_matrix.md"
+	KeywordMatrix = specdoc.MatrixFile
 	// frozenMarker identifies FRDs frozen as design intent.
 	frozenMarker = "**Status: FROZEN"
 )
