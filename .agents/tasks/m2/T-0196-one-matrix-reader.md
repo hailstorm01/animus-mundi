@@ -4,7 +4,7 @@ title: One reader of the keyword matrix, and Analyze split by job (directive #13
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0196-one-matrix-reader
 depends_on: [T-0195]
 claims: [specdoc:ReadMatrix, specdoc:MatrixItem, specdoc:MatrixFile, fences:Analyze-split]
