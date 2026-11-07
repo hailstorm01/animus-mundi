@@ -4,7 +4,7 @@ title: One reader of the keyword matrix, and Analyze split by job (directive #13
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0196-one-matrix-reader
 depends_on: [T-0195]
 claims: [specdoc:ReadMatrix, specdoc:MatrixItem, specdoc:MatrixFile, fences:Analyze-split]
@@ -295,3 +295,10 @@ No other file changes.
     9. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
     10. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly on starter decks (all invariants held).
   - Reviewer notice: pure move; sim outputs, fences, and tests byte-identical to run branch.
+- 2026-11-07, lead-architect (wave D.2 run, session 10, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as 235f5da. Flash run `5c122541-b696-4c2c-b620-903ec3c7d9bd`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). The engineer's summary linked files in the main checkout, but the main checkout stayed clean on `main`. Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0196-one-matrix-reader` (262f3dd):
+  - Scope: only the Allowed Files and this file changed. No test file changed, and there is no `test(T-0196)` commit, as a pure move asks.
+  - Checked against the diff: the four files are byte-identical to the lead's dry run (`git diff --no-index` prints nothing for each), so the hunks are exactly Edits 1-4.
+  - Reuse: the matrix is now parsed once. `frd.KeywordMatrix` and `lint.go`'s paths name the file without parsing it (Inputs); the paths are #134's.
+  - Fences and placement: `specdoc` is the package the Boundaries row gives shared scanning, and the row now names the reader. Nothing in `pkg/engine` changes. Rules fidelity: nothing rule-related changes.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: `gofmt -l pkg cmd` clean; case 1 prints nothing and `go test ./...` exits 0; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`; case 3 the five lines, exit 0; case 4 the matrix line; cases 5-7 exact; the numstat exact; the stat lists the four files and this file; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's `pkg/` and `cmd/` match the task tip's (`git diff` prints nothing), so the gates hold on the run branch. #133 is fully applied and archived. #134 is next.
