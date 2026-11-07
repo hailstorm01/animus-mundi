@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -726,5 +727,55 @@ func TestFR_ACT_001_LegalTargetDoesNotExcuseACost(t *testing.T) {
 	actNotOffered(t, s, a, 0, "a legal target exists but R2 cannot be paid")
 	if !s.alive(foe) {
 		t.Errorf("the legal target is untouched (SVY-R36)")
+	}
+}
+
+// T-0190 (directive #127): ActivatedCost is a client's read of what an activated
+// ability costs. It reads the resources without checking the pool, and says
+// whether the other costs can be paid now.
+func TestActivatedCost_ReadsResourcesAndOtherCosts(t *testing.T) {
+	check := func(t *testing.T, g *Game, a *Asset, i, wantReq, wantTac int, wantOK bool) {
+		t.Helper()
+		req, tac, ok := g.ActivatedCost(a, i)
+		if req != wantReq || tac != wantTac || ok != wantOK {
+			t.Errorf("ActivatedCost(%d) = R%d T%d %v, want R%d T%d %v", i, req, tac, ok, wantReq, wantTac, wantOK)
+		}
+	}
+	t.Run("resources are read, not checked against the pool", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility([]ability.Cost{actRes(1, 2)}, drawN(1))))
+		s.setPool(0, 0, 0)
+		check(t, s.g, a, 0, 1, 2, true)
+	})
+	t.Run("each index reads its own ability", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Engine", nil,
+			actAbility([]ability.Cost{actRes(1, 0)}, drawN(1)),
+			actAbility([]ability.Cost{actRes(0, 3)}, drawN(1))))
+		check(t, s.g, a, 0, 1, 0, true)
+		check(t, s.g, a, 1, 0, 3, true)
+	})
+	t.Run("exhausting the source needs it Readied", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility([]ability.Cost{actRes(1, 0), actExhaust}, drawN(1))))
+		check(t, s.g, a, 0, 1, 0, true)
+		a.Exhausted = true
+		check(t, s.g, a, 0, 1, 0, false)
+	})
+	t.Run("a discard or killing the source is always payable", func(t *testing.T) {
+		s := newScene(t)
+		a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility([]ability.Cost{{Kind: ability.CostDiscard, UpTo: 1}, actKill}, drawN(1))))
+		a.Exhausted = true
+		check(t, s.g, a, 0, 0, 0, true)
+	})
+	for _, kind := range []ability.CostKind{ability.CostKill, ability.CostExhaust} {
+		t.Run(fmt.Sprintf("chosen-asset cost %d needs an option", kind), func(t *testing.T) {
+			s := newScene(t)
+			cost := ability.Cost{Kind: kind, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindStructure}}
+			a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility([]ability.Cost{cost}, drawN(1))))
+			check(t, s.g, a, 0, 0, 0, false)
+			s.put(0, ZoneMainTheater, structure("Wall", 0, 9, Keywords{}))
+			check(t, s.g, a, 0, 0, 0, true)
+		})
 	}
 }

@@ -996,3 +996,14 @@ func TestFences_Case39_EngineImports(t *testing.T) {
 		}
 	}
 }
+
+// 40. pkg/sim may import pkg/engine and nothing else in the module (T-0190).
+func TestFences_Case40_SimImportsOnlyEngine(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "pkg/sim/x.go", "package sim\n\nimport _ \"animus-mundi/pkg/engine/ability\"\n")
+	out := expectFail(t, repo)
+	want := "pkg/sim/x.go:3: imports animus-mundi/pkg/engine/ability; pkg/sim may import only pkg/engine"
+	if !strings.Contains(out, "[ERROR] "+want) {
+		t.Fatalf("expected %q, got:\n%s", want, out)
+	}
+}
