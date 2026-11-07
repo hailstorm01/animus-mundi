@@ -26,6 +26,10 @@ func TestEventKinds_ValuesAreTheSchema(t *testing.T) {
 		{EventLeave, "leave"},
 		{EventDraw, "draw"},
 		{EventDiscard, "discard"},
+		{EventHeal, "heal"},
+		{EventArmor, "armor"},
+		{EventPower, "power"},
+		{EventCardMove, "card-move"},
 		{EventResult, "result"},
 		{EventMatchEnd, "match-end"},
 	}
