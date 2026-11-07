@@ -4,7 +4,7 @@ title: One read of "the source, or its last-known record", `resolveAttack` calls
 kind: harness
 tier: flash
 wave: D.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.2/T-0193-one-read-of-source-or-last-known
 depends_on: [T-0192]
 claims: [engine:resolveAttack-source-lookup, engine:itemSource-comment]
@@ -61,10 +61,23 @@ No other file changes.
 - `pkg/engine/effects.go`
 
 ## Done When
-- [ ] Cases 1-6 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-6 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 7): wrote this task from board directive #131, next in board order, against the run branch at a8bad00. No `main` commits to sync. Not `WAVE-COMPLETE`: #131-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (wave D.2 run): implemented pure-move edits for T-0193 (#131).
+  - Status set to `in-progress` (commit 948bd40).
+  - What changed: in `pkg/engine/combat.go` (`resolveAttack`), replaced the explicit `g.Asset(it.Source)` / `g.LastKnown(it.Source)` controller lookup with `g.itemSource(it)`. In `pkg/engine/effects.go`, updated the doc comment on `itemSource` to cite `FR-ZON-004` and `FR-CBT-002 Step 3`.
+  - Reuse: reused existing `g.itemSource(it)` in `pkg/engine/effects.go`.
+  - Commands and results:
+    - Case 1: `git -C W diff autoloop/m2-wave-d.2 -- '*_test.go'` printed nothing; `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` passed: `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -e 'g.LastKnown(' -- pkg/engine/combat.go pkg/engine/effects.go` printed single occurrence at `pkg/engine/effects.go:370:	return g.LastKnown(it.Source)`.
+    - Case 4: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed `1	3	pkg/engine/combat.go` and `3	2	pkg/engine/effects.go`.
+    - Case 5: `git -C W diff autoloop/m2-wave-d.2 --stat` listed only `combat.go`, `effects.go`, and the task file.
+    - Case 6: `go -C W tool task check` passed all stages (fmt-check, vet, tests, lint --all); `go -C W tool task sim` passed (`[PASS] Every match terminated with all invariants holding.`).
+  - Implementation committed as `feat(engine): resolveAttack calls itemSource (T-0193)` (commit c5fe8b1).
+  - Reviewer notes: pure move, exactly matches dry-run edits. Set `status: review`.
