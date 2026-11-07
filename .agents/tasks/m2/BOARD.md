@@ -36,4 +36,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0195](T-0195-faction-read-and-face-down-guards.md) | One read of "this faction or Neutral", and no face-down guard that can't fire (#132 (c), (d)) | queued |
+| [T-0195](T-0195-faction-read-and-face-down-guards.md) | One read of "this faction or Neutral", and no face-down guard that can't fire (#132 (c), (d)) | ready |
