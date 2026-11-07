@@ -360,8 +360,9 @@ func (g *Game) value(controller PlayerID, source int, inst *Instance, v ability.
 }
 
 // itemSource returns the item's source asset, or its last-known record once it has
-// left the battlefield, so a damage event still names and attributes it
-// (FR-REP-004 Stage 5). It is nil only for a source that was never an asset.
+// left the battlefield (FR-ZON-004), so a damage event still names and attributes
+// it (FR-REP-004 Stage 5) and an attack still knows its attacker's controller
+// (FR-CBT-002 Step 3). It is nil only for a source that was never an asset.
 func (g *Game) itemSource(it *StackItem) *Asset {
 	if a := g.Asset(it.Source); a != nil {
 		return a
