@@ -59,10 +59,57 @@ type cardInfo struct {
 	words []string
 }
 
+// markerIDs holds the open and ruled items of the keyword matrix and the survey, which
+// OPEN(...) markers are checked against.
+type markerIDs struct {
+	openMatrix, ruledMatrix, openSurvey, ruledSurvey map[string]bool
+}
+
 // Analyze scans non-test Go files under pkg/ (except pkg/engine/cards and pkg/toolchain)
 // for card names and invalid markers, and checks the imports of the packages in
 // allowedImports (pkg/engine/cards included).
 func Analyze(repoRoot string) (*Report, error) {
+	cards, err := loadCardNames(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	ids, err := readMarkerIDs(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	files, err := scannedFiles(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	items, err := scanFiles(repoRoot, files, cards, ids)
+	if err != nil {
+		return nil, err
+	}
+	importItems, err := checkAllImports(repoRoot, files)
+	if err != nil {
+		return nil, err
+	}
+	items = append(items, importItems...)
+
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].file != items[j].file {
+			return items[i].file < items[j].file
+		}
+		if items[i].line != items[j].line {
+			return items[i].line < items[j].line
+		}
+		return items[i].msg < items[j].msg
+	})
+
+	rep := &Report{}
+	for _, it := range items {
+		rep.Violations = append(rep.Violations, fmt.Sprintf("%s:%d: %s", it.file, it.line, it.msg))
+	}
+	return rep, nil
+}
+
+// loadCardNames reads every card name in data/cards except the exempt ones, sorted by name.
+func loadCardNames(repoRoot string) ([]cardInfo, error) {
 	cardsDir := filepath.Join(repoRoot, "data", "cards")
 	info, err := os.Stat(cardsDir)
 	if err != nil {
@@ -123,36 +170,23 @@ func Analyze(repoRoot string) (*Report, error) {
 	sort.Slice(cards, func(i, j int) bool {
 		return cards[i].name < cards[j].name
 	})
+	return cards, nil
+}
 
+// readMarkerIDs reads the open and ruled items of the keyword matrix and of the survey's
+// Ruling Questions table.
+func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 	openMatrix := make(map[string]bool)
 	ruledMatrix := make(map[string]bool)
-	matrixPath := filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md")
-	mContent, err := os.ReadFile(matrixPath)
+	matrix, err := specdoc.ReadMatrix(repoRoot)
 	if err != nil {
-		return nil, fmt.Errorf("reading keyword_interaction_matrix.md: %w", err)
+		return nil, fmt.Errorf("reading %s: %w", specdoc.MatrixFile, err)
 	}
-	matrixLines := strings.Split(string(mContent), "\n")
-	currentSec := ""
-	for _, line := range matrixLines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "## ") {
-			currentSec = trimmed
-			continue
-		}
-		if !strings.HasPrefix(trimmed, "|") {
-			continue
-		}
-		cells := strings.Split(trimmed, "|")
-		if len(cells) < 3 {
-			continue
-		}
-		id := strings.TrimSpace(cells[1])
-		if strings.HasPrefix(id, "KIM-") {
-			if strings.HasPrefix(currentSec, "## Open Items") {
-				openMatrix[id] = true
-			} else if strings.HasPrefix(currentSec, "## Rulings") {
-				ruledMatrix[id] = true
-			}
+	for _, it := range matrix {
+		if it.Open {
+			openMatrix[it.ID] = true
+		} else {
+			ruledMatrix[it.ID] = true
 		}
 	}
 
@@ -195,10 +229,15 @@ func Analyze(repoRoot string) (*Report, error) {
 			openSurvey[svyID] = true
 		}
 	}
+	return &markerIDs{openMatrix: openMatrix, ruledMatrix: ruledMatrix, openSurvey: openSurvey, ruledSurvey: ruledSurvey}, nil
+}
 
+// scannedFiles lists the non-test Go files under pkg/ that the card-name and marker
+// scan reads: all but pkg/engine/cards and pkg/toolchain, slash-separated.
+func scannedFiles(repoRoot string) ([]string, error) {
 	pkgDir := filepath.Join(repoRoot, "pkg")
 	var files []string
-	err = filepath.WalkDir(pkgDir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(pkgDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -221,7 +260,11 @@ func Analyze(repoRoot string) (*Report, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading pkg directory: %w", err)
 	}
+	return files, nil
+}
 
+// scanFiles reports the card names and invalid OPEN(...) markers in files.
+func scanFiles(repoRoot string, files []string, cards []cardInfo, ids *markerIDs) ([]violationItem, error) {
 	var items []violationItem
 
 	for _, name := range files {
@@ -241,9 +284,9 @@ func Analyze(repoRoot string) (*Report, error) {
 				prefix := parts[0]
 				switch prefix {
 				case "KIM":
-					if openMatrix[markerID] {
+					if ids.openMatrix[markerID] {
 						// Open item: valid marker
-					} else if ruledMatrix[markerID] {
+					} else if ids.ruledMatrix[markerID] {
 						items = append(items, violationItem{
 							file: name,
 							line: lineNum,
@@ -257,9 +300,9 @@ func Analyze(repoRoot string) (*Report, error) {
 						})
 					}
 				case "SVY":
-					if openSurvey[markerID] {
+					if ids.openSurvey[markerID] {
 						// Open survey item: valid marker
-					} else if ruledSurvey[markerID] {
+					} else if ids.ruledSurvey[markerID] {
 						items = append(items, violationItem{
 							file: name,
 							line: lineNum,
@@ -296,33 +339,23 @@ func Analyze(repoRoot string) (*Report, error) {
 			}
 		}
 	}
+	return items, nil
+}
 
-	// Import direction also applies to the cards package, which the scan above skips.
+// checkAllImports checks the imports of the scanned files and of pkg/engine/cards.
+func checkAllImports(repoRoot string, files []string) ([]violationItem, error) {
+	// Import direction also applies to the cards package, which the scan skips.
 	importFiles := append([]string(nil), files...)
 	cardsFiles, err := goFilesUnder(repoRoot, "pkg/engine/cards")
 	if err != nil {
 		return nil, err
 	}
 	importFiles = append(importFiles, cardsFiles...)
+	var items []violationItem
 	for _, name := range importFiles {
 		items = append(items, checkImports(repoRoot, name)...)
 	}
-
-	sort.Slice(items, func(i, j int) bool {
-		if items[i].file != items[j].file {
-			return items[i].file < items[j].file
-		}
-		if items[i].line != items[j].line {
-			return items[i].line < items[j].line
-		}
-		return items[i].msg < items[j].msg
-	})
-
-	rep := &Report{}
-	for _, it := range items {
-		rep.Violations = append(rep.Violations, fmt.Sprintf("%s:%d: %s", it.file, it.line, it.msg))
-	}
-	return rep, nil
+	return items, nil
 }
 
 // Lint runs the fences check over package code under pkg/ and prints the results.

@@ -1,4 +1,4 @@
-// Package specdoc holds what the toolchain linters share when they scan a file: requirement IDs, the lines that define them, and reading a file as lines.
+// Package specdoc holds what the toolchain shares when it scans a file: requirement IDs, the lines that define them, reading a file as lines, and the keyword matrix's items.
 package specdoc
 
 import (

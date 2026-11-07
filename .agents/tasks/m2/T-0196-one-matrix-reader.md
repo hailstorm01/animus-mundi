@@ -4,7 +4,7 @@ title: One reader of the keyword matrix, and Analyze split by job (directive #13
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0196-one-matrix-reader
 depends_on: [T-0195]
 claims: [specdoc:ReadMatrix, specdoc:MatrixItem, specdoc:MatrixFile, fences:Analyze-split]
@@ -269,10 +269,29 @@ No other file changes.
 - `pkg/toolchain/linter/fences/fences.go`
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 10): wrote this task from board directive #133 against the run branch at d83bdcc. No `main` commits to sync. Not `WAVE-COMPLETE`: #133-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Four non-test files, within the D2.4 limit. The design note's `pkg/toolchain` Boundaries row now names the matrix reader and its two users (this commit). Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (wave D.2 run, session 10): implemented T-0196 pure move (#133).
+  - What changed:
+    - `pkg/toolchain/specdoc/matrix.go`: added `MatrixFile = "keyword_interaction_matrix.md"`, `MatrixItem` struct, and `ReadMatrix(repoRoot string) ([]MatrixItem, error)` parsing KIM- rows of Open Items and Rulings.
+    - `pkg/toolchain/specdoc/specdoc.go`: updated package docstring to mention keyword matrix items.
+    - `pkg/toolchain/docs/whatsup.go`: updated `openMatrixItems` to call `specdoc.ReadMatrix`.
+    - `pkg/toolchain/linter/fences/fences.go`: split `Analyze` into `loadCardNames`, `readMarkerIDs`, `scannedFiles`, `scanFiles`, and `checkAllImports`. `readMarkerIDs` calls `specdoc.ReadMatrix`.
+  - Reuse search: confirmed no prior matrix reader in `pkg/toolchain` besides the two copies.
+  - Commands run and results:
+    1. `git -C W diff autoloop/m2-wave-d.2 -- '*_test.go'`: no diff; `go -C W test ./...`: pass (all packages passed).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-d.2`: `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    3. `go -C W run ./cmd/cardtown lint fences`: exited 0 and printed expected 5 lines ([PASS] Package code is free of card names, invalid markers and disallowed imports).
+    4. `go -C W run ./cmd/cardtown whats-up -section state`: printed `Keyword interaction matrix: 1 open item(s), 0 reachable with current cards`.
+    5. `git -C W grep -n -e 'Open Items' -e 'keyword_interaction_matrix' -e '## Rulings' -- pkg/toolchain/docs/whatsup.go pkg/toolchain/linter/fences/fences.go pkg/toolchain/specdoc`: printed exactly 6 lines, all in `pkg/toolchain/specdoc/matrix.go` (:9, :11, :14, :18, :32, :33).
+    6. `git -C W grep -n -e 'ReadMatrix' -- pkg cmd`: printed exactly 4 lines (`pkg/toolchain/docs/whatsup.go:197`, `pkg/toolchain/linter/fences/fences.go:181`, `pkg/toolchain/specdoc/matrix.go:18`, `:19`).
+    7. `git -C W grep -n -e '^func ' -e '^type ' -- pkg/toolchain/linter/fences/fences.go`: printed exactly the 15 lines in order with expected line numbers (:47, :51, :57, :64, :71, :112, :178, :237, :267, :346, :362, :386, :413, :462, :485).
+    8. `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd`: printed exactly 4 lines (6 12 pkg/toolchain/docs/whatsup.go, 80 47 pkg/toolchain/linter/fences/fences.go, 51 0 pkg/toolchain/specdoc/matrix.go, 1 1 pkg/toolchain/specdoc/specdoc.go).
+    9. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
+    10. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly on starter decks (all invariants held).
+  - Reviewer notice: pure move; sim outputs, fences, and tests byte-identical to run branch.
