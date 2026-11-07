@@ -85,7 +85,8 @@
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
 //     damage.go: the damage pipeline. sweep.go: the death sweep, destruction
-//     and match loss. replace.go: destruction replacement. layers.go: derived power, health and keywords.
+//     and match loss. replace.go: destruction replacement. layers.go: derived power, health and keywords,
+//     the Cornered check and EffectiveState.
 //     invariants.go: state checks.
 //
 // Package boundary: this package holds the rules, the game state, the Observer

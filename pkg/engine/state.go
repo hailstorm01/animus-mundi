@@ -155,19 +155,6 @@ type firingKey struct {
 	asset, trigger, turn int
 }
 
-// EffectiveState is an asset's effective characteristics at one moment, read
-// through the layer pipeline (FR-LAY-001).
-type EffectiveState struct {
-	Power     int
-	MaxHealth int
-	Keywords  Keywords
-}
-
-// effectiveState reads a's effective characteristics now.
-func (g *Game) effectiveState(a *Asset) EffectiveState {
-	return EffectiveState{Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a)}
-}
-
 // lastKnownRecord is an asset as it left the battlefield: a raw copy and its
 // effective characteristics immediately prior to departure (FR-ZON-004, board
 // directive #13).
