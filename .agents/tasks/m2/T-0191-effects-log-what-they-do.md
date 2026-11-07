@@ -4,7 +4,7 @@ title: Effects log what they do (directive #129, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0191-effects-log-what-they-do
 depends_on: [T-0190]
 claims: [event:EventHeal, event:EventArmor, event:EventPower, event:EventCardMove, engine:stepHeal, engine:stepAddArmor, engine:stepModifyStat, engine:stepRelocate, test:TestEffectEvents_*, test:TestView_HealLineShowsToBothSeats, test:TestReplay_EffectEventsRoundTrip]
