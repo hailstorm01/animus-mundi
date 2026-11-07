@@ -4,7 +4,7 @@ title: The policy asks the engine what an activated ability costs (directive #12
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0190-policy-asks-activated-cost
 depends_on: [T-0189]
 claims: [engine:Game.ActivatedCost, engine:Game.otherCostsPayable, sim:activationCosts, fence:pkg/sim imports, test:TestActivatedCost_ReadsResourcesAndOtherCosts, test:TestFences_Case40_SimImportsOnlyEngine]
