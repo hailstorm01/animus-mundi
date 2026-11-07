@@ -195,3 +195,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0189 | Effective reads live in `layers.go`, `cornered`, `EffectiveState` and `effectiveState` move there (directive #126, harness, flash, pure move) | done |
 | T-0190 | The policy asks the engine what an activated ability costs (directive #127, harness, flash) | done |
 | T-0191 | Effects log what they do (directive #129, harness, flash) | done |
+| T-0192 | One read of an action event's kind, `(Event).ActionKind` read by `actionOf` and `Monitors.Event` (directive #130, harness, flash) | done |

@@ -4,7 +4,7 @@ title: One read of an action event's kind (directive #130, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0192-one-read-of-action-kind
 depends_on: [T-0191]
 claims: [engine:Event.ActionKind, eventlog:actionOf, sim:Monitors.Event, test:TestEvent_ActionKind]
@@ -155,3 +155,9 @@ No other file changes.
       5	4	pkg/sim/monitor.go
     - Case 7: `go -C W tool task check` passed clean (fmt-check, vet, all tests, cardtown lint --all); `go -C W tool task sim` passed clean (200 games, 0 invariant violations).
   - Status moved to `review`. Ready for lead review.
+- 2026-11-07, lead-architect (wave D.2 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as d1e1458. Flash run `72ee795a-404e-4906-b986-7b64b4c41ade`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; no `permission check failed` match in the transcript; its one `"status":"ERROR"` step, step 3, is a `file does not exist` from a read, not a refused command; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0192-one-read-of-action-kind` (9756e28):
+  - Scope: only the Allowed Files and this file changed. `ef2a675` holds only `pkg/engine/events_test.go`, and no test file changed after it. No existing test was edited: the file gains only the addition in Edit 1.
+  - Checked against the diff: the hunks are exactly Edits 2-4. `actionOf` and `Monitors.Event` both read the kind through `ActionKind`, and `Detail` and the JSON are untouched. Every monitor case tests `ok`, so a false result can't read as `ActGenerate`, the zero value.
+  - Fences and placement: no card name, and the method sits beside `emitAction` as #130 asks. Rules fidelity: nothing rule-related changes.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: at `ef2a675` `go vet ./pkg/engine` exits 1 and prints `e.ActionKind undefined`; at the tip cases 2-6 hold, with one `strings.Cut` line at `pkg/engine/events.go:175` and the numstat exact; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing after the branch point, so the gates hold on the run branch. Directive #130 is applied. #131 is next.
