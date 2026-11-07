@@ -4,7 +4,7 @@ title: One read of an action event's kind (directive #130, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0192-one-read-of-action-kind
 depends_on: [T-0191]
 claims: [engine:Event.ActionKind, eventlog:actionOf, sim:Monitors.Event, test:TestEvent_ActionKind]
