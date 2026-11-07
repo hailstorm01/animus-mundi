@@ -4,7 +4,7 @@ title: One read of "this faction or Neutral", and no face-down guard that can't 
 kind: harness
 tier: flash
 wave: D.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.2/T-0195-faction-read-and-face-down-guards
 depends_on: [T-0194]
 claims: [engine:Card-InFactionOrNeutral, engine:fireHook-face-down-guard, engine:replacementsFor-face-down-guard]
@@ -79,11 +79,28 @@ No other file changes.
 - `pkg/engine/replace.go`
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 8): queued with T-0194, which split #132 under D2.4. The next session takes this task from the board.
 - 2026-11-07, lead-architect (wave D.2 run, session 9): wrote this task out from board directive #132 (c), (d) against the run branch at a0393e7. No `main` commits to sync. Not `WAVE-COMPLETE`: #132-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. `claims:` now names the method. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (wave D.2 run, session 9): implemented T-0195 pure move (#132 (c), (d)).
+  - What changed:
+    - `pkg/engine/deck.go`: added `(*Card).InFactionOrNeutral(faction string) bool` helper; updated `ValidateDeck` to use it instead of open-coded string comparisons.
+    - `pkg/sim/sim.go`: updated `FactionDeck` to use `c.InFactionOrNeutral(faction)`.
+    - `pkg/engine/trigger.go`: removed unused `if a.FaceDown { return }` guard in `fireHook` (unreachable because face-down cards return `scratchFace` whose `Printed().Ability` is nil).
+    - `pkg/engine/replace.go`: simplified guard in `replacementsFor` to `if src.Printed().Ability == nil { continue }`, removing redundant `src.FaceDown` check.
+  - Reuse search: confirmed no prior `Card` method reading faction exists in `pkg` or `cmd`.
+  - Commands run and results:
+    1. `git -C W diff autoloop/m2-wave-d.2 -- '*_test.go'`: no diff; `go -C W test ./...`: pass (all packages passed).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-d.2`: `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    3. `git -C W grep -n -e 'InFactionOrNeutral' -- pkg cmd`: printed exactly 4 lines (`pkg/engine/deck.go:36`, `:38`, `:81`, and `pkg/sim/sim.go:39`).
+    4. `git -C W grep -n -e 'NEUTRAL' -- pkg/engine/deck.go pkg/sim/sim.go`: printed exactly 2 lines (`pkg/engine/deck.go:39`, `:58`).
+    5. `git -C W grep -n -e 'FaceDown' -- pkg/engine/trigger.go pkg/engine/replace.go`: printed nothing (exit code 1).
+    6. `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd`: printed exactly 4 lines (7 1 pkg/engine/deck.go, 1 1 pkg/engine/replace.go, 0 3 pkg/engine/trigger.go, 1 2 pkg/sim/sim.go).
+    7. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
+    8. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly (200 games, P0 78.5% / P1 19.0% / draws 2.5%, all invariants held).
+  - Reviewer notice: pure move; sim outputs and tests byte-identical to run branch.
