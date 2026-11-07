@@ -4,7 +4,7 @@ title: One read of an action event's kind (directive #130, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0192-one-read-of-action-kind
 depends_on: [T-0191]
 claims: [engine:Event.ActionKind, eventlog:actionOf, sim:Monitors.Event, test:TestEvent_ActionKind]
@@ -129,10 +129,29 @@ No other file changes.
 - In the `test(T-0192)` commit only: `pkg/engine/events_test.go`, for the addition in Edit 1. No existing test changes.
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 6): wrote this task from board directive #130, next in board order, against the run branch at 9e27f6c. No `main` commits to sync. Not `WAVE-COMPLETE`: #130-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (flash): implemented directive #130 (one read of an action event's kind).
+  - Edit 1: added TestEvent_ActionKind to pkg/engine/events_test.go. Confirmed failure under Case 1 (`go vet ./pkg/engine` -> `e.ActionKind undefined`) and committed as test(T-0192).
+  - Edit 2: added (Event).ActionKind() (ActionKind, bool) to pkg/engine/events.go, importing strings.
+  - Edit 3: updated actionOf in pkg/eventlog/replay.go to use e.ActionKind(), removed unused strings import.
+  - Edit 4: updated event handler in pkg/sim/monitor.go to switch on e.ActionKind().
+  - Reused strings.Cut and ActionKind.String() matching surrounding engine patterns.
+  - Verification:
+    - Case 1: `go -C W vet ./pkg/engine` exited 1 with `e.ActionKind undefined` on Edit 1 alone.
+    - Case 2: `go -C W test ./pkg/engine -run TestEvent_ActionKind` passed (`ok animus-mundi/pkg/engine 1.725s`).
+    - Case 3: `git -C W grep -n strings.Cut -- pkg/engine/events.go pkg/eventlog/replay.go pkg/sim/monitor.go` printed single line `pkg/engine/events.go:175:	word, _, _ := strings.Cut(e.Detail, " ")`.
+    - Case 4: `go -C W test ./pkg/eventlog ./pkg/sim` passed (`ok animus-mundi/pkg/eventlog 4.148s`, `ok animus-mundi/pkg/sim 52.322s`).
+    - Case 5: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` passed with `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    - Case 6: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed exactly:
+      17	0	pkg/engine/events.go
+      22	0	pkg/engine/events_test.go
+      4	11	pkg/eventlog/replay.go
+      5	4	pkg/sim/monitor.go
+    - Case 7: `go -C W tool task check` passed clean (fmt-check, vet, all tests, cardtown lint --all); `go -C W tool task sim` passed clean (200 games, 0 invariant violations).
+  - Status moved to `review`. Ready for lead review.

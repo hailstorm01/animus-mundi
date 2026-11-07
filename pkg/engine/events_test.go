@@ -622,3 +622,25 @@ func TestEvents_Case9_ExistingEventsUnchanged(t *testing.T) {
 		t.Errorf("existing events changed:\n got %q\nwant %q", got, want)
 	}
 }
+
+// T-0192 (directive #130): ActionKind reads back the kind emitAction wrote, and
+// nothing else.
+func TestEvent_ActionKind(t *testing.T) {
+	for k := ActGenerate; k <= ActEndTurn; k++ {
+		s := newScene(t)
+		s.g.emitAction(Action{Kind: k})
+		e := s.g.Log[len(s.g.Log)-1]
+		if got, ok := e.ActionKind(); !ok || got != k {
+			t.Errorf("ActionKind of %q = %v, %v, want %v, true", e.Detail, got, ok, k)
+		}
+	}
+	for _, e := range []Event{
+		{Kind: EventDeploy, Detail: "Deploy"},
+		{Kind: EventAction, Detail: "Dance"},
+		{Kind: EventAction, Detail: ""},
+	} {
+		if got, ok := e.ActionKind(); ok {
+			t.Errorf("ActionKind of %+v = %v, true, want false", e, got)
+		}
+	}
+}

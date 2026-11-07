@@ -161,12 +161,13 @@ func (m *Monitors) Event(e engine.Event) {
 	case engine.EventDeploy, engine.EventScratch:
 		m.watchEntry(e)
 	case engine.EventAction:
-		switch kind, _, _ := strings.Cut(e.Detail, " "); kind {
-		case engine.ActAttack.String():
+		kind, ok := e.ActionKind()
+		switch {
+		case ok && kind == engine.ActAttack:
 			m.checkAttack(e)
-		case engine.ActGenerate.String():
+		case ok && kind == engine.ActGenerate:
 			m.checkGenerate(e)
-		case engine.ActConvert.String():
+		case ok && kind == engine.ActConvert:
 			m.checkConvert(e)
 		}
 	}

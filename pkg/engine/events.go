@@ -5,6 +5,7 @@ package engine
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // Observer receives a game's events. It must not change the game: it gets
@@ -162,6 +163,22 @@ func (g *Game) emitAction(a Action) {
 		}
 	}
 	g.emit(e)
+}
+
+// ActionKind returns the kind an action event recorded, which emitAction wrote
+// as the first word of Detail. It is false for another event kind or an unknown
+// word.
+func (e Event) ActionKind() (ActionKind, bool) {
+	if e.Kind != EventAction {
+		return 0, false
+	}
+	word, _, _ := strings.Cut(e.Detail, " ")
+	for k := ActGenerate; k <= ActEndTurn; k++ {
+		if k.String() == word {
+			return k, true
+		}
+	}
+	return 0, false
 }
 
 // emitMatchStart is the first event of the game, after setup and the mulligan.
