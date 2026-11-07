@@ -100,6 +100,11 @@ func ValidateDeck(d DeckList) error {
 	return errors.Join(errs...)
 }
 
+// deckLineError reports a parse error on one line of the decklist at path.
+func deckLineError(path string, line int, format string, args ...any) error {
+	return fmt.Errorf("%s: line %d: %s", path, line, fmt.Sprintf(format, args...))
+}
+
 // LoadDeck reads a decklist file and resolves its names against cards.
 func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
 	data, err := os.ReadFile(path)
@@ -121,15 +126,15 @@ func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
 
 		if strings.HasPrefix(line, "HQ:") {
 			if hqSeen {
-				return DeckList{}, fmt.Errorf("line %d: multiple HQ lines", lineNum)
+				return DeckList{}, deckLineError(path, lineNum, "multiple HQ lines")
 			}
 			cardName := strings.TrimSpace(strings.TrimPrefix(line, "HQ:"))
 			if cardName == "" {
-				return DeckList{}, fmt.Errorf("line %d: missing HQ card name", lineNum)
+				return DeckList{}, deckLineError(path, lineNum, "missing HQ card name")
 			}
 			c, ok := cards[cardName]
 			if !ok {
-				return DeckList{}, fmt.Errorf("line %d: unknown card name %q", lineNum, cardName)
+				return DeckList{}, deckLineError(path, lineNum, "unknown card name %q", cardName)
 			}
 			deck.HQ = c
 			hqSeen = true
@@ -138,27 +143,27 @@ func LoadDeck(path string, cards map[string]*Card) (DeckList, error) {
 
 		idx := strings.IndexAny(line, " \t")
 		if idx == -1 {
-			return DeckList{}, fmt.Errorf("line %d: invalid entry format %q (expected <count> <card name>)", lineNum, line)
+			return DeckList{}, deckLineError(path, lineNum, "invalid entry format %q (expected <count> <card name>)", line)
 		}
 		countStr := strings.TrimSpace(line[:idx])
 		cardName := strings.TrimSpace(line[idx+1:])
 		if cardName == "" {
-			return DeckList{}, fmt.Errorf("line %d: missing card name", lineNum)
+			return DeckList{}, deckLineError(path, lineNum, "missing card name")
 		}
 
 		count, err := strconv.Atoi(countStr)
 		if err != nil || count <= 0 {
-			return DeckList{}, fmt.Errorf("line %d: invalid copy count %q (must be a positive integer)", lineNum, countStr)
+			return DeckList{}, deckLineError(path, lineNum, "invalid copy count %q (must be a positive integer)", countStr)
 		}
 
 		if seenCards[cardName] {
-			return DeckList{}, fmt.Errorf("line %d: duplicate card %q (lists must be canonical)", lineNum, cardName)
+			return DeckList{}, deckLineError(path, lineNum, "duplicate card %q (lists must be canonical)", cardName)
 		}
 		seenCards[cardName] = true
 
 		c, ok := cards[cardName]
 		if !ok {
-			return DeckList{}, fmt.Errorf("line %d: unknown card name %q", lineNum, cardName)
+			return DeckList{}, deckLineError(path, lineNum, "unknown card name %q", cardName)
 		}
 
 		for range count {

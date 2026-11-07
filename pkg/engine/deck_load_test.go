@@ -337,3 +337,39 @@ func TestLoadDeck_Case12_DesignNoteCountsMatch(t *testing.T) {
 		t.Errorf("Path counts do not match design note table.\nGot:  %v\nWant: %v", pathCounts, wantPath)
 	}
 }
+
+// T-0187 (directive #124): a parse error names the decklist and its line. The
+// whole prefix is compared, because a temp path can hold the line's digits.
+func TestLoadDeck_Case13_ParseErrorsNameTheFile(t *testing.T) {
+	cards := map[string]*Card{
+		"Commander": deckHQ("ANIMUS"),
+		"Trooper":   deckCard("Trooper", "ANIMUS", "COMMON"),
+	}
+	tests := []struct {
+		name    string
+		content string
+		line    int
+		detail  string
+	}{
+		{"multiple HQ lines", "HQ: Commander\nHQ: Commander\n", 2, "multiple HQ lines"},
+		{"missing HQ card name", "HQ:\n", 1, "missing HQ card name"},
+		{"unknown HQ card", "HQ: Ghost\n", 1, `unknown card name "Ghost"`},
+		{"invalid entry format", "HQ: Commander\nTrooper\n", 2, `invalid entry format "Trooper"`},
+		{"invalid copy count", "HQ: Commander\ntwo Trooper\n", 2, `invalid copy count "two"`},
+		{"duplicate card", "HQ: Commander\n1 Trooper\n1 Trooper\n", 3, `duplicate card "Trooper"`},
+		{"unknown main card", "HQ: Commander\n1 Ghost\n", 2, `unknown card name "Ghost"`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := writeDeckFile(t, t.TempDir(), "deck.txt", tc.content)
+			_, err := LoadDeck(p, cards)
+			if err == nil {
+				t.Fatalf("%s: expected error, got nil", tc.name)
+			}
+			want := p + ": line " + strconv.Itoa(tc.line) + ": " + tc.detail
+			if !strings.HasPrefix(err.Error(), want) {
+				t.Errorf("%s: got %q, want it to start with %q", tc.name, err, want)
+			}
+		})
+	}
+}
