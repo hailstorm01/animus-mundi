@@ -11,6 +11,7 @@ import (
 
 	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/linter/rules"
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 var (
@@ -191,25 +192,18 @@ func ShowState(repoRoot string) {
 	fmt.Println()
 }
 
-// openMatrixItems counts rows of the keyword matrix's Open Items table
-// ("| KIM-B05 | ? | R | ..."), and how many are reachable ("R").
+// openMatrixItems counts the keyword matrix's open items, and how many are reachable ("R").
 func openMatrixItems(repoRoot string) (open, reachable int, ok bool) {
-	content, err := os.ReadFile(filepath.Join(repoRoot, "docs", "frd", "keyword_interaction_matrix.md"))
+	items, err := specdoc.ReadMatrix(repoRoot)
 	if err != nil {
 		return 0, 0, false
 	}
-	inOpen := false
-	for _, line := range strings.Split(string(content), "\n") {
-		if strings.HasPrefix(line, "## ") {
-			inOpen = strings.HasPrefix(line, "## Open Items")
-			continue
-		}
-		cells := strings.Split(line, "|")
-		if !inOpen || len(cells) < 4 || !strings.HasPrefix(strings.TrimSpace(cells[1]), "KIM-") {
+	for _, it := range items {
+		if !it.Open {
 			continue
 		}
 		open++
-		if strings.TrimSpace(cells[3]) == "R" {
+		if it.Reach == "R" {
 			reachable++
 		}
 	}
