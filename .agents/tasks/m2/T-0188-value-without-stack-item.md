@@ -4,7 +4,7 @@ title: A value doesn't need a stack item, `value` takes the controller, source a
 kind: harness
 tier: flash
 wave: D.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.2/T-0188-value-without-stack-item
 depends_on: [T-0187]
 claims: [signature:Game.value]
@@ -69,10 +69,19 @@ No new tests: a pure move, so no `test(T-0188)` commit. W is your worktree. Run 
 - `pkg/engine/effects.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-06, lead-architect (wave D.2 run, session 2): wrote this task from board directive #125, next in board order, against the run branch at 9cd61d9. No `main` commits to sync. Not `WAVE-COMPLETE`: #125-#127 and #129-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer: implemented directive #125 in pkg/engine/effects.go (commit c265c86). Updated g.value to take (controller PlayerID, source int, inst *Instance, v ability.Value, dealer *Asset) and updated its six callers in effects.go (stepDealDamage, stepHeal, stepAddArmor, deckDrop, stepModifyStat, stepDiscard) to pass r.it.Controller, r.it.Source, r.it.Inst. In value body, updated Asset and LastKnownEffective lookups to use source. Reuse search: verified no other callers or readers of ability.Value in pkg/engine.
+  Acceptance cases verified:
+  1. git diff autoloop/m2-wave-d.2 -- '*_test.go' (clean, no test diff); go test ./... (pass).
+  2. go tool task sim-compare -- autoloop/m2-wave-d.2 (PASS: starter and stress sims match byte for byte).
+  3. git grep -n -e 'g.value(' -e 'func (g [*]Game) value(' -- pkg/engine (exactly 7 lines matching lines 178, 188, 198, 223, 234, 247, 336).
+  4. git diff autoloop/m2-wave-d.2 --numstat -- pkg cmd (exactly 15 13 pkg/engine/effects.go).
+  5. go run ./cmd/cardtown lint fences (PASS).
+  6. git diff autoloop/m2-wave-d.2 --stat (only pkg/engine/effects.go and task file).
+  7. go tool task check (gofmt, go vet, test, lint all pass); go tool task sim (starter sim passes cleanly).
