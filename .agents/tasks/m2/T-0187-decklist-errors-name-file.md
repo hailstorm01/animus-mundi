@@ -4,7 +4,7 @@ title: Decklist parse errors name the file (directives #124 and #8, harness, fla
 kind: harness
 tier: flash
 wave: D.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-d.2/T-0187-decklist-errors-name-file
 depends_on: []
 claims: [engine:LoadDeck line errors, test:TestLoadDeck_Case13_ParseErrorsNameTheFile]
@@ -93,10 +93,19 @@ Commit only this file as `test(T-0187): ...`, after confirming that all seven su
 - `pkg/engine/deck_load_test.go` (Edit 1 only, in the test commit)
 
 ## Done When
-- [ ] `go test ./pkg/engine -run TestLoadDeck` passes
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go test ./pkg/engine -run TestLoadDeck` passes
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-11-06 (lead-architect): Written for #124 and #8, `ready`. First task of wave D.2.
+- 2026-11-06 (kernel-engineer): Implementation complete, moving to `review`.
+  - Added TestLoadDeck_Case13_ParseErrorsNameTheFile in pkg/engine/deck_load_test.go covering 7 subtests; confirmed all 7 failed as expected before implementation.
+  - Implemented deckLineError in pkg/engine/deck.go and updated all 8 parse error sites in LoadDeck to use it.
+  - Reused: formatting helper deckLineError wraps fmt.Errorf with path and line context without wrapping ErrIllegalDeck.
+  - Verification:
+    - go test ./pkg/engine -run TestLoadDeck: PASS
+    - go tool task check (gofmt, go vet, all tests, cardtown lint --all): PASS
+    - go tool task sim: PASS (starter decks 200 games clean)
+    - go tool task sim-compare -- autoloop/m2-wave-d.2: PASS (starter and stress sims byte-identical)
