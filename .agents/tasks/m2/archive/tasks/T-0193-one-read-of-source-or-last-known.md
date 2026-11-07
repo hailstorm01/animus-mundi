@@ -4,7 +4,7 @@ title: One read of "the source, or its last-known record", `resolveAttack` calls
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0193-one-read-of-source-or-last-known
 depends_on: [T-0192]
 claims: [engine:resolveAttack-source-lookup, engine:itemSource-comment]
@@ -81,3 +81,9 @@ No other file changes.
     - Case 6: `go -C W tool task check` passed all stages (fmt-check, vet, tests, lint --all); `go -C W tool task sim` passed (`[PASS] Every match terminated with all invariants holding.`).
   - Implementation committed as `feat(engine): resolveAttack calls itemSource (T-0193)` (commit c5fe8b1).
   - Reviewer notes: pure move, exactly matches dry-run edits. Set `status: review`.
+- 2026-11-07, lead-architect (wave D.2 run, session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as cfb74a4. Flash run `132c908e-a44e-4c16-adbc-b499d2f0b6e9`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; no `permission check failed` match and no `"status":"ERROR"` step in the transcript; `.err` is empty). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0193-one-read-of-source-or-last-known` (cfaa0a7):
+  - Scope: only the Allowed Files and this file changed. No test file changed, and there is no `test(T-0193)` commit, as a pure move asks.
+  - Checked against the diff: the hunks are exactly Edits 1-2. `itemSource(it)` is the lookup `resolveAttack` wrote out, and a nil result leaves `attController` at `it.Controller`, so the old fallback holds.
+  - Fences and placement: no card name and no new declaration. Rules fidelity: nothing rule-related changes (`FR-CBT-002` Step 3 and `FR-ZON-004` read the same).
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: case 1 prints nothing and `go test ./...` exits 0; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`; one `g.LastKnown(` line at `pkg/engine/effects.go:370`; the numstat exact; the stat lists the two files and this file; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing after the branch point, so the gates hold on the run branch. Directive #131 is applied. #132 is next.
