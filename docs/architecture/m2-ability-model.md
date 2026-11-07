@@ -155,6 +155,19 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #121: the docs say what wave D built.
 
    #120 has no task: it is a `waiting:` row for a cost no M2 card prints, and #118 (b) waits for *Boneyard Amalgam*. #107–#114 are pure moves, and #121 is comments and docs only. #115, #116, #117, #118 and #119 add tests and don't change how any executable card plays. Done when no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
+6h. **Wave D.2, cleanup, added 2026-11-06 from structural review 9 (board directives #125–#135).** It goes after wave D.1 and before wave E, which builds on it (user, 2026-11-06). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave D.2`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order, after #124 (decklist errors name the file), which is already open:
+   - #125: a value doesn't need a stack item, which *Boneyard Amalgam*'s count reuses.
+   - #126: effective reads live in `layers.go`.
+   - #127: the policy asks the engine what an activated ability costs, and `sim` drops `ability`.
+   - #129 (a `harness` task): effects log what they do, with an addendum to ADR-0005.
+   - #130: one read of an action event's kind.
+   - #131: one read of "the source, or its last-known record".
+   - #132: small repeats, each spelled once.
+   - #133: one reader of the keyword matrix.
+   - #134: one classifier of changed files, and "all linters" means all.
+   - #135: the text says what the code does.
+
+   #128 has no task here: it is a `waiting:` row for *Veil Render*. #125–#127 and #130–#133 are pure moves. #134 is one except on the git-failure path, #129 adds events and tests, and #135 changes one sim header line, which its `sim-compare` shows. Done when no `open: before` directive is left, every other task's `go tool task sim-compare` passed (for #133 and #134, unchanged lint output), and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
