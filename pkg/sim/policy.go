@@ -192,7 +192,7 @@ func funds(a engine.Action, pool resources, taps []tap, c neededCost) bool {
 		}
 	}
 	if a.Kind == engine.ActConvert {
-		return shortTac && reachable(resources{pool.req - engine.ConvertReq, pool.tac + 1}, rest, c.resources)
+		return shortTac && reachable(resources{pool.req - engine.ConvertReq, pool.tac + engine.ConvertTac}, rest, c.resources)
 	}
 	i := slices.IndexFunc(taps, func(t tap) bool { return t.asset == a.Asset })
 	if a.Asset == c.source || i < 0 {
@@ -219,7 +219,7 @@ func reachable(pool resources, taps []tap, c resources) bool {
 		states = next
 	}
 	for s := range states {
-		if s.req >= c.req && s.tac+(s.req-c.req)/engine.ConvertReq >= c.tac {
+		if s.req >= c.req && s.tac+(s.req-c.req)/engine.ConvertReq*engine.ConvertTac >= c.tac {
 			return true
 		}
 	}

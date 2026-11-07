@@ -8,20 +8,27 @@ import (
 	"animus-mundi/pkg/engine"
 )
 
+const (
+	// decklistDir holds the decklists: its path from the repo root, slash-separated.
+	decklistDir = "data/decks/"
+	// stressPrefix begins a stress deck's recorded name.
+	stressPrefix = "stress:"
+)
+
 // DecklistName is the recorded name of a decklist: its path from the repo
 // root, slash-separated.
 func DecklistName(faction, deck string) string {
-	return fmt.Sprintf("data/decks/%s-%s.txt", strings.ToLower(faction), deck)
+	return fmt.Sprintf("%s%s-%s.txt", decklistDir, strings.ToLower(faction), deck)
 }
 
 // StressName is the recorded name of a faction's stress deck.
-func StressName(faction string) string { return "stress:" + faction }
+func StressName(faction string) string { return stressPrefix + faction }
 
 // ResolveDeck turns a recorded deck name back into a deck: a stress name
 // builds FactionDeck, any other name is a decklist path under repoRoot,
 // loaded with LoadDeck (not validated, as replay does today).
 func ResolveDeck(repoRoot string, cards map[string]*engine.Card, name string) (engine.DeckList, error) {
-	if faction, ok := strings.CutPrefix(name, "stress:"); ok {
+	if faction, ok := strings.CutPrefix(name, stressPrefix); ok {
 		return FactionDeck(cards, faction)
 	}
 	return engine.LoadDeck(filepath.Join(repoRoot, filepath.FromSlash(name)), cards)
@@ -31,7 +38,7 @@ func ResolveDeck(repoRoot string, cards map[string]*engine.Card, name string) (e
 func SimDecks(cards map[string]*engine.Card, decksDir, name string, factions [2]string) ([2]engine.DeckList, error) {
 	var decks [2]engine.DeckList
 	for i, f := range factions {
-		filename := strings.TrimPrefix(DecklistName(f, name), "data/decks/")
+		filename := strings.TrimPrefix(DecklistName(f, name), decklistDir)
 		file := filepath.Join(decksDir, filename)
 		d, err := engine.LoadDeck(file, cards)
 		if err != nil {
@@ -51,7 +58,7 @@ func SimDecks(cards map[string]*engine.Card, decksDir, name string, factions [2]
 func MatchDecks(repoRoot string, cards map[string]*engine.Card, deck string, factions [2]string) ([2]engine.DeckList, [2]string, error) {
 	var names [2]string
 	if deck != "" {
-		decks, err := SimDecks(cards, filepath.Join(repoRoot, "data", "decks"), deck, factions)
+		decks, err := SimDecks(cards, filepath.Join(repoRoot, filepath.FromSlash(decklistDir)), deck, factions)
 		if err != nil {
 			return decks, names, err
 		}

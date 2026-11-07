@@ -159,7 +159,7 @@ func actionLabel(v view.View, a engine.Action) string {
 	case engine.ActGenerate:
 		return fmt.Sprintf("Generate: %s -> %s", findAsset(a.Asset), a.Resource)
 	case engine.ActConvert:
-		return "Convert: 2 Requisition -> 1 Tactics"
+		return fmt.Sprintf("Convert: %d Requisition -> %d Tactics", engine.ConvertReq, engine.ConvertTac)
 	case engine.ActDeploy:
 		return fmt.Sprintf("Deploy: %s to %s", findHandCard(a.Card), a.Zone)
 	case engine.ActEnact:

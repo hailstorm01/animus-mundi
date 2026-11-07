@@ -4,7 +4,7 @@ title: Conversion and deck names, each spelled once (directive #132 (a), (b), ha
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0194-conversion-and-deck-names-spelled-once
 depends_on: [T-0193]
 claims: [engine:ConvertTac, sim:decklistDir, sim:stressPrefix, cardtown:convert-label]
@@ -103,10 +103,27 @@ No other file changes.
 - `cmd/cardtown/play_screen.go`
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 8): wrote this task from board directive #132 (a), (b), next in board order, against the run branch at 88b5e37, and T-0195 as `queued` for (c), (d) (D2.4). No `main` commits to sync. Not `WAVE-COMPLETE`: #132-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (wave D.2 run, session 8): implemented T-0194 pure move (#132 (a), (b)).
+  - What changed:
+    - `pkg/engine/resources.go`: defined `ConvertTac = 1` alongside `ConvertReq = 2`, updated `p.convert()` to `p.Tac += ConvertTac`.
+    - `pkg/sim/policy.go`: replaced `pool.tac + 1` with `pool.tac + engine.ConvertTac` in `funds()`; updated conversion math in `reachable()` to multiply by `engine.ConvertTac`.
+    - `cmd/cardtown/play_screen.go`: `actionLabel` formats both `engine.ConvertReq` and `engine.ConvertTac` with `Convert: %d Requisition -> %d Tactics`.
+    - `pkg/sim/decks.go`: declared `decklistDir = "data/decks/"` and `stressPrefix = "stress:"`; updated `DecklistName`, `StressName`, `ResolveDeck`, `SimDecks`, and `MatchDecks` to reference them.
+  - Reuse search: confirmed no prior constants existed for conversion tactics yield or deck prefixes in `pkg/` or `cmd/`.
+  - Commands run and results:
+    1. `git -C W diff autoloop/m2-wave-d.2 -- '*_test.go'`: no diff; `go -C W test ./...`: pass (all packages passed).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-d.2`: `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    3. `git -C W grep -n -e 'tac + 1' -e 'p.Tac++' -e 'Convert: 2' -- pkg/engine/resources.go pkg/sim/policy.go cmd/cardtown/play_screen.go`: exited 1 (no occurrences).
+    4. `git -C W grep -n -e 'Convert: %d Requisition -> %d Tactics' -- cmd/cardtown/play_screen.go`: printed line 162.
+    5. `git -C W grep -n -e 'stress:' -e 'data.*decks' -- pkg/sim/decks.go`: printed lines 13, 15, and 56.
+    6. `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd`: printed exactly 4 lines (1 1 cmd/cardtown/play_screen.go, 6 3 pkg/engine/resources.go, 12 5 pkg/sim/decks.go, 2 2 pkg/sim/policy.go).
+    7. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
+    8. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly (200 games, P0 78.5% / P1 19.0% / draws 2.5%, all invariants held).
+  - Reviewer notice: pure move; sim outputs and tests byte-identical to run branch.
