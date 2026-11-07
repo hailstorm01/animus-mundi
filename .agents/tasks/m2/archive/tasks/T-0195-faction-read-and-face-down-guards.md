@@ -4,7 +4,7 @@ title: One read of "this faction or Neutral", and no face-down guard that can't 
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0195-faction-read-and-face-down-guards
 depends_on: [T-0194]
 claims: [engine:Card-InFactionOrNeutral, engine:fireHook-face-down-guard, engine:replacementsFor-face-down-guard]
@@ -104,3 +104,10 @@ No other file changes.
     7. `git -C W diff autoloop/m2-wave-d.2 --stat`: only those 4 files plus task file.
     8. `go -C W tool task check`: all formatting, vet, unit tests, and linters passed; `go -C W tool task sim`: passed cleanly (200 games, P0 78.5% / P1 19.0% / draws 2.5%, all invariants held).
   - Reviewer notice: pure move; sim outputs and tests byte-identical to run branch.
+- 2026-11-07, lead-architect (wave D.2 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as a9c1802. Flash run `e687797f-1d68-48ee-bfd9-5fc20117d2f5`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` value; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `cli.log` has no `soft-denying` line for it; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0195-faction-read-and-face-down-guards` (6e51ada):
+  - Scope: only the Allowed Files and this file changed. No test file changed, and there is no `test(T-0195)` commit, as a pure move asks.
+  - Checked against the diff: the hunks are exactly Edits 1-4, and the branch's `pkg/` and `cmd/` are byte-identical to the lead's dry run. `!A && !B` becomes `!(A || B)` in `ValidateDeck`, and `FactionDeck`'s condition reads the same. `deck.go:58` and `sim.go:37` keep their own reads, as Inputs says.
+  - The guards: `Printed()` returns `scratchFace` for a face-down asset, and `scratchFace` has no `Ability`, so both removed checks were already covered by the nil check beside them. `TestFR_ZON_004_FaceDownScratchCompanyFiresNoDeathTrigger` and the `TestCard_*_FaceDownCopy*` tests pin the trigger side. `replacement_test.go` has no test of a face-down replacement source, so that side rests on this reading and on `sim-compare`; #132 asks for the same test names, so none was added.
+  - Fences and placement: no card name. The method is exported because `sim` reads it, and it sits in `deck.go` with the rest of `FR-SET-001`. Rules fidelity: nothing rule-related changes.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: case 1 prints nothing and `go test ./...` exits 0; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`; case 3 four lines; case 4 two lines; case 5 prints nothing, exit 1; the numstat exact; the stat lists the four files and this file; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's `pkg/` and `cmd/` match the task tip's (`git diff` prints nothing), so the gates hold on the run branch. #132 is fully applied and archived. #133 is next.

@@ -198,3 +198,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0192 | One read of an action event's kind, `(Event).ActionKind` read by `actionOf` and `Monitors.Event` (directive #130, harness, flash) | done |
 | T-0193 | One read of "the source, or its last-known record", `resolveAttack` calls `itemSource` (directive #131, harness, flash, pure move) | done |
 | T-0194 | Conversion and deck names, each spelled once (directive #132 (a), (b), harness, flash, pure move) | done |
+| T-0195 | One read of "this faction or Neutral", and no face-down guard that can't fire (directive #132 (c), (d), harness, flash, pure move) | done |
