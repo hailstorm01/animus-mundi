@@ -4,7 +4,7 @@ title: The policy asks the engine what an activated ability costs (directive #12
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0190-policy-asks-activated-cost
 depends_on: [T-0189]
 claims: [engine:Game.ActivatedCost, engine:Game.otherCostsPayable, sim:activationCosts, fence:pkg/sim imports, test:TestActivatedCost_ReadsResourcesAndOtherCosts, test:TestFences_Case40_SimImportsOnlyEngine]
@@ -199,10 +199,29 @@ No other file changes.
 - In the `test(T-0190)` commit only: `pkg/engine/activated_test.go` and `pkg/toolchain/linter/fences/fences_test.go`, for the additions in Edit 1. No existing test changes.
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 4): wrote this task from board directive #127, next in board order, against the run branch at 7c3a404. No `main` commits to sync. Not `WAVE-COMPLETE`: #127 and #129-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (flash): implemented T-0190 per runbook and task specifications.
+  - Diff shows:
+    - `pkg/engine/activated_test.go`: added `TestActivatedCost_ReadsResourcesAndOtherCosts` covering resource reads independent of pool, per-index reading, exhaust requirements, free discard/kill-self costs, and chosen-asset kill/exhaust options.
+    - `pkg/toolchain/linter/fences/fences_test.go`: added `TestFences_Case40_SimImportsOnlyEngine`.
+    - `pkg/engine/costs.go`: split non-resource checks into `otherCostsPayable(pl)` shared by `costsPayable` and new method `ActivatedCost(a *Asset, i int) (req, tac int, ok bool)` reusing `activatedPlacement`.
+    - `pkg/sim/policy.go`: removed `animus-mundi/pkg/engine/ability` import and updated `activationCosts` to query `g.ActivatedCost(as, i)`.
+    - `pkg/toolchain/linter/fences/fences.go`: restricted `pkg/sim` in `allowedImports` to only `{"pkg/engine"}`.
+  - Reuse:
+    - Reused `activatedPlacement` to build placement in `ActivatedCost`, and shared `otherCostsPayable` with `costsPayable`.
+  - Commands and results:
+    - Case 1: `go -C W test ./pkg/toolchain/linter/fences -run TestFences_Case40` failed; `go -C W vet ./pkg/engine` printed `g.ActivatedCost undefined`. Committed `test(T-0190): fail before ActivatedCost and sim fence` (38f6f75).
+    - Case 2: `go -C W test ./pkg/engine -run TestActivatedCost_` passed (6/6 subtests).
+    - Case 3: `go -C W test ./pkg/toolchain/linter/fences -run TestFences_Case40` passed; `go -C W run ./cmd/cardtown lint fences` exited 0.
+    - Case 4: `git -C W grep -n engine/ability -- pkg/sim` returned exactly two test files (`monitor_keywords_test.go:7`, `policy_test.go:11`).
+    - Case 5: `git -C W diff autoloop/m2-wave-d.2 -- pkg/sim/policy_test.go` printed nothing; `go -C W test ./pkg/sim` passed.
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    - Case 7: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed exactly the 5 expected lines (51 0, 33 9, 6 17, 1 1, 11 0).
+    - Case 8: `go -C W tool task check` passed (fmt-check, vet, all tests, full lint); `go -C W tool task sim` passed on starter decks.
+  - Review note: sim outputs remain byte-identical while non-test imports of `ability` in `pkg/sim` are eliminated. Ready for lead-architect review.

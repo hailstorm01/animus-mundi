@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"animus-mundi/pkg/engine"
-	"animus-mundi/pkg/engine/ability"
 )
 
 // Policy picks one of the legal actions for the active player.
@@ -157,8 +156,9 @@ func handCosts(g *engine.Game, p *engine.Player) []neededCost {
 }
 
 // activationCosts lists the resource costs of the active player's activated
-// abilities, leaving out an ability whose source must exhaust and already has.
-// It doesn't check targets, so a tap may fund an ability that then has none.
+// abilities, leaving out an ability whose other costs can't be paid now
+// (ActivatedCost). It doesn't check targets, so a tap may fund an ability that
+// then has none.
 func activationCosts(g *engine.Game) []neededCost {
 	var out []neededCost
 	for _, as := range g.Assets() {
@@ -166,20 +166,9 @@ func activationCosts(g *engine.Game) []neededCost {
 		if as.Controller != g.Active || def == nil {
 			continue
 		}
-		for _, act := range def.Activated {
-			c := neededCost{source: as.ID}
-			usable := true
-			for _, k := range act.Costs {
-				switch k.Kind {
-				case ability.CostResources:
-					c.req += k.Req
-					c.tac += k.Tac
-				case ability.CostExhaustSelf:
-					usable = !as.Exhausted
-				}
-			}
-			if usable {
-				out = append(out, c)
+		for i := range def.Activated {
+			if req, tac, ok := g.ActivatedCost(as, i); ok {
+				out = append(out, neededCost{resources: resources{req, tac}, source: as.ID})
 			}
 		}
 	}

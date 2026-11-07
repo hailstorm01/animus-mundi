@@ -64,21 +64,45 @@ func (g *Game) chooseCostDiscards(pl placement) []*Instance {
 }
 
 // costsPayable reports whether every cost of pl can be paid now: a resources
-// cost needs its Requisition and Tactics (CostResources), exhausting the source
-// needs it Readied (CostExhaustSelf), and a kill or exhaust cost needs at least
-// one option (FR-TRN-003a, FR-ACT-001, SVY-R29). A discard cost is always
-// payable, because discarding none pays it, and so is killing the source
-// (CostKillSelf).
+// cost needs its Requisition and Tactics (CostResources), and the others are
+// otherCostsPayable's to judge (FR-TRN-003a, FR-ACT-001, SVY-R29).
 func (g *Game) costsPayable(pl placement) bool {
 	for _, c := range pl.costs {
+		if c.Kind == ability.CostResources && !g.Players[pl.controller].canPay(c.Req, c.Tac) {
+			return false
+		}
+	}
+	return g.otherCostsPayable(pl)
+}
+
+// ActivatedCost returns the Requisition and Tactics that a's printed activated
+// ability i costs, and whether its other costs can be paid now (FR-ACT-001). It
+// checks neither the resources against the pool nor the ability's targets, so a
+// client can plan for an ability it can't activate yet. LegalActions says what
+// can be activated now.
+func (g *Game) ActivatedCost(a *Asset, i int) (req, tac int, ok bool) {
+	act := a.Printed().Ability.Activated[i]
+	for _, c := range act.Costs {
+		if c.Kind == ability.CostResources {
+			req += c.Req
+			tac += c.Tac
+		}
+	}
+	return req, tac, g.otherCostsPayable(activatedPlacement(a.Controller, a, act))
+}
+
+// otherCostsPayable reports whether every cost of pl except its resources can be
+// paid now: exhausting the source needs it Readied (CostExhaustSelf), and a kill
+// or exhaust cost needs at least one option (SVY-R29). A discard cost is always
+// payable, because discarding none pays it, and so is killing the source
+// (CostKillSelf).
+func (g *Game) otherCostsPayable(pl placement) bool {
+	for _, c := range pl.costs {
 		switch c.Kind {
+		case ability.CostResources:
+			continue // not this check's to judge
 		case ability.CostDiscard, ability.CostKillSelf:
 			continue // discarding none pays it; killing the source always can
-		case ability.CostResources:
-			if !g.Players[pl.controller].canPay(c.Req, c.Tac) {
-				return false
-			}
-			continue
 		case ability.CostExhaustSelf:
 			if a := g.Asset(pl.source); a == nil || a.Exhausted {
 				return false
