@@ -215,7 +215,7 @@ type Event struct {
 	Source int    `json:"source,omitempty"` // asset ID
 	Target int    `json:"target,omitempty"` // asset ID
 	Zone   string `json:"zone,omitempty"`   // Zone.String()
-	Amount int    `json:"amount,omitempty"` // a place event: stack depth; an Activate action event: the ability's index
+	Amount int    `json:"amount,omitempty"` // a place event: stack depth; an Activate action event: the ability's index; heal: the damage removed; armor: the Armor added; power: the power change
 
 	Resource string `json:"resource,omitempty"` // action events: a Generate's "Requisition" or "Tactics"
 
@@ -258,6 +258,10 @@ const (
 	EventDraw          = "draw"
 	EventDiscard       = "discard"
 	EventShuffle       = "shuffle" // a search shuffled a deck (FR-DEK-001): names the player and the zone, no card
+	EventHeal          = "heal"
+	EventArmor         = "armor"
+	EventPower         = "power"
+	EventCardMove      = "card-move" // an effect moved a card out of a discard pile to Zone; deck searches and draws stay secret
 	EventResult        = "result"
 	EventMatchEnd      = "match-end"
 )

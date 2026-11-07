@@ -4,7 +4,7 @@ title: Effects log what they do (directive #129, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0191-effects-log-what-they-do
 depends_on: [T-0190]
 claims: [event:EventHeal, event:EventArmor, event:EventPower, event:EventCardMove, engine:stepHeal, engine:stepAddArmor, engine:stepModifyStat, engine:stepRelocate, test:TestEffectEvents_*, test:TestView_HealLineShowsToBothSeats, test:TestReplay_EffectEventsRoundTrip]
@@ -420,10 +420,27 @@ No other file changes.
 - In the `test(T-0191)` commit only: `pkg/engine/effect_events_test.go`, `pkg/engine/eventkinds_test.go`, `pkg/view/view_test.go` and `pkg/eventlog/replay_test.go`, for the additions in Edit 1. No other existing test changes.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 5): wrote this task from board directive #129, next in board order, against the run branch at 4de2a3f. No `main` commits to sync. Not `WAVE-COMPLETE`: #129-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer: implemented T-0191 per task specification and board directive #129.
+  - Test commit c7b9db5 (`test(T-0191): effect events tests`): added `pkg/engine/effect_events_test.go`, updated `pkg/engine/eventkinds_test.go`, `pkg/view/view_test.go`, and `pkg/eventlog/replay_test.go`. Verified Case 1 compile failures before implementation (`vet` printed `undefined: EventHeal` / `undefined: engine.EventHeal`).
+  - Implementation commit 118f817 (`feat(engine): effects log what they do (T-0191)`):
+    - Added constants `EventHeal`, `EventArmor`, `EventPower`, `EventCardMove` in `pkg/engine/events.go` and documented their `Amount` field usage.
+    - Updated `stepHeal`, `stepAddArmor`, `stepModifyStat`, and `stepRelocate` in `pkg/engine/effects.go` to emit their respective events with `Player: -1`, logging before public-card movement, and guarding relocated pile cards via `g.DiscardCard`.
+    - Reused existing `g.logEvent`, `g.DiscardCard`, `g.stepAssets`, and `g.stepCards`.
+  - Commands and verification results:
+    - Case 1: `go vet ./pkg/engine`, `go vet ./pkg/view`, `go vet ./pkg/eventlog` failed with `undefined: EventHeal` / `undefined: engine.EventHeal`.
+    - Case 2: `go test ./pkg/engine -run TestEffectEvents_` -> ok (1.704s).
+    - Case 3: `go test ./pkg/engine -run TestEventKinds_` -> ok (1.466s).
+    - Case 4: `go test ./pkg/view -run TestView_HealLineShowsToBothSeats` -> ok (1.023s).
+    - Case 5: `go test ./pkg/view -run TestView_Case4_NoLeak` -> ok (2.763s).
+    - Case 6: `go test ./pkg/eventlog -run TestReplay_EffectEventsRoundTrip -v` -> ok (1.524s), event counts: heal: 98 events, armor: 18 events, power: 43 events, card-move: 72 events.
+    - Case 7: `go tool task sim-compare -- autoloop/m2-wave-d.2` -> [PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte.
+    - Case 8: `git diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` -> exactly matches the 6 lines (193 0, 18 8, 4 0, 5 1, 38 0, 38 0).
+    - Case 9: `go tool task check` and `go tool task sim` both passed clean.
+  - Reviewer note: `DiscardCard` safely checks that the target card remains in the discard pile prior to card-move event emission and relocation, ensuring no face-down/private leak. Ready for review.

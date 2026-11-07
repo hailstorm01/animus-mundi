@@ -639,3 +639,41 @@ func TestReplay_SearchWithoutItsHiddenFlagDiverges(t *testing.T) {
 	}
 	t.Fatal("no game holds a search decision")
 }
+
+// T-0191 (directive #129): a recorded game with an effect's events replays with
+// no divergence after the JSON round trip, and the sample holds every kind.
+func TestReplay_EffectEventsRoundTrip(t *testing.T) {
+	seen := map[string]int{}
+	for i, evs := range allGames(t) {
+		found := false
+		for _, e := range evs {
+			switch e.Kind {
+			case engine.EventHeal, engine.EventArmor, engine.EventPower:
+				if e.Target == 0 {
+					t.Errorf("game %d, seq %d: a %s event with no target", i+1, e.Seq, e.Kind)
+				}
+			case engine.EventCardMove:
+				if e.Card == "" || e.Inst == 0 || e.Zone == "" {
+					t.Errorf("game %d, seq %d: a card-move event with no card, instance or zone", i+1, e.Seq)
+				}
+			default:
+				continue
+			}
+			seen[e.Kind]++
+			found = true
+		}
+		if !found {
+			continue
+		}
+		if _, err := eventlog.Replay(evs, len(evs), resolveDeck(t)); err != nil {
+			t.Fatalf("game %d: %v", i+1, err)
+		}
+	}
+	for _, kind := range []string{engine.EventHeal, engine.EventArmor, engine.EventPower, engine.EventCardMove} {
+		if seen[kind] == 0 {
+			t.Errorf("no %s event in the sample games", kind)
+		} else {
+			t.Logf("%s: %d events", kind, seen[kind])
+		}
+	}
+}

@@ -1467,3 +1467,41 @@ func TestView_SearchInAGameStaysPrivate(t *testing.T) {
 		t.Errorf("seat 1 shuffle line: got %q, want %q", lines1[shuffleIdx], wantShuf)
 	}
 }
+
+// T-0191 (directive #129): an effect's event is the same log line for both seats,
+// and it names no face-down card.
+func TestView_HealLineShowsToBothSeats(t *testing.T) {
+	s := newScene(t)
+	src := testUnit("Healer", 1, 5, engine.Keywords{})
+	src.Ability = &ability.Def{Activated: []ability.Activated{{
+		Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpHeal, Amount: ability.Value{N: 2}, Subject: ability.SubjectAll,
+			Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}}},
+	}}}
+	healer := s.put(0, engine.ZoneMainTheater, src)
+	healer.Damage = 3
+	hidden := s.put(0, engine.ZoneReserves, testUnit("Hidden Recruit", 1, 5, engine.Keywords{}))
+	hidden.FaceDown, hidden.Damage = true, 1
+	if err := s.g.Apply(engine.Action{Kind: engine.ActActivate, Player: 0, Asset: healer.ID, Ability: 0}); err != nil {
+		t.Fatal(err)
+	}
+	want := map[int]string{
+		healer.ID: fmt.Sprintf("%s heals 2", healer),
+		hidden.ID: fmt.Sprintf("face-down Scratch Company#%d heals 1", hidden.ID),
+	}
+	lines := [2][]string{view.LogLines(s.g.Log, 0), view.LogLines(s.g.Log, 1)}
+	seen := 0
+	for i, e := range s.g.Log {
+		if e.Kind != engine.EventHeal {
+			continue
+		}
+		seen++
+		for seat, l := range lines {
+			if !strings.HasSuffix(l[i], want[e.Target]) || strings.Contains(l[i], "Hidden Recruit") {
+				t.Errorf("seat %d's line %q, want it to end with %q and name no face-down card", seat, l[i], want[e.Target])
+			}
+		}
+	}
+	if seen != 2 {
+		t.Errorf("%d heal events, want 2", seen)
+	}
+}

@@ -183,12 +183,15 @@ func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
 	return len(as)
 }
 
-// stepHeal removes damage from each asset the step acts on.
+// stepHeal removes damage from each asset the step acts on. Its event's Amount is
+// the damage actually removed.
 func (g *Game) stepHeal(r *resolution, st ability.Step) int {
 	n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
+		before := a.Damage
 		a.Damage = max(0, a.Damage-n)
+		g.logEvent(Event{Kind: EventHeal, Player: -1, Target: a.ID, Amount: before - a.Damage}, "%s heals %d", a, before-a.Damage)
 	}
 	return len(as)
 }
@@ -199,6 +202,7 @@ func (g *Game) stepAddArmor(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		a.Armor += n
+		g.logEvent(Event{Kind: EventArmor, Player: -1, Target: a.ID, Amount: n}, "%s gains %d Armor", a, n)
 	}
 	return len(as)
 }
@@ -231,7 +235,9 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
-		a.TempPower += g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
+		n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
+		a.TempPower += n
+		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power until end of turn", a, n)
 	}
 	return len(as)
 }
@@ -263,24 +269,28 @@ func relocateTo(st ability.Step) (to Zone, bottom bool) {
 // stepRelocate moves each asset of stepAssets, then each card of stepCards, to
 // its owner's hand or deck, and returns how many moved. An asset leaves the
 // battlefield with its last-known state (FR-ZON-004); the event carries no
-// Card, as a face-down asset's card is private in a hand or deck.
+// Card, as a face-down asset's card is private in a hand or deck. A card must
+// still be in a discard pile, which is public: its event names it there, before
+// the move can hide it.
 func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 	to, bottom := relocateTo(st)
+	text := "%s returns to its owner's hand"
+	if to == ZoneDeck {
+		text = "%s is put into its owner's deck"
+	}
 	n := 0
 	for _, a := range g.stepAssets(r, st) {
-		text := "%s returns to its owner's hand"
-		if to == ZoneDeck {
-			text = "%s is put into its owner's deck"
-		}
 		g.logEvent(Event{Kind: EventLeave, Player: -1, Target: a.ID, Zone: to.String()}, text, a)
 		g.leaveBattlefield(a, g.effectiveState(a))
 		g.putCard(a.Inst, to, bottom)
 		n++
 	}
 	for _, inst := range g.stepCards(r, st) {
-		if !g.takeCard(inst) {
+		if g.DiscardCard(inst.ID) != inst {
 			continue
 		}
+		g.logEvent(Event{Kind: EventCardMove, Player: -1, Card: inst.Card.Name, Inst: inst.ID, Zone: to.String()}, text, inst.Card.Name)
+		g.takeCard(inst)
 		g.putCard(inst, to, bottom)
 		n++
 	}
