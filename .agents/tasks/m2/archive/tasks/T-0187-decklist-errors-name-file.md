@@ -4,7 +4,7 @@ title: Decklist parse errors name the file (directives #124 and #8, harness, fla
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0187-decklist-errors-name-file
 depends_on: []
 claims: [engine:LoadDeck line errors, test:TestLoadDeck_Case13_ParseErrorsNameTheFile]
@@ -109,3 +109,4 @@ Commit only this file as `test(T-0187): ...`, after confirming that all seven su
     - go tool task check (gofmt, go vet, all tests, cardtown lint --all): PASS
     - go tool task sim: PASS (starter decks 200 games clean)
     - go tool task sim-compare -- autoloop/m2-wave-d.2: PASS (starter and stress sims byte-identical)
+- 2026-11-06 (lead-architect): Approved on the first round, with no refused command. Both files are byte-identical to the lead's dry run, and each commit touches only its allowed file. All seven subtests of `TestLoadDeck_Case13_ParseErrorsNameTheFile` fail at 8c8a170. `deck.go` holds one `line %d`, in the helper. Re-ran `go test ./pkg/engine -run TestLoadDeck`, `go tool task check`, `go tool task sim` and `go tool task sim-compare -- autoloop/m2-wave-d.2`: exit 0. Merged as 784516f.

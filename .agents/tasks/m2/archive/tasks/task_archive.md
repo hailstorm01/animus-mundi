@@ -190,3 +190,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0184 | The docs say what wave D built, doc.go, placement.go and ability.go comments (directive #121, harness, flash, comments only) | done |
 | T-0185 | Unstarve ProgressPolicy without scenario seeding (directive #122, harness, flash) | done |
 | T-0186 | Drop the search clause from the hidden-decision check (directive #123, harness, flash) | done |
+| T-0187 | Decklist parse errors name the file (directives #124 and #8, harness, flash) | done |
