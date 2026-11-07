@@ -36,8 +36,7 @@ func FactionDeck(cards map[string]*engine.Card, faction string) (engine.DeckList
 		switch {
 		case c.Type == engine.TypeHeadquarters && strings.EqualFold(c.Faction, faction) && deck.HQ == nil:
 			deck.HQ = c
-		case c.Supported() && !c.IsScratchCompany() &&
-			(strings.EqualFold(c.Faction, faction) || strings.EqualFold(c.Faction, "NEUTRAL")):
+		case c.Supported() && !c.IsScratchCompany() && c.InFactionOrNeutral(faction):
 			pool = append(pool, c)
 		}
 	}

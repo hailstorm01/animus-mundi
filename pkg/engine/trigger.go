@@ -79,9 +79,6 @@ func (g *Game) confirmDestroyed(id int) {
 // fireHook buffers a's own triggers for hook in printed order. A face-down
 // asset has no printed abilities.
 func (g *Game) fireHook(a *Asset, hook ability.Hook) {
-	if a.FaceDown {
-		return
-	}
 	def := a.Printed().Ability
 	if def == nil {
 		return
