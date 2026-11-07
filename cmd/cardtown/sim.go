@@ -29,7 +29,7 @@ func runSim(args []string) {
 	monitors := fs.Bool("monitors", true, "Check FRD 01 rules in every game and print a coverage table")
 	fs.Usage = func() {
 		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N] [-policy random|progress] [-log] [-events FILE] [-monitors=false]")
-		fmt.Println("Random-policy playouts on the rules kernel (termination, invariants, win rates)")
+		fmt.Println("Playouts on the rules kernel (termination, invariants, win rates)")
 		fmt.Println("\nFlags:")
 		fs.PrintDefaults()
 	}
@@ -134,7 +134,7 @@ func runSim(args []string) {
 	}
 	pct := func(n int) float64 { return 100 * float64(n) / float64(st.Games) }
 	fmt.Println("==========================================================")
-	fmt.Println("  CARD TOWN RULES KERNEL: RANDOM-POLICY PLAYOUTS           ")
+	fmt.Println("  CARD TOWN RULES KERNEL: PLAYOUTS                         ")
 	fmt.Println("==========================================================")
 	fmt.Printf("  %s (%s) vs %s (%s), %d games, seeds %d..%d\n", *p0, decks[0].HQ.Name, *p1, decks[1].HQ.Name, st.Games, *seed, *seed+uint64(st.Games)-1)
 	if *deck != "" {

@@ -96,7 +96,7 @@ func ShowTools(repoRoot string) {
 	fmt.Println("    cardtown lint rules")
 	fmt.Println("- cardtown lint fences : Verifies engine code contains no card names and only valid open markers")
 	fmt.Println("    cardtown lint fences")
-	fmt.Println("- cardtown sim [flags] : Random-policy playouts on the rules kernel; fails on non-termination or broken invariants")
+	fmt.Println("- cardtown sim [flags] : Playouts on the rules kernel; fails on non-termination or broken invariants")
 	fmt.Println("    cardtown sim [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N]")
 	fmt.Println("- cardtown hook install : Installs native Git pre-commit hook into .git/hooks/pre-commit")
 	fmt.Println("    cardtown hook install")
