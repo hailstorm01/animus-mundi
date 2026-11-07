@@ -191,3 +191,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0185 | Unstarve ProgressPolicy without scenario seeding (directive #122, harness, flash) | done |
 | T-0186 | Drop the search clause from the hidden-decision check (directive #123, harness, flash) | done |
 | T-0187 | Decklist parse errors name the file (directives #124 and #8, harness, flash) | done |
+| T-0188 | A value doesn't need a stack item, `value` takes the controller, source and instance (directive #125, harness, flash, pure move) | done |

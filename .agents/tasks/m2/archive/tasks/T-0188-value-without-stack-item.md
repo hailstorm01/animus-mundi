@@ -4,7 +4,7 @@ title: A value doesn't need a stack item, `value` takes the controller, source a
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0188-value-without-stack-item
 depends_on: [T-0187]
 claims: [signature:Game.value]
@@ -85,3 +85,9 @@ No new tests: a pure move, so no `test(T-0188)` commit. W is your worktree. Run 
   5. go run ./cmd/cardtown lint fences (PASS).
   6. git diff autoloop/m2-wave-d.2 --stat (only pkg/engine/effects.go and task file).
   7. go tool task check (gofmt, go vet, test, lint all pass); go tool task sim (starter sim passes cleanly).
+- 2026-11-07, lead-architect (wave D.2 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as 5384409. Flash run `4c469b8b-2ead-4d39-896c-3164e3409317`: exit 0, `status: SUCCESS`, no refusals (`denied_actions` empty; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0188-value-without-stack-item` (0633530):
+  - Scope: only `pkg/engine/effects.go` and this file changed. No test file changed.
+  - Pure move, checked against the diff: the hunks are exactly Edits 1 and 2. The body reads `source`, which every caller passes as `r.it.Source`. `itemSource` is unchanged. `controller` and `inst` are unused, as #125's signature has them until a count `Value` arrives.
+  - Fences and placement: no card name, no new rule, no new declaration.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-6; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained only this task's file and board row after the branch point, so the gates hold on the run branch. Directive #125 is applied. #126 is next.
