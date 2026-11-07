@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	"strings"
 
 	"animus-mundi/pkg/engine"
 )
@@ -252,20 +251,14 @@ func decisionEqual(a, b engine.DecisionRecord) bool {
 		slices.Equal(a.Options, b.Options) && slices.Equal(a.Refs, b.Refs) && slices.Equal(a.Picks, b.Picks)
 }
 
-// actionOf rebuilds the Action an action event recorded. The kind is the first
-// word of Detail.
+// actionOf rebuilds the Action an action event recorded.
 func actionOf(e engine.Event) (engine.Action, error) {
-	word, _, _ := strings.Cut(e.Detail, " ")
 	a := engine.Action{Player: engine.PlayerID(e.Player), Asset: e.Source, Target: e.Target, Card: e.Inst}
-	found := false
-	for k := engine.ActGenerate; k <= engine.ActEndTurn; k++ {
-		if k.String() == word {
-			a.Kind, found = k, true
-		}
-	}
-	if !found {
+	kind, ok := e.ActionKind()
+	if !ok {
 		return a, fmt.Errorf("unknown action %q", e.Detail)
 	}
+	a.Kind = kind
 	if a.Kind == engine.ActActivate {
 		a.Ability = e.Amount
 	}
