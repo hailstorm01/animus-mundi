@@ -4,7 +4,7 @@ title: One classifier of changed files, and "all linters" means all (directive #
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0197-one-change-classifier
 depends_on: [T-0196]
 claims: [cardtown:lintSelection, cardtown:allLinters, cardtown:changedFiles, cardtown:selectChanged, fences:SurveyFile]
