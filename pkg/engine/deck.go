@@ -33,6 +33,12 @@ func illegalDeck(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrIllegalDeck, fmt.Sprintf(format, args...))
 }
 
+// InFactionOrNeutral reports whether the card belongs to faction or is Neutral:
+// the cards a main deck of that faction may hold (FR-SET-001).
+func (c *Card) InFactionOrNeutral(faction string) bool {
+	return strings.EqualFold(c.Faction, faction) || strings.EqualFold(c.Faction, "NEUTRAL")
+}
+
 // ValidateDeck returns nil if d is construction-legal under FR-SET-001.
 // Otherwise it returns every violation joined (errors.Join), each wrapping
 // ErrIllegalDeck and naming the offending card where there is one.
@@ -72,7 +78,7 @@ func ValidateDeck(d DeckList) error {
 			errs = append(errs, illegalDeck("Scratch Company %s cannot be in the main deck", c.Name))
 		}
 		// Without a usable HQ there is no faction to compare against.
-		if hqFaction != "" && !strings.EqualFold(c.Faction, hqFaction) && !strings.EqualFold(c.Faction, "NEUTRAL") {
+		if hqFaction != "" && !c.InFactionOrNeutral(hqFaction) {
 			errs = append(errs, illegalDeck("%s (%s) does not match Headquarters faction %s", c.Name, c.Faction, hqFaction))
 		}
 		if c.Type == TypeHeadquarters {

@@ -36,7 +36,7 @@ type usedReplacements map[usedKey]bool
 func (g *Game) replacementsFor(a *Asset, used usedReplacements) []replacementOption {
 	var out []replacementOption
 	for _, src := range g.assetsByID() {
-		if src.FaceDown || src.Printed().Ability == nil {
+		if src.Printed().Ability == nil {
 			continue
 		}
 		reps := src.Printed().Ability.Replacements
