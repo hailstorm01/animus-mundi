@@ -18,8 +18,11 @@ func (r Resource) String() string {
 	return "Requisition"
 }
 
-// ConvertReq is the Requisition one conversion to Tactics takes (FR-RES-003).
-const ConvertReq = 2
+// One conversion takes ConvertReq Requisition and gives ConvertTac Tactics (FR-RES-003).
+const (
+	ConvertReq = 2
+	ConvertTac = 1
+)
 
 // generate carries out a checked Generate: the asset exhausts and its controller
 // gains the asset's printed yield of the chosen resource (FR-RES-001).
@@ -41,7 +44,7 @@ func (g *Game) generate(a Action) {
 // convert carries out a checked conversion (FR-RES-003).
 func (p *Player) convert() {
 	p.pay(ConvertReq, 0)
-	p.Tac++
+	p.Tac += ConvertTac
 }
 
 // canYield implements the Generate Resources rows of FR-CAP-001. A zero yield
