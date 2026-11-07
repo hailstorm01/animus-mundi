@@ -4,7 +4,7 @@ title: Effective reads live in `layers.go`, `cornered`, `EffectiveState` and `ef
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0189-effective-reads-in-layers
 depends_on: [T-0188]
 claims: [file-move:cornered, file-move:EffectiveState, file-move:effectiveState]
