@@ -4,7 +4,7 @@ title: The policy asks the engine what an activated ability costs (directive #12
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0190-policy-asks-activated-cost
 depends_on: [T-0189]
 claims: [engine:Game.ActivatedCost, engine:Game.otherCostsPayable, sim:activationCosts, fence:pkg/sim imports, test:TestActivatedCost_ReadsResourcesAndOtherCosts, test:TestFences_Case40_SimImportsOnlyEngine]
@@ -225,3 +225,9 @@ No other file changes.
     - Case 7: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed exactly the 5 expected lines (51 0, 33 9, 6 17, 1 1, 11 0).
     - Case 8: `go -C W tool task check` passed (fmt-check, vet, all tests, full lint); `go -C W tool task sim` passed on starter decks.
   - Review note: sim outputs remain byte-identical while non-test imports of `ability` in `pkg/sim` are eliminated. Ready for lead-architect review.
+- 2026-11-07, lead-architect (wave D.2 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as 8674ef7. Flash run `b3667ccd-1118-4468-b73a-b8028c25a248`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0190-policy-asks-activated-cost` (a61e21e):
+  - Scope: only the Allowed Files and this file changed. `38f6f75` holds only the two test files, and no test file changed after it. No existing test was edited: the two test files gain only the additions in Edit 1.
+  - Checked against the diff: the hunks are exactly Edits 2-4. `costsPayable` still needs every resources cost and every other cost, and `otherCostsPayable` holds the one check of the others, so nothing else restates "the source must be Readied". `pkg/sim`'s non-test files no longer import `ability`, and the fence table now holds them to that.
+  - Fences and placement: no card name, and `ActivatedCost` sits in `costs.go` as #127 asks. Rules fidelity: no special case; the method reads any printed ability.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: at `38f6f75` the Case 40 test fails and `go vet ./pkg/engine` prints `g.ActivatedCost undefined`; at the tip cases 2-7 hold, with 6 subtests passing and the numstat exact; `gofmt -l pkg cmd` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-d.2` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing but this task's file and board row after the branch point, so the gates hold on the run branch. The design note's Boundaries sentence on what `sim` imports is updated in this commit, as #127 asks. Directive #127 is applied. #129 is next.
