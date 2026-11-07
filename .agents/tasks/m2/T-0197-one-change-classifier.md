@@ -4,7 +4,7 @@ title: One classifier of changed files, and "all linters" means all (directive #
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0197-one-change-classifier
 depends_on: [T-0196]
 claims: [cardtown:lintSelection, cardtown:allLinters, cardtown:changedFiles, cardtown:selectChanged, fences:SurveyFile]
@@ -258,10 +258,27 @@ No other file changes. Run `gofmt -l pkg cmd` after the edits; it must print not
 - `pkg/toolchain/linter/frd/ownership.go`
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 11): wrote this task from board directive #134 against the run branch at f97bea1. No `main` commits to sync. Not `WAVE-COMPLETE`: #134 and #135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Three non-test files, within the D2.4 limit. The file-name constants remove the copies T-0196 left to #134 (Inputs), so no new directive is needed. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer (wave D.2 run, session 12): status -> in-progress.
+  - Acceptance tests written to `cmd/cardtown/lint_test.go` (Cases 1-3: `TestSelectChanged_Case1_Paths`, `TestSelectChanged_Case2_BothModes`, `TestSelectChanged_Case3_GitFailure`). Confirmed compilation failure before implementation (`go -C W test ./cmd/cardtown -run TestSelectChanged -v` failed with undefined `lintSelection`, `selectChanged`, `changedFiles`, `allLinters`). Committed as `test(T-0197): acceptance tests for selectChanged, changedFiles, allLinters (#134)` (commit `8b36810`).
+  - Search for reuse: reused `git.GetStagedFiles` and `git.GetStatus` in `changedFiles`; reused `specdoc.MatrixFile` in `ownership.go` and `lint.go`.
+  - Implemented #134 edits:
+    - `cmd/cardtown/lint.go`: Consolidated change detection in `changedFiles` and `selectChanged`, unified `allLinters()` across `--all` and git-failure fallback paths; updated `isFencesPath` to use `specdoc.MatrixFile` and `fences.SurveyFile`.
+    - `pkg/toolchain/linter/fences/fences.go`: Added `const SurveyFile = "m2_starter_set_ability_survey.md"`, updated `readMarkerIDs` to use `SurveyFile`.
+    - `pkg/toolchain/linter/frd/ownership.go`: Replaced literal matrix filename with `specdoc.MatrixFile`.
+  - Verification:
+    - Case 4: `go -C W test ./cmd/cardtown -run TestSelectChanged -v` passed (all 3 tests pass). `git -C W diff autoloop/m2-wave-d.2 -- pkg/toolchain/linter/fences/fences_test.go pkg/toolchain/linter/frd/ownership_test.go pkg/toolchain/git/git_test.go` printed nothing. `git -C W diff autoloop/m2-wave-d.2 --numstat -- cmd/cardtown/lint_test.go` showed `132 0 cmd/cardtown/lint_test.go` (0 deleted lines).
+    - Case 5: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    - Case 6: `git -C W grep -n -e 'GetStagedFiles' -e 'GetStatus' -e 'isRulesPath(' -e 'isFencesPath(' -e 'allLinters()' -e 'Running all linters' -- cmd/cardtown/lint.go` printed exactly the 11 expected lines.
+    - Case 7: `git -C W grep -n -e '^func ' -e '^type ' -- cmd/cardtown/lint.go` printed exactly the 8 declarations in the expected order.
+    - Case 8: `git -C W grep -n -e 'keyword_interaction_matrix' -e 'm2_starter_set_ability_survey' -- cmd/cardtown/lint.go pkg/toolchain/specdoc/matrix.go pkg/toolchain/linter/fences/fences.go pkg/toolchain/linter/frd/ownership.go` printed exactly the 2 expected lines (`fences.go:36` and `matrix.go:9`).
+    - Case 9: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed exactly the 4 expected lines (`94 96 cmd/cardtown/lint.go`, `132 0 cmd/cardtown/lint_test.go`, `6 2 pkg/toolchain/linter/fences/fences.go`, `3 1 pkg/toolchain/linter/frd/ownership.go`). `git -C W diff autoloop/m2-wave-d.2 --stat` listed only those 4 files and this task file.
+    - Case 10: `go -C W tool task check` passed (fmt-check, vet, all tests, all linters clean); `go -C W tool task sim` passed clean on starter decks.
+  - Committed implementation as `feat(toolchain): one classifier of changed files, all linters means all (T-0197)` (commit `6cbf113`).
+  - Status -> review. Handing off for review.

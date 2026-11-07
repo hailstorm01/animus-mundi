@@ -31,6 +31,10 @@ var (
 // modulePath is the Go module path that import rules are written against.
 const modulePath = "animus-mundi"
 
+// SurveyFile is the ability survey's file name, in docs/design. OPEN(...) markers may cite
+// the items of its Ruling Questions table.
+const SurveyFile = "m2_starter_set_ability_survey.md"
+
 // allowedImports maps a package directory to the in-module import paths (relative to
 // the module root) its non-test files may use. Packages not listed are not checked.
 var allowedImports = map[string][]string{
@@ -192,10 +196,10 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 
 	openSurvey := make(map[string]bool)
 	ruledSurvey := make(map[string]bool)
-	surveyPath := filepath.Join(repoRoot, "docs", "design", "m2_starter_set_ability_survey.md")
+	surveyPath := filepath.Join(repoRoot, "docs", "design", SurveyFile)
 	sContent, err := os.ReadFile(surveyPath)
 	if err != nil {
-		return nil, fmt.Errorf("reading m2_starter_set_ability_survey.md: %w", err)
+		return nil, fmt.Errorf("reading %s: %w", SurveyFile, err)
 	}
 	surveyLines := strings.Split(string(sContent), "\n")
 	inRulingQuestions := false
