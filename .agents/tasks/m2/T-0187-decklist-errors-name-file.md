@@ -4,7 +4,7 @@ title: Decklist parse errors name the file (directives #124 and #8, harness, fla
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-d.2/T-0187-decklist-errors-name-file
 depends_on: []
 claims: [engine:LoadDeck line errors, test:TestLoadDeck_Case13_ParseErrorsNameTheFile]
