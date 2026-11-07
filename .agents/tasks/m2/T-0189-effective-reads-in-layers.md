@@ -4,7 +4,7 @@ title: Effective reads live in `layers.go`, `cornered`, `EffectiveState` and `ef
 kind: harness
 tier: flash
 wave: D.2
-status: ready
+status: review
 branch: m2/autoloop-wave-d.2/T-0189-effective-reads-in-layers
 depends_on: [T-0188]
 claims: [file-move:cornered, file-move:EffectiveState, file-move:effectiveState]
@@ -87,10 +87,26 @@ No new tests: a pure move, so no `test(T-0189)` commit. W is your worktree. Run 
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1-7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-d.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-07, lead-architect (wave D.2 run, session 3): wrote this task from board directive #126, next in board order, against the run branch at 2d71351. No `main` commits to sync. Not `WAVE-COMPLETE`: #126, #127 and #129-#135 are `open: before the next Deliverables task`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #118 (b), #120, #128: no such card). Next: `kernel-engineer` on Flash.
+- 2026-11-07, kernel-engineer: pure move implementation complete per directive #126.
+  - What changed:
+    - `pkg/engine/state.go`: removed `EffectiveState` and `effectiveState` (lines 158-170).
+    - `pkg/engine/trigger.go`: removed `cornered` (lines 125-131).
+    - `pkg/engine/doc.go`: updated `layers.go` description to mention the Cornered check and `EffectiveState`.
+    - `pkg/engine/layers.go`: added `cornered`, `EffectiveState`, and `effectiveState` alongside `IsLethal`.
+  - Reuse: verified no other declaration of `cornered`, `EffectiveState`, or `effectiveState` exists in `pkg/engine`.
+  - Commands run and results:
+    - Case 1: `git -C W diff autoloop/m2-wave-d.2 -- '*_test.go'` returned no output; `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-d.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-d.2 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -e 'func (g [*]Game) cornered(' -e 'func (g [*]Game) effectiveState(' -e 'type EffectiveState struct' -- pkg/engine` returned lines 40, 51, and 58 in `pkg/engine/layers.go`.
+    - Case 4: `git -C W diff autoloop/m2-wave-d.2 --numstat -- pkg cmd` printed `2 1 pkg/engine/doc.go`, `20 0 pkg/engine/layers.go`, `0 13 pkg/engine/state.go`, `0 7 pkg/engine/trigger.go`.
+    - Case 5: `go -C W run ./cmd/cardtown lint fences` passed (exit 0).
+    - Case 6: `git -C W diff autoloop/m2-wave-d.2 --stat` showed only the four allowed files and this task file.
+    - Case 7: `go -C W tool task check` passed all stages (fmt-check, vet, tests, all linters); `go -C W tool task sim` passed (all 200 matches terminated with invariants holding).
+  - Reviewer notes: Pure move, byte-identical sim behavior, no test files modified.

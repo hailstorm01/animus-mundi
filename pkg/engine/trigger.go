@@ -122,13 +122,6 @@ func (g *Game) bufferTrigger(a *Asset, label string, t ability.Trigger) {
 	})
 }
 
-// cornered reports whether p is Cornered: the opponent controls strictly more
-// battlefield assets (units and structures) in the Main Theater than p does.
-// Headquarters are never in the Main Theater (FR-KWD-002e).
-func (g *Game) cornered(p PlayerID) bool {
-	return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))
-}
-
 // fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger (an
 // ability.Aggressive trigger, read now, not at card load), if any, then its
 // printed attack triggers (FR-CBT-002).

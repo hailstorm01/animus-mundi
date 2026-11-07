@@ -34,7 +34,27 @@ func (g *Game) Keywords(a *Asset) Keywords {
 	return kw
 }
 
+// cornered reports whether p is Cornered: the opponent controls strictly more
+// battlefield assets (units and structures) in the Main Theater than p does.
+// Headquarters are never in the Main Theater (FR-KWD-002e).
+func (g *Game) cornered(p PlayerID) bool {
+	return len(g.TheaterOf(p.Opponent())) > len(g.TheaterOf(p))
+}
+
 // IsLethal reports whether the next death sweep destroys a (FR-LAY-002).
 func (g *Game) IsLethal(a *Asset) bool {
 	return g.MaxHealth(a) <= 0 || g.CurrentHealth(a) <= 0
+}
+
+// EffectiveState is an asset's effective characteristics at one moment, read
+// through the layer pipeline (FR-LAY-001).
+type EffectiveState struct {
+	Power     int
+	MaxHealth int
+	Keywords  Keywords
+}
+
+// effectiveState reads a's effective characteristics now.
+func (g *Game) effectiveState(a *Asset) EffectiveState {
+	return EffectiveState{Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a)}
 }
