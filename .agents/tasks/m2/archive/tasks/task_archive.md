@@ -201,3 +201,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0195 | One read of "this faction or Neutral", and no face-down guard that can't fire (directive #132 (c), (d), harness, flash, pure move) | done |
 | T-0196 | One reader of the keyword matrix, and `Analyze` split by job (directive #133, harness, flash, pure move) | done |
 | T-0197 | One classifier of changed files, and "all linters" means all (directive #134, harness, flash) | done |
+| T-0198 | The text says what the code does (directive #135, harness, flash) | done |

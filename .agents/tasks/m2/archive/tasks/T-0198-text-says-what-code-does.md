@@ -4,7 +4,7 @@ title: The text says what the code does (directive #135, harness, flash)
 kind: harness
 tier: flash
 wave: D.2
-status: review
+status: done
 branch: m2/autoloop-wave-d.2/T-0198-text-says-what-code-does
 depends_on: [T-0190]
 claims: []
@@ -103,3 +103,9 @@ No other file changes. Run `gofmt -l pkg cmd` after the edits; it must print not
       ```
     - Case 5: `go -C W tool task check` passed all stages (gofmt, vet, test, linter --all). `go -C W tool task sim` passed clean (P0 78.5%, P1 19.0%, draws 2.5%).
   - Committed implementation as `feat(toolchain): the text says what the code does (T-0198)` (731e20e).
+- 2026-11-07, lead-architect (wave D.2 run, session 12, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-d.2` as 061b84d. Flash run `34ec0148-3c39-4012-b2c6-989396a15bdd`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-d.2...m2/autoloop-wave-d.2/T-0198-text-says-what-code-does` (b32675f):
+  - Scope: only the Allowed Files and this file changed; no test changed.
+  - Checked against the diff: `main.go`, `sim.go` and `whatsup.go` are byte-identical to the lead's dry run (blobs d56a8e7, edbf983, 16e258f), so the hunks are exactly Edits 1-3, and the header keeps its 61 characters.
+  - Reuse, fences and placement: wording only; nothing in `pkg/engine` changes. Rules fidelity: nothing rule-related changes. #135 (a) needed no edit (Inputs).
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: `gofmt -l pkg cmd` clean; case 1 no output, exit 1; cases 2 and 3 exact; `go tool task sim-compare -- autoloop/m2-wave-d.2` exits non-zero with the two one-hunk header diffs of case 4 (index 60b2717..6b4a199 starter, 801c884..dce2bb0 stress, the same as the dry run); `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 78.5% / P1 19.0% / draws 2.5%, 47/50 and 34/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` prints nothing). #135 is fully applied and archived; it was wave D.2's last directive.
