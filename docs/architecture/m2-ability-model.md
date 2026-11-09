@@ -169,6 +169,11 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #135: the text says what the code does.
 
    #128 has no task here: it is a `waiting:` row for *Veil Render*. #125–#127 and #130–#133 are pure moves. #134 is one except on the git-failure path, #129 adds events and tests, and #135 changes one sim header line, which its `sim-compare` shows. Done when no `open: before` directive is left, every other task's `go tool task sim-compare` passed (for #133 and #134, unchanged lint output), and `go tool task check` and `go tool task sim` pass.
+6i. **Wave E.1, cleanup, added 2026-11-09 from structural review 10 (board directives #136–#139).** It goes after wave E and before wave F, which builds on it (user, 2026-11-09). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave E.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #138: `value` takes only what it reads, with this note's `Value` line.
+   - #139: the docs say what wave E built. It may share #138's task.
+
+   #136 and #137 have no task here: they are `waiting:` rows that block wave F's *Eerie Remnant* and *Allshan's Battle Trance* tasks, each with a pure move ahead of its card (one `fireHook` for a trigger from a card off the battlefield, and "until end of turn" as one list of modifiers). #138 is a pure move and #139 is comments only. Done when no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
