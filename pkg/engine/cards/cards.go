@@ -18,7 +18,6 @@ var NotYetExecutable = []string{
 	"Animoceps Stalk",
 	"Blind Defile",
 	"Blindside",
-	"Boneyard Amalgam",
 	"Brigand Highlander",
 	"Broken Horn Armorer",
 	"Chainbreaker Phalanx",

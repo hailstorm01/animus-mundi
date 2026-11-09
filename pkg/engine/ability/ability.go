@@ -35,6 +35,17 @@ type Def struct {
 	// as in "Cornered: Aggressive 3." (SVY-R18, FR-KWD-002e). It is zero for a
 	// card without one.
 	Cornered CorneredKeywords
+	// CostReduction is the card's own hand-active cost reduction (FR-CST-001),
+	// read by Game.EffectiveCost. It is zero for a card without one.
+	CostReduction CostReduction
+}
+
+// CostReduction lowers the card's own Requisition cost while it is in its owner's
+// hand: Req off for each card in a discard pile that matches Per (Per.InPile; its
+// Allegiance is relative to the card's owner). Requisition clamps at 0.
+type CostReduction struct {
+	Req int
+	Per Filter
 }
 
 // CorneredKeywords are the keywords a card has only while its controller is

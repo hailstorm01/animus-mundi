@@ -4,15 +4,40 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 
 	"animus-mundi/pkg/engine/ability"
 )
 
 // EffectiveCost returns what deploying or enacting inst costs now, in
-// Requisition and Tactics, the one read of a card's cost (FR-CST-001). No card
-// changes a cost yet, so it is the printed cost.
+// Requisition and Tactics, the one read of a card's cost (FR-CST-001). It is the
+// printed cost, less the card's own hand-active reduction (Def.CostReduction)
+// while it is in its owner's hand, with Requisition clamped at 0. It is read on
+// demand, so it follows the discard piles as they change.
 func (g *Game) EffectiveCost(inst *Instance) (req, tac int) {
-	return inst.Card.ReqCost, inst.Card.TacCost
+	req, tac = inst.Card.ReqCost, inst.Card.TacCost
+	if inst.Card.Ability == nil {
+		return req, tac
+	}
+	red := inst.Card.Ability.CostReduction
+	if red.Req > 0 && slices.Contains(g.Players[inst.Owner].Hand, inst) {
+		req = max(0, req-red.Req*g.countPileCards(inst, red.Per))
+	}
+	return req, tac
+}
+
+// countPileCards returns how many cards in the discard piles match the pile
+// filter f for src's owner as controller (matchesCard).
+func (g *Game) countPileCards(src *Instance, f ability.Filter) int {
+	n := 0
+	for _, p := range g.Players {
+		for _, c := range p.Discard {
+			if g.matchesCard(src.Owner, src, f, c) {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 // payCost takes inst's cost (EffectiveCost) from p.

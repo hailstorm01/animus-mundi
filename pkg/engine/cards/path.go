@@ -146,6 +146,10 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Boneyard Amalgam": {
+		Text:          []string{"This unit costs R1 less to deploy for each unit card in your discard pile."},
+		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}},
+	},
 	"Boneyard Scavenger": {
 		Text: []string{"T1, exhaust, kill this unit: Return chosen maneuver card from your discard pile to your hand."},
 		Activated: []ability.Activated{
