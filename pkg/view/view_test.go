@@ -1138,6 +1138,30 @@ func TestView_HandCardCarriesItsCostNow(t *testing.T) {
 	}
 }
 
+// T-0200 (directive #118 (b)): a hand card whose cost is reduced shows the lower
+// cost now, beside its printed cost. Boneyard Amalgam (R10 T0) costs R1 less
+// for each unit card in its owner's discard pile.
+func TestView_HandCardShowsItsLowerCost(t *testing.T) {
+	cards, err := engine.LoadCards(filepath.Join("..", "..", "data", "cards"))
+	if err != nil {
+		t.Fatalf("load cards: %v", err)
+	}
+	s := newScene(t)
+	p0 := s.g.Players[0]
+	p0.Hand = []*engine.Instance{s.inst(0, cards["Boneyard Amalgam"])}
+	for range 3 {
+		p0.Discard = append(p0.Discard, s.inst(0, cards["Saboteur"]))
+	}
+	v := view.PlayerView(s.g, 0)
+	if len(v.You.Hand) != 1 {
+		t.Fatalf("hand %+v, want the one card", v.You.Hand)
+	}
+	h := v.You.Hand[0]
+	if h.ReqCost != 10 || h.TacCost != 0 || h.ReqNow != 7 || h.TacNow != 0 {
+		t.Errorf("hand card %+v, want printed R10 T0 and now R7 T0", h)
+	}
+}
+
 // T-0183 (directive #119): a hidden decision of any kind names no option and no
 // pick to the other seat, and its own seat sees the whole line.
 func TestView_HiddenDecisionLineNamesNoOptionAndNoPick(t *testing.T) {
