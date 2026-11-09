@@ -11,3 +11,4 @@ Wave E, the survey's row E (`docs/design/m2_starter_set_ability_survey.md` line 
 | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1 | 2026-11-09 | T-0199 Macabre Dancers (card, flash) | done | eeb4a55 | tests 1, code 1 | none | clean; Path 36/50 main cards executable; P0 79.5% / P1 18.5% / draws 2.0%; 9 deck cards left on `NotYetExecutable` | CONTINUE |
+| 2 | 2026-11-09 | T-0200 Boneyard Amalgam (shape, sonnet: hand-active cost reduction, `ability.CostReduction`; #118 (b) applied) | done | 7dfd80d | tests 1, code 1 | none | clean; Path 38/50 main cards executable; P0 73.5% / P1 26.0% / draws 0.5%; 8 deck cards left on `NotYetExecutable` | WAVE-COMPLETE |

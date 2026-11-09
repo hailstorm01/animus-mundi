@@ -4,7 +4,7 @@ title: Hand-active cost reduction, first card Boneyard Amalgam (wave E shape, so
 kind: shape
 tier: sonnet
 wave: E
-status: review
+status: done
 branch: m2/autoloop-wave-e/T-0200-boneyard-amalgam
 depends_on: [T-0182]
 claims: [shape:CostReduction (ability.CostReduction, Def.CostReduction), card:Boneyard Amalgam]
@@ -65,14 +65,15 @@ In a new file `pkg/engine/cards_path_amalgam_test.go`, from the CSV text and `FR
 - Test: a new test function in `pkg/view/view_test.go` (the acceptance case above, in the `test(T-0200)` commit)
 
 ## Done When
-- [ ] The card and rules tests pass: `go test ./pkg/engine -run "TestCard_BoneyardAmalgam|TestFR_CST_001"`
-- [ ] The view test passes: `go test ./pkg/view -run TestView_HandCardShowsItsLowerCost`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card and rules tests pass: `go test ./pkg/engine -run "TestCard_BoneyardAmalgam|TestFR_CST_001"`
+- [x] The view test passes: `go test ./pkg/view -run TestView_HandCardShowsItsLowerCost`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-09 lead-architect (wave E run, session 2): written against e74170a, with the lead's probe above. Board read twice (D2.0), no `open: before` directive. Waiting triggers checked: #118 (b) fires (this task's `cards:` hold *Boneyard Amalgam*), set to `open` and applied here; #15, #71, #91 (2), #106, #120 and #128 have not fired (no turn hook, each-player effect, mode cost, criteria search, mandatory discard cost or discard deploy among this task's cards). Searched `pkg/engine` and the task archive for an existing cost change: none (`EffectiveCost` returns the printed cost, `costs.go:11-16`), and `matchesCard` already checks pile cards against a filter, so nothing is duplicated. Set to `tests`.
 - 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_amalgam_test.go`: TestCard_BoneyardAmalgam_PrintedCostWithNoUnitCards, _OneLessPerUnitCard, _OpponentsPileNotCounted, _CountsAnotherAmalgamInThePile, _CostClampsAtZero, _DeployPaysTheLowerCost, and TestFR_CST_001_ReductionOnlyFromHand. Local helpers only (`amalgamScene` etc. in the test file); no scenario_test.go helpers requested. Four fail now as intended (reduction not built); the rest pass on the printed cost. `go vet` clean, `cardtown lint rules` passes. No cases left out. Set to tests-review.
 - 2026-11-09 lead-architect: tests approved (D4, round 1). Each checked against `FR-CST-001` (lines 300–306, 469): max(0, printed − reductions), the clamp at 0, the on-demand read during cost calculation and deploy legality, and `activeZone: HAND`; "your discard pile" leaves the opponent's out, and another *Boneyard Amalgam* there is a unit card. The test cards are what they stand for (Saboteur a Unit, Steel Rain a Maneuver, Hammerhand Bivouac a Structure). Four fail now; the three that pass hold on the printed cost and stay meaningful once the reduction exists. A lead probe with the Shape and Definition above, since reverted, passes all seven and `go test ./...`. Set to `ready`.
 - 2026-11-09 kernel-engineer: wrote `TestView_HandCardShowsItsLowerCost` first (`pkg/view/view_test.go`, commit `test(T-0200)`); it failed with ReqNow 10, want 7. Then built `ability.CostReduction{Req, Per}` and `Def.CostReduction` (`ability.go`), and `EffectiveCost` in `costs.go`: while inst is in its owner's hand and `Req > 0` it subtracts `Req` times `countPileCards(inst, Per)` (new helper, `matchesCard` over both discard piles, controller `inst.Owner`) and clamps Requisition at 0; a nil `Card.Ability` returns the printed cost. Added the *Boneyard Amalgam* def before *Boneyard Scavenger* in `path.go` and removed the name from `NotYetExecutable`. Reused `matchesCard` and `Filter.InPile`; no second cost read, no helpers in `scenario_test.go`, no tests edited. Ran: `go test ./pkg/engine -run "TestCard_BoneyardAmalgam|TestFR_CST_001"` ok; `go test ./pkg/view -run TestView_HandCardShowsItsLowerCost` ok; `go tool task check` passes; `go tool task sim` clean, Path 38/50 executable, Animus 47/50. Look at: the hand test is `slices.Contains(Players[Owner].Hand, inst)`, so a card on the stack (after `takeCard`) reads the printed cost, which is fine as `payCost` runs first.
+- 2026-11-09 lead-architect (wave E run, session 2): approved (D5, round 1), merged as 7dfd80d. The diff is the Shape and Definition above, inside `Allowed Files`: `ability.CostReduction` and `Def.CostReduction`, `EffectiveCost` with its `countPileCards` helper (reusing `matchesCard`), the definition and the name off `NotYetExecutable`. `cards_path_amalgam_test.go` changed only in 2209b41, and the view test sits alone in its `test(T-0200)` commit ee8a974, where the reviewer re-ran it and saw it fail (ReqNow 10, want 7). No card name in engine code, no `OPEN(…)` marker; the count reads any pile filter, not the tested cases. Re-run by the reviewer on the task branch and again on the merge, with exit codes: the two Done When `go test` lines, `go tool task check`, `go tool task sim`, all 0; the sim matches the lead's probe (Path 38/50, P0 73.5% / P1 26.0% / draws 0.5%). #118 (b) applied, so #118 moves to the directive archive; the design note's Key types now name `CostReduction`. 8 deck cards are still on `NotYetExecutable` (#14 (e)).
