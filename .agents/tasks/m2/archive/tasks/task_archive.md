@@ -202,3 +202,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0196 | One reader of the keyword matrix, and `Analyze` split by job (directive #133, harness, flash, pure move) | done |
 | T-0197 | One classifier of changed files, and "all linters" means all (directive #134, harness, flash) | done |
 | T-0198 | The text says what the code does (directive #135, harness, flash) | done |
+| T-0199 | Make Macabre Dancers executable (Unbowed heals 2, Cornered Resistant 1, wave E card, flash) | done |
