@@ -4,7 +4,7 @@ title: "*Chainbreaker's Tenacity*'s armor grant is its own sentence (directive #
 kind: harness
 tier: flash
 wave: F
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f/T-0202-tenacity-armor-sentence
 depends_on: [T-0201]
 claims: [text:Chainbreaker's Tenacity]
@@ -66,10 +66,27 @@ No new tests: a text change only. W is your worktree. Run each command on its ow
 - `pkg/engine/cards_path_maneuvers_test.go` (the comment in Edit 3 only)
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-09, lead-architect (wave F run, session 1): wrote this task from board directive #140 (1), which goes ahead of wave F's first card task (D2.0), against the run branch at 721f371. Run file created; no `main` commits to sync. Not `WAVE-COMPLETE`: all eight of the header's cards are on `NotYetExecutable`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Two non-test files, under the size rule. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #120, #128, #136, #137: no such card in a task). #140 (2)–(4) wait for their tasks. Deck cards still on `NotYetExecutable` (#14 (e)): 8. Next: `kernel-engineer` on Flash.
+- 2026-11-09, kernel-engineer (wave F run, session 1): implemented T-0202 in commit 5a5d7ff (`chore(cards): Chainbreaker's Tenacity's armor grant is its own sentence (T-0202)`).
+  - What changed:
+    - `data/cards/maneuvers-path.csv:2`: updated rulesText to `Chosen allied unit gets +1 power until end of turn. It gains 2 armor.`
+    - `pkg/engine/cards/path.go:229`: updated Text slice to match CSV.
+    - `pkg/engine/cards_path_maneuvers_test.go:523-524`: updated comment quote to match new sentence break.
+  - Reuse: text-only harness task; no engine shapes added or modified.
+  - Acceptance Cases:
+    1. `git -C W grep -n -F -e "until end of turn and gains 2 armor" -- data pkg`: exit 1, no match.
+    2. `git -C W grep -n -F -e "until end of turn. It gains 2 armor." -- data pkg`: printed lines `data/cards/maneuvers-path.csv:2` and `pkg/engine/cards/path.go:229`.
+    3. `git -C W grep -n -F -e "It gains 2 armor" -- pkg/engine/cards_path_maneuvers_test.go`: printed line 524.
+    4. `git -C W diff autoloop/m2-wave-f --numstat -- data pkg cmd`: printed `1 1 data/cards/maneuvers-path.csv`, `1 1 pkg/engine/cards/path.go`, `2 2 pkg/engine/cards_path_maneuvers_test.go`.
+    5. `go -C W test ./pkg/engine -run TestDefs_MatchRulesText`: PASS (exit 0).
+    6. `go -C W tool task sim-compare -- autoloop/m2-wave-f`: PASS (`[PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included`).
+    7. `go -C W run ./cmd/cardtown lint fences`: PASS (exit 0).
+    8. `git -C W diff autoloop/m2-wave-f --stat`: lists only the 3 files above plus this task file.
+    9. `go -C W tool task check` and `go -C W tool task sim`: both PASS (check: gofmt, vet, all tests, cardtown lint --all clean; sim: 200 games clean, all invariants hold).
+  - Reviewer note: exact sentence break edit per board directive #140 (1) and FR-LAY-003. Handing off at review.
