@@ -4,7 +4,7 @@ title: Make Macabre Dancers executable (Unbowed heals 2, Cornered Resistant 1, w
 kind: card
 tier: flash
 wave: E
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-e/T-0199-macabre-dancers
 depends_on: [T-0050, T-0180]
 claims: [card:Macabre Dancers]
@@ -59,3 +59,4 @@ In a new file `pkg/engine/cards_path_dancers_test.go`, from the CSV text, loadin
 ## Log
 - 2026-11-09 lead-architect (wave E run, session 1): written against 54bcada, with the lead's probe above. Board read twice (D2.0), no `open: before` directive; every `waiting:` trigger checked and none fired (#118 (b) waits for *Boneyard Amalgam*, the next wave E task). Searched `pkg/engine` and the task archive: no new shape, every part of the Definition exists. Set to `tests`.
 - 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_dancers_test.go` (6 tests, all `TestCard_MacabreDancers_*` as listed under Tests: UnbowedHealsTwoAfterSurvivingDamage, HealNeverRemovesMoreThanItsDamage, LethalUnbowedTriggersAndFizzles, CorneredResistantReducesDamage, CorneredResistantStopsOneDamageAndUnbowed, NotCorneredHasNoResistant). Helpers requested: none (a local `dancersScene` lives in the test file). All six fail now (card not executable: no Unbowed trigger, no Cornered Resistant); `go vet` is clean and `cardtown lint rules` passes. No cases left out. Set to `tests-review`.
+- 2026-11-09 lead-architect: tests approved (D4, round 1), each checked against `FR-KWD-002a` (a lethal Unbowed triggers, is placed after the sweep, and its self-heal fizzles; no damage taken, no trigger), `FR-KWD-002d`, `FR-KWD-002e`/`FR-KWD-002b` with `SVY-R18`, and `SVY-R13`. A lead probe with the Definition above, since reverted, passes all six and `go test ./...`. Set to `ready`.
