@@ -28,7 +28,6 @@ var NotYetExecutable = []string{
 	"Forced Mutation",
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
-	"Macabre Dancers",
 	"Melodic Pummeler",
 	"Mutation Swell",
 	"Poisoned Rations",
