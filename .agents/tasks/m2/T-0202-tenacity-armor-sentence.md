@@ -4,7 +4,7 @@ title: "*Chainbreaker's Tenacity*'s armor grant is its own sentence (directive #
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0202-tenacity-armor-sentence
 depends_on: [T-0201]
 claims: [text:Chainbreaker's Tenacity]
