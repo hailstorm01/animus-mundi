@@ -4,7 +4,7 @@ title: "`value` takes only what it reads, and the docs say what wave E built (di
 kind: harness
 tier: flash
 wave: E.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-e.1/T-0201-value-reads-source-only
 depends_on: [T-0200]
 claims: [signature:Game.value, comments:pkg/engine/doc.go]
@@ -87,10 +87,25 @@ No new tests: a pure move plus comments, so no `test(T-0201)` commit. W is your 
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-e.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-e.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-09, lead-architect (wave E.1 run, session 1): wrote this task from board directives #138 and #139, the only `open: before` rows, against the run branch at 799f1a8. Run file created; no `main` commits to sync. Not `WAVE-COMPLETE`: #138 and #139 are `open: before the next Deliverables task`. Rewrote the design note's `Value` line in this commit (#138). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because the edits are exact and were dry-run. Two non-test files, under the size rule. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: none has triggered (#6, #7: mode is `serial`; #15: no turn-boundary hook; #71, #91 (2), #106, #120, #128, #136, #137: no such card in a task). Next: `kernel-engineer` on Flash.
+- 2026-11-09, kernel-engineer (session 1): implemented directives #138 and #139.
+  - Changes:
+    - `pkg/engine/effects.go`: simplified `g.value(source int, v ability.Value, dealer *Asset)` signature and documentation comment to drop unused `controller` and `inst` arguments (#138). Updated all 6 caller sites in `stepDealDamage`, `stepHeal`, `stepAddArmor`, `deckDrop`, `stepModifyStat`, and `stepDiscard` to pass only `r.it.Source, st.Amount`.
+    - `pkg/engine/doc.go`: documented a card's own hand-active cost reduction (`Def.CostReduction`) under "What runs now" (lines 53-55) and updated "Not built yet" continuous abilities clause (lines 68-69) (#139).
+  - Reuse:
+    - Checked `pkg/engine` for callers or alternate implementations of `ability.Value`; verified only the 6 caller sites in `pkg/engine/effects.go` resolve `ability.Value` at runtime, matching Deliverable 6i and directives #138/#139.
+  - Acceptance Cases & verification commands:
+    - Case 1: `git -C W diff autoloop/m2-wave-e.1 -- '*_test.go'` (clean, no test diff); `go -C W test ./...` passed (exit 0).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-e.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-e.1 byte for byte, exit codes included`.
+    - Case 3: `git -C W grep -n -e 'g.value(' -e 'func (g [*]Game) value(' -- pkg/engine` printed exactly the 7 expected lines in `pkg/engine/effects.go` (178, 189, 201, 227, 238, 253, and 344).
+    - Case 4: `git -C W grep -n -e 'hand-active cost reduction' -- pkg/engine/doc.go` printed lines 53 and 68.
+    - Case 5: `git -C W diff autoloop/m2-wave-e.1 --numstat -- pkg cmd` printed `5	2	pkg/engine/doc.go` and `12	14	pkg/engine/effects.go`.
+    - Case 6: `go -C W run ./cmd/cardtown lint fences` passed with `[PASS] Package code is free of card names, invalid markers and disallowed imports.`.
+    - Case 7: `git -C W diff autoloop/m2-wave-e.1 --stat` listed only `pkg/engine/doc.go`, `pkg/engine/effects.go`, and this task file.
+    - Case 8: `go -C W tool task check` passed (fmt, vet, tests, full cardtown linter suite all clean); `go -C W tool task sim` passed (200 games, all invariants holding).
