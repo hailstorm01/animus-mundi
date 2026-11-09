@@ -4,7 +4,7 @@ title: "`value` takes only what it reads, and the docs say what wave E built (di
 kind: harness
 tier: flash
 wave: E.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-e.1/T-0201-value-reads-source-only
 depends_on: [T-0200]
 claims: [signature:Game.value, comments:pkg/engine/doc.go]
