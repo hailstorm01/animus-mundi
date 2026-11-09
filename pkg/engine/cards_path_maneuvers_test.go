@@ -520,8 +520,8 @@ func TestCard_TacticalWithdrawal_PaysOneTactics(t *testing.T) {
 // Maneuvers Chainbreaker's Tenacity and Fortify, loaded from data/cards.
 // Player 0 enacts; player 1 is the opponent.
 //
-// Chainbreaker's Tenacity: "Chosen allied unit gets +1 power until end of turn
-// and gains 2 armor." Cost 1 Tactics.
+// Chainbreaker's Tenacity: "Chosen allied unit gets +1 power until end of turn.
+// It gains 2 armor." Cost 1 Tactics.
 // Fortify: "Chosen allied unit gains 3 armor." Cost 1 Tactics.
 
 // armorPair puts two plain allied units (printed power 2, Health 5) in the Main Theater.

@@ -1,5 +1,5 @@
 "name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","needsRework"
-"Chainbreaker's Tenacity","MANEUVER","PATH","0","1","Chosen allied unit gets +1 power until end of turn and gains 2 armor.","COMMON","false"
+"Chainbreaker's Tenacity","MANEUVER","PATH","0","1","Chosen allied unit gets +1 power until end of turn. It gains 2 armor.","COMMON","false"
 "Fortify","MANEUVER","PATH","0","1","Chosen allied unit gains 3 armor.","COMMON","false"
 "Tactical Withdrawal","MANEUVER","PATH","0","1","Return up to one chosen allied unit to its owner's hand. Draw a card.","COMMON","false"
 "Blindside","MANEUVER","PATH","0","2","Chosen opposing unit gets -3 power until the end of your opponent's turn.","COMMON","false"

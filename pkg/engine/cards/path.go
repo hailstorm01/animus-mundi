@@ -226,7 +226,7 @@ var pathDefs = map[string]*ability.Def{
 		},
 	},
 	"Chainbreaker's Tenacity": {
-		Text: []string{"Chosen allied unit gets +1 power until end of turn and gains 2 armor."},
+		Text: []string{"Chosen allied unit gets +1 power until end of turn. It gains 2 armor."},
 		Effect: ability.Effect{
 			Targets: []ability.Target{
 				{
