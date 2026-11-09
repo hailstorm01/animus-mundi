@@ -9,7 +9,7 @@
 "Pincer Tactics","MANEUVER","PATH","0","3","Deal 1 damage to each of up to 2 chosen allied units. Deal 2 damage to chosen non-Scratch asset.","COMMON","false"
 "Poisoned Rations","MANEUVER","PATH","0","3","Chosen unit gets -3 max health until end of turn.","RARE","false"
 "Reaver's Rush","MANEUVER","PATH","0","3","Deploy chosen unit card with power 3 or less from your discard pile for free.","COMMON","false"
-"Allshan's Battle Trance","MANEUVER","PATH","0","4","Deploy chosen unit card from your discard pile to the Main Theater. It gains Stalwart and gets +2 power until end of turn.","MYTHIC","false"
+"Allshan's Battle Trance","MANEUVER","PATH","0","4","Deploy chosen unit card from your discard pile to the Main Theater. Until end of turn, it gains Stalwart and gets +2 power.","MYTHIC","false"
 "Ambush Tactics","MANEUVER","PATH","0","4","Choose two:
 - Kill chosen unit.
 - Return chosen unit to its owner's hand.

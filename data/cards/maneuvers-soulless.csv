@@ -6,7 +6,7 @@
 "Dolus Infusion","MANEUVER","SOULLESS","0","2","Draw 2 cards, and your Headquarters heals 2.","UNCOMMON","false"
 "Inspired Salvage","MANEUVER","SOULLESS","2","2","Return up to 2 chosen Mechanized cards from your discard pile to your hand.","RARE","false"
 "Railway Reinforcements","MANEUVER","SOULLESS","0","2","Move up to 3 chosen allied units from your Reserves to the Main Theater.","COMMON","false"
-"Redline Infusion","MANEUVER","SOULLESS","0","2","Chosen allied unit gets +2 power and gains ""Overkill: Ready this unit."" until end of turn. At the end of your turn, kill that unit.","COMMON","false"
+"Redline Infusion","MANEUVER","SOULLESS","0","2","Until end of turn, chosen allied unit gets +2 power and gains ""Overkill: Ready this unit."" At the end of your turn, kill that unit.","COMMON","false"
 "All-Out War","MANEUVER","SOULLESS","3","3","Discard your hand. Then:
 - Chosen allied asset gets power equal to the number of cards discarded this way until end of turn.
 - Scratch X, where X is the number of cards discarded this way.
@@ -15,4 +15,4 @@
 "Macrocannon Barrage","MANEUVER","SOULLESS","0","3","Distribute 5 damage among up to 5 chosen units.","UNCOMMON","false"
 "Fire for Effect","MANEUVER","SOULLESS","0","4","Opposing assets in the Main Theater gain Resistant -1 until end of turn.
 Deal 1 damage to chosen asset in the Main Theater.","RARE","false"
-"March of Progress","MANEUVER","SOULLESS","0","4","Up to 2 chosen units gain the Mechanized subtype until end of turn. Allied Mechanized units gain 2 armor and get +2 power until end of turn.","RARE","false"
+"March of Progress","MANEUVER","SOULLESS","0","4","Up to 2 chosen units gain the Mechanized subtype until end of turn. Allied Mechanized units gain 2 armor. They get +2 power until end of turn.","RARE","false"

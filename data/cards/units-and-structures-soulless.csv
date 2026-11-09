@@ -20,7 +20,7 @@ This unit has +2 power for each card tucked under it.","2","5","1","2","MYTHIC",
 "Culverin Brigade","UNIT","SOULLESS","Infantry","4","0","RESERVES","When this unit deploys, deal 1 damage to each of up to 2 chosen opposing assets.","5","4","1","2","RARE","false"
 "Dolus Macrocannon","STRUCTURE","SOULLESS","Emplacement","4","0","MAIN_THEATER","R1, exhaust: Deal 2 damage to chosen non-Scratch asset.","2","6","2","2","RARE","false"
 "Dolus Refiner","STRUCTURE","SOULLESS","Industrial","4","0","MAIN_THEATER","Exhaust: Draw 2 cards, then discard 2 cards.","0","9","1","1","RARE","false"
-"Field Mechanic","UNIT","SOULLESS","Specialist","4","0","RESERVES","When this unit deploys, chosen allied Mechanized unit gains 2 armor and gets +2 power until end of turn.","3","5","1","2","RARE","false"
+"Field Mechanic","UNIT","SOULLESS","Specialist","4","0","RESERVES","When this unit deploys, chosen allied Mechanized unit gains 2 armor. It gets +2 power until end of turn.","3","5","1","2","RARE","false"
 "Piston Fist Prototype","UNIT","SOULLESS","Mechanized","3","3","RESERVES","Aggressive 9
 After this unit attacks, move this unit to your Reserves.","1","9","1","2","MYTHIC","false"
 "Aggressor Assault Suit","UNIT","SOULLESS","Mechanized","5","0","RESERVES","Armor 2","6","5","1","2","COMMON","false"
@@ -28,5 +28,5 @@ After this unit attacks, move this unit to your Reserves.","1","9","1","2","MYTH
 "MAX-8 Autonomous Warsuit","UNIT","SOULLESS","Cybernetic, Mechanized","6","0","RESERVES","When this unit deploys, deal 2 damage to chosen asset. Chosen asset heals 2.","4","7","2","2","MYTHIC","false"
 "Redlined Brawler","UNIT","SOULLESS","Specialist","6","0","RESERVES","When this unit deploys, you may discard 2 cards. If you do, move this unit to the Main Theater.","7","6","1","2","COMMON","false"
 "Repurposed Industrial Loader","UNIT","SOULLESS","Mechanized","6","0","RESERVES","Stalwart","7","3","2","2","COMMON","false"
-"Land Fortress","UNIT","SOULLESS","Mechanized, Cybernetic","8","0","RESERVES","Exhaust: Chosen unit in the same zone gets +2 power until end of turn and gains 1 armor.","7","7","2","2","COMMON","false"
+"Land Fortress","UNIT","SOULLESS","Mechanized, Cybernetic","8","0","RESERVES","Exhaust: Chosen unit in the same zone gets +2 power until end of turn. It gains 1 armor.","7","7","2","2","COMMON","false"
 "Dominator Warsuit","UNIT","SOULLESS","Mechanized","10","0","RESERVES","R1: This unit gains 1 armor.","5","11","3","3","RARE","false"

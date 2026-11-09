@@ -1,4 +1,4 @@
-Status: approved (user, 2026-11-09)
+Status: applied: FRD 01 v3.22, 2026-11-09
 Directive: #140
 Rulings: SVY-R39, SVY-R40, SVY-R41, SVY-R42, SVY-R43
 
