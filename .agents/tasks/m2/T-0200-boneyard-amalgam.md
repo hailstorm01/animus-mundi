@@ -4,7 +4,7 @@ title: Hand-active cost reduction, first card Boneyard Amalgam (wave E shape, so
 kind: shape
 tier: sonnet
 wave: E
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-e/T-0200-boneyard-amalgam
 depends_on: [T-0182]
 claims: [shape:CostReduction (ability.CostReduction, Def.CostReduction), card:Boneyard Amalgam]
