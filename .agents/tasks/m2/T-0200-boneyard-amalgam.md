@@ -4,7 +4,7 @@ title: Hand-active cost reduction, first card Boneyard Amalgam (wave E shape, so
 kind: shape
 tier: sonnet
 wave: E
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-e/T-0200-boneyard-amalgam
 depends_on: [T-0182]
 claims: [shape:CostReduction (ability.CostReduction, Def.CostReduction), card:Boneyard Amalgam]
@@ -73,3 +73,4 @@ In a new file `pkg/engine/cards_path_amalgam_test.go`, from the CSV text and `FR
 
 ## Log
 - 2026-11-09 lead-architect (wave E run, session 2): written against e74170a, with the lead's probe above. Board read twice (D2.0), no `open: before` directive. Waiting triggers checked: #118 (b) fires (this task's `cards:` hold *Boneyard Amalgam*), set to `open` and applied here; #15, #71, #91 (2), #106, #120 and #128 have not fired (no turn hook, each-player effect, mode cost, criteria search, mandatory discard cost or discard deploy among this task's cards). Searched `pkg/engine` and the task archive for an existing cost change: none (`EffectiveCost` returns the printed cost, `costs.go:11-16`), and `matchesCard` already checks pile cards against a filter, so nothing is duplicated. Set to `tests`.
+- 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_amalgam_test.go`: TestCard_BoneyardAmalgam_PrintedCostWithNoUnitCards, _OneLessPerUnitCard, _OpponentsPileNotCounted, _CountsAnotherAmalgamInThePile, _CostClampsAtZero, _DeployPaysTheLowerCost, and TestFR_CST_001_ReductionOnlyFromHand. Local helpers only (`amalgamScene` etc. in the test file); no scenario_test.go helpers requested. Four fail now as intended (reduction not built); the rest pass on the printed cost. `go vet` clean, `cardtown lint rules` passes. No cases left out. Set to tests-review.
