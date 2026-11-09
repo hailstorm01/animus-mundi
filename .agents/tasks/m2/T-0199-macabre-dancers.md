@@ -4,7 +4,7 @@ title: Make Macabre Dancers executable (Unbowed heals 2, Cornered Resistant 1, w
 kind: card
 tier: flash
 wave: E
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-e/T-0199-macabre-dancers
 depends_on: [T-0050, T-0180]
 claims: [card:Macabre Dancers]
