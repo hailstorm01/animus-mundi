@@ -4,7 +4,7 @@ title: Make Macabre Dancers executable (Unbowed heals 2, Cornered Resistant 1, w
 kind: card
 tier: flash
 wave: E
-status: tests
+status: review
 branch: m2/autoloop-wave-e/T-0199-macabre-dancers
 depends_on: [T-0050, T-0180]
 claims: [card:Macabre Dancers]
@@ -51,10 +51,13 @@ In a new file `pkg/engine/cards_path_dancers_test.go`, from the CSV text, loadin
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_MacabreDancers`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_MacabreDancers`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-09 lead-architect (wave E run, session 1): written against 54bcada, with the lead's probe above. Board read twice (D2.0), no `open: before` directive; every `waiting:` trigger checked and none fired (#118 (b) waits for *Boneyard Amalgam*, the next wave E task). Searched `pkg/engine` and the task archive: no new shape, every part of the Definition exists. Set to `tests`.
+- 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_dancers_test.go` (6 tests, all `TestCard_MacabreDancers_*` as listed under Tests: UnbowedHealsTwoAfterSurvivingDamage, HealNeverRemovesMoreThanItsDamage, LethalUnbowedTriggersAndFizzles, CorneredResistantReducesDamage, CorneredResistantStopsOneDamageAndUnbowed, NotCorneredHasNoResistant). Helpers requested: none (a local `dancersScene` lives in the test file). All six fail now (card not executable: no Unbowed trigger, no Cornered Resistant); `go vet` is clean and `cardtown lint rules` passes. No cases left out. Set to `tests-review`.
+- 2026-11-09 lead-architect: tests approved (D4, round 1), each checked against `FR-KWD-002a` (a lethal Unbowed triggers, is placed after the sweep, and its self-heal fizzles; no damage taken, no trigger), `FR-KWD-002d`, `FR-KWD-002e`/`FR-KWD-002b` with `SVY-R18`, and `SVY-R13`. A lead probe with the Definition above, since reverted, passes all six and `go test ./...`. Set to `ready`.
+- 2026-11-09 kernel-engineer: implemented Macabre Dancers in `pkg/engine/cards/path.go` (added between Ironclad Colossus and Necropolis Hunt: HookDamaged trigger with OpHeal, SubjectSelf, Amount 2; Cornered: CorneredKeywords{Resistant: 1}) and removed from NotYetExecutable in `pkg/engine/cards/cards.go`. Reused HookDamaged, OpHeal, SubjectSelf, and CorneredKeywords.Resistant; no new shapes, keywords, or engine logic introduced. Verification: `go test ./pkg/engine -run TestCard_MacabreDancers` passes (6/6); `go tool task check` passes (gofmt, go vet, all package tests, cardtown lint --all); `go tool task sim` passes (200 games, P0 79.5% / P1 18.5% / draws 2.0%, Path 36/50 cards executable); `TestStarterSet_Executable` and `pkg/sim` coverage tests pass cleanly. Set to `review`.

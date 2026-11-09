@@ -417,6 +417,27 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Macabre Dancers": {
+		Text: []string{
+			"Unbowed: Heal 2.",
+			"Cornered: Resistant 1.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDamaged,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpHeal,
+							Subject: ability.SubjectSelf,
+							Amount:  ability.Value{N: 2},
+						},
+					},
+				},
+			},
+		},
+		Cornered: ability.CorneredKeywords{Resistant: 1},
+	},
 	"Necropolis Hunt": {
 		Text: []string{"When this unit is killed, deal damage equal to its power to chosen non-Headquarters asset."},
 		Triggers: []ability.Trigger{
