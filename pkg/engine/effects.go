@@ -175,7 +175,7 @@ func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
 		dealer = ds[0]
 		src = dealer
 	}
-	n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, dealer)
+	n := g.value(r.it.Source, st.Amount, dealer)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		g.dealDamage(src, a, n, false)
@@ -186,7 +186,7 @@ func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
 // stepHeal removes damage from each asset the step acts on. Its event's Amount is
 // the damage actually removed.
 func (g *Game) stepHeal(r *resolution, st ability.Step) int {
-	n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
+	n := g.value(r.it.Source, st.Amount, nil)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		before := a.Damage
@@ -198,7 +198,7 @@ func (g *Game) stepHeal(r *resolution, st ability.Step) int {
 
 // stepAddArmor gives each asset the step acts on Armor.
 func (g *Game) stepAddArmor(r *resolution, st ability.Step) int {
-	n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
+	n := g.value(r.it.Source, st.Amount, nil)
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		a.Armor += n
@@ -224,7 +224,7 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 	total := 0
 	for _, pid := range stepPlayers(r.it, st) {
 		before := len(g.Players[pid].Deck)
-		take(pid, g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil))
+		take(pid, g.value(r.it.Source, st.Amount, nil))
 		total += before - len(g.Players[pid].Deck)
 	}
 	return total
@@ -235,7 +235,7 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
-		n := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil)
+		n := g.value(r.it.Source, st.Amount, nil)
 		a.TempPower += n
 		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power until end of turn", a, n)
 	}
@@ -250,7 +250,7 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 // stepDiscard has each step player discard Amount cards of their choice from
 // their own hand (discardFromHand). It returns how many cards they discarded.
 func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
-	n, total := g.value(r.it.Controller, r.it.Source, r.it.Inst, st.Amount, nil), 0
+	n, total := g.value(r.it.Source, st.Amount, nil), 0
 	for _, pid := range stepPlayers(r.it, st) {
 		total += len(g.discardFromHand(pid, n, false))
 	}
@@ -336,14 +336,12 @@ func (g *Game) slotAssets(r *resolution, i int) []*Asset {
 	return out
 }
 
-// value reads v as a step resolves (SVY-R10), or wherever no stack item exists,
-// such as a cost check. It takes the three things a read may need: the controller
-// and source instance are for a count, which no Value reads yet. With a nil
-// dealer, source power is the source's effective power if it is on the
-// battlefield, else the effective power recorded as it left (FR-ZON-004), else 0.
-// With a chosen dealer it is that asset's current power, never a last-known value
-// (SVY-R27).
-func (g *Game) value(controller PlayerID, source int, inst *Instance, v ability.Value, dealer *Asset) int {
+// value reads v as a step resolves (SVY-R10), for the ability whose source asset
+// has the ID source. With a nil dealer, source power is the source's effective
+// power if it is on the battlefield, else the effective power recorded as it left
+// (FR-ZON-004), else 0. With a chosen dealer it is that asset's current power,
+// never a last-known value (SVY-R27).
+func (g *Game) value(source int, v ability.Value, dealer *Asset) int {
 	if v.From != ability.ValueSourcePower {
 		return v.N
 	}
