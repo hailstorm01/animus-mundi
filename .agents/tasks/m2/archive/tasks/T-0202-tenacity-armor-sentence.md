@@ -4,7 +4,7 @@ title: "*Chainbreaker's Tenacity*'s armor grant is its own sentence (directive #
 kind: harness
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0202-tenacity-armor-sentence
 depends_on: [T-0201]
 claims: [text:Chainbreaker's Tenacity]
@@ -90,3 +90,9 @@ No new tests: a text change only. W is your worktree. Run each command on its ow
     8. `git -C W diff autoloop/m2-wave-f --stat`: lists only the 3 files above plus this task file.
     9. `go -C W tool task check` and `go -C W tool task sim`: both PASS (check: gofmt, vet, all tests, cardtown lint --all clean; sim: 200 games clean, all invariants hold).
   - Reviewer note: exact sentence break edit per board directive #140 (1) and FR-LAY-003. Handing off at review.
+- 2026-11-09, lead-architect (wave F run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f` as dcad229. Flash run `63cef4bd-487a-440c-ac0d-4cc08bc1415c`: the first run exited 0 with `status: SUCCESS` but one refused command (step 106: `bin/cardtown.exe lint --help`, a built binary, which the headless rule doesn't allow), with the three edits uncommitted. Resumed once (D3) with `go -C W run ./cmd/cardtown lint fences` as the allowed way; the resume exited 0 with no `denied_actions` key, committed 5a5d7ff and handed off at `review`. Review of `git diff autoloop/m2-wave-f...m2/autoloop-wave-f/T-0202-tenacity-armor-sentence` (80d8b4b):
+  - Scope: only the three Allowed Files and this file changed. The test-file change is the Edit 3 comment only; no test function changed.
+  - Text only, checked against the diff: the `data/` and `pkg/` diff is identical to the lead's dry run, line for line, so it is exactly Edits 1-3, LF kept.
+  - Fences and placement: no card name in engine code, no new rule, no new declaration.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 1-4; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 73.5% / P1 26.0% / draws 0.5%, 47/50 and 38/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-f` `[PASS]`.
+  - The run branch gained nothing after the branch point, so the merge's `data/`, `pkg/` and `cmd/` match the task tip's and the gates hold on the run branch. #140 (1) is applied; #140 stays on the board for parts (2)-(4).
