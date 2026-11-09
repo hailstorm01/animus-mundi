@@ -4,7 +4,7 @@ title: "`value` takes only what it reads, and the docs say what wave E built (di
 kind: harness
 tier: flash
 wave: E.1
-status: review
+status: done
 branch: m2/autoloop-wave-e.1/T-0201-value-reads-source-only
 depends_on: [T-0200]
 claims: [signature:Game.value, comments:pkg/engine/doc.go]
@@ -109,3 +109,9 @@ No new tests: a pure move plus comments, so no `test(T-0201)` commit. W is your 
     - Case 6: `go -C W run ./cmd/cardtown lint fences` passed with `[PASS] Package code is free of card names, invalid markers and disallowed imports.`.
     - Case 7: `git -C W diff autoloop/m2-wave-e.1 --stat` listed only `pkg/engine/doc.go`, `pkg/engine/effects.go`, and this task file.
     - Case 8: `go -C W tool task check` passed (fmt, vet, tests, full cardtown linter suite all clean); `go -C W tool task sim` passed (200 games, all invariants holding).
+- 2026-11-09, lead-architect (wave E.1 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-e.1` as 7a4835a. Flash run `c4c17e67-4f48-434b-b624-527d685d8812`: exit 0, `status: SUCCESS`, no refusals (no `denied_actions` key; the transcript has no step with `"status":"ERROR"` and no `permission check failed` match; `.err` holds only agy's "root agent idle" notice). Review of `git diff autoloop/m2-wave-e.1...m2/autoloop-wave-e.1/T-0201-value-reads-source-only` (7a5dd80):
+  - Scope: only `pkg/engine/effects.go`, `pkg/engine/doc.go` and this file changed. No test file changed.
+  - Pure move plus comments, checked against the diff: the `pkg/` diff is identical to the lead's dry run, line for line, so it is exactly Edits 1-4. `value`'s body is unchanged and still reads only `source`, `v` and `dealer`.
+  - Fences and placement: no card name, no new rule, no new declaration.
+  - Re-run by the reviewer in a scratch worktree of the task branch, all as expected: cases 3-7; `gofmt -l` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 73.5% / P1 26.0% / draws 0.5%, 47/50 and 38/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-e.1` `[PASS]`.
+  - The merge's `pkg/` and `cmd/` match the task tip's, because the run branch gained nothing after the branch point, so the gates hold on the run branch. Directives #138 and #139 are applied and archived.
