@@ -23,3 +23,4 @@ Inputs, Tests and Allowed Files are written against the code of the day before t
 
 ## Log
 - 2026-11-09 lead-architect (wave F run, session 2): split off T-0203 under the D2 size rule; `queued` on it.
+- 2026-11-09 lead-architect (wave F run, session 4): not written yet, stays `queued`. Its Covers left the departed-source reading of "same zone" to FRD 01, and FRD 01 settles neither a source that moved to the other zone nor one that left the battlefield before the second target check (`FR-TGT-003`, `FR-ZON-004`). Ruling question queued on `main` in `docs/design/outcomes/2026-11-09-wave-f-same-zone-source.md` (111c8fb), design note Open Question 20. Write Inputs, Tests and Allowed Files once its `Status:` reads `applied`.
