@@ -4,7 +4,7 @@ title: OpDeployFree, a free deploy from a discard pile during resolution (wave F
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0208-deploy-free
 depends_on: []
 claims: [shape:OpDeployFree (ability.OpDeployFree; stepDeployFree; the free-deploy zone decision DecideZone)]
@@ -71,3 +71,4 @@ In a new file `pkg/engine/deploy_free_test.go`, with a synthetic Maneuver (`mane
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 8): written against the run branch at 5458b2e, the first of wave F's free deploys (*Reaver's Rush*, `FR-TRN-003a`). Searched `pkg/engine` and the task archive for an existing equivalent: `deployCard` (#95, T-0146) is the one deploy, reused here; no step deploys a card, and no decision chooses a zone. *Reaver's Rush* needs a second shape, a power criterion, so under the D2 size rule it splits into this task, T-0209 (the power criterion, `queued`) and T-0210 (*Reaver's Rush*, card, flash, `queued`). Set to `tests`.
+- 2026-11-10 rules-test-author: wrote `pkg/engine/deploy_free_test.go` (8 tests, one with two subtests): `TestFR_TRN_003a_DeployFreeEntersFromDiscardWithoutCosts`, `TestFR_TRN_003a_DeployFreeAsksZoneWhenBothPrinted`, `TestFR_MOD_001_DeployFreeZoneTimeoutEntersReserves`, `TestFR_TRN_003a_DeployFreeExplicitZoneOverridesPrinted`, `TestFR_TRN_003a_DeployFreeFiresDeployTriggersNotMoves`, `TestFR_TRN_003a_DeployFreeKeepsDeploysExhausted`, `TestFR_TGT_003_DeployFreeTargetLeftPileDeploysNothing`, `TestFR_TRN_003a_DeployFreeSkipsUnsupportedCard`. Helpers requested: none (small builders `dfManeuver`, `dfScene`, `dfUnit`, `dfZoneAsks` live in the test file). `go vet` fails only on the missing `ability.OpDeployFree` and `DecideZone`; `cardtown lint rules` passes. Left out: Structure cards and a card printing neither zone (skipped by the shape, but FRD 01 does not pin the case beyond the Reserves/Main Theater rule), and several cards in one step (no FRD 01 ordering rule).
