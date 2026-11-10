@@ -4,7 +4,7 @@ title: The "in that zone" filter criterion, read against the locked zone (wave F
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0206-that-zone-criterion
 depends_on: [T-0205]
 claims: [shape:"in that zone" filter criterion (ability.Filter relative-zone criterion; matchesFilter and legalTarget read the item's locked zone)]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/that_zone_test.go`, with synthetic units printing a `H
 - 2026-11-10 lead-architect (wave F run, session 5): split off T-0205 under the D2 size rule (#141 (1)); `queued` on it.
 - 2026-11-10 lead-architect (wave F run, session 6): Inputs, Shape, Tests and Allowed Files written against the run branch at dd65d01 (#141 (1), second half). Set to `tests`.
 - 2026-11-10 rules-test-author: wrote pkg/engine/that_zone_test.go: TestFR_TGT_001_ThatZoneOffersLockedZoneOnly (Main Theater and Reserves locks), TestFR_TGT_003_ThatZoneTargetLeftZoneIsIllegal, TestFR_TGT_003_ThatZoneTargetOutlivesSource (source moved back; source left), TestFR_TGT_001_ThatZoneAllStepActsOnLockedZone (both locks), TestFR_TGT_001_ThatZonePickOffersLockedZone, TestFR_TGT_001_ThatZoneWithoutLockMatchesNothing. Helpers requested: none (local builders prefixed tz in the test file). Vet fails only on the missing ability.ZoneRefThat / Filter.ZoneRef. Left out: nothing. Note: the pick test uses an OpKill SubjectPick step (UpTo 1) answered with a timeout, so no unit dies; it asserts only the offered options.
+- 2026-11-10 lead-architect (wave F run, session 6): tests reviewed (6ea761f, 6 tests, three with two subtests): each matches the Tests list, `SVY-R45`, `FR-ZON-001` and `FR-TGT-003` (the watcher itself is offered, as the Armorer may choose itself); set to `ready`.
