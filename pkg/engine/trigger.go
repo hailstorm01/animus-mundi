@@ -46,7 +46,14 @@ func (g *Game) fireDeploy(a *Asset) { g.fireHook(a, ability.HookDeploy) }
 
 // fireMoved buffers a's own move triggers (self hook only). moveOnBattlefield
 // calls it after a is placed in its new zone (SVY-R1, FR-ZON-002).
-func (g *Game) fireMoved(a *Asset) { g.fireHook(a, ability.HookMoves) }
+// Each trigger locks the zone a moved to, its own value, fixed by the event (SVY-R45).
+func (g *Game) fireMoved(a *Asset) {
+	n := len(g.pending)
+	g.fireHook(a, ability.HookMoves)
+	for i := n; i < len(g.pending); i++ {
+		g.pending[i].locked = &LockedZone{Zone: a.Zone, Player: a.Controller}
+	}
+}
 
 // fireKilled buffers a's own death triggers. The deathSweep calls it before a
 // leaves the battlefield, so the controller is a's last-known controller. A

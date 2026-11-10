@@ -4,7 +4,7 @@ title: A zone locked on the stack item, first a move's destination (wave F shape
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: review
 branch: m2/autoloop-wave-f/T-0205-locked-zone
 depends_on: [T-0203]
 claims: [shape:locked zone on the stack item (engine.LockedZone, StackItem.Locked, placement.locked; fireMoved locks the move's destination)]
@@ -61,3 +61,6 @@ In a new file `pkg/engine/locked_zone_test.go`, with synthetic units printing a 
 - 2026-11-09 lead-architect (wave F run, session 2): split off T-0203 under the D2 size rule; `queued` on it.
 - 2026-11-09 lead-architect (wave F run, session 4): not written yet, stays `queued`. Its Covers left the departed-source reading of "same zone" to FRD 01, and FRD 01 settles neither a source that moved to the other zone nor one that left the battlefield before the second target check (`FR-TGT-003`, `FR-ZON-004`). Ruling question queued on `main` in `docs/design/outcomes/2026-11-09-wave-f-same-zone-source.md` (111c8fb), design note Open Question 20. Write Inputs, Tests and Allowed Files once its `Status:` reads `applied`.
 - 2026-11-10 lead-architect (wave F run, session 5): the outcome reads `Status: applied: FRD 01 v3.23`, so #141 is `open: before T-0205`. Rewritten for #141 (1): the Armorer's shape is one zone locked on the stack item plus a filter criterion that reads it, seven non-test files, so it splits under the D2 size rule into this task (the stored zone and the move-destination setter), T-0206 (the "in that zone" criterion, `queued`) and T-0207 (*Broken Horn Armorer*, card, `queued`). Renamed from `T-0205-broken-horn-armorer.md`. Set to `tests`.
+- 2026-11-10 rules-test-author: tests written in pkg/engine/locked_zone_test.go: TestFR_TGT_001_MoveLocksMainTheater, TestFR_TGT_001_MoveLocksOwnReserves, TestFR_TGT_001_EachMoveLocksItsDestination, TestFR_TGT_001_LockedZoneOutlivesSource (subtests: source leaves before flush; source moves again after flush), TestFR_TGT_001_NoLockWithoutMove. Helpers requested: none (small helpers flushedItems and wantLocked live in the test file). `go vet` fails only on the missing StackItem.Locked field; `cardtown lint rules` passes. Left out: nothing. Status set to tests-review.
+- 2026-11-10 lead-architect (wave F run, session 5): tests reviewed (60ae12a, 5 tests, one with two subtests): each matches the Tests list and `SVY-R45`, `FR-ZON-001`; set to `ready`.
+- 2026-11-10 kernel-engineer: implemented. Added `LockedZone` and `StackItem.Locked` (stack.go), `placement.locked` copied by `stackItem` (placement.go), and `fireMoved` now locks `LockedZone{Zone: a.Zone, Player: a.Controller}` on each trigger it buffers from index n on, one fresh value each, as `fireCombatKill` marks its own (trigger.go). Reuse: `fireHook` and the pending-index marking idiom of `fireCombatKill`; no new shape. Ran: the T-0205 tests (ok), `go tool task check` (exit 0), `go tool task sim` (exit 0), `go tool task sim-compare -- autoloop/m2-wave-f` (byte-identical). Reviewer: nothing reads `Locked` yet.
