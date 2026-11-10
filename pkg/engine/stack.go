@@ -16,6 +16,14 @@ const (
 	StackManeuver // an enacted Maneuver: runs Effect's steps for Controller, then Inst goes to its owner's discard pile (FR-MNV-001)
 )
 
+// LockedZone is the zone a stack item's source-relative filters read, locked
+// once (SVY-R44, SVY-R45). Player is the owner of a Reserves or Headquarters
+// Zone; it is unused for the shared Main Theater (FR-ZON-001).
+type LockedZone struct {
+	Zone   Zone
+	Player PlayerID
+}
+
 // StackItem is one entry on the shared LIFO Resolution Stack (FR-QUE-001).
 type StackItem struct {
 	Kind       StackKind
@@ -31,6 +39,7 @@ type StackItem struct {
 	Chosen  [][]int         // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
 	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
 	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed trigger or an activated ability
+	Locked  *LockedZone     // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45); nil if it locked none
 }
 
 // PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so

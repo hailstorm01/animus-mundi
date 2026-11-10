@@ -19,13 +19,14 @@ type placement struct {
 	inst       *Instance // source card instance, tracked by identity (FR-ZON-004)
 	label      string
 	costs      []ability.Cost // costs paid with this placement: a Maneuver's additional costs (FR-TRN-003a) or an activated ability's (FR-ACT-001); a trigger has none
+	locked     *LockedZone    // zone locked for source-relative filters (SVY-R44, SVY-R45); nil if none
 	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
 }
 
 // stackItem builds the item pl goes on the stack as: its kind, and the
 // controller, source and instance pl already holds.
 func (pl placement) stackItem(kind StackKind) *StackItem {
-	return &StackItem{Kind: kind, Controller: pl.controller, Source: pl.source, Inst: pl.inst}
+	return &StackItem{Kind: kind, Controller: pl.controller, Source: pl.source, Inst: pl.inst, Locked: pl.locked}
 }
 
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
