@@ -44,6 +44,10 @@ func (p sourcePos) compare(q sourcePos) int {
 // is a's controller now. They wait for the flush after the item's sweep.
 func (g *Game) fireDeploy(a *Asset) { g.fireHook(a, ability.HookDeploy) }
 
+// fireMoved buffers a's own move triggers (self hook only). moveOnBattlefield
+// calls it after a is placed in its new zone (SVY-R1, FR-ZON-002).
+func (g *Game) fireMoved(a *Asset) { g.fireHook(a, ability.HookMoves) }
+
 // fireKilled buffers a's own death triggers. The deathSweep calls it before a
 // leaves the battlefield, so the controller is a's last-known controller. A
 // face-down asset fires nothing (FR-ZON-004).
@@ -87,7 +91,7 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != a.Controller) {
 			continue
 		}
-		if hook == ability.HookDeploy && !deployedTo(a, t.ToZone) {
+		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !deployedTo(a, t.ToZone) {
 			continue
 		}
 		// Cornered is an enqueue gate: checked here, when the event happens,

@@ -201,6 +201,7 @@ func (g *Game) removeFromBattlefield(a *Asset) {
 func (g *Game) moveOnBattlefield(a *Asset, to Zone) {
 	g.removeFromBattlefield(a)
 	g.placeOnBattlefield(a, to)
+	g.fireMoved(a)
 }
 
 // newAsset builds the asset inst becomes as it enters the battlefield under
@@ -233,7 +234,7 @@ func (g *Game) placeOnBattlefield(a *Asset, zone Zone) {
 }
 
 // deployedTo reports whether a is in zone z now, which for a deploy trigger is
-// the zone its deploy put it in. ZoneAny always holds.
+// the zone its deploy or move put it in. ZoneAny always holds.
 func deployedTo(a *Asset, z ability.Zone) bool {
 	if to, ok := battlefieldZone(z); ok {
 		return a.Zone == to
