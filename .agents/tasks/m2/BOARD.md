@@ -35,6 +35,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0208 | OpDeployFree, a free deploy from a discard pile during resolution (wave F shape, sonnet) | tests |
 | T-0209 | A stat criterion in filters, "with power N or less" (wave F shape, sonnet) | queued |
 | T-0210 | Reaver's Rush (wave F deck card, flash; #140 (4)) | queued |
