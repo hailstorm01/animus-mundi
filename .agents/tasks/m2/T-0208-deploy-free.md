@@ -4,7 +4,7 @@ title: OpDeployFree, a free deploy from a discard pile during resolution (wave F
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0208-deploy-free
 depends_on: []
 claims: [shape:OpDeployFree (ability.OpDeployFree; stepDeployFree; the free-deploy zone decision DecideZone)]
@@ -76,3 +76,4 @@ In a new file `pkg/engine/deploy_free_test.go`, with a synthetic Maneuver (`mane
   1. A single legal pile target is chosen without a question: `choose` takes the sole-answer fast path ([choice.go:104-109](../../../pkg/engine/choice.go); FR-MOD-001 §1, pinned by `TestFR_MOD_001_SinglePileTargetIsNotAsked`). With one card in the pile, the leading `Answer{Picks: []int{0}}` that `dfScene` scripts for the target, and that `TestFR_TRN_003a_DeployFreeFiresDeployTriggersNotMoves` and `TestFR_TGT_003_DeployFreeTargetLeftPileDeploysNothing` script directly, is never used for the target: the `DecideZone` takes it instead. So `TestFR_TRN_003a_DeployFreeAsksZoneWhenBothPrinted` gets Reserves on a correct build and fails, and `TestFR_MOD_001_DeployFreeZoneTimeoutEntersReserves` passes without ever timing out. Drop that leading answer everywhere: script only the decisions that are actually asked (none where no zone is asked, `s.script(0)`), so the chooser's past-the-end error also catches an unexpected question.
   2. In `TestFR_MOD_001_DeployFreeZoneTimeoutEntersReserves` and `TestFR_TRN_003a_DeployFreeAsksZoneWhenBothPrinted`, also check that the `DecideZone` is the only decision player 0 was asked (`len(s.asked(0)) == 1`), so the zone answer can't go to another question.
   The rest stands: each test matches the Tests list and `FR-TRN-003a`, `SVY-R1`, `SVY-R43`. A Structure card is not skipped by the shape (it says Unit or Structure); no test for it is needed.
+- 2026-11-10 rules-test-author: fixed review notes 1 and 2 in `pkg/engine/deploy_free_test.go`. (1) Dropped the leading target answer from `dfScene` and scripted `s.script(0)` in the deploy-triggers and target-left-pile tests, so only asked decisions are scripted. (2) The zone-asked and zone-timeout tests now also check player 0 was asked exactly one decision. Back to `tests-review`.

@@ -26,9 +26,9 @@ func dfManeuver(req, tac int, to ability.Zone) *Card {
 }
 
 // dfScene puts card c into player 0's discard pile and enacts a Maneuver that
-// free-deploys it into to. The scripted answers for seat 0 are the target pick
-// (the only card in the pile) followed by answers. It returns the scene, the
-// card's instance and the Maneuver.
+// free-deploys it into to. Seat 0 is scripted with answers, one per decision
+// actually asked: a single legal pile target is chosen without a question
+// (FR-MOD-001 1). It returns the scene, the card's instance and the Maneuver.
 func dfScene(t *testing.T, c *Card, to ability.Zone, answers ...Answer) (*scene, *Instance, *Instance) {
 	t.Helper()
 	s := newScene(t)
@@ -36,7 +36,7 @@ func dfScene(t *testing.T, c *Card, to ability.Zone, answers ...Answer) (*scene,
 	man := s.give(0, dfManeuver(1, 1, to))
 	p := s.g.Players[0]
 	p.Req, p.Tac = 3, 3
-	s.script(0, append([]Answer{{Picks: []int{0}}}, answers...)...)
+	s.script(0, answers...)
 	s.do(enactAction(man))
 	return s, inst, man
 }
@@ -89,6 +89,9 @@ func TestFR_TRN_003a_DeployFreeAsksZoneWhenBothPrinted(t *testing.T) {
 	// Covers: SVY-R43
 	c := dfUnit("Either", ZoneMainTheater, ZoneReserves)
 	s, _, _ := dfScene(t, c, ability.ZoneAny, Answer{Picks: []int{1}})
+	if n := len(s.asked(0)); n != 1 {
+		t.Errorf("the DecideZone is the only decision player 0 was asked, got %d", n)
+	}
 	asks := dfZoneAsks(s)
 	if len(asks) != 1 {
 		t.Fatalf("player 0 is asked one DecideZone, got %d (FR-TRN-003a 1)", len(asks))
@@ -113,6 +116,10 @@ func TestFR_MOD_001_DeployFreeZoneTimeoutEntersReserves(t *testing.T) {
 	if n := len(dfZoneAsks(s)); n != 1 {
 		t.Fatalf("player 0 is asked one DecideZone, got %d", n)
 	}
+	if n := len(s.asked(0)); n != 1 {
+		t.Errorf("the DecideZone is the only decision player 0 was asked, got %d", n)
+	}
+
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves {
 		t.Errorf("a timed-out free-deploy zone choice enters Reserves (SVY-R43, FR-MOD-001 6): %v", a)
@@ -153,7 +160,7 @@ func TestFR_TRN_003a_DeployFreeFiresDeployTriggersNotMoves(t *testing.T) {
 	s := newScene(t)
 	s.inDiscard(0, c)
 	man := s.give(0, dfManeuver(0, 0, ability.ZoneMainTheater))
-	s.script(0, Answer{Picks: []int{0}})
+	s.script(0)
 	deck := len(s.g.Players[0].Deck)
 	s.do(enactAction(man))
 	a := assetOf(s.g, c)
@@ -187,7 +194,7 @@ func TestFR_TGT_003_DeployFreeTargetLeftPileDeploysNothing(t *testing.T) {
 	c := dfUnit("Leaves", ZoneReserves)
 	inst := s.inDiscard(0, c)[0]
 	man := s.give(0, dfManeuver(0, 0, ability.ZoneAny))
-	s.script(0, Answer{Picks: []int{0}})
+	s.script(0)
 	// Once the Maneuver is placed with its target chosen, the card goes to hand.
 	r := &recorder{}
 	moved := false
