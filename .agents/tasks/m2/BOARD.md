@@ -34,6 +34,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0203 | The moves-zone hook, for Chainbreaker Phalanx and Broken Horn Armorer (wave F shape, sonnet) | tests |
 | T-0204 | Chainbreaker Phalanx (wave F card, flash) | queued |
 | T-0205 | A "same zone" filter, first card Broken Horn Armorer (wave F shape, sonnet) | queued |

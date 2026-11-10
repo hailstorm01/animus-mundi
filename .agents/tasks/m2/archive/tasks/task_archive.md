@@ -206,3 +206,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0200 | Hand-active cost reduction, first card Boneyard Amalgam (wave E shape, sonnet) | done |
 | T-0201 | `value` takes only what it reads, and the docs say what wave E built (directives #138 and #139, harness, flash, pure move) | done |
 | T-0202 | *Chainbreaker's Tenacity*'s armor grant is its own sentence (directive #140 (1), harness, flash, text only) | done |
+| T-0203 | The moves-zone hook, for Chainbreaker Phalanx and Broken Horn Armorer (wave F shape, sonnet) | done |
