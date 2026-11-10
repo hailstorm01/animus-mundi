@@ -200,6 +200,41 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Chainbreaker Phalanx": {
+		Text: []string{"Whenever this unit moves to the Main Theater, you may move chosen allied unit from your Reserves to the Main Theater. That unit gains 2 armor."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:     ability.HookMoves,
+				ToZone:   ability.ZoneMainTheater,
+				Optional: true,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+								Zone:       ability.ZoneReserves,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpMoveZone,
+							To:      ability.ZoneMainTheater,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+						{
+							Op:      ability.OpAddArmor,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Sappers": {
 		Text: []string{"When this unit deploys, deal 1 damage to chosen structure or Headquarters."},
 		Triggers: []ability.Trigger{
