@@ -180,6 +180,29 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Broken Horn Armorer": {
+		Text: []string{"Whenever this unit moves to a new zone, chosen asset in that zone gains 1 armor."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookMoves,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{ZoneRef: ability.ZoneRefThat},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpAddArmor,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Chainbreaker Irregulars": {
 		Text: []string{"Unbowed: Draw a card, then discard a card."},
 		Triggers: []ability.Trigger{
