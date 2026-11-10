@@ -4,7 +4,7 @@ title: Broken Horn Armorer (wave F deck card, flash; #141 (2))
 kind: card
 tier: flash
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0207-broken-horn-armorer
 depends_on: [T-0206]
 claims: [card:Broken Horn Armorer]
@@ -61,3 +61,4 @@ In a new file `pkg/engine/cards_path_armorer_test.go`, from the CSV text, loadin
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 5): split off T-0205 under the D2 size rule (#141 (2)); `queued` on T-0206.
 - 2026-11-10 lead-architect (wave F run, session 7): written against a5f66ec, with the lead's probe above. No `main` commits to sync, and the scratch folder was empty. Board read twice (D2.0): #140 is `open: before` the *Battle Trance* task only, #141 is `open` with (2) in this task, and no other `open: before` directive applies. Waiting triggers checked, none fired: #6, #7 (no mode change), #15 (no turn hook), #71 (no each-player effect), #91 (2) (no mode cost), #106 (no criteria search), #120 (no mandatory discard cost), #128 (no discard deploy), #136 (no off-battlefield trigger), #137 (no keyword grant), #141 (3) (no "in the same zone" card, no aura). Searched `pkg/engine` and the task archive: no new shape; every part of the Definition exists. Set to `tests`.
+- 2026-11-10 rules-test-author: wrote `pkg/engine/cards_path_armorer_test.go` (6 tests, all fail until the card is defined; the file compiles): `TestCard_BrokenHornArmorer_MarchToMainTheaterArmorsChosenAsset`, `_MarchToReservesOffersOwnReserves`, `_DeployFiresNothing`, `_MovedByEffectFires`, `_TargetOutlivesSource` (two subtests), `_TargetLeftZoneIsIllegal`. Reuses `tzScript`, `tzWantOffered`, `tzWantArmor` (that_zone_test.go) and `phalanxChooser` (cards_path_phalanx_test.go). Helpers requested: none. Cases left out: none. Set to `tests-review`.
