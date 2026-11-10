@@ -118,6 +118,7 @@ const (
 	HookDamaged                    // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
 	HookExhausted                  // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
 	HookCombatKill                 // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
+	HookMoves                      // this unit moved to a new battlefield zone, by March or by a step that moves it (OpMoveZone); entering the battlefield, by any deploy, is not moving (SVY-R1, FR-ZON-002)
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.
@@ -156,7 +157,7 @@ func Aggressive(n int) Trigger {
 type Trigger struct {
 	Hook     Hook
 	Turn     TurnOwner
-	ToZone   Zone    // HookDeploy only: fires only if the asset was deployed into this zone
+	ToZone   Zone    // HookDeploy and HookMoves only: fires only if the asset was deployed or moved into this zone
 	Cornered bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
 	Optional bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
 	Keyword  Keyword // the keyword this trigger comes from; zero for a printed ability
