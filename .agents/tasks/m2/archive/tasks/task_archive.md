@@ -209,3 +209,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0203 | The moves-zone hook, for Chainbreaker Phalanx and Broken Horn Armorer (wave F shape, sonnet) | done |
 | T-0204 | Chainbreaker Phalanx (wave F card, flash) | done |
 | T-0205 | A zone locked on the stack item, first a move's destination (wave F shape, sonnet; #141 (1)) | done |
+| T-0206 | The "in that zone" filter criterion, read against the locked zone (wave F shape, sonnet; #141 (1)) | done |

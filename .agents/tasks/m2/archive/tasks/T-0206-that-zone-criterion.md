@@ -4,7 +4,7 @@ title: The "in that zone" filter criterion, read against the locked zone (wave F
 kind: shape
 tier: sonnet
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0206-that-zone-criterion
 depends_on: [T-0205]
 claims: [shape:"in that zone" filter criterion (ability.Filter relative-zone criterion; matchesFilter and legalTarget read the item's locked zone)]
@@ -67,3 +67,4 @@ In a new file `pkg/engine/that_zone_test.go`, with synthetic units printing a `H
 - 2026-11-10 rules-test-author: wrote pkg/engine/that_zone_test.go: TestFR_TGT_001_ThatZoneOffersLockedZoneOnly (Main Theater and Reserves locks), TestFR_TGT_003_ThatZoneTargetLeftZoneIsIllegal, TestFR_TGT_003_ThatZoneTargetOutlivesSource (source moved back; source left), TestFR_TGT_001_ThatZoneAllStepActsOnLockedZone (both locks), TestFR_TGT_001_ThatZonePickOffersLockedZone, TestFR_TGT_001_ThatZoneWithoutLockMatchesNothing. Helpers requested: none (local builders prefixed tz in the test file). Vet fails only on the missing ability.ZoneRefThat / Filter.ZoneRef. Left out: nothing. Note: the pick test uses an OpKill SubjectPick step (UpTo 1) answered with a timeout, so no unit dies; it asserts only the offered options.
 - 2026-11-10 lead-architect (wave F run, session 6): tests reviewed (6ea761f, 6 tests, three with two subtests): each matches the Tests list, `SVY-R45`, `FR-ZON-001` and `FR-TGT-003` (the watcher itself is offered, as the Armorer may choose itself); set to `ready`.
 - 2026-11-10 kernel-engineer: added `ability.ZoneRef` (`ZoneRefNone`, `ZoneRefThat`) and `Filter.ZoneRef`; filter.go: `inLocked`, `matchesFilterAt` (today's body plus the locked-zone check, nil lock matches nothing), `matchesFilter` kept as a nil-lock wrapper (costs.go, replace.go unchanged), `legalTarget` takes `lock` after `src`. Callers pass the lock: `targetDecision` (`pl.locked`), `pickAssets`/`SubjectAll`/second check (`it.Locked`). Reuse: no second matcher; `LockedZone` from T-0205. Ran: `go test ./pkg/engine -run "TestFR_TGT_00[13]_ThatZone"` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-f` byte-identical. Only the four allowed files changed.
+- 2026-11-10 lead-architect (wave F run, session 6): code reviewed (bb895a6): only the four Allowed Files changed, the test commit is untouched, and the locked zone has one check (`inLocked`, called only from `matchesFilterAt`); `costs.go` and `replace.go` keep `matchesFilter`, its nil-lock form. Re-ran the T-0206 tests, `go tool task check`, `go tool task sim` and `go tool task sim-compare -- autoloop/m2-wave-f` (byte-identical) in a review worktree. Approved and merged into `autoloop/m2-wave-f` (09cd2b1). #141 (1) is applied; T-0207 (*Broken Horn Armorer*) is next.
