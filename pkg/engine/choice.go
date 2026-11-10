@@ -19,10 +19,11 @@ const (
 	DecidePick                            // untargeted pick from the battlefield or a discard pile as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
 	DecideReplacement                     // choose which of several replacements applies to one event (FR-REP-001, SVY-R23), asked of the affected asset's controller: same fallback as DecideTarget, the first source in fixed order (SVY-R16), a source's own replacements in listed (printed) order
 	DecideSearch                          // choose a card from your own deck (FR-DEK-001): must choose (SVY-R37), a deck inspection so no fast path; fallback takes the first listed, the top card (SVY-R38)
+	DecideZone                            // choose the zone a free-deployed card enters (FR-TRN-003a 1): fallback takes the first listed, Reserves (SVY-R43)
 )
 
 func (k DecisionKind) String() string {
-	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick", "Replacement", "Search"}[k]
+	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick", "Replacement", "Search", "Zone"}[k]
 }
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -133,7 +134,7 @@ func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
 	case DecideTarget, DecidePick, DecideReplacement:
 		return g.fixedOrderPicks(d)
-	case DecideOrder, DecideMode, DecideSearch:
+	case DecideOrder, DecideMode, DecideSearch, DecideZone:
 		return firstPicks(d, listedOrder(d))
 	case DecideHand:
 		return g.handPicks(d)
