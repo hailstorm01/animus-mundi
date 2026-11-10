@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Blind Defile",
 	"Blindside",
 	"Brigand Highlander",
-	"Broken Horn Armorer",
 	"Devilhorn Scouting Party",
 	"Drifting Concept",
 	"Eerie Remnant",
