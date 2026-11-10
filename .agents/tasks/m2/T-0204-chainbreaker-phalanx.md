@@ -4,7 +4,7 @@ title: Chainbreaker Phalanx (wave F card, flash)
 kind: card
 tier: flash
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0204-chainbreaker-phalanx
 depends_on: [T-0203]
 claims: [card:Chainbreaker Phalanx]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/cards_path_phalanx_test.go`, from the CSV text, loadin
 - 2026-11-09 lead-architect (wave F run, session 2): split off T-0203 under the D2 size rule; `queued` on it.
 - 2026-11-09 lead-architect (wave F run, session 3): T-0203 is `done` (merge c5bc636). Added the `doc.go` hook-list line to Covers, from T-0203's review. It goes here, not in T-0205, so T-0205 stays within four non-test files.
 - 2026-11-09 lead-architect (wave F run, session 4): written against 03d19c7, with the lead's probe above. No `main` commits to sync. Board read twice (D2.0): #140 is `open: before` the *Battle Trance* task only, and no other `open: before` directive applies. Waiting triggers checked, none fired: #6, #7 (no mode change), #15 (no turn hook), #71 (no each-player effect), #91 (2) (no mode cost), #106 (no criteria search), #120 (no mandatory discard cost), #128 (no discard deploy), #136 (no off-battlefield trigger), #137 (no keyword grant). Searched `pkg/engine` and the task archive: no new shape; every part of the Definition exists. Set to `tests`.
+- 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_phalanx_test.go`: TestCard_ChainbreakerPhalanx_MarchMovesChosenUnitAndArmorsIt, _DeclineIsNotPlaced (subtests decline, timeout), _MarchToReservesFiresNothing, _DeployFiresNothing, _OnlyAlliedUnitsInReserves, _ChainsIntoAnotherPhalanx. Helpers requested: none (`phalanxChooser`, `countKind`, `phalanxScene` live in the test file). Left out: no case asserts whether a target question is asked when exactly one legal target exists (SVY-R3 auto-choice), so the chooser answers it if asked. `go vet` clean; the tests fail now because the card is in `NotYetExecutable` (Deploy and March are rejected or fire nothing). Set to `tests-review`.
