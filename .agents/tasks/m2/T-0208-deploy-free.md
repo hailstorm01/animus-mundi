@@ -4,7 +4,7 @@ title: OpDeployFree, a free deploy from a discard pile during resolution (wave F
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0208-deploy-free
 depends_on: []
 claims: [shape:OpDeployFree (ability.OpDeployFree; stepDeployFree; the free-deploy zone decision DecideZone)]
@@ -77,3 +77,4 @@ In a new file `pkg/engine/deploy_free_test.go`, with a synthetic Maneuver (`mane
   2. In `TestFR_MOD_001_DeployFreeZoneTimeoutEntersReserves` and `TestFR_TRN_003a_DeployFreeAsksZoneWhenBothPrinted`, also check that the `DecideZone` is the only decision player 0 was asked (`len(s.asked(0)) == 1`), so the zone answer can't go to another question.
   The rest stands: each test matches the Tests list and `FR-TRN-003a`, `SVY-R1`, `SVY-R43`. A Structure card is not skipped by the shape (it says Unit or Structure); no test for it is needed.
 - 2026-11-10 rules-test-author: fixed review notes 1 and 2 in `pkg/engine/deploy_free_test.go`. (1) Dropped the leading target answer from `dfScene` and scripted `s.script(0)` in the deploy-triggers and target-left-pile tests, so only asked decisions are scripted. (2) The zone-asked and zone-timeout tests now also check player 0 was asked exactly one decision. Back to `tests-review`.
+- 2026-11-10 lead-architect (wave F run, session 8): tests re-reviewed (42d1c18): both notes applied (only asked decisions are scripted, and the zone tests check that the `DecideZone` is the only question); `gofmt -l` is clean on the committed file. Each test matches the Tests list and `FR-TRN-003a`, `SVY-R1`, `SVY-R43`. Set to `ready`.
