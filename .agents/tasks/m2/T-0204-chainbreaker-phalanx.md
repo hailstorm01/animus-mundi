@@ -4,7 +4,7 @@ title: Chainbreaker Phalanx (wave F card, flash)
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0204-chainbreaker-phalanx
 depends_on: [T-0203]
 claims: [card:Chainbreaker Phalanx]
