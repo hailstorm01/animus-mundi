@@ -35,5 +35,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0206 | The "in that zone" filter criterion, read against the locked zone (wave F shape, sonnet; #141 (1)) | queued |
+| T-0206 | The "in that zone" filter criterion, read against the locked zone (wave F shape, sonnet; #141 (1)) | tests |
 | T-0207 | Broken Horn Armorer (wave F deck card, flash; #141 (2)) | queued |
