@@ -97,8 +97,52 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepMoveZone(r, st)
 	case ability.OpSearchDeck:
 		return g.stepSearchDeck(r, st)
+	case ability.OpDeployFree:
+		return g.stepDeployFree(r, st)
 	}
 	return 0
+}
+
+// stepDeployFree puts each card of stepCards, still in its owner's discard
+// pile, onto the battlefield for free under the ability's controller and
+// returns how many it deployed (FR-TRN-003a, FR-CST-001). Only a supported Unit
+// or Structure card goes. The zone is st.To if it names one (FR-TRN-003a 2),
+// else the card's printed zone limited to Reserves and the Main Theater; with
+// both printed the controller chooses, Reserves listed first, and a timeout
+// takes Reserves (SVY-R43). A card printing neither is skipped. It enters
+// through deployCard, so deploy triggers fire and it is not a move (SVY-R1).
+func (g *Game) stepDeployFree(r *resolution, st ability.Step) int {
+	n := 0
+	for _, inst := range g.stepCards(r, st) {
+		c := inst.Card
+		if g.DiscardCard(inst.ID) != inst || (c.Type != TypeUnit && c.Type != TypeStructure) || !c.Supported() {
+			continue
+		}
+		zone, ok := battlefieldZone(st.To)
+		if !ok {
+			res := slices.Contains(c.DeployZones, ZoneReserves)
+			main := slices.Contains(c.DeployZones, ZoneMainTheater)
+			switch {
+			case res && main:
+				d := Decision{Player: r.it.Controller, Kind: DecideZone, Prompt: "Choose the zone to deploy " + c.Name + " into", Min: 1, Max: 1,
+					Options: []Option{{Label: ZoneReserves.String()}, {Label: ZoneMainTheater.String()}}}
+				zone = ZoneReserves
+				if picks := g.choose(d); len(picks) > 0 && picks[0] == 1 {
+					zone = ZoneMainTheater
+				}
+			case res:
+				zone = ZoneReserves
+			case main:
+				zone = ZoneMainTheater
+			default:
+				continue
+			}
+		}
+		g.takeCard(inst)
+		g.deployCard(inst, r.it.Controller, zone)
+		n++
+	}
+	return n
 }
 
 // stepSearchDeck has each step player choose a card from their deck, shuffle
