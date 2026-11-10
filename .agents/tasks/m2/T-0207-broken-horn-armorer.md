@@ -4,7 +4,7 @@ title: Broken Horn Armorer (wave F deck card, flash; #141 (2))
 kind: card
 tier: flash
 wave: F
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f/T-0207-broken-horn-armorer
 depends_on: [T-0206]
 claims: [card:Broken Horn Armorer]
@@ -53,13 +53,14 @@ In a new file `pkg/engine/cards_path_armorer_test.go`, from the CSV text, loadin
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_BrokenHornArmorer`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_BrokenHornArmorer`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 5): split off T-0205 under the D2 size rule (#141 (2)); `queued` on T-0206.
 - 2026-11-10 lead-architect (wave F run, session 7): written against a5f66ec, with the lead's probe above. No `main` commits to sync, and the scratch folder was empty. Board read twice (D2.0): #140 is `open: before` the *Battle Trance* task only, #141 is `open` with (2) in this task, and no other `open: before` directive applies. Waiting triggers checked, none fired: #6, #7 (no mode change), #15 (no turn hook), #71 (no each-player effect), #91 (2) (no mode cost), #106 (no criteria search), #120 (no mandatory discard cost), #128 (no discard deploy), #136 (no off-battlefield trigger), #137 (no keyword grant), #141 (3) (no "in the same zone" card, no aura). Searched `pkg/engine` and the task archive: no new shape; every part of the Definition exists. Set to `tests`.
 - 2026-11-10 rules-test-author: wrote `pkg/engine/cards_path_armorer_test.go` (6 tests, all fail until the card is defined; the file compiles): `TestCard_BrokenHornArmorer_MarchToMainTheaterArmorsChosenAsset`, `_MarchToReservesOffersOwnReserves`, `_DeployFiresNothing`, `_MovedByEffectFires`, `_TargetOutlivesSource` (two subtests), `_TargetLeftZoneIsIllegal`. Reuses `tzScript`, `tzWantOffered`, `tzWantArmor` (that_zone_test.go) and `phalanxChooser` (cards_path_phalanx_test.go). Helpers requested: none. Cases left out: none. Set to `tests-review`.
 - 2026-11-10 lead-architect (wave F run, session 7): tests approved (D4, round 1) against f8ec408. Each test checks the outcome its cited rule gives: `SVY-R1` (a deploy asks nothing), `SVY-R45` with `FR-TGT-001` (the offered targets are exactly the move destination's assets, the Armorer itself and enemy assets included) and `FR-ZON-001` (a move to Reserves offers only its controller's own Reserves), `FR-ZON-002`/`FR-TRG-004` (a move by the Phalanx's effect fires the Armorer), `FR-TGT-003`/`FR-ZON-004` (the locked zone outlives the source; a target that left that zone fizzles). The offered-options checks read the decision put to the player, not engine internals. A lead probe with the Definition, since reverted, passes all six (seven with the subtests), and `go test ./pkg/...` passes. Set to `ready`, dispatching `kernel-engineer` (flash).
+- 2026-11-10 kernel-engineer: added card definition for Broken Horn Armorer in pkg/engine/cards/path.go using HookMoves, Filter.ZoneRefThat, and OpAddArmor (SubjectTarget, amount 1); removed Broken Horn Armorer from NotYetExecutable in pkg/engine/cards/cards.go. Reused shapes: HookMoves (T-0203), ZoneRefThat (T-0206), OpAddArmor (FR-LAY-002). Ran `go test ./pkg/engine -run TestCard_BrokenHornArmorer` (passed), `go tool task check` (all format, vet, test, linter suites passed), `go tool task sim` (clean: Path 42/50 main cards executable, 200 games P0 68.0% / P1 30.5% / draws 1.5%), and `go test ./pkg/engine -run TestStarterSet_Executable` (passed). Set to `review`.
