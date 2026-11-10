@@ -5,7 +5,7 @@
 When this card is put into your discard pile from your hand, you may deploy it from your discard pile for free.","3","1","0","0","UNCOMMON","false"
 "Hammerhand Brigands","UNIT","PATH","Infantry, Hammerhand","1","0","RESERVES","Unbowed: Scratch 1.","2","1","1","2","COMMON","false"
 "Blind Defile","STRUCTURE","PATH","Territory","2","0","MAIN_THEATER","Whenever an opposing unit attacks, you may kill this structure and that attacking unit.","0","2","0","2","COMMON","false"
-"Broken Horn Armorer","UNIT","PATH","Devilhorn, Specialist","2","0","RESERVES","Whenever this unit moves to a new zone, chosen asset in the same zone gains 1 armor.","2","2","1","2","COMMON","false"
+"Broken Horn Armorer","UNIT","PATH","Devilhorn, Specialist","2","0","RESERVES","Whenever this unit moves to a new zone, chosen asset in that zone gains 1 armor.","2","2","1","2","COMMON","false"
 "Chainbreaker Sappers","UNIT","PATH","Specialist, Chainbreaker","2","0","RESERVES","When this unit deploys, deal 1 damage to chosen structure or Headquarters.","3","2","1","2","COMMON","false"
 "Devilhorn Captain","UNIT","PATH","Officer, Devilhorn","2","0","RESERVES","Unbowed: Deal 1 damage to chosen asset in the Main Theater.","2","3","1","2","UNCOMMON","false"
 "Macabre Dancers","UNIT","PATH","Specialist, Reaver","2","2","RESERVES","Unbowed: Heal 2.
