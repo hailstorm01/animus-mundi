@@ -221,7 +221,18 @@ type Filter struct {
 	Scratch    ScratchCompany // ScratchAny (zero) means any unit; else only Scratch Company units, or none
 	Other      bool           // excludes the ability's own source asset ("other")
 	Zone       Zone           // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
+	ZoneRef    ZoneRef        // ZoneRefNone (zero) means no source-relative zone criterion; else only assets in the zone the stack item locked
 }
+
+// ZoneRef is a zone criterion read against the zone a stack item locked, not
+// the source's current zone (FR-TGT-001, FR-TGT-003). A later "in the same zone"
+// (SVY-R44) is another value, read the same way.
+type ZoneRef int
+
+const (
+	ZoneRefNone ZoneRef = iota // the zero value: no source-relative zone criterion
+	ZoneRefThat                // "in that zone": the zone locked as a move's destination (SVY-R45)
+)
 
 // InPile reports whether f chooses cards in a discard pile rather than assets
 // on the battlefield (Zone is ZoneDiscard). Every target, pick and filter check

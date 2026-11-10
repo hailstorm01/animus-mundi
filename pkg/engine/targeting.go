@@ -90,7 +90,7 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 		})
 	} else {
 		d, _ = g.assetDecision(pl.controller, DecideTarget, prompt, t.UpTo, func(a *Asset) bool {
-			return g.legalTarget(pl.controller, pl.source, t.Filter, a)
+			return g.legalTarget(pl.controller, pl.source, pl.locked, t.Filter, a)
 		})
 	}
 	if t.PerDiscard {
@@ -157,7 +157,7 @@ func (g *Game) pileDecision(p PlayerID, kind DecisionKind, prompt string, upTo i
 // asked, and a timeout picks none. With no match nothing is asked.
 func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
 	d, opts := g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
-		return g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a)
+		return g.matchesFilterAt(r.it.Controller, r.it.Source, r.it.Locked, st.Filter, a)
 	})
 	return pickFrom(g, d, opts)
 }
