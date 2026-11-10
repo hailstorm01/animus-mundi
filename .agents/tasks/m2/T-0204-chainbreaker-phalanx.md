@@ -4,7 +4,7 @@ title: Chainbreaker Phalanx (wave F card, flash)
 kind: card
 tier: flash
 wave: F
-status: tests
+status: review
 branch: m2/autoloop-wave-f/T-0204-chainbreaker-phalanx
 depends_on: [T-0203]
 claims: [card:Chainbreaker Phalanx]
@@ -56,12 +56,16 @@ In a new file `pkg/engine/cards_path_phalanx_test.go`, from the CSV text, loadin
 - `pkg/engine/doc.go` (`HookMoves` in the self-hook list)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_ChainbreakerPhalanx`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_ChainbreakerPhalanx`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-09 lead-architect (wave F run, session 2): split off T-0203 under the D2 size rule; `queued` on it.
 - 2026-11-09 lead-architect (wave F run, session 3): T-0203 is `done` (merge c5bc636). Added the `doc.go` hook-list line to Covers, from T-0203's review. It goes here, not in T-0205, so T-0205 stays within four non-test files.
 - 2026-11-09 lead-architect (wave F run, session 4): written against 03d19c7, with the lead's probe above. No `main` commits to sync. Board read twice (D2.0): #140 is `open: before` the *Battle Trance* task only, and no other `open: before` directive applies. Waiting triggers checked, none fired: #6, #7 (no mode change), #15 (no turn hook), #71 (no each-player effect), #91 (2) (no mode cost), #106 (no criteria search), #120 (no mandatory discard cost), #128 (no discard deploy), #136 (no off-battlefield trigger), #137 (no keyword grant). Searched `pkg/engine` and the task archive: no new shape; every part of the Definition exists. Set to `tests`.
+- 2026-11-09 rules-test-author: wrote `pkg/engine/cards_path_phalanx_test.go`: TestCard_ChainbreakerPhalanx_MarchMovesChosenUnitAndArmorsIt, _DeclineIsNotPlaced (subtests decline, timeout), _MarchToReservesFiresNothing, _DeployFiresNothing, _OnlyAlliedUnitsInReserves, _ChainsIntoAnotherPhalanx. Helpers requested: none (`phalanxChooser`, `countKind`, `phalanxScene` live in the test file). Left out: no case asserts whether a target question is asked when exactly one legal target exists (SVY-R3 auto-choice), so the chooser answers it if asked. `go vet` clean; the tests fail now because the card is in `NotYetExecutable` (Deploy and March are rejected or fire nothing). Set to `tests-review`.
+- 2026-11-09 lead-architect (wave F run, session 4): tests approved (D4, round 1) against b080d72. Each test checks the outcome its cited rule gives: `FR-ZON-002` and `SVY-R1` (only a move into the Main Theater fires, a deploy doesn't), `SVY-R9` (asked once on placement; a decline or timeout places nothing and asks no target), `FR-TGT-001` (only allied units in your Reserves are offered), `FR-TGT-003` with `SVY-R25`/`SVY-R26` (the armor lands on the unit the move step just moved), and `FR-TRG-003`/`FR-TRG-004` (B's trigger is placed alone, after A's resolves). No assertion on implementation details. A lead probe with the Definition, since reverted, passes all six and `go test ./pkg/...`. Set to `ready`, dispatching `kernel-engineer` (flash).
+- 2026-11-09 kernel-engineer (flash): added Chainbreaker Phalanx definition to pathDefs in pkg/engine/cards/path.go between Chainbreaker Irregulars and Chainbreaker Sappers with HookMoves, ToZone: ZoneMainTheater, Optional: true, target filter allied unit in Reserves, and steps OpMoveZone to ZoneMainTheater and OpAddArmor (2); removed Chainbreaker Phalanx from NotYetExecutable in pkg/engine/cards/cards.go; added HookMoves after HookCombatKill to the comment in pkg/engine/doc.go. Reused HookMoves from T-0203, existing Optional trigger shape, OpMoveZone, and OpAddArmor. Ran `go test ./pkg/engine -run TestCard_ChainbreakerPhalanx` (pass), `go tool task check` (all vet, tests, and linter checks pass clean), and `go tool task sim` (Path 40/50 main cards executable, P0 70.0% / P1 28.5% / draws 1.5% over 200 games, all invariants held). Set to `review`.
+- 2026-11-09 lead-architect (wave F run, session 4): code reviewed (D5, round 1) against ec22ec0. Scope: only the three Allowed Files changed, and `cards_path_phalanx_test.go` is the same as in b080d72. The definition is the task's Definition, field for field; `doc.go` gains only `HookMoves` in the self-hook list. Fences: no card name in engine code, no new shape, no `OPEN(…)`. Reuse: `HookMoves`/`ToZone`, `Optional`, a zone-filtered target, `OpMoveZone` and `OpAddArmor`, all existing. Gates re-run in the review worktree, all exit 0: `go test ./pkg/engine -run TestCard_ChainbreakerPhalanx`, `go tool task check`, `go tool task sim` (200 games, Path 40/50 main cards executable, P0 70.0% / P1 28.5% / draws 1.5%, the same as the lead's probe). The Flash run (`agy` conversation `40c471a2-c368-48a2-924d-c3ad0fc3940b`) left no denied action. Approved.
