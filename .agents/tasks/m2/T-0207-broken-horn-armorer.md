@@ -4,7 +4,7 @@ title: Broken Horn Armorer (wave F deck card, flash; #141 (2))
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0207-broken-horn-armorer
 depends_on: [T-0206]
 claims: [card:Broken Horn Armorer]
