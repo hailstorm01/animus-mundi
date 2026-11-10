@@ -38,7 +38,7 @@ func (g *Game) resolveAbility(it *StackItem) {
 				}
 				continue
 			}
-			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Effect.Targets[i].Filter, a) {
+			if a := g.Asset(id); a != nil && g.legalTarget(it.Controller, it.Source, it.Locked, it.Effect.Targets[i].Filter, a) {
 				r.chosen[i] = append(r.chosen[i], a)
 			}
 		}
@@ -393,7 +393,7 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 	case ability.SubjectAll:
 		var out []*Asset
 		for _, a := range g.assetsByID() {
-			if g.matchesFilter(r.it.Controller, r.it.Source, st.Filter, a) {
+			if g.matchesFilterAt(r.it.Controller, r.it.Source, r.it.Locked, st.Filter, a) {
 				out = append(out, a)
 			}
 		}
