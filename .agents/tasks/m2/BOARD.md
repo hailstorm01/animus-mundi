@@ -35,4 +35,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0207 | Broken Horn Armorer (wave F deck card, flash; #141 (2)) | queued |
+| T-0207 | Broken Horn Armorer (wave F deck card, flash; #141 (2)) | tests |
