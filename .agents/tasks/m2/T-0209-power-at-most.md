@@ -4,7 +4,7 @@ title: A stat criterion in filters, "with power N or less" (wave F shape, sonnet
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0209-power-at-most
 depends_on: []
 claims: [shape:filter stat criterion (ability.Filter "stat N or less", power first; matchesCard reads a pile card's printed power, matchesFilterAt an asset's effective power)]
@@ -59,3 +59,4 @@ In a new file `pkg/engine/power_at_most_test.go`, with synthetic cards (`unit`, 
 - 2026-11-10 lead-architect (wave F run, session 8): split off T-0208 under the D2 size rule; `queued`. It can go before or after T-0208, and T-0210 needs both.
 - 2026-11-10 lead-architect (wave F run, session 9): Inputs, Shape, Tests and Allowed Files written against the run branch at 78c2fe1. Searched `pkg/engine` and the task archive for an existing stat criterion: none (`ability.Filter` has none, and no "or less" comparison exists). Set to `tests`.
 - 2026-11-10 rules-test-author: wrote pkg/engine/power_at_most_test.go, six tests: TestFR_TGT_001_PowerAtMostOffersPileCardsByPrintedPower, TestFR_TGT_001_PowerAtMostReadsEffectivePowerOnTheBattlefield, TestFR_TGT_003_PowerAtMostTargetCheckedAgainOnResolution, TestFR_TGT_001_PowerAtMostAllStepReadsEffectivePower, TestFR_TGT_001_PowerAtMostPilePickReadsPrintedPower, TestFR_TGT_001_NoStatCriterionIgnoresAtMost. Helpers requested: none. `go vet` fails only on the missing `ability.Filter.Stat`, `AtMost` and `ability.StatPower`; `cardtown lint rules` passes. Asset filters set `Other` so the Source (power 1) stays out of offers. The TargetCheckedAgain test raises the chosen unit's TempPower inside the chooser as it answers the target question (after the options are computed, before resolution). Nothing left out.
+- 2026-11-10 lead-architect (wave F run, session 9): tests reviewed (05298f2, 6 tests): each matches the Tests list, `FR-TGT-001` line 375 (effective power on the battlefield, inclusive bound), `FR-ZON-004` (printed power in a pile) and `FR-TGT-003` (the second check). Probed with the two fields added and no checks: the five criterion tests fail and `NoStatCriterionIgnoresAtMost` passes, as the zero value should. Set to `ready`.
