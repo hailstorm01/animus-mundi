@@ -1008,6 +1008,130 @@ func TestCard_DisorientingPulse_PaysOneTactics(t *testing.T) {
 	}
 }
 
+// Tests for T-0212 (FR-ENT-103, FR-MNV-001, FR-TGT-001, FR-LAY-001,
+// FR-LAY-002, FR-KWD-002h): the Animus Maneuver Forced Mutation, loaded from
+// data/cards. Player 0 enacts; player 1 is the opponent.
+//
+// Forced Mutation: "Turn chosen opposing unit face down. It becomes a Scratch
+// Company unit." Cost 4 Tactics.
+
+func TestCard_ForcedMutation_TurnsChosenOpposingUnitFaceDownInPlace(t *testing.T) {
+	// Covers: FR-ENT-103, FR-MNV-001, FR-LAY-001
+	s := newScene(t)
+	foe := s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, Keywords{Stalwart: true}))
+	foe.Exhausted, foe.Armor = true, 2
+	other := s.put(1, ZoneMainTheater, unit("Other", 1, 3, Keywords{}))
+	id := foe.ID
+	inst := enactFor(s, "Forced Mutation")
+	chooseAsset(s, foe)
+	s.do(enactAction(inst))
+	a := s.g.Asset(id)
+	if a == nil || a.Zone != ZoneMainTheater || a.Controller != 1 {
+		t.Fatalf("the chosen unit stays the same asset in player 1's Main Theater (FR-ENT-103): %v", a)
+	}
+	if !a.FaceDown || !a.Exhausted || a.Armor != 2 {
+		t.Errorf("it is face down and keeps its readiness and Armor: FaceDown %v, Exhausted %v, Armor %d; want true, true, 2 (FR-ENT-103)", a.FaceDown, a.Exhausted, a.Armor)
+	}
+	if got := s.g.Power(a); got != 1 {
+		t.Errorf("effective power = %d, want 1 (FR-LAY-001, FR-ENT-103)", got)
+	}
+	if got := s.g.MaxHealth(a); got != 1 {
+		t.Errorf("effective Maximum Health = %d, want 1 (FR-LAY-001, FR-ENT-103)", got)
+	}
+	if got := s.g.Keywords(a); got != (Keywords{DeploysExhausted: true}) {
+		t.Errorf("effective keywords = %+v, want Deploys Exhausted only (FR-ENT-103)", got)
+	}
+	if other.FaceDown {
+		t.Errorf("the unchosen opposing unit is not turned face down (FR-TGT-001)")
+	}
+	if lastDiscard(s.g.Players[0]) != inst {
+		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
+	}
+	if p := s.g.Players[0]; p.Tac != 1 || p.Req != 3 {
+		t.Errorf("enacting costs 4 Tactics and no Requisition: pool R%d T%d, want R3 T1 (FR-MNV-001)", p.Req, p.Tac)
+	}
+}
+
+func TestCard_ForcedMutation_DamagedTargetIsDestroyed(t *testing.T) {
+	// Covers: FR-ENT-103, FR-LAY-002
+	s := newScene(t)
+	card := unit("Martyr", 3, 4, Keywords{})
+	foe := s.put(1, ZoneMainTheater, card)
+	foe.Damage = 1
+	inst := foe.Inst
+	s.do(enactAction(enactFor(s, "Forced Mutation")))
+	if s.alive(foe) {
+		t.Fatalf("1 damage on a Maximum Health of 1 is lethal: the unit is destroyed in the sweep after the item (FR-ENT-103, FR-LAY-002)")
+	}
+	if lastDiscard(s.g.Players[1]) != inst {
+		t.Errorf("its own card is in player 1's discard pile (FR-LAY-002)")
+	}
+}
+
+func TestCard_ForcedMutation_OnlyOpposingUnitsAreOffered(t *testing.T) {
+	// Covers: FR-TGT-001, FR-KWD-002h
+	s := newScene(t)
+	main := s.put(1, ZoneMainTheater, unit("EMain", 1, 3, Keywords{}))
+	res := s.put(1, ZoneReserves, unit("ERes", 1, 3, Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("EWall", 0, 3, Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	chooseAsset(s, res)
+	s.do(enactAction(enactFor(s, "Forced Mutation")))
+	got := targetOffers(s)
+	if len(got) != 2 || !got[main.ID] || !got[res.ID] {
+		t.Errorf("exactly the two opposing non-Ward units, in either zone, are offered, got refs %v (FR-TGT-001)", got)
+	}
+	for _, a := range []*Asset{st, ward, ally, s.g.Players[0].HQ, s.g.Players[1].HQ} {
+		if got[a.ID] {
+			t.Errorf("%s is not a legal target and must not be offered (FR-TGT-001, FR-KWD-002h)", a)
+		}
+	}
+	if !res.FaceDown || res.Zone != ZoneReserves {
+		t.Errorf("the chosen Reserves unit is face down in Reserves: FaceDown %v, zone %v (FR-ENT-103)", res.FaceDown, res.Zone)
+	}
+	if main.FaceDown {
+		t.Errorf("the Main Theater unit stays face up (FR-TGT-001)")
+	}
+}
+
+func TestCard_ForcedMutation_NotEnactableWithoutLegalTarget(t *testing.T) {
+	// Covers: SVY-R29, FR-MNV-001
+	cases := []struct {
+		name  string
+		setup func(s *scene)
+		want  bool
+	}{
+		{"no units on the battlefield", func(s *scene) {}, false},
+		{"only an opposing Structure", func(s *scene) {
+			s.put(1, ZoneMainTheater, structure("EWall", 0, 3, Keywords{}))
+		}, false},
+		{"only an allied unit", func(s *scene) {
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+		}, false},
+		{"only an opposing Ward unit", func(s *scene) {
+			s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+		}, false},
+		{"one plain opposing unit in Reserves", func(s *scene) {
+			s.put(1, ZoneReserves, unit("Res", 1, 3, Keywords{}))
+		}, true},
+	}
+	for _, c := range cases {
+		s := newScene(t)
+		c.setup(s)
+		inst := enactFor(s, "Forced Mutation")
+		if got := offersEnact(s.g, inst); got != c.want {
+			t.Errorf("%s: Enact offered = %v, want %v (SVY-R29)", c.name, got, c.want)
+		}
+		if !c.want {
+			s.reject(enactAction(inst))
+			if !inHand(s.g.Players[0], inst) {
+				t.Errorf("%s: the card stays in hand (SVY-R29)", c.name)
+			}
+		}
+	}
+}
+
 // Tests for T-0134 (FR-MNV-001, FR-TGT-001, FR-KWD-002d, FR-KWD-002h,
 // FR-REP-004): the Animus Maneuver Conversion Spike, loaded from data/cards.
 // Player 0 enacts; player 1 is the opponent.
