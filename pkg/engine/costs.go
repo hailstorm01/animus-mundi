@@ -116,6 +116,22 @@ func (g *Game) ActivatedCost(a *Asset, i int) (req, tac int, ok bool) {
 	return req, tac, g.otherCostsPayable(activatedPlacement(a.Controller, a, act))
 }
 
+// DiscardDeployCost returns the Requisition and Tactics that deploying inst from
+// its owner's discard pile costs, and whether it may be deployed from there: it
+// is in that pile, prints a discard-active deploy permission (FR-TRN-003), and
+// the permission's and the card's additional costs other than resources can be
+// paid now (FR-TRN-003a). Like ActivatedCost, it checks neither the resources
+// against the pool nor the zone, so a client can plan for a deploy it can't
+// make yet. LegalActions says what can be deployed now.
+func (g *Game) DiscardDeployCost(inst *Instance) (req, tac int, ok bool) {
+	req, tac = g.EffectiveCost(inst)
+	if pileCard(g.Players[inst.Owner], inst.ID, ZoneDiscard) == nil || deployPermission(inst.Card) == nil {
+		return req, tac, false
+	}
+	// No cost depends on the zone, so Reserves stands in for either.
+	return req, tac, g.otherCostsPayable(deployPlacement(inst.Owner, inst, ZoneReserves, ZoneDiscard))
+}
+
 // otherCostsPayable reports whether every cost of pl except its resources can be
 // paid now: exhausting the source needs it Readied (CostExhaustSelf), and a kill
 // or exhaust cost needs at least one option (SVY-R29). A discard cost is always

@@ -677,3 +677,105 @@ func TestReplay_EffectEventsRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+// Tests for T-0215 (directive #128, FR-TRN-003): a deploy from a discard pile
+// replays from its action event's From.
+
+// revenantDeck is a synthetic deck whose units may be deployed from their
+// owner's discard pile by killing an allied unit.
+func revenantDeck() engine.DeckList {
+	hq := &engine.Card{Name: "Revenant HQ", Type: engine.TypeHeadquarters, Power: 3, Health: 20, ReqYield: 3, TacYield: 2,
+		DeployZones: []engine.Zone{engine.ZoneHeadquarters}}
+	u := &engine.Card{Name: "Revenant", Type: engine.TypeUnit, Power: 2, Health: 1, ReqCost: 1, ReqYield: 1, TacYield: 1,
+		DeployZones: []engine.Zone{engine.ZoneReserves, engine.ZoneMainTheater},
+		Ability: &ability.Def{Statics: []ability.Static{{
+			Kind: ability.StaticDeployPermission, ActiveZone: ability.ZoneDiscard,
+			Costs: []ability.Cost{{Kind: ability.CostKill,
+				Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}},
+		}}}}
+	main := make([]*engine.Card, 30)
+	for i := range main {
+		main[i] = u
+	}
+	return engine.DeckList{HQ: hq, Main: main}
+}
+
+var revenantNames = [2]string{"revenant", "revenant"}
+
+func revenantResolve(name string) (engine.DeckList, error) {
+	if name != "revenant" {
+		return engine.DeckList{}, fmt.Errorf("unknown deck %q", name)
+	}
+	return revenantDeck(), nil
+}
+
+func revenantGames(t *testing.T) [][]engine.Event {
+	t.Helper()
+	d := revenantDeck()
+	games, err := play([2]engine.DeckList{d, d}, revenantNames, 30, 7)
+	if err != nil {
+		t.Fatalf("revenant games: %v", err)
+	}
+	return games
+}
+
+// isDeploy reports whether e is a Deploy action event from the pile from names
+// ("" for the hand).
+func isDeploy(e engine.Event, from string) bool {
+	return e.Kind == "action" && e.Detail == "Deploy" && e.From == from
+}
+
+func TestReplay_DiscardDeploysRoundTrip(t *testing.T) {
+	seen := 0
+	for gi, evs := range revenantGames(t) {
+		for _, e := range evs {
+			if isDeploy(e, "Discard") {
+				seen++
+			}
+		}
+		if _, err := eventlog.Replay(evs, len(evs), revenantResolve); err != nil {
+			t.Fatalf("game %d: %v", gi+1, err)
+		}
+	}
+	if seen == 0 {
+		t.Errorf("no Deploy action event with From %q over 30 games", "Discard")
+	}
+}
+
+func TestReplay_DiscardDeployFromAnUnknownZoneIsAnError(t *testing.T) {
+	for _, evs := range revenantGames(t) {
+		for i, e := range evs {
+			if !isDeploy(e, "Discard") {
+				continue
+			}
+			cp := append([]engine.Event{}, evs...)
+			cp[i].From = "Nowhere"
+			_, err := eventlog.Replay(cp, len(cp), revenantResolve)
+			want := fmt.Sprintf("replay diverged at seq %d: unknown zone %q", e.Seq, "Nowhere")
+			if err == nil || !strings.Contains(err.Error(), want) {
+				t.Fatalf("From recorded as Nowhere: error %v, want it to contain %q", err, want)
+			}
+			return
+		}
+	}
+	t.Fatal("no game holds a Deploy event with From Discard")
+}
+
+func TestReplay_DeployWithAnotherFromDiverges(t *testing.T) {
+	for _, evs := range revenantGames(t) {
+		for i, e := range evs {
+			if !isDeploy(e, "") {
+				continue
+			}
+			cp := append([]engine.Event{}, evs...)
+			cp[i].From = "Hand"
+			_, err := eventlog.Replay(cp, len(cp), revenantResolve)
+			want := fmt.Sprintf("replay diverged at seq %d: action event fields", e.Seq)
+			if err == nil || !strings.Contains(err.Error(), want) {
+				t.Fatalf("a hand Deploy recorded with From Hand: error %v, want it to contain %q", err, want)
+			}
+			return
+		}
+	}
+	t.Fatal("no game holds a Deploy event from hand")
+}

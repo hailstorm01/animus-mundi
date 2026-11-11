@@ -4,7 +4,7 @@ title: Replay and ProgressPolicy handle a deploy from a discard pile (wave F har
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: review
 branch: m2/autoloop-wave-f/T-0215-discard-deploy-clients
 depends_on: [T-0214]
 claims: [file:pkg/eventlog/replay.go (actionOf reads Event.From through one zoneNamed; diff compares From), file:pkg/sim/policy.go (playCosts counts discard deploys), export:engine.Game.DiscardDeployCost]
@@ -435,11 +435,32 @@ Then run `gofmt -l pkg cmd`; it must print nothing.
 - `pkg/sim/policy_test.go` (new tests appended only; no existing test changes)
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log, each test failing at the test commit
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes, byte for byte
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log, each test failing at the test commit
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes, byte for byte
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213, split off *Veil Render* under the D2 size rule (D2.4). Depends on T-0214's `Action.From` and `Event.From`.
 - 2026-11-11 lead-architect (wave F run, session 16): wrote the Inputs, Acceptance Cases, Tests and Edits against the run branch at 6f69ee6, and dry-ran them (Inputs). The original Covers needed five non-test files, so under the D2 size rule the play screen's label, with the view's `Inst` on the seat's own discard cards, went to T-0217 (`queued`). `FormatEvent` and the view's log need no change (Inputs). Harness, so it skips `tests` and goes to `ready`; tier `flash`, because the edits and tests are exact and dry-run. Every command here is on the headless allow-list, one per line. Directive #128 stays `open: before T-0216` for T-0217. Next: `kernel-engineer` on Flash.
+- 2026-11-11 kernel-engineer (wave F run, session 17): implemented T-0215.
+  - Test commit c102b21: added pkg/engine/discard_deploy_cost_test.go, appended discard deploy replay tests to pkg/eventlog/replay_test.go, and appended discard deploy budget tests to pkg/sim/policy_test.go. Verified cases 1-5 failed:
+    - Case 1: `go -C W test ./pkg/eventlog -run TestReplay_DiscardDeploysRoundTrip -count=1` -> FAIL (replay diverged at seq 101: the recorded action was rejected: illegal action: card 53 is not in your hand)
+    - Case 2: `go -C W test ./pkg/eventlog -run TestReplay_DiscardDeployFromAnUnknownZoneIsAnError -count=1` -> FAIL (From recorded as Nowhere: error replay diverged at seq 101: the recorded action was rejected: illegal action: card 53 is not in your hand, want it to contain "unknown zone \"Nowhere\"")
+    - Case 3: `go -C W test ./pkg/eventlog -run TestReplay_DeployWithAnotherFromDiverges -count=1` -> FAIL (a hand Deploy recorded with From Hand: error replay diverged at seq 101: the recorded action was rejected: illegal action: card 53 is not in your hand, want it to contain "action event fields")
+    - Case 4: `go -C W test ./pkg/engine -run TestDiscardDeployCost -count=1` -> FAIL (build failed: s.g.DiscardDeployCost undefined)
+    - Case 5: `go -C W test ./pkg/sim -run TestProgress_DiscardDeployBudgets -count=1` -> FAIL (seed 1: R1 from the discard pile is in reach: got Scratch, want a Requisition Generate)
+  - Search for reuse: DiscardDeployCost reuses EffectiveCost, pileCard, deployPermission, deployPlacement, and otherCostsPayable. zoneNamed in replay.go consolidates zone-name resolution for both Zone and From fields. playCosts in policy.go reuses DiscardDeployCost and Card.Supported/DeployZones.
+  - Implementation commit 922247a:
+    - pkg/engine/costs.go: implemented DiscardDeployCost mirroring ActivatedCost.
+    - pkg/eventlog/replay.go: diff and structured compare Event.From; actionOf reads From and Zone through consolidated zoneNamed.
+    - pkg/sim/policy.go: replaced handCosts with playCosts, considering both hand cards and playable discard cards.
+  - Verification & acceptance results:
+    - Case 1: `go -C W test ./pkg/eventlog -run TestReplay_DiscardDeploysRoundTrip -count=1` -> PASS (ok animus-mundi/pkg/eventlog 1.281s)
+    - Case 2: `go -C W test ./pkg/eventlog -run TestReplay_DiscardDeployFromAnUnknownZoneIsAnError -count=1` -> PASS (ok animus-mundi/pkg/eventlog 1.241s)
+    - Case 3: `go -C W test ./pkg/eventlog -run TestReplay_DeployWithAnotherFromDiverges -count=1` -> PASS (ok animus-mundi/pkg/eventlog 1.223s)
+    - Case 4: `go -C W test ./pkg/engine -run TestDiscardDeployCost -count=1` -> PASS (ok animus-mundi/pkg/engine 1.024s)
+    - Case 5: `go -C W test ./pkg/sim -run TestProgress_DiscardDeployBudgets -count=1` -> PASS (ok animus-mundi/pkg/sim 0.663s)
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-f` -> PASS ([PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included)
+    - Case 7: `git -C W diff autoloop/m2-wave-f --stat` -> lists only 6 Allowed Files plus task file
+    - Case 8: `go -C W tool task check` -> PASS (gofmt, go vet, all package tests, all linters clean); `go -C W tool task sim` -> PASS (200 starter playouts, all invariants held).
