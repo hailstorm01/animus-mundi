@@ -155,11 +155,18 @@ func (g *Game) emitAction(a Action) {
 	case ActAttack:
 		e.Source, e.Target = a.Asset, a.Target
 	case ActDeploy, ActEnact:
-		if inst := handCard(g.Players[a.Player], a.Card); inst != nil {
+		from := ZoneHand
+		if a.Kind == ActDeploy {
+			from = a.From
+		}
+		if inst := pileCard(g.Players[a.Player], a.Card, from); inst != nil {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
 		}
 		if a.Kind == ActDeploy { // Zone's zero value is ZoneDeck: an Enact leaves it empty
 			e.Zone = a.Zone.String()
+			if a.From == ZoneDiscard {
+				e.From = a.From.String()
+			}
 		}
 	}
 	g.emit(e)
@@ -232,6 +239,7 @@ type Event struct {
 	Source int    `json:"source,omitempty"` // asset ID
 	Target int    `json:"target,omitempty"` // asset ID
 	Zone   string `json:"zone,omitempty"`   // Zone.String()
+	From   string `json:"from,omitempty"`   // an action event's Deploy origin: "Discard" for a discard deploy, empty for the hand
 	Amount int    `json:"amount,omitempty"` // a place event: stack depth; an Activate action event: the ability's index; heal: the damage removed; armor: the Armor added; power: the power change
 
 	Resource string `json:"resource,omitempty"` // action events: a Generate's "Requisition" or "Tactics"

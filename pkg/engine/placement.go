@@ -65,13 +65,34 @@ func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 
 // deployPlacement is the placement of the card inst that pid deploys to zone,
 // for both its legality check and declaring it: its additional costs are paid
-// with it (FR-TRN-003a).
-func deployPlacement(pid PlayerID, inst *Instance, zone Zone) placement {
+// with it (FR-TRN-003a). From is the pile it comes from: for a discard deploy
+// the permission's costs follow its own (FR-TRN-003).
+func deployPlacement(pid PlayerID, inst *Instance, zone, from Zone) placement {
 	pl := placement{controller: pid, inst: inst, label: inst.Card.Name, zone: zone}
 	if inst.Card.Ability != nil {
 		pl.costs = inst.Card.Ability.ExtraCosts
 	}
+	if from == ZoneDiscard {
+		if perm := deployPermission(inst.Card); perm != nil {
+			pl.costs = slices.Concat(pl.costs, perm.Costs)
+		}
+	}
 	return pl
+}
+
+// deployPermission returns c's first printed deploy permission that is active in
+// the discard pile, or nil: the one reader of it (FR-TRN-003, FR-CST-001).
+func deployPermission(c *Card) *ability.Static {
+	if c.Ability == nil {
+		return nil
+	}
+	for i := range c.Ability.Statics {
+		st := &c.Ability.Statics[i]
+		if st.Kind == ability.StaticDeployPermission && st.ActiveZone == ability.ZoneDiscard {
+			return st
+		}
+	}
+	return nil
 }
 
 // activatedPlacement is the placement of the printed ability act of asset a,

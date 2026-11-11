@@ -44,6 +44,7 @@ type Action struct {
 	Resource Resource // Generate
 	Card     int      // Deploy, Enact: Instance.ID in hand
 	Zone     Zone     // Deploy: declared battlefield zone
+	From     Zone     // Deploy: the pile the card comes from: the hand (the zero value, or ZoneHand) or ZoneDiscard (a deploy permission, FR-TRN-003)
 	Target   int      // Attack: the defender
 	Ability  int      // Activate: index into the asset's Def.Activated
 }
@@ -61,10 +62,10 @@ func (g *Game) Apply(a Action) error {
 	case ActConvert:
 		p.convert()
 	case ActDeploy:
-		inst := g.playFromHand(p, a.Card)
-		g.declare(deployPlacement(a.Player, inst, a.Zone), ability.Effect{}, StackDeploy)
+		inst := g.payAndTake(p, a.Card, a.From)
+		g.declare(deployPlacement(a.Player, inst, a.Zone, a.From), ability.Effect{}, StackDeploy)
 	case ActEnact:
-		inst := g.playFromHand(p, a.Card)
+		inst := g.payAndTake(p, a.Card, ZoneHand)
 		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect, StackManeuver)
 	case ActActivate:
 		as := g.Asset(a.Asset)
@@ -119,22 +120,25 @@ func (g *Game) check(a Action) error {
 			return illegal("conversion needs %d Requisition", ConvertReq)
 		}
 	case ActDeploy:
-		inst, err := g.handPlay(p, a.Card)
+		inst, err := g.canPlay(p, a.Card, a.From)
 		if err != nil {
 			return err
 		}
 		c := inst.Card
+		if a.From == ZoneDiscard && deployPermission(c) == nil {
+			return illegal("%s has no permission to be deployed from the discard pile (FR-TRN-003)", c.Name)
+		}
 		if c.Type != TypeUnit && c.Type != TypeStructure {
 			return illegal("%s cannot be deployed", c.Name)
 		}
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {
 			return illegal("%s cannot be deployed to %s", c.Name, a.Zone)
 		}
-		if !g.placeable(deployPlacement(a.Player, inst, a.Zone), ability.Effect{}) {
+		if !g.placeable(deployPlacement(a.Player, inst, a.Zone, a.From), ability.Effect{}) {
 			return illegal("%s's additional costs cannot be paid (FR-TRN-003a)", c.Name)
 		}
 	case ActEnact:
-		inst, err := g.handPlay(p, a.Card)
+		inst, err := g.canPlay(p, a.Card, ZoneHand)
 		if err != nil {
 			return err
 		}
@@ -181,13 +185,32 @@ func (g *Game) check(a Action) error {
 	return nil
 }
 
-// handPlay returns the card with instance ID id if p may play it from hand:
-// it is in hand, the kernel supports it and p can pay its cost. Deploy and
-// Enact both start here and then check only what is their own.
-func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
-	inst := handCard(p, id)
+// pileCard returns the card with instance ID id in the pile of p that from
+// names: the discard pile, or the hand for ZoneHand and the zero value. It is
+// nil for any other zone, and for a card in another player's pile.
+func pileCard(p *Player, id int, from Zone) *Instance {
+	var pile []*Instance
+	switch from {
+	case ZoneDeck, ZoneHand:
+		pile = p.Hand
+	case ZoneDiscard:
+		pile = p.Discard
+	}
+	for _, inst := range pile {
+		if inst.ID == id {
+			return inst
+		}
+	}
+	return nil
+}
+
+// canPlay returns the card with instance ID id if p may play it from the pile
+// from names: it is there, the kernel supports it and p can pay its cost. Deploy
+// and Enact both start here and then check only what is their own.
+func (g *Game) canPlay(p *Player, id int, from Zone) (*Instance, error) {
+	inst := pileCard(p, id, from)
 	if inst == nil {
-		return nil, illegal("card %d is not in hand", id)
+		return nil, illegal("card %d is not in your %s", id, pileName(from))
 	}
 	c := inst.Card
 	if !c.Supported() {
@@ -200,10 +223,19 @@ func (g *Game) handPlay(p *Player, id int) (*Instance, error) {
 	return inst, nil
 }
 
-// playFromHand finds the card handPlay approved, pays its cost and takes it from
-// hand: what Deploy and Enact do before each goes on in its own way.
-func (g *Game) playFromHand(p *Player, id int) *Instance {
-	inst := handCard(p, id)
+// pileName names the pile from selects, for a message.
+func pileName(from Zone) string {
+	if from == ZoneDiscard {
+		return "discard pile"
+	}
+	return "hand"
+}
+
+// payAndTake finds the card canPlay approved, pays its cost while it is still
+// in its pile and takes it from there: what Deploy and Enact do before each
+// goes on in its own way.
+func (g *Game) payAndTake(p *Player, id int, from Zone) *Instance {
+	inst := pileCard(p, id, from)
 	g.payCost(p, inst)
 	g.takeCard(inst)
 	return inst
@@ -267,6 +299,11 @@ func (g *Game) LegalActions() []Action {
 	for _, inst := range p.Hand {
 		for _, z := range inst.Card.DeployZones {
 			try(Action{Kind: ActDeploy, Player: pid, Card: inst.ID, Zone: z})
+		}
+	}
+	for _, inst := range p.Discard {
+		for _, z := range inst.Card.DeployZones {
+			try(Action{Kind: ActDeploy, Player: pid, Card: inst.ID, Zone: z, From: ZoneDiscard})
 		}
 	}
 	for _, inst := range p.Hand {

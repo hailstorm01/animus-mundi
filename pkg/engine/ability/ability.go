@@ -38,6 +38,32 @@ type Def struct {
 	// CostReduction is the card's own hand-active cost reduction (FR-CST-001),
 	// read by Game.EffectiveCost. It is zero for a card without one.
 	CostReduction CostReduction
+	// Statics lists the printed static abilities, in printed order. Only a
+	// discard-active deploy permission is a kind so far.
+	Statics []Static
+}
+
+// StaticKind enumerates the kinds of printed static ability. It has no default:
+// the zero value is invalid.
+type StaticKind int
+
+const (
+	// StaticDeployPermission is "You may deploy this card from your discard pile
+	// by ...": its owner may deploy it from ActiveZone as a manual Deploy, paying
+	// Costs in addition to its deployment costs (FR-TRN-003, FR-CST-001).
+	StaticDeployPermission StaticKind = iota + 1
+)
+
+// Static is one printed static ability.
+type Static struct {
+	Kind StaticKind
+	// ActiveZone is the zone the card must be in for the ability to apply
+	// (ZoneDiscard for a deploy permission).
+	ActiveZone Zone
+	// Costs are a deploy permission's additional costs, in printed order, paid on
+	// declaration (FR-TRN-003a). Their filters stay battlefield filters, relative
+	// to the payer.
+	Costs []Cost
 }
 
 // CostReduction lowers the card's own Requisition cost while it is in its owner's
