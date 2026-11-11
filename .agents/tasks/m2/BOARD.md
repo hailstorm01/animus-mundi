@@ -36,6 +36,6 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0214](T-0214-deploy-from-discard.md) | A card's own permission to deploy it from its owner's discard pile, with its costs | queued |
+| [T-0214](T-0214-deploy-from-discard.md) | A card's own permission to deploy it from its owner's discard pile, with its costs | tests |
 | [T-0215](T-0215-discard-deploy-clients.md) | Replay, the play screen and ProgressPolicy handle a deploy from a discard pile | queued |
 | [T-0216](T-0216-veil-render.md) | Veil Render, deployed from its owner's discard pile by killing an allied asset | queued |

@@ -20,6 +20,7 @@ Covers (Tests written against the code of the day before it leaves `queued`):
 - From hand it deploys as a plain Unit to Reserves, with no kill.
 - *Allshan's Battle Trance* or *Reaver's Rush*-style free deploys waive the kill (`FR-TRN-003a`'s example) where a printed card can do it today (*Reaver's Rush* can't: power 5).
 - Not legal from the opponent's pile, or with no allied asset to kill.
+- `pkg/engine/doc.go`'s shape list gains a line for `Def.Statics`: a card's own discard-active deploy permission (`ability.StaticDeployPermission`), deployed as an `ActDeploy` with `From: ZoneDiscard` and its `Costs` paid on declaration (`FR-TRN-003`, `FR-TRN-003a`; from T-0214, whose Allowed Files had no room for it).
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213 (D2.4). Directive #128 is `open: before T-0216`, applied by T-0213, T-0214 and T-0215.
