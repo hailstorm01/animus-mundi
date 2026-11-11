@@ -4,7 +4,7 @@ title: Deploy goes through declare, so a deployed card's additional costs are pa
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0213-deploy-declare
 depends_on: []
 claims: [shape:deployPlacement (a deploy's placement; Deploy through declare; placement.zone)]
