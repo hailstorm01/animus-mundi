@@ -4,7 +4,7 @@ title: Forced Mutation, turning a chosen opposing unit face down (wave F deck ca
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0212-forced-mutation
 depends_on: [T-0211]
 claims: [card:Forced Mutation]
