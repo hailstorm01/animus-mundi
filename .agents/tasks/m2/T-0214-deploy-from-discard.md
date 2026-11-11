@@ -4,7 +4,7 @@ title: A card's own permission to deploy it from its owner's discard pile, with 
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0214-deploy-from-discard
 depends_on: [T-0213]
 claims: [shape:discard deploy permission (ability.Static, ability.StaticKind, StaticDeployPermission, Static.ActiveZone and Static.Costs; Def.Statics; deployPermission), field:Action.From, field:Event.From]
@@ -83,3 +83,4 @@ In a new file `pkg/engine/deploy_discard_test.go`. Synthetic cards: a Unit for p
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213, split off *Veil Render* under the D2 size rule (D2.4). Depends on T-0213's deploy placement.
 - 2026-11-10 lead-architect (wave F run, session 14): written in full against the run branch at 7f290cd. Searched `pkg/engine` and the task archive for an existing equivalent: no `Static`, no deploy permission and no `From` exist; T-0213's `deployPlacement` and `declare` are the one declare sequence, and this task extends them. `handPlay` and `playFromHand` become one find, play check and pay-and-take that read the origin, so Deploy and Enact keep sharing them (#128's Fix). `pkg/engine/doc.go`'s shape list would be a fifth non-test file, so its line for `Def.Statics` goes into T-0216's Covers. Set to `tests`.
+- 2026-11-10 rules-test-author: wrote pkg/engine/deploy_discard_test.go (df50f41), 11 tests: TestFR_TRN_003_DiscardDeployPaysItsKillCostAfterThePush, TestFR_TRN_003a_DiscardDeployReplacedKillStaysPaid, TestFR_TRN_003_DiscardDeployNeedsThePermission, TestFR_TRN_003_DiscardDeployOnlyFromYourOwnPile, TestFR_TRN_003_DiscardDeployNeedsAnEmptyStack, TestFR_TRN_003a_DiscardDeployCostsMustBePayable, TestFR_CST_001_HandReductionDoesNotApplyInThePile, TestFR_TRN_003_HandDeployIgnoresThePermission, TestFR_TRN_003_DiscardDeployOfferedForEachZone, TestFR_TRN_003_DeployFromAnotherZoneIsIllegal, TestFR_CST_001_FreeDeployWaivesThePermissionCost. Helpers requested: none (local helpers ddPermission, ddUnit, ddDeploy, ddOffers; reuses dcAssetOf, kcScript, dfManeuver, alliedUnitFilter). The file does not compile until the engineer builds ability.Static, ability.StaticDeployPermission, Def.Statics, Action.From and Event.From (go vet fails on undefined ability.Static, as expected); cardtown lint rules passes. No cases left out. Assumption: the death trigger's up-to-1 target slot is asked as a DecideTarget even with one legal option (zero is also an option).
