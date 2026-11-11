@@ -6,7 +6,7 @@ tier: flash
 wave: F
 status: queued
 branch: m2/autoloop-wave-f/T-0216-veil-render
-depends_on: [T-0213, T-0214, T-0215]
+depends_on: [T-0213, T-0214, T-0215, T-0217]
 claims: [card:Veil Render]
 cards: [Veil Render]
 requirements: [FR-TRN-003, FR-TRN-003a, FR-CST-001]
@@ -24,3 +24,4 @@ Covers (Tests written against the code of the day before it leaves `queued`):
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213 (D2.4). Directive #128 is `open: before T-0216`, applied by T-0213, T-0214 and T-0215.
+- 2026-11-11 lead-architect (wave F run, session 16): T-0215 split under the D2 size rule; the play screen's label went to T-0217, now in `depends_on`.
