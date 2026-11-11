@@ -166,9 +166,9 @@ func TestEffectEvents_MorphLogsTheFaceDownChange(t *testing.T) {
 			want = append(want, a)
 		}
 	}
-	names := make([]string, len(want))
-	for i, a := range want {
-		names[i] = fmt.Sprintf("%s#%d turns face down", a.Printed().Name, a.ID)
+	names := map[int]string{}
+	for _, a := range want {
+		names[a.ID] = fmt.Sprintf("%s#%d turns face down", a.Printed().Name, a.ID)
 	}
 	all := maneuver("Mass Mutate", 0, 0, steps(ability.Step{Op: ability.OpMorphScratch, Subject: ability.SubjectAll,
 		Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}}))
@@ -178,16 +178,26 @@ func TestEffectEvents_MorphLogsTheFaceDownChange(t *testing.T) {
 	if len(got) != len(want) || len(want) != 2 {
 		t.Fatalf("%d face-down events, want one per unit turned (2): %+v", len(got), got)
 	}
-	for i, a := range want {
-		e := got[i]
-		if e.Target != a.ID || e.Player != -1 || e.Card != "" {
-			t.Errorf("event %d: target %d, player %d, card %q; want target %d, player -1, no card", i, e.Target, e.Player, e.Card, a.ID)
+	for _, a := range want {
+		var mine []Event
+		for _, e := range got {
+			if e.Target == a.ID {
+				mine = append(mine, e)
+			}
 		}
-		if e.Detail != names[i] {
-			t.Errorf("event %d: detail %q, want %q (naming the printed card, logged before the flip)", i, e.Detail, names[i])
+		if len(mine) != 1 {
+			t.Errorf("unit %d has %d face-down events, want exactly 1: %+v", a.ID, len(mine), got)
+			continue
+		}
+		e := mine[0]
+		if e.Player != -1 || e.Card != "" {
+			t.Errorf("event for unit %d: player %d, card %q; want player -1, no card", a.ID, e.Player, e.Card)
+		}
+		if w := names[a.ID]; e.Detail != w {
+			t.Errorf("event for unit %d: detail %q, want %q (naming the printed card, logged before the flip)", a.ID, e.Detail, w)
 		}
 		if !a.FaceDown {
-			t.Errorf("unit %d is face down after the step", i)
+			t.Errorf("unit %d is face down after the step", a.ID)
 		}
 	}
 }
