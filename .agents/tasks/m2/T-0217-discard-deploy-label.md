@@ -4,7 +4,7 @@ title: The play screen names a deploy from the discard pile (wave F harness, fla
 kind: harness
 tier: flash
 wave: F
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f/T-0217-discard-deploy-label
 depends_on: [T-0214]
 claims: [file:pkg/view/view.go (Inst on the seat's own discard cards), file:cmd/cardtown/play_screen.go (a discard deploy's label; findHandCard becomes findCard over a pile)]
@@ -284,11 +284,27 @@ index d1f64a4..cd848d8 100644
 - `cmd/cardtown/play_test.go` (one new test appended only; no existing test changes)
 
 ## Done When
-- [ ] Cases 1-6 hold, with their commands and results in the Log, each test failing at the test commit
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes, byte for byte
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-6 hold, with their commands and results in the Log, each test failing at the test commit
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes, byte for byte
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-11 lead-architect (wave F run, session 16): queued with T-0215, whose original Covers needed five non-test files (D2.4). T-0216 depends on it. Directive #128 is `open: before T-0216`, and this task applies its last piece.
 - 2026-11-11 lead-architect (wave F run, session 17): wrote the Inputs, Acceptance Cases, Tests and Edits against the run branch at c7e989a, and dry-ran them (Inputs). The Covers' check "no golden output or test pins a discard `CardView`'s `Inst` at 0" found four tests that do; each is narrowed, not dropped, and named under Inputs and Tests. The view's rule stays "an instance ID only where an Action names it", now the seat's own hand and discard cards. Harness, so it skips `tests` and goes to `ready`; tier `flash`, because the edits and tests are exact and dry-run. Every command here is on the headless allow-list, one per line. Next: `kernel-engineer` on Flash.
+- 2026-11-11 kernel-engineer (wave F run, Flash): implemented T-0217.
+  - Test commit 27c424c (`test(T-0217): own discard cards carry instance IDs and play screen discard deploy label`): narrowed four tests in `pkg/view/view_test.go` (`TestView_Case1_Contents`, `TestView_Case2_FaceDown`, `TestView_PileTargetShowsCardNamesNotInstanceIDs`, `TestView_ManeuverPileTargetShowsCardNamesNotInstanceIDs`), added `TestView_OwnDiscardCardsCarryInstanceIDs`, and added `TestPlay_ActionLabelNamesADiscardDeploy` in `cmd/cardtown/play_test.go`.
+    - `go test ./pkg/view -run TestView_OwnDiscardCardsCarryInstanceIDs -count=1` failed (Inst 0 != ID).
+    - `go test ./pkg/view -run TestView_Case -count=1` failed (`TestView_Case1_Contents` and `TestView_Case2_FaceDown` failed on Inst 0).
+    - `go test ./pkg/view -run PileTargetShowsCardNamesNotInstanceIDs -count=1` failed (both pile-target tests failed on Inst 0).
+    - `go test ./cmd/cardtown -run TestPlay_ActionLabelNamesADiscardDeploy -count=1` failed (actionLabel printed `Card#42 to Reserves` instead of discard origin label).
+  - Implementation commit 7622bc5 (`feat(view): the play screen names a deploy from the discard pile (T-0217)`):
+    - `pkg/view/view.go`: updated package doc and `CardView.Inst` comment; in `side()`, populated `c.Inst = inst.ID` for cards in `p.Discard` when `own` is true.
+    - `cmd/cardtown/play_screen.go`: generalized `findHandCard` to `findCard(pile []view.CardView, instID int)`, used `findCard(v.You.Discard, a.Card)` for discard deploys with `"Deploy: %s from discard pile to %s"`, and reused `findCard(v.You.Hand, ...)` for hand deploy and enact.
+  - Acceptance cases re-run and passed:
+    - Case 1: `go test ./pkg/view -run TestView_OwnDiscardCardsCarryInstanceIDs -count=1` -> PASS (ok 0.644s)
+    - Case 2: `go test ./pkg/view -run TestView_Case -count=1` -> PASS (ok 2.552s); `go test ./pkg/view -run PileTargetShowsCardNamesNotInstanceIDs -count=1` -> PASS (ok 0.651s)
+    - Case 3: `go test ./cmd/cardtown -run TestPlay_ActionLabelNamesADiscardDeploy -count=1` -> PASS (ok 0.574s)
+    - Case 4: `go tool task sim-compare -- autoloop/m2-wave-f` -> `[PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included`
+    - Case 5: `git diff autoloop/m2-wave-f --stat` -> only 4 allowed files and task file modified
+    - Case 6: `go tool task check` -> PASS (gofmt, go vet, all tests, cardtown lint --all); `go tool task sim` -> PASS (starter sim 200 games clean)
