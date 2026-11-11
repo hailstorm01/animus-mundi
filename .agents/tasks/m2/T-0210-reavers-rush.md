@@ -4,7 +4,7 @@ title: Reaver's Rush, a free deploy of a chosen unit card with power 3 or less f
 kind: card
 tier: flash
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0210-reavers-rush
 depends_on: [T-0208, T-0209]
 claims: [card:Reaver's Rush]
@@ -61,3 +61,4 @@ In a new file `pkg/engine/cards_path_reavers_rush_test.go`, from the CSV text, l
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 8): split off T-0208 under the D2 size rule; `queued` on T-0208 and T-0209.
 - 2026-11-10 lead-architect (wave F run, session 10): Inputs, Definition, Tests and Allowed Files written against the run branch at 8647386, with T-0208 and T-0209 `done`. Searched `pkg/engine` and the task archive for an existing equivalent: `OpDeployFree` (T-0208) and `Filter.Stat` (T-0209) are the shapes, reused as is; no new shape. Directive #140 (4) applies here. Probed the definition (see above), then reverted it. Set to `tests`.
+- 2026-11-10 rules-test-author: wrote pkg/engine/cards_path_reavers_rush_test.go: TestCard_ReaversRush_DeploysChosenUnitCardForFree, _OffersOnlyUnitCardsPowerThreeOrLess, _NotEnactableWithoutLegalCard (subtests a-e), _GuerrillasZoneTimeoutEntersReserves, _GuerrillasMainTheaterFiresDeployTrigger. Helpers requested: none (small builders kept in the test file). No cases left out. All fail now as expected (card not yet executable). Set to tests-review.
