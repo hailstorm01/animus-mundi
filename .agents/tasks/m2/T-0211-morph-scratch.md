@@ -4,7 +4,7 @@ title: OpMorphScratch, turning a battlefield unit face down in place (wave F sha
 kind: shape
 tier: sonnet
 wave: F
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f/T-0211-morph-scratch
 depends_on: []
 claims: [shape:OpMorphScratch (ability.OpMorphScratch; stepMorphScratch; the face-down event EventFaceDown)]
@@ -74,3 +74,4 @@ In a new file `pkg/engine/morph_scratch_test.go`, with a synthetic Maneuver (`ma
   The rest stands: each test matches the Tests list and `FR-ENT-103`, `FR-LAY-001`, `FR-LAY-002`, `FR-ZON-004`, `FR-ZON-005`. On the author's keyword note: the Scratch face prints Deploys Exhausted ([card.go:141](../../../pkg/engine/card.go)), and `Keywords` already returns it; the "has none" in its doc comment means no Cornered keywords, since the face has no `Ability`. The expectation is right, and `layers.go` is not this task's file.
 - 2026-11-10 rules-test-author: review note 1 fixed. `TestEffectEvents_MorphLogsTheFaceDownChange` no longer pins `g.Assets()` order: it checks 2 face-down events, then for each unit exactly one event by `Target` with `Player` -1, no `Card` and the text "<printed name>#<id> turns face down" (names captured before the flip). Nothing else changed. `status: tests-review`.
 - 2026-11-10 lead-architect (wave F run, session 11): tests re-reviewed (7221b56): note 1 applied (each `face-down` event is matched to its unit by `Target`, names captured before the flip, count 2). The lead probe, re-run on 48c6cb2 with the four Allowed Files edited as the Shape says and since discarded, passes all seven tests and `TestEventKinds_ValuesAreTheSchema`; without it the package doesn't build. Each test matches the Tests list and `FR-ENT-103`. Set to `ready`.
+- 2026-11-10 kernel-engineer: implemented, `status: review`. Added `ability.OpMorphScratch` (after `OpDeployFree`), `Game.stepMorphScratch` in `effects.go` (one `runStep` case; a method on `*Game` like the other steps), `EventFaceDown = "face-down"` after `EventPower`, and `OpMorphScratch` in `doc.go`'s step list. Reuse: `stepAssets`, `logEvent`, `Asset.Printed()`/`FaceDown` (no existing step changed `FaceDown`; shape modelled on `stepMoveZone`/`stepAddArmor`). The step logs the event, then sets `FaceDown`; skips non-units and already face-down units. No tests or other files edited. Ran: `go test ./pkg/engine -run "Morph|EventKinds"` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-f` PASS byte-identical.
