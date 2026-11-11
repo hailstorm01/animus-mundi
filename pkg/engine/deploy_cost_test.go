@@ -55,6 +55,7 @@ func TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush(t *testing.T) {
 	p := s.g.Players[0]
 	p.Req, p.Tac = 2, 1
 	kcScript(s, nil, martyr)
+	hand := len(p.Hand) // includes the card being deployed
 	s.do(dcDeployToReserves(inst))
 	if s.alive(martyr) || !inDiscard(p, martyr.Inst) {
 		t.Errorf("the allied unit chosen for the cost is killed into its owner's discard pile (FR-TRN-003a)")
@@ -77,27 +78,32 @@ func TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush(t *testing.T) {
 	if len(got) != 2 || !((got[0] == want[0] && got[1] == want[1]) || (got[0] == want[1] && got[1] == want[0])) {
 		t.Errorf("the pick lists both allied units: got %v, want %v (FR-TRN-003a)", got, want)
 	}
-	var place, destroy, draw, deploy int
+	// A successful draw logs no event, so the trigger's resolution is pinned by its own
+	// place event (it went on top of the deploy) and by player 0's hand growing by one.
+	var place, destroy, trig, deploy int
 	for _, e := range s.g.Log {
 		switch {
 		case e.Kind == "place" && e.Card == "Sacrificer" && place == 0:
 			place = e.Seq
 		case e.Kind == "destroy" && e.Target == martyr.ID && destroy == 0:
 			destroy = e.Seq
-		case e.Kind == "draw" && e.Player == 0 && place != 0 && draw == 0:
-			draw = e.Seq
+		case e.Kind == "place" && e.Card == "Martyr" && place != 0 && trig == 0:
+			trig = e.Seq
 		case e.Kind == "deploy" && e.Inst == inst.ID && deploy == 0:
 			deploy = e.Seq
 		}
 	}
-	if place == 0 || destroy == 0 || draw == 0 || deploy == 0 {
-		t.Fatalf("missing events: place %d, destroy %d, draw %d, deploy %d", place, destroy, draw, deploy)
+	if place == 0 || destroy == 0 || trig == 0 || deploy == 0 {
+		t.Fatalf("missing events: place %d, destroy %d, trigger place %d, deploy %d", place, destroy, trig, deploy)
 	}
 	if place > destroy {
 		t.Errorf("the deploy is placed on the stack before the cost's kill (seq %d vs %d) (FR-TRN-003a)", place, destroy)
 	}
-	if draw > deploy {
-		t.Errorf("the cost's death trigger goes on top of the deploy and resolves first: draw seq %d, deploy seq %d (FR-TRN-003a)", draw, deploy)
+	if trig < place || trig > deploy {
+		t.Errorf("the cost's death trigger goes on top of the deploy and resolves first: trigger place seq %d, deploy place seq %d, deploy seq %d (FR-TRN-003a)", trig, place, deploy)
+	}
+	if len(p.Hand) != hand {
+		t.Errorf("the death trigger's draw resolved: hand is %d, want %d (the deployed card left, one card drawn) (FR-TRN-003a)", len(p.Hand), hand)
 	}
 }
 
