@@ -4,7 +4,7 @@ title: Reaver's Rush, a free deploy of a chosen unit card with power 3 or less f
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0210-reavers-rush
 depends_on: [T-0208, T-0209]
 claims: [card:Reaver's Rush]
