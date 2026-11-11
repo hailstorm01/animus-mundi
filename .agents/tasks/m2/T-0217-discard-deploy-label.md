@@ -4,7 +4,7 @@ title: The play screen names a deploy from the discard pile (wave F harness, fla
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0217-discard-deploy-label
 depends_on: [T-0214]
 claims: [file:pkg/view/view.go (Inst on the seat's own discard cards), file:cmd/cardtown/play_screen.go (a discard deploy's label; findHandCard becomes findCard over a pile)]
