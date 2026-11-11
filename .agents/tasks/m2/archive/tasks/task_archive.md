@@ -217,3 +217,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0211 | OpMorphScratch, turning a battlefield unit face down in place (wave F shape, sonnet) | done |
 | T-0212 | Forced Mutation (wave F deck card, flash) | done |
 | T-0213 | Deploy goes through declare, so a deployed card's additional costs are paid (wave F shape, sonnet; #128) | done |
+| T-0214 | A card's own permission to deploy it from its owner's discard pile, with its costs (wave F shape, sonnet; #128) | done |

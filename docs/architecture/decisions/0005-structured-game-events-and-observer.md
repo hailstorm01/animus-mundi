@@ -33,6 +33,8 @@ Every accepted action emits one `action` event.
 
 **Addendum (T-0211).** `face-down` is an effect turning a battlefield unit face down in place (`FR-ENT-103`): one event per unit turned, with `Target`, `Player` -1 and no `Card`. It is logged before the unit turns, so its text names the card, which was public until then. Later events about the unit name it as a face-down Scratch Company. Additive.
 
+**Addendum (T-0214).** A Deploy's `action` event carries `From`, the pile the card was deployed from: `"Discard"` for a deploy by the card's own discard-pile permission (`FR-TRN-003`), omitted for a deploy from hand. `Card` and `Inst` name the card in that pile. Additive: every log without a discard deploy is byte-identical.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences

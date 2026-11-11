@@ -4,7 +4,7 @@ title: A card's own permission to deploy it from its owner's discard pile, with 
 kind: shape
 tier: sonnet
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0214-deploy-from-discard
 depends_on: [T-0213]
 claims: [shape:discard deploy permission (ability.Static, ability.StaticKind, StaticDeployPermission, Static.ActiveZone and Static.Costs; Def.Statics; deployPermission), field:Action.From, field:Event.From]
@@ -75,10 +75,10 @@ In a new file `pkg/engine/deploy_discard_test.go`. Synthetic cards: a Unit for p
 - `pkg/engine/events.go` (`Event.From`, `emitAction`)
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "DiscardDeploy|HandReductionDoesNotApplyInThePile|HandDeployIgnoresThePermission|DeployFromAnotherZoneIsIllegal|FreeDeployWaivesThePermissionCost"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes (no printed card has the permission)
+- [x] The listed tests pass: `go test ./pkg/engine -run "DiscardDeploy|HandReductionDoesNotApplyInThePile|HandDeployIgnoresThePermission|DeployFromAnotherZoneIsIllegal|FreeDeployWaivesThePermissionCost"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes (no printed card has the permission)
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213, split off *Veil Render* under the D2 size rule (D2.4). Depends on T-0213's deploy placement.
@@ -86,3 +86,5 @@ In a new file `pkg/engine/deploy_discard_test.go`. Synthetic cards: a Unit for p
 - 2026-11-10 rules-test-author: wrote pkg/engine/deploy_discard_test.go (df50f41), 11 tests: TestFR_TRN_003_DiscardDeployPaysItsKillCostAfterThePush, TestFR_TRN_003a_DiscardDeployReplacedKillStaysPaid, TestFR_TRN_003_DiscardDeployNeedsThePermission, TestFR_TRN_003_DiscardDeployOnlyFromYourOwnPile, TestFR_TRN_003_DiscardDeployNeedsAnEmptyStack, TestFR_TRN_003a_DiscardDeployCostsMustBePayable, TestFR_CST_001_HandReductionDoesNotApplyInThePile, TestFR_TRN_003_HandDeployIgnoresThePermission, TestFR_TRN_003_DiscardDeployOfferedForEachZone, TestFR_TRN_003_DeployFromAnotherZoneIsIllegal, TestFR_CST_001_FreeDeployWaivesThePermissionCost. Helpers requested: none (local helpers ddPermission, ddUnit, ddDeploy, ddOffers; reuses dcAssetOf, kcScript, dfManeuver, alliedUnitFilter). The file does not compile until the engineer builds ability.Static, ability.StaticDeployPermission, Def.Statics, Action.From and Event.From (go vet fails on undefined ability.Static, as expected); cardtown lint rules passes. No cases left out. Assumption: the death trigger's up-to-1 target slot is asked as a DecideTarget even with one legal option (zero is also an option).
 - 2026-11-10 lead-architect (wave F run, session 14): tests reviewed (df50f41, 11 tests). A lead probe (the four Allowed Files edited as the Shape says, since discarded) passes all 11 and every `pkg/...` test. Each test matches the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001`, `SVY-R15` and `SVY-R29`. The author's assumption holds: an "up to 1" slot is asked as a `DecideTarget` with one legal option, since none is also a choice. Set to `ready`.
 - 2026-11-10 kernel-engineer: built the shape in the four Allowed Files. ability.go: StaticKind (iota+1), StaticDeployPermission, Static, Def.Statics. actions.go: Action.From; handPlay/playFromHand replaced by one pileCard (find; the zero value ZoneDeck and ZoneHand both mean the hand, ZoneDiscard the own discard pile, any other zone finds nothing), canPlay (play check) and payAndTake (pay while in the pile, then takeCard), shared by Deploy and Enact; check rejects a discard deploy without deployPermission; LegalActions offers discard deploys per DeployZones after the hand ones. placement.go: deployPermission (the one reader) and deployPlacement(..., from) building the cost list with slices.Concat. events.go: Event.From (omitempty) set by emitAction for a discard deploy, which also finds the card through pileCard. Reuse: handCard stays (setup.go), takeCard, payCost, declare, placeable unchanged; no existing equivalent of a pile lookup or Static found. Commands: go test of the 11 listed tests ok; go tool task check passed; go tool task sim ran clean; go tool task sim-compare -- autoloop/m2-wave-f PASS (byte-identical). Reviewer: note pileCard maps the zero Zone (ZoneDeck) to the hand.
+- 2026-11-10 lead-architect (wave F run, session 14): code reviewed (4564edb). Only the four Allowed Files changed, and the test file is the one from df50f41. No card name appears in engine code. Deploy and Enact share one `pileCard`, `canPlay` and `payAndTake`, and the deploy still goes through `declare`, `placeable` and `payCosts`, so no second declare sequence exists. `deployPermission` is the one reader of the permission, and `deployPlacement` builds a new cost slice. `handCard` stays for `setup.go`, as the Shape says. It is a by-ID loop over one pile, not a rule, so it isn't a duplicate under D2.0. Re-ran `go tool task check`, `go tool task sim` (clean, 200 games, P0 74.0% / P1 25.0% / draws 1.0%) and `go tool task sim-compare -- autoloop/m2-wave-f` (byte-identical) in a review worktree. Approved.
+- 2026-11-10 lead-architect (wave F run, session 14): merged into `autoloop/m2-wave-f` (d7d9858); `done`. ADR-0005 addendum for `Event.From` added. #128's second part is applied; #128 stays `open: before T-0216` for T-0215. Next: T-0215 (replay, the play screen and `ProgressPolicy` for a discard deploy, harness), `queued` on this task, written in full before it leaves `queued`.
