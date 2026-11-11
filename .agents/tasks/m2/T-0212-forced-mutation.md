@@ -4,7 +4,7 @@ title: Forced Mutation, turning a chosen opposing unit face down (wave F deck ca
 kind: card
 tier: flash
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0212-forced-mutation
 depends_on: [T-0211]
 claims: [card:Forced Mutation]
@@ -60,3 +60,4 @@ Add them to `pkg/engine/cards_animus_maneuvers_test.go`, after the *Disorienting
 - 2026-11-10 lead-architect (wave F run, session 11): queued with T-0211 (the `OpMorphScratch` shape), split under the D2 size rule.
 - 2026-11-10 lead-architect (wave F run, session 12): Inputs, Definition, Tests and Allowed Files written against the run branch at 7259ec3, with T-0211 `done`. Searched `pkg/engine` and the task archive for an existing equivalent: `OpMorphScratch` (T-0211) is the shape, reused as is, with *Disorienting Pulse*'s target form; no new shape. No waiting directive fires with this card (#142 waits for the first card that tucks). Probed the definition (see above), then reverted it. Set to `tests`.
 - 2026-11-10 rules-test-author: wrote four tests in `pkg/engine/cards_animus_maneuvers_test.go` after the Disorienting Pulse tests: `TestCard_ForcedMutation_TurnsChosenOpposingUnitFaceDownInPlace`, `TestCard_ForcedMutation_DamagedTargetIsDestroyed`, `TestCard_ForcedMutation_OnlyOpposingUnitsAreOffered`, `TestCard_ForcedMutation_NotEnactableWithoutLegalTarget` (5 table cases). Helpers requested: none. Cases left out: none. All four fail now (card not yet executable); `go vet` and gofmt clean, `cardtown lint rules` passes. Set to `tests-review`.
+- 2026-11-10 lead-architect (wave F run, session 12): tests reviewed (1fd85c3, 4 tests, one with five table cases). Each matches the Tests list and `FR-ENT-103`, `FR-LAY-001`, `FR-LAY-002`, `FR-TGT-001`, `FR-KWD-002h` and `FR-MNV-001` (`SVY-R29`); only asked decisions are scripted (a single legal target isn't asked). Probed them in a review worktree with the Definition added, since reverted: all four pass, and `TestStarterSet_Executable` passes with the name removed; without it, all four fail. Set to `ready`.
