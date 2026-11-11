@@ -4,7 +4,7 @@ title: OpMorphScratch, turning a battlefield unit face down in place (wave F sha
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0211-morph-scratch
 depends_on: []
 claims: [shape:OpMorphScratch (ability.OpMorphScratch; stepMorphScratch; the face-down event EventFaceDown)]
@@ -72,3 +72,4 @@ In a new file `pkg/engine/morph_scratch_test.go`, with a synthetic Maneuver (`ma
 - 2026-11-10 lead-architect (wave F run, session 11): tests reviewed (052bbf9), returned to `tests`. A lead probe (the four Allowed Files edited as the Shape says, since discarded) passes six of the seven tests and the edited `TestEventKinds_ValuesAreTheSchema`. Notes:
   1. `TestEffectEvents_MorphLogsTheFaceDownChange` fails on that correct build: it expects the events in `g.Assets()` order, but a `SubjectAll` step acts in its own order (the probe logged `Bulwark` before `Sentry`, the reverse of `g.Assets()`). The Shape says the events come "in step order", and neither the task nor FRD 01 fixes that order for an "all" step, so don't pin it: match each event to its unit by `Target` (each unit has exactly one `face-down` event, with `Player` -1, no `Card` and the text `"<printed name>#<id> turns face down"`), and keep the count check of 2.
   The rest stands: each test matches the Tests list and `FR-ENT-103`, `FR-LAY-001`, `FR-LAY-002`, `FR-ZON-004`, `FR-ZON-005`. On the author's keyword note: the Scratch face prints Deploys Exhausted ([card.go:141](../../../pkg/engine/card.go)), and `Keywords` already returns it; the "has none" in its doc comment means no Cornered keywords, since the face has no `Ability`. The expectation is right, and `layers.go` is not this task's file.
+- 2026-11-10 rules-test-author: review note 1 fixed. `TestEffectEvents_MorphLogsTheFaceDownChange` no longer pins `g.Assets()` order: it checks 2 face-down events, then for each unit exactly one event by `Target` with `Player` -1, no `Card` and the text "<printed name>#<id> turns face down" (names captured before the flip). Nothing else changed. `status: tests-review`.
