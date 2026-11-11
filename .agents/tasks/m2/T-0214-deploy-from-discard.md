@@ -4,7 +4,7 @@ title: A card's own permission to deploy it from its owner's discard pile, with 
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0214-deploy-from-discard
 depends_on: [T-0213]
 claims: [shape:discard deploy permission (ability.Static, ability.StaticKind, StaticDeployPermission, Static.ActiveZone and Static.Costs; Def.Statics; deployPermission), field:Action.From, field:Event.From]
