@@ -4,7 +4,7 @@ title: Deploy goes through declare, so a deployed card's additional costs are pa
 kind: shape
 tier: sonnet
 wave: F
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f/T-0213-deploy-declare
 depends_on: []
 claims: [shape:deployPlacement (a deploy's placement; Deploy through declare; placement.zone)]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/deploy_cost_test.go`, with a synthetic Unit card for p
   The other three tests match the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `SVY-R15` and `SVY-R29`, and stand as they are.
 - 2026-11-10 rules-test-author: review note 1 fixed in `pkg/engine/deploy_cost_test.go`. `TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush` no longer looks for a `draw` event: it pins the order by the Martyr ability's `place` event (after the deploy's `place`, before the `deploy` event) and by player 0's hand ending at its pre-deploy size (the deployed card left, one card drawn). Everything else unchanged. Vet clean, gofmt clean, lint rules passes; the test still fails now on the unbuilt behavior (the kill cost is not paid), as expected.
 - 2026-11-10 lead-architect (wave F run, session 13): tests re-reviewed (2821cfb): note 1 applied (the order is pinned by the Martyr ability's `place` event between the deploy's `place` and `deploy` events, and the draw by player 0's hand size). The lead probe, re-run with the two Allowed Files edited as the Shape says and since discarded, passes all four tests and the whole `pkg/engine` suite. Each test matches the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `SVY-R15` and `SVY-R29`. Set to `ready`.
+- 2026-11-10 kernel-engineer: built. `placement.zone` (copied into `StackItem.Zone` by `stackItem`) and `deployPlacement` (beside `maneuverPlacement`: controller, inst, label, zone, `Ability.ExtraCosts`) in `placement.go`; `Apply`'s `ActDeploy` now calls `declare(deployPlacement(...), ability.Effect{}, StackDeploy)` and `check`'s `ActDeploy` rejects when `!placeable(...)` (message cites FR-TRN-003a) in `actions.go` (plus the `ability` import). Reused `declare`, `placeable`, `payCosts`; no second sequence. Ran: `go test ./pkg/engine -run TestFR_TRN_003` ok; `go tool task check` passed (fmt, vet, tests, lint --all); `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-f` PASS byte for byte. Nothing unusual for the reviewer beyond the new import.

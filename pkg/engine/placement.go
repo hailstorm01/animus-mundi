@@ -21,12 +21,13 @@ type placement struct {
 	costs      []ability.Cost // costs paid with this placement: a Maneuver's additional costs (FR-TRN-003a) or an activated ability's (FR-ACT-001); a trigger has none
 	locked     *LockedZone    // zone locked for source-relative filters (SVY-R44, SVY-R45); nil if none
 	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
+	zone       Zone           // a deploy's declared battlefield zone; zero for every other placement
 }
 
 // stackItem builds the item pl goes on the stack as: its kind, and the
 // controller, source and instance pl already holds.
 func (pl placement) stackItem(kind StackKind) *StackItem {
-	return &StackItem{Kind: kind, Controller: pl.controller, Source: pl.source, Inst: pl.inst, Locked: pl.locked}
+	return &StackItem{Kind: kind, Controller: pl.controller, Source: pl.source, Inst: pl.inst, Locked: pl.locked, Zone: pl.zone}
 }
 
 // chooseOnPlacement chooses what e needs on placement, in rules order: its
@@ -56,6 +57,17 @@ func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 // both its legality check and the choosing of its modes and targets.
 func maneuverPlacement(pid PlayerID, inst *Instance) placement {
 	pl := placement{controller: pid, inst: inst, label: inst.Card.Name}
+	if inst.Card.Ability != nil {
+		pl.costs = inst.Card.Ability.ExtraCosts
+	}
+	return pl
+}
+
+// deployPlacement is the placement of the card inst that pid deploys to zone,
+// for both its legality check and declaring it: its additional costs are paid
+// with it (FR-TRN-003a).
+func deployPlacement(pid PlayerID, inst *Instance, zone Zone) placement {
+	pl := placement{controller: pid, inst: inst, label: inst.Card.Name, zone: zone}
 	if inst.Card.Ability != nil {
 		pl.costs = inst.Card.Ability.ExtraCosts
 	}

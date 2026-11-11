@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+
+	"animus-mundi/pkg/engine/ability"
 )
 
 // ErrIllegal wraps every rejected action.
@@ -60,7 +62,7 @@ func (g *Game) Apply(a Action) error {
 		p.convert()
 	case ActDeploy:
 		inst := g.playFromHand(p, a.Card)
-		g.push(&StackItem{Kind: StackDeploy, Controller: a.Player, Inst: inst, Zone: a.Zone})
+		g.declare(deployPlacement(a.Player, inst, a.Zone), ability.Effect{}, StackDeploy)
 	case ActEnact:
 		inst := g.playFromHand(p, a.Card)
 		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect, StackManeuver)
@@ -127,6 +129,9 @@ func (g *Game) check(a Action) error {
 		}
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {
 			return illegal("%s cannot be deployed to %s", c.Name, a.Zone)
+		}
+		if !g.placeable(deployPlacement(a.Player, inst, a.Zone), ability.Effect{}) {
+			return illegal("%s's additional costs cannot be paid (FR-TRN-003a)", c.Name)
 		}
 	case ActEnact:
 		inst, err := g.handPlay(p, a.Card)
