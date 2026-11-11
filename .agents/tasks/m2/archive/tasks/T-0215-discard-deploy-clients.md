@@ -4,7 +4,7 @@ title: Replay and ProgressPolicy handle a deploy from a discard pile (wave F har
 kind: harness
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0215-discard-deploy-clients
 depends_on: [T-0214]
 claims: [file:pkg/eventlog/replay.go (actionOf reads Event.From through one zoneNamed; diff compares From), file:pkg/sim/policy.go (playCosts counts discard deploys), export:engine.Game.DiscardDeployCost]
@@ -464,3 +464,9 @@ Then run `gofmt -l pkg cmd`; it must print nothing.
     - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-f` -> PASS ([PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included)
     - Case 7: `git -C W diff autoloop/m2-wave-f --stat` -> lists only 6 Allowed Files plus task file
     - Case 8: `go -C W tool task check` -> PASS (gofmt, go vet, all package tests, all linters clean); `go -C W tool task sim` -> PASS (200 starter playouts, all invariants held).
+- 2026-11-11 lead-architect (wave F run, session 16, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f` as 49a1894. Flash run `c55d138e-cdcd-4b8c-8be8-6e3094641f40`: exit 0, `status: SUCCESS`, no `denied_actions` key, and the transcript has no `permission check failed` step; `.err` holds only agy's "root agent idle" notice. (The engineer's Log calls this "session 17"; it is this session's dispatch.) Review of `git diff autoloop/m2-wave-f...m2/autoloop-wave-f/T-0215-discard-deploy-clients` (ba53f81):
+  - Scope: only the six Allowed Files and this file changed. The `test(T-0215)` commit c102b21 holds only the three test files; the implementation commit 922247a holds only `costs.go`, `replay.go` and `policy.go` and leaves every test file as c102b21 has it.
+  - Checked against the diff, not the Log: all six files are byte-identical to the lead's dry run (blobs 130e4e8, 4a39bf3, f1e9b9e, eede490, 9777c57, 1a2a444), so the hunks are exactly the Edits and Tests. The dry run showed each new test failing without the implementation, as the Log also reports.
+  - Reuse and fences: `DiscardDeployCost` calls `EffectiveCost`, `pileCard`, `deployPermission`, `deployPlacement` and `otherCostsPayable`, so the permission keeps one reader; `zoneNamed` replaces `actionOf`'s zone loop and serves `Zone` and `From`. No card name in package code. `engine` gains one exported client-planning reader beside `ActivatedCost`.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 74.0% / P1 25.0% / draws 1.0%, 49/50 and 44/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-f` `[PASS]`, byte for byte. The merge's tree matches the task tip's.
+  - #128 stays `open: before T-0216` for T-0217, its last piece.
