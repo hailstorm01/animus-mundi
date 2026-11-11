@@ -4,7 +4,7 @@ title: OpMorphScratch, turning a battlefield unit face down in place (wave F sha
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0211-morph-scratch
 depends_on: []
 claims: [shape:OpMorphScratch (ability.OpMorphScratch; stepMorphScratch; the face-down event EventFaceDown)]
