@@ -39,21 +39,22 @@ func RandomPolicy(seed uint64, endBias float64) Policy {
 	}
 }
 
-// marchPast is how often a unit marches out of Reserves anyway while a hand card
-// is short of Requisition it can't reach: often enough that a card the player
+// marchPast is how often a unit marches out of Reserves anyway while a playable
+// card is short of Requisition it can't reach: often enough that a card the player
 // may never afford doesn't pin its units there.
 const marchPast = 0.25
 
 // ProgressPolicy is a random policy that favors progress over passing. It
 // picks only from legal and is deterministic for seed. Each call it prefers:
-//  1. a play from hand: a Deploy or an Enact, uniform over card and zone;
-//  2. a Generate or Convert that funds a hand card's cost (funds);
+//  1. a play: a Deploy or an Enact, from hand or a Deploy from the discard pile,
+//     uniform over card and zone;
+//  2. a Generate or Convert that funds a playable card's cost (funds, playCosts);
 //  3. an Attack, March, Scratch or Activate, or a Generate or Convert that funds
 //     an activated ability's cost (probability 0.9, uniform), else EndTurn;
 //  4. EndTurn.
 //
 // A unit in Reserves that yields Requisition stays there, except marchPast of
-// the time, while a hand card is short of Requisition it can't reach this turn,
+// the time, while a playable card is short of Requisition it can't reach this turn,
 // so that its yield is there on a later turn.
 func ProgressPolicy(seed uint64) Policy {
 	r := rand.New(rand.NewPCG(seed, ^seed))
@@ -63,9 +64,9 @@ func ProgressPolicy(seed uint64) Policy {
 		p := g.Players[g.Active]
 		pool := resources{p.Req, p.Tac}
 		taps := legalTaps(g, legal)
-		hand := handCosts(g, p)
+		cards := playCosts(g, p)
 		activations := activationCosts(g)
-		saving := slices.ContainsFunc(hand, func(c neededCost) bool {
+		saving := slices.ContainsFunc(cards, func(c neededCost) bool {
 			return c.req > pool.req && !reachable(pool, taps, c.resources)
 		})
 		for _, a := range legal {
@@ -73,7 +74,7 @@ func ProgressPolicy(seed uint64) Policy {
 			case engine.ActDeploy, engine.ActEnact:
 				plays = append(plays, a)
 			case engine.ActGenerate, engine.ActConvert:
-				if fundsAny(a, pool, taps, hand) {
+				if fundsAny(a, pool, taps, cards) {
 					closers = append(closers, a)
 				} else if fundsAny(a, pool, taps, activations) {
 					acts = append(acts, a)
@@ -111,8 +112,8 @@ type tap struct {
 }
 
 // neededCost is a cost the active player may want to pay. source is the asset
-// whose activated ability it is, which won't tap to fund it, or 0 for a hand
-// card: no asset has that ID.
+// whose activated ability it is, which won't tap to fund it, or 0 for a card to
+// play: no asset has that ID.
 type neededCost struct {
 	resources
 	source int
@@ -141,8 +142,10 @@ func legalTaps(g *engine.Game, legal []engine.Action) []tap {
 	return taps
 }
 
-// handCosts lists what p's playable hand cards cost now.
-func handCosts(g *engine.Game, p *engine.Player) []neededCost {
+// playCosts lists what p's playable cards cost now: its hand cards, and the
+// cards it may deploy from its discard pile by their own permission, leaving out
+// one whose other costs can't be paid now (Game.DiscardDeployCost, FR-TRN-003).
+func playCosts(g *engine.Game, p *engine.Player) []neededCost {
 	var out []neededCost
 	for _, inst := range p.Hand {
 		c := inst.Card
@@ -151,6 +154,14 @@ func handCosts(g *engine.Game, p *engine.Player) []neededCost {
 		}
 		req, tac := g.EffectiveCost(inst)
 		out = append(out, neededCost{resources: resources{req, tac}})
+	}
+	for _, inst := range p.Discard {
+		if !inst.Card.Supported() || len(inst.Card.DeployZones) == 0 {
+			continue
+		}
+		if req, tac, ok := g.DiscardDeployCost(inst); ok {
+			out = append(out, neededCost{resources: resources{req, tac}})
+		}
 	}
 	return out
 }

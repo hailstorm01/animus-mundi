@@ -216,7 +216,7 @@ func diff(rec, got engine.Event) string {
 	case rec.Turn != got.Turn || rec.Phase != got.Phase:
 		return fmt.Sprintf("turn and phase: recorded T%d %s, replayed T%d %s", rec.Turn, rec.Phase, got.Turn, got.Phase)
 	case rec.Player != got.Player || rec.Card != got.Card || rec.Inst != got.Inst || rec.Source != got.Source ||
-		rec.Target != got.Target || rec.Zone != got.Zone || rec.Amount != got.Amount || rec.Resource != got.Resource:
+		rec.Target != got.Target || rec.Zone != got.Zone || rec.From != got.From || rec.Amount != got.Amount || rec.Resource != got.Resource:
 		return fmt.Sprintf("%s event fields: recorded %+v, replayed %+v", rec.Kind, structured(rec), structured(got))
 	}
 	if (rec.Decision == nil) != (got.Decision == nil) ||
@@ -242,8 +242,8 @@ func diff(rec, got engine.Event) string {
 	return ""
 }
 
-func structured(e engine.Event) [8]any {
-	return [8]any{e.Player, e.Card, e.Inst, e.Source, e.Target, e.Zone, e.Amount, e.Resource}
+func structured(e engine.Event) [9]any {
+	return [9]any{e.Player, e.Card, e.Inst, e.Source, e.Target, e.Zone, e.From, e.Amount, e.Resource}
 }
 
 func decisionEqual(a, b engine.DecisionRecord) bool {
@@ -265,16 +265,27 @@ func actionOf(e engine.Event) (engine.Action, error) {
 	if a.Kind == engine.ActGenerate && e.Resource == engine.Tactics.String() {
 		a.Resource = engine.Tactics
 	}
+	var err error
 	if e.Zone != "" {
-		zoneFound := false
-		for z := engine.ZoneDeck; z <= engine.ZoneStack; z++ {
-			if z.String() == e.Zone {
-				a.Zone, zoneFound = z, true
-			}
+		if a.Zone, err = zoneNamed(e.Zone); err != nil {
+			return a, err
 		}
-		if !zoneFound {
-			return a, fmt.Errorf("unknown zone %q", e.Zone)
+	}
+	if e.From != "" {
+		if a.From, err = zoneNamed(e.From); err != nil {
+			return a, err
 		}
 	}
 	return a, nil
+}
+
+// zoneNamed returns the zone whose String is name: an action event's Zone or
+// From.
+func zoneNamed(name string) (engine.Zone, error) {
+	for z := engine.ZoneDeck; z <= engine.ZoneStack; z++ {
+		if z.String() == name {
+			return z, nil
+		}
+	}
+	return 0, fmt.Errorf("unknown zone %q", name)
 }
