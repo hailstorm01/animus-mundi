@@ -4,7 +4,7 @@ title: The play screen names a deploy from the discard pile (wave F harness, fla
 kind: harness
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0217-discard-deploy-label
 depends_on: [T-0214]
 claims: [file:pkg/view/view.go (Inst on the seat's own discard cards), file:cmd/cardtown/play_screen.go (a discard deploy's label; findHandCard becomes findCard over a pile)]
@@ -308,3 +308,9 @@ index d1f64a4..cd848d8 100644
     - Case 4: `go tool task sim-compare -- autoloop/m2-wave-f` -> `[PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included`
     - Case 5: `git diff autoloop/m2-wave-f --stat` -> only 4 allowed files and task file modified
     - Case 6: `go tool task check` -> PASS (gofmt, go vet, all tests, cardtown lint --all); `go tool task sim` -> PASS (starter sim 200 games clean)
+- 2026-11-11 lead-architect (wave F run, session 17, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f` as ba5b4e9. Flash run `9902c2ae-00a6-4617-a977-f2dab701cee0`: exit 0, `status: SUCCESS`, no `denied_actions` key; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f...m2/autoloop-wave-f/T-0217-discard-deploy-label` (0955c29):
+  - Scope: only the four Allowed Files and this file changed. The `test(T-0217)` commit 27c424c holds only the two test files, with the four authorized edits and two new tests; the implementation commit 7622bc5 holds only `view.go` and `play_screen.go` and leaves both test files as 27c424c has them.
+  - Checked against the diff, not the Log: all four files are byte-identical to the lead's dry run (blobs cd848d8, 98f2250, 9d8ef49, edfc3d4), so the hunks are exactly the Edits and Tests. The dry run showed all six named tests failing without the implementation, as the Log also reports.
+  - Reuse and fences: one `findCard` serves the hand and the discard pile, with one `Card#N` fallback. No card name in package code; `engine` is untouched. The view still carries no instance ID on an asset, a stack item or the opponent's cards.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0, clean, 200 games, P0 74.0% / P1 25.0% / draws 1.0%, 49/50 and 44/50 main cards executable; `go tool task sim-compare -- autoloop/m2-wave-f` `[PASS]`, byte for byte. The merge's `pkg/`, `cmd/` and `data/` match the task tip's.
+  - Directive #128 is now fully applied and archived; T-0216 (*Veil Render*) is no longer blocked by it.

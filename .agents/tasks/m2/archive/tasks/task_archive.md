@@ -219,3 +219,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0213 | Deploy goes through declare, so a deployed card's additional costs are paid (wave F shape, sonnet; #128) | done |
 | T-0214 | A card's own permission to deploy it from its owner's discard pile, with its costs (wave F shape, sonnet; #128) | done |
 | T-0215 | Replay and ProgressPolicy handle a deploy from a discard pile (wave F harness, flash; #128) | done |
+| T-0217 | The play screen names a deploy from the discard pile (wave F harness, flash; #128) | done |
