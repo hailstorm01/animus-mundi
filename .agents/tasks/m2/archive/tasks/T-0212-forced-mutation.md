@@ -4,7 +4,7 @@ title: Forced Mutation, turning a chosen opposing unit face down (wave F deck ca
 kind: card
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0212-forced-mutation
 depends_on: [T-0211]
 claims: [card:Forced Mutation]
@@ -62,3 +62,5 @@ Add them to `pkg/engine/cards_animus_maneuvers_test.go`, after the *Disorienting
 - 2026-11-10 rules-test-author: wrote four tests in `pkg/engine/cards_animus_maneuvers_test.go` after the Disorienting Pulse tests: `TestCard_ForcedMutation_TurnsChosenOpposingUnitFaceDownInPlace`, `TestCard_ForcedMutation_DamagedTargetIsDestroyed`, `TestCard_ForcedMutation_OnlyOpposingUnitsAreOffered`, `TestCard_ForcedMutation_NotEnactableWithoutLegalTarget` (5 table cases). Helpers requested: none. Cases left out: none. All four fail now (card not yet executable); `go vet` and gofmt clean, `cardtown lint rules` passes. Set to `tests-review`.
 - 2026-11-10 lead-architect (wave F run, session 12): tests reviewed (1fd85c3, 4 tests, one with five table cases). Each matches the Tests list and `FR-ENT-103`, `FR-LAY-001`, `FR-LAY-002`, `FR-TGT-001`, `FR-KWD-002h` and `FR-MNV-001` (`SVY-R29`); only asked decisions are scripted (a single legal target isn't asked). Probed them in a review worktree with the Definition added, since reverted: all four pass, and `TestStarterSet_Executable` passes with the name removed; without it, all four fail. Set to `ready`.
 - 2026-11-10 kernel-engineer: added Forced Mutation definition to animusDefs in pkg/engine/cards/animus.go between Feed the Despoiler and Funeral Fungus, reusing ability.OpMorphScratch (T-0211) targeting ability.AllegianceOpposing unit in either zone, and removed Forced Mutation from cards.NotYetExecutable in pkg/engine/cards/cards.go. Ran go test ./pkg/engine -run TestCard_ForcedMutation (passed, 4 tests), go test ./pkg/engine -run TestStarterSet_Executable (passed), go tool task check (passed: fmt-check, vet, tests, lint --all), and go tool task sim (clean: 200 games, Animus 49/50 main cards executable, 0 violations, all invariants hold). Set to review.
+- 2026-11-10 lead-architect (wave F run, session 12): code reviewed (7d34717): only the two Allowed Files changed, with the Definition as written; the test commit is untouched; no card name in engine code and no new shape. Re-ran `go test ./pkg/engine -run TestCard_ForcedMutation`, `go tool task check` and `go tool task sim` (clean, Animus 49/50, P0 74.0% / P1 25.0% / draws 1.0%) in a review worktree. `agy` conversation `0fe86464-f6cc-47f8-9ce8-67ce5d3ea91a`, no denied actions. Approved.
+- 2026-11-10 lead-architect (wave F run, session 12): merged into `autoloop/m2-wave-f` (a8dc028); `done`.
