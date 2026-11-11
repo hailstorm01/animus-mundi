@@ -222,7 +222,19 @@ type Filter struct {
 	Other      bool           // excludes the ability's own source asset ("other")
 	Zone       Zone           // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
 	ZoneRef    ZoneRef        // ZoneRefNone (zero) means no source-relative zone criterion; else only assets in the zone the stack item locked
+	Stat       Stat           // StatNone (zero) means no stat criterion; else the entity's value of that stat must be AtMost or less
+	AtMost     int            // the bound of Stat ("power 3 or less" is StatPower, 3); means nothing while Stat is StatNone
 }
+
+// Stat is a stat a filter can bound (FR-TGT-001 "Dynamic Stats"). A later stat
+// (Requisition cost, health) is another value, read the same way: a card in a
+// pile by its printed value, an asset on the battlefield by its effective one.
+type Stat int
+
+const (
+	StatNone  Stat = iota // the zero value: no stat criterion
+	StatPower             // Combat Power
+)
 
 // ZoneRef is a zone criterion read against the zone a stack item locked, not
 // the source's current zone (FR-TGT-001, FR-TGT-003). A later "in the same zone"

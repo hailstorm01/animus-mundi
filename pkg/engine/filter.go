@@ -22,12 +22,39 @@ func kindOf(t CardType) ability.Kinds {
 // matchesCard reports whether card inst, in a discard pile, meets every
 // criterion of the pile filter f for an ability controlled by ctl whose own
 // card is src: allegiance by the card's owner, Kinds, Subtypes and Scratch by its
-// printed characteristics (FR-ZON-004), Other not src. f must be InPile.
+// printed characteristics (FR-ZON-004), Stat by its printed value, Other not
+// src. f must be InPile.
 func (g *Game) matchesCard(ctl PlayerID, src *Instance, f ability.Filter, inst *Instance) bool {
 	if !f.InPile() || (f.Other && inst == src) {
 		return false
 	}
+	if !withinStat(f, cardStat(f.Stat, inst.Card)) {
+		return false
+	}
 	return matchesPrinted(ctl, f, inst.Owner, inst.Card)
+}
+
+// withinStat reports whether v meets f's stat criterion: true when f has none,
+// else v is f.AtMost or less.
+func withinStat(f ability.Filter, v int) bool {
+	return f.Stat == ability.StatNone || v <= f.AtMost
+}
+
+// cardStat is a card's printed value of s (FR-ZON-004); 0 for StatNone.
+func cardStat(s ability.Stat, c *Card) int {
+	if s == ability.StatPower {
+		return c.Power
+	}
+	return 0
+}
+
+// assetStat is an asset's effective value of s (Layer 6, FR-TGT-001); 0 for
+// StatNone.
+func (g *Game) assetStat(s ability.Stat, a *Asset) int {
+	if s == ability.StatPower {
+		return g.Power(a)
+	}
+	return 0
 }
 
 // legalTarget reports whether battlefield asset a meets every criterion of f
@@ -96,7 +123,7 @@ func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) 
 
 // matchesFilterAt reports whether battlefield asset a meets every criterion of f
 // (allegiance relative to ctl, kinds, subtypes, Scratch, Other: not the source asset
-// src, Zone: currently in that battlefield zone, ZoneRef: in lock's zone, never the source's current one). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
+// src, Stat: its effective value, Zone: currently in that battlefield zone, ZoneRef: in lock's zone, never the source's current one). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
 // this alone.
 func (g *Game) matchesFilterAt(ctl PlayerID, src int, lock *LockedZone, f ability.Filter, a *Asset) bool {
 	if f.Other && a.ID == src {
@@ -106,6 +133,9 @@ func (g *Game) matchesFilterAt(ctl PlayerID, src int, lock *LockedZone, f abilit
 		return false
 	}
 	if f.InPile() || !deployedTo(a, f.Zone) {
+		return false
+	}
+	if !withinStat(f, g.assetStat(f.Stat, a)) {
 		return false
 	}
 	return matchesPrinted(ctl, f, a.Controller, a.Printed())
