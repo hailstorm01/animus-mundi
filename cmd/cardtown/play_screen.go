@@ -146,8 +146,8 @@ func actionLabel(v view.View, a engine.Action) string {
 		return fmt.Sprintf("Asset#%d", id)
 	}
 
-	findHandCard := func(instID int) string {
-		for _, c := range v.You.Hand {
+	findCard := func(pile []view.CardView, instID int) string {
+		for _, c := range pile {
 			if c.Inst == instID {
 				return c.Card
 			}
@@ -161,9 +161,12 @@ func actionLabel(v view.View, a engine.Action) string {
 	case engine.ActConvert:
 		return fmt.Sprintf("Convert: %d Requisition -> %d Tactics", engine.ConvertReq, engine.ConvertTac)
 	case engine.ActDeploy:
-		return fmt.Sprintf("Deploy: %s to %s", findHandCard(a.Card), a.Zone)
+		if a.From == engine.ZoneDiscard {
+			return fmt.Sprintf("Deploy: %s from discard pile to %s", findCard(v.You.Discard, a.Card), a.Zone)
+		}
+		return fmt.Sprintf("Deploy: %s to %s", findCard(v.You.Hand, a.Card), a.Zone)
 	case engine.ActEnact:
-		return fmt.Sprintf("Enact: %s", findHandCard(a.Card))
+		return fmt.Sprintf("Enact: %s", findCard(v.You.Hand, a.Card))
 	case engine.ActActivate:
 		if as := lookupAsset(a.Asset); as != nil {
 			return fmt.Sprintf("Activate: %s: %s", findAsset(a.Asset), as.Text)
