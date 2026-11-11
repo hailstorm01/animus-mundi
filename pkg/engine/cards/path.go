@@ -558,6 +558,29 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Reaver's Rush": {
+		Text: []string{"Deploy chosen unit card with power 3 or less from your discard pile for free."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneDiscard,
+						Stat:       ability.StatPower,
+						AtMost:     3,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDeployFree,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Rogue Fleshshaper": {
 		Text: []string{
 			"When this unit deploys, choose one:",

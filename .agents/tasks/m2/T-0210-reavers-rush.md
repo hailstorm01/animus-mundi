@@ -4,7 +4,7 @@ title: Reaver's Rush, a free deploy of a chosen unit card with power 3 or less f
 kind: card
 tier: flash
 wave: F
-status: tests
+status: review
 branch: m2/autoloop-wave-f/T-0210-reavers-rush
 depends_on: [T-0208, T-0209]
 claims: [card:Reaver's Rush]
@@ -53,11 +53,15 @@ In a new file `pkg/engine/cards_path_reavers_rush_test.go`, from the CSV text, l
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_ReaversRush`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_ReaversRush`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 8): split off T-0208 under the D2 size rule; `queued` on T-0208 and T-0209.
 - 2026-11-10 lead-architect (wave F run, session 10): Inputs, Definition, Tests and Allowed Files written against the run branch at 8647386, with T-0208 and T-0209 `done`. Searched `pkg/engine` and the task archive for an existing equivalent: `OpDeployFree` (T-0208) and `Filter.Stat` (T-0209) are the shapes, reused as is; no new shape. Directive #140 (4) applies here. Probed the definition (see above), then reverted it. Set to `tests`.
+- 2026-11-10 rules-test-author: wrote pkg/engine/cards_path_reavers_rush_test.go: TestCard_ReaversRush_DeploysChosenUnitCardForFree, _OffersOnlyUnitCardsPowerThreeOrLess, _NotEnactableWithoutLegalCard (subtests a-e), _GuerrillasZoneTimeoutEntersReserves, _GuerrillasMainTheaterFiresDeployTrigger. Helpers requested: none (small builders kept in the test file). No cases left out. All fail now as expected (card not yet executable). Set to tests-review.
+- 2026-11-10 lead-architect (wave F run, session 10): tests reviewed (6978550, 5 tests, one with five subtests). Each matches the Tests list and `FR-TRN-003a`, `FR-MNV-001` (`SVY-R29`), `FR-TGT-001` and `SVY-R43`; only asked decisions are scripted, and the Guerrillas tests check the `DecideZone` is the only question. Probed them in a review worktree with the Definition added, since reverted: all five pass, and `TestStarterSet_Executable` passes with the name removed; without it, all fail. Set to `ready`.
+- 2026-11-10 kernel-engineer: implemented Reaver's Rush in pkg/engine/cards/path.go between Pincer Tactics and Rogue Fleshshaper using ability.OpDeployFree (reused from T-0208) with one target filtered by AllegianceAllied, KindUnit, ZoneDiscard, StatPower AtMost 3 (reused from T-0209); removed Reaver's Rush from NotYetExecutable in pkg/engine/cards/cards.go. Verified: go test ./pkg/engine -run "TestCard_ReaversRush" passed; TestStarterSet_Executable passed; go tool task sim passed (starter decks clean: Path 44/50 executable, P0 73.5% / P1 25.5% / draws 1.0% over 200 games); go tool task check passed all formatting, vet, tests, and cardtown linters. Set to review.
+- 2026-11-10 lead-architect (wave F run, session 10): code reviewed (caa5e41): only the two Allowed Files changed, with the Definition as written; the test commit is untouched; no card name in engine code and no new shape. Re-ran `go test ./pkg/engine -run TestCard_ReaversRush`, `go tool task check` and `go tool task sim` (clean, Path 44/50, P0 73.5% / P1 25.5% / draws 1.0%) in a review worktree. Approved.
