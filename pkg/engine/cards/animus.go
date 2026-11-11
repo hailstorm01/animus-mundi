@@ -308,6 +308,26 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Forced Mutation": {
+		Text: []string{"Turn chosen opposing unit face down. It becomes a Scratch Company unit."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpMorphScratch,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Funeral Fungus": {
 		Text: []string{
 			"As an additional cost to enact this maneuver, exhaust a readied allied unit.",

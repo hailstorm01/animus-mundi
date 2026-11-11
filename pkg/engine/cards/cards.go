@@ -22,7 +22,6 @@ var NotYetExecutable = []string{
 	"Devilhorn Scouting Party",
 	"Drifting Concept",
 	"Eerie Remnant",
-	"Forced Mutation",
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
 	"Melodic Pummeler",
