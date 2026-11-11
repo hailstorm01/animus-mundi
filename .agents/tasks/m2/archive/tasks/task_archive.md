@@ -212,3 +212,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0206 | The "in that zone" filter criterion, read against the locked zone (wave F shape, sonnet; #141 (1)) | done |
 | T-0207 | Broken Horn Armorer (wave F deck card, flash; #141 (2)) | done |
 | T-0208 | OpDeployFree, a free deploy from a discard pile during resolution (wave F shape, sonnet) | done |
+| T-0209 | A stat criterion in filters, "with power N or less" (wave F shape, sonnet) | done |

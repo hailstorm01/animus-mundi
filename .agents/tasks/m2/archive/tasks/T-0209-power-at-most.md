@@ -4,7 +4,7 @@ title: A stat criterion in filters, "with power N or less" (wave F shape, sonnet
 kind: shape
 tier: sonnet
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0209-power-at-most
 depends_on: []
 claims: [shape:filter stat criterion (ability.Filter "stat N or less", power first; matchesCard reads a pile card's printed power, matchesFilterAt an asset's effective power)]
