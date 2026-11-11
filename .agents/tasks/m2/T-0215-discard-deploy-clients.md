@@ -4,7 +4,7 @@ title: Replay and ProgressPolicy handle a deploy from a discard pile (wave F har
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0215-discard-deploy-clients
 depends_on: [T-0214]
 claims: [file:pkg/eventlog/replay.go (actionOf reads Event.From through one zoneNamed; diff compares From), file:pkg/sim/policy.go (playCosts counts discard deploys), export:engine.Game.DiscardDeployCost]
