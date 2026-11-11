@@ -36,5 +36,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0211 | OpMorphScratch, turning a battlefield unit face down in place (wave F shape, sonnet) | tests |
 | T-0212 | Forced Mutation (wave F deck card, flash) | queued |

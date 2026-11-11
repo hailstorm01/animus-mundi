@@ -214,3 +214,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0208 | OpDeployFree, a free deploy from a discard pile during resolution (wave F shape, sonnet) | done |
 | T-0209 | A stat criterion in filters, "with power N or less" (wave F shape, sonnet) | done |
 | T-0210 | Reaver's Rush (wave F deck card, flash; #140 (4)) | done |
+| T-0211 | OpMorphScratch, turning a battlefield unit face down in place (wave F shape, sonnet) | done |
