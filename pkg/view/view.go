@@ -7,14 +7,16 @@
 //   - its own hand: card names, printed characteristics, what each costs now
 //     and instance IDs;
 //   - the opponent's hand and both decks: counts only;
-//   - public: both discard piles, HQs, Reserves and resource pools, the Main
-//     Theater, the stack, the turn, the phase, the active player and the outcome.
+//   - public: both discard piles (the seat's own with instance IDs), HQs,
+//     Reserves and resource pools, the Main Theater, the stack, the turn, the
+//     phase, the active player and the outcome.
 //
 // A face-down asset is a Scratch Company with the Scratch face's
 // characteristics to both seats, its owner included (FR-ZON-005,
-// double-blind). No asset and no discard card carries a card instance ID: an
-// instance ID could identify a card seen earlier. Only the seat's own hand
-// cards do, because an Action names them.
+// double-blind). No asset and no card in the opponent's discard pile carries
+// a card instance ID: an instance ID could identify a card seen earlier. Only
+// the seat's own hand and discard cards do, because an Action names them (a
+// deploy from the discard pile names its card, FR-TRN-003).
 package view
 
 import "animus-mundi/pkg/engine"
@@ -45,7 +47,7 @@ type Side struct {
 
 // CardView is a card off the battlefield, with its printed characteristics.
 type CardView struct {
-	Inst       int // only for the seat's own hand cards (an Action names them); 0 elsewhere
+	Inst       int // only for the seat's own hand and discard cards (an Action names them); 0 elsewhere
 	Card       string
 	Type       string
 	ReqCost    int
@@ -131,7 +133,11 @@ func side(g *engine.Game, p *engine.Player, own bool) Side {
 		}
 	}
 	for _, inst := range p.Discard {
-		s.Discard = append(s.Discard, cardView(inst.Card))
+		c := cardView(inst.Card)
+		if own {
+			c.Inst = inst.ID
+		}
+		s.Discard = append(s.Discard, c)
 	}
 	return s
 }
