@@ -4,7 +4,7 @@ title: Deploy goes through declare, so a deployed card's additional costs are pa
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0213-deploy-declare
 depends_on: []
 claims: [shape:deployPlacement (a deploy's placement; Deploy through declare; placement.zone)]
@@ -59,3 +59,4 @@ In a new file `pkg/engine/deploy_cost_test.go`, with a synthetic Unit card for p
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): written against the run branch at 89c6c18, for *Veil Render*, the first card of the survey's row F still to build. Its task fires directive #128 (deploying from a discard pile goes through `declare`), which is now `open: before T-0216`. Searched `pkg/engine` and the task archive for an existing equivalent: `declare` and `placement` already serve Maneuvers and activated abilities (T-0163), and only Deploy pushes its item directly ([actions.go:62-63](../../../pkg/engine/actions.go)), so this task routes it through them and adds no second sequence. *Veil Render* with #128 needs about nine non-test files across `engine`, `eventlog`, `sim` and `cmd/cardtown`, so under the D2 size rule it splits into this task, T-0214 (the discard-active deploy permission and `Action.From`, shape, sonnet, `queued`), T-0215 (replay, play screen and `ProgressPolicy` for a discard deploy, harness, `queued`) and T-0216 (*Veil Render*, card, flash, `queued`). Set to `tests`.
+- 2026-11-10 rules-test-author: tests written in `pkg/engine/deploy_cost_test.go`: `TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush`, `TestFR_TRN_003a_DeployKillCostNeedsAnAlliedUnit`, `TestFR_TRN_003a_DeployReplacedKillCostStaysPaid`, `TestFR_TRN_003_DeployWithoutAdditionalCostsAsksNothing`. Helpers requested: none (file-local `killCostUnit`, `dcDeployToReserves`, `dcOffersDeploy`, `dcAssetOf`; reuses `kcScript`, `alliedUnitFilter`, `recordPlaced`). Vet clean; the first three fail now as expected, the fourth passes already (it pins unchanged behavior). `cardtown lint rules` passes. Left out: nothing. Note: in the replaced-kill test the Shifting Impossibility is itself an allied unit, so the cost asks a pick and the test scripts the Scratch Company (same as `TestFR_TRN_003a_ReplacedKillCostStaysPaid`).
