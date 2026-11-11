@@ -1,0 +1,21 @@
+Status: open (lead-architect, 2026-11-11)
+Task / Directive: T-0216 / none (branch: autoloop/m2-wave-f)
+Cards: Veil Render
+
+### ❓ Open Ruling Question: may *Veil Render*'s "kill an allied asset" kill its controller's own Headquarters? (2026-11-11)
+
+- **Question:**
+  1. Can a player pay *Veil Render*'s discard-deploy cost, "killing an allied asset", by killing their own Headquarters?
+  2. If yes: does a killed Headquarters (destroyed outright, not damaged to 0) lose the match, and at which moment? Is it the next death sweep, the same as Headquarters defeat by damage?
+  3. If yes: a timed-out pick of the asset to kill (an untargeted selection, `FR-MOD-001` §6) takes the choosing player's own Headquarters first, because the fixed order starts with it. So a timed-out *Veil Render* deploy from the discard pile would kill the player's own Headquarters. Is that intended, or does a timed-out cost pick skip the Headquarters (or take it last)?
+- **Source:** task T-0216 (*Veil Render*, wave F, `queued`), while the wave F run (`autoloop/m2-wave-f`, session 17) was writing it in full, before dispatch; design note Open Question 21.
+- **Cards affected:** *Veil Render* (`data/cards/units-and-structures-animus.csv` line 17, Animus Mythic Unit, R3 T3, Reserves, power 5, health 4): "You may deploy this card from your discard pile by killing an allied asset in addition to paying its deployment costs." It is in M2 and in the Animus starter deck (1 copy, `data/decks/animus-starter.txt` line 12), and it is the last Animus deck card on `cards.NotYetExecutable`. No other Animus or Path card kills an asset that could be a Headquarters. Every other kill cost or effect names a unit. The only other text with this wording is *NO-AH-5* (Soulless, outside M2), and it excludes the Headquarters explicitly: "Kill chosen allied non-Headquarters asset".
+- **Current FRD 01 & engine state:**
+  - FRD 01 v3.23, line 211 (Battlefield Entities): rules text that says "assets" includes Headquarters and Structures. FRD 02's benchmark #6 (`docs/frd/reference/02_Benchmark_Card_Blueprints.md` line 218) gives the cost as `KILL_ASSET` with `entityType: ASSET`. Read literally, the Headquarters is a legal choice.
+  - `FR-TRN-003a` (line 359) pays the cost on declaration, and `SVY-R15` keeps a replaced kill paid. Neither line says anything about a Headquarters.
+  - Headquarters defeat (line 585, `FR-CBT-003`; line 121, `KIM-S02`) is defined by Current Health (or Effective Maximum Health) at or below 0 at the death sweep. FRD 01 doesn't say what a Headquarters that is killed outright does.
+  - `FR-MOD-001` §6, Mandatory Targets and Untargeted Selections (line 419): the choosing player's own assets come first, and within them the Headquarters comes first.
+  - The engine's `kill` skips every Headquarters ([sweep.go:31](../../../pkg/engine/sweep.go)). This is a documented M2 limit from T-0072 ("no M2 card kills one"), not a rule, and it is pinned by `TestFR_LAY_002_KillSkipsAHeadquarters` ([if_you_do_test.go:243](../../../pkg/engine/if_you_do_test.go)). `costDecision` ([costs.go:56](../../../pkg/engine/costs.go)) offers the payer's matching assets in ID order, so the Headquarters comes first. `payCosts` ([costs.go:177](../../../pkg/engine/costs.go)) kills the pick through `kill`.
+  - With the benchmark's filter, the code as it stands would offer the Headquarters, kill nothing when it is chosen, and still deploy *Veil Render*. The cost would be free, and a timeout would pay it that way. That matches no reading of the rules, so the definition can't be written until this is ruled.
+  - The engine's support for T-0216 is in place: T-0213, T-0214, T-0215 and T-0217 are `done`.
+- **Lead's recommendation:** Rule that a Headquarters can't be killed to pay a cost, and print *Veil Render*'s cost as "killing an allied non-Headquarters asset", the wording *NO-AH-5* already uses. Killing your own Headquarters would just concede the match, so it is never a real cost. Under the fixed order a timeout picks the Headquarters first, so a timed-out deploy would concede. With that ruling, question 2 can wait for the first card that kills a Headquarters (none in M2), and `kill`'s Headquarters skip stays as it is.
