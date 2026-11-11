@@ -4,7 +4,7 @@ title: OpMorphScratch, turning a battlefield unit face down in place (wave F sha
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0211-morph-scratch
 depends_on: []
 claims: [shape:OpMorphScratch (ability.OpMorphScratch; stepMorphScratch; the face-down event EventFaceDown)]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/morph_scratch_test.go`, with a synthetic Maneuver (`ma
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 11): written against the run branch at de1b1c2, for *Forced Mutation* (`FR-ENT-103`), the next of wave F's deck cards. Searched `pkg/engine` and the task archive for an existing equivalent: no step changes `FaceDown` (only `newAsset` sets it, for a scratch, [zones.go:212](../../../pkg/engine/zones.go)), and `Printed()` already reads the Scratch face for every characteristic, so the step sets the flag and logs it. *Forced Mutation* would need five non-test files with its shape, so under the D2 size rule it splits into this task and T-0212 (*Forced Mutation*, card, flash, `queued`). `FR-ENT-103`'s purge of tucked cards has nothing to act on in M2 (no Attached sub-zone, no Animus or Path card tucks), so it is directive #142, `waiting` for the first task that adds tucking (D2.4). Set to `tests`.
+- 2026-11-10 rules-test-author: tests written, `status: tests-review`. New `pkg/engine/morph_scratch_test.go`: `TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace`, `TestFR_ENT_103_MorphKeepsAReadiedUnitReadied` (FR-KWD-002l), `TestFR_ENT_103_MorphWithDamageIsDestroyed`, `TestFR_ENT_103_MorphedUnitFiresNoPrintedTriggers`, `TestFR_ENT_103_MorphedUnitReturnsToHandAsPrintedCard`, `TestFR_ENT_103_MorphSkipsUnitAlreadyFaceDown`, `TestEffectEvents_MorphLogsTheFaceDownChange`. Authorized edit: `{EventFaceDown, "face-down"}` in `TestEventKinds_ValuesAreTheSchema`. Helpers requested: none (small builders `morphManeuver`, `morphEnact` live in the test file). Vet fails only on the missing `ability.OpMorphScratch` and `EventFaceDown`; `cardtown lint rules` passes. Notes: the two-unit event test expects events in `g.Assets()` order; the effective-keywords check expects `Keywords{DeploysExhausted: true}` from `Game.Keywords` for a face-down unit, per this task (the `go doc` comment says a face-down asset has "none", which the engineer should reconcile: FR-ENT-103 says the Scratch face's Deploys Exhausted). No case left out.
