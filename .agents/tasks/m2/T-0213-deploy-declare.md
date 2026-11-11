@@ -4,7 +4,7 @@ title: Deploy goes through declare, so a deployed card's additional costs are pa
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0213-deploy-declare
 depends_on: []
 claims: [shape:deployPlacement (a deploy's placement; Deploy through declare; placement.zone)]
@@ -64,3 +64,4 @@ In a new file `pkg/engine/deploy_cost_test.go`, with a synthetic Unit card for p
   1. `TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush` fails on that correct build with `missing events: … draw 0`: a successful draw logs no event (`moveTopToHand`, [zones.go:16-22](../../../pkg/engine/zones.go); only a draw from an empty deck is logged), so the `draw` event never appears. The probe's log reads `place` (Deploy of Sacrificer), the cost's `decision`, `destroy` (Martyr), `place` (ability of Martyr), then `deploy` (Sacrificer). Pin the order with what is logged: the Martyr ability's `place` event comes after the deploy's `place` and before its `deploy` event (it went on top and resolved first), and player 0's hand grew by one card (the trigger's draw resolved). Keep the other checks.
   The other three tests match the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `SVY-R15` and `SVY-R29`, and stand as they are.
 - 2026-11-10 rules-test-author: review note 1 fixed in `pkg/engine/deploy_cost_test.go`. `TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush` no longer looks for a `draw` event: it pins the order by the Martyr ability's `place` event (after the deploy's `place`, before the `deploy` event) and by player 0's hand ending at its pre-deploy size (the deployed card left, one card drawn). Everything else unchanged. Vet clean, gofmt clean, lint rules passes; the test still fails now on the unbuilt behavior (the kill cost is not paid), as expected.
+- 2026-11-10 lead-architect (wave F run, session 13): tests re-reviewed (2821cfb): note 1 applied (the order is pinned by the Martyr ability's `place` event between the deploy's `place` and `deploy` events, and the draw by player 0's hand size). The lead probe, re-run with the two Allowed Files edited as the Shape says and since discarded, passes all four tests and the whole `pkg/engine` suite. Each test matches the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `SVY-R15` and `SVY-R29`. Set to `ready`.
