@@ -99,6 +99,8 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepSearchDeck(r, st)
 	case ability.OpDeployFree:
 		return g.stepDeployFree(r, st)
+	case ability.OpMorphScratch:
+		return g.stepMorphScratch(r, st)
 	}
 	return 0
 }
@@ -448,4 +450,22 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 		}
 	}
 	return nil
+}
+
+// stepMorphScratch turns each unit of stepAssets face down in place and
+// returns how many it turned (FR-ENT-103). Printed() then reads the Scratch
+// face; nothing else changes. A Structure, a Headquarters and a unit already
+// face down are skipped. The event is logged first, so its text names the card
+// while it is still public.
+func (g *Game) stepMorphScratch(r *resolution, st ability.Step) int {
+	n := 0
+	for _, a := range g.stepAssets(r, st) {
+		if a.Printed().Type != TypeUnit || a.FaceDown {
+			continue
+		}
+		g.logEvent(Event{Kind: EventFaceDown, Player: -1, Target: a.ID}, "%s turns face down", a)
+		a.FaceDown = true
+		n++
+	}
+	return n
 }

@@ -297,6 +297,7 @@ const (
 	OpMoveZone                   // move each Subject unit to Step.To, in its controller's battlefield, keeping its state (FR-ZON-002, FR-ZON-004). A unit already there, a Structure and a Headquarters don't move
 	OpSearchDeck                 // its controller chooses a card from their deck, the rest is shuffled and the card goes to their hand (FR-DEK-001, SVY-R37, SVY-R38). An empty deck is still shuffled
 	OpDeployFree                 // put each Subject card, still in its discard pile, onto the battlefield for free under the ability's controller, with no stack item and no costs (FR-TRN-003a, FR-CST-001): into Step.To if set, else its printed zone, chosen by the controller when it prints both Reserves and the Main Theater (SVY-R43)
+	OpMorphScratch               // turn each Subject unit face down in place: it becomes the 1/1/1/1 Infantry Scratch Company whose only ability is Deploys Exhausted, and keeps its zone, controller, readiness, damage, Armor and Layer 5 modifiers (FR-ENT-103). A unit already face down, a Structure and a Headquarters are skipped
 )
 
 // Subject is what a step acts on.

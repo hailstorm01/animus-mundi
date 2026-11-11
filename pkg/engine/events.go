@@ -278,6 +278,7 @@ const (
 	EventHeal          = "heal"
 	EventArmor         = "armor"
 	EventPower         = "power"
+	EventFaceDown      = "face-down" // an effect turned a battlefield unit face down (FR-ENT-103)
 	EventCardMove      = "card-move" // an effect moved a card out of a discard pile to Zone; deck searches and draws stay secret
 	EventResult        = "result"
 	EventMatchEnd      = "match-end"
