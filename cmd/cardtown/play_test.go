@@ -417,3 +417,28 @@ func TestPlay_ActionLabelFindsAssetsInEveryZone(t *testing.T) {
 		t.Errorf("actionLabel for Scratch = %q, want %q", gotScratch, wantScratch)
 	}
 }
+
+// T-0217 (directive #128, FR-TRN-003): the play screen labels a deploy from the
+// discard pile with its card's name, from the seat's own discard pile, and its
+// origin. A hand deploy's label is unchanged, and each looks only in its own pile.
+func TestPlay_ActionLabelNamesADiscardDeploy(t *testing.T) {
+	v := view.View{You: view.Side{
+		Hand:    []view.CardView{{Inst: 41, Card: "Alpha Courier"}},
+		Discard: []view.CardView{{Inst: 42, Card: "Veil Render"}},
+	}}
+	for _, tc := range []struct {
+		a    engine.Action
+		want string
+	}{
+		{engine.Action{Kind: engine.ActDeploy, Card: 42, Zone: engine.ZoneReserves, From: engine.ZoneDiscard}, "Deploy: Veil Render from discard pile to Reserves"},
+		{engine.Action{Kind: engine.ActDeploy, Card: 99, Zone: engine.ZoneMainTheater, From: engine.ZoneDiscard}, "Deploy: Card#99 from discard pile to Main Theater"},
+		{engine.Action{Kind: engine.ActDeploy, Card: 41, Zone: engine.ZoneReserves, From: engine.ZoneDiscard}, "Deploy: Card#41 from discard pile to Reserves"},
+		{engine.Action{Kind: engine.ActDeploy, Card: 41, Zone: engine.ZoneReserves}, "Deploy: Alpha Courier to Reserves"},
+		{engine.Action{Kind: engine.ActDeploy, Card: 41, Zone: engine.ZoneReserves, From: engine.ZoneHand}, "Deploy: Alpha Courier to Reserves"},
+		{engine.Action{Kind: engine.ActDeploy, Card: 42, Zone: engine.ZoneReserves}, "Deploy: Card#42 to Reserves"},
+	} {
+		if got := actionLabel(v, tc.a); got != tc.want {
+			t.Errorf("actionLabel(%+v) = %q, want %q", tc.a, got, tc.want)
+		}
+	}
+}

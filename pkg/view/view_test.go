@@ -202,16 +202,20 @@ func TestView_Case1_Contents(t *testing.T) {
 		t.Errorf("deck counts = %d/%d, want 4/3", v.You.DeckCount, v.Opponent.DeckCount)
 	}
 
-	// Discard piles: both, with names, no instance IDs.
+	// Discard piles: both, with names; instance IDs on the seat's own only,
+	// because an Action names them (T-0217, FR-TRN-003).
 	if got := cardNames(v.You.Discard); !slices.Equal(got, []string{"Alpha Fallen"}) {
 		t.Errorf("own discard = %v, want [Alpha Fallen]", got)
 	}
 	if got := cardNames(v.Opponent.Discard); !slices.Equal(got, []string{"Beta Fallen"}) {
 		t.Errorf("opponent discard = %v, want [Beta Fallen]", got)
 	}
-	for _, c := range append(slices.Clone(v.You.Discard), v.Opponent.Discard...) {
+	if want := g.Players[0].Discard[0].ID; len(v.You.Discard) != 1 || v.You.Discard[0].Inst != want {
+		t.Errorf("own discard = %+v, want Alpha Fallen with instance ID %d", v.You.Discard, want)
+	}
+	for _, c := range v.Opponent.Discard {
 		if c.Inst != 0 {
-			t.Errorf("discard card %q carries instance ID %d, want 0", c.Card, c.Inst)
+			t.Errorf("opponent's discard card %q carries instance ID %d, want 0", c.Card, c.Inst)
 		}
 	}
 
@@ -368,8 +372,19 @@ func TestView_Case2_FaceDown(t *testing.T) {
 		if got := cardNames(owner.Discard); !slices.Equal(got, []string{"Alpha Hidden Gem"}) {
 			t.Errorf("seat %d sees player 0's discard as %v, want [Alpha Hidden Gem]", seat, got)
 		}
-		if strings.Contains(mustJSON(t, v), "424242") {
-			t.Errorf("seat %d's view contains the destroyed card's instance ID", seat)
+		js := mustJSON(t, v)
+		if seat == 0 {
+			// The owner's own discard card carries its instance ID, because an
+			// Action names it (T-0217, FR-TRN-003); nothing else does.
+			if len(owner.Discard) != 1 || owner.Discard[0].Inst != 424242 {
+				t.Errorf("seat 0's own discard = %+v, want the destroyed card with instance ID 424242", owner.Discard)
+			}
+			rest := v
+			rest.You.Discard = nil
+			js = mustJSON(t, rest)
+		}
+		if strings.Contains(js, "424242") {
+			t.Errorf("seat %d's view contains the destroyed card's instance ID outside its owner's own discard pile", seat)
 		}
 	}
 }
@@ -734,9 +749,19 @@ func TestView_PileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 			t.Errorf("seat %d: ChosenCards is empty for the asset slot and only the name of the card still in a pile for the pile slot: %v", seat, it.ChosenCards)
 		}
 		js := mustJSON(t, v)
+		if seat == 0 {
+			// The owner's own discard card carries its instance ID, because an
+			// Action names it (T-0217, FR-TRN-003); nothing else does.
+			if len(v.You.Discard) != 1 || v.You.Discard[0].Inst != inPile.ID {
+				t.Errorf("seat 0: own discard = %+v, want Card In Pile with instance ID %d", v.You.Discard, inPile.ID)
+			}
+			rest := v
+			rest.You.Discard = nil
+			js = mustJSON(t, rest)
+		}
 		for _, id := range []int{inPile.ID, gone.ID} {
 			if regexp.MustCompile(fmt.Sprintf(`\b%d\b`, id)).MatchString(js) {
-				t.Errorf("seat %d: the view carries a card instance ID %d, which is never shown", seat, id)
+				t.Errorf("seat %d: the view carries a card instance ID %d outside its owner's own discard pile", seat, id)
 			}
 		}
 		if strings.Contains(js, "Card Gone From Piles") {
@@ -835,9 +860,19 @@ func TestView_ManeuverPileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 			t.Errorf("seat %d: ChosenCards is empty for the asset slot and only the name of the card still in a pile for the pile slot: %v", seat, it.ChosenCards)
 		}
 		js := mustJSON(t, v)
+		if seat == 0 {
+			// The owner's own discard card carries its instance ID, because an
+			// Action names it (T-0217, FR-TRN-003); nothing else does.
+			if len(v.You.Discard) != 1 || v.You.Discard[0].Inst != inPile.ID {
+				t.Errorf("seat 0: own discard = %+v, want Card In Pile with instance ID %d", v.You.Discard, inPile.ID)
+			}
+			rest := v
+			rest.You.Discard = nil
+			js = mustJSON(t, rest)
+		}
 		for _, id := range []int{inPile.ID, gone.ID} {
 			if regexp.MustCompile(fmt.Sprintf(`\b%d\b`, id)).MatchString(js) {
-				t.Errorf("seat %d: the view carries a card instance ID %d, which is never shown", seat, id)
+				t.Errorf("seat %d: the view carries a card instance ID %d outside its owner's own discard pile", seat, id)
 			}
 		}
 		if strings.Contains(js, "Card Gone From Piles") {
@@ -1527,5 +1562,30 @@ func TestView_HealLineShowsToBothSeats(t *testing.T) {
 	}
 	if seen != 2 {
 		t.Errorf("%d heal events, want 2", seen)
+	}
+}
+
+// T-0217 (directive #128, FR-TRN-003): each seat's own discard cards carry
+// their instance IDs, in pile order, because a deploy from the discard pile
+// names its card; they carry no cost now. The opponent's discard cards carry
+// none.
+func TestView_OwnDiscardCardsCarryInstanceIDs(t *testing.T) {
+	s := newContentScene(t)
+	for seat := range engine.PlayerID(2) {
+		v := view.PlayerView(s.g, seat)
+		own, opp := s.g.Players[seat].Discard, s.g.Players[1-seat].Discard
+		if len(own) == 0 || len(opp) == 0 || len(v.You.Discard) != len(own) || len(v.Opponent.Discard) != len(opp) {
+			t.Fatalf("seat %d: discards %+v and %+v, want one entry per card in %d and %d", seat, v.You.Discard, v.Opponent.Discard, len(own), len(opp))
+		}
+		for i, c := range v.You.Discard {
+			if c.Inst != own[i].ID || c.ReqNow != 0 || c.TacNow != 0 {
+				t.Errorf("seat %d: own discard card %d = %+v, want instance ID %d and no cost now", seat, i, c, own[i].ID)
+			}
+		}
+		for _, c := range v.Opponent.Discard {
+			if c.Inst != 0 {
+				t.Errorf("seat %d: opponent's discard card %q carries instance ID %d, want 0", seat, c.Card, c.Inst)
+			}
+		}
 	}
 }
