@@ -561,3 +561,57 @@ func (c *activationCounter) Event(e engine.Event) {
 	}
 }
 func (c *activationCounter) Settled(s engine.Snapshot) {}
+
+// Tests for T-0215 (directive #128, #122 (a), FR-TRN-003): ProgressPolicy
+// counts a discard deploy's cost with the hand cards'.
+
+// revenant is a vanilla R1 unit that may be deployed from its owner's discard
+// pile, paying costs (none for nil) in addition to its own.
+func revenant(costs []ability.Cost) *engine.Card {
+	c := costlyUnit(1)
+	c.Ability = &ability.Def{Statics: []ability.Static{{
+		Kind: ability.StaticDeployPermission, ActiveZone: ability.ZoneDiscard, Costs: costs}}}
+	return c
+}
+
+// inDiscard puts c into player 0's discard pile.
+func inDiscard(s *scene, c *engine.Card) *engine.Instance {
+	inst := &engine.Instance{ID: s.id(), Card: c, Owner: 0}
+	s.g.Players[0].Discard = append(s.g.Players[0].Discard, inst)
+	return inst
+}
+
+// A discard card it may deploy (R1) makes the Readied HQ tap for it, and the
+// deploy follows. A card with no permission, and one whose kill cost has no
+// allied unit to kill, tap nothing.
+func TestProgress_DiscardDeployBudgets(t *testing.T) {
+	for seed := uint64(1); seed <= 16; seed++ {
+		s := newScene(t)
+		emptyPool(s, true)
+		inst := inDiscard(s, revenant(nil))
+		policy := ProgressPolicy(seed)
+		got := policy(s.g, s.g.LegalActions())
+		if got.Kind != engine.ActGenerate || got.Resource != engine.Requisition {
+			t.Fatalf("seed %d: R1 from the discard pile is in reach: got %+v, want a Requisition Generate", seed, got)
+		}
+		if err := s.g.Apply(got); err != nil {
+			t.Fatalf("seed %d: %v", seed, err)
+		}
+		got = policy(s.g, s.g.LegalActions())
+		if got.Kind != engine.ActDeploy || got.Card != inst.ID || got.From != engine.ZoneDiscard {
+			t.Errorf("seed %d: after the Generate, got %+v, want the Deploy of card %d from the discard pile", seed, got, inst.ID)
+		}
+	}
+	kill := []ability.Cost{{Kind: ability.CostKill,
+		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}}
+	for _, c := range []*engine.Card{costlyUnit(1), revenant(kill)} {
+		for seed := uint64(1); seed <= 16; seed++ {
+			s := newScene(t)
+			emptyPool(s, true)
+			inDiscard(s, c)
+			if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind == engine.ActGenerate {
+				t.Errorf("seed %d: %s can't be deployed from the discard pile now: got %+v, want no Generate", seed, c.Name, got)
+			}
+		}
+	}
+}
