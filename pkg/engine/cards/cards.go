@@ -28,7 +28,6 @@ var NotYetExecutable = []string{
 	"Melodic Pummeler",
 	"Mutation Swell",
 	"Poisoned Rations",
-	"Reaver's Rush",
 	"Rhapsody's Hollow",
 	"Solarheart Monk",
 	"Veil Render",
