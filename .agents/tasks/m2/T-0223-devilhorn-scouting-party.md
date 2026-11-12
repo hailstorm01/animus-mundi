@@ -4,7 +4,7 @@ title: "Devilhorn Scouting Party: a look at the top 3 with one free deploy of a 
 kind: card
 tier: flash
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0223-devilhorn-scouting-party
 depends_on: [T-0221, T-0222]
 claims: [card:Devilhorn Scouting Party]
@@ -85,3 +85,4 @@ New tests go in `pkg/engine/cards_path_scouting_party_test.go`. Use the real car
 - 2026-11-12 lead-architect (wave F run, session 25): tests reviewed (9b3a916). Seven of the eight, and the authorized edit to `TestReplay_OnlySearchAndLookRecordsAreHidden`, match the Tests list and the FRD 01 text they cite. All eight fail on the task branch and pass against the Shape's definition, tried locally and discarded. Returned for one note:
   1. `TestCard_DevilhornScoutingParty_DeployTriggerFires` asserts `ally.Damage + sab.Damage == 1`, but X's face-down Scratch Company (scratched by the same resolution, before the Saboteur's trigger is placed) is also an allied unit, so "chosen allied unit" may legally pick it, and the test would then fail on a legal outcome. It passes today only because of the kernel's fixed target order (an implementation detail). Sum the damage over every asset player 0 controls and want exactly 1 (and none on player 1's side other than the enemy's 2), as the Tests list says: "one allied unit (whichever the trigger chose) takes 1". Change nothing else.
 - 2026-11-12 rules-test-author: note 1 fixed: DeployTriggerFires now sums damage over every asset player 0 controls and wants exactly 1 (the enemy still takes 2). Nothing else changed.
+- 2026-11-12 lead-architect (wave F run, session 25): tests re-reviewed (f9120ce). Note 1 is fixed as asked: `_DeployTriggerFires` sums the damage over every asset player 0 controls, and nothing else changed. All eight tests match the Tests list and the FRD 01 text they cite (`FR-MOD-001` §1, §4, §6, `FR-TRN-003a` 1, `FR-CST-001`, `FR-SET-004`, `FR-ZON-004`, `FR-KWD-002m`, `SVY-R1`, `SVY-R41`–`SVY-R43`), and they assert outcomes, picking look options by label. The authorized edit in `pkg/eventlog/replay_test.go` is exactly the one named. Tests approved; set to `ready`.
