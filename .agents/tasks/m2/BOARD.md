@@ -34,5 +34,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0222 | OpLookTop, a look at the top cards of a deck with free deploys and a bottom order in one prompt (wave F shape, sonnet; #140 (3)) | queued |
+| T-0222 | OpLookTop, a look at the top cards of a deck with free deploys and a bottom order in one prompt (wave F shape, sonnet; #140 (3)) || tests |
 | T-0223 | Devilhorn Scouting Party (wave F deck card, flash) | queued |
