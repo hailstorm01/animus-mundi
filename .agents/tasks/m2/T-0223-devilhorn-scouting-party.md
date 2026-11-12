@@ -4,7 +4,7 @@ title: "Devilhorn Scouting Party: a look at the top 3 with one free deploy of a 
 kind: card
 tier: flash
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0223-devilhorn-scouting-party
 depends_on: [T-0221, T-0222]
 claims: [card:Devilhorn Scouting Party]
@@ -81,3 +81,4 @@ New tests go in `pkg/engine/cards_path_scouting_party_test.go`. Use the real car
 - 2026-11-11 lead-architect (wave F run, session 23): split off T-0221 under the D2 size rule, with T-0222; `queued` on T-0221 and T-0222.
 - 2026-11-12 lead-architect (wave F run, session 24): T-0222 is `done` (merge 143be71); its `doc.go` separator nit added to the Covers.
 - 2026-11-12 lead-architect (wave F run, session 25): written in full against the run branch at 66f37b3 (Inputs, Shape, Tests, Allowed Files). A card task with three non-test files and no new shape. The local trial found one existing test to edit (`TestReplay_OnlySearchRecordsAreHidden`), named above. Waiting triggers checked: #6, #7, #15, #71, #91 (2), #106 (a look is not a deck search), #120, #136, #141 (3) and #142 don't fire. Set to `tests`.
+- 2026-11-12 rules-test-author: tests written in pkg/engine/cards_path_scouting_party_test.go: TestCard_DevilhornScoutingParty_{DeploysAUnitCostingThreeForFree, OnlyUnitsCostingThreeOrLessAreOffered, NothingEligibleStillAsks, TimeoutDeploysNothingAndStillScratches, ChosenBottomOrderKept, ZoneIsPartOfTheLook, DeployTriggerFires, EmptyDeck}. Authorized edit made: TestReplay_OnlySearchRecordsAreHidden renamed TestReplay_OnlySearchAndLookRecordsAreHidden (passes now). Helpers requested: none (test-local sct* helpers in the new file). Cases left out: none. Red now: Enact rejected, the card is still in NotYetExecutable.

@@ -580,10 +580,10 @@ func TestReplay_SearchWithSwappedOptionsDiverges(t *testing.T) {
 	t.Fatal("no game holds a search decision with at least two refs")
 }
 
-// T-0183 (directive #119): in real games every search record is flagged hidden
-// and no other record is, in the record and in its JSON, where an open decision
-// has no hidden key.
-func TestReplay_OnlySearchRecordsAreHidden(t *testing.T) {
+// T-0183 (directive #119), T-0223: in real games every search record and every
+// look record is flagged hidden and no other record is, in the record and in its
+// JSON, where an open decision has no hidden key.
+func TestReplay_OnlySearchAndLookRecordsAreHidden(t *testing.T) {
 	searches, open := 0, 0
 	for gi, evs := range slices.Concat(searchGames(t), allGames(t)) {
 		flagged := 0
@@ -591,9 +591,9 @@ func TestReplay_OnlySearchRecordsAreHidden(t *testing.T) {
 			if e.Decision == nil {
 				continue
 			}
-			isSearch := e.Decision.Kind == engine.DecideSearch.String()
+			isSearch := e.Decision.Kind == engine.DecideSearch.String() || e.Decision.Kind == engine.DecideLook.String()
 			if e.Decision.Hidden != isSearch {
-				t.Fatalf("game %d: decision %+v, want Hidden only on a search", gi+1, *e.Decision)
+				t.Fatalf("game %d: decision %+v, want Hidden only on a search or a look", gi+1, *e.Decision)
 			}
 			if isSearch {
 				flagged++
