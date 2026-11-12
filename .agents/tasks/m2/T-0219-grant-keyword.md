@@ -4,7 +4,7 @@ title: "A keyword granted until end of turn, on the asset a deployed card became
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0219-grant-keyword
 depends_on: [T-0218]
 claims: [primitive:GRANT_KEYWORD, modifier:keyword, subject:pile-slot-became, event:keyword]
@@ -50,7 +50,7 @@ New tests go in `pkg/engine/grant_keyword_test.go`. Synthetic Maneuvers built wi
 - **Authorized edit** (`pkg/engine/eventkinds_test.go`, `TestEventKinds_ValuesAreTheSchema`): add the row `{EventKeyword, "keyword"}` after `{EventFaceDown, "face-down"}`. In the `test(T-0219)` commit.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- none expected; if the test author needs one, it names it here.
+- none. The tests use only existing helpers (newScene, put, putScratch, inDiscard, give, script, endTurn, attack, wantDamage; maneuver, enactAction, modifyTarget, moveStep, dfUnit, assetOf, effectEvents, inHand).
 
 ## Allowed Files
 - `pkg/engine/ability/ability.go`
@@ -68,3 +68,4 @@ New tests go in `pkg/engine/grant_keyword_test.go`. Synthetic Maneuvers built wi
 ## Log
 - 2026-11-11, lead-architect (wave F run, session 20): queued as the next wave F deck card in survey row F's order. Writing it fired #137's trigger, so T-0218 (#137's pure move) goes first. Tier `sonnet`: it adds a shape.
 - 2026-11-11, lead-architect (wave F run, session 21): written in full against the run branch at 92480d0, and renamed from `T-0219-allshans-battle-trance`. The Covers needed seven non-test files (the five above, plus `cards/path.go` and `cards/cards.go` for the card), so under the D2 size rule the card split off as T-0220 (card, flash, `queued`), with `doc.go`'s shape line and #140 (2)'s test. Five files is one over the rule. Not split further: the op (`ability.go`), its step and "it" (`effects.go`), its fold (`layers.go`) and its event (`events.go`) are one shape, and none works alone; `card.go` is one line, there so the name "Stalwart" stays written once (D2.0). Searched `pkg/engine` and the task archive for an existing equivalent: none (see Inputs). Waiting triggers checked: #15 doesn't fire (a keyword or power expiring in 4c makes nothing lethal), nor #6, #7, #71, #91 (2), #106, #120, #136, #141 (3), #142. Set to `tests`.
+- 2026-11-11, rules-test-author: tests written in `pkg/engine/grant_keyword_test.go` (commit `'"$H1"'`) plus the authorized `{EventKeyword, "keyword"}` row in `TestEventKinds_ValuesAreTheSchema`. Tests: TestFR_LAY_001_GrantedKeywordIsEffective, TestFR_LAY_001_GrantedKeywordAddsToCornered, TestFR_LAY_003_GrantedKeywordExpiresInSubPhase4c, TestFR_LAY_001_GrantedKeywordKeptThroughMove, TestFR_ENT_103_FaceDownUnitKeepsGrantedKeyword, TestFR_LAY_001_GrantingAggressiveGrantsNothing, TestEffectEvents_KeywordGrant, TestEffectEvents_KeywordGrantFaceDownStaysHidden (extra: the face-down detail case, split from the unit-order case), TestFR_TRN_003a_LaterStepActsOnTheDeployedCard, TestFR_TGT_003_LaterStepWithoutTheDeployDoesNothing (subtests CardLeftThePile, DeploySkippedUnsupported, NotADeploy). Helpers requested: none. Cases left out: none. `cardtown lint rules` passes; vet fails only on the not-yet-existing `EventKeyword`, `ability.OpGrantKeyword`, `ability.KeywordStalwart` and `Step.Keyword`. Reuses `dfUnit` from `deploy_free_test.go` and `moveStep` from `move_zone_test.go` (same package). Set to `tests-review`.
