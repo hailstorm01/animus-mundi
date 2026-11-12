@@ -16,12 +16,15 @@
 //     keyed by card name in pkg/engine/cards. Engine code never names a card
 //     (cardtown lint fences).
 //   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks,
-//     HookDamaged, HookExhausted, HookCombatKill, HookMoves) run through a pending-trigger buffer, in APNAP order with cascades
-//     (FR-TRG-002 to FR-TRG-004). A trigger may be optional, and its effects
-//     may choose targets ("up to N", "other", a zone) that are verified
-//     when it is placed and again when it resolves (FR-TGT-001, FR-TGT-003). A
-//     trigger may be limited to N firings each turn per asset (Trigger.MaxPerTurn,
-//     FR-TRN-001), and Unbowed (FR-KWD-002a) fires on damage taken. A trigger
+//     HookDamaged, HookExhausted, HookCombatKill, HookMoves,
+//     HookDiscardedFromHand) run through a pending-trigger buffer, in APNAP
+//     order with cascades (FR-TRG-002 to FR-TRG-004). A trigger may be
+//     optional, and its effects may choose targets ("up to N", "other", a zone)
+//     that are verified when it is placed and again when it resolves
+//     (FR-TGT-001, FR-TGT-003). A trigger may be limited to N firings each turn
+//     per asset (Trigger.MaxPerTurn, FR-TRN-001), and Unbowed (FR-KWD-002a) fires
+//     on damage taken. A trigger may work from its card's discard pile instead of
+//     the battlefield (Trigger.ActiveZone, survey G1, FR-ZON-004). A trigger
 //     may be modal ("choose N" modes, chosen on placement before its targets,
 //     FR-MOD-001 §5).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including

@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Blindside",
 	"Brigand Highlander",
 	"Drifting Concept",
-	"Eerie Remnant",
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
 	"Melodic Pummeler",

@@ -439,6 +439,24 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Eerie Remnant": {
+		Text: []string{"When this card is put into your discard pile from your hand, you may deploy it from your discard pile for free."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:       ability.HookDiscardedFromHand,
+				ActiveZone: ability.ZoneDiscard,
+				Optional:   true,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDeployFree,
+							Subject: ability.SubjectSelf,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Fortify": {
 		Text: []string{"Chosen allied unit gains 3 armor."},
 		Effect: ability.Effect{
