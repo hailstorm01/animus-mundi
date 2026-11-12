@@ -10,8 +10,9 @@ import (
 // Acceptance Case 8: Executable flag.
 // A new test builds a game from the starter decks with a fixed seed.
 // Every CardView in the seat's hand has Executable == c.Supported() for that card.
-// Seed 1 is chosen: seat 0's initial hand contains Despoiler Larva (supported)
-// as well as Veil Render (unsupported).
+// Seed 1 is chosen: seat 0's initial hand contains Despoiler Larva (supported).
+// Every Animus card is executable since T-0216 (Veil Render), so the test swaps
+// seat 0's last hand card for a copy with an unsupported line.
 func TestView_Case8_ExecutableFlag(t *testing.T) {
 	decks := starterDecks(t)
 	g, err := engine.NewGame(engine.Config{
@@ -21,6 +22,13 @@ func TestView_Case8_ExecutableFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGame: %v", err)
 	}
+	hand := g.Players[0].Hand
+	if len(hand) == 0 {
+		t.Fatalf("seat 0 has empty hand")
+	}
+	unsupported := *hand[len(hand)-1].Card
+	unsupported.Unsupported = []string{"An unsupported line."}
+	hand[len(hand)-1].Card = &unsupported
 
 	v := view.PlayerView(g, 0)
 	if len(v.You.Hand) == 0 {
