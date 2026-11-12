@@ -4,7 +4,7 @@ title: "Allshan's Battle Trance: deployed from the discard pile to the Main Thea
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0220-allshans-battle-trance
 depends_on: [T-0219]
 claims: [card:Allshan's Battle Trance]
