@@ -25,7 +25,16 @@ func kindOf(t CardType) ability.Kinds {
 // printed characteristics (FR-ZON-004), Stat by its printed value, Other not
 // src. f must be InPile.
 func (g *Game) matchesCard(ctl PlayerID, src *Instance, f ability.Filter, inst *Instance) bool {
-	if !f.InPile() || (f.Other && inst == src) {
+	return f.InPile() && g.cardMeets(ctl, src, f, inst)
+}
+
+// cardMeets reports whether card inst, wherever it is, meets every card-level
+// criterion of f: Other (not src), Stat by its printed value, then allegiance
+// by the card's owner, Kinds, Subtypes and Scratch by its printed
+// characteristics. It reads no zone criterion. The look at the top cards
+// (T-0222) checks a deck card with it.
+func (g *Game) cardMeets(ctl PlayerID, src *Instance, f ability.Filter, inst *Instance) bool {
+	if f.Other && inst == src {
 		return false
 	}
 	if !withinStat(f, cardStat(f.Stat, inst.Card)) {
@@ -42,17 +51,25 @@ func withinStat(f ability.Filter, v int) bool {
 
 // cardStat is a card's printed value of s (FR-ZON-004); 0 for StatNone.
 func cardStat(s ability.Stat, c *Card) int {
-	if s == ability.StatPower {
+	switch s {
+	case ability.StatPower:
 		return c.Power
+	case ability.StatRequisition:
+		return c.ReqCost
 	}
 	return 0
 }
 
 // assetStat is an asset's effective value of s (Layer 6, FR-TGT-001); 0 for
-// StatNone.
+// StatNone. Requisition cost is the cost printed on what the asset is now (a
+// face-down unit's is the Scratch Company face's, 0): no layer changes a
+// Requisition cost, so printed is effective.
 func (g *Game) assetStat(s ability.Stat, a *Asset) int {
-	if s == ability.StatPower {
+	switch s {
+	case ability.StatPower:
 		return g.Power(a)
+	case ability.StatRequisition:
+		return a.Printed().ReqCost
 	}
 	return 0
 }
