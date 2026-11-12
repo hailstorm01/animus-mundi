@@ -418,6 +418,27 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Devilhorn Scouting Party": {
+		Text: []string{"Look at the top 3 cards of your deck. You may deploy a unit card with Requisition cost 3 or less from among them for free. Put the rest on the bottom of your deck in any order. Then, Scratch 1."},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:     ability.OpLookTop,
+					Amount: ability.Value{N: 3},
+					UpTo:   1,
+					Filter: ability.Filter{
+						Kinds:  ability.KindUnit,
+						Stat:   ability.StatRequisition,
+						AtMost: 3,
+					},
+				},
+				{
+					Op:     ability.OpScratch,
+					Amount: ability.Value{N: 1},
+				},
+			},
+		},
+	},
 	"Fortify": {
 		Text: []string{"Chosen allied unit gains 3 armor."},
 		Effect: ability.Effect{
