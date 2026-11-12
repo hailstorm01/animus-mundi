@@ -102,8 +102,11 @@ Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are 
 | **R43** | When a free-deployed card may enter either Reserves or the Main Theater (`FR-TRN-003a` 1), a timeout puts it in Reserves, following the fixed order of R16. In a look at the top cards, the zone of each deployed card is part of that look's one prompt | Reaver's Rush (with Devilhorn Guerrillas); Mutation Swell, Devilhorn Scouting Party, Light of the World Soul, World Soul Messenger | **Ruled (user, 2026-11-09).** Recorded in FRD 01 v3.22 as `SVY-R43` (`FR-TRN-003a`, `FR-MOD-001` §4, §6). |
 | **R44** | For a card or ability on the Resolution Stack, "in the same zone" means the zone its source is in when the item is placed (its last-known zone if already gone), locked with the targets, for targeted clauses and untargeted picks. A card that needs its source to still be there says so. A continuous ability uses its source's current zone | Hammerhand Bivouac; Tempest Runner, Mobile Armory, Land Fortress, Popup Bunker, Flickering Ember (outside M2); the same-zone auras keep the current-zone reading | **Ruled (user, 2026-11-09).** Recorded in FRD 01 v3.23 as `SVY-R44` (`FR-TGT-001`, `FR-TGT-003`, `FR-ZON-004`). |
 | **R45** | In a trigger on a move, "that zone" is the zone the triggering move went to, fixed by the event. Card text says "that zone" for a move's destination and "the same zone" only for the source's zone on placement | Broken Horn Armorer (reworded) | **Ruled (user, 2026-11-09).** Recorded in FRD 01 v3.23 as `SVY-R45` (`FR-TGT-001`). |
+| **R46** | May *Veil Render*'s "kill an allied asset" kill its own Headquarters, and what does a killed Headquarters do? (Open Question 21, T-0216) | Veil Render (reworded) | **Ruled (user, 2026-11-11).** Recorded in FRD 01 v3.24 as `SVY-R46` (`FR-TRN-003a`, `FR-CBT-003`). |
 
 **Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
+
+What a Headquarters killed outright (not damaged to 0) does. No M2 card can kill one (`SVY-R46`). Left for the first card that can, such as a "destroy a player" win condition.
 
 ---
 
@@ -154,7 +157,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Animoceps Node | E | Continuous | allied units in same zone +1 power | `FR-LAY-001` | Structure; does not buff itself |
 | Melodic Pummeler | E | Continuous | allied Horror units in same zone +1 power | `FR-LAY-001` | Includes itself |
 | Hulking Incongruity | E | Continuous | allied Horror units in same zone gain Resistant 1 | `FR-LAY-001` | G2; includes itself |
-| Veil Render ★ | F | Continuous (discard-active permission) | deploy from discard + kill allied asset | `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001` | Benchmark #6; replaced kill cost stays paid (`SVY-R15`) |
+| Veil Render ★ | F | Continuous (discard-active permission) | deploy from discard + kill allied unit | `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001` | Benchmark #6 (cost narrowed to a unit, SVY-R46); replaced kill cost stays paid (SVY-R15) |
 | Mutation Swell ★ | F | Maneuver | `KILL` 2 or 4 allied Scratch Company (untargeted, picked on resolution); `DEPLOY_FREE` per 2 killed | `FR-TGT-002`, `FR-TRN-003a` (`SVY-R3`) | Benchmark #14, but its `CHOSEN` targeting is superseded: the kill is untargeted (2026-10-20); timeout picks the first in fixed order (`SVY-R16`); replaced kills count toward its deploys (`SVY-R21`, `SVY-R15`) |
 | Forced Mutation | F | Maneuver | `MORPH_SCRATCH` chosen opposing unit | `FR-ENT-103` | |
 | Animoceps Spore Cloud ★ | G | Replacement | `WOULD_TAKE_DAMAGE` on allied units in same zone → `REDIRECT_DAMAGE_TARGET` self | `FR-REP-001`–`FR-REP-004` | Benchmark #3 |
