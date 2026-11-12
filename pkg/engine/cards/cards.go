@@ -29,5 +29,4 @@ var NotYetExecutable = []string{
 	"Poisoned Rations",
 	"Rhapsody's Hollow",
 	"Solarheart Monk",
-	"Veil Render",
 }
