@@ -221,3 +221,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0215 | Replay and ProgressPolicy handle a deploy from a discard pile (wave F harness, flash; #128) | done |
 | T-0217 | The play screen names a deploy from the discard pile (wave F harness, flash; #128) | done |
 | T-0216 | Veil Render, deployed from its owner's discard pile by killing an allied unit (wave F card, flash; #143) | done |
+| T-0218 | "Until end of turn" is one list of modifiers on the asset (directive #137, wave F harness, flash, pure move) | done |
