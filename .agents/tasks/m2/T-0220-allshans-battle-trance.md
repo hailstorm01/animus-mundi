@@ -4,7 +4,7 @@ title: "Allshan's Battle Trance: deployed from the discard pile to the Main Thea
 kind: card
 tier: flash
 wave: F
-status: tests
+status: review
 branch: m2/autoloop-wave-f/T-0220-allshans-battle-trance
 depends_on: [T-0219]
 claims: [card:Allshan's Battle Trance]
@@ -67,10 +67,13 @@ New tests go in `pkg/engine/cards_path_battle_trance_test.go`. Use the real card
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AllshansBattleTrance|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] The listed tests pass: `go test ./pkg/engine -run "AllshansBattleTrance|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-11, lead-architect (wave F run, session 21): queued, split off T-0219 under the D2 size rule (D2.4). Takes #140 (2) from T-0219, which now holds only the shape.
 - 2026-11-11, lead-architect (wave F run, session 22): written in full against the run branch at c2ad364 (Inputs, Shape, Tests, Allowed Files). It is a card task with three non-test files and no new shape: it uses only `done` ones (T-0208, T-0210's pile slot, T-0219). #140 (2) is its `ExpiresInSubPhase4c` test. Waiting triggers checked: #15 doesn't fire (the keyword and the power that expire in 4c make nothing lethal), and neither do #6, #7, #71, #91 (2), #106, #120, #136, #141 (3) or #142. Set to `tests`.
+- 2026-11-11, rules-test-author: tests written in `pkg/engine/cards_path_battle_trance_test.go`: TestCard_AllshansBattleTrance_DeploysToTheMainTheater, _ExpiresInSubPhase4c, _StalwartTakesOneCombatDamage, _GuerrillasDeployTriggerFires, _VeilRenderPaysNoKill, _NotEnactableWithoutAUnitCard (4 subtests), _TargetLeftThePile. Helpers requested: none (reuses rrUnit). `go vet` is clean and `cardtown lint rules` passes. All 7 fail now because the card is not executable. Left out: nothing. Note: the Stalwart-combat test uses a custom Reserves-only unit (power 2, health 9) so the 3-power foe's damage is capped to 1. Status set to tests-review.
+- 2026-11-11, lead-architect (wave F run, session 22): tests reviewed (29e44ed). All seven match the Tests list and the FRD 01 text they cite (`FR-TRN-003a` 2, `FR-CST-001`, line 169's Readied entry, `FR-KWD-002c`, `FR-TGT-003`, `SVY-R29`, `SVY-R39`, `SVY-R46`), and they assert outcomes, not implementation. They fail on the task branch and pass against the Shape's definition, tried locally and discarded. Tests approved; set to `ready`.
+- 2026-11-11, kernel-engineer: implemented Allshan's Battle Trance (commit 32cb290). Removed "Allshan's Battle Trance" from `NotYetExecutable` in `pkg/engine/cards/cards.go`; added its ability definition in `pkg/engine/cards/path.go` before "Allshan, Chainbreaker Revenant" using an allied discard pile unit target and three steps (`OpDeployFree` to Main Theater, `OpGrantKeyword` Stalwart, `OpModifyStat` +2); documented `OpGrantKeyword` and later step behavior on pile slots in `pkg/engine/doc.go`. Reused `OpDeployFree` (T-0208) and `OpGrantKeyword` / `OpModifyStat` on the same slot (T-0219). Verified: `go test ./pkg/engine -run "AllshansBattleTrance|TestDefs"` passed; `go tool task check` passed cleanly; `go tool task sim` ran clean across 200 games with 45/50 Path starter main deck cards executable. Status set to `review`.
