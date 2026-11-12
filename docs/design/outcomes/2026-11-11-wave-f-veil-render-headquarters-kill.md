@@ -1,5 +1,5 @@
 Status: applied: FRD 01 v3.24, 2026-11-11
-Directive: #142
+Directive: #143
 Rulings: SVY-R46
 
 ### 🎲 Design Outcome: Veil Render's discard-deploy cost kills an allied unit (2026-11-11)
@@ -47,7 +47,7 @@ Rulings: SVY-R46
 - **Prompt to run:** `@pm-frd-drafter apply Design Outcome docs/design/outcomes/2026-11-11-wave-f-veil-render-headquarters-kill.md`
 
 #### → `lead-architect` (build board directive)
-- **Directive row:** #142 in [`.agents/tasks/m2/BOARD.md`](../../../.agents/tasks/m2/BOARD.md), status `waiting: docs/design/outcomes/2026-11-11-wave-f-veil-render-headquarters-kill.md applied (then open: before T-0216)`.
+- **Directive row:** #143 in [`.agents/tasks/m2/BOARD.md`](../../../.agents/tasks/m2/BOARD.md), status `waiting: docs/design/outcomes/2026-11-11-wave-f-veil-render-headquarters-kill.md applied (then open: before T-0216)`.
   - **(1) T-0216's definition.** The cost is one `CostKill` with `Filter{Allegiance: AllegianceAllied, Kinds: KindUnit}`, the same filter as *Feed the Despoiler* (`pkg/engine/cards/animus.go:291`), not the benchmark's `entityType: ASSET`. `Text` is the reworded CSV line.
   - **(2) T-0216's Covers.** Rewrite them for a unit. Pin these: killing an allied Scratch Company unit pays the cost. With only allied Structures and the Headquarters on the battlefield, the discard deploy isn't legal. A timed-out cost pick kills the first allied unit in fixed order (Reserves before the Main Theater, oldest first) and never the Headquarters. Keep the existing Covers (death triggers resolve above it, a replaced kill still pays under `SVY-R15`, the hand deploy has no kill, free deploys waive the kill, not legal from the opponent's pile).
   - **(3)** Mark the design note's Open Question 21 answered, and fix T-0216's title and Goal ("by killing an allied asset" → "an allied unit").
