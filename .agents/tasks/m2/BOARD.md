@@ -33,4 +33,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0226](T-0226-eerie-remnant.md) | *Eerie Remnant* (card, flash) | queued |
+| [T-0226](T-0226-eerie-remnant.md) | *Eerie Remnant* (card, flash) | tests |
