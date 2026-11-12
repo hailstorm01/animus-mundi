@@ -225,3 +225,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0219 | A keyword granted until end of turn, on the asset a deployed card became (wave F shape, sonnet; for Allshan's Battle Trance) | done |
 | T-0220 | Allshan's Battle Trance (wave F card, flash; #140 (2)) | done |
 | T-0221 | A Requisition cost criterion in filters, "with Requisition cost N or less" (wave F shape, sonnet; for Devilhorn Scouting Party) | done |
+| T-0222 | OpLookTop, a look at the top cards of a deck with free deploys and a bottom order in one prompt (wave F shape, sonnet; #140 (3)) | done |
