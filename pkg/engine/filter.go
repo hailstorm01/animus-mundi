@@ -149,7 +149,7 @@ func (g *Game) matchesFilterAt(ctl PlayerID, src int, lock *LockedZone, f abilit
 	if f.ZoneRef != ability.ZoneRefNone && !inLocked(a, lock) {
 		return false
 	}
-	if f.InPile() || !deployedTo(a, f.Zone) {
+	if f.InPile() || !deployedTo(a.Zone, f.Zone) {
 		return false
 	}
 	if !withinStat(f, g.assetStat(f.Stat, a)) {

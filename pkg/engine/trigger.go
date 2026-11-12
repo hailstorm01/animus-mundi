@@ -40,16 +40,34 @@ func (p sourcePos) compare(q sourcePos) int {
 	return cmp.Or(cmp.Compare(p.zone, q.zone), cmp.Compare(p.arrived, q.arrived))
 }
 
+// triggerSource is what fires a trigger, read when it fires: the face it
+// prints, its controller, its zone and its rank in the flush's source order,
+// and the IDs its placement and MaxPerTurn counter use. Every source so far
+// is a battlefield asset (assetSource).
+type triggerSource struct {
+	card       *Card     // its printed face (the Scratch face if face-down)
+	id         int       // source asset ID: the placement's source and the MaxPerTurn key
+	inst       *Instance // source card instance (FR-ZON-004)
+	controller PlayerID
+	zone       Zone
+	pos        sourcePos
+}
+
+// assetSource is a as a trigger source, as it stands now.
+func assetSource(a *Asset) triggerSource {
+	return triggerSource{card: a.Printed(), id: a.ID, inst: a.Inst, controller: a.Controller, zone: a.Zone, pos: posOf(a)}
+}
+
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
 // is a's controller now. They wait for the flush after the item's sweep.
-func (g *Game) fireDeploy(a *Asset) { g.fireHook(a, ability.HookDeploy) }
+func (g *Game) fireDeploy(a *Asset) { g.fireHook(assetSource(a), ability.HookDeploy) }
 
 // fireMoved buffers a's own move triggers (self hook only). moveOnBattlefield
 // calls it after a is placed in its new zone (SVY-R1, FR-ZON-002).
 // Each trigger locks the zone a moved to, its own value, fixed by the event (SVY-R45).
 func (g *Game) fireMoved(a *Asset) {
 	n := len(g.pending)
-	g.fireHook(a, ability.HookMoves)
+	g.fireHook(assetSource(a), ability.HookMoves)
 	for i := n; i < len(g.pending); i++ {
 		g.pending[i].locked = &LockedZone{Zone: a.Zone, Player: a.Controller}
 	}
@@ -58,21 +76,21 @@ func (g *Game) fireMoved(a *Asset) {
 // fireKilled buffers a's own death triggers. The deathSweep calls it before a
 // leaves the battlefield, so the controller is a's last-known controller. A
 // face-down asset fires nothing (FR-ZON-004).
-func (g *Game) fireKilled(a *Asset) { g.fireHook(a, ability.HookKilled) }
+func (g *Game) fireKilled(a *Asset) { g.fireHook(assetSource(a), ability.HookKilled) }
 
 // fireDamaged buffers a's own damage-taken triggers (Unbowed). dealDamage calls it
 // when a took damage, so the controller is a's controller now, kept if a then dies.
-func (g *Game) fireDamaged(a *Asset) { g.fireHook(a, ability.HookDamaged) }
+func (g *Game) fireDamaged(a *Asset) { g.fireHook(assetSource(a), ability.HookDamaged) }
 
 // fireExhausted buffers a's own exhaust triggers. exhaust calls it after a becomes Exhausted.
-func (g *Game) fireExhausted(a *Asset) { g.fireHook(a, ability.HookExhausted) }
+func (g *Game) fireExhausted(a *Asset) { g.fireHook(assetSource(a), ability.HookExhausted) }
 
 // fireCombatKill buffers att's own combat-kill triggers. resolveAttack calls it when
 // the attacker's combat damage left def lethal; the triggers wait on def's
 // destruction, because a replaced death is not a kill (SVY-R19).
 func (g *Game) fireCombatKill(att, def *Asset) {
 	n := len(g.pending)
-	g.fireHook(att, ability.HookCombatKill)
+	g.fireHook(assetSource(att), ability.HookCombatKill)
 	for i := n; i < len(g.pending); i++ {
 		g.pending[i].awaits = def.ID
 	}
@@ -87,27 +105,27 @@ func (g *Game) confirmDestroyed(id int) {
 	}
 }
 
-// fireHook buffers a's own triggers for hook in printed order. A face-down
-// asset has no printed abilities.
-func (g *Game) fireHook(a *Asset, hook ability.Hook) {
-	def := a.Printed().Ability
+// fireHook buffers src's own triggers for hook in printed order: the one place
+// a trigger's gates are checked. A face-down asset has no printed abilities.
+func (g *Game) fireHook(src triggerSource, hook ability.Hook) {
+	def := src.card.Ability
 	if def == nil {
 		return
 	}
 	for i, t := range def.Triggers {
-		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != a.Controller) {
+		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != src.controller) {
 			continue
 		}
-		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !deployedTo(a, t.ToZone) {
+		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !deployedTo(src.zone, t.ToZone) {
 			continue
 		}
 		// Cornered is an enqueue gate: checked here, when the event happens,
 		// and before the MaxPerTurn counter (FR-KWD-002e, FR-LAY-003).
-		if t.Cornered && !g.cornered(a.Controller) {
+		if t.Cornered && !g.cornered(src.controller) {
 			continue
 		}
 		if t.MaxPerTurn > 0 {
-			k := firingKey{asset: a.ID, trigger: i, turn: g.Turn}
+			k := firingKey{asset: src.id, trigger: i, turn: g.Turn}
 			if g.firings[k] >= t.MaxPerTurn {
 				continue
 			}
@@ -116,17 +134,17 @@ func (g *Game) fireHook(a *Asset, hook ability.Hook) {
 			}
 			g.firings[k]++
 		}
-		g.bufferTrigger(a, fmt.Sprintf("%s: trigger %d", a.Printed().Name, i+1), t)
+		g.bufferTrigger(src, fmt.Sprintf("%s: trigger %d", src.card.Name, i+1), t)
 	}
 }
 
-// bufferTrigger adds the fired trigger t to the buffer: a is its source, a's
-// controller now is its controller, and label names it in the flush's prompts.
-func (g *Game) bufferTrigger(a *Asset, label string, t ability.Trigger) {
+// bufferTrigger adds the fired trigger t to the buffer: src is its source, src's
+// controller is its controller, and label names it in the flush's prompts.
+func (g *Game) bufferTrigger(src triggerSource, label string, t ability.Trigger) {
 	g.pending = append(g.pending, pendingTrigger{
-		placement: placement{source: a.ID, inst: a.Inst, controller: a.Controller, label: label},
+		placement: placement{source: src.id, inst: src.inst, controller: src.controller, label: label},
 		trig:      t,
-		pos:       posOf(a),
+		pos:       src.pos,
 	})
 }
 
@@ -134,10 +152,11 @@ func (g *Game) bufferTrigger(a *Asset, label string, t ability.Trigger) {
 // ability.Aggressive trigger, read now, not at card load), if any, then its
 // printed attack triggers (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
+	src := assetSource(a)
 	if n := g.Keywords(a).Aggressive; n > 0 {
-		g.bufferTrigger(a, fmt.Sprintf("%s: %s %d", a.Printed().Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
+		g.bufferTrigger(src, fmt.Sprintf("%s: %s %d", src.card.Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
 	}
-	g.fireHook(a, ability.HookAttacks)
+	g.fireHook(src, ability.HookAttacks)
 }
 
 // flushTriggers places the buffer on the stack: the active player's triggers
