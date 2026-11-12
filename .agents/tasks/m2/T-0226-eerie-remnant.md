@@ -4,7 +4,7 @@ title: "Eerie Remnant: when put into your discard pile from your hand, you may d
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0226-eerie-remnant
 depends_on: [T-0225]
 claims: [card:Eerie Remnant]
