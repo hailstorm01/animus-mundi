@@ -267,7 +267,7 @@ func TestFR_QUE_001_NonEmptyStackBlocksTacticalActionsButNotEconomy(t *testing.T
 func TestFR_LAY_001_CombatPowerClampsAtZero(t *testing.T) {
 	s := newScene(t)
 	u := s.put(0, ZoneMainTheater, unit("Weak", 2, 3, Keywords{}))
-	u.TempPower = -5
+	u.Modifiers = []Modifier{{Layer: 5, Power: -5}}
 	if p := s.g.Power(u); p != 0 {
 		t.Fatalf("power = %d, want 0", p)
 	}

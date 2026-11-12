@@ -67,9 +67,9 @@ func TestFR_TGT_001_PowerAtMostReadsEffectivePowerOnTheBattlefield(t *testing.T)
 	p3 := s.put(1, ZoneMainTheater, unit("P3", 3, 5, Keywords{}))
 	s.put(1, ZoneMainTheater, unit("P4", 4, 5, Keywords{}))
 	up := s.put(1, ZoneMainTheater, unit("P3plus1", 3, 5, Keywords{}))
-	up.TempPower = 1 // effective 4
+	up.Modifiers = []Modifier{{Layer: 5, Power: 1}} // effective 4
 	down := s.put(1, ZoneMainTheater, unit("P4minus2", 4, 5, Keywords{}))
-	down.TempPower = -2 // effective 2
+	down.Modifiers = []Modifier{{Layer: 5, Power: -2}} // effective 2
 	slot := ability.Target{Filter: paMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})}
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{slot}, armorStep(1, 0)))
@@ -93,7 +93,7 @@ func TestFR_TGT_003_PowerAtMostTargetCheckedAgainOnResolution(t *testing.T) {
 		s.asks[0] = append(s.asks[0], d)
 		for i, o := range d.Options {
 			if o.Ref == a.ID {
-				a.TempPower = 1
+				a.Modifiers = []Modifier{{Layer: 5, Power: 1}}
 				return Answer{Picks: []int{i}}
 			}
 		}
@@ -115,12 +115,12 @@ func TestFR_TGT_001_PowerAtMostAllStepReadsEffectivePower(t *testing.T) {
 	allyLow := s.put(0, ZoneMainTheater, unit("AllyLow", 2, 5, Keywords{}))
 	allyHigh := s.put(0, ZoneMainTheater, unit("AllyHigh", 5, 5, Keywords{}))
 	allyDown := s.put(0, ZoneMainTheater, unit("AllyDown", 4, 5, Keywords{}))
-	allyDown.TempPower = -1 // effective 3
+	allyDown.Modifiers = []Modifier{{Layer: 5, Power: -1}} // effective 3
 	foeEdge := s.put(1, ZoneMainTheater, unit("FoeEdge", 3, 5, Keywords{}))
 	foeUp := s.put(1, ZoneMainTheater, unit("FoeUp", 3, 5, Keywords{}))
-	foeUp.TempPower = 1 // effective 4
+	foeUp.Modifiers = []Modifier{{Layer: 5, Power: 1}} // effective 4
 	foeDown := s.put(1, ZoneMainTheater, unit("FoeDown", 5, 5, Keywords{}))
-	foeDown.TempPower = -3 // effective 2
+	foeDown.Modifiers = []Modifier{{Layer: 5, Power: -3}} // effective 2
 	f := paMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})
 	s.script(0)
 	s.iydDeploy(iydTrigger(false, nil, allStep(ability.OpAddArmor, 1, f)))

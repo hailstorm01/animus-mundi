@@ -30,8 +30,8 @@ func TestCard_AllshanChainbreakerRevenant_EntersReservesAsFiveSixForFiveRequisit
 	if s.g.Players[0].Req != 0 {
 		t.Errorf("Allshan costs 5 Requisition: %d left", s.g.Players[0].Req)
 	}
-	if a.Armor != 0 || a.TempPower != 0 {
-		t.Errorf("Unbowed and Cornered are not deploy triggers: Armor %d, TempPower %d", a.Armor, a.TempPower)
+	if a.Armor != 0 || a.TempPower() != 0 {
+		t.Errorf("Unbowed and Cornered are not deploy triggers: Armor %d, TempPower %d", a.Armor, a.TempPower())
 	}
 	if n := len(s.asked(0)) + len(s.asked(1)); n != 0 {
 		t.Errorf("nothing is asked on deploy: asked %d times", n)
@@ -88,12 +88,12 @@ func TestCard_AllshanChainbreakerRevenant_CorneredAttackDealsEightAndPowerResets
 	s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
 	s.do(s.attack(al, def))
 	s.wantDamage(def, 8)
-	if al.TempPower != 3 {
-		t.Errorf("Cornered: +3 power until end of turn: TempPower %d, want 3", al.TempPower)
+	if al.TempPower() != 3 {
+		t.Errorf("Cornered: +3 power until end of turn: TempPower %d, want 3", al.TempPower())
 	}
 	s.endTurn()
-	if al.TempPower != 0 {
-		t.Errorf("the +3 power expires at end of turn: TempPower %d, want 0", al.TempPower)
+	if al.TempPower() != 0 {
+		t.Errorf("the +3 power expires at end of turn: TempPower %d, want 0", al.TempPower())
 	}
 	if p := al.Printed(); p.Power != 5 {
 		t.Errorf("Allshan is a 5 power unit again: %d", p.Power)
@@ -107,8 +107,8 @@ func TestCard_AllshanChainbreakerRevenant_NotCorneredAttackGainsNothing(t *testi
 	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
 	s.do(s.attack(al, def))
 	s.wantDamage(def, 5)
-	if al.TempPower != 0 {
-		t.Errorf("Cornered needs the opponent to control strictly more Main Theater assets: TempPower %d, want 0", al.TempPower)
+	if al.TempPower() != 0 {
+		t.Errorf("Cornered needs the opponent to control strictly more Main Theater assets: TempPower %d, want 0", al.TempPower())
 	}
 }
 
@@ -140,8 +140,8 @@ func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
 				t.Errorf("the Aggressive item's source is Allshan: %+v", it)
 			}
 		}
-		if al.TempPower != 3 {
-			t.Errorf("Aggressive 3 gives +3 power until end of turn: TempPower %d, want 3", al.TempPower)
+		if al.TempPower() != 3 {
+			t.Errorf("Aggressive 3 gives +3 power until end of turn: TempPower %d, want 3", al.TempPower())
 		}
 	})
 	t.Run("not cornered", func(t *testing.T) {

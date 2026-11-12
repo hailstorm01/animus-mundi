@@ -1124,7 +1124,7 @@ func TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive(t *tes
 	hunt := deployHunt(s)
 	s.endTurn()
 	hit := s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
-	hunt.TempPower = 2 // stands in for an until-end-of-turn bonus, still active this turn
+	hunt.Modifiers = []Modifier{{Layer: 5, Power: 2}} // stands in for an until-end-of-turn bonus, still active this turn
 	s.scriptRefs(0, nil, e)
 	s.script(1)
 	s.do(s.attack(hit, hunt))

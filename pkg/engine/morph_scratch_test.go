@@ -36,7 +36,7 @@ func TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace(t *testing.T) {
 	s := newScene(t)
 	card := unit("Bulwark", 4, 5, Keywords{Stalwart: true})
 	u := s.put(1, ZoneMainTheater, card)
-	u.Exhausted, u.Armor, u.TempPower = true, 3, 2
+	u.Exhausted, u.Armor, u.Modifiers = true, 3, []Modifier{{Layer: 5, Power: 2}}
 	id := u.ID
 	morphEnact(s, morphManeuver())
 	a := s.g.Asset(id)
@@ -46,8 +46,8 @@ func TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace(t *testing.T) {
 	if !a.FaceDown {
 		t.Errorf("the unit is face down (FR-ENT-103)")
 	}
-	if !a.Exhausted || a.Armor != 3 || a.TempPower != 2 {
-		t.Errorf("it keeps its readiness, Armor and Layer 5 modifier: Exhausted %v, Armor %d, TempPower %d; want true, 3, 2 (FR-ENT-103)", a.Exhausted, a.Armor, a.TempPower)
+	if !a.Exhausted || a.Armor != 3 || a.TempPower() != 2 {
+		t.Errorf("it keeps its readiness, Armor and Layer 5 modifier: Exhausted %v, Armor %d, TempPower %d; want true, 3, 2 (FR-ENT-103)", a.Exhausted, a.Armor, a.TempPower())
 	}
 	if got := s.g.Power(a); got != 3 {
 		t.Errorf("effective power = %d, want 3: Scratch Company 1 plus the kept +2 (FR-LAY-001 Layer 1, FR-ENT-103)", got)

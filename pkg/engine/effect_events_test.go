@@ -91,8 +91,8 @@ func TestEffectEvents_PowerLogsThePowerChange(t *testing.T) {
 			from := len(s.g.Log)
 			s.do(activate(src, 0))
 			wantAssetEvents(t, effectEvents(s.g, from, EventPower), []*Asset{a, b}, []int{n, n}, "%s gets %+d power until end of turn")
-			if a.TempPower != n || b.TempPower != n {
-				t.Errorf("TempPower %d, %d, want %d", a.TempPower, b.TempPower, n)
+			if a.TempPower() != n || b.TempPower() != n {
+				t.Errorf("TempPower %d, %d, want %d", a.TempPower(), b.TempPower(), n)
 			}
 		})
 	}

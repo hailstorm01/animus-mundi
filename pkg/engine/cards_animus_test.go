@@ -1044,7 +1044,7 @@ func TestCard_CraterfallAncient_TimeoutOnTheQuestionDeclines(t *testing.T) {
 // Covers: SVY-R10
 func TestCard_CraterfallAncient_DamageEqualsEffectivePowerAtResolution(t *testing.T) {
 	s, anc, b := ancientScene(t)
-	anc.TempPower = 2 // stands in for an until-end-of-turn bonus, active this turn
+	anc.Modifiers = []Modifier{{Layer: 5, Power: 2}} // stands in for an until-end-of-turn bonus, active this turn
 	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy, b.enemy2))
 	s.do(s.attack(anc, b.dummy))
 	wantDealt(t, s.g, b.enemy, 1, 8, "power 6 plus 2 temporary is 8, not the printed 6")

@@ -31,7 +31,7 @@ func TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState(t *testing.T) {
 	s := newScene(t)
 	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, Keywords{}))
 	e.Damage = 3
-	e.TempPower = 2
+	e.Modifiers = []Modifier{{Layer: 5, Power: 2}}
 	inst := e.Inst
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, rlEnemyTarget, rlStep(ability.OpReturnToHand, ability.SubjectTarget, false)))
@@ -61,8 +61,8 @@ func TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState(t *testing.T) {
 	if n == nil {
 		t.Fatalf("the card can be deployed again")
 	}
-	if n.ID == e.ID || n.Damage != 0 || n.TempPower != 0 {
-		t.Errorf("a redeployed card is a new asset with no damage or modifier: id %d (old %d), damage %d, temp power %d", n.ID, e.ID, n.Damage, n.TempPower)
+	if n.ID == e.ID || n.Damage != 0 || n.TempPower() != 0 {
+		t.Errorf("a redeployed card is a new asset with no damage or modifier: id %d (old %d), damage %d, temp power %d", n.ID, e.ID, n.Damage, n.TempPower())
 	}
 }
 
