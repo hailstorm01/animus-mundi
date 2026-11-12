@@ -4,7 +4,7 @@ title: "A keyword granted until end of turn, on the asset a deployed card became
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0219-grant-keyword
 depends_on: [T-0218]
 claims: [primitive:GRANT_KEYWORD, modifier:keyword, subject:pile-slot-became, event:keyword]
@@ -72,3 +72,4 @@ New tests go in `pkg/engine/grant_keyword_test.go`. Synthetic Maneuvers built wi
 - 2026-11-11, lead-architect (wave F run, session 21): tests reviewed (1e879dc), returned to `tests` with one note. The other tests match the Tests list and `FR-LAY-001`, `FR-LAY-003`, `FR-ENT-103`, `FR-TRN-003a`, `FR-TGT-003` and `SVY-R39`; the extra `TestEffectEvents_KeywordGrantFaceDownStaysHidden` is welcome.
   1. `TestEffectEvents_KeywordGrant` expects the wrong order. It builds `want` from `s.g.Assets()`, which lists Reserves before the Main Theater, so `want` is [Sentry, Rider]. A `SubjectAll` step acts on `assetsByID()`, oldest first (`stepAssets`' comment, `effects.go`), so a correct implementation logs Rider (put first) then Sentry, and the test fails. Build `want` from the two assets `s.put` returns, in put order (`[]*Asset{rider, sentry}`), and drop the `Assets()` loop. Change nothing else.
 - 2026-11-11, rules-test-author: note 1 fixed in `877b0b7`: TestEffectEvents_KeywordGrant now builds its expected order from the two assets s.put returns, [rider, sentry], not from s.g.Assets(). Nothing else changed. Set to `tests-review`.
+- 2026-11-11, lead-architect (wave F run, session 21): tests re-reviewed (877b0b7): note 1 is fixed as asked and nothing else changed. Tests approved; set to `ready`.
