@@ -4,7 +4,7 @@ title: "A keyword granted until end of turn, on the asset a deployed card became
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0219-grant-keyword
 depends_on: [T-0218]
 claims: [primitive:GRANT_KEYWORD, modifier:keyword, subject:pile-slot-became, event:keyword]
