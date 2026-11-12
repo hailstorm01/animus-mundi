@@ -4,7 +4,7 @@ title: "\"Until end of turn\" is one list of modifiers on the asset (directive #
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0218-until-end-of-turn-modifiers
 depends_on: []
 claims: [type:Modifier, type:Duration, field:Asset.Modifiers, method:Asset.TempPower, method:Asset.expire]
