@@ -20,10 +20,11 @@ const (
 	DecideReplacement                     // choose which of several replacements applies to one event (FR-REP-001, SVY-R23), asked of the affected asset's controller: same fallback as DecideTarget, the first source in fixed order (SVY-R16), a source's own replacements in listed (printed) order
 	DecideSearch                          // choose a card from your own deck (FR-DEK-001): must choose (SVY-R37), a deck inspection so no fast path; fallback takes the first listed, the top card (SVY-R38)
 	DecideZone                            // choose the zone a free-deployed card enters (FR-TRN-003a 1): fallback takes the first listed, Reserves (SVY-R43)
+	DecideLook                            // a look at the top cards of your own deck (FR-MOD-001 §4): each option is a whole outcome; a deck inspection, so no fast path; fallback takes the first listed (SVY-R41, SVY-R42, SVY-R43)
 )
 
 func (k DecisionKind) String() string {
-	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick", "Replacement", "Search", "Zone"}[k]
+	return [...]string{"Target", "Mode", "Optional", "Order", "Hand", "Pick", "Replacement", "Search", "Zone", "Look"}[k]
 }
 
 // Option is one legal answer element, in the order the card or rules list it.
@@ -134,7 +135,7 @@ func (g *Game) fallbackPicks(d Decision) []int {
 	switch d.Kind {
 	case DecideTarget, DecidePick, DecideReplacement:
 		return g.fixedOrderPicks(d)
-	case DecideOrder, DecideMode, DecideSearch, DecideZone:
+	case DecideOrder, DecideMode, DecideSearch, DecideZone, DecideLook:
 		return firstPicks(d, listedOrder(d))
 	case DecideHand:
 		return g.handPicks(d)

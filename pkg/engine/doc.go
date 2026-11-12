@@ -25,9 +25,9 @@
 //     may be modal ("choose N" modes, chosen on placement before its targets,
 //     FR-MOD-001 §5).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
-//     choosing from your own hand (DecideHand, SVY-R16) and from your own deck (DecideSearch, SVY-R37, SVY-R38) and the zone of a free deploy (DecideZone, SVY-R43).
+//     choosing from your own hand (DecideHand, SVY-R16) and from your own deck (DecideSearch, SVY-R37, SVY-R38) the zone of a free deploy (DecideZone, SVY-R43) and a look at the top cards of your own deck (DecideLook, SVY-R41–SVY-R43).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
-//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103) and OpGrantKeyword (a keyword granted until end of turn, FR-LAY-001), with "all" steps, source-power values, the
+//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103) OpGrantKeyword (a keyword granted until end of turn, FR-LAY-001) and OpLookTop (a look at the top cards with free deploys and a bottom order, FR-MOD-001 §4), with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. A later step on a pile slot acts on the asset an earlier
 //     OpDeployFree of the same resolution made of its card. SubjectPick is an untargeted pick made as the
