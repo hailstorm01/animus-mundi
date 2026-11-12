@@ -4,7 +4,7 @@ title: "Eerie Remnant: when put into your discard pile from your hand, you may d
 kind: card
 tier: flash
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0226-eerie-remnant
 depends_on: [T-0225]
 claims: [card:Eerie Remnant]
@@ -46,7 +46,7 @@ New tests go in `pkg/engine/cards_path_remnant_test.go`. Use the real cards (`s.
 - `TestDefs_MatchRulesText` already checks `Text` against the CSV. Nothing to add there.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- none expected. Existing helpers: newScene, card, give, setPool, onTop, put, inDiscard, script, do, asked, attack, enactAction, deployPath, assetOf, inDiscardPile, alive, wantDamage, unit, vanilla.
+- none. Note: `setPool` does not exist; the tests set `Players[0].Req`/`Tac` directly. Existing helpers used: newScene, card, give, byKind, askedKind, onField, inZone, onTop, put, inDiscard, script, do, asked, attack, enactAction, deployPath, assetOf, inDiscardPile, alive, wantDamage, unit, vanilla.
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -61,3 +61,4 @@ New tests go in `pkg/engine/cards_path_remnant_test.go`. Use the real cards (`s.
 ## Log
 - 2026-11-12, lead-architect (wave F run, session 27): split from T-0225 under the D2 size rule, `queued` on it, Covers only.
 - 2026-11-12, lead-architect (wave F run, session 28): written in full against the run branch at dfda605 (Inputs, Shape, Tests, Allowed Files). A card task with three non-test files and no new shape. The local trial found no existing test to edit. Waiting triggers checked: #6, #7, #15 (a discard hook is not a turn-start, turn-end or draw hook), #71, #91 (2), #106, #120, #141 (3) and #142 don't fire. Set to `tests`.
+- 2026-11-12, rules-test-author (wave F run): wrote `pkg/engine/cards_path_remnant_test.go`, 7 tests, no helpers requested (local helpers `remnantChooser`, `remnantExhaustedInReserves`, `remnantOrdersScene` live in the test file; `setPool` named in the plan does not exist, so the pool is set through `Players[p].Req/Tac`). Tests: `TestCard_EerieRemnant_DeploysFromHandAsAThreeOneExhaustedForOneRequisition`, `_ImprovisedOrdersDiscardDeploysItExhausted`, `_SteelRainCostDiscardFiresAboveTheManeuver` (deploy event seq before the damage event seq), `_IrregularsUnbowedDiscardDeploysIt`, `_DeclinedStaysInThePile` (answer `no`), `_TimeoutStaysInThePile`, `_KilledOnTheBattlefieldFiresNothing` (Remnant attacks a 5-power unit and dies). Current result: 6 fail as expected (card not executable yet); the killed-on-battlefield test passes today as a regression guard. `go vet` clean, `cardtown lint rules` passes. Nothing left out.
