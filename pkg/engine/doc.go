@@ -53,6 +53,10 @@
 //   - A card's own hand-active cost reduction ("costs R1 less to deploy for each
 //     unit card in your discard pile", Def.CostReduction): EffectiveCost lowers its
 //     Requisition cost while it is in its owner's hand (FR-CST-001).
+//   - A card's own discard-active deploy permission ("You may deploy this card
+//     from your discard pile by ...", Def.Statics with ability.StaticDeployPermission):
+//     its owner deploys it as an ActDeploy with From: ZoneDiscard, and the
+//     permission's Costs are paid on declaration (FR-TRN-003, FR-TRN-003a).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be

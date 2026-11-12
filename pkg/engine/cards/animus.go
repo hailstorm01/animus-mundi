@@ -653,4 +653,19 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Veil Render": {
+		Text: []string{"You may deploy this card from your discard pile by killing an allied unit in addition to paying its deployment costs."},
+		Statics: []ability.Static{
+			{
+				Kind:       ability.StaticDeployPermission,
+				ActiveZone: ability.ZoneDiscard,
+				Costs: []ability.Cost{
+					{
+						Kind:   ability.CostKill,
+						Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit},
+					},
+				},
+			},
+		},
+	},
 }

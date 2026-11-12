@@ -4,7 +4,7 @@ title: Veil Render, deployed from its owner's discard pile by killing an allied 
 kind: card
 tier: flash
 wave: F
-status: tests
+status: review
 branch: m2/autoloop-wave-f/T-0216-veil-render
 depends_on: [T-0213, T-0214, T-0215, T-0217]
 claims: [card:Veil Render]
@@ -85,14 +85,21 @@ Add them to a new file `pkg/engine/cards_animus_veil_test.go`, in the style of t
 - `pkg/engine/doc.go` (the shape-list bullet above)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_VeilRender`
-- [ ] `go test ./pkg/view -run TestView_Case8_ExecutableFlag` passes
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_VeilRender`
+- [x] `go test ./pkg/view -run TestView_Case8_ExecutableFlag` passes
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] The card loads with no unsupported lines (`TestStarterSet_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-10 lead-architect (wave F run, session 13): queued with T-0213 (D2.4). Directive #128 is `open: before T-0216`, applied by T-0213, T-0214 and T-0215.
 - 2026-11-11 lead-architect (wave F run, session 16): T-0215 split under the D2 size rule; the play screen's label went to T-0217, now in `depends_on`.
 - 2026-11-11 lead-architect (wave F run, session 17): not written, stays `queued`. A probe of the benchmark's definition (one `StaticDeployPermission` with `CostKill`, `Filter{Allegiance: AllegianceAllied}`, since reverted) passes everything except `TestView_Case8_ExecutableFlag`, which needs an unsupported card in seat 0's hand at seed 1 (*Veil Render* was the last Animus one). The task names that test as an authorized edit: swap one hand card's `Card` for a copy with an `Unsupported` line. Writing it found a rules gap. "An allied asset" includes the Headquarters (FRD 01 line 211), but `kill` skips a Headquarters ([sweep.go:31](../../../pkg/engine/sweep.go)), so the cost would be free with it, and a timed-out pick takes it first (`FR-MOD-001` §6). FRD 01 doesn't say what a killed Headquarters does either. Ruling question on `main` (5b35925): `docs/design/outcomes/2026-11-11-wave-f-veil-render-headquarters-kill.md`, design note Open Question 21. Of the Covers, "no allied asset to kill" can't happen with the real card (there is always a Headquarters unless the ruling excludes it), and no printed executable card can free-deploy it (*Reaver's Rush* allows power 3 or less), so that case uses a synthetic `OpDeployFree` Maneuver on the real card. Model cards for the tests: *Unceasing Tide* (a death trigger above the deploy) and *Shifting Impossibility* with a Scratch Company (a replaced kill).
 - 2026-11-11 lead-architect (wave F run, session 19): `main` synced into the run branch (40df6d9: `SVY-R46`, FRD 01 v3.24, *Veil Render*'s rewording, directive #143). #143's trigger fired (the outcome reads `Status: applied: FRD 01 v3.24`), so it is `open: before T-0216` and applied here: (1) the Definition uses the unit filter, (2) the Covers are rewritten for a unit, (3) the title and Goal say "an allied unit" and the design note's Open Question 21 is marked answered in this commit, (4) `kill` is left as it is. Inputs, Definition, Tests and Allowed Files written against the run branch at 40df6d9, with T-0213, T-0214, T-0215 and T-0217 `done`. Searched `pkg/engine` and the task archive for an existing equivalent: `StaticDeployPermission` (T-0214) is the shape, reused as is, with *Feed the Despoiler*'s filter; no new shape. No other waiting directive fires with this card (#136 waits for a trigger that fires off the battlefield; a static permission isn't one). Probed the definition, the tests and the Case 8 edit (see above), then reverted them. Set to `tests`.
+- 2026-11-11 rules-test-author: wrote pkg/engine/cards_animus_veil_test.go (commit b7f2cda): TestCard_VeilRender_DiscardDeployKillsTheChosenAlliedUnit, _ScratchCompanyCanPay, _NotDeployableWithoutAnAlliedUnit, _TimedOutCostKillsTheFirstAlliedUnit, _CostDeathTriggerResolvesFirst, _ReplacedKillStillPays, _HandDeployHasNoKill, _FreeDeployWaivesTheKill, _NotFromTheOpponentsPile. Made the authorized TestView_Case8_ExecutableFlag edit (passes now). Helpers requested: none (small vrHQ builder kept in the test file). Cases left out: none. Expected red until the definition lands: 6 fail (card unsupported); NotDeployable and NotFromTheOpponentsPile pass trivially while unsupported. cardtown lint rules passes. Set to tests-review.
+- 2026-11-11 lead-architect (wave F run, session 19): tests reviewed (b7f2cda, 9 tests). Each matches the Tests list and `FR-TRN-003`, `FR-TRN-003a`, `FR-CST-001`, `FR-MOD-001` §6, `FR-REP-001` (`SVY-R15`, `SVY-R16`, `SVY-R29`, `SVY-R46`); only asked decisions are scripted. The `TestView_Case8_ExecutableFlag` edit is exactly the one named. Probed them in a review worktree with the Definition added, since reverted: all nine pass, and `TestStarterSet_Executable` and `pkg/view` pass with the name removed; without it, seven fail (the two "not offered" tests pass either way and guard the rule once it is defined). Set to `ready`.
+- 2026-11-11 kernel-engineer: implemented Veil Render definition (commit 47ff082).
+  - pkg/engine/cards/animus.go: added "Veil Render" definition to animusDefs with StaticDeployPermission on ZoneDiscard and CostKill with Filter{Allegiance: AllegianceAllied, Kinds: KindUnit} (reusing StaticDeployPermission from T-0214 and the filter from Feed the Despoiler).
+  - pkg/engine/cards/cards.go: removed "Veil Render" from NotYetExecutable.
+  - pkg/engine/doc.go: documented the discard-active deploy permission shape under Def.Statics with StaticDeployPermission.
+  - Verification: `go test ./pkg/engine -run TestCard_VeilRender` (9/9 passed); `go test ./pkg/view -run TestView_Case8_ExecutableFlag` (passed); `go test ./pkg/engine -run 'TestStarterSet_Executable|TestDefs_MatchRulesText'` (passed); `go tool task check` passed clean (fmt-check, vet, all package tests, all linters); `go tool task sim` clean (200 games, P0 50/50 executable, 71.5% win rate, all invariants held). Set to review.
