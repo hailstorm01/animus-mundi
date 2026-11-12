@@ -4,7 +4,7 @@ title: Veil Render, deployed from its owner's discard pile by killing an allied 
 kind: card
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0216-veil-render
 depends_on: [T-0213, T-0214, T-0215, T-0217]
 claims: [card:Veil Render]
@@ -103,3 +103,5 @@ Add them to a new file `pkg/engine/cards_animus_veil_test.go`, in the style of t
   - pkg/engine/cards/cards.go: removed "Veil Render" from NotYetExecutable.
   - pkg/engine/doc.go: documented the discard-active deploy permission shape under Def.Statics with StaticDeployPermission.
   - Verification: `go test ./pkg/engine -run TestCard_VeilRender` (9/9 passed); `go test ./pkg/view -run TestView_Case8_ExecutableFlag` (passed); `go test ./pkg/engine -run 'TestStarterSet_Executable|TestDefs_MatchRulesText'` (passed); `go tool task check` passed clean (fmt-check, vet, all package tests, all linters); `go tool task sim` clean (200 games, P0 50/50 executable, 71.5% win rate, all invariants held). Set to review.
+- 2026-11-11 lead-architect (wave F run, session 19): code reviewed (47ff082): only the three Allowed Files changed, with the Definition and the doc.go bullet as written; the test commit is untouched; no card name in engine code and no new shape. Re-ran `go test ./pkg/engine -run TestCard_VeilRender`, `go test ./pkg/view -run TestView_Case8_ExecutableFlag`, `go tool task check` and `go tool task sim` (clean, Animus 50/50, P0 71.5% / P1 27.5% / draws 1.0%) in a review worktree. `agy` conversation `844198b6-0958-4008-9a01-4d09354588e0`, no denied actions. Approved.
+- 2026-11-11 lead-architect (wave F run, session 19): merged into `autoloop/m2-wave-f` (8630b2a); `done`. Directive #143 fully applied.
