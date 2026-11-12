@@ -70,12 +70,14 @@ func askedKind(s *scene, p PlayerID, k DecisionKind) []Decision {
 
 // onField returns the battlefield asset of inst, or nil.
 func onField(g *Game, inst *Instance) *Asset {
+	lists := [][]*Asset{g.Theater}
 	for _, p := range g.Players {
-		for _, list := range [][]*Asset{{p.HQ}, p.Reserves, p.MainTheater} {
-			for _, a := range list {
-				if a != nil && a.Inst == inst {
-					return a
-				}
+		lists = append(lists, []*Asset{p.HQ}, p.Reserves)
+	}
+	for _, list := range lists {
+		for _, a := range list {
+			if a != nil && a.Inst == inst {
+				return a
 			}
 		}
 	}
