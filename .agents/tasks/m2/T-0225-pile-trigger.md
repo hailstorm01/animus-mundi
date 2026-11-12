@@ -4,7 +4,7 @@ title: "A trigger from a card in its discard pile: Trigger.ActiveZone, HookDisca
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: review
 branch: m2/autoloop-wave-f/T-0225-pile-trigger
 depends_on: [T-0224]
 claims: [field:ability.Trigger.ActiveZone, hook:ability.HookDiscardedFromHand (fired from discardCards), func:pileSource (the pile trigger source beside assetSource) and its rank in sourcePos, the ActiveZone gate in fireHook, StackItem.Tracked for a pile trigger]
@@ -92,3 +92,4 @@ Tests:
 - 2026-11-12, lead-architect (wave F run, session 27): the block is a test defect, not a rules or shape question, so the tests go back to `rules-test-author` (the shape commit 53f05e9 stays). Note 2: `onField` (`pile_trigger_test.go:74`) ranges over `p.MainTheater`, which `Player` doesn't have; the Main Theater is the shared `Game.Theater` (`state.go:127`), so the test file doesn't compile. Range over each player's `HQ` and `Reserves` plus `g.Theater` once. Change only `onField`. The lead's first review read the tests but couldn't compile them before the shape existed, and missed it. Set to `tests`.
 - 2026-11-12, rules-test-author: fixed note 2: `onField` now ranges over each player's HQ and Reserves plus the shared `g.Theater` once. `go vet ./pkg/engine` clean; the listed tests pass against the shape on the branch. Set to `tests-review`.
 - 2026-11-12, lead-architect (wave F run, session 27): tests re-reviewed (9603f6b): note 2 is fixed, only `onField` changed, and the ten listed tests compile and pass against 53f05e9 (re-run by the lead). Set to `ready`: the engineer re-runs the Done When commands on the existing implementation.
+- 2026-11-12, kernel-engineer (sonnet): after the test fix (9603f6b) the implementation commit 53f05e9 stands unchanged. Ran every Done When command in a fresh worktree: the listed tests pass; `go tool task check` passes (gofmt, vet, all tests, lint); `go tool task sim` runs clean; `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte for byte equal). Reviewer: `activeIn` treats any source zone other than `ZoneDiscard` as the battlefield.
