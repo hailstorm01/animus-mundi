@@ -4,7 +4,7 @@ title: "Devilhorn Scouting Party: a look at the top 3 with one free deploy of a 
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0223-devilhorn-scouting-party
 depends_on: [T-0221, T-0222]
 claims: [card:Devilhorn Scouting Party]
