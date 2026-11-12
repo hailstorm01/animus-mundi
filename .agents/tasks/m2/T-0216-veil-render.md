@@ -4,7 +4,7 @@ title: Veil Render, deployed from its owner's discard pile by killing an allied 
 kind: card
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0216-veil-render
 depends_on: [T-0213, T-0214, T-0215, T-0217]
 claims: [card:Veil Render]
