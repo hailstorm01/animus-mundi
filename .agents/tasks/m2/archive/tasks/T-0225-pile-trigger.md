@@ -4,7 +4,7 @@ title: "A trigger from a card in its discard pile: Trigger.ActiveZone, HookDisca
 kind: shape
 tier: sonnet
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0225-pile-trigger
 depends_on: [T-0224]
 claims: [field:ability.Trigger.ActiveZone, hook:ability.HookDiscardedFromHand (fired from discardCards), func:pileSource (the pile trigger source beside assetSource) and its rank in sourcePos, the ActiveZone gate in fireHook, StackItem.Tracked for a pile trigger]
@@ -28,11 +28,11 @@ Covers:
 - Directive #136 (`BOARD.md`): the pile source is "controlled by its owner, which ranks after every battlefield asset in the flush's source order". `SVY-R7`'s order (line 424) names battlefield zones only; #136, approved by the user on 2026-11-09, places the pile after them. Among one player's pile sources, the order is the order the cards entered the pile.
 - Design note: `docs/architecture/m2-ability-model.md`, Key types `Trigger` (line 32) and `Hook` (line 33, "discarded from hand"); Open Question 2 (line 182: G1 is `Trigger.ActiveZone`, no ruling needed).
 - Code (run branch at fc006d8):
-  - `ability.Hook` and its constants, `ability.Trigger` ([ability.go:137-200](../../../pkg/engine/ability/ability.go)); `ability.Zone` with `ZoneDiscard` ([ability.go:203-210](../../../pkg/engine/ability/ability.go)).
-  - `sourcePos` and `posOf` ([trigger.go:22-41](../../../pkg/engine/trigger.go)); `triggerSource` and `assetSource` ([trigger.go:43-59](../../../pkg/engine/trigger.go)); `fireHook` ([trigger.go:111](../../../pkg/engine/trigger.go)); `bufferTrigger` ([trigger.go:140](../../../pkg/engine/trigger.go)); `flushTriggers`, where `item.Tracked` is set ([trigger.go:169-206](../../../pkg/engine/trigger.go)); `accepts` (the optional question).
-  - `discardCards` ([zones.go:111-121](../../../pkg/engine/zones.go)), its callers `discardFromHand` ([zones.go:70](../../../pkg/engine/zones.go)) and `payCosts` ([costs.go:176](../../../pkg/engine/costs.go)). A cost's triggers wait in the buffer and `resolveStack` flushes them above the declared item ([stack.go:90](../../../pkg/engine/stack.go)).
-  - `StackItem.Source` and `StackItem.Tracked` ([stack.go:35](../../../pkg/engine/stack.go), [:40](../../../pkg/engine/stack.go)): a Maneuver's item already has `Source` 0, "not an asset".
-  - `stepCards`' `SubjectSelf` case ([effects.go:512-523](../../../pkg/engine/effects.go)) returns the item's `Inst` only if the item is `Tracked` and the instance is still in its owner's discard pile; `stepDeployFree` ([effects.go:125](../../../pkg/engine/effects.go)) deploys it under the item's controller. Neither changes.
+  - `ability.Hook` and its constants, `ability.Trigger` ([ability.go:137-200](../../../../../pkg/engine/ability/ability.go)); `ability.Zone` with `ZoneDiscard` ([ability.go:203-210](../../../../../pkg/engine/ability/ability.go)).
+  - `sourcePos` and `posOf` ([trigger.go:22-41](../../../../../pkg/engine/trigger.go)); `triggerSource` and `assetSource` ([trigger.go:43-59](../../../../../pkg/engine/trigger.go)); `fireHook` ([trigger.go:111](../../../../../pkg/engine/trigger.go)); `bufferTrigger` ([trigger.go:140](../../../../../pkg/engine/trigger.go)); `flushTriggers`, where `item.Tracked` is set ([trigger.go:169-206](../../../../../pkg/engine/trigger.go)); `accepts` (the optional question).
+  - `discardCards` ([zones.go:111-121](../../../../../pkg/engine/zones.go)), its callers `discardFromHand` ([zones.go:70](../../../../../pkg/engine/zones.go)) and `payCosts` ([costs.go:176](../../../../../pkg/engine/costs.go)). A cost's triggers wait in the buffer and `resolveStack` flushes them above the declared item ([stack.go:90](../../../../../pkg/engine/stack.go)).
+  - `StackItem.Source` and `StackItem.Tracked` ([stack.go:35](../../../../../pkg/engine/stack.go), [:40](../../../../../pkg/engine/stack.go)): a Maneuver's item already has `Source` 0, "not an asset".
+  - `stepCards`' `SubjectSelf` case ([effects.go:512-523](../../../../../pkg/engine/effects.go)) returns the item's `Inst` only if the item is `Tracked` and the instance is still in its owner's discard pile; `stepDeployFree` ([effects.go:125](../../../../../pkg/engine/effects.go)) deploys it under the item's controller. Neither changes.
 - Searched `pkg/engine` and the task archive for an existing equivalent: no trigger fires from off the battlefield (`ActiveZone`, `HookDiscarded`, `pileSource` absent). T-0224 made `fireHook` take a `triggerSource`; this task adds the second builder beside `assetSource`, not a second firing path. `data/cards`: the only "put into your discard pile from your hand" card is *Eerie Remnant*; *Solarheart Monk* (any route, deferred) is the only other enter-discard trigger, and neither prints a per-turn limit.
 
 ### Shape (the engineer builds it)
