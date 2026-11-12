@@ -4,7 +4,7 @@ title: "A trigger fires from a trigger source, so one fireHook checks every trig
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: review
 branch: m2/autoloop-wave-f/T-0224-trigger-source
 depends_on: []
 claims: [type:triggerSource, func:assetSource, func:fireHook (signature), func:bufferTrigger (signature), func:deployedTo (signature)]
@@ -155,10 +155,19 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/filter.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-12, lead-architect (wave F run, session 26): wrote this task from board directive #136, whose trigger fired when T-0225 (*Eerie Remnant*, the last header card on `NotYetExecutable`) was written `queued` in the same commit. #136 is `open: before T-0225`, so this task goes first. The card task then adds a source built from a card in its owner's discard pile, controlled by its owner and ranked after every battlefield asset (ADR-0002's fixed order), and fires it through this `fireHook`. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-12, kernel-engineer (tier flash): implemented pure move from directive #136 in commit `1f3eef8`. Added `triggerSource` struct and `assetSource(a *Asset)` constructor in `pkg/engine/trigger.go`. Updated `fireHook` and `bufferTrigger` to accept `triggerSource` instead of `*Asset`, and updated all hook callers (`fireDeploy`, `fireMoved`, `fireKilled`, `fireDamaged`, `fireExhausted`, `fireCombatKill`, `fireAttacks`) to wrap assets via `assetSource`. Updated `deployedTo` in `pkg/engine/zones.go` to accept `Zone` and updated caller in `pkg/engine/filter.go:matchesFilterAt`. Verified acceptance cases 1–8:
+  1. `git -C W diff autoloop/m2-wave-f --stat -- '*_test.go'` printed nothing.
+  2. `go -C W tool task sim-compare -- autoloop/m2-wave-f` printed `[PASS] starter and stress sims match autoloop/m2-wave-f byte for byte, exit codes included`.
+  3. `git -C W diff autoloop/m2-wave-f --numstat -- pkg cmd` printed exactly 3 lines: `1 1 pkg/engine/filter.go`, `41 22 pkg/engine/trigger.go`, `4 4 pkg/engine/zones.go`.
+  4. `git -C W grep -n -e 'Printed()' -- pkg/engine/trigger.go` printed exactly 1 line: `pkg/engine/trigger.go:58`.
+  5. `git -C W grep -n -e 'fireHook(' -e 'bufferTrigger(' -- pkg cmd ':!*_test.go'` printed exactly 11 lines in `pkg/engine/trigger.go` (:63, :70, :79, :83, :86, :93, :110, :137, :143, :157, :159).
+  6. `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
+  7. `git -C W diff autoloop/m2-wave-f --stat` showed only `pkg/engine/filter.go`, `pkg/engine/trigger.go`, `pkg/engine/zones.go`, and `.agents/tasks/m2/T-0224-trigger-source.md`.
+  8. `gofmt -l W/pkg` clean; `go -C W tool task check` passed (all vet, test, linter checks passed); `go -C W tool task sim` passed (200 games, P0 60.5% / P1 38.5% / draws 1.0%, P0 50/50 and P1 47/50 executable, all invariants holding). Ready for review.
