@@ -109,14 +109,15 @@ func (g *Game) chooseDiscards(pid PlayerID, n int, upTo bool) []*Instance {
 }
 
 // discardCards moves each of cards, in the given order, from its pile to its
-// owner's discard pile and logs the discard. Every discard from hand is moved
-// here.
+// owner's discard pile and logs the discard, then fires its discarded-from-hand
+// triggers. Every discard from hand is moved here.
 func (g *Game) discardCards(pid PlayerID, cards []*Instance) {
 	for _, inst := range cards {
 		g.takeCard(inst)
 		g.putCard(inst, ZoneDiscard, false)
 		g.logEvent(Event{Kind: EventDiscard, Player: int(pid), Card: inst.Card.Name, Inst: inst.ID, Zone: ZoneHand.String()},
 			"player %d discards %s", pid, inst.Card.Name)
+		g.fireDiscarded(inst)
 	}
 }
 

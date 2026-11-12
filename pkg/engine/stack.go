@@ -32,12 +32,12 @@ type StackItem struct {
 	Inst *Instance // StackDeploy, StackManeuver: the card on the stack
 	Zone Zone      // StackDeploy: declared zone; StackMarch: origin zone
 
-	Source int // asset ID: marching unit, attacker, scratching HQ; 0 for a StackManeuver (a Maneuver is not an asset)
+	Source int // asset ID: marching unit, attacker, scratching HQ; 0 for a StackManeuver or a trigger from a card in a pile (neither is an asset)
 	Target int // StackAttack: the defender
 
 	Effect  ability.Effect  // StackAbility, StackManeuver: the effect resolving (for StackAbility, Source is its source asset)
 	Chosen  [][]int         // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
-	Tracked bool            // StackAbility: a death trigger, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
+	Tracked bool            // StackAbility: a death trigger or a trigger from its card's discard pile, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
 	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed trigger or an activated ability
 	Locked  *LockedZone     // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45); nil if it locked none
 }
