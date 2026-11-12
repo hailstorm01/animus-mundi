@@ -34,4 +34,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0220](T-0220-allshans-battle-trance.md) | Allshan's Battle Trance (wave F card, flash; #140 (2)) | queued |
+| [T-0220](T-0220-allshans-battle-trance.md) | Allshan's Battle Trance (wave F card, flash; #140 (2)) | tests |
