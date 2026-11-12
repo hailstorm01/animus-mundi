@@ -30,6 +30,7 @@ func TestEventKinds_ValuesAreTheSchema(t *testing.T) {
 		{EventArmor, "armor"},
 		{EventPower, "power"},
 		{EventFaceDown, "face-down"},
+		{EventKeyword, "keyword"},
 		{EventCardMove, "card-move"},
 		{EventResult, "result"},
 		{EventMatchEnd, "match-end"},

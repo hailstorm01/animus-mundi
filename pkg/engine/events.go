@@ -287,6 +287,7 @@ const (
 	EventArmor         = "armor"
 	EventPower         = "power"
 	EventFaceDown      = "face-down" // an effect turned a battlefield unit face down (FR-ENT-103)
+	EventKeyword       = "keyword"   // an effect granted a keyword until end of turn (FR-LAY-001)
 	EventCardMove      = "card-move" // an effect moved a card out of a discard pile to Zone; deck searches and draws stay secret
 	EventResult        = "result"
 	EventMatchEnd      = "match-end"

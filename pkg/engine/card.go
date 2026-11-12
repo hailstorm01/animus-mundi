@@ -52,7 +52,7 @@ type keywordDef struct {
 // or, for a keyword that is a triggered ability, in ability.Keyword.
 var keywordDefs = []keywordDef{
 	{name: "Resistant", num: func(k *Keywords) *int { return &k.Resistant }},
-	{name: "Stalwart", flag: func(k *Keywords) *bool { return &k.Stalwart }},
+	{name: ability.KeywordStalwart.String(), flag: func(k *Keywords) *bool { return &k.Stalwart }},
 	{name: ability.KeywordAggressive.String(), num: func(k *Keywords) *int { return &k.Aggressive }},
 	{name: "Ethereal", flag: func(k *Keywords) *bool { return &k.Ethereal }},
 	{name: "Ward", flag: func(k *Keywords) *bool { return &k.Ward }},

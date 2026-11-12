@@ -20,6 +20,9 @@ type resolution struct {
 	done   []int
 	// replaced is the asset whose event a replacement replaces: SubjectReplaced (replace.go).
 	replaced *Asset
+	// became is, per pile slot, the assets that cards deployed by an earlier
+	// step of this resolution became ("it", FR-TRN-003a).
+	became map[int][]*Asset
 }
 
 // resolveAbility runs the stack item's effect, a triggered or activated
@@ -101,6 +104,8 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepDeployFree(r, st)
 	case ability.OpMorphScratch:
 		return g.stepMorphScratch(r, st)
+	case ability.OpGrantKeyword:
+		return g.stepGrantKeyword(r, st)
 	}
 	return 0
 }
@@ -141,7 +146,13 @@ func (g *Game) stepDeployFree(r *resolution, st ability.Step) int {
 			}
 		}
 		g.takeCard(inst)
-		g.deployCard(inst, r.it.Controller, zone)
+		a := g.deployCard(inst, r.it.Controller, zone)
+		if st.Subject == ability.SubjectTarget {
+			if r.became == nil {
+				r.became = map[int][]*Asset{}
+			}
+			r.became[st.Target] = append(r.became[st.Target], a)
+		}
 		n++
 	}
 	return n
@@ -374,7 +385,7 @@ func (g *Game) slotAssets(r *resolution, i int) []*Asset {
 		return nil
 	}
 	var out []*Asset
-	for _, a := range r.chosen[i] {
+	for _, a := range append(slices.Clone(r.chosen[i]), r.became[i]...) {
 		if g.Asset(a.ID) == a {
 			out = append(out, a)
 		}
@@ -468,4 +479,29 @@ func (g *Game) stepMorphScratch(r *resolution, st ability.Step) int {
 		n++
 	}
 	return n
+}
+
+// stepGrantKeyword gives each asset of stepAssets the step's keyword until end
+// of turn, as a Layer 3 modifier (FR-LAY-001, FR-LAY-003), and returns how many
+// it granted. A keyword with no flag in keywordDefs (KeywordNone, or Aggressive,
+// whose trigger comes only from the printed keyword) grants nothing.
+func (g *Game) stepGrantKeyword(r *resolution, st ability.Step) int {
+	name := st.Keyword.String()
+	var granted Keywords
+	found := false
+	for _, d := range keywordDefs {
+		if name != "" && d.name == name && d.flag != nil {
+			*d.flag(&granted) = true
+			found = true
+		}
+	}
+	if !found {
+		return 0
+	}
+	as := g.stepAssets(r, st)
+	for _, a := range as {
+		a.Modifiers = append(a.Modifiers, Modifier{Layer: 3, Keywords: granted, Until: UntilEndOfTurn})
+		g.logEvent(Event{Kind: EventKeyword, Player: -1, Target: a.ID}, "%s gains %s until end of turn", a, name)
+	}
+	return len(as)
 }

@@ -1,6 +1,6 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
-// Nothing grants types (Layer 2), and the only keyword grant (Layer 3) is a
-// card's Cornered keywords. There are no auras (Layer 4) yet, so the pipeline
+// Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords
+// and the keywords a resolved step grants until end of turn. There are no auras (Layer 4) yet, so the pipeline
 // reduces to Layer 1 + Layer 3 + Layer 5 + Layer 6 clamping.
 
 package engine
@@ -19,12 +19,13 @@ const (
 )
 
 // Modifier is one change a resolved effect made to an asset's characteristics.
-// Layer is its FR-LAY-001 layer. The only kind built so far is a Layer 5 power
-// modifier: Power is added to Combat Power.
+// Layer is its FR-LAY-001 layer. A Layer 5 modifier adds Power to Combat Power;
+// a Layer 3 modifier grants Keywords.
 type Modifier struct {
-	Layer int
-	Power int
-	Until Duration
+	Layer    int
+	Power    int
+	Keywords Keywords
+	Until    Duration
 }
 
 // TempPower is the sum of a's Layer 5 power modifiers.
@@ -67,7 +68,25 @@ func (g *Game) Keywords(a *Asset) Keywords {
 		kw.Aggressive += d.Cornered.Aggressive
 		kw.Resistant += d.Cornered.Resistant
 	}
+	for _, m := range a.Modifiers {
+		if m.Layer == 3 {
+			kw.add(m.Keywords)
+		}
+	}
 	return kw
+}
+
+// add folds o into k: a flag is set, a number is added. It walks keywordDefs,
+// so a later keyword needs no new line here.
+func (k *Keywords) add(o Keywords) {
+	for _, d := range keywordDefs {
+		switch {
+		case d.num != nil:
+			*d.num(k) += *d.num(&o)
+		case d.flag != nil:
+			*d.flag(k) = *d.flag(k) || *d.flag(&o)
+		}
+	}
 }
 
 // cornered reports whether p is Cornered: the opponent controls strictly more
