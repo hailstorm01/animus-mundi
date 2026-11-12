@@ -1,0 +1,85 @@
+---
+id: T-0225
+title: "A trigger from a card in its discard pile: Trigger.ActiveZone, HookDiscardedFromHand and a pile trigger source (wave F shape, sonnet; #136's card part)"
+kind: shape
+tier: sonnet
+wave: F
+status: tests
+branch: m2/autoloop-wave-f/T-0225-pile-trigger
+depends_on: [T-0224]
+claims: [field:ability.Trigger.ActiveZone, hook:ability.HookDiscardedFromHand (fired from discardCards), func:pileSource (the pile trigger source beside assetSource) and its rank in sourcePos, the ActiveZone gate in fireHook, StackItem.Tracked for a pile trigger]
+cards: []
+requirements: [FR-ZON-004, FR-TRG-002, FR-TRG-003, FR-MOD-001]
+---
+
+## Goal
+A triggered ability that works from its card's discard pile (survey gap G1; `Trigger.ActiveZone` in the design note's Key types, `docs/architecture/m2-ability-model.md:32`), first for "When this card is put into your discard pile from your hand, ..." (*Eerie Remnant*, `data/cards/units-and-structures-path.csv:4`, the last wave F deck card on `NotYetExecutable`, 3 copies in `data/decks/path-starter.txt`). This is directive #136's card part: the trigger fires through T-0224's one `fireHook`, from a trigger source built from a card in a pile.
+
+Covers:
+- `ability.Trigger.ActiveZone` (battlefield by default, G1) and `ability.HookDiscardedFromHand`, fired from `discardCards` (`pkg/engine/zones.go:114`), the one path every discard from hand takes (the effect step `OpDiscard` through `discardFromHand`, and a discard cost through `payCosts`).
+- `pileSource`, a trigger source built from a card in its owner's discard pile, controlled by its owner, ranked after every battlefield asset in the flush's source order; `fireHook` gates each trigger on its `ActiveZone`.
+- A pile trigger's item is `Tracked`, so `SubjectSelf` card steps (T-0208's `OpDeployFree`, `OpReturnToHand`, `OpPutOnDeck`) act on the triggering card only while it is still in its owner's discard pile (`FR-ZON-004`, Self-Relocating Trigger Tracking, FRD 01 line 251).
+- Synthetic-card tests only. No printed card has the hook until T-0226.
+
+- Not this task: *Eerie Remnant*'s definition, `doc.go`'s hook list and the removal from `cards.NotYetExecutable` (T-0226, `queued`, card, flash; split under the D2 size rule: the shape alone is four non-test files). An enter-discard trigger from any route (*Solarheart Monk*, deferred by #14 (b)): its hook fires at the other places a card enters a discard pile (`sweep.go:20`, `stack.go:124`), from the same `pileSource`.
+
+## Inputs
+- FRD 01 v3.24: `FR-ZON-004` *Enter-Discard Triggers* (line 250: evaluated against the card's printed face as it enters the discard pile; *Eerie Remnant* requires discarding from hand) and *Self-Relocating Trigger Tracking* (line 251: a trigger that moves "it" out of the discard pile tracks that card there and does nothing if it has left); `FR-TRG-002` (line 441), `FR-TRG-003` (line 444: APNAP, each player orders their own); `FR-MOD-001` §6 (line 421: an optional trigger times out to declined, `SVY-R9`; line 424: an unanswered order goes by source position, `SVY-R7`) and §7 (line 426).
+- Directive #136 (`BOARD.md`): the pile source is "controlled by its owner, which ranks after every battlefield asset in the flush's source order". `SVY-R7`'s order (line 424) names battlefield zones only; #136, approved by the user on 2026-11-09, places the pile after them. Among one player's pile sources, the order is the order the cards entered the pile.
+- Design note: `docs/architecture/m2-ability-model.md`, Key types `Trigger` (line 32) and `Hook` (line 33, "discarded from hand"); Open Question 2 (line 182: G1 is `Trigger.ActiveZone`, no ruling needed).
+- Code (run branch at fc006d8):
+  - `ability.Hook` and its constants, `ability.Trigger` ([ability.go:137-200](../../../pkg/engine/ability/ability.go)); `ability.Zone` with `ZoneDiscard` ([ability.go:203-210](../../../pkg/engine/ability/ability.go)).
+  - `sourcePos` and `posOf` ([trigger.go:22-41](../../../pkg/engine/trigger.go)); `triggerSource` and `assetSource` ([trigger.go:43-59](../../../pkg/engine/trigger.go)); `fireHook` ([trigger.go:111](../../../pkg/engine/trigger.go)); `bufferTrigger` ([trigger.go:140](../../../pkg/engine/trigger.go)); `flushTriggers`, where `item.Tracked` is set ([trigger.go:169-206](../../../pkg/engine/trigger.go)); `accepts` (the optional question).
+  - `discardCards` ([zones.go:111-121](../../../pkg/engine/zones.go)), its callers `discardFromHand` ([zones.go:70](../../../pkg/engine/zones.go)) and `payCosts` ([costs.go:176](../../../pkg/engine/costs.go)). A cost's triggers wait in the buffer and `resolveStack` flushes them above the declared item ([stack.go:90](../../../pkg/engine/stack.go)).
+  - `StackItem.Source` and `StackItem.Tracked` ([stack.go:35](../../../pkg/engine/stack.go), [:40](../../../pkg/engine/stack.go)): a Maneuver's item already has `Source` 0, "not an asset".
+  - `stepCards`' `SubjectSelf` case ([effects.go:512-523](../../../pkg/engine/effects.go)) returns the item's `Inst` only if the item is `Tracked` and the instance is still in its owner's discard pile; `stepDeployFree` ([effects.go:125](../../../pkg/engine/effects.go)) deploys it under the item's controller. Neither changes.
+- Searched `pkg/engine` and the task archive for an existing equivalent: no trigger fires from off the battlefield (`ActiveZone`, `HookDiscarded`, `pileSource` absent). T-0224 made `fireHook` take a `triggerSource`; this task adds the second builder beside `assetSource`, not a second firing path. `data/cards`: the only "put into your discard pile from your hand" card is *Eerie Remnant*; *Solarheart Monk* (any route, deferred) is the only other enter-discard trigger, and neither prints a per-turn limit.
+
+### Shape (the engineer builds it)
+- **`ability.HookDiscardedFromHand`**, after `HookMoves`. Comment: this card was put into its owner's discard pile from their hand, by a discard step or a discard cost (`FR-ZON-004`); it fires only triggers with `ActiveZone` `ZoneDiscard`.
+- **`ability.Trigger.ActiveZone Zone`**, after `ToZone`. Comment: where the trigger works from (survey G1): `ZoneAny`, the zero value, is the battlefield; `ZoneDiscard` is its card's owner's discard pile. No other value is used.
+- **`Trigger.MaxPerTurn`'s comment** adds: per asset, so only for a battlefield trigger; no pile trigger prints a limit.
+- **`sourcePos`'s comment:** rank 3 is a discard pile, after every battlefield zone, and `arrived` is then the card's position in that pile (`SVY-R7`; #136).
+- **`pileSource(g *Game, inst *Instance) triggerSource`**, or a `Game` method, in `trigger.go` beside `assetSource`: `card` is `inst.Card` (its printed face, `FR-ZON-004` line 250), `id` 0 (no asset, as for a Maneuver's item), `inst`, `controller` `inst.Owner`, `zone` `ZoneDiscard`, `pos` `sourcePos{zone: 3, arrived: <inst's index in its owner's Discard>}`. Update `triggerSource`'s comment: a source is a battlefield asset (`assetSource`) or a card in its owner's discard pile (`pileSource`), and `id` is 0 for the latter.
+- **The `ActiveZone` gate in `fireHook`**, before the other gates: a trigger with `ActiveZone` `ZoneAny` fires only from a battlefield source (Headquarters, Reserves or Main Theater), one with `ZoneDiscard` only from a source whose `zone` is `ZoneDiscard`. A small helper (`activeIn(src Zone, z ability.Zone) bool`) is fine. Every existing trigger has `ActiveZone` zero and a battlefield source, so nothing changes for them.
+- **`fireDiscarded(inst *Instance)`** in `trigger.go`: `g.fireHook(<pileSource of inst>, ability.HookDiscardedFromHand)`.
+- **`discardCards`** calls `g.fireDiscarded(inst)` for each card right after it is moved and its discard logged, so the cards' positions, and their triggers' order, follow the discard order. Its comment says it fires each card's discarded-from-hand triggers.
+- **`flushTriggers`:** `item.Tracked` is true for a `HookKilled` trigger, as now, and for a trigger with `ActiveZone` `ZoneDiscard`.
+- **`StackItem` comments** (`stack.go`): `Source` is 0 for a StackManeuver or a trigger from a card in a pile (neither is an asset); `Tracked` is set for a death trigger or a trigger from its card's discard pile, so `Inst` is its card, tracked in its owner's discard pile.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+In a new file `pkg/engine/pile_trigger_test.go`, synthetic cards only, in the style of `self_tracking_test.go`, `discard_test.go` and `deploy_free_test.go` (`newScene`, `unit`, `maneuver`, `s.give`, `s.inDiscard`, `s.put`, `s.script`, `s.asked`, `enactAction`). Unless a test says otherwise:
+- **"Remnant"** is a unit card costing 1 that prints only Reserves, with one trigger `{Hook: HookDiscardedFromHand, ActiveZone: ZoneDiscard, Optional: true, Effect: {Steps: [{Op: OpDeployFree, Subject: SubjectSelf}]}}`.
+- Player 0 discards it by enacting a Maneuver with no targets whose one step is `OpDiscard` 1 (the controller), with Remnant the only card left in hand, so the discard is not asked (`SVY-R16`), and accepts the optional trigger when asked.
+
+Tests:
+- `TestFR_ZON_004_DiscardedFromHandTriggerDeploysItself`: after the Maneuver resolves, player 0 is asked one `DecideOptional` for Remnant's trigger; accepted, it is placed and resolves: Remnant's instance is on the battlefield under player 0 in Reserves, no longer in the discard pile, and the stack is empty. The place event for the trigger names the card *Remnant* and its instance.
+- `TestFR_MOD_001_DiscardedFromHandTriggerDeclinedLeavesTheCard` (`SVY-R9`): seat 0 times out on the `DecideOptional`: nothing is placed, and Remnant stays in player 0's discard pile, not on the battlefield.
+- `TestFR_TRG_002_DiscardCostFiresTheTriggerAboveTheItem` (`FR-TRN-003a`, `FR-TRG-002`): player 0 enacts a Maneuver with a discard cost (as in `discard_cost_test.go`) and discards Remnant to it; its effect is `OpDraw` 1. Remnant's trigger is placed above the Maneuver and resolves first: Remnant is deployed before the Maneuver's draw (compare the deploy and draw events' order, or the board and hand after only the trigger resolved).
+- `TestFR_TRG_003_OpponentsDiscardFiresTheOwnersTrigger` (`FR-TRG-003`): player 0's Maneuver has `OpDiscard` 1 with `SubjectOpponents`; player 1's only hand card is Remnant. Player 1, not player 0, is asked the `DecideOptional`, and Remnant enters Reserves under player 1.
+- `TestFR_TRG_003_PileTriggerRanksAfterBattlefieldTriggers` (#136, `SVY-R7`): player 0 has a unit "Watcher" on the battlefield with a `HookDamaged` trigger (draw 1); player 0's Maneuver targets Watcher with `OpDealDamage` 1, then `OpDiscard` 1 discards Remnant. Player 0 is asked one `DecideOrder` whose options list Watcher's trigger first (`Ref` Watcher's asset ID) and Remnant's second (`Ref` 0). On a timeout (seat 0 times out on the order, and answers the optional question yes), Watcher's trigger is placed first, so Remnant's resolves first.
+- `TestFR_TRG_003_PileTriggersFollowTheDiscardOrder` (`SVY-R7`): two cards with Remnant's trigger, "Remnant A" and "Remnant B", and a third card "Filler" are player 0's hand after the enact (A, then B, then Filler, so the `DecideHand` is asked); the step is `OpDiscard` 2 and player 0 answers B, then A. The `DecideOrder` lists B's trigger, then A's.
+- `TestFR_ZON_004_PileTriggerFizzlesIfItsCardLeftThePile` (FRD 01 line 251): a card "Wanderer" with two pile triggers on `HookDiscardedFromHand` (both `ActiveZone: ZoneDiscard`, not optional): trigger 1 returns itself to hand (`OpReturnToHand`, `SubjectSelf`), trigger 2 deploys itself free. Player 0 orders them so the return resolves first: Wanderer ends in player 0's hand, nothing is deployed, and trigger 2 resolves doing nothing.
+- `TestFR_ZON_004_PileTriggerMovesOnlyItsOwnInstance`: another copy of Remnant (the same `*Card`) is already in player 0's discard pile (`s.inDiscard`) before the discard. Only the discarded instance enters the battlefield; the other copy stays in the pile.
+- `TestFR_ZON_004_OnlyADiscardFromHandFiresIt`: Remnant on the battlefield (`s.put`) is destroyed by combat and goes to the discard pile: no `DecideOptional` is asked and nothing is placed for it. A Maneuver card carrying the same trigger, enacted and put into the discard pile on resolution, fires nothing either.
+- `TestFR_ZON_004_ActiveZoneGatesTheSource` (G1): a card with `{Hook: HookDiscardedFromHand}` and no `ActiveZone` (a battlefield trigger), discarded from hand, fires nothing. A unit with `{Hook: HookDeploy, ActiveZone: ZoneDiscard}`, deployed, fires nothing either.
+- **Existing tests:** every other test passes unchanged.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected. The test author keeps any small builder in the test file.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go` (`HookDiscardedFromHand`, `Trigger.ActiveZone`, the `MaxPerTurn` comment)
+- `pkg/engine/trigger.go` (`sourcePos`'s comment, `triggerSource`'s comment, `pileSource`, the `ActiveZone` gate in `fireHook`, `fireDiscarded`, `Tracked` in `flushTriggers`)
+- `pkg/engine/zones.go` (`discardCards`)
+- `pkg/engine/stack.go` (the `Source` and `Tracked` comments only)
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run "PileTrigger|DiscardedFromHand|DiscardCostFiresTheTrigger|OpponentsDiscardFires|OnlyADiscardFromHand|ActiveZoneGates"`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes (no printed card has the hook until T-0226)
+
+## Log
+- 2026-11-12, lead-architect (wave F run, session 26): queued with Covers only. Writing it fired #136, now `open: before T-0225`; T-0224 is its pure move and goes first.
+- 2026-11-12, lead-architect (wave F run, session 27): split under the D2 size rule: the shape alone touches four non-test files (`ability.go`, `trigger.go`, `zones.go`, `stack.go`), so *Eerie Remnant*'s definition, `doc.go` and `NotYetExecutable` go to T-0226 (card, flash, `queued`), both on the board in this commit. Renamed from `T-0225-eerie-remnant.md`; `cards:` is now empty. Inputs, Shape, Tests and Allowed Files written against fc006d8. Decided here (the Covers left it to this task): a pile source's `id` is 0, as a Maneuver's item, so the placement names no asset, and `MaxPerTurn` stays per asset (no pile trigger prints a limit; `data/cards` searched). The pile's rank after the battlefield is #136's, which the user approved; `SVY-R7` names battlefield zones only. Set to `tests`.
