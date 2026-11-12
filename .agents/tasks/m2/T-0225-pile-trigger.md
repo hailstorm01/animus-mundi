@@ -4,7 +4,7 @@ title: "A trigger from a card in its discard pile: Trigger.ActiveZone, HookDisca
 kind: shape
 tier: sonnet
 wave: F
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f/T-0225-pile-trigger
 depends_on: [T-0224]
 claims: [field:ability.Trigger.ActiveZone, hook:ability.HookDiscardedFromHand (fired from discardCards), func:pileSource (the pile trigger source beside assetSource) and its rank in sourcePos, the ActiveZone gate in fireHook, StackItem.Tracked for a pile trigger]
@@ -87,3 +87,4 @@ Tests:
 - 2026-11-12, lead-architect (wave F run, session 27): tests reviewed (b405b61). Nine of the ten match the Tests list and FRD 01 (`FR-ZON-004` lines 250-251, `FR-TRG-003`, `SVY-R7`, `SVY-R9`, #136); the option refs, pick orders and default placement order were checked against `flushTriggers` and `chooseDiscards`. Returned with one note:
   1. `TestFR_ZON_004_ActiveZoneGatesTheSource`, second scene: `deployFromHand` declares an `ActDeploy`, whose `StackDeploy` item is itself a `place` event naming "Pile Deploy" (`push`, `stack.go:66-70`). So `pileLogPlaces(s, "Pile Deploy") != 0` fails even when the gate works. Count only the deploy's own placement (expect exactly 1 `place` event naming the card), or check that no `place` event for it comes after the deploy event; keep `len(s.asked(0)) == 0`, and add a precondition that the unit is on the battlefield. Edit only this assertion; the other tests stand. Set to `tests`.
 - 2026-11-12, rules-test-author: fixed note 1: `TestFR_ZON_004_ActiveZoneGatesTheSource`'s second scene now expects exactly 1 place event naming the card (the deploy's own item), keeps the asked-count check, and has a precondition that the unit is on the battlefield. Set to `tests-review`.
+- 2026-11-12, lead-architect (wave F run, session 27): tests re-reviewed (2397098): note 1 is fixed as asked (a battlefield precondition, exactly the deploy's own place event, no question); nothing else changed. Set to `ready`.
