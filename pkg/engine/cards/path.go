@@ -10,6 +10,42 @@ func init() {
 
 // pathDefs holds ability definitions for Path cards.
 var pathDefs = map[string]*ability.Def{
+	"Allshan's Battle Trance": {
+		Text: []string{
+			"Deploy chosen unit card from your discard pile to the Main Theater. Until end of turn, it gains Stalwart and gets +2 power.",
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneDiscard,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDeployFree,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+					To:      ability.ZoneMainTheater,
+				},
+				{
+					Op:      ability.OpGrantKeyword,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+					Keyword: ability.KeywordStalwart,
+				},
+				{
+					Op:      ability.OpModifyStat,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+					Amount:  ability.Value{N: 2},
+				},
+			},
+		},
+	},
 	"Allshan, Chainbreaker Revenant": {
 		Text: []string{
 			"Unbowed: This unit gains 2 armor.",

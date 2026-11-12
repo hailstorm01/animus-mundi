@@ -11,7 +11,6 @@ var Defs = map[string]*ability.Def{}
 // NotYetExecutable lists, sorted, every starter-set card the kernel cannot
 // execute yet. Card tasks remove names from it; M2 is done when it is empty.
 var NotYetExecutable = []string{
-	"Allshan's Battle Trance",
 	"Ancestral Monument",
 	"Animoceps Node",
 	"Animoceps Spore Cloud",
