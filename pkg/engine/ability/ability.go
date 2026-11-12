@@ -257,14 +257,15 @@ type Filter struct {
 	AtMost     int            // the bound of Stat ("power 3 or less" is StatPower, 3); means nothing while Stat is StatNone
 }
 
-// Stat is a stat a filter can bound (FR-TGT-001 "Dynamic Stats"). A later stat
-// (Requisition cost, health) is another value, read the same way: a card in a
+// Stat is a stat a filter can bound (FR-TGT-001 "Dynamic Stats"). Power and
+// Requisition cost are values; a later stat (health) is another, read the same way: a card in a
 // pile by its printed value, an asset on the battlefield by its effective one.
 type Stat int
 
 const (
-	StatNone  Stat = iota // the zero value: no stat criterion
-	StatPower             // Combat Power
+	StatNone        Stat = iota // the zero value: no stat criterion
+	StatPower                   // Combat Power
+	StatRequisition             // Requisition cost (FR-CRD-101)
 )
 
 // ZoneRef is a zone criterion read against the zone a stack item locked, not
