@@ -210,20 +210,27 @@ func TestCard_DevilhornScoutingParty_ZoneIsPartOfTheLook(t *testing.T) {
 
 func TestCard_DevilhornScoutingParty_DeployTriggerFires(t *testing.T) {
 	// Covers: SVY-R1
-	var enemy, ally *Asset
+	var enemy *Asset
 	s, insts, _ := sctScene(t, func(s *scene) []*Card {
 		return []*Card{s.card("Saboteur"), ltOther("M1"), ltOther("M2"), ltOther("X")}
 	}, sctLabel("Saboteur", ZoneReserves, "M1", "M2"), func(s *scene) {
 		enemy = s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-		ally = s.put(0, ZoneReserves, unit("Ally", 1, 5, Keywords{}))
+		s.put(0, ZoneReserves, unit("Ally", 1, 5, Keywords{}))
 	})
 	sab := ltAsset(s, insts[0])
 	if sab == nil || sab.Zone != ZoneReserves {
 		t.Fatalf("Saboteur is deployed into Reserves: %v", sab)
 	}
 	s.wantDamage(enemy, 2)
-	if got := ally.Damage + sab.Damage; got != 1 {
-		t.Errorf("its deploy trigger deals 1 damage to one allied unit: ally %d, Saboteur %d (a deploy is not a move, SVY-R1)", ally.Damage, sab.Damage)
+	// The Scratch Company X becomes is also an allied unit, so the trigger may choose it.
+	total := 0
+	for _, a := range s.g.Assets() {
+		if a.Controller == 0 {
+			total += a.Damage
+		}
+	}
+	if total != 1 {
+		t.Errorf("its deploy trigger deals 1 damage to one allied unit, whichever it chose: player 0's assets took %d in all (a deploy is not a move, SVY-R1)", total)
 	}
 }
 
