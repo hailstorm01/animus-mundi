@@ -4,7 +4,7 @@ title: "A trigger fires from a trigger source, so one fireHook checks every trig
 kind: harness
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0224-trigger-source
 depends_on: []
 claims: [type:triggerSource, func:assetSource, func:fireHook (signature), func:bufferTrigger (signature), func:deployedTo (signature)]
@@ -171,3 +171,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   6. `go -C W run ./cmd/cardtown lint fences` passed (exit code 0).
   7. `git -C W diff autoloop/m2-wave-f --stat` showed only `pkg/engine/filter.go`, `pkg/engine/trigger.go`, `pkg/engine/zones.go`, and `.agents/tasks/m2/T-0224-trigger-source.md`.
   8. `gofmt -l W/pkg` clean; `go -C W tool task check` passed (all vet, test, linter checks passed); `go -C W tool task sim` passed (200 games, P0 60.5% / P1 38.5% / draws 1.0%, P0 50/50 and P1 47/50 executable, all invariants holding). Ready for review.
+- 2026-11-12, lead-architect (wave F run, session 26, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f` as 3982af5. Flash run `fd7282e6-e921-4056-9a8c-ec3b86317881`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f...m2/autoloop-wave-f/T-0224-trigger-source` (69ef645):
+  - Scope: the three Allowed Files and this file. No test file changed (case 1).
+  - Pure move, checked against the diff: the `pkg/` diff's added and removed lines are identical to the lead's dry run, so it is exactly Edits 1-7. No test name or assertion changed.
+  - Fences and placement: no card name; `triggerSource` and `assetSource` sit in `trigger.go` beside `sourcePos`. The gates (hook, `Turn`, `ToZone`, `Cornered`, `MaxPerTurn`) are still checked in one place, `fireHook`, which no longer reads an asset.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 60.5% / P1 38.5% / draws 1.0%, P0 50/50 and P1 47/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #136's pure move is applied; its card part goes in T-0225, so #136 stays on the board as `open`.

@@ -227,3 +227,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0221 | A Requisition cost criterion in filters, "with Requisition cost N or less" (wave F shape, sonnet; for Devilhorn Scouting Party) | done |
 | T-0222 | OpLookTop, a look at the top cards of a deck with free deploys and a bottom order in one prompt (wave F shape, sonnet; #140 (3)) | done |
 | T-0223 | Devilhorn Scouting Party (wave F deck card, flash; #140 (3)) | done |
+| T-0224 | A trigger fires from a trigger source, so one fireHook checks every trigger's gates (directive #136, wave F harness, flash, pure move) | done |
