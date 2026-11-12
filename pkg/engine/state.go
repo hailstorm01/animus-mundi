@@ -73,8 +73,9 @@ type Asset struct {
 	Damage     int
 	Armor      int
 
-	// TempPower is the Layer 5 "until end of turn" power modifier.
-	TempPower int
+	// Modifiers are the changes resolved effects made to its characteristics,
+	// oldest first, each with its layer and duration (FR-LAY-001, FR-LAY-003).
+	Modifiers []Modifier
 
 	arrived int // arrival number: when it entered its current battlefield zone, counted across the match (SVY-R7)
 }

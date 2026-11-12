@@ -4,7 +4,7 @@ title: "\"Until end of turn\" is one list of modifiers on the asset (directive #
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: review
 branch: m2/autoloop-wave-f/T-0218-until-end-of-turn-modifiers
 depends_on: []
 claims: [type:Modifier, type:Duration, field:Asset.Modifiers, method:Asset.TempPower, method:Asset.expire]
@@ -160,10 +160,11 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - the ten test files under Tests, in the `test(T-0218)` commit only
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-11, lead-architect (wave F run, session 20): wrote this task from board directive #137, whose trigger fired when T-0219 (*Allshan's Battle Trance*, the next Deliverables task in survey row F's order after *Veil Render*, *Reaver's Rush* and their shapes) was written `queued` in the same commit. #137 is `open: before T-0219`, so this task goes first. #140 stays `open: before` T-0219 for its part (2), which T-0219 applies. The design note's Layers sentence was rewritten in this commit. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #136 (no *Eerie Remnant* task), #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-11, kernel-engineer: implemented T-0218 (#137). Test updates committed first in 55eb19e (test(T-0218): read and write Modifiers and TempPower() (#137)) which failed compilation due to undefined Asset.Modifiers, Modifier, and calling int TempPower as a function. Implementation committed in 9014d28 (feat(engine): until end of turn is one list of modifiers on asset (T-0218)). Replaced Asset.TempPower int with Modifiers []Modifier on Asset in state.go; defined Duration, UntilEndOfTurn, Modifier, Asset.TempPower(), and Asset.expire() in layers.go; updated Game.Power() to call a.TempPower(); updated turn.go Sub-Phase 4c to call a.expire(UntilEndOfTurn); updated stepModifyStat in effects.go to append Modifier{Layer: 5, Power: n, Until: UntilEndOfTurn}; updated assetSnap in snapshot.go to call a.TempPower(). Reused slices.DeleteFunc for expiry. Verified acceptance cases 1-8: Case 1 diff numstat matched exactly ten lines and git log showed only test(T-0218); Case 2 sim-compare passed byte-for-byte; Case 3 grep TempPower returned exactly five lines; Case 4 grep Modifiers returned exactly five lines; Case 5 non-test diff numstat returned exactly five lines (3 3 effects.go, 38 2 layers.go, 1 1 snapshot.go, 3 2 state.go, 1 1 turn.go); Case 6 cardtown lint fences passed; Case 7 diff stat matched only the 5 implementation files, 10 test files, and task file; Case 8 gofmt clean, task check passed, and task sim completed 200 games clean (P0 71.5% / P1 27.5% / draws 1.0%).

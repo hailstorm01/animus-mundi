@@ -33,7 +33,7 @@ func (g *Game) endTurn() {
 		p.Req, p.Tac = 0, 0
 	}
 	for _, a := range g.Assets() {
-		a.TempPower = 0
+		a.expire(UntilEndOfTurn)
 	}
 	// 4d: handover.
 	g.Active = g.Active.Opponent()

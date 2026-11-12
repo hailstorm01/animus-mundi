@@ -73,7 +73,7 @@ func TestFR_TGT_003_MovedTargetStillTakesLaterSteps(t *testing.T) {
 func TestFR_ZON_004_MovedUnitKeepsItsState(t *testing.T) {
 	s := newScene(t)
 	x := s.put(0, ZoneReserves, unit("X", 2, 6, Keywords{}))
-	x.Damage, x.Armor, x.TempPower, x.Exhausted = 2, 3, 1, true
+	x.Damage, x.Armor, x.Modifiers, x.Exhausted = 2, 3, []Modifier{{Layer: 5, Power: 1}}, true
 	power := s.g.Power(x)
 	s.choosesAssets(0, x.ID)
 	s.enactFree(ability.Effect{

@@ -140,7 +140,7 @@ func newContentScene(t *testing.T) *contentScene {
 
 	p0.HQ.Damage = 4
 	s.sentry = s.put(0, engine.ZoneReserves, testUnit("Alpha Sentry", 2, 4, engine.Keywords{}))
-	s.sentry.Damage, s.sentry.Armor, s.sentry.Exhausted, s.sentry.TempPower = 1, 2, true, 3
+	s.sentry.Damage, s.sentry.Armor, s.sentry.Exhausted, s.sentry.Modifiers = 1, 2, true, []engine.Modifier{{Layer: 5, Power: 3}}
 	s.lancer = s.put(0, engine.ZoneMainTheater, testUnit("Alpha Lancer", 3, 2, engine.Keywords{Aggressive: 2}))
 	s.raider = s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, engine.Keywords{Guardian: true}))
 
