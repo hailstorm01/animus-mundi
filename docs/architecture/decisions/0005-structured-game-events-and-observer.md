@@ -35,6 +35,8 @@ Every accepted action emits one `action` event.
 
 **Addendum (T-0214).** A Deploy's `action` event carries `From`, the pile the card was deployed from: `"Discard"` for a deploy by the card's own discard-pile permission (`FR-TRN-003`), omitted for a deploy from hand. `Card` and `Inst` name the card in that pile. Additive: every log without a discard deploy is byte-identical.
 
+**Addendum (T-0219).** `keyword` is an effect granting a battlefield asset a keyword until end of turn (`OpGrantKeyword`, `FR-LAY-001`): one event per asset granted, with `Target`, `Player` -1 and no `Card`, and text `<asset> gains <keyword> until end of turn` through the asset's `String`, so a face-down asset stays hidden. Additive: no starter or stress log changes until a card uses it.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences

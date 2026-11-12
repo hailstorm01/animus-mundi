@@ -34,5 +34,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0219](T-0219-grant-keyword.md) | A keyword granted until end of turn, on the asset a deployed card became (wave F shape, sonnet; for Allshan's Battle Trance) | tests |
 | [T-0220](T-0220-allshans-battle-trance.md) | Allshan's Battle Trance (wave F card, flash; #140 (2)) | queued |

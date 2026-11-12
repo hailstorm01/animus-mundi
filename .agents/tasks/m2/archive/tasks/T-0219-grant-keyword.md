@@ -4,7 +4,7 @@ title: "A keyword granted until end of turn, on the asset a deployed card became
 kind: shape
 tier: sonnet
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0219-grant-keyword
 depends_on: [T-0218]
 claims: [primitive:GRANT_KEYWORD, modifier:keyword, subject:pile-slot-became, event:keyword]
@@ -75,3 +75,4 @@ New tests go in `pkg/engine/grant_keyword_test.go`. Synthetic Maneuvers built wi
 - 2026-11-11, lead-architect (wave F run, session 21): tests re-reviewed (877b0b7): note 1 is fixed as asked and nothing else changed. Tests approved; set to `ready`.
 - 2026-11-11, kernel-engineer: implemented (feat commit below). Searched `pkg/engine` for a keyword grant / "it" subject first: none, so new. Diff: `ability.go` (`OpGrantKeyword`, `KeywordStalwart` + `String`, `Step.Keyword`, comments; gofmt realigned the const/struct comments); `card.go` (Stalwart name from `ability.KeywordStalwart.String()`); `layers.go` (`Modifier.Keywords`, `Game.Keywords` folds Layer 3 modifiers through `Keywords.add`, which walks `keywordDefs`; package comment); `effects.go` (`resolution.became` per pile slot, filled by `stepDeployFree` for `SubjectTarget`, appended in `slotAssets` and filtered to those still on the battlefield; `stepGrantKeyword`, flag lookup via `keywordDefs`, nothing for Aggressive/None); `events.go` (`EventKeyword`). Commands: the listed `go test -run ...` ok; `go tool task check` PASS; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-f` PASS byte-identical. Look at: `slotAssets` clones `chosen[i]` before appending `became[i]`.
 - 2026-11-11, lead-architect (wave F run, session 21): code reviewed (e606da7). Only the five Allowed Files changed, and no test changed after 877b0b7. No card name in engine code. `OpGrantKeyword` is appended, so no `Op` value moves. The fold (`Keywords.add`) walks `keywordDefs` once, and the grant finds its keyword there by the name `ability.Keyword` holds, so "Stalwart" is written once. One `Modifiers` list and one `expire`, as #137 built. "It" is `resolution.became`, filled only by `stepDeployFree`, so no battlefield lookup by instance exists. Gates re-run in a review worktree: `go tool task check` passes, `go tool task sim` is clean (Animus 50/50 executable, P0 71.5% / P1 27.5% / draws 1.0%), and `go tool task sim-compare -- autoloop/m2-wave-f` is byte-identical. Approved.
+- 2026-11-11, lead-architect (wave F run, session 21): merged into `autoloop/m2-wave-f` (d2595ea); `done`. ADR-0005 addendum for `keyword` added, and the design note's Layers sentence says what was built. Next: T-0220 (*Allshan's Battle Trance*, card, flash), `queued` on this task, written in full before it leaves `queued`; #140 (2) goes in it.
