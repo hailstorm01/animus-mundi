@@ -4,7 +4,7 @@ title: OpLookTop, a look at the top cards of a deck with free deploys and a bott
 kind: shape
 tier: sonnet
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0222-look-top
 depends_on: [T-0221]
 claims: [shape:OpLookTop (ability.OpLookTop; stepLookTop; the one look decision DecideLook, its outcome options and fallback); the free-deploy zone list freeDeployZones shared with stepDeployFree]
