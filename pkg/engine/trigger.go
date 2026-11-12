@@ -21,7 +21,9 @@ type pendingTrigger struct {
 }
 
 // sourcePos is where a trigger's source stood when it fired: its zone's rank
-// (Headquarters 0, Reserves 1, Main Theater 2) and its arrival number. A
+// (Headquarters 0, Reserves 1, Main Theater 2, a discard pile 3: after every
+// battlefield zone, and arrived is then the card's position in that pile; SVY-R7,
+// directive #136) and its arrival number. A
 // player's simultaneous triggers fall back to this order (SVY-R7, FR-MOD-001 §6).
 type sourcePos struct{ zone, arrived int }
 
@@ -42,8 +44,9 @@ func (p sourcePos) compare(q sourcePos) int {
 
 // triggerSource is what fires a trigger, read when it fires: the face it
 // prints, its controller, its zone and its rank in the flush's source order,
-// and the IDs its placement and MaxPerTurn counter use. Every source so far
-// is a battlefield asset (assetSource).
+// and the IDs its placement and MaxPerTurn counter use. A source is a battlefield
+// asset (assetSource) or a card in its owner's discard pile (pileSource); id is 0
+// for the latter.
 type triggerSource struct {
 	card       *Card     // its printed face (the Scratch face if face-down)
 	id         int       // source asset ID: the placement's source and the MaxPerTurn key
@@ -56,6 +59,29 @@ type triggerSource struct {
 // assetSource is a as a trigger source, as it stands now.
 func assetSource(a *Asset) triggerSource {
 	return triggerSource{card: a.Printed(), id: a.ID, inst: a.Inst, controller: a.Controller, zone: a.Zone, pos: posOf(a)}
+}
+
+// pileSource is inst, a card in its owner's discard pile, as a trigger source: its
+// printed face (FR-ZON-004), no asset, controlled by its owner and ranked after
+// every battlefield asset, by its position in the pile (SVY-R7, directive #136).
+func pileSource(g *Game, inst *Instance) triggerSource {
+	return triggerSource{card: inst.Card, inst: inst, controller: inst.Owner, zone: ZoneDiscard,
+		pos: sourcePos{zone: 3, arrived: slices.Index(g.Players[inst.Owner].Discard, inst)}}
+}
+
+// activeIn reports whether a trigger with ActiveZone z works from a source in
+// zone src: ZoneDiscard only from a discard pile, ZoneAny only from the battlefield.
+func activeIn(src Zone, z ability.Zone) bool {
+	if z == ability.ZoneDiscard {
+		return src == ZoneDiscard
+	}
+	return src != ZoneDiscard
+}
+
+// fireDiscarded buffers inst's discarded-from-hand triggers (FR-ZON-004).
+// discardCards calls it after inst is in its owner's discard pile.
+func (g *Game) fireDiscarded(inst *Instance) {
+	g.fireHook(pileSource(g, inst), ability.HookDiscardedFromHand)
 }
 
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
@@ -113,7 +139,7 @@ func (g *Game) fireHook(src triggerSource, hook ability.Hook) {
 		return
 	}
 	for i, t := range def.Triggers {
-		if t.Hook != hook || (t.Turn == ability.TurnYours && g.Active != src.controller) {
+		if t.Hook != hook || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
 			continue
 		}
 		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !deployedTo(src.zone, t.ToZone) {
@@ -199,7 +225,7 @@ func (g *Game) flushTriggers() {
 			}
 			item := p.stackItem(StackAbility)
 			item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
-			item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled, p.trig.Keyword
+			item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.Keyword
 			g.push(item)
 		}
 	}

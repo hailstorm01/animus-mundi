@@ -138,13 +138,14 @@ type Replacement struct {
 type Hook int
 
 const (
-	HookDeploy     Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
-	HookKilled                     // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
-	HookAttacks                    // this asset attacked (combat Step 2, FR-CBT-002)
-	HookDamaged                    // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
-	HookExhausted                  // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
-	HookCombatKill                 // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
-	HookMoves                      // this unit moved to a new battlefield zone, by March or by a step that moves it (OpMoveZone); entering the battlefield, by any deploy, is not moving (SVY-R1, FR-ZON-002)
+	HookDeploy            Hook = iota + 1 // this asset was deployed (its deploy resolved onto the battlefield)
+	HookKilled                            // this asset was destroyed from the battlefield (FR-ZON-004 leaves-battlefield trigger)
+	HookAttacks                           // this asset attacked (combat Step 2, FR-CBT-002)
+	HookDamaged                           // this asset took damage: Armor absorbed plus Health committed was more than 0 (FR-REP-004 Stage 5, FR-KWD-002a)
+	HookExhausted                         // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
+	HookCombatKill                        // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
+	HookMoves                             // this unit moved to a new battlefield zone, by March or by a step that moves it (OpMoveZone); entering the battlefield, by any deploy, is not moving (SVY-R1, FR-ZON-002)
+	HookDiscardedFromHand                 // this card was put into its owner's discard pile from their hand, by a discard step or a discard cost (FR-ZON-004); fires only triggers with ActiveZone ZoneDiscard
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.
@@ -186,15 +187,18 @@ func Aggressive(n int) Trigger {
 
 // Trigger is one printed triggered ability.
 type Trigger struct {
-	Hook     Hook
-	Turn     TurnOwner
-	ToZone   Zone    // HookDeploy and HookMoves only: fires only if the asset was deployed or moved into this zone
-	Cornered bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
-	Optional bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
-	Keyword  Keyword // the keyword this trigger comes from; zero for a printed ability
-	Effect   Effect
+	Hook   Hook
+	Turn   TurnOwner
+	ToZone Zone // HookDeploy and HookMoves only: fires only if the asset was deployed or moved into this zone
+	// ActiveZone is where the trigger works from (survey G1): ZoneAny, the zero value, is the
+	// battlefield; ZoneDiscard is its card's owner's discard pile. No other value is used.
+	ActiveZone Zone
+	Cornered   bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
+	Optional   bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
+	Keyword    Keyword // the keyword this trigger comes from; zero for a printed ability
+	Effect     Effect
 
-	// MaxPerTurn limits how often this trigger fires each turn, per asset (FR-TRN-001);
+	// MaxPerTurn limits how often this trigger fires each turn, per asset, so only for a battlefield trigger; no pile trigger prints a limit (FR-TRN-001);
 	// 0 means no limit. A firing whose clauses later fizzle still counts.
 	MaxPerTurn int
 }
