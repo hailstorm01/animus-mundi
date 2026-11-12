@@ -331,6 +331,7 @@ const (
 	OpDeployFree                 // put each Subject card, still in its discard pile, onto the battlefield for free under the ability's controller, with no stack item and no costs (FR-TRN-003a, FR-CST-001): into Step.To if set, else its printed zone, chosen by the controller when it prints both Reserves and the Main Theater (SVY-R43)
 	OpMorphScratch               // turn each Subject unit face down in place: it becomes the 1/1/1/1 Infantry Scratch Company whose only ability is Deploys Exhausted, and keeps its zone, controller, readiness, damage, Armor and Layer 5 modifiers (FR-ENT-103). A unit already face down, a Structure and a Headquarters are skipped
 	OpGrantKeyword               // the Subject gains Step.Keyword until end of turn (Layer 3, FR-LAY-001; expires in Sub-Phase 4c, FR-LAY-003)
+	OpLookTop                    // its controller looks at the top Amount cards of their deck and, in one hidden prompt, chooses which are deployed for free (up to UpTo, or exactly one when UpTo is 0 and one is eligible), each card matching Filter's card-level criteria, the zone of each, and the order the rest go to the bottom (FR-MOD-001 §4, SVY-R41-SVY-R43)
 )
 
 // Subject is what a step acts on.
@@ -353,10 +354,10 @@ type Step struct {
 	Subject     Subject
 	Bottom      bool    // OpPutOnDeck: the bottom of the deck instead of the top
 	Target      int     // SubjectTarget: index into Effect.Targets
-	Filter      Filter  // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile)
-	UpTo        int     // SubjectPick: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
+	Filter      Filter  // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile). OpLookTop: the card-level criteria a deployed card must meet
+	UpTo        int     // SubjectPick, OpLookTop: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
 	Dealer      int     // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
-	To          Zone    // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2)
+	To          Zone    // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2). OpLookTop: the same override
 	Keyword     Keyword // OpGrantKeyword only: the keyword granted
 	IfDone      bool    // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 	IfHandEmpty bool    // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
