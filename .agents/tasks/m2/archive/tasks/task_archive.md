@@ -223,3 +223,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0216 | Veil Render, deployed from its owner's discard pile by killing an allied unit (wave F card, flash; #143) | done |
 | T-0218 | "Until end of turn" is one list of modifiers on the asset (directive #137, wave F harness, flash, pure move) | done |
 | T-0219 | A keyword granted until end of turn, on the asset a deployed card became (wave F shape, sonnet; for Allshan's Battle Trance) | done |
+| T-0220 | Allshan's Battle Trance (wave F card, flash; #140 (2)) | done |
