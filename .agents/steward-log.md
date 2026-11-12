@@ -12,3 +12,4 @@ Kept by `workflow-steward` (`.agents/skills/workflow-steward/SKILL.md`). The ste
 | 2026-10-27 | **agy's `go` rule fences the shell, not Go.** The allow-list still permits `go run` and `go generate`, which run arbitrary code. | User: tighten, or accept |
 | 2026-10-27 | **Empty folder `C:\tmp\la` left behind** by wave B session 11. The safety check refuses the steward's `rmdir`. | User to delete |
 | 2026-11-06 | **Check the runner's token changes on the next wave run** (see history, 2026-11-06). Sessions should start near 18.8k tokens and read the skill without searching first. A `STOP` for a missing tool means the flags need another look. | Next wave run |
+| 2026-11-11 | **Check the wave F rerun.** Session 19 should resolve the `BOARD.md` sync under D7.2 step 2 (`main`'s #143 next to the run branch's #142, `Last directive` set to #143), and any directive it adds should take its number from `go tool task next-directive`. | Next wave run |

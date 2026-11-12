@@ -122,6 +122,11 @@ tasks:
     cmds:
       - '{{.BIN}} hook install'
 
+  next-directive:
+    desc: 'Number for a new board directive: one after the highest Last directive on main and every autoloop/ branch (.agents/rules/AGENTS.md)'
+    cmds:
+      - go run ./.agents/scripts/nextdirective {{.CLI_ARGS}}
+
   wave-run:
     desc: 'Build one wave unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`'
     cmds:
