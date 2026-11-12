@@ -4,7 +4,7 @@ title: OpLookTop, a look at the top cards of a deck with free deploys and a bott
 kind: shape
 tier: sonnet
 wave: F
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-f/T-0222-look-top
 depends_on: [T-0221]
 claims: [shape:OpLookTop (ability.OpLookTop; stepLookTop; the one look decision DecideLook, its outcome options and fallback); the free-deploy zone list freeDeployZones shared with stepDeployFree]
@@ -81,3 +81,4 @@ In a new file `pkg/engine/look_top_test.go`, synthetic cards only, in the style 
 ## Log
 - 2026-11-11 lead-architect (wave F run, session 23): split off T-0221 under the D2 size rule, with T-0223; `queued` on T-0221.
 - 2026-11-12 lead-architect (wave F run, session 24): Inputs, Shape, Tests and Allowed Files written against the run branch at 1b6e9d1. Searched `pkg/engine` and the task archive: no look op or look decision exists, and the free-deploy zone rule lives only in `stepDeployFree`, which this task moves into `freeDeployZones` so the look reuses it. Four non-test files: the look goes in `effects.go` beside `stepDeployFree`, not a new file, so it stays inside the D2 size rule. The design note's Open Question 5 is updated by the lead in this commit. `FR-DEK-001` dropped from `requirements` (a look is not a search; #106 not fired). Set to `tests`.
+- 2026-11-12 rules-test-author: wrote pkg/engine/look_top_test.go: TestFR_MOD_001_LookTopTimeoutDeploysNothingKeepsOrderSeen, TestFR_MOD_001_LookTopKeepsThePlayersBottomOrder, TestFR_MOD_001_LookTopZoneChosenInTheSamePrompt, TestFR_MOD_001_LookTopOffersOnlyEligibleCards, TestFR_MOD_001_LookTopRequiredPickTimesOutToTheFirstEligible, TestFR_MOD_001_LookTopShortDeckLooksAtWhatIsThere, TestFR_MOD_001_LookTopIsHiddenSoNoFastPath, TestFR_TRN_003a_LookTopDeployCountsForIfDone, TestFR_TRN_003a_LookTopDeployFiresDeployTriggers. Helpers requested: none (small lt* builders live in the test file). go vet fails only on the missing ability.OpLookTop and DecideLook; cardtown lint rules passes. Deliberately left out: nothing from the Tests section. Notes: the timeout test pins the recorded Picks [0] but not the decision event's How (the task says answered, the event log records timeouts as timeout); the draw-count checks for IfDone and deploy triggers use the hand-size change (-1 for the enacted card). Set to tests-review.
