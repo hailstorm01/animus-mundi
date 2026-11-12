@@ -4,7 +4,7 @@ title: "A trigger fires from a trigger source, so one fireHook checks every trig
 kind: harness
 tier: flash
 wave: F
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f/T-0224-trigger-source
 depends_on: []
 claims: [type:triggerSource, func:assetSource, func:fireHook (signature), func:bufferTrigger (signature), func:deployedTo (signature)]
