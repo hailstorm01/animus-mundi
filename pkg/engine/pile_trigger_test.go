@@ -400,7 +400,16 @@ func TestFR_ZON_004_ActiveZoneGatesTheSource(t *testing.T) {
 	dp := trigUnit("Pile Deploy", ability.Trigger{Hook: ability.HookDeploy, ActiveZone: ability.ZoneDiscard, Optional: true,
 		Effect: ability.Effect{Steps: []ability.Step{drawN(1)}}})
 	s.deployFromHand(0, dp)
-	if len(s.asked(0)) != 0 || pileLogPlaces(s, "Pile Deploy") != 0 {
-		t.Errorf("a discard-pile trigger does not fire for a card on the battlefield (G1)")
+	onBoard := false
+	for _, a := range s.g.Players[0].Reserves {
+		if a.Inst.Card == dp {
+			onBoard = true
+		}
+	}
+	if !onBoard {
+		t.Fatalf("precondition: the unit is deployed onto the battlefield")
+	}
+	if len(s.asked(0)) != 0 || pileLogPlaces(s, "Pile Deploy") != 1 {
+		t.Errorf("a discard-pile trigger does not fire for a card on the battlefield: no question and only the deploy's own place event, got %d asked, %d place events (G1)", len(s.asked(0)), pileLogPlaces(s, "Pile Deploy"))
 	}
 }
