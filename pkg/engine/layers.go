@@ -5,11 +5,47 @@
 
 package engine
 
-import "animus-mundi/pkg/engine/ability"
+import (
+	"slices"
+
+	"animus-mundi/pkg/engine/ability"
+)
+
+// Duration is how long a Modifier lasts (FR-LAY-003).
+type Duration int
+
+const (
+	UntilEndOfTurn Duration = iota // expires in Sub-Phase 4c (FR-TRN-001)
+)
+
+// Modifier is one change a resolved effect made to an asset's characteristics.
+// Layer is its FR-LAY-001 layer. The only kind built so far is a Layer 5 power
+// modifier: Power is added to Combat Power.
+type Modifier struct {
+	Layer int
+	Power int
+	Until Duration
+}
+
+// TempPower is the sum of a's Layer 5 power modifiers.
+func (a *Asset) TempPower() int {
+	n := 0
+	for _, m := range a.Modifiers {
+		if m.Layer == 5 {
+			n += m.Power
+		}
+	}
+	return n
+}
+
+// expire removes a's modifiers that last d.
+func (a *Asset) expire(d Duration) {
+	a.Modifiers = slices.DeleteFunc(a.Modifiers, func(m Modifier) bool { return m.Until == d })
+}
 
 // Power returns effective Combat Power, the only stat that clamps at 0.
 func (g *Game) Power(a *Asset) int {
-	return max(0, a.Printed().Power+a.TempPower)
+	return max(0, a.Printed().Power+a.TempPower())
 }
 
 // MaxHealth returns effective Maximum Health. It does not clamp (FR-LAY-002).

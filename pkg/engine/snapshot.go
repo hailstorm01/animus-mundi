@@ -61,7 +61,7 @@ func (g *Game) assetSnap(a *Asset) AssetSnap {
 		ID: a.ID, Inst: a.Inst.ID, Card: a.Inst.Card.Name,
 		Owner: int(a.Inst.Owner), Controller: int(a.Controller), Zone: a.Zone.String(),
 		Exhausted: a.Exhausted, FaceDown: a.FaceDown, Damage: a.Damage, Armor: a.Armor,
-		TempPower: a.TempPower, Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a),
+		TempPower: a.TempPower(), Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a),
 	}
 }
 

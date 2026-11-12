@@ -276,13 +276,13 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 	return total
 }
 
-// stepModifyStat gives each Subject +Amount power until end of turn: the Layer 5
-// TempPower, cleared in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
+// stepModifyStat gives each Subject +Amount power until end of turn: a Layer 5
+// modifier, which expires in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		n := g.value(r.it.Source, st.Amount, nil)
-		a.TempPower += n
+		a.Modifiers = append(a.Modifiers, Modifier{Layer: 5, Power: n, Until: UntilEndOfTurn})
 		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power until end of turn", a, n)
 	}
 	return len(as)
