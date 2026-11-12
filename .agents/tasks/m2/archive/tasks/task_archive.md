@@ -224,3 +224,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0218 | "Until end of turn" is one list of modifiers on the asset (directive #137, wave F harness, flash, pure move) | done |
 | T-0219 | A keyword granted until end of turn, on the asset a deployed card became (wave F shape, sonnet; for Allshan's Battle Trance) | done |
 | T-0220 | Allshan's Battle Trance (wave F card, flash; #140 (2)) | done |
+| T-0221 | A Requisition cost criterion in filters, "with Requisition cost N or less" (wave F shape, sonnet; for Devilhorn Scouting Party) | done |
