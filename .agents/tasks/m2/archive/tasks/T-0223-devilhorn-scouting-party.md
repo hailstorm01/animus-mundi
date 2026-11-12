@@ -4,7 +4,7 @@ title: "Devilhorn Scouting Party: a look at the top 3 with one free deploy of a 
 kind: card
 tier: flash
 wave: F
-status: review
+status: done
 branch: m2/autoloop-wave-f/T-0223-devilhorn-scouting-party
 depends_on: [T-0221, T-0222]
 claims: [card:Devilhorn Scouting Party]
@@ -97,3 +97,5 @@ New tests go in `pkg/engine/cards_path_scouting_party_test.go`. Use the real car
   - go tool task check: pass (gofmt, vet, all tests, lint --all)
   - go tool task sim: clean (200 games, P0 60.5% / P1 38.5% / draws 1.0%, Path 47/50 executable, all invariants held).
   Set to review.
+- 2026-11-12 lead-architect (wave F run, session 25): code reviewed (4fc5149). Only the three Allowed Files changed, and no test changed after f9120ce. The definition is the Shape's: no targets, `OpLookTop` with `Amount` 3, `UpTo` 1 and the unit, `StatRequisition` at most 3 filter, then `OpScratch` 1; no new shape, no card name in engine code. `doc.go` gained exactly the two commas. Gates re-run in a review worktree: the task's tests and the edited replay test pass, `go tool task check` passes, and `go tool task sim` is clean (Path 47/50 executable, P0 60.5% / P1 38.5% / draws 1.0%, every invariant holding). Approved.
+- 2026-11-12 lead-architect (wave F run, session 25): merged into `autoloop/m2-wave-f` (2da3ef5); `done`. #140 is fully applied and archived.
