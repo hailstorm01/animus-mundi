@@ -143,14 +143,9 @@ func TestFR_LAY_001_GrantingAggressiveGrantsNothing(t *testing.T) {
 func TestEffectEvents_KeywordGrant(t *testing.T) {
 	// ADR-0005: one event per asset acted on, in order.
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
-	s.put(0, ZoneReserves, unit("Sentry", 2, 3, Keywords{}))
-	var want []*Asset
-	for _, a := range s.g.Assets() {
-		if a.Controller == 0 && a.Printed().Type == TypeUnit {
-			want = append(want, a)
-		}
-	}
+	rider := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
+	sentry := s.put(0, ZoneReserves, unit("Sentry", 2, 3, Keywords{}))
+	want := []*Asset{rider, sentry} // a simultaneous step acts oldest first
 	all := maneuver("Mass Grant", 0, 0, steps(ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectAll,
 		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}, Keyword: ability.KeywordStalwart}))
 	from := len(s.g.Log)
