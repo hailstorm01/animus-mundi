@@ -34,4 +34,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0223 | Devilhorn Scouting Party (wave F deck card, flash) | queued |
+| T-0223 | Devilhorn Scouting Party (wave F deck card, flash) | tests |
