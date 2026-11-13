@@ -174,6 +174,14 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #139: the docs say what wave E built. It may share #138's task.
 
    #136 and #137 have no task here: they are `waiting:` rows that block wave F's *Eerie Remnant* and *Allshan's Battle Trance* tasks, each with a pure move ahead of its card (one `fireHook` for a trigger from a card off the battlefield, and "until end of turn" as one list of modifiers). #138 is a pure move and #139 is comments only. Done when no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
+6j. **Wave F.1, cleanup, added 2026-11-13 from structural review 11 (board directives #144–#148).** It goes after wave F, which stopped at the #14 (d) playtest checkpoint, and before the work that follows the checkpoint (user, 2026-11-13). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave F.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #144: a card step's "still in a discard pile" check is made once, in `stepCards`.
+   - #145: one lookup of a card in a player's pile (`handCard` goes), and one read of which pile an action names (`Action.pile()`).
+   - #146: `fireHook` returns what it buffered.
+   - #147: the policy asks the engine what a playable card costs (`Game.PlayCost`), with acceptance cases.
+   - #148: free deploys and the look at the top cards move to `freedeploy.go`. It may share #147's task.
+
+   #144–#146 and #148 are pure moves. #147 adds an engine query and tests, and moves the policy's filters into it unchanged. Done when #144–#148 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
