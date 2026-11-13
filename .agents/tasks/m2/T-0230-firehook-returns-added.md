@@ -4,7 +4,7 @@ title: "fireHook returns the entries it buffered (directive #146, wave F.1 harne
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: review
 branch: m2/autoloop-wave-f.1/T-0230-firehook-returns-added
 depends_on: [T-0229]
 claims: [func:fireHook (return value), func:fireMoved (field set), func:fireCombatKill (field set)]
@@ -119,10 +119,24 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-13, lead-architect (wave F.1 run, session 4): written for #146 against c4bd35b (T-0229 merged; nothing new on `main` to sync). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no double quotes, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-13, kernel-engineer (wave F.1 run, Flash): implemented #146 pure move in pkg/engine/trigger.go (commit e2819a6).
+  - Changes: `fireHook` now returns `[]pendingTrigger` (`g.pending[n:]`, or `nil` when `src.card.Ability == nil`); `fireMoved` and `fireCombatKill` now iterate `for i := range added` where `added := g.fireHook(...)` instead of tracking `len(g.pending)` locally.
+  - Reuse: `bufferTrigger` appends to `g.pending`; `fireHook` returns a slice alias over newly appended triggers.
+  - Verification results:
+    1. `git -C W diff autoloop/m2-wave-f.1 --stat -- '*_test.go'`: empty (no test changes).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-f.1`: `[PASS] starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included`.
+    3. `git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd`: `12	10	pkg/engine/trigger.go`.
+    4. `git -C W grep -n -F 'len(g.pending)' -- pkg`: exactly 3 lines (`pkg/engine/invariants.go:64`, `:65`, `pkg/engine/trigger.go:137`).
+    5. `git -C W grep -n -F 'added := g.fireHook' -- pkg`: exactly 2 lines (`pkg/engine/trigger.go:95`, `:117`).
+    6. `git -C W grep -n -F 'hook ability.Hook) []pendingTrigger {' -- pkg/engine`: exactly 1 line (`pkg/engine/trigger.go:136`).
+    7. `go -C W run ./cmd/cardtown lint fences`: exit 0 (`[PASS]`).
+    8. `git -C W diff autoloop/m2-wave-f.1 --stat`: lists only `pkg/engine/trigger.go` and this task file.
+    9. `gofmt -l W/pkg`: clean; `go -C W tool task check`: exit 0; `go -C W tool task sim`: exit 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
+  - Handed off with status: review.

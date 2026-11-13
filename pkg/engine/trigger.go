@@ -92,10 +92,9 @@ func (g *Game) fireDeploy(a *Asset) { g.fireHook(assetSource(a), ability.HookDep
 // calls it after a is placed in its new zone (SVY-R1, FR-ZON-002).
 // Each trigger locks the zone a moved to, its own value, fixed by the event (SVY-R45).
 func (g *Game) fireMoved(a *Asset) {
-	n := len(g.pending)
-	g.fireHook(assetSource(a), ability.HookMoves)
-	for i := n; i < len(g.pending); i++ {
-		g.pending[i].locked = &LockedZone{Zone: a.Zone, Player: a.Controller}
+	added := g.fireHook(assetSource(a), ability.HookMoves)
+	for i := range added {
+		added[i].locked = &LockedZone{Zone: a.Zone, Player: a.Controller}
 	}
 }
 
@@ -115,10 +114,9 @@ func (g *Game) fireExhausted(a *Asset) { g.fireHook(assetSource(a), ability.Hook
 // the attacker's combat damage left def lethal; the triggers wait on def's
 // destruction, because a replaced death is not a kill (SVY-R19).
 func (g *Game) fireCombatKill(att, def *Asset) {
-	n := len(g.pending)
-	g.fireHook(assetSource(att), ability.HookCombatKill)
-	for i := n; i < len(g.pending); i++ {
-		g.pending[i].awaits = def.ID
+	added := g.fireHook(assetSource(att), ability.HookCombatKill)
+	for i := range added {
+		added[i].awaits = def.ID
 	}
 }
 
@@ -133,10 +131,13 @@ func (g *Game) confirmDestroyed(id int) {
 
 // fireHook buffers src's own triggers for hook in printed order: the one place
 // a trigger's gates are checked. A face-down asset has no printed abilities.
-func (g *Game) fireHook(src triggerSource, hook ability.Hook) {
+// It returns the entries it added, a slice of the buffer, so a caller can set a
+// field on each before the flush; the other callers ignore it.
+func (g *Game) fireHook(src triggerSource, hook ability.Hook) []pendingTrigger {
+	n := len(g.pending)
 	def := src.card.Ability
 	if def == nil {
-		return
+		return nil
 	}
 	for i, t := range def.Triggers {
 		if t.Hook != hook || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
@@ -162,6 +163,7 @@ func (g *Game) fireHook(src triggerSource, hook ability.Hook) {
 		}
 		g.bufferTrigger(src, fmt.Sprintf("%s: trigger %d", src.card.Name, i+1), t)
 	}
+	return g.pending[n:]
 }
 
 // bufferTrigger adds the fired trigger t to the buffer: src is its source, src's
