@@ -142,25 +142,15 @@ func legalTaps(g *engine.Game, legal []engine.Action) []tap {
 	return taps
 }
 
-// playCosts lists what p's playable cards cost now: its hand cards, and the
-// cards it may deploy from its discard pile by their own permission, leaving out
-// one whose other costs can't be paid now (Game.DiscardDeployCost, FR-TRN-003).
+// playCosts lists what p's playable cards cost now, its hand cards and then its
+// discard pile's, as the engine prices them (Game.PlayCost).
 func playCosts(g *engine.Game, p *engine.Player) []neededCost {
 	var out []neededCost
-	for _, inst := range p.Hand {
-		c := inst.Card
-		if !c.Supported() || (len(c.DeployZones) == 0 && c.Type != engine.TypeManeuver) {
-			continue
-		}
-		req, tac := g.EffectiveCost(inst)
-		out = append(out, neededCost{resources: resources{req, tac}})
-	}
-	for _, inst := range p.Discard {
-		if !inst.Card.Supported() || len(inst.Card.DeployZones) == 0 {
-			continue
-		}
-		if req, tac, ok := g.DiscardDeployCost(inst); ok {
-			out = append(out, neededCost{resources: resources{req, tac}})
+	for _, pile := range [][]*engine.Instance{p.Hand, p.Discard} {
+		for _, inst := range pile {
+			if req, tac, ok := g.PlayCost(inst); ok {
+				out = append(out, neededCost{resources: resources{req, tac}})
+			}
 		}
 	}
 	return out
