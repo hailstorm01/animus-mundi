@@ -4,7 +4,7 @@ title: "The mulligan finds its cards with pileCard, handCard goes, and pileCard 
 kind: harness
 tier: flash
 wave: F.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.1/T-0228-mulligan-pile-card
 depends_on: []
 claims: [func:handCard (delete), func:pileCard (move to zones.go)]
@@ -80,10 +80,29 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/setup.go`
 
 ## Done When
-- [ ] Cases 1–8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
+- 2026-11-13, kernel-engineer (wave F.1 run, session 3): implemented T-0228 (directive #145 (a), pure move).
+  - Changes:
+    - `pkg/engine/actions.go`: removed `func pileCard` (lines 188-206).
+    - `pkg/engine/zones.go`: deleted `func handCard` (lines 266-274); added `func pileCard` immediately after `DiscardCard` (lines 177-191).
+    - `pkg/engine/setup.go`: updated mulligan card lookup on line 80 from `handCard(p, id)` to `pileCard(p, id, ZoneHand)`.
+  - Reuse: `pileCard` reused as the single pile-card lookup function across `pkg/engine`; redundant `handCard` eliminated.
+  - Acceptance cases verified:
+    1. `git -C W diff autoloop/m2-wave-f.1 --stat -- '*_test.go'` -> printed nothing (exit 0).
+    2. `go -C W tool task sim-compare -- autoloop/m2-wave-f.1` -> `[PASS] starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included`.
+    3. `git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd` -> printed:
+       `0	19	pkg/engine/actions.go`
+       `1	1	pkg/engine/setup.go`
+       `19	9	pkg/engine/zones.go`
+    4. `git -C W grep -n -e 'func handCard' -e 'func pileCard' -- pkg` -> `pkg/engine/zones.go:177:func pileCard(p *Player, id int, from Zone) *Instance {`.
+    5. `git -C W grep -n -w handCard -- pkg cmd` -> printed nothing (exit 1).
+    6. `go -C W run ./cmd/cardtown lint fences` -> `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit 0).
+    7. `git -C W diff autoloop/m2-wave-f.1 --stat` -> listed only the three code files and this task file.
+    8. `gofmt -l W/pkg` -> printed nothing; `go -C W tool task check` passed exit 0; `go -C W tool task sim` passed exit 0 (200 games, all invariants held).
+  - Implementation committed as `7f58eaa feat(engine): pileCard moves to zones.go, handCard deleted, mulligan calls pileCard (T-0228)`.
 - 2026-11-13, lead-architect (wave F.1 run, session 2): wrote this task from board directive #145 (a), after syncing `main`'s directives #149–#151 into the run branch. #145's whole fix touches five non-test files (`actions.go`, `zones.go`, `setup.go`, `events.go`, `doc.go`), over the D2.4 limit of four, so it is split: (a) here, (b) in T-0229, `queued`, with its own board row. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
