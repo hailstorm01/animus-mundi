@@ -4,7 +4,7 @@ title: "The mulligan finds its cards with pileCard, handCard goes, and pileCard 
 kind: harness
 tier: flash
 wave: F.1
-status: review
+status: done
 branch: m2/autoloop-wave-f.1/T-0228-mulligan-pile-card
 depends_on: []
 claims: [func:handCard (delete), func:pileCard (move to zones.go)]
@@ -106,3 +106,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     8. `gofmt -l W/pkg` -> printed nothing; `go -C W tool task check` passed exit 0; `go -C W tool task sim` passed exit 0 (200 games, all invariants held).
   - Implementation committed as `7f58eaa feat(engine): pileCard moves to zones.go, handCard deleted, mulligan calls pileCard (T-0228)`.
 - 2026-11-13, lead-architect (wave F.1 run, session 2): wrote this task from board directive #145 (a), after syncing `main`'s directives #149–#151 into the run branch. #145's whole fix touches five non-test files (`actions.go`, `zones.go`, `setup.go`, `events.go`, `doc.go`), over the D2.4 limit of four, so it is split: (a) here, (b) in T-0229, `queued`, with its own board row. Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-13, lead-architect (wave F.1 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.1` as 0b66395. Flash run `73c4364a-17dd-4790-8e7b-abd9fcbf7468`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.1...m2/autoloop-wave-f.1/T-0228-mulligan-pile-card` (361cb0a):
+  - Scope: the three Allowed Files and this file. No test file changed (case 1).
+  - Pure move, checked against the diff: the `pkg/` diff is exactly Edits 1-4 and matches the lead's dry run (numstat `0 19`, `1 1`, `19 9`); `pileCard`'s body and comment moved unchanged.
+  - Fences and placement: no card name; `pileCard` sits in `zones.go` beside `DiscardCard`, and `handCard` is gone with no caller (cases 4, 5).
+  - Re-run by the reviewer in a scratch worktree of the task branch: cases 1, 3, 4 and 5 as written; `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.1` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #145 stays `open`: (a) is applied; (b) is T-0229, `queued`, next.

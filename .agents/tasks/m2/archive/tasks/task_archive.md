@@ -231,3 +231,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0225 | A trigger from a card in its discard pile: Trigger.ActiveZone, HookDiscardedFromHand and a pile trigger source (wave F shape, sonnet; #136's card part) | done |
 | T-0226 | Eerie Remnant (wave F deck card, flash; #136's card part) | done |
 | T-0227 | A card step's "still in a discard pile" check is made once, in `stepCards` (#144, wave F.1 harness, flash, pure move) | done |
+| T-0228 | The mulligan finds its cards with `pileCard`, `handCard` goes, and `pileCard` moves to `zones.go` (#145 (a), wave F.1 harness, flash, pure move) | done |
