@@ -4,7 +4,7 @@ title: "A card step's \"still in a discard pile\" check is made once, in stepCar
 kind: harness
 tier: flash
 wave: F.1
-status: review
+status: done
 branch: m2/autoloop-wave-f.1/T-0227-card-step-pile-check
 depends_on: []
 claims: [func:stepCards (pile check), func:stepDeployFree (pile check), func:stepRelocate (pile check)]
@@ -166,3 +166,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 6: `git -C W diff autoloop/m2-wave-f.1 --stat` listed only `pkg/engine/effects.go` and `.agents/tasks/m2/T-0227-card-step-pile-check.md`.
     - Case 7: `gofmt -l W/pkg` printed nothing; `go -C W tool task check` passed with exit code 0; `go -C W tool task sim` passed with exit code 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%, all invariants holding).
   - Ready for lead-architect review.
+- 2026-11-13, lead-architect (wave F.1 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.1` as 3d7b2e4. Flash run `0f9491f9-3ce2-4ea9-a227-2fa4a8aa994f`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. The engineer ran some commands with agy's `BypassSandbox` (its worktree and `go tool task check` hit temp-directory access errors in agy's sandbox); none was refused. Review of `git diff autoloop/m2-wave-f.1...m2/autoloop-wave-f.1/T-0227-card-step-pile-check` (8db9df1):
+  - Scope: `pkg/engine/effects.go` and this file. No test file changed (case 1).
+  - Pure move, checked against the diff: the `pkg/` diff's added and removed lines are identical to the lead's dry run, so it is exactly Edits 1-5. No test name or assertion changed.
+  - Fences and placement: no card name; the check sits in `stepCards`, beside `slotAssets`, and no step body checks a card's pile (case 4).
+  - Re-run by the reviewer in a scratch worktree of the task branch: cases 1, 3 and 4 as written; `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.1` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #144 is `applied` and archived.
