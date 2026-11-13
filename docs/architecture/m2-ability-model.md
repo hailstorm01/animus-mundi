@@ -182,6 +182,14 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #148: free deploys and the look at the top cards move to `freedeploy.go`. It may share #147's task.
 
    #144–#146 and #148 are pure moves. #147 adds an engine query and tests, and moves the policy's filters into it unchanged. Done when #144–#148 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass.
+6k. **Wave F.2, play-screen feedback, added 2026-11-13 from the user's playtest at the #14 (d) checkpoint (board directives #149–#151).** It goes after wave F.1 (user, 2026-11-13). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave F.2`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order, each a `harness` task:
+   - #149: an ability's prompts name its source card and show its rules text, and the stack listing names each item's card.
+   - #150: battlefield assets show their resource yields.
+   - #151: a single-pick prompt lists identical options once (play screen only).
+
+   #150 and #151 leave sim output unchanged (`go tool task sim-compare`). #149 may add a field to `Decision`, and then its task names the expected `-events` difference. Done when #149–#151 are `applied`, no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass.
+
+   **After the checkpoint (#14, applied 2026-11-13):** every starter-deck card is executable, and the remaining Animus and Path cards stay in M2 (user: the two starter factions are completed before Concordia and Soulless). After wave F.2, work resumes in this list's order with the non-deck cards and the shapes #14 (b) deferred, wave by wave as the survey orders them. A *Devilhorn Captain* change from the user's playtest goes through `@game-designer` and reaches the board as its directive.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
