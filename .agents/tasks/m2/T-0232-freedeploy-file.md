@@ -4,7 +4,7 @@ title: "Free deploys and the look at the top cards move to freedeploy.go (direct
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0232-freedeploy-file
 depends_on: [T-0231]
 claims: [file:pkg/engine/freedeploy.go]
