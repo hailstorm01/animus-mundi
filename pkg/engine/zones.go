@@ -171,6 +171,25 @@ func (g *Game) DiscardCard(id int) *Instance {
 	return nil
 }
 
+// pileCard returns the card with instance ID id in the pile of p that from
+// names: the discard pile, or the hand for ZoneHand and the zero value. It is
+// nil for any other zone, and for a card in another player's pile.
+func pileCard(p *Player, id int, from Zone) *Instance {
+	var pile []*Instance
+	switch from {
+	case ZoneDeck, ZoneHand:
+		pile = p.Hand
+	case ZoneDiscard:
+		pile = p.Discard
+	}
+	for _, inst := range pile {
+		if inst.ID == id {
+			return inst
+		}
+	}
+	return nil
+}
+
 // leaveBattlefield removes a from the battlefield to a non-battlefield zone,
 // keeping a last-known record with eff, a's effective characteristics taken
 // immediately prior to departure. A lone departure passes g.effectiveState(a);
@@ -262,13 +281,4 @@ func remove[T comparable](s []T, v T) []T {
 		}
 	}
 	return s
-}
-
-func handCard(p *Player, id int) *Instance {
-	for _, inst := range p.Hand {
-		if inst.ID == id {
-			return inst
-		}
-	}
-	return nil
 }
