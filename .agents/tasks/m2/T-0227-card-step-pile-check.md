@@ -4,7 +4,7 @@ title: "A card step's \"still in a discard pile\" check is made once, in stepCar
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0227-card-step-pile-check
 depends_on: []
 claims: [func:stepCards (pile check), func:stepDeployFree (pile check), func:stepRelocate (pile check)]
