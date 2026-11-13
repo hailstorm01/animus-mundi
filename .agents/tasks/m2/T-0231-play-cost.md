@@ -4,7 +4,7 @@ title: "The policy asks the engine what a playable card costs: Game.PlayCost (di
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0231-play-cost
 depends_on: [T-0230]
 claims: [func:Game.PlayCost, func:sim.playCosts (body)]
