@@ -185,25 +185,6 @@ func (g *Game) check(a Action) error {
 	return nil
 }
 
-// pileCard returns the card with instance ID id in the pile of p that from
-// names: the discard pile, or the hand for ZoneHand and the zero value. It is
-// nil for any other zone, and for a card in another player's pile.
-func pileCard(p *Player, id int, from Zone) *Instance {
-	var pile []*Instance
-	switch from {
-	case ZoneDeck, ZoneHand:
-		pile = p.Hand
-	case ZoneDiscard:
-		pile = p.Discard
-	}
-	for _, inst := range pile {
-		if inst.ID == id {
-			return inst
-		}
-	}
-	return nil
-}
-
 // canPlay returns the card with instance ID id if p may play it from the pile
 // from names: it is there, the kernel supports it and p can pay its cost. Deploy
 // and Enact both start here and then check only what is their own.

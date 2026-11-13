@@ -77,7 +77,7 @@ func NewGame(cfg Config) (*Game, error) {
 		}
 		var aside []*Instance
 		for _, id := range cfg.Mulligan(p.ID, append([]*Instance(nil), p.Hand...)) {
-			if inst := handCard(p, id); inst != nil {
+			if inst := pileCard(p, id, ZoneHand); inst != nil {
 				g.takeCard(inst)
 				aside = append(aside, inst)
 				setAside[p.ID] = append(setAside[p.ID], inst.Card.Name)
