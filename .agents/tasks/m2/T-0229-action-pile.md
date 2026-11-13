@@ -4,7 +4,7 @@ title: "One read of which pile an action names: Action.pile() (directive #145 (b
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0229-action-pile
 depends_on: [T-0228]
 claims: [func:Action.pile, func:pileCard (ZoneDeck case), func:emitAction (pile read)]
