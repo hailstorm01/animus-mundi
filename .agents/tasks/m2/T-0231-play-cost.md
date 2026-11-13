@@ -4,7 +4,7 @@ title: "The policy asks the engine what a playable card costs: Game.PlayCost (di
 kind: harness
 tier: flash
 wave: F.1
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.1/T-0231-play-cost
 depends_on: [T-0230]
 claims: [func:Game.PlayCost, func:sim.playCosts (body)]
@@ -188,10 +188,21 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/play_cost_test.go` (new; the `test(T-0231)` commit only)
 
 ## Done When
-- [ ] Cases 1–10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-13, lead-architect (wave F.1 run, session 5): written for #147 against 4dc0303 (T-0230 merged; nothing new on `main` to sync). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because every edit and the whole test file are exact and were dry-run. #148 doesn't share this task: together they would touch five non-test files (D2.4); it follows as its own task. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-13, kernel-engineer (wave F.1 run, session 5): implemented directive #147. Added acceptance tests in `pkg/engine/play_cost_test.go` and verified they failed before implementation. Implemented `Game.PlayCost` in `pkg/engine/costs.go` (reusing `pileCard` from `zones.go` and `EffectiveCost`/`DiscardDeployCost` from `costs.go`) and updated `playCosts` in `pkg/sim/policy.go` to call only `g.PlayCost(inst)`. Verified acceptance cases 1–10:
+  - Case 1: `go -C W test ./pkg/engine -run TestPlayCost` failed at commit `test(T-0231)` with `s.g.PlayCost undefined` (exit 1).
+  - Case 2: `go -C W test ./pkg/engine -run TestPlayCost_HandCards` passed (exit 0).
+  - Case 3: `go -C W test ./pkg/engine -run TestPlayCost_DiscardCards` passed (exit 0).
+  - Case 4: `go -C W test ./pkg/engine -run TestPlayCost_OtherZones` passed (exit 0).
+  - Case 5: `git -C W grep -n -F "Supported" -- pkg/sim/policy.go`, `git -C W grep -n -F "EffectiveCost" -- pkg/sim/policy.go`, and `git -C W grep -n -F "DiscardDeployCost" -- pkg/sim/policy.go` returned no matches (exit 1); `git -C W grep -n -F "g.PlayCost(inst)" -- pkg/sim/policy.go` returned `pkg/sim/policy.go:151:` (exit 0).
+  - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-f.1` passed: `[PASS] starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included` (exit 0).
+  - Case 7: `git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd` printed exactly 3 lines: `25 0 pkg/engine/costs.go`, `59 0 pkg/engine/play_cost_test.go`, and `7 17 pkg/sim/policy.go`.
+  - Case 8: `go -C W run ./cmd/cardtown lint fences` passed: `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit 0).
+  - Case 9: `git -C W diff autoloop/m2-wave-f.1 --stat` lists only the 3 code/test files and this task file.
+  - Case 10: `gofmt -l W/pkg` clean; `go -C W tool task check` passed (exit 0); `go -C W tool task sim` passed (exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%). Ready for review.
