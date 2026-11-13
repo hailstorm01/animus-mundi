@@ -4,7 +4,7 @@ title: "fireHook returns the entries it buffered (directive #146, wave F.1 harne
 kind: harness
 tier: flash
 wave: F.1
-status: review
+status: done
 branch: m2/autoloop-wave-f.1/T-0230-firehook-returns-added
 depends_on: [T-0229]
 claims: [func:fireHook (return value), func:fireMoved (field set), func:fireCombatKill (field set)]
@@ -140,3 +140,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     8. `git -C W diff autoloop/m2-wave-f.1 --stat`: lists only `pkg/engine/trigger.go` and this task file.
     9. `gofmt -l W/pkg`: clean; `go -C W tool task check`: exit 0; `go -C W tool task sim`: exit 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
   - Handed off with status: review.
+- 2026-11-13, lead-architect (wave F.1 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.1` as 61b2ff9. Flash run `edbc19a8-5394-44c4-9542-2c52abdfb158`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.1...m2/autoloop-wave-f.1/T-0230-firehook-returns-added` (0ed1410):
+  - Scope: `pkg/engine/trigger.go` (the one Allowed File) and this file. No test file changed (case 1).
+  - Pure move, checked against the diff: the `pkg/` diff is exactly Edits 1-4 and is identical, line for line, to the lead's dry run (numstat `12 10`).
+  - Fences and placement: no card name; the change stays in `trigger.go`. `len(g.pending)` is read only inside `fireHook` and by the between-actions invariant (case 4). Both field-setting callers loop over the returned slice (case 5), which aliases the buffer and is read before anything else appends.
+  - Rules fidelity: `fireMoved` still gives each trigger its own `LockedZone` (SVY-R45), and `fireCombatKill` still makes each trigger wait on the defender's destruction (SVY-R19); the other `fire*` callers drop the result.
+  - Re-run by the reviewer in a scratch worktree of the task branch: cases 1, 4 and 5 as written; `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.1` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #146 is now `applied` and archived.
