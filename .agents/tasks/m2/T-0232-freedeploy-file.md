@@ -4,7 +4,7 @@ title: "Free deploys and the look at the top cards move to freedeploy.go (direct
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: review
 branch: m2/autoloop-wave-f.1/T-0232-freedeploy-file
 depends_on: [T-0231]
 claims: [file:pkg/engine/freedeploy.go]
@@ -107,10 +107,29 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-13, lead-architect (wave F.1 run, session 6): written for #148 against 0f3ba6d (T-0231 merged; nothing new on `main` to sync). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because every edit is exact and was dry-run; case 4 pins the three files to the dry run's blobs. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no double quotes, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. #149–#151 (wave F.2) stay `open: before the next Deliverables task`, after this one. Next: `kernel-engineer` on Flash.
+- 2026-11-13, kernel-engineer (T-0232): implemented pure move of free-deploy and look code to pkg/engine/freedeploy.go.
+  - Changes: created pkg/engine/freedeploy.go (210 lines) containing stepDeployFree, freeDeployZones, lookOutcome, stepLookTop, combinations, permutations, zoneAssignments, lookLabel unchanged; removed lines 117-315 from pkg/engine/effects.go and removed unused fmt and strings imports; updated headers in pkg/engine/effects.go and pkg/engine/doc.go.
+  - Reuse: pure move of existing engine declarations; no new shapes or tests.
+  - Acceptance Cases:
+    1. git -C W diff autoloop/m2-wave-f.1 --stat -- '*_test.go': clean (no output).
+    2. go -C W tool task sim-compare -- autoloop/m2-wave-f.1: [PASS] starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included.
+    3. git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd:
+       1	0	pkg/engine/doc.go
+       1	202	pkg/engine/effects.go
+       210	0	pkg/engine/freedeploy.go
+    4. git -C W rev-parse HEAD:pkg/engine/freedeploy.go HEAD:pkg/engine/effects.go HEAD:pkg/engine/doc.go:
+       591a164190b702d7bb9b4e3dc03cdcdbab6d71ac
+       fc7ace94af7c1b303cd48b77840dae69f2c87699
+       6629e663271fc0b75040196191da0f67d7f97725 (byte for byte matches the dry run).
+    5. git -C W grep -n -E '^(func|type) (.g .Game. )?(stepDeployFree|freeDeployZones|lookOutcome|stepLookTop|combinations|permutations|zoneAssignments|lookLabel)[ (]' -- pkg: exactly 8 lines in freedeploy.go (lines 21, 55, 74, 88, 149, 163, 179, 194).
+    6. git -C W grep -n -F 'freedeploy.go' -- pkg: exactly 2 lines (doc.go:94, effects.go:1).
+    7. go -C W run ./cmd/cardtown lint fences: exits 0 ([PASS] Package code is free of card names, invalid markers and disallowed imports).
+    8. git -C W diff autoloop/m2-wave-f.1 --stat: lists only doc.go, effects.go, freedeploy.go and task file.
+    9. gofmt -l W/pkg: clean; go -C W tool task check: pass (fmt-check, vet, tests, full linter pass); go -C W tool task sim: pass (200 games, P0 63.5% / P1 35.0% / draws 1.5%).

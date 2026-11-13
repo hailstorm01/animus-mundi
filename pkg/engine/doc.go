@@ -91,6 +91,7 @@
 //     converting them, and paying with them. targeting.go: target choice and
 //     untargeted picks. filter.go: checking assets and discard-pile cards against
 //     an ability's filter. effects.go: running a resolved ability's steps.
+//     freedeploy.go: free deploys and the look at the top cards.
 //   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
