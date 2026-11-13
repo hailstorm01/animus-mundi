@@ -4,7 +4,7 @@ title: "Free deploys and the look at the top cards move to freedeploy.go (direct
 kind: harness
 tier: flash
 wave: F.1
-status: review
+status: done
 branch: m2/autoloop-wave-f.1/T-0232-freedeploy-file
 depends_on: [T-0231]
 claims: [file:pkg/engine/freedeploy.go]
@@ -133,3 +133,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     7. go -C W run ./cmd/cardtown lint fences: exits 0 ([PASS] Package code is free of card names, invalid markers and disallowed imports).
     8. git -C W diff autoloop/m2-wave-f.1 --stat: lists only doc.go, effects.go, freedeploy.go and task file.
     9. gofmt -l W/pkg: clean; go -C W tool task check: pass (fmt-check, vet, tests, full linter pass); go -C W tool task sim: pass (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
+- 2026-11-13, lead-architect (wave F.1 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.1` as 8e2624d. Flash run `fc83cd90-0b02-4857-bd38-0afcacc18379`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.1...m2/autoloop-wave-f.1/T-0232-freedeploy-file` (5307474):
+  - Scope: the three Allowed Files and this file. No test file changed (case 1).
+  - Pure move, checked against the diff: the three committed blobs are the dry run's (case 4: `591a164`, `fc7ace9`, `6629e66`), so `freedeploy.go` holds `effects.go` lines 117-314 unchanged under its header, and `effects.go` lost exactly those lines, `fmt` and `strings`, with its header pointing to the new file. Numstat `1 0`, `1 202`, `210 0` (case 3).
+  - Fences and placement: no card name; the code stays in package `engine`, which owns step resolution, and `doc.go`'s Files list names the new file (case 6). Nothing duplicated: the eight declarations exist once, in `freedeploy.go` (case 5).
+  - Rules fidelity: no behavior change; `runStep` still dispatches `OpDeployFree` and `OpLookTop` to the same functions.
+  - Re-run by the reviewer in a scratch worktree of the task branch: cases 1, 3, 4 and 6 as written; `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.1` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #148 is now `applied` and archived.
