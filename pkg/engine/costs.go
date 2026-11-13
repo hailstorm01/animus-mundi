@@ -132,6 +132,31 @@ func (g *Game) DiscardDeployCost(inst *Instance) (req, tac int, ok bool) {
 	return req, tac, g.otherCostsPayable(deployPlacement(inst.Owner, inst, ZoneReserves, ZoneDiscard))
 }
 
+// PlayCost returns the Requisition and Tactics that playing inst costs now, and
+// whether a client should plan for it: a supported card in its owner's hand
+// that has a deploy zone or is a Maneuver costs EffectiveCost, without checking
+// its additional costs, and a supported card in its owner's discard pile that
+// has a deploy zone costs DiscardDeployCost. Anywhere else ok is false. Like
+// DiscardDeployCost, it checks neither the resources against the pool nor the
+// zone. LegalActions says what can be played now.
+func (g *Game) PlayCost(inst *Instance) (req, tac int, ok bool) {
+	c, p := inst.Card, g.Players[inst.Owner]
+	switch {
+	case pileCard(p, inst.ID, ZoneHand) != nil:
+		if !c.Supported() || (len(c.DeployZones) == 0 && c.Type != TypeManeuver) {
+			return 0, 0, false
+		}
+		req, tac = g.EffectiveCost(inst)
+		return req, tac, true
+	case pileCard(p, inst.ID, ZoneDiscard) != nil:
+		if !c.Supported() || len(c.DeployZones) == 0 {
+			return 0, 0, false
+		}
+		return g.DiscardDeployCost(inst)
+	}
+	return 0, 0, false
+}
+
 // otherCostsPayable reports whether every cost of pl except its resources can be
 // paid now: exhausting the source needs it Readied (CostExhaustSelf), and a kill
 // or exhaust cost needs at least one option (SVY-R29). A discard cost is always
