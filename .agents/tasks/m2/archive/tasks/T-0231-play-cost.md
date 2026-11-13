@@ -4,7 +4,7 @@ title: "The policy asks the engine what a playable card costs: Game.PlayCost (di
 kind: harness
 tier: flash
 wave: F.1
-status: review
+status: done
 branch: m2/autoloop-wave-f.1/T-0231-play-cost
 depends_on: [T-0230]
 claims: [func:Game.PlayCost, func:sim.playCosts (body)]
@@ -206,3 +206,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Case 8: `go -C W run ./cmd/cardtown lint fences` passed: `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit 0).
   - Case 9: `git -C W diff autoloop/m2-wave-f.1 --stat` lists only the 3 code/test files and this task file.
   - Case 10: `gofmt -l W/pkg` clean; `go -C W tool task check` passed (exit 0); `go -C W tool task sim` passed (exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%). Ready for review.
+- 2026-11-13, lead-architect (wave F.1 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.1` as ced6830. Flash run `b4989ceb-8bbd-4f00-9bad-c53d95da6318`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.1...m2/autoloop-wave-f.1/T-0231-play-cost` (fcea451):
+  - Scope: `pkg/engine/costs.go`, `pkg/sim/policy.go`, the new `pkg/engine/play_cost_test.go` and this file. The `test(T-0231)` commit (402faa7) holds only the test file; the implementation commit (267a12d) holds only the two non-test files. No earlier test changed.
+  - Checked against the diff: the `pkg/` diff, test file included, is identical to the lead's dry run (numstat `25 0`, `59 0`, `7 17`). The tests failed first: re-run at 402faa7 by the reviewer, `PlayCost undefined`.
+  - Fences and placement: no card name; `PlayCost` sits in `costs.go` beside `ActivatedCost` and `DiscardDeployCost`, the engine's cost readers. `policy.go` no longer names `Supported`, `EffectiveCost` or `DiscardDeployCost` (case 5), so the playability filters are written once, in the engine (#147).
+  - Rules fidelity: a hand card is priced by `EffectiveCost` (FR-CST-001) without its additional costs, as the policy did; a discard card goes through `DiscardDeployCost` (FR-TRN-003, FR-TRN-003a), whose name, behavior and tests are unchanged. Hand before discard pile, as before.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l pkg` clean; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.1` `[PASS]`; `go tool task sim` exit 0, clean, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #147 is now `applied` and archived.

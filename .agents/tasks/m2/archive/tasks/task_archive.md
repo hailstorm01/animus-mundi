@@ -234,3 +234,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0228 | The mulligan finds its cards with `pileCard`, `handCard` goes, and `pileCard` moves to `zones.go` (#145 (a), wave F.1 harness, flash, pure move) | done |
 | T-0229 | One read of which pile an action names: `Action.pile()` (#145 (b), wave F.1 harness, flash, pure move) | done |
 | T-0230 | `fireHook` returns the entries it buffered (#146, wave F.1 harness, flash, pure move) | done |
+| T-0231 | The policy asks the engine what a playable card costs: `Game.PlayCost` (#147, wave F.1 harness, flash) | done |
