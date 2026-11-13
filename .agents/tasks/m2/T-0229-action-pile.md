@@ -4,7 +4,7 @@ title: "One read of which pile an action names: Action.pile() (directive #145 (b
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: review
 branch: m2/autoloop-wave-f.1/T-0229-action-pile
 depends_on: [T-0228]
 claims: [func:Action.pile, func:pileCard (ZoneDeck case), func:emitAction (pile read)]
@@ -134,11 +134,12 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] Cases 1–9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
+- 2026-11-13, kernel-engineer (wave F.1, Flash): implemented directive #145 (b) in commit `1d2da9d`. Diff shows: (1) pkg/engine/actions.go added `func (a Action) pile() Zone` returning `a.From` when Deploy and `From != ZoneDeck`, else `ZoneHand`. `Apply` and `check` (canPlay, discard permission, placeable) now call `a.pile()`. Updated `From` doc comment. (2) pkg/engine/events.go `emitAction` uses `a.pile()` instead of inline local ternary and discard checks. (3) pkg/engine/zones.go `pileCard` dropped `ZoneDeck` case and updated comment. (4) pkg/engine/doc.go updated enums commentary noting the `Action.From` exception and `Action.pile()` reader. Reused: `pileCard` and `pileName` unchanged; `a.pile()` replaces 3 inline copies. Commands verified: (1) `git -C W diff autoloop/m2-wave-f.1 --stat -- '*_test.go'` printed nothing; (2) `go -C W tool task sim-compare -- autoloop/m2-wave-f.1` passed: starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included; (3) `git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd` printed 19 8 actions.go, 4 2 doc.go, 3 7 events.go, 3 3 zones.go; (4) `git -C W grep -n -F a.From -- pkg/engine` printed 4 lines (actions.go:57, actions.go:58, deploy_discard_test.go:47, deploy_discard_test.go:297); (5) `git -C W grep -n -F 'a.pile()' -- pkg` printed 9 lines (actions.go lines 76, 77, 79, 134, 139, 148, 152; events.go lines 158, 163); (6) `git -C W grep -n -F 'case ZoneDeck, ZoneHand' -- pkg` printed nothing; (7) `go -C W run ./cmd/cardtown lint fences` passed (exit 0); (8) `git -C W diff autoloop/m2-wave-f.1 --stat` printed the 4 pkg files and the task file; (9) `gofmt -l W/pkg` clean, `go -C W tool task check` exit 0, `go -C W tool task sim` exit 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%). Status set to review.
 - 2026-11-13, lead-architect (wave F.1 run, session 3): written out in full from #145 (b) against b73a27f (T-0228 merged; nothing new on `main` to sync). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
 - 2026-11-13, lead-architect (wave F.1 run, session 2): queued with T-0228, which takes #145 (a). Written out in full (Inputs, exact Edits, Acceptance Cases) when T-0228 is `done`.

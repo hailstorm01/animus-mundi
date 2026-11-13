@@ -112,8 +112,10 @@
 // Enums: this package's enums (ActionKind, Resource, CardType, DecisionKind,
 // StackKind, Zone, Phase) are plain iota lists. Their zero value is an
 // ordinary first member (ActGenerate, ZoneDeck, PhaseSetup), not a default or
-// an unset marker, and ActionKind.String indexes an array by value. The shape
-// enums in pkg/engine/ability follow that package's three rules instead.
+// an unset marker, and ActionKind.String indexes an array by value. One field
+// is the exception: Action.From's zero value reads as the hand, and inside
+// this package only Action.pile reads it. The shape enums in pkg/engine/ability
+// follow that package's three rules instead.
 //
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
 // it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md

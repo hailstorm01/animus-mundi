@@ -155,17 +155,13 @@ func (g *Game) emitAction(a Action) {
 	case ActAttack:
 		e.Source, e.Target = a.Asset, a.Target
 	case ActDeploy, ActEnact:
-		from := ZoneHand
-		if a.Kind == ActDeploy {
-			from = a.From
-		}
-		if inst := pileCard(g.Players[a.Player], a.Card, from); inst != nil {
+		if inst := pileCard(g.Players[a.Player], a.Card, a.pile()); inst != nil {
 			e.Card, e.Inst = inst.Card.Name, inst.ID
 		}
 		if a.Kind == ActDeploy { // Zone's zero value is ZoneDeck: an Enact leaves it empty
 			e.Zone = a.Zone.String()
-			if a.From == ZoneDiscard {
-				e.From = a.From.String()
+			if a.pile() == ZoneDiscard {
+				e.From = ZoneDiscard.String()
 			}
 		}
 	}

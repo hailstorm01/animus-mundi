@@ -44,9 +44,20 @@ type Action struct {
 	Resource Resource // Generate
 	Card     int      // Deploy, Enact: Instance.ID in hand
 	Zone     Zone     // Deploy: declared battlefield zone
-	From     Zone     // Deploy: the pile the card comes from: the hand (the zero value, or ZoneHand) or ZoneDiscard (a deploy permission, FR-TRN-003)
+	From     Zone     // Deploy: the pile the card comes from: the hand (the zero value, or ZoneHand) or ZoneDiscard (a deploy permission, FR-TRN-003); this package reads it only in pile
 	Target   int      // Attack: the defender
 	Ability  int      // Activate: index into the asset's Def.Activated
+}
+
+// pile returns the pile a takes its card from: ZoneHand for an Enact and for a
+// Deploy whose From is the zero value, else the Deploy's From, in which pileCard
+// finds no card unless it is ZoneHand or ZoneDiscard (FR-TRN-003). It is the one
+// reader of From in this package.
+func (a Action) pile() Zone {
+	if a.Kind == ActDeploy && a.From != ZoneDeck {
+		return a.From
+	}
+	return ZoneHand
 }
 
 // Apply validates and executes a, then resolves the stack until it is empty.
@@ -62,10 +73,10 @@ func (g *Game) Apply(a Action) error {
 	case ActConvert:
 		p.convert()
 	case ActDeploy:
-		inst := g.payAndTake(p, a.Card, a.From)
-		g.declare(deployPlacement(a.Player, inst, a.Zone, a.From), ability.Effect{}, StackDeploy)
+		inst := g.payAndTake(p, a.Card, a.pile())
+		g.declare(deployPlacement(a.Player, inst, a.Zone, a.pile()), ability.Effect{}, StackDeploy)
 	case ActEnact:
-		inst := g.payAndTake(p, a.Card, ZoneHand)
+		inst := g.payAndTake(p, a.Card, a.pile())
 		g.declare(maneuverPlacement(a.Player, inst), inst.Card.Ability.Effect, StackManeuver)
 	case ActActivate:
 		as := g.Asset(a.Asset)
@@ -120,12 +131,12 @@ func (g *Game) check(a Action) error {
 			return illegal("conversion needs %d Requisition", ConvertReq)
 		}
 	case ActDeploy:
-		inst, err := g.canPlay(p, a.Card, a.From)
+		inst, err := g.canPlay(p, a.Card, a.pile())
 		if err != nil {
 			return err
 		}
 		c := inst.Card
-		if a.From == ZoneDiscard && deployPermission(c) == nil {
+		if a.pile() == ZoneDiscard && deployPermission(c) == nil {
 			return illegal("%s has no permission to be deployed from the discard pile (FR-TRN-003)", c.Name)
 		}
 		if c.Type != TypeUnit && c.Type != TypeStructure {
@@ -134,11 +145,11 @@ func (g *Game) check(a Action) error {
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {
 			return illegal("%s cannot be deployed to %s", c.Name, a.Zone)
 		}
-		if !g.placeable(deployPlacement(a.Player, inst, a.Zone, a.From), ability.Effect{}) {
+		if !g.placeable(deployPlacement(a.Player, inst, a.Zone, a.pile()), ability.Effect{}) {
 			return illegal("%s's additional costs cannot be paid (FR-TRN-003a)", c.Name)
 		}
 	case ActEnact:
-		inst, err := g.canPlay(p, a.Card, ZoneHand)
+		inst, err := g.canPlay(p, a.Card, a.pile())
 		if err != nil {
 			return err
 		}

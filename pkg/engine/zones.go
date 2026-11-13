@@ -172,12 +172,12 @@ func (g *Game) DiscardCard(id int) *Instance {
 }
 
 // pileCard returns the card with instance ID id in the pile of p that from
-// names: the discard pile, or the hand for ZoneHand and the zero value. It is
-// nil for any other zone, and for a card in another player's pile.
+// names: the hand or the discard pile (Action.pile says which one an action
+// names). It is nil for any other zone, and for a card in another player's pile.
 func pileCard(p *Player, id int, from Zone) *Instance {
 	var pile []*Instance
 	switch from {
-	case ZoneDeck, ZoneHand:
+	case ZoneHand:
 		pile = p.Hand
 	case ZoneDiscard:
 		pile = p.Discard
