@@ -4,7 +4,7 @@ title: "fireHook returns the entries it buffered (directive #146, wave F.1 harne
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0230-firehook-returns-added
 depends_on: [T-0229]
 claims: [func:fireHook (return value), func:fireMoved (field set), func:fireCombatKill (field set)]
