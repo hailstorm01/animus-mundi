@@ -114,8 +114,8 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 	return 0
 }
 
-// stepDeployFree puts each card of stepCards, still in its owner's discard
-// pile, onto the battlefield for free under the ability's controller and
+// stepDeployFree puts each card of stepCards, each still in its owner's
+// discard pile, onto the battlefield for free under the ability's controller and
 // returns how many it deployed (FR-TRN-003a, FR-CST-001). Only a supported Unit
 // or Structure card goes. The zone is st.To if it names one (FR-TRN-003a 2),
 // else the card's printed zone limited to Reserves and the Main Theater; with
@@ -127,7 +127,7 @@ func (g *Game) stepDeployFree(r *resolution, st ability.Step) int {
 	for _, inst := range g.stepCards(r, st) {
 		c := inst.Card
 		zones := freeDeployZones(c, st.To)
-		if g.DiscardCard(inst.ID) != inst || len(zones) == 0 {
+		if len(zones) == 0 {
 			continue
 		}
 		zone := zones[0]
@@ -481,9 +481,9 @@ func relocateTo(st ability.Step) (to Zone, bottom bool) {
 // stepRelocate moves each asset of stepAssets, then each card of stepCards, to
 // its owner's hand or deck, and returns how many moved. An asset leaves the
 // battlefield with its last-known state (FR-ZON-004); the event carries no
-// Card, as a face-down asset's card is private in a hand or deck. A card must
-// still be in a discard pile, which is public: its event names it there, before
-// the move can hide it.
+// Card, as a face-down asset's card is private in a hand or deck. A card of
+// stepCards is still in a discard pile, which is public: its event names it
+// there, before the move can hide it.
 func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 	to, bottom := relocateTo(st)
 	text := "%s returns to its owner's hand"
@@ -498,9 +498,6 @@ func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 		n++
 	}
 	for _, inst := range g.stepCards(r, st) {
-		if g.DiscardCard(inst.ID) != inst {
-			continue
-		}
 		g.logEvent(Event{Kind: EventCardMove, Player: -1, Card: inst.Card.Name, Inst: inst.ID, Zone: to.String()}, text, inst.Card.Name)
 		g.takeCard(inst)
 		g.putCard(inst, to, bottom)
@@ -509,28 +506,35 @@ func (g *Game) stepRelocate(r *resolution, st ability.Step) int {
 	return n
 }
 
-// stepCards returns the cards a card step acts on. SubjectSelf is a death
-// trigger's own card: a Tracked item whose exact instance is still in its
-// owner's discard pile (FR-ZON-004). SubjectPick with a pile filter is the
-// cards picked from discard piles, in pick order. SubjectTarget is the cards
-// chosen for its pile slot that are still legal. Anything else has none.
+// stepCards returns the cards a card step acts on, each once and only while
+// its exact instance is still in its owner's discard pile (FR-ZON-004): the one
+// place a card step checks this, as slotAssets is for assets. SubjectSelf is a
+// Tracked item's own card. SubjectPick with a pile filter is the cards picked
+// from discard piles, in pick order. SubjectTarget is the cards chosen for its
+// pile slot that are still legal. Anything else has none.
 func (g *Game) stepCards(r *resolution, st ability.Step) []*Instance {
+	var cards []*Instance
 	switch st.Subject {
 	case ability.SubjectSelf:
-		it := r.it
-		if it.Tracked && it.Inst != nil && slices.Contains(g.Players[it.Inst.Owner].Discard, it.Inst) {
-			return []*Instance{it.Inst}
+		if it := r.it; it.Tracked && it.Inst != nil {
+			cards = []*Instance{it.Inst}
 		}
 	case ability.SubjectTarget:
 		if st.Target >= 0 && st.Target < len(r.cards) {
-			return r.cards[st.Target]
+			cards = r.cards[st.Target]
 		}
 	case ability.SubjectPick:
 		if st.Filter.InPile() {
-			return g.pickCards(r, st)
+			cards = g.pickCards(r, st)
 		}
 	}
-	return nil
+	var out []*Instance
+	for _, inst := range cards {
+		if g.DiscardCard(inst.ID) == inst && !slices.Contains(out, inst) {
+			out = append(out, inst)
+		}
+	}
+	return out
 }
 
 // slotAssets returns slot i's chosen assets that are still on the battlefield,

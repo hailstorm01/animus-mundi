@@ -4,7 +4,7 @@ title: "A card step's \"still in a discard pile\" check is made once, in stepCar
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: review
 branch: m2/autoloop-wave-f.1/T-0227-card-step-pile-check
 depends_on: []
 claims: [func:stepCards (pile check), func:stepDeployFree (pile check), func:stepRelocate (pile check)]
@@ -143,10 +143,26 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/effects.go`
 
 ## Done When
-- [ ] Cases 1–7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1–7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-13, lead-architect (wave F.1 run, session 1): wrote this task from board directive #144, the first of wave F.1 (design note Deliverable 6j). Harness, so it skips `tests` and goes straight to `ready`; tier `flash`, because every edit is exact and was dry-run. One addition to the directive's fix, to keep it a pure move for every input: `stepCards` keeps each card once (see Inputs). Every command here is on the headless allow-list, one per line, with no pipes, `$`, double quotes or unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-13, kernel-engineer (wave F.1 run, session 1): implemented task T-0227 (directive #144, pure move).
+  - Status transition: ready -> in-progress -> review.
+  - Changes in pkg/engine/effects.go (24 added, 20 deleted):
+    - Updated `stepDeployFree` doc comment and removed redundant `g.DiscardCard(inst.ID) != inst ||` check from line 130.
+    - Updated `stepRelocate` doc comment and removed redundant `g.DiscardCard(inst.ID) != inst` check loop filter.
+    - Updated `stepCards` doc comment and consolidated discard pile membership verification into `g.DiscardCard(inst.ID) == inst && !slices.Contains(out, inst)` loop filter over collected cards, ensuring exact instance discard pile presence once per card.
+  - Reuse: Reused existing lookup method `DiscardCard` (`pkg/engine/zones.go:163`), removing duplicate checks across card step callers.
+  - Acceptance Cases & verification results:
+    - Case 1: `git -C W diff autoloop/m2-wave-f.1 --stat -- '*_test.go'` printed nothing (no test changes).
+    - Case 2: `go -C W tool task sim-compare -- autoloop/m2-wave-f.1` exited 0 and printed `[PASS] starter and stress sims match autoloop/m2-wave-f.1 byte for byte, exit codes included`.
+    - Case 3: `git -C W diff autoloop/m2-wave-f.1 --numstat -- pkg cmd` printed exactly one line: `24\t20\tpkg/engine/effects.go`.
+    - Case 4: `git -C W grep -n -e 'DiscardCard(' -e '\.Discard\b' -- pkg/engine/effects.go` printed exactly one line: `pkg/engine/effects.go:533:\t\tif g.DiscardCard(inst.ID) == inst && !slices.Contains(out, inst) {`.
+    - Case 5: `go -C W run ./cmd/cardtown lint fences` exited 0 with `[PASS] Package code is free of card names, invalid markers and disallowed imports.`.
+    - Case 6: `git -C W diff autoloop/m2-wave-f.1 --stat` listed only `pkg/engine/effects.go` and `.agents/tasks/m2/T-0227-card-step-pile-check.md`.
+    - Case 7: `gofmt -l W/pkg` printed nothing; `go -C W tool task check` passed with exit code 0; `go -C W tool task sim` passed with exit code 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%, all invariants holding).
+  - Ready for lead-architect review.
