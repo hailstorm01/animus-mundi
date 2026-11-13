@@ -38,4 +38,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0229 | One read of which pile an action names: `Action.pile()` (#145 (b), wave F.1 harness, flash, pure move) | queued |
+| T-0229 | One read of which pile an action names: `Action.pile()` (#145 (b), wave F.1 harness, flash, pure move) | ready |
