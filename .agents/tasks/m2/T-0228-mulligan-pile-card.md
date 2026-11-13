@@ -4,7 +4,7 @@ title: "The mulligan finds its cards with pileCard, handCard goes, and pileCard 
 kind: harness
 tier: flash
 wave: F.1
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.1/T-0228-mulligan-pile-card
 depends_on: []
 claims: [func:handCard (delete), func:pileCard (move to zones.go)]
