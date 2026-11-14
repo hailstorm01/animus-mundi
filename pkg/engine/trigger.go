@@ -193,8 +193,10 @@ func (g *Game) fireAttacks(a *Asset) {
 // is asked about in its turn to be placed, before its modes and targets; declined, it is
 // not placed (SVY-R9). A trigger still waiting on an asset's destruction is dropped,
 // because the sweep did not destroy it (SVY-R19). Each player's triggers are listed, and by default placed,
-// in source order (sourcePos). A match that ended discards the buffer.
+// in source order (sourcePos). A match that ended discards the buffer. The
+// trigger order names no source card, even in a flush inside a scope askFor opened.
 func (g *Game) flushTriggers() {
+	defer g.askFor(nil)()
 	buf := g.pending
 	g.pending = nil
 	if g.Outcome.Over {
@@ -221,16 +223,23 @@ func (g *Game) flushTriggers() {
 			order = g.choose(d)
 		}
 		for _, i := range order {
-			p := mine[i]
-			if p.trig.Optional && !g.accepts(p) {
-				continue
-			}
-			item := p.stackItem(StackAbility)
-			item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
-			item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.Keyword
-			g.push(item)
+			g.placeTrigger(mine[i])
 		}
 	}
+}
+
+// placeTrigger asks p's "you may" if it is optional and, unless it is declined,
+// places p on the stack with its modes and targets chosen (SVY-R9). Every
+// decision it asks names p's source card (Decision.Source, shownCard).
+func (g *Game) placeTrigger(p pendingTrigger) {
+	defer g.askFor(g.shownCard(p.source, p.inst))()
+	if p.trig.Optional && !g.accepts(p) {
+		return
+	}
+	item := p.stackItem(StackAbility)
+	item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
+	item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.Keyword
+	g.push(item)
 }
 
 // accepts asks p's controller the "you may" question of an optional trigger

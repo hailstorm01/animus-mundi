@@ -247,7 +247,7 @@ func structured(e engine.Event) [9]any {
 }
 
 func decisionEqual(a, b engine.DecisionRecord) bool {
-	return a.Kind == b.Kind && a.Player == b.Player && a.Prompt == b.Prompt && a.How == b.How && a.Hidden == b.Hidden &&
+	return a.Kind == b.Kind && a.Player == b.Player && a.Prompt == b.Prompt && a.How == b.How && a.Hidden == b.Hidden && a.Source == b.Source &&
 		slices.Equal(a.Options, b.Options) && slices.Equal(a.Refs, b.Refs) && slices.Equal(a.Picks, b.Picks)
 }
 
