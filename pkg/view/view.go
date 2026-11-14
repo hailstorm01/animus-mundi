@@ -9,7 +9,9 @@
 //   - the opponent's hand and both decks: counts only;
 //   - public: both discard piles (the seat's own with instance IDs), HQs,
 //     Reserves and resource pools, the Main Theater, the stack, the turn, the
-//     phase, the active player and the outcome.
+//     phase, the active player and the outcome. Each battlefield asset shows
+//     its effective power, health and keywords and its printed resource
+//     yields (a face-down asset, the Scratch face's).
 //
 // A face-down asset is a Scratch Company with the Scratch face's
 // characteristics to both seats, its owner included (FR-ZON-005,
@@ -62,7 +64,9 @@ type CardView struct {
 }
 
 // AssetView is a battlefield asset. Power, MaxHealth and Keywords are
-// effective (the layer functions); a face-down asset shows the Scratch face.
+// effective (the layer functions); ReqYield and TacYield are printed, as
+// Generate Resources reads them (FR-RES-001); a face-down asset shows the
+// Scratch face.
 type AssetView struct {
 	ID                int // asset ID, as Actions and Decisions use
 	Card              string
@@ -76,6 +80,8 @@ type AssetView struct {
 	MaxHealth         int
 	Keywords          []string // none for a face-down asset
 	Text              string   // printed rules text
+	ReqYield          int      // printed Requisition yield
+	TacYield          int      // printed Tactics yield
 }
 
 // StackView is one Resolution Stack item.
@@ -157,7 +163,7 @@ func assetView(g *engine.Game, a *engine.Asset) AssetView {
 		ID: a.ID, Card: a.Printed().Name, Controller: int(a.Controller), Owner: int(a.Inst.Owner),
 		Zone: a.Zone.String(), Exhausted: a.Exhausted, FaceDown: a.FaceDown, Damage: a.Damage, Armor: a.Armor,
 		Power: g.Power(a), MaxHealth: g.MaxHealth(a), Keywords: g.Keywords(a).Lines(),
-		Text: a.Printed().RulesText,
+		Text: a.Printed().RulesText, ReqYield: a.Printed().ReqYield, TacYield: a.Printed().TacYield,
 	}
 }
 

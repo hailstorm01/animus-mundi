@@ -126,7 +126,7 @@ func formatAsset(a view.AssetView) string {
 	if len(extra) > 0 {
 		statStr = ", " + strings.Join(extra, ", ")
 	}
-	return fmt.Sprintf("%s#%d (%d/%d, %s%s)", a.Card, a.ID, a.Power, a.MaxHealth, status, statStr)
+	return fmt.Sprintf("%s#%d (%d/%d, %s, Yield R%d T%d%s)", a.Card, a.ID, a.Power, a.MaxHealth, status, a.ReqYield, a.TacYield, statStr)
 }
 
 func actionLabel(v view.View, a engine.Action) string {
