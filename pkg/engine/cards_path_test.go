@@ -1092,8 +1092,8 @@ func TestCard_NecropolisHunt_DecliningDealsNoDamage(t *testing.T) {
 		t.Fatalf("one \"you may\" question and no target question after \"no\": %+v", s.asked(0))
 	}
 	for _, e := range damageEvents(s.g.Log) {
-		if e.Source == hunt.ID {
-			t.Errorf("declining the Hunt's \"you may\" deals no damage, but the Hunt dealt %d to asset %d", e.Amount, e.Target)
+		if e.Source == hunt.ID && !e.Combat {
+			t.Errorf("declining the Hunt's \"you may\" deals no damage, but the Hunt's trigger dealt %d to asset %d", e.Amount, e.Target)
 		}
 	}
 	for _, a := range []*Asset{b.u0, b.s0, b.c0, b.u1, b.s1, b.c1} {
