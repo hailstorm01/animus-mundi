@@ -4,7 +4,7 @@ title: A "you may" that could do nothing isn't asked; Devilhorn Captain and Necr
 kind: shape
 tier: sonnet
 wave: F.2
-status: review
+status: done
 branch: m2/autoloop-wave-f.2/T-0238-optional-could-do-nothing
 depends_on: []
 claims: [shape:couldDoNothing (an optional trigger with nothing to act on is not asked or placed, SVY-R48), card-text:Devilhorn Captain, card-text:Necropolis Hunt]
@@ -80,10 +80,10 @@ New tests:
 - `data/cards/units-and-structures-path.csv`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "DevilhornCaptain|NecropolisHunt|ChainbreakerPhalanx|InfestedApostle|EerieRemnant|TestFR_MOD_001|TestDefs_MatchRulesText"` and `go test ./cmd/cardtown -run TestPlay_ScriptedSessionPrintsSourceLines`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks. Its win rates shift from the run branch's (P0 63.5% / P1 35.0% / draws 1.5%; the lead's dry run gave P0 58.5% / P1 39.5% / draws 2.0%), which the user accepted (#152), so `go tool task sim-compare` is expected to differ and is not a gate here.
-- [ ] Both cards still load with no unsupported lines (`cards.NotYetExecutable` unchanged; the sim header reads 50/50 for both decks).
+- [x] The listed tests pass: `go test ./pkg/engine -run "DevilhornCaptain|NecropolisHunt|ChainbreakerPhalanx|InfestedApostle|EerieRemnant|TestFR_MOD_001|TestDefs_MatchRulesText"` and `go test ./cmd/cardtown -run TestPlay_ScriptedSessionPrintsSourceLines`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks. Its win rates shift from the run branch's (P0 63.5% / P1 35.0% / draws 1.5%; the lead's dry run gave P0 58.5% / P1 39.5% / draws 2.0%), which the user accepted (#152), so `go tool task sim-compare` is expected to differ and is not a gate here.
+- [x] Both cards still load with no unsupported lines (`cards.NotYetExecutable` unchanged; the sim header reads 50/50 for both decks).
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run session 6): written for directive #152 from the run branch at `8f215c9`. The lead dry-ran the Shape's exact edits in a scratch worktree: the build passes, and the only failures are the 20 merged Captain and Hunt tests listed under Tests (9 Captain, 11 Hunt) and `TestPlay_ScriptedSessionPrintsSourceLines` (seed 3); `pkg/sim`, `pkg/eventlog` and `pkg/view` pass; `go tool task sim` is clean at P0 58.5% / P1 39.5% / draws 2.0%. Four non-test files, within the D2.4 limit. Next: `rules-test-author`.
@@ -93,3 +93,8 @@ New tests:
 - 2026-11-14, rules-test-author (round 2): note 1 fixed in a new `test(T-0238)` commit: `TestCard_NecropolisHunt_DecliningDealsNoDamage` skips `e.Combat` damage events, so only the trigger's damage counts. Nothing else changed. `gofmt -l` and `go vet` clean. Next: lead review of tests.
 - 2026-11-14, lead-architect (wave F.2 run session 7, tests review round 2): tests approved, `ready`. Note 1 is fixed in af34281 (the decline check skips combat damage). With the lead's dry-run Shape applied over the branch, every listed test passes and `go tool task check` passes; without it the new and edited tests fail as the author listed. Next: `kernel-engineer` (sonnet).
 - 2026-11-14, kernel-engineer: built the Shape. `couldDoNothing` added to `placement.go` after `placeable` (reuses `targetDecision` Options; no second legality copy); `placeTrigger` condition changed as specified, with the `placeTrigger`, `flushTriggers` and `placeable` comments naming `SVY-R48`. Both cards: CSV `rulesText` cells (only those two cells, LF endings kept), `Text` in `cards/path.go` and `Optional: true` on each trigger. Nothing else touched; no tests edited. Ran: the listed `go test ./pkg/engine -run ...` ok; `go test ./cmd/cardtown -run TestPlay_ScriptedSessionPrintsSourceLines` ok; `go tool task check` passes; `go tool task sim` clean, 50/50 both decks, P0 58.5% / P1 39.5% / draws 2.0% (as the lead's dry run).
+- 2026-11-14, lead-architect (wave F.2 run session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.2` as d510192.
+  - Scope: the implementation commit dec1d91 changes only the four Allowed Files and this file; no test changed after the `test(T-0238)` commits (7287366, af34281; `git diff af34281 <tip> -- '*_test.go'` is empty). The two card blobs (`cards/path.go` 9b388c3, the CSV 46dfaad) are the lead's dry run's; `placement.go` and `trigger.go` are the Shape as written, with the three comments it names.
+  - Fences and reuse: no card name in package code; `couldDoNothing` sits in `placement.go` beside `placeable` and reads `targetDecision`'s `Options`, the ones `chooseTargets` offers, so legality has one copy; `accepts`, `chooseTargets` and the choosers are unchanged.
+  - Rules fidelity: general over every optional trigger (`SVY-R48`): only an effect with no modes, at least one slot, every step on `SubjectTarget` and every slot empty is skipped; a mandatory trigger is still placed (`SVY-R30`), and an untargeted step or pick (`SVY-R14`) keeps the question.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `go tool task check` exit 0; `go tool task sim` clean, 200 games, P0 58.5% / P1 39.5% / draws 2.0% (the shift #152 accepted; `sim-compare` not a gate), 50/50 executable for both decks. The merge's tree matches the task tip's, so the gates hold on the run branch. #152 is `applied` (T-0238) and moves to the directive archive.
