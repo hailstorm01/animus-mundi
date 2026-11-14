@@ -4,7 +4,7 @@ title: "Battlefield assets show their resource yields: AssetView.ReqYield and Ta
 kind: harness
 tier: flash
 wave: F.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.2/T-0236-asset-yields
 depends_on: [T-0235]
 claims: [field:view.AssetView.ReqYield, field:view.AssetView.TacYield]
