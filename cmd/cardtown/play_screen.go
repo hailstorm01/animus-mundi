@@ -80,11 +80,7 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	if len(v.Stack) > 0 {
 		fmt.Fprintln(out, "Resolution Stack:")
 		for _, item := range v.Stack {
-			if item.Kind == "Maneuver" {
-				fmt.Fprintf(out, "  Maneuver: %s (Player %d)\n", item.Card, item.Controller)
-			} else {
-				fmt.Fprintf(out, "  %s (Player %d, Source %d)\n", item.Kind, item.Controller, item.Source)
-			}
+			fmt.Fprintf(out, "  %s\n", stackLine(item))
 		}
 	} else {
 		fmt.Fprintln(out, "Resolution Stack: (empty)")
@@ -92,6 +88,26 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 
 	// Discards
 	fmt.Fprintf(out, "Discards: You %d | Opponent %d\n\n", len(v.You.Discard), len(v.Opponent.Discard))
+}
+
+// stackLine is the stack listing's line for item. An ability names its card as
+// the engine's place event does ("ability of", or "<keyword> trigger of"), a
+// Deploy its card and zone, and a Maneuver its card (#149); a March, an Attack,
+// a Scratch, and an ability with no card name their source asset.
+func stackLine(item view.StackView) string {
+	switch {
+	case item.Kind == "Maneuver":
+		return fmt.Sprintf("Maneuver: %s (Player %d)", item.Card, item.Controller)
+	case item.Kind == "Deploy" && item.Card != "":
+		return fmt.Sprintf("Deploy of %s to %s (Player %d)", item.Card, item.Zone, item.Controller)
+	case item.Kind == "Ability" && item.Card != "":
+		what := "Ability of " + item.Card
+		if item.Keyword != "" {
+			what = item.Keyword + " trigger of " + item.Card
+		}
+		return fmt.Sprintf("%s (Player %d, Source %d)", what, item.Controller, item.Source)
+	}
+	return fmt.Sprintf("%s (Player %d, Source %d)", item.Kind, item.Controller, item.Source)
 }
 
 func formatAsset(a view.AssetView) string {

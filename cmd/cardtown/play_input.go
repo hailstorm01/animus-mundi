@@ -41,6 +41,9 @@ func promptAction(scanner *bufio.Scanner, out io.Writer, legal []engine.Action) 
 func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {
 	return func(g *engine.Game, d engine.Decision) engine.Answer {
 		fmt.Fprintln(out, d.Prompt)
+		if d.Source != nil {
+			fmt.Fprintln(out, sourceLine(d.Source))
+		}
 
 		if d.Kind == engine.DecideOptional {
 			for {
@@ -111,4 +114,15 @@ func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {
 			return engine.Answer{Picks: picks}
 		}
 	}
+}
+
+// sourceLine is what terminalChooser prints under the prompt of a decision with
+// a source card (Decision.Source, #149): the card's name and its printed rules
+// text, each further line of the text indented under the first.
+func sourceLine(c *engine.Card) string {
+	text := strings.ReplaceAll(strings.TrimSpace(c.RulesText), "\n", "\n    ")
+	if text == "" {
+		return "  [" + c.Name + "]"
+	}
+	return "  [" + c.Name + "] " + text
 }
