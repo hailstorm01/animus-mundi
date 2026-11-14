@@ -4,7 +4,7 @@ title: A "you may" that could do nothing isn't asked; Devilhorn Captain and Necr
 kind: shape
 tier: sonnet
 wave: F.2
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-f.2/T-0238-optional-could-do-nothing
 depends_on: []
 claims: [shape:couldDoNothing (an optional trigger with nothing to act on is not asked or placed, SVY-R48), card-text:Devilhorn Captain, card-text:Necropolis Hunt]
@@ -91,3 +91,4 @@ New tests:
 - 2026-11-14, lead-architect (wave F.2 run session 7, tests review round 1): back to `tests`. The lead applied its dry-run Shape over `test(T-0238)` (7287366) in a scratch worktree: every listed test passes but one, `go tool task check` fails only there, and `cardtown lint --all` passes. Note:
   1. `TestCard_NecropolisHunt_DecliningDealsNoDamage` fails after the Shape (`cards_path_test.go:1096`: "the Hunt dealt 5 to asset 59"): its loop over `damageEvents` counts the Hunt's own combat damage to the Defender, whose `Source` is also the Hunt. Only the trigger's damage is non-combat (`Event.Combat`, as `TestCard_NecropolisHunt_DamageEventNamesTheDeadHuntAsSourceAndIsNonCombat` checks), so skip events with `e.Combat` there. Nothing else changes; the rest of the commit is approved as is. Make the fix in a new `test(T-0238)` commit.
 - 2026-11-14, rules-test-author (round 2): note 1 fixed in a new `test(T-0238)` commit: `TestCard_NecropolisHunt_DecliningDealsNoDamage` skips `e.Combat` damage events, so only the trigger's damage counts. Nothing else changed. `gofmt -l` and `go vet` clean. Next: lead review of tests.
+- 2026-11-14, lead-architect (wave F.2 run session 7, tests review round 2): tests approved, `ready`. Note 1 is fixed in af34281 (the decline check skips combat damage). With the lead's dry-run Shape applied over the branch, every listed test passes and `go tool task check` passes; without it the new and edited tests fail as the author listed. Next: `kernel-engineer` (sonnet).
