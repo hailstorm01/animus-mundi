@@ -54,32 +54,53 @@ func (it *StackItem) PileSlot(i int) bool {
 func (g *Game) push(item *StackItem) {
 	g.Stack = append(g.Stack, item)
 	e := Event{Kind: EventPlace, Player: int(item.Controller), Source: item.Source, Amount: len(g.Stack)}
-	var what string
 	switch item.Kind {
-	case StackDeploy:
+	case StackDeploy, StackManeuver:
 		e.Card, e.Inst = item.Inst.Card.Name, item.Inst.ID
-		what = "Deploy of " + e.Card
-	case StackMarch:
-		what = "March"
 	case StackAttack:
 		e.Target = item.Target
-		what = "Attack"
-	case StackScratch:
-		what = "Scratch"
-	case StackManeuver:
-		e.Card, e.Inst = item.Inst.Card.Name, item.Inst.ID
-		what = "Maneuver " + e.Card
 	case StackAbility:
-		e.Card, e.Inst = cardName(item.Inst), 0
-		if item.Inst != nil {
-			e.Inst = item.Inst.ID
-		}
-		what = "ability of " + e.Card
-		if item.Keyword != ability.KeywordNone {
-			what = item.Keyword.String() + " trigger of " + e.Card
+		// The card both seats see (SourceCard), and its instance ID only when
+		// that is the instance's own card: a face-down source's ID could
+		// identify the real card (FR-ZON-005).
+		if c := g.SourceCard(item); c != nil {
+			e.Card = c.Name
+			if item.Inst != nil && c == item.Inst.Card {
+				e.Inst = item.Inst.ID
+			}
 		}
 	}
-	g.logEvent(e, "player %d places %s on the stack", item.Controller, what)
+	g.logEvent(e, "player %d places %s on the stack", item.Controller, g.StackLabel(item))
+}
+
+// StackLabel names stack item it, in the one wording of what it is: "Deploy of
+// X", "March", "Attack", "Scratch", "Maneuver X", "ability of X" or "<keyword>
+// trigger of X". An ability names its card as both seats see it (SourceCard,
+// FR-ZON-005), or no card if it has none. The place event and the play
+// screen's stack listing (view.StackView.Label) both read it.
+func (g *Game) StackLabel(it *StackItem) string {
+	switch it.Kind {
+	case StackDeploy:
+		return "Deploy of " + cardName(it.Inst)
+	case StackMarch:
+		return "March"
+	case StackAttack:
+		return "Attack"
+	case StackScratch:
+		return "Scratch"
+	case StackManeuver:
+		return "Maneuver " + cardName(it.Inst)
+	case StackAbility:
+		name := ""
+		if c := g.SourceCard(it); c != nil {
+			name = c.Name
+		}
+		if it.Keyword != ability.KeywordNone {
+			return it.Keyword.String() + " trigger of " + name
+		}
+		return "ability of " + name
+	}
+	return ""
 }
 
 // resolveStack places any triggers the action fired, then resolves top-down

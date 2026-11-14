@@ -4,7 +4,7 @@ title: "One function names a stack item: `Game.StackLabel` (directive #153, wave
 kind: harness
 tier: flash
 wave: F.3
-status: ready
+status: review
 branch: m2/autoloop-wave-f.3/T-0239-stack-label
 depends_on: []
 claims: [func:StackLabel, field:StackView.Label]
@@ -341,10 +341,30 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `cmd/cardtown/play_source_test.go` (Test edit 1 only; the `test(T-0239)` commit only)
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.3` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.3` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.3 run, session 1): written in full against d4b38f2 for #153. Run file created; nothing on `main` to sync (`main` is the run branch's base, d4b38f2); the scratch folder was empty. Not `WAVE-COMPLETE` before the task (#153 and #154 `open: before the next Deliverables task`). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because the edits and the test files are exact and were dry-run. Test edit 1 is the one change to an existing test (see Inputs: the directive's two acceptance lines can't both hold, and the fixture edit keeps the screen's expected text as it is). Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.3 run, session 1):
+  - Set `status: in-progress` (commit `a234450`).
+  - Added test files `pkg/engine/stack_label_test.go` and `pkg/view/stack_label_test.go`, and applied Test edit 1 to `cmd/cardtown/play_source_test.go`. Verified failure before edits with `go -C W vet ./pkg/engine ./pkg/view` (`s.g.StackLabel undefined`, `it.Label undefined`). Committed as `test(T-0239): one function names a stack item` (`06f91e1`).
+  - Implemented Edits 1-3:
+    - `pkg/engine/stack.go`: implemented `(g *Game) StackLabel(it *StackItem) string` returning the canonical wording for each stack item kind ("Deploy of X", "March", "Attack", "Scratch", "Maneuver X", "ability of X", "<keyword> trigger of X"), reusing `SourceCard` and `cardName`. Updated `push` to route event detail logging through `g.StackLabel(item)` and only set `Event.Inst` when `c == item.Inst.Card` (dropping ID when source is face-down).
+    - `pkg/view/view.go`: added `Label` field to `StackView` and set `Label: g.StackLabel(it)` in `stackView`.
+    - `cmd/cardtown/play_screen.go`: `stackLine` formats ability items as `strings.ToUpper(item.Label[:1]) + item.Label[1:]` with controller and source ID.
+    Committed as `refactor(engine): one function names a stack item, StackLabel (T-0239)` (`d07a3d9`).
+  - Verified Acceptance Cases 1-10:
+    - Case 1: `go -C W vet ./pkg/engine ./pkg/view` failed before edits (`StackLabel` / `Label` undefined).
+    - Case 2: `go -C W test ./pkg/engine -run TestStackLabel_` passed (1.071s).
+    - Case 3: `go -C W test ./pkg/view -run TestView_StackItemLabel` passed (0.642s).
+    - Case 4: `go -C W test ./cmd/cardtown -run TestPlay_` passed (0.645s).
+    - Case 5: `git -C W grep -n -e "ability of " -e "trigger of " -- pkg cmd ":!*_test.go"` returned exactly 9 lines in comments (`ability.go:85`, `actions.go:31`, `doc.go:49`, `state.go:156`, `view.go:96`) and `StackLabel`'s comment/code (`stack.go:77,78,99,101`). Zero occurrences in `play_screen.go`.
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-f.3` passed: `[PASS] starter and stress sims match autoloop/m2-wave-f.3 byte for byte, exit codes included`.
+    - Case 7: `git -C W diff autoloop/m2-wave-f.3 --numstat -- pkg cmd` printed exactly the 6 files with expected additions/deletions.
+    - Case 8: `go -C W run ./cmd/cardtown lint fences` passed.
+    - Case 9: `git -C W diff autoloop/m2-wave-f.3 --stat` listed only the 6 files plus this task file.
+    - Case 10: `gofmt -l W/cmd W/pkg` clean; `go -C W tool task check` passed; `go -C W tool task sim` passed (200 games, P0 58.5% / P1 39.5% / draws 2.0%).
+  - Moved task to `status: review`.
