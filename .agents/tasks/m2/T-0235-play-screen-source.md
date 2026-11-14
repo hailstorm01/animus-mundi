@@ -4,7 +4,7 @@ title: "The play screen shows a decision's source card and its rules text, and t
 kind: harness
 tier: flash
 wave: F.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.2/T-0235-play-screen-source
 depends_on: [T-0234]
 claims: [func:sourceLine, func:stackLine]
@@ -262,11 +262,27 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `cmd/cardtown/play_source_test.go` (new; the `test(T-0235)` commit only)
 
 ## Done When
-- [ ] Cases 1-11 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-11 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run, session 1): queued stub, split off T-0233 under D2.4. Follows T-0234.
 - 2026-11-14, lead-architect (wave F.2 run, session 3): written out in full against 920cdcb for #149 (c). Nothing on `main` to sync (`git log autoloop/m2-wave-f.2..main` is empty). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because both edits and the test file are exact and were dry-run. Changes from the stub: the tests go in a new file, `cmd/cardtown/play_source_test.go`, rather than `play_test.go`, so the test commit adds one file and touches no earlier test; the claims are the two new helpers. The chooser tests build `engine.Card` literals with the printed texts of the day rather than loading `data/cards`, so #152's change to *Devilhorn Captain*'s text doesn't touch them. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.2 run, session 3): implemented T-0235 for directive #149 (c).
+  - Test commit: `b06e723 test(T-0235): the play screen shows a decision's source card; the stack names each card` adding `cmd/cardtown/play_source_test.go`. Confirmed failing beforehand on subtests (a), (b), (c) and plain unit, with (d) passing.
+  - Implementation commit: `f9cf7ef feat(cardtown): play prompts show their source card and text; the stack names each card (T-0235)` touching `cmd/cardtown/play_input.go` (14 lines added) and `cmd/cardtown/play_screen.go` (21 lines added, 5 lines removed).
+  - Reused `engine.Decision.Source` from T-0233/T-0234, and `view.StackView` fields `Card`, `Zone`, `Keyword`.
+  - Acceptance results:
+    - Case 1: `go -C W test ./cmd/cardtown -run TestPlay_ChooserPrintsTheSourceCard` failed as expected before Edit 1 ((d) passed).
+    - Cases 2 & 3: `go -C W test ./cmd/cardtown -run TestPlay_ChooserPrintsTheSourceCard` passed after Edit 1; trigger order unchanged.
+    - Case 4: `go -C W test ./cmd/cardtown -run TestPlay_ScriptedSessionPrintsSourceLines` passed.
+    - Case 5: `go -C W test ./cmd/cardtown -run TestPlay_PrintScreen` passed.
+    - Case 6: `go -C W test ./cmd/cardtown -run TestPlay_Case4_NoHiddenInformation` and `go -C W test ./pkg/view/...` passed.
+    - Case 7: `go -C W tool task sim-compare -- autoloop/m2-wave-f.2` passed: `[PASS] starter and stress sims match autoloop/m2-wave-f.2 byte for byte, exit codes included`.
+    - Case 8: `git -C W diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` showed exactly three files (`14 0 cmd/cardtown/play_input.go`, `21 5 cmd/cardtown/play_screen.go`, `137 0 cmd/cardtown/play_source_test.go`).
+    - Case 9: `go -C W run ./cmd/cardtown lint fences` passed (exit 0).
+    - Case 10: `git -C W diff autoloop/m2-wave-f.2 --stat` showed only those three files plus the task file.
+    - Case 11: `gofmt -l W/cmd` clean; `go -C W tool task check` passed exit 0; `go -C W tool task sim` passed exit 0 (200 games, P0 63.5%, P1 35.0%, draws 1.5%, all invariants held).
+  - Status moved to `review`. Ready for lead review.
