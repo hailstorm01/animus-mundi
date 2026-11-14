@@ -4,7 +4,7 @@ title: "Battlefield assets show their resource yields: AssetView.ReqYield and Ta
 kind: harness
 tier: flash
 wave: F.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.2/T-0236-asset-yields
 depends_on: [T-0235]
 claims: [field:view.AssetView.ReqYield, field:view.AssetView.TacYield]
@@ -245,10 +245,30 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `cmd/cardtown/play_yield_test.go` (new; the `test(T-0236)` commit only)
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run, session 4): written in full against 584249b for #150. Nothing on `main` to sync (`git log autoloop/m2-wave-f.2..main` is empty), and the scratch folder was empty. Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because both edits and both test files are exact and were dry-run. The tests go in two new files, so the test commit touches no earlier test. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.2 run, Gemini Flash): implemented T-0236 for #150.
+  - Commits:
+    - `392f35b`: `test(T-0236): battlefield assets show their resource yields` (added `pkg/view/yield_test.go` and `cmd/cardtown/play_yield_test.go`)
+    - `d731d06`: `feat(view): battlefield assets carry their printed yields; the play screen prints them (T-0236)` (Edits 1-2 to `pkg/view/view.go` and `cmd/cardtown/play_screen.go`)
+  - Diff:
+    - `pkg/view/view.go`: updated package comment and `AssetView` docstring; added `ReqYield` and `TacYield` fields to `AssetView`; mapped `a.Printed().ReqYield` and `a.Printed().TacYield` in `assetView` (reused `a.Printed()`, matching `Generate Resources` and preserving double-blind face-down Scratch yields per FR-ZON-005, FR-RES-001).
+    - `cmd/cardtown/play_screen.go`: updated `formatAsset` to format `, Yield R%d T%d` after status and before armor/damage.
+    - `pkg/view/yield_test.go`: added `TestView_AssetShowsItsPrintedYields`.
+    - `cmd/cardtown/play_yield_test.go`: added `TestPlay_FormatAssetShowsYields` and `TestPlay_PrintScreenShowsYieldsOnBothSides`.
+  - Commands and results:
+    - Case 1: `go test ./pkg/view` and `go test ./cmd/cardtown` at test commit both failed compilation due to undefined/unknown `ReqYield` and `TacYield`.
+    - Case 2: `go test ./pkg/view -run TestView_AssetShowsItsPrintedYields` passed (0.655s).
+    - Case 3: `go test ./cmd/cardtown -run TestPlay_FormatAssetShowsYields` and `TestPlay_PrintScreenShowsYieldsOnBothSides` passed (0.594s, 0.578s).
+    - Case 4: `go test ./pkg/view/...` and `go test ./cmd/cardtown -run TestPlay_Case4_NoHiddenInformation` passed (2.637s, 0.606s).
+    - Case 5: `go tool task sim-compare -- autoloop/m2-wave-f.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-f.2 byte for byte, exit codes included`.
+    - Case 6: `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` printed exactly the 4 expected lines.
+    - Case 7: `go run ./cmd/cardtown lint fences` passed (exit 0).
+    - Case 8: `git diff autoloop/m2-wave-f.2 --stat` listed only the 4 code/test files and this task file.
+    - Case 9: `gofmt -l cmd pkg` clean; `go tool task check` passed (vet, all tests, linter dispatch clean); `go tool task sim` clean (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
+  - Ready for review.
