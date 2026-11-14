@@ -117,8 +117,8 @@ func TestPlay_ScriptedSessionPrintsSourceLines(t *testing.T) {
 
 func TestPlay_PrintScreenNamesEachStackItemsCard(t *testing.T) {
 	v := view.View{Stack: []view.StackView{
-		{Kind: "Ability", Controller: 1, Source: 12, Card: "Devilhorn Captain"},
-		{Kind: "Ability", Controller: 0, Source: 7, Card: "Ripper Pack", Keyword: "Aggressive"},
+		{Kind: "Ability", Controller: 1, Source: 12, Card: "Devilhorn Captain", Label: "ability of Devilhorn Captain"},
+		{Kind: "Ability", Controller: 0, Source: 7, Card: "Ripper Pack", Keyword: "Aggressive", Label: "Aggressive trigger of Ripper Pack"},
 		{Kind: "Ability", Controller: 0, Source: 5},
 		{Kind: "Deploy", Controller: 0, Card: "Chainbreaker Irregular", Zone: "Reserves"},
 		{Kind: "Maneuver", Controller: 0, Card: "Disorienting Pulse"},
