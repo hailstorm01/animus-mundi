@@ -4,7 +4,7 @@ title: "Decisions name their source card: Decision.Source, the askFor scope, and
 kind: harness
 tier: flash
 wave: F.2
-status: review
+status: done
 branch: m2/autoloop-wave-f.2/T-0233-decision-source
 depends_on: [T-0232]
 claims: [field:Decision.Source, field:Game.asking, func:Game.askFor, func:Game.shownCard, func:Game.SourceCard]
@@ -317,3 +317,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `go -C W run ./cmd/cardtown lint fences` passed with `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit code 0).
     - Case 9: `git -C W diff autoloop/m2-wave-f.2 --stat` showed only the five files and the task file.
     - Case 10: `gofmt -l W/pkg` printed nothing; `go -C W tool task check` passed (all tests, vet, fmt, and all linters passed); `go -C W tool task sim` passed (200 starter playouts, all invariants holding).
+- 2026-11-14, lead-architect (wave F.2 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.2` as f99b291. Flash run `e0cd7b68-c1d3-4890-8ad5-fa46a19dda6a`: exit 0, `status: SUCCESS`, no `denied_actions` key, no `permission check failed` in the transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.2...m2/autoloop-wave-f.2/T-0233-decision-source` (09fe78d):
+  - Scope: the four Allowed non-test files, the new test file and this file. The `test(T-0233)` commit (d1c0954) holds only the test file, which is identical to the one in this task; the implementation commit (bb9cfc0) holds only the four non-test files. No earlier test changed.
+  - Checked against the diff: the `pkg/` diff matches the lead's dry run (numstat `19 0`, `141 0`, `24 0`, `2 0`, `3 6`). The tests failed first: re-run at d1c0954 by the reviewer, `d.Source undefined`.
+  - Fences and placement: no card name; `askFor` and the `Source` stamp sit in `choice.go` with `choose`, `shownCard` and `SourceCard` in `placement.go` beside `declare`. Reuse: the view's own face-down rule is gone (case 5), so "which face a source shows" is written once, in `shownCard`.
+  - Rules fidelity: prompts, picks and fallbacks are unchanged; `Source` follows FR-ZON-005 (`Asset.Printed()`), so a face-down source shows only the Scratch face.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l pkg` clean; `cardtown lint fences` `[PASS]`; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.2` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #149 stays `open`: T-0234 and T-0235 are its other parts.
