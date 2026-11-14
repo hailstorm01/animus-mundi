@@ -4,7 +4,7 @@ title: "One function names a stack item: `Game.StackLabel` (directive #153, wave
 kind: harness
 tier: flash
 wave: F.3
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.3/T-0239-stack-label
 depends_on: []
 claims: [func:StackLabel, field:StackView.Label]
