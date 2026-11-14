@@ -192,6 +192,11 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    #149 is split under the D2 size rule into T-0233 (`Decision.Source` and declared placements), T-0234 (triggers, resolutions and `DecisionRecord.Source`) and T-0235 (the play screen). #150 and #151 leave sim output unchanged (`go tool task sim-compare`). #149's `Decision.Source` shows in the `-events` output (T-0234 names the difference). Done when #149–#152 are `applied`, no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass.
 
    **After the checkpoint (#14, applied 2026-11-13):** every starter-deck card is executable, and the remaining Animus and Path cards stay in M2 (user: the two starter factions are completed before Concordia and Soulless). After wave F.2, work resumes in this list's order with the non-deck cards and the shapes #14 (b) deferred, wave by wave as the survey orders them. A *Devilhorn Captain* change from the user's playtest goes through `@game-designer` and reaches the board as its directive.
+6l. **Wave F.3, cleanup, added 2026-11-14 from structural review 12 (board directives #153–#154).** It goes after wave F.2 and before the non-deck Animus and Path cards (user, 2026-11-14). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave F.3`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #153: one function names a stack item, through `SourceCard`, for the place event, the view and the play screen.
+   - #154: the docs say what waves E to F.2 built, `deployedTo` becomes `inZone`, and Open Question 10 is re-checked.
+
+   #153 is a pure move with a new test, and #154 is docs, comments and a rename. Done when #153 and #154 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. After it, work resumes with the non-deck cards as 6k says.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
