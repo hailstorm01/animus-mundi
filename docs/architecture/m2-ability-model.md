@@ -187,7 +187,9 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #150: battlefield assets show their resource yields.
    - #151: a single-pick prompt lists identical options once (play screen only).
 
-   #150 and #151 leave sim output unchanged (`go tool task sim-compare`). #149 may add a field to `Decision`, and then its task names the expected `-events` difference. Done when #149–#151 are `applied`, no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass.
+   - #152: *Devilhorn Captain* and *Necropolis Hunt* say "you may", and a "you may" that could do nothing isn't asked (`SVY-R47`, `SVY-R48`; added 2026-11-14, when its outcome was applied). It changes the sim's baseline, which the user accepted.
+
+   #149 is split under the D2 size rule into T-0233 (`Decision.Source` and declared placements), T-0234 (triggers, resolutions and `DecisionRecord.Source`) and T-0235 (the play screen). #150 and #151 leave sim output unchanged (`go tool task sim-compare`). #149's `Decision.Source` shows in the `-events` output (T-0234 names the difference). Done when #149–#152 are `applied`, no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass.
 
    **After the checkpoint (#14, applied 2026-11-13):** every starter-deck card is executable, and the remaining Animus and Path cards stay in M2 (user: the two starter factions are completed before Concordia and Soulless). After wave F.2, work resumes in this list's order with the non-deck cards and the shapes #14 (b) deferred, wave by wave as the survey orders them. A *Devilhorn Captain* change from the user's playtest goes through `@game-designer` and reaches the board as its directive.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
