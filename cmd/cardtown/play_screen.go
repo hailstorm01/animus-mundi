@@ -90,8 +90,8 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	fmt.Fprintf(out, "Discards: You %d | Opponent %d\n\n", len(v.You.Discard), len(v.Opponent.Discard))
 }
 
-// stackLine is the stack listing's line for item. An ability names its card as
-// the engine's place event does ("ability of", or "<keyword> trigger of"), a
+// stackLine is the stack listing's line for item. An ability prints its Label,
+// the engine's own wording (Game.StackLabel), with a capital first letter, a
 // Deploy its card and zone, and a Maneuver its card (#149); a March, an Attack,
 // a Scratch, and an ability with no card name their source asset.
 func stackLine(item view.StackView) string {
@@ -100,12 +100,8 @@ func stackLine(item view.StackView) string {
 		return fmt.Sprintf("Maneuver: %s (Player %d)", item.Card, item.Controller)
 	case item.Kind == "Deploy" && item.Card != "":
 		return fmt.Sprintf("Deploy of %s to %s (Player %d)", item.Card, item.Zone, item.Controller)
-	case item.Kind == "Ability" && item.Card != "":
-		what := "Ability of " + item.Card
-		if item.Keyword != "" {
-			what = item.Keyword + " trigger of " + item.Card
-		}
-		return fmt.Sprintf("%s (Player %d, Source %d)", what, item.Controller, item.Source)
+	case item.Kind == "Ability" && item.Card != "" && item.Label != "":
+		return fmt.Sprintf("%s%s (Player %d, Source %d)", strings.ToUpper(item.Label[:1]), item.Label[1:], item.Controller, item.Source)
 	}
 	return fmt.Sprintf("%s (Player %d, Source %d)", item.Kind, item.Controller, item.Source)
 }
