@@ -2,11 +2,13 @@ package engine
 
 import (
 	"testing"
+
+	"animus-mundi/pkg/engine/ability"
 )
 
 // Card tests for Devilhorn Captain (T-0052), written from the CSV rules text in
 // data/cards/units-and-structures-path.csv: Unit, 2 Requisition, Reserves, 2/3,
-// "Unbowed: Deal 1 damage to chosen asset in the Main Theater." Cards are the
+// "Unbowed: You may deal 1 damage to chosen asset in the Main Theater." Cards are the
 // real ones loaded with s.card.
 
 // captainBoard is player 1's Captain in the Main Theater facing player 0 (the
@@ -61,13 +63,13 @@ func TestCard_DevilhornCaptain_DamagedOffersEveryMainTheaterAssetOfEitherSideBut
 	s := newScene(t)
 	b := s.captainBoard()
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-	s.scriptRefs(1, nil, b.u0)
+	s.scriptPlan(1, nil, []Answer{yes}, pick(b.u0))
 	s.do(s.attack(hitter, b.cap))
 	asked := s.asked(1)
-	if len(asked) != 1 || asked[0].Kind != DecideTarget || asked[0].Player != 1 {
-		t.Fatalf("the Captain's controller chooses the target: %+v", asked)
+	if len(asked) != 2 || asked[0].Kind != DecideOptional || asked[1].Kind != DecideTarget || asked[1].Player != 1 {
+		t.Fatalf("the Captain's controller is asked its \"you may\", then chooses the target: %+v", asked)
 	}
-	wantOptions(t, asked[0], "units and structures of either side in the Main Theater, the Captain included; no Reserves asset, no Headquarters, no opposing Ward unit",
+	wantOptions(t, asked[1], "units and structures of either side in the Main Theater, the Captain included; no Reserves asset, no Headquarters, no opposing Ward unit",
 		b.cap, b.u0, b.s0, b.u1, b.s1, hitter)
 	s.wantDamage(b.u0, 1)
 	s.wantDamage(b.ward0, 0)
@@ -83,7 +85,7 @@ func TestCard_DevilhornCaptain_CanDamageAnAlliedStructureInTheMainTheater(t *tes
 	s := newScene(t)
 	b := s.captainBoard()
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-	s.scriptRefs(1, nil, b.s1)
+	s.scriptPlan(1, nil, []Answer{yes}, pick(b.s1))
 	s.do(s.attack(hitter, b.cap))
 	s.wantDamage(b.s1, 1)
 	s.wantDamage(b.u0, 0)
@@ -95,13 +97,13 @@ func TestCard_DevilhornCaptain_AlliedWardUnitInTheMainTheaterIsAnOption(t *testi
 	captain := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
 	allyWard := s.put(1, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-	s.scriptRefs(1, nil, allyWard)
+	s.scriptPlan(1, nil, []Answer{yes}, pick(allyWard))
 	s.do(s.attack(hitter, captain))
 	asked := s.asked(1)
-	if len(asked) == 0 {
-		t.Fatalf("the Captain's controller is asked")
+	if len(asked) != 2 {
+		t.Fatalf("the Captain's controller is asked its \"you may\" and then the target: %+v", asked)
 	}
-	wantOptions(t, asked[0], "Ward only protects against opposing players' targeting", captain, allyWard, hitter)
+	wantOptions(t, asked[1], "Ward only protects against opposing players' targeting", captain, allyWard, hitter)
 	s.wantDamage(allyWard, 1)
 }
 
@@ -113,15 +115,16 @@ func TestCard_DevilhornCaptain_FiresInReservesAndStillOffersOnlyMainTheaterAsset
 	s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{}))
 	captain := s.put(0, ZoneReserves, s.card("Devilhorn Captain"))
 	// Saboteur: the opposing clause has a sole target (enemy, not asked); the
-	// allied clause is asked and picks the Captain in Reserves.
-	s.scriptRefs(0, nil, captain, ally)
+	// allied clause is asked and picks the Captain in Reserves. The Captain's
+	// controller then says yes to its "you may" and picks the ally.
+	s.scriptPlan(0, nil, []Answer{yes}, pick(captain), pick(ally))
 	deploySaboteur(s)
 	asked := s.asked(0)
-	if len(asked) != 2 {
-		t.Fatalf("two questions: Saboteur's allied clause, then the Captain's Unbowed target: %+v", asked)
+	if len(asked) != 3 || asked[1].Kind != DecideOptional {
+		t.Fatalf("three questions: Saboteur's allied clause, the Captain's \"you may\", then its Unbowed target: %+v", asked)
 	}
 	s.wantDamage(captain, 1)
-	wantOptions(t, asked[1], "the Captain in Reserves still chooses only among Main Theater assets", ally, enemy)
+	wantOptions(t, asked[2], "the Captain in Reserves still chooses only among Main Theater assets", ally, enemy)
 	s.wantDamage(ally, 1)
 	s.wantDamage(enemy, 2) // Saboteur's 2 only
 }
@@ -131,11 +134,11 @@ func TestCard_DevilhornCaptain_CanChooseItselfAndItsOwnDamageFiresUnbowedAgain(t
 	s := newScene(t)
 	b := s.captainBoard()
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-	s.scriptRefs(1, nil, b.cap, b.u1)
+	s.scriptPlan(1, nil, []Answer{yes, yes}, pick(b.cap), pick(b.u1))
 	s.do(s.attack(hitter, b.cap))
 	asked := s.asked(1)
-	if len(asked) != 2 {
-		t.Fatalf("combat damage fires Unbowed, and the 1 damage it deals to itself fires it again: %d questions, want 2 (FR-KWD-002a)", len(asked))
+	if len(asked) != 4 || optionalAsks(asked) != 2 || len(targetAsks(asked)) != 2 {
+		t.Fatalf("combat damage fires Unbowed, and the 1 damage it deals to itself fires it again: %d questions, want 4 (two \"you may\", two targets) (FR-KWD-002a)", len(asked))
 	}
 	s.wantDamage(b.cap, 2) // 1 from combat, 1 from its own Unbowed
 	s.wantDamage(b.u1, 1)  // the second trigger's target
@@ -150,16 +153,16 @@ func TestCard_DevilhornCaptain_LethalDamageResolvesFromDiscardAndTheDeadCaptainI
 	b := s.captainBoard()
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
 	inst := b.cap.Inst
-	s.scriptRefs(1, nil, b.u1)
+	s.scriptPlan(1, nil, []Answer{yes}, pick(b.u1))
 	s.do(s.attack(hitter, b.cap))
 	if s.alive(b.cap) || !inZone(s.g.Players[1].Discard, inst) {
 		t.Fatalf("precondition: 5 damage destroys the 2/3 Captain into its owner's Discard")
 	}
 	asked := s.asked(1)
-	if len(asked) != 1 || asked[0].Kind != DecideTarget || asked[0].Player != 1 {
-		t.Fatalf("the dead Captain's controller still chooses: %+v", asked)
+	if len(asked) != 2 || asked[0].Kind != DecideOptional || asked[1].Kind != DecideTarget || asked[1].Player != 1 {
+		t.Fatalf("the dead Captain's controller is still asked, then chooses: %+v", asked)
 	}
-	wantOptions(t, asked[0], "the dead Captain is not on the battlefield, so not an option (FR-TGT-003)",
+	wantOptions(t, asked[1], "the dead Captain is not on the battlefield, so not an option (FR-TGT-003)",
 		b.u0, b.s0, b.u1, b.s1, hitter)
 	s.wantDamage(b.u1, 1)
 }
@@ -172,17 +175,17 @@ func TestCard_DevilhornCaptain_LethalDamageIsChosenByTheLastKnownController(t *t
 	ally := s.put(0, ZoneMainTheater, unit("Ally of Controller", 1, 5, Keywords{}))
 	// Owned by player 1 and controlled by player 0 when it dies.
 	captured := s.putControlled(1, 0, s.card("Devilhorn Captain"))
-	s.scriptRefs(0, nil, hitter)
+	s.scriptPlan(0, nil, []Answer{yes}, pick(hitter))
 	s.script(1)
 	s.do(s.attack(hitter, captured))
 	if s.alive(captured) {
 		t.Fatalf("precondition: the captured Captain is destroyed")
 	}
 	asked := s.asked(0)
-	if len(asked) != 1 || asked[0].Player != 0 {
-		t.Fatalf("the trigger is chosen by the Captain's last-known controller, player 0: %+v", asked)
+	if len(asked) != 2 || asked[0].Player != 0 || asked[1].Player != 0 {
+		t.Fatalf("the trigger is asked of and chosen by the Captain's last-known controller, player 0: %+v", asked)
 	}
-	wantOptions(t, asked[0], "both remaining Main Theater assets, whichever side they are on", ally, hitter)
+	wantOptions(t, asked[1], "both remaining Main Theater assets, whichever side they are on", ally, hitter)
 	if n := len(s.asked(1)); n != 0 {
 		t.Errorf("the card's owner is not asked: asked %d times", n)
 	}
@@ -195,19 +198,22 @@ func TestCard_DevilhornCaptain_SoleLegalTargetIsNotAsked(t *testing.T) {
 	captain := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
 	s.put(1, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{}))
 	s.script(0)
-	s.script(1)
+	s.script(1, yes)
 	s.do(s.attack(hitter, captain))
 	if s.alive(captain) {
 		t.Fatalf("precondition: the Captain is destroyed, leaving the hitter as the only Main Theater asset")
 	}
-	if n := len(s.asked(0)) + len(s.asked(1)); n != 0 {
-		t.Errorf("a sole legal target is selected without a question: asked %d times (FR-MOD-001)", n)
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("the opponent is not asked: asked %d times", n)
+	}
+	if a := s.asked(1); len(a) != 1 || a[0].Kind != DecideOptional {
+		t.Errorf("only the \"you may\" is asked; a sole legal target is selected without a question (FR-MOD-001): %+v", a)
 	}
 	s.wantDamage(hitter, 3) // 2 retaliation, 1 from the Captain's Unbowed
 }
 
 // Covers: FR-MOD-001
-func TestCard_DevilhornCaptain_TimeoutDamagesExactlyOneLegalTarget(t *testing.T) {
+func TestCard_DevilhornCaptain_TimeoutDeclinesAndDealsNothing(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
 	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
@@ -216,15 +222,90 @@ func TestCard_DevilhornCaptain_TimeoutDamagesExactlyOneLegalTarget(t *testing.T)
 	if s.alive(b.cap) {
 		t.Fatalf("precondition: the Captain is destroyed, so its trigger cannot cascade")
 	}
+	if a := s.asked(1); len(a) != 1 || a[0].Kind != DecideOptional {
+		t.Errorf("only the \"you may\" is asked, and no target question follows: %+v", a)
+	}
 	got := b.u0.Damage + b.s0.Damage + b.u1.Damage + b.s1.Damage + (hitter.Damage - 2) // 2 is the retaliation
-	if got != 1 {
-		t.Errorf("a timeout picks one legal Main Theater target and deals it 1 damage: %d total on them (FR-MOD-001)", got)
+	if got != 0 {
+		t.Errorf("a timeout on a \"you may\" declines (FR-MOD-001 sec. 6), so no Main Theater asset takes the Captain's damage: %d total on them", got)
 	}
 	for _, a := range []*Asset{b.ward0, b.rs0, b.rs1, b.scratch, s.g.Players[0].HQ, s.g.Players[1].HQ} {
 		if a.Damage != 0 {
 			t.Errorf("%s is not a legal option and takes no damage: damage %d", a, a.Damage)
 		}
 	}
+}
+
+// pingCaptain has player 0 deploy a Reserves unit whose deploy trigger deals 1
+// non-combat damage to chosen opposing unit; the Captain is the only one.
+func (s *scene) pingCaptain() {
+	s.t.Helper()
+	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(1, 0))
+}
+
+// Covers: FR-TGT-002, FR-MOD-001
+func TestCard_DevilhornCaptain_DecliningDealsNoDamage(t *testing.T) {
+	s := newScene(t)
+	b := s.captainBoard()
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	s.scriptPlan(1, nil, []Answer{no})
+	s.do(s.attack(hitter, b.cap))
+	if a := s.asked(1); len(a) != 1 || a[0].Kind != DecideOptional {
+		t.Fatalf("one \"you may\" question and no target question after \"no\": %+v", a)
+	}
+	s.wantDamage(b.cap, 1) // the hitter's 1 only
+	for _, a := range []*Asset{b.u0, b.s0, b.u1, b.s1, b.ward0, b.rs0, b.rs1} {
+		s.wantDamage(a, 0)
+	}
+	s.wantDamage(hitter, 2) // the Captain's retaliation only
+}
+
+// Covers: FR-TGT-002, FR-MOD-001
+func TestCard_DevilhornCaptain_LoneDamagedCaptainCanDeclineAndSurvives(t *testing.T) {
+	s := newScene(t)
+	captain := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
+	s.script(0)
+	s.scriptPlan(1, nil, []Answer{no})
+	s.pingCaptain()
+	if a := s.asked(1); len(a) != 1 || a[0].Kind != DecideOptional {
+		t.Fatalf("the lone Captain is asked its \"you may\" once (it is a legal target itself): %+v", a)
+	}
+	if !s.alive(captain) {
+		t.Fatalf("the Captain declined and is still on the battlefield")
+	}
+	s.wantDamage(captain, 1) // no more than the damage it took
+}
+
+// Covers: SVY-R48, FR-MOD-001
+func TestCard_DevilhornCaptain_EmptyMainTheaterAsksNothing(t *testing.T) {
+	s := newScene(t)
+	captain := s.put(1, ZoneReserves, s.card("Devilhorn Captain"))
+	s.script(0)
+	s.script(1)
+	s.pingCaptain()
+	s.wantDamage(captain, 1)
+	if n := len(s.asked(1)); n != 0 {
+		t.Errorf("no Main Theater asset, so the \"you may\" could do nothing and is not asked (SVY-R48): asked %d times", n)
+	}
+	if got := placesFrom(s.g, captain); got != 0 {
+		t.Errorf("no Captain trigger is placed (SVY-R48): %d place events", got)
+	}
+}
+
+// Covers: FR-KWD-002a, FR-TGT-002
+func TestCard_DevilhornCaptain_ChoosingAnAlliedUnbowedUnitFiresItsUnbowed(t *testing.T) {
+	s := newScene(t)
+	first := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
+	second := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	s.scriptPlan(1, nil, []Answer{yes, no}, pick(second))
+	s.script(0)
+	s.do(s.attack(hitter, first))
+	asked := s.asked(1)
+	if len(asked) != 3 || optionalAsks(asked) != 2 || len(targetAsks(asked)) != 1 {
+		t.Fatalf("a \"you may\" and a target for the hit Captain, then the hit second Captain's own \"you may\": %+v", asked)
+	}
+	s.wantDamage(second, 1)
 }
 
 // Covers: FR-REP-004, FR-KWD-002b
