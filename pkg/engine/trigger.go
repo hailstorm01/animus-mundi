@@ -143,7 +143,7 @@ func (g *Game) fireHook(src triggerSource, hook ability.Hook) []pendingTrigger {
 		if t.Hook != hook || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
 			continue
 		}
-		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !deployedTo(src.zone, t.ToZone) {
+		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !zoneMatches(src.zone, t.ToZone) {
 			continue
 		}
 		// Cornered is an enqueue gate: checked here, when the event happens,

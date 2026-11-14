@@ -253,9 +253,10 @@ func (g *Game) placeOnBattlefield(a *Asset, zone Zone) {
 	}
 }
 
-// deployedTo reports whether an asset in zone at is in zone z, which for a deploy
-// trigger is the zone its deploy or move put it in. ZoneAny always holds.
-func deployedTo(at Zone, z ability.Zone) bool {
+// zoneMatches reports whether an asset in zone at is in zone z, the zone a shape
+// names: a filter's zone, or for a deploy or move trigger the zone its deploy
+// or move put it in. ZoneAny always holds.
+func zoneMatches(at Zone, z ability.Zone) bool {
 	if to, ok := battlefieldZone(z); ok {
 		return at == to
 	}

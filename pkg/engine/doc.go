@@ -26,9 +26,15 @@
 //     on damage taken. A trigger may work from its card's discard pile instead of
 //     the battlefield (Trigger.ActiveZone, survey G1, FR-ZON-004). A trigger
 //     may be modal ("choose N" modes, chosen on placement before its targets,
-//     FR-MOD-001 §5).
+//     FR-MOD-001 §5). An optional trigger that could do nothing if accepted
+//     (every step acts on a target slot, and no slot has a legal entity) is
+//     neither asked nor placed (couldDoNothing, SVY-R48).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
 //     choosing from your own hand (DecideHand, SVY-R16) and from your own deck (DecideSearch, SVY-R37, SVY-R38), the zone of a free deploy (DecideZone, SVY-R43) and a look at the top cards of your own deck (DecideLook, SVY-R41–SVY-R43).
+//     Each decision names the card whose Deploy, Maneuver or ability is being
+//     placed or resolved as it is asked, as both seats see it (Decision.Source,
+//     FR-ZON-005), from the scope askFor opens, and its match record carries
+//     that card's name (DecisionRecord.Source).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
 //     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103), OpGrantKeyword (a keyword granted until end of turn, FR-LAY-001) and OpLookTop (a look at the top cards with free deploys and a bottom order, FR-MOD-001 §4), with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
@@ -82,11 +88,14 @@
 //
 // Files:
 //   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
-//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets, deploying a card, and the zone a shape names.
+//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets, deploying a card, and the zone a shape names (zoneMatches).
 //   - actions.go: Action, Apply, checks and LegalActions. combat.go: attack
-//     legality and combat resolution. stack.go: the Resolution Stack.
+//     legality and combat resolution. stack.go: the Resolution Stack, and
+//     StackLabel, the one wording of what a stack item is.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
-//     an effect, its modes and then its targets. costs.go: a card's cost and
+//     an effect, its modes and then its targets, the card it shows as its
+//     source (shownCard, SourceCard), and whether an optional trigger could do
+//     nothing (couldDoNothing). costs.go: a card's cost and
 //     a placement's costs. resources.go: Requisition and Tactics, generating and
 //     converting them, and paying with them. targeting.go: target choice and
 //     untargeted picks. filter.go: checking assets and discard-pile cards against
@@ -94,11 +103,13 @@
 //     freedeploy.go: free deploys and the look at the top cards.
 //   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
 //     cardload.go: the CSV loader and keyword lines.
-//   - events.go: Event, the Observer, match records and emitting. choice.go: decisions.
+//   - events.go: Event, the Observer, match records and emitting. choice.go: decisions,
+//     and the askFor scope that names their source card.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
 //     damage.go: the damage pipeline. sweep.go: the death sweep, destruction
 //     and match loss. replace.go: destruction replacement. layers.go: derived power, health and keywords,
-//     the Cornered check and EffectiveState.
+//     the Cornered check and EffectiveState, and an asset's Modifier list with
+//     each modifier's Duration.
 //     invariants.go: state checks.
 //
 // Package boundary: this package holds the rules, the game state, the Observer
