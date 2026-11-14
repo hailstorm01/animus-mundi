@@ -4,7 +4,7 @@ title: A "you may" that could do nothing isn't asked; Devilhorn Captain and Necr
 kind: shape
 tier: sonnet
 wave: F.2
-status: ready
+status: review
 branch: m2/autoloop-wave-f.2/T-0238-optional-could-do-nothing
 depends_on: []
 claims: [shape:couldDoNothing (an optional trigger with nothing to act on is not asked or placed, SVY-R48), card-text:Devilhorn Captain, card-text:Necropolis Hunt]
@@ -92,3 +92,4 @@ New tests:
   1. `TestCard_NecropolisHunt_DecliningDealsNoDamage` fails after the Shape (`cards_path_test.go:1096`: "the Hunt dealt 5 to asset 59"): its loop over `damageEvents` counts the Hunt's own combat damage to the Defender, whose `Source` is also the Hunt. Only the trigger's damage is non-combat (`Event.Combat`, as `TestCard_NecropolisHunt_DamageEventNamesTheDeadHuntAsSourceAndIsNonCombat` checks), so skip events with `e.Combat` there. Nothing else changes; the rest of the commit is approved as is. Make the fix in a new `test(T-0238)` commit.
 - 2026-11-14, rules-test-author (round 2): note 1 fixed in a new `test(T-0238)` commit: `TestCard_NecropolisHunt_DecliningDealsNoDamage` skips `e.Combat` damage events, so only the trigger's damage counts. Nothing else changed. `gofmt -l` and `go vet` clean. Next: lead review of tests.
 - 2026-11-14, lead-architect (wave F.2 run session 7, tests review round 2): tests approved, `ready`. Note 1 is fixed in af34281 (the decline check skips combat damage). With the lead's dry-run Shape applied over the branch, every listed test passes and `go tool task check` passes; without it the new and edited tests fail as the author listed. Next: `kernel-engineer` (sonnet).
+- 2026-11-14, kernel-engineer: built the Shape. `couldDoNothing` added to `placement.go` after `placeable` (reuses `targetDecision` Options; no second legality copy); `placeTrigger` condition changed as specified, with the `placeTrigger`, `flushTriggers` and `placeable` comments naming `SVY-R48`. Both cards: CSV `rulesText` cells (only those two cells, LF endings kept), `Text` in `cards/path.go` and `Optional: true` on each trigger. Nothing else touched; no tests edited. Ran: the listed `go test ./pkg/engine -run ...` ok; `go test ./cmd/cardtown -run TestPlay_ScriptedSessionPrintsSourceLines` ok; `go tool task check` passes; `go tool task sim` clean, 50/50 both decks, P0 58.5% / P1 39.5% / draws 2.0% (as the lead's dry run).

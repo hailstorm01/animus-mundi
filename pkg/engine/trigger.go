@@ -191,7 +191,7 @@ func (g *Game) fireAttacks(a *Asset) {
 // first, then the non-active player's on top (FR-TRG-003). Each player orders
 // their own triggers; a single trigger is not asked about. An optional trigger
 // is asked about in its turn to be placed, before its modes and targets; declined, it is
-// not placed (SVY-R9). A trigger still waiting on an asset's destruction is dropped,
+// not placed (SVY-R9); one that couldDoNothing is neither asked nor placed (SVY-R48). A trigger still waiting on an asset's destruction is dropped,
 // because the sweep did not destroy it (SVY-R19). Each player's triggers are listed, and by default placed,
 // in source order (sourcePos). A match that ended discards the buffer. The
 // trigger order names no source card, even in a flush inside a scope askFor opened.
@@ -229,11 +229,13 @@ func (g *Game) flushTriggers() {
 }
 
 // placeTrigger asks p's "you may" if it is optional and, unless it is declined,
-// places p on the stack with its modes and targets chosen (SVY-R9). Every
+// places p on the stack with its modes and targets chosen (SVY-R9). An optional
+// trigger that couldDoNothing is skipped without asking (SVY-R48); a mandatory
+// one is placed whatever it finds (SVY-R30). Every
 // decision it asks names p's source card (Decision.Source, shownCard).
 func (g *Game) placeTrigger(p pendingTrigger) {
 	defer g.askFor(g.shownCard(p.source, p.inst))()
-	if p.trig.Optional && !g.accepts(p) {
+	if p.trig.Optional && (g.couldDoNothing(p.placement, p.trig.Effect) || !g.accepts(p)) {
 		return
 	}
 	item := p.stackItem(StackAbility)
