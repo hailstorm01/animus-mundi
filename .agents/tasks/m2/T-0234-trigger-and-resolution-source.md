@@ -4,7 +4,7 @@ title: "Triggers and resolutions name their source card, and the decision record
 kind: harness
 tier: flash
 wave: F.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.2/T-0234-trigger-and-resolution-source
 depends_on: [T-0233]
 claims: [func:Game.placeTrigger, field:DecisionRecord.Source]
