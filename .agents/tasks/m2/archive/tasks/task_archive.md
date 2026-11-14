@@ -242,3 +242,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0236 | Battlefield assets show their resource yields: `AssetView.ReqYield` and `TacYield`, and the play screen's asset line (#150, wave F.2 harness, flash) | done |
 | T-0237 | A single-pick prompt lists identical options once: `shownOptions` (#151, wave F.2 harness, flash) | done |
 | T-0238 | A "you may" that could do nothing isn't asked; *Devilhorn Captain* and *Necropolis Hunt* say "you may" (#152, wave F.2 shape, sonnet) | done |
+| T-0239 | One function names a stack item: `Game.StackLabel`, `StackView.Label` (#153, wave F.3 harness, flash) | done |
