@@ -35,5 +35,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0234](T-0234-trigger-and-resolution-source.md) | Triggers and resolutions name their source card; `DecisionRecord.Source` (#149 (b)) | queued |
+| [T-0234](T-0234-trigger-and-resolution-source.md) | Triggers and resolutions name their source card; `DecisionRecord.Source` (#149 (b)) | ready |
 | [T-0235](T-0235-play-screen-source.md) | The play screen shows a decision's source card and text; the stack names each card (#149 (c)) | queued |
