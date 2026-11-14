@@ -4,7 +4,7 @@ title: "The play screen shows a decision's source card and its rules text, and t
 kind: harness
 tier: flash
 wave: F.2
-status: review
+status: done
 branch: m2/autoloop-wave-f.2/T-0235-play-screen-source
 depends_on: [T-0234]
 claims: [func:sourceLine, func:stackLine]
@@ -286,3 +286,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 10: `git -C W diff autoloop/m2-wave-f.2 --stat` showed only those three files plus the task file.
     - Case 11: `gofmt -l W/cmd` clean; `go -C W tool task check` passed exit 0; `go -C W tool task sim` passed exit 0 (200 games, P0 63.5%, P1 35.0%, draws 1.5%, all invariants held).
   - Status moved to `review`. Ready for lead review.
+- 2026-11-14, lead-architect (wave F.2 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.2` as 104fd7e. Flash run `8f6148ba-5a4a-463b-a30f-edfb5a89f822`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.2...m2/autoloop-wave-f.2/T-0235-play-screen-source` (39923b9):
+  - Scope: the two Allowed non-test files, the new test file and this file. The `test(T-0235)` commit (b06e723) holds only `play_source_test.go`, identical to the file in this task; the implementation commit (f9cf7ef) holds only `play_input.go` and `play_screen.go`, whose blobs (bbc0b5a, b8c5a50) are the lead's dry run's. No earlier test changed. The tests failed first: re-run at b06e723 by the reviewer, every `TestPlay_ChooserPrintsTheSourceCard` subtest but `(d)` fails.
+  - Fences and placement: no card name in package code; both helpers sit in `cmd/cardtown` beside the code they serve, and `pkg/view` and `pkg/engine` don't change. Reuse: as Inputs says; nothing copied.
+  - Hidden information: the source line prints `Decision.Source`, the face both seats see (FR-ZON-005), and `TestPlay_Case4_NoHiddenInformation` passes over the session's output with its source lines.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l cmd pkg` clean; `go test ./cmd/cardtown ./pkg/view/...` ok; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.2` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable; `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` is case 8's three lines.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #149 is `applied` (T-0233, T-0234, T-0235) and moves to the directive archive.

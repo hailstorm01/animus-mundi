@@ -238,3 +238,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0232 | Free deploys and the look at the top cards move to `freedeploy.go` (#148, wave F.1 harness, flash, pure move) | done |
 | T-0233 | Decisions name their source card: `Decision.Source`, the `askFor` scope, declared placements (#149 (a), wave F.2 harness, flash) | done |
 | T-0234 | Triggers and resolutions name their source card; `DecisionRecord.Source` (#149 (b), wave F.2 harness, flash) | done |
+| T-0235 | The play screen shows a decision's source card and its rules text; the stack names each card (#149 (c), wave F.2 harness, flash) | done |
