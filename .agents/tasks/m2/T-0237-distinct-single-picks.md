@@ -4,7 +4,7 @@ title: "A single-pick prompt lists identical options once (directive #151, wave 
 kind: harness
 tier: flash
 wave: F.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.2/T-0237-distinct-single-picks
 depends_on: []
 claims: [func:shownOptions]
