@@ -4,7 +4,7 @@ title: "A single-pick prompt lists identical options once (directive #151, wave 
 kind: harness
 tier: flash
 wave: F.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.2/T-0237-distinct-single-picks
 depends_on: []
 claims: [func:shownOptions]
@@ -198,10 +198,28 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `cmd/cardtown/play_distinct_test.go` (new; the `test(T-0237)` commit only)
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run, session 5): written in full against af77383 for #151. Nothing on `main` to sync (`git log autoloop/m2-wave-f.2..main` is empty); the scratch folder was empty. Not `WAVE-COMPLETE` before the task (#151 `open: before the next Deliverables task`, #152 `open`). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because the edit and the test file are exact and were dry-run. The tests go in a new file, so the test commit touches no earlier test. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.2): implemented #151 in cmd/cardtown.
+  - Commits:
+    - 7eec4c0 test(T-0237): a single-pick prompt lists identical options once
+    - adca375 feat(cardtown): a single-pick prompt lists identical options once (T-0237)
+  - Diff:
+    - `cmd/cardtown/play_distinct_test.go`: added `TestPlay_ChooserListsIdenticalOptionsOnce` testing subtests (a) through (d) for single-pick deduplication, multi-pick retention, and non-duplicate formatting.
+    - `cmd/cardtown/play_input.go`: added `shownOptions(d engine.Decision) []int` filtering duplicate option labels when `d.Max == 1`. Updated `terminalChooser` to print `shown` options and map chosen indices back through `shown[idx-1]` before `d.Valid`.
+  - Reuse: search showed no prior option de-duplication in cmd/cardtown. Kept existing `d.Valid` validation over mapped picks.
+  - Verification & Acceptance Cases:
+    1. Pre-implementation test failure: `go test ./cmd/cardtown -run TestPlay_ChooserListsIdenticalOptionsOnce` failed subtests (a) and (b); (c) and (d) passed.
+    2. Identical single-pick options listed once: `go test ./cmd/cardtown -run TestPlay_ChooserListsIdenticalOptionsOnce` passed.
+    3. Multi-pick options list all duplicates: subtest (c) passed.
+    4. No duplicates / unchanged behavior: subtest (d) passed, and `go test ./cmd/cardtown -run TestPlay_` passed.
+    5. Sims byte-identical: `go tool task sim-compare -- autoloop/m2-wave-f.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-f.2 byte for byte, exit codes included`.
+    6. Only listed edits in pkg/cmd: `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` showed exactly `85 0 cmd/cardtown/play_distinct_test.go` and `27 5 cmd/cardtown/play_input.go`.
+    7. Fences: `go run ./cmd/cardtown lint fences` printed `[PASS] Package code is free of card names, invalid markers and disallowed imports.` and exited 0.
+    8. Nothing else changed: `git diff autoloop/m2-wave-f.2 --stat` showed only `play_distinct_test.go`, `play_input.go`, and this task file.
+    9. `gofmt -l cmd` clean (no output); `go tool task check` passed (all tests, vet, fmt, and cardtown lint --all passed); `go tool task sim` exit 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
