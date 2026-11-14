@@ -85,6 +85,26 @@ func TestCard_ChainbreakerPhalanx_MarchMovesChosenUnitAndArmorsIt(t *testing.T) 
 	s.wantSettled("a Phalanx March that moves a unit")
 }
 
+// Covers: SVY-R48, FR-MOD-001
+func TestCard_ChainbreakerPhalanx_NoAlliedUnitInReservesAsksNothing(t *testing.T) {
+	s := newScene(t)
+	p := s.put(0, ZoneReserves, s.card("Chainbreaker Phalanx"))
+	s.phalanxChooser(yes)
+	items := recordPlaced(s)
+	s.do(Action{Kind: ActMarch, Player: 0, Asset: p.ID})
+	if got := s.g.Asset(p.ID); got == nil || got.Zone != ZoneMainTheater {
+		t.Fatalf("precondition: the March moves the Phalanx to the Main Theater, got %v", got)
+	}
+	if n := len(s.asked(0)); n != 0 {
+		t.Errorf("no allied unit in Reserves, so the 'you may' could do nothing and is not asked (SVY-R48): asked %d times", n)
+	}
+	for _, it := range *items {
+		if it.Kind == StackAbility && it.Source == p.ID {
+			t.Errorf("the trigger is not placed (SVY-R48): placed %+v", it)
+		}
+	}
+}
+
 // Covers: SVY-R9, FR-MOD-001
 func TestCard_ChainbreakerPhalanx_DeclineIsNotPlaced(t *testing.T) {
 	cases := []struct {

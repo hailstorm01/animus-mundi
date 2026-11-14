@@ -169,7 +169,8 @@ func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 // (SVY-R29): every cost payable (costsPayable), then at least
 // ChooseN legal modes, or a legal entity for each exactly-one slot. It applies
 // to enacting a Maneuver and to activating an ability (SVY-R29, SVY-R36). A
-// trigger is still placed whatever it finds (SVY-R30, FR-TGT-003).
+// trigger is still placed whatever it finds (SVY-R30, FR-TGT-003), except an
+// optional one that couldDoNothing (SVY-R48).
 func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
 		return false
@@ -178,6 +179,30 @@ func (g *Game) placeable(pl placement, e ability.Effect) bool {
 		return len(g.legalModes(pl, e)) >= e.ChooseN
 	}
 	return g.slotsLegal(pl, e.Targets)
+}
+
+// couldDoNothing reports whether e, placed as pl, could do nothing if its
+// controller accepted: it has no modes, has at least one target slot, every
+// step acts on a target slot (ability.SubjectTarget), and no slot has a legal
+// entity now, judged by the same Options chooseTargets would offer
+// (targetDecision). Only an optional trigger reads it, so a "you may" that
+// could do nothing is neither asked nor placed (SVY-R48, FR-MOD-001 §7); a
+// mandatory trigger is placed anyway (SVY-R30).
+func (g *Game) couldDoNothing(pl placement, e ability.Effect) bool {
+	if len(e.Modes) > 0 || len(e.Targets) == 0 {
+		return false
+	}
+	for _, s := range e.Steps {
+		if s.Subject != ability.SubjectTarget {
+			return false
+		}
+	}
+	for i, t := range e.Targets {
+		if len(g.targetDecision(pl, i, t).Options) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // legalModes returns the indices of e's legal modes, in printed order. A mode

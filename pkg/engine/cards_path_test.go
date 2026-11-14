@@ -873,14 +873,15 @@ func deployHunt(s *scene) *Asset {
 
 // huntAttacks deploys the Hunt, readies it over a full round and has it attack
 // a fresh 2/5 opposing Defender, so both die. Player 0 answers its death
-// question by choosing want in order. It returns the Hunt and the Defender.
+// question by saying "you may" yes and then choosing want in order. It returns
+// the Hunt and the Defender.
 func huntAttacks(s *scene, want ...*Asset) (hunt, def *Asset) {
 	s.t.Helper()
 	hunt = deployHunt(s)
 	s.endTurn()
 	s.endTurn()
 	def = s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
-	s.scriptRefs(0, nil, want...)
+	s.scriptPlan(0, nil, []Answer{yes}, picksOf(want)...)
 	s.do(s.attack(hunt, def))
 	if s.alive(hunt) {
 		s.t.Fatalf("precondition: the Hunt is destroyed by the Defender's retaliation")
@@ -890,14 +891,15 @@ func huntAttacks(s *scene, want ...*Asset) (hunt, def *Asset) {
 
 // huntDefends deploys the Hunt, passes the turn and has an opposing 2/20
 // Hitter attack it. Player 0 answers its death question by choosing want in
-// order; player 1 is given a script that records any question. It returns the
+// order after a "yes" to its "you may"; player 1 is given a script that records
+// any question. It returns the
 // Hunt and the Hitter.
 func huntDefends(s *scene, want ...*Asset) (hunt, hit *Asset) {
 	s.t.Helper()
 	hunt = deployHunt(s)
 	s.endTurn()
 	hit = s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
-	s.scriptRefs(0, nil, want...)
+	s.scriptPlan(0, nil, []Answer{yes}, picksOf(want)...)
 	s.script(1)
 	s.do(s.attack(hit, hunt))
 	if s.alive(hunt) {
@@ -928,9 +930,12 @@ func TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHea
 	s.put(1, ZoneMainTheater, structure("Warded Structure", 0, 5, Keywords{Ward: true}))
 	reserve := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, Keywords{}))
 	_, def := huntAttacks(s, b.s1)
-	asked := s.asked(0)
+	if n := optionalAsks(s.asked(0)); n != 1 {
+		t.Fatalf("the Hunt's controller is asked its \"you may\" once: asked %d times", n)
+	}
+	asked := targetAsks(s.asked(0))
 	if len(asked) != 1 {
-		t.Fatalf("one death question for the Hunt's controller: asked %d times", len(asked))
+		t.Fatalf("one target question for the Hunt's controller after the \"yes\": asked %d times", len(asked))
 	}
 	if d := asked[0]; d.Kind != DecideTarget || d.Player != 0 || d.Min != 1 || d.Max != 1 {
 		t.Errorf("a mandatory single DecideTarget for the Hunt's controller: %+v", d)
@@ -972,9 +977,9 @@ func TestCard_NecropolisHunt_KilledOnOpponentsTurnStillTriggersAndItsControllerC
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
 	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
 	_, hit := huntDefends(s, e)
-	asked := s.asked(0)
-	if len(asked) != 1 {
-		t.Fatalf("no turn gate: the Hunt's controller is asked once on the opponent's turn: asked %d times", len(asked))
+	asked := targetAsks(s.asked(0))
+	if len(asked) != 1 || optionalAsks(s.asked(0)) != 1 {
+		t.Fatalf("no turn gate: the Hunt's controller is asked its \"you may\" and then the target once on the opponent's turn: %+v", s.asked(0))
 	}
 	wantOptions(t, asked[0], "every other unit and structure of either side", ally, e, hit)
 	s.wantDamage(e, 5)
@@ -1042,14 +1047,17 @@ func TestCard_NecropolisHunt_SoleLegalTargetIsNotAsked(t *testing.T) {
 	wall := s.put(1, ZoneMainTheater, structure("Only Wall", 0, 9, Keywords{}))
 	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, Keywords{Ward: true}))
 	huntAttacks(s)
-	if n := len(s.asked(0)); n != 0 {
-		t.Errorf("a single legal option is chosen without a question (FR-MOD-001 sec. 1): asked %d times", n)
+	if n := optionalAsks(s.asked(0)); n != 1 {
+		t.Errorf("the \"you may\" is asked once: asked %d times", n)
+	}
+	if n := len(targetAsks(s.asked(0))); n != 0 {
+		t.Errorf("a single legal option is chosen without a target question (FR-MOD-001 sec. 1): asked %d times", n)
 	}
 	s.wantDamage(wall, 5)
 }
 
 // Covers: FR-MOD-001
-func TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget(t *testing.T) {
+func TestCard_NecropolisHunt_TimeoutDeclinesAndDealsNothing(t *testing.T) {
 	s := newScene(t)
 	u := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, Keywords{}))
 	w := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 9, Keywords{}))
@@ -1059,11 +1067,37 @@ func TestCard_NecropolisHunt_TimeoutDamagesExactlyOneLegalTarget(t *testing.T) {
 	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.do(s.attack(hunt, def))
-	if n := len(s.asked(0)); n != 1 {
-		t.Fatalf("one death question: asked %d times", n)
+	if n := optionalAsks(s.asked(0)); n != 1 || len(s.asked(0)) != 1 {
+		t.Fatalf("one \"you may\" question and no target question: %+v", s.asked(0))
 	}
-	if (u.Damage == 5) == (w.Damage == 5) || u.Damage+w.Damage != 5 {
-		t.Errorf("a timeout picks the first legal target in fixed order (FR-MOD-001 sec. 6, SVY-R16): damage %d and %d, want exactly one with 5", u.Damage, w.Damage)
+	if u.Damage != 0 || w.Damage != 0 {
+		t.Errorf("a timeout on a \"you may\" declines (FR-MOD-001 sec. 6), so the Hunt deals no damage: damage %d and %d", u.Damage, w.Damage)
+	}
+}
+
+// Covers: FR-TGT-002, FR-MOD-001
+func TestCard_NecropolisHunt_DecliningDealsNoDamage(t *testing.T) {
+	s := newScene(t)
+	b := s.targetBoard()
+	hunt := deployHunt(s)
+	s.endTurn()
+	s.endTurn()
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	s.scriptPlan(0, nil, []Answer{no})
+	s.do(s.attack(hunt, def))
+	if s.alive(hunt) {
+		t.Fatalf("precondition: the Hunt is destroyed by the Defender's retaliation")
+	}
+	if n := optionalAsks(s.asked(0)); n != 1 || len(s.asked(0)) != 1 {
+		t.Fatalf("one \"you may\" question and no target question after \"no\": %+v", s.asked(0))
+	}
+	for _, e := range damageEvents(s.g.Log) {
+		if e.Source == hunt.ID && !e.Combat {
+			t.Errorf("declining the Hunt's \"you may\" deals no damage, but the Hunt's trigger dealt %d to asset %d", e.Amount, e.Target)
+		}
+	}
+	for _, a := range []*Asset{b.u0, b.s0, b.c0, b.u1, b.s1, b.c1} {
+		s.wantDamage(a, 0)
 	}
 }
 
@@ -1125,7 +1159,7 @@ func TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive(t *tes
 	s.endTurn()
 	hit := s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
 	hunt.Modifiers = []Modifier{{Layer: 5, Power: 2}} // stands in for an until-end-of-turn bonus, still active this turn
-	s.scriptRefs(0, nil, e)
+	s.scriptPlan(0, nil, []Answer{yes}, pick(e))
 	s.script(1)
 	s.do(s.attack(hit, hunt))
 	if s.alive(hunt) {

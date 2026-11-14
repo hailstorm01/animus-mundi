@@ -92,6 +92,18 @@ func TestCard_InfestedApostle_MayKillItself(t *testing.T) {
 	s.wantDamage(v, 2)
 }
 
+// Covers: FR-MOD-001, SVY-R14, SVY-R48
+func TestCard_InfestedApostle_NoOpposingUnitIsStillAsked(t *testing.T) {
+	s := newScene(t)
+	s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+	s.scriptPlan(0, nil, []Answer{no})
+	deployApostle(s)
+	asks := s.asked(0)
+	if len(asks) != 1 || asks[0].Kind != DecideOptional {
+		t.Fatalf("the kill is a pick, not a target, so the 'you may' can still do something and is asked even with no opposing unit: got %v (SVY-R14, SVY-R48)", kindsOf(asks))
+	}
+}
+
 // Covers: FR-MOD-001
 func TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage(t *testing.T) {
 	s := newScene(t)

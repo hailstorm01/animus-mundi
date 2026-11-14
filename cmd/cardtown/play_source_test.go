@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -90,23 +91,28 @@ func TestPlay_ChooserPrintsTheSourceCard(t *testing.T) {
 // that card's line (#149 (a)-(c)): the prompt names the card, and the line
 // under it starts with the same name in brackets.
 func TestPlay_ScriptedSessionPrintsSourceLines(t *testing.T) {
-	args := []string{"-deck", "starter", "-p0", "ANIMUS", "-p1", "PATH", "-seat", "0", "-seed", "3"}
-	var out bytes.Buffer
-	if code := runPlay(args, &scriptedReader{out: &out}, &out); code != 0 {
-		t.Fatalf("runPlay exited with code %d", code)
-	}
-	lines := strings.Split(out.String(), "\n")
-	sources := 0
-	for i := 1; i < len(lines); i++ {
-		rest, ok := strings.CutPrefix(lines[i], "  [")
-		name, _, closed := strings.Cut(rest, "]")
-		if ok && closed && strings.Contains(lines[i-1], name+": ") {
-			sources++
+	// The first seed whose session reaches such a prompt is enough; which seed
+	// does depends on the random answers, so try several.
+	for seed := 1; seed <= 8; seed++ {
+		args := []string{"-deck", "starter", "-p0", "ANIMUS", "-p1", "PATH", "-seat", "0", "-seed", strconv.Itoa(seed)}
+		var out bytes.Buffer
+		if code := runPlay(args, &scriptedReader{out: &out}, &out); code != 0 {
+			t.Fatalf("seed %d: runPlay exited with code %d", seed, code)
+		}
+		lines := strings.Split(out.String(), "\n")
+		sources := 0
+		for i := 1; i < len(lines); i++ {
+			rest, ok := strings.CutPrefix(lines[i], "  [")
+			name, _, closed := strings.Cut(rest, "]")
+			if ok && closed && strings.Contains(lines[i-1], name+": ") {
+				sources++
+			}
+		}
+		if sources > 0 {
+			return
 		}
 	}
-	if sources == 0 {
-		t.Errorf("no prompt is followed by its source card's line")
-	}
+	t.Errorf("no prompt is followed by its source card's line in any session of seeds 1 to 8")
 }
 
 func TestPlay_PrintScreenNamesEachStackItemsCard(t *testing.T) {

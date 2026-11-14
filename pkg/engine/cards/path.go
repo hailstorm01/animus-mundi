@@ -347,10 +347,11 @@ var pathDefs = map[string]*ability.Def{
 		},
 	},
 	"Devilhorn Captain": {
-		Text: []string{"Unbowed: Deal 1 damage to chosen asset in the Main Theater."},
+		Text: []string{"Unbowed: You may deal 1 damage to chosen asset in the Main Theater."},
 		Triggers: []ability.Trigger{
 			{
-				Hook: ability.HookDamaged,
+				Hook:     ability.HookDamaged,
+				Optional: true,
 				Effect: ability.Effect{
 					Targets: []ability.Target{
 						{
@@ -576,10 +577,11 @@ var pathDefs = map[string]*ability.Def{
 		Cornered: ability.CorneredKeywords{Resistant: 1},
 	},
 	"Necropolis Hunt": {
-		Text: []string{"When this unit is killed, deal damage equal to its power to chosen non-Headquarters asset."},
+		Text: []string{"When this unit is killed, you may deal damage equal to its power to chosen non-Headquarters asset."},
 		Triggers: []ability.Trigger{
 			{
-				Hook: ability.HookKilled,
+				Hook:     ability.HookKilled,
+				Optional: true,
 				Effect: ability.Effect{
 					Targets: []ability.Target{
 						{

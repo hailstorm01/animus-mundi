@@ -171,6 +171,14 @@ func TestCard_EerieRemnant_IrregularsUnbowedDiscardDeploysIt(t *testing.T) {
 	}
 }
 
+func TestCard_EerieRemnant_IsStillAskedWithNothingToTarget(t *testing.T) {
+	// Covers: FR-MOD-001, SVY-R48
+	s, _, _, _ := remnantOrdersScene(t, no)
+	if got := askedKind(s, 0, DecideOptional); len(got) != 1 {
+		t.Errorf("its step acts on itself, not a target, so the 'you may' is asked once, got %d (SVY-R48)", len(got))
+	}
+}
+
 func TestCard_EerieRemnant_DeclinedStaysInThePile(t *testing.T) {
 	// Covers: FR-MOD-001
 	s, _, rem, _ := remnantOrdersScene(t, no)
