@@ -65,8 +65,9 @@ func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {
 			}
 		}
 
-		for i, opt := range d.Options {
-			fmt.Fprintf(out, "  %d) %s\n", i+1, opt.Label)
+		shown := shownOptions(d)
+		for k, i := range shown {
+			fmt.Fprintf(out, "  %d) %s\n", k+1, d.Options[i].Label)
 		}
 
 		for {
@@ -91,12 +92,12 @@ func terminalChooser(scanner *bufio.Scanner, out io.Writer) engine.Chooser {
 			parsed := true
 			for _, p := range strings.Fields(line) {
 				idx, err := strconv.Atoi(p)
-				if err != nil || idx < 1 || idx > len(d.Options) {
-					fmt.Fprintf(out, "Invalid choice %q: must be a number between 1 and %d\n", p, len(d.Options))
+				if err != nil || idx < 1 || idx > len(shown) {
+					fmt.Fprintf(out, "Invalid choice %q: must be a number between 1 and %d\n", p, len(shown))
 					parsed = false
 					break
 				}
-				picks = append(picks, idx-1)
+				picks = append(picks, shown[idx-1])
 			}
 			if !parsed {
 				continue
@@ -125,4 +126,25 @@ func sourceLine(c *engine.Card) string {
 		return "  [" + c.Name + "]"
 	}
 	return "  [" + c.Name + "] " + text
+}
+
+// shownOptions returns the indices of d's options that terminalChooser lists,
+// in order: the listed number k+1 answers option shownOptions(d)[k]. A decision
+// that picks at most one lists each option text once, at its first option, so
+// identical outcomes (two copies of a card) aren't offered twice (#151); any
+// other decision lists every option, because picking two copies there is a
+// real choice.
+func shownOptions(d engine.Decision) []int {
+	var shown []int
+	seen := make(map[string]bool, len(d.Options))
+	for i, opt := range d.Options {
+		if d.Max == 1 {
+			if seen[opt.Label] {
+				continue
+			}
+			seen[opt.Label] = true
+		}
+		shown = append(shown, i)
+	}
+	return shown
 }
