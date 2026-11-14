@@ -4,7 +4,7 @@ title: "`doc.go` says what waves E to F.2 built, and `deployedTo` becomes `zoneM
 kind: harness
 tier: flash
 wave: F.3
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.3/T-0240-engine-docs-and-zone-matches
 depends_on: [T-0239]
 claims: [func:zoneMatches, doc:pkg/engine/doc.go]
@@ -127,10 +127,27 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/trigger.go`
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.3` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.3` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.3 run, session 2): written in full against 65d05bc for #154. Nothing on `main` to sync (`main` at d4b38f2 is the run branch's base); the scratch folder was empty. Not `WAVE-COMPLETE` before the task (#154 `open: before the next Deliverables task`). The lead did #154 (a), (b), the design note's half of (c), and (f) itself in this commit (`docs/architecture/` is the lead's to write; precedent #141 (4)). (f): Open Question 10 still holds; the reasoning is in the question. Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.3 run, session 3): implemented edits 1-4 per task spec in scratch worktree.
+  - Diff shows:
+    - `pkg/engine/zones.go`: renamed `deployedTo` to `zoneMatches` and updated doc comment.
+    - `pkg/engine/filter.go`: updated call to `zoneMatches`.
+    - `pkg/engine/trigger.go`: updated call to `zoneMatches`.
+    - `pkg/engine/doc.go`: updated package doc comment across 5 sections to document `couldDoNothing`, `Decision.Source` / `DecisionRecord.Source` / `askFor`, `zoneMatches`, `StackLabel`, `shownCard`, `SourceCard`, and `Modifier` / `Duration`.
+  - Reuse: pure rename and comment docs update; no new shapes.
+  - Acceptance cases verified:
+    - Case 1: `git -C W grep -n deployedTo -- pkg cmd` printed nothing (exit 1).
+    - Case 2: `git -C W grep -n zoneMatches -- pkg cmd` printed exactly five lines across `pkg/engine/doc.go:91`, `pkg/engine/filter.go:152`, `pkg/engine/trigger.go:146`, `pkg/engine/zones.go:256`, `pkg/engine/zones.go:259`.
+    - Case 3: `git -C W grep -n -e couldDoNothing -e Decision.Source -e StackLabel -e SourceCard -e askFor -e "Modifier list" -- pkg/engine/doc.go` printed exactly eight lines (31, 35, 36, 94, 97, 98, 107, 111).
+    - Case 4: `go -C W tool task sim-compare -- autoloop/m2-wave-f.3` reported `[PASS] starter and stress sims match autoloop/m2-wave-f.3 byte for byte, exit codes included`.
+    - Case 5: `git -C W diff autoloop/m2-wave-f.3 --numstat -- pkg cmd docs` reported `17 6 pkg/engine/doc.go`, `1 1 pkg/engine/filter.go`, `1 1 pkg/engine/trigger.go`, `4 3 pkg/engine/zones.go`.
+    - Case 6: `go -C W run ./cmd/cardtown lint fences` passed (exit 0).
+    - Case 7: `git -C W diff autoloop/m2-wave-f.3 --stat` listed only the four code files and the task file.
+    - Case 8: `gofmt -l W/cmd W/pkg` clean; `go -C W tool task check` passed; `go -C W tool task sim` passed (200/200 games clean, all invariants holding).
+  - Status set to `review`. Ready for lead review.
