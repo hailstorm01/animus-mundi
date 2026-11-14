@@ -4,7 +4,7 @@ title: "Decisions name their source card: Decision.Source, the askFor scope, and
 kind: harness
 tier: flash
 wave: F.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.2/T-0233-decision-source
 depends_on: [T-0232]
 claims: [field:Decision.Source, field:Game.asking, func:Game.askFor, func:Game.shownCard, func:Game.SourceCard]
