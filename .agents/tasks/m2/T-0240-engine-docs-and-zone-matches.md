@@ -4,7 +4,7 @@ title: "`doc.go` says what waves E to F.2 built, and `deployedTo` becomes `zoneM
 kind: harness
 tier: flash
 wave: F.3
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.3/T-0240-engine-docs-and-zone-matches
 depends_on: [T-0239]
 claims: [func:zoneMatches, doc:pkg/engine/doc.go]
