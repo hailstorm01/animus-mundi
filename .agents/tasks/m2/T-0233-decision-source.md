@@ -4,7 +4,7 @@ title: "Decisions name their source card: Decision.Source, the askFor scope, and
 kind: harness
 tier: flash
 wave: F.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.2/T-0233-decision-source
 depends_on: [T-0232]
 claims: [field:Decision.Source, field:Game.asking, func:Game.askFor, func:Game.shownCard, func:Game.SourceCard]
@@ -286,10 +286,34 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/decision_source_test.go` (new; the `test(T-0233)` commit only)
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run, session 1): written for #149 (a) against bcb41fa (the run branch's base; nothing on `main` to sync). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because every edit and the whole test file are exact and were dry-run. #149 is split under D2.4: T-0234 (triggers and resolution, `DecisionRecord.Source`) and T-0235 (the play screen) are `queued`, with board rows and task files in this commit. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. #152's trigger fired (its outcome reads `Status: applied: FRD 01 v3.25`), so it is `open`, after #151 as its row says. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (T-0233): implemented directive #149 (a).
+  - Status moved to `review`.
+  - Added `pkg/engine/decision_source_test.go` and verified Acceptance Case 1 (`go -C W test ./pkg/engine -run TestDecisionSource` fails to build with `d.Source undefined`) prior to committing `test(T-0233)`.
+  - Implemented Edits 1-5:
+    - Added `Source *Card` field to `Decision` in `pkg/engine/choice.go`.
+    - Added `askFor` scope manager and stamped `d.Source = g.asking` when nil in `g.choose` (`pkg/engine/choice.go`).
+    - Added `asking *Card` field to `Game` struct (`pkg/engine/state.go`).
+    - Added `defer g.askFor(g.shownCard(pl.source, pl.inst))()` in `g.declare`, and added `shownCard` and `SourceCard` methods (`pkg/engine/placement.go`).
+    - Updated `stackView` in `pkg/view/view.go` to use `g.SourceCard(it)` instead of duplicating face-down Scratch logic.
+  - Verification results:
+    - Case 1: `go -C W test ./pkg/engine -run TestDecisionSource` failed to build with `d.Source undefined` before edits.
+    - Case 2 & 3: `go -C W test ./pkg/engine -run TestDecisionSource_` passed (1.050s).
+    - Case 4: `go -C W test ./pkg/engine -run TestSourceCard` passed (1.049s).
+    - Case 5: `git -C W grep -n -F "g.Asset(it.Source)" -- pkg/view/view.go` returned no matches (exit code 1); `git -C W grep -n -F "g.SourceCard(it)" -- pkg/view/view.go` returned `pkg/view/view.go:202:` (exit code 0).
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-f.2` returned `[PASS] starter and stress sims match autoloop/m2-wave-f.2 byte for byte, exit codes included` (exit code 0).
+    - Case 7: `git -C W diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` printed exactly:
+      19	0	pkg/engine/choice.go
+      141	0	pkg/engine/decision_source_test.go
+      24	0	pkg/engine/placement.go
+      2	0	pkg/engine/state.go
+      3	6	pkg/view/view.go
+    - Case 8: `go -C W run ./cmd/cardtown lint fences` passed with `[PASS] Package code is free of card names, invalid markers and disallowed imports.` (exit code 0).
+    - Case 9: `git -C W diff autoloop/m2-wave-f.2 --stat` showed only the five files and the task file.
+    - Case 10: `gofmt -l W/pkg` printed nothing; `go -C W tool task check` passed (all tests, vet, fmt, and all linters passed); `go -C W tool task sim` passed (200 starter playouts, all invariants holding).
