@@ -4,7 +4,7 @@ title: "The play screen shows a decision's source card and its rules text, and t
 kind: harness
 tier: flash
 wave: F.2
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-f.2/T-0235-play-screen-source
 depends_on: [T-0234]
 claims: [func:sourceLine, func:stackLine]
