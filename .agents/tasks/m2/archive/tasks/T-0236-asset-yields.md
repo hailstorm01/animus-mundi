@@ -4,7 +4,7 @@ title: "Battlefield assets show their resource yields: AssetView.ReqYield and Ta
 kind: harness
 tier: flash
 wave: F.2
-status: review
+status: done
 branch: m2/autoloop-wave-f.2/T-0236-asset-yields
 depends_on: [T-0235]
 claims: [field:view.AssetView.ReqYield, field:view.AssetView.TacYield]
@@ -272,3 +272,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `git diff autoloop/m2-wave-f.2 --stat` listed only the 4 code/test files and this task file.
     - Case 9: `gofmt -l cmd pkg` clean; `go tool task check` passed (vet, all tests, linter dispatch clean); `go tool task sim` clean (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
   - Ready for review.
+- 2026-11-14, lead-architect (wave F.2 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.2` as 3dca647. Flash run `56d19709-64af-460f-985f-e79b570adbd8`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.2...m2/autoloop-wave-f.2/T-0236-asset-yields` (07cd58c):
+  - Scope: the two Allowed non-test files, the two new test files and this file. The `test(T-0236)` commit (392f35b) holds only the two test files, whose blobs (19a4195, 3d53068) are this task's; the implementation commit (d731d06) holds only `view.go` and `play_screen.go`, whose blobs (14c01f3, 896f84e) are the lead's dry run's. No earlier test changed. The tests failed first: re-run at 392f35b by the reviewer, both packages fail to build on the missing `ReqYield` field.
+  - Fences and placement: no card name in package code; the field sits in `pkg/view`, the formatting in `cmd/cardtown`, and `pkg/engine` doesn't change. Reuse: the view reads the printed card's fields through `Printed()`, as Generate Resources does; no rule is copied.
+  - Hidden information: a face-down asset's yields are the Scratch face's (`TestView_AssetShowsItsPrintedYields` (b)), and the `viewtest` leak tests pass.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l cmd pkg` clean; `go test ./pkg/view/... ./cmd/cardtown` ok; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.2` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable; `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` is case 6's four lines.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #150 is `applied` (T-0236) and moves to the directive archive.
