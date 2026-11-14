@@ -4,7 +4,7 @@ title: "Triggers and resolutions name their source card, and the decision record
 kind: harness
 tier: flash
 wave: F.2
-status: in-progress
+status: review
 branch: m2/autoloop-wave-f.2/T-0234-trigger-and-resolution-source
 depends_on: [T-0233]
 claims: [func:Game.placeTrigger, field:DecisionRecord.Source]
@@ -389,11 +389,12 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/eventlog/replay_source_test.go` (new; the `test(T-0234)` commit only)
 
 ## Done When
-- [ ] Cases 1-12 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-12 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-f.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-14, lead-architect (wave F.2 run, session 1): queued stub, split off T-0233 under D2.4 (#149 as a whole is about ten non-test files). Next after T-0233; T-0235 (the play screen) follows it.
 - 2026-11-14, lead-architect (wave F.2 run, session 2): written out in full against 5dfa8e4 for #149 (b). Nothing on `main` to sync (`git log autoloop/m2-wave-f.2..main` is empty). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because every edit and both test files are exact and were dry-run. The stub's replacement question is decided above (Inputs, "The replacement choice"): `replace.go` doesn't change. The stub listed "a new test file"; it is two, one per package, and `pkg/eventlog/replay.go` joins so that a replay compares the new field (four non-test files, within D2.4). Reuse search (D2.3): the face a trigger shows is T-0233's `shownCard`, and the resolution scope is in the one `runSteps` every resolution shares, so there is no second copy. Every command here is on the headless allow-list: one per line, no pipes, no `$`, no unquoted parentheses. Waiting directives checked: #6, #7 (mode `serial`), #15 (no turn-boundary hook), #71, #91 (2), #106, #120, #141 (3), #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-14, kernel-engineer (wave F.2, Flash): implemented directive #149 (b). Opened scratch worktree on branch m2/autoloop-wave-f.2/T-0234-trigger-and-resolution-source; set status: in-progress (b45ac07). Reused Game.askFor, Game.shownCard and Game.SourceCard from T-0233. Added test files pkg/engine/decision_source_trigger_test.go and pkg/eventlog/replay_source_test.go; verified Acceptance Case 1 failure (order.Source undefined), committed as `test(T-0234): triggers and resolutions name their source card` (72129bb). Implemented Edits 1-4: flushTriggers defers askFor(nil) and delegates placement to placeTrigger(p) which opens askFor(g.shownCard(p.source, p.inst)); runSteps opens askFor(g.SourceCard(r.it)); DecisionRecord gains Source string with json:"source,omitempty" populated in emitDecision; decisionEqual checks a.Source == b.Source. Committed as `feat(engine): triggers and resolutions open the askFor scope; DecisionRecord.Source (T-0234)` (f9575be). Verified Acceptance Cases 1-12: Case 1 pre-edit build failed as expected; Cases 2-6 `go test ./pkg/engine -run TestDecisionSource_` ok; Case 6 `go test ./pkg/eventlog -run TestReplay_DecisionWithAnotherSourceDiverges` ok; Case 7 `go test ./pkg/engine -run TestSourceCard` ok and `go test ./pkg/eventlog` ok; Case 8 `go tool task sim-compare -- autoloop/m2-wave-f.2` [PASS]; Case 9 `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` exactly 6 lines with identical counts; Case 10 `cardtown lint fences` [PASS] exit 0; Case 11 `git diff autoloop/m2-wave-f.2 --stat` 7 files (6 code/test + task file); Case 12 `gofmt -l pkg` clean, `go tool task check` pass (exit 0), `go tool task sim` pass (200 games clean, P0 63.5% / P1 35.0% / draws 1.5%). Ready for review.
