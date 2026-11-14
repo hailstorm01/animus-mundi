@@ -51,7 +51,10 @@ func (g *Game) resolveAbility(it *StackItem) {
 
 // runSteps runs the steps of r's item in order, recording how many things each
 // did. A resolving ability and an inline replacement (replace.go) share it.
+// Every decision a step asks names the item's source card (Decision.Source,
+// SourceCard), a replacement choice in a kill step's window included.
 func (g *Game) runSteps(r *resolution) {
+	defer g.askFor(g.SourceCard(r.it))()
 	for i, st := range r.it.Effect.Steps {
 		n := 0
 		if g.stepRuns(r, i, st) {

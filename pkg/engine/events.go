@@ -25,6 +25,7 @@ type DecisionRecord struct {
 	Picks   []int    `json:"picks"`            // indexes into Options, as applied
 	How     string   `json:"how"`              // "answer", "auto" (fast path), "timeout" (fallback), "invalid" (fallback after an invalid answer)
 	Hidden  bool     `json:"hidden,omitempty"` // Decision.Hidden: a seat's view keeps the options and picks from the other seat
+	Source  string   `json:"source,omitempty"` // Decision.Source's name; "" for a decision with no source
 }
 
 // MatchStart is the first event of a game.
@@ -132,6 +133,9 @@ func (g *Game) emitDecision(d Decision, picks []int, how string) {
 	}
 	if rec.Picks == nil {
 		rec.Picks = []int{}
+	}
+	if d.Source != nil {
+		rec.Source = d.Source.Name
 	}
 	for i, o := range d.Options {
 		rec.Options[i], rec.Refs[i] = o.Label, o.Ref
