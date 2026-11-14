@@ -25,7 +25,7 @@ T2, exhaust: Return this structure to its owner's hand.","0","7","2","1","RARE",
 "Tempest City Ray","STRUCTURE","CONCORDIA","Organic, Tempest","5","0","MAIN_THEATER","T2, exhaust: Move chosen opposing unit to Reserves.","0","8","1","2","RARE","false"
 "Gemstone Titan","UNIT","CONCORDIA","Forge, Elemental","6","0","RESERVES","When this unit deploys, kill chosen opposing structure with current Health less than this unit's power.","6","6","2","2","UNCOMMON","false"
 "Samsara, Living Tempest","UNIT","CONCORDIA","Elemental, Tempest","6","0","MAIN_THEATER","Whenever this unit attacks, look at the top 2 cards of your deck. Put one into your hand and the other into your discard pile. If the card put into your discard pile this way was a maneuver card, deal 2 damage to chosen asset.","6","7","0","2","MYTHIC","false"
-"Stardust Colossus","UNIT","CONCORDIA","Forge, Giant, Construct","6","0","RESERVES","Whenever this unit deploys or attacks, return up to one chosen card from your discard pile to your hand.","6","7","2","2","RARE","false"
+"Stardust Colossus","UNIT","CONCORDIA","Forge, Giant, Construct","6","0","RESERVES","Whenever this unit deploys or attacks, you may return chosen card from your discard pile to your hand.","6","7","2","2","RARE","false"
 "Dread Manifestation","UNIT","CONCORDIA","Spirit, Dread","7","0","MAIN_THEATER","Whenever this unit attacks and kills another unit, you may move chosen unit in the Main Theater to its controller's Reserves.
 Opposing units in the same zone have -2 power.","7","8","0","0","MYTHIC","false"
 "Swirling Dustdevil","UNIT","CONCORDIA","Elemental","8","0","RESERVES","This unit costs R1 less to deploy for each maneuver card in your discard pile.","6","5","2","2","COMMON","false"
