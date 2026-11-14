@@ -46,11 +46,35 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 // chosen and filled into a stack item of this kind, the item goes on the stack,
 // and the costs are paid (FR-TRN-003, FR-TRN-003a, FR-ACT-001).
 func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
+	defer g.askFor(g.shownCard(pl.source, pl.inst))()
 	pl.discards = g.chooseCostDiscards(pl)
 	item := pl.stackItem(kind)
 	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
 	g.push(item)
 	g.payCosts(pl)
+}
+
+// shownCard is the card that a placement or a stack item with source asset ID
+// source and card instance inst shows as its source: the source asset's printed
+// face while it is on the battlefield (the Scratch face if face-down,
+// FR-ZON-005), else inst's card (a card being deployed or played, or a card in
+// a discard pile), else nil. Decision.Source and SourceCard both read it.
+func (g *Game) shownCard(source int, inst *Instance) *Card {
+	if a := g.Asset(source); source != 0 && a != nil {
+		return a.Printed()
+	}
+	if inst != nil {
+		return inst.Card
+	}
+	return nil
+}
+
+// SourceCard is the card stack item it shows as its source, as both seats see
+// it (shownCard): its Source asset's printed face while that asset is on the
+// battlefield, else its Inst's card (a Deploy's or a Maneuver's own card, or an
+// ability's card that has left the battlefield), else nil.
+func (g *Game) SourceCard(it *StackItem) *Card {
+	return g.shownCard(it.Source, it.Inst)
 }
 
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for

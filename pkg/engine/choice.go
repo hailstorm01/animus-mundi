@@ -42,6 +42,12 @@ type Decision struct {
 	Min, Max int  // how many picks a valid answer has
 	Hidden   bool // the choice inspects hidden cards in a Hand or Deck (no fast path, and the play log keeps it from the other seat)
 	Repeats  bool // the same option may be picked more than once (FR-MOD-001 §5)
+	// Source is the card whose Deploy, Maneuver or ability is being placed or
+	// resolved as d is asked, as both seats see it (FR-ZON-005: the Scratch
+	// face for a face-down asset), so a client can show its rules text; nil for
+	// a decision outside any, such as the mulligan or the trigger order. choose
+	// fills it in from the scope askFor opened.
+	Source *Card
 }
 
 // Answer is a Chooser's reply: indexes into Decision.Options, or a timeout.
@@ -94,11 +100,24 @@ func (d Decision) soleAnswer() ([]int, bool) {
 	return nil, false
 }
 
+// askFor opens a scope in which every decision choose asks names c as its
+// Source, and returns the func that closes it, restoring the source before it.
+// Scopes nest: a free deploy declared while an ability resolves names the
+// deployed card until its declaration ends. A nil c opens a scope with no source.
+func (g *Game) askFor(c *Card) (restore func()) {
+	prev := g.asking
+	g.asking = c
+	return func() { g.asking = prev }
+}
+
 // choose returns the picks for d (indexes into d.Options). It takes the
 // single-option fast path itself, otherwise asks the deciding seat's Chooser,
 // and applies the FR-MOD-001 §6 fallback on a nil chooser, a timeout or an
 // invalid answer. With no valid answer at all it returns no picks and asks no one.
 func (g *Game) choose(d Decision) []int {
+	if d.Source == nil {
+		d.Source = g.asking
+	}
 	if !d.satisfiable() {
 		return nil
 	}

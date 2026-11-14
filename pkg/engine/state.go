@@ -145,6 +145,8 @@ type Game struct {
 
 	pending []pendingTrigger // triggers fired while an item resolves, awaiting the flush (FR-TRG-004)
 
+	asking *Card // the source card the decisions asked now name (Decision.Source, askFor); nil outside any
+
 	// firings counts the firings of limited triggers (Trigger.MaxPerTurn), per asset, per
 	// trigger and per turn. A new turn number is a fresh count, which is how the limits
 	// reset every turn (FR-TRN-001). Not part of snapshots or events.

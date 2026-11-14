@@ -198,12 +198,9 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 		s.Target = it.Target
 	case engine.StackAbility:
 		s.Keyword = it.Keyword.String()
-		// A face-down asset has no abilities today; if one ever has, its
-		// item still names only the Scratch face.
-		if a := g.Asset(it.Source); a != nil && a.FaceDown {
-			s.Card = a.Printed().Name
-		} else if it.Inst != nil {
-			s.Card = it.Inst.Card.Name
+		// A face-down source names only the Scratch face (Game.SourceCard).
+		if c := g.SourceCard(it); c != nil {
+			s.Card = c.Name
 		}
 		s.Chosen, s.ChosenCards = chosenTargets(g, it)
 	case engine.StackManeuver:
