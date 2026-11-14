@@ -4,7 +4,7 @@ title: "A single-pick prompt lists identical options once (directive #151, wave 
 kind: harness
 tier: flash
 wave: F.2
-status: review
+status: done
 branch: m2/autoloop-wave-f.2/T-0237-distinct-single-picks
 depends_on: []
 claims: [func:shownOptions]
@@ -223,3 +223,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     7. Fences: `go run ./cmd/cardtown lint fences` printed `[PASS] Package code is free of card names, invalid markers and disallowed imports.` and exited 0.
     8. Nothing else changed: `git diff autoloop/m2-wave-f.2 --stat` showed only `play_distinct_test.go`, `play_input.go`, and this task file.
     9. `gofmt -l cmd` clean (no output); `go tool task check` passed (all tests, vet, fmt, and cardtown lint --all passed); `go tool task sim` exit 0 (200 games, P0 63.5% / P1 35.0% / draws 1.5%).
+- 2026-11-14, lead-architect (wave F.2 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-f.2` as 18b6b0a. Flash run `6a65a52b-f750-46d0-88cf-6bde6057c76c`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-f.2...m2/autoloop-wave-f.2/T-0237-distinct-single-picks` (acfd0db):
+  - Scope: the one Allowed non-test file, the new test file and this file. The `test(T-0237)` commit (7eec4c0) holds only `play_distinct_test.go`, blob 34e22e2, the file in this task; the implementation commit (adca375) holds only `play_input.go`, blob d725f6f, the lead's dry run's. No earlier test changed. The tests failed first: re-run at 7eec4c0 by the reviewer, every subtest fails but `(c)` and `(d)`, which pass.
+  - Fences and placement: no card name in package code; the helper sits in `cmd/cardtown` beside `terminalChooser`, and `pkg/engine` and `pkg/view` don't change. Reuse: as Inputs says; nothing copied.
+  - Rules fidelity: display only; every listed number answers a real option, which `d.Valid` still checks, and a decision with `Max` above 1 lists every option, so no choice is lost.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l cmd pkg` clean; `go test ./cmd/cardtown ./pkg/view/...` ok; `cardtown lint fences` exit 0; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-f.2` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 63.5% / P1 35.0% / draws 1.5%, P0 50/50 and P1 50/50 main cards executable; `git diff autoloop/m2-wave-f.2 --numstat -- pkg cmd` is case 6's two lines.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #151 is `applied` (T-0237) and moves to the directive archive.
