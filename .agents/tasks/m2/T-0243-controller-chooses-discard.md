@@ -4,7 +4,7 @@ title: A discard chosen by the ability's controller from an opponent's revealed 
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0243-controller-chooses-discard
 depends_on: []
 claims: [shape:controller-chosen discard (ability.Step.ControllerChooses on OpDiscard; chooseDiscards takes the chooser), shape:hand timeout ranks the hand that holds the options (handPicks, SVY-R50)]
@@ -67,3 +67,4 @@ In a new file `pkg/engine/revealed_hand_test.go`, with a synthetic card whose ab
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 4): synced `main` into the run branch (b061faf: directive #156 and FRD 01 v3.27, `SVY-R50`; `BOARD.md` header conflict resolved as `Last directive #156`, `Last task T-0242`, row 156 added). #156's trigger fired (the outcome reads `Status: applied: FRD 01 v3.27`), so it is `open: before T-0243`. Written for *Drifting Concept*'s shape (design note 6m, "From wave B"); the card is T-0244 (`queued`), split under the D2 size rule. Design note Open Question 23 marked answered. Set to `tests`.
+- 2026-11-15 rules-test-author: wrote `pkg/engine/revealed_hand_test.go` (7 tests): `TestFR_MOD_001_ControllerChoosesFromOpponentsHand`, `TestFR_MOD_001_RevealedHandTimeoutTakesMostRecent`, `TestFR_MOD_001_RevealedHandInvalidAnswerTakesMostRecent`, `TestFR_MOD_001_RevealedOneCardHandIsAsked`, `TestFR_MOD_001_RevealedEmptyHandAsksNothing`, `TestFR_MOD_001_RevealedHandDiscardFiresOwnersTrigger` (the first two plus the invalid-answer case cover directive #156 (a); the others (b), (c), (d)). Helpers requested: none (small builders live in the test file). `go vet` fails only on the missing `ability.Step.ControllerChooses` field, the shape the engineer adds. `cardtown lint rules` passes. Cases left out: none.
