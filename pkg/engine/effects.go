@@ -261,12 +261,17 @@ func (g *Game) stepKill(r *resolution, st ability.Step) int {
 	return g.kill(g.stepAssets(r, st))
 }
 
-// stepDiscard has each step player discard Amount cards of their choice from
-// their own hand (discardFromHand). It returns how many cards they discarded.
+// stepDiscard has each step player discard Amount cards from their own hand
+// (discardFromHand): of their own choice, or with st.ControllerChooses of the
+// ability controller's choice. It returns how many cards they discarded.
 func (g *Game) stepDiscard(r *resolution, st ability.Step) int {
 	n, total := g.value(r.it.Source, st.Amount, nil), 0
 	for _, pid := range stepPlayers(r.it, st) {
-		total += len(g.discardFromHand(pid, n, false))
+		chooser := pid
+		if st.ControllerChooses {
+			chooser = r.it.Controller
+		}
+		total += len(g.discardFromHand(chooser, pid, n, false))
 	}
 	return total
 }
