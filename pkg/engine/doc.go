@@ -33,7 +33,7 @@
 //     (every step acts on a target slot, and no slot has a legal entity) is
 //     neither asked nor placed (couldDoNothing, SVY-R48).
 //   - Per-seat Chooser decisions with timeout fallbacks (FR-MOD-001), including
-//     choosing from your own hand (DecideHand, SVY-R16) and from your own deck (DecideSearch, SVY-R37, SVY-R38), the zone of a free deploy (DecideZone, SVY-R43) and a look at the top cards of your own deck (DecideLook, SVY-R41–SVY-R43).
+//     choosing from a hand, your own or an opponent's revealed one (DecideHand, SVY-R16, SVY-R50), and from your own deck (DecideSearch, SVY-R37, SVY-R38), the zone of a free deploy (DecideZone, SVY-R43) and a look at the top cards of your own deck (DecideLook, SVY-R41–SVY-R43).
 //     Each decision names the card whose Deploy, Maneuver or ability is being
 //     placed or resolved as it is asked, as both seats see it (Decision.Source,
 //     FR-ZON-005), from the scope askFor opens, and its match record carries

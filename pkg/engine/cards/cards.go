@@ -17,7 +17,6 @@ var NotYetExecutable = []string{
 	"Animoceps Stalk",
 	"Blindside",
 	"Brigand Highlander",
-	"Drifting Concept",
 	"Hammerhand Bivouac",
 	"Hulking Incongruity",
 	"Melodic Pummeler",

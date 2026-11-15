@@ -254,6 +254,26 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Drifting Concept": {
+		Text: []string{
+			"When this unit deploys, chosen opponent reveals their hand. You choose a card from it. That player discards that card.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:                ability.OpDiscard,
+							Amount:            ability.Value{N: 1},
+							Subject:           ability.SubjectOpponents,
+							ControllerChooses: true,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Ensnaring Mist": {
 		Text: []string{
 			"Move chosen unit to its controller's Reserves.",
