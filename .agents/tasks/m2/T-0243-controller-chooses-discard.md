@@ -4,7 +4,7 @@ title: A discard chosen by the ability's controller from an opponent's revealed 
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0243-controller-chooses-discard
 depends_on: []
 claims: [shape:controller-chosen discard (ability.Step.ControllerChooses on OpDiscard; chooseDiscards takes the chooser), shape:hand timeout ranks the hand that holds the options (handPicks, SVY-R50)]
