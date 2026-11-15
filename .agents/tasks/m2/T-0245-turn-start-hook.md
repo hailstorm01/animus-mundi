@@ -4,7 +4,7 @@ title: A start-of-turn trigger that resolves in the Ready Phase, before the Draw
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0245-turn-start-hook
 depends_on: []
 claims: [hook:turn-start (ability.HookTurnStart; fireTurnStart fires it for every battlefield asset), shape:start-of-turn trigger resolution (beginTurn places and resolves the Ready Phase's triggers before the Draw Phase, directive #15 (1))]
@@ -64,3 +64,4 @@ In a new file `pkg/engine/turn_start_trigger_test.go`, with synthetic cards: a s
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 6): written for *Hammerhand Bivouac*'s hook (design note 6m, "From wave B"). FRD 01 doesn't settle when an untargeted pool is split or what a timeout does with one, so the pool and the card wait for the ruling question committed on `main` (f8b574d, design note Open Question 24). The hook doesn't depend on it. Directive #15's trigger fired with this task: its part (1), the Ready Phase, is applied here; its draw and End Phase parts stay `waiting` on its row. Set to `tests`.
+- 2026-11-15 rules-test-author: wrote pkg/engine/turn_start_trigger_test.go: TestFR_TRN_001_StartOfTurnTriggerResolvesBeforeDraw, TestFR_TRN_001_StartOfYourTurnOnly, TestFR_TRN_001_StartOfTurnTriggerAfterReady, TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw, TestFR_TRG_003_StartOfTurnTriggersInAPNAPOrder, TestFR_TRG_003_TwoStartOfTurnTriggersAreOrdered, TestFR_TRN_001_MatchEndsDuringStartOfTurn. Helpers requested: none (small builders startTrigger, startSteps, startStructure stay in the test file). `go vet` fails only on the undefined `ability.HookTurnStart` the engineer adds. `cardtown lint rules` passes. Nothing left out. The AfterReady test installs its own chooser via `s.g.choosers[0]` to read the unit's state at the moment the target is asked.
