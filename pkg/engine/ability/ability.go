@@ -146,6 +146,7 @@ const (
 	HookCombatKill                        // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
 	HookMoves                             // this unit moved to a new battlefield zone, by March or by a step that moves it (OpMoveZone); entering the battlefield, by any deploy, is not moving (SVY-R1, FR-ZON-002)
 	HookDiscardedFromHand                 // this card was put into its owner's discard pile from their hand, by a discard step or a discard cost (FR-ZON-004); fires only triggers with ActiveZone ZoneDiscard
+	HookTurnStart                         // a turn began: fired in the Ready Phase after the active player's assets ready, for every battlefield asset; "at the start of your turn" is this hook with Turn: TurnYours (FR-TRN-001)
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.

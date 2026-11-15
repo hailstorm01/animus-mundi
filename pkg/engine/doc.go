@@ -17,7 +17,8 @@
 //     (cardtown lint fences).
 //   - Triggered abilities on self hooks (HookDeploy, HookKilled, HookAttacks,
 //     HookDamaged, HookExhausted, HookCombatKill, HookMoves,
-//     HookDiscardedFromHand) run through a pending-trigger buffer, in APNAP
+//     HookDiscardedFromHand, HookTurnStart, which resolves in the Ready Phase before the
+//     Draw Phase, FR-TRN-001) run through a pending-trigger buffer, in APNAP
 //     order with cascades (FR-TRG-002 to FR-TRG-004). A trigger may be
 //     optional, and its effects may choose targets ("up to N", "other", a zone)
 //     that are verified when it is placed and again when it resolves
