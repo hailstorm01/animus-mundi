@@ -31,5 +31,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0241 | A trigger on another asset's attack, and "that attacking unit" as a step subject: `Trigger.Watches`, `SubjectWatched` (wave H shape, sonnet; *Blind Defile*'s shape) | tests |
 | T-0242 | *Blind Defile* (wave H card, flash; waits for T-0241 and ruling question `2026-11-15-wave-h-blind-defile-kill-both`) | queued |
