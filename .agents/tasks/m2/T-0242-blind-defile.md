@@ -4,7 +4,7 @@ title: "Blind Defile: whenever an opposing unit attacks, you may kill it; if you
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0242-blind-defile
 depends_on: [T-0241]
 claims: [card:Blind Defile]
@@ -62,12 +62,13 @@ New tests go in `pkg/engine/cards_path_defile_test.go`. Use the real card (`s.ca
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "BlindDefile|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] The listed tests pass: `go test ./pkg/engine -run "BlindDefile|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 1): split off T-0241 under the D2 size rule; `queued` on it and on the ruling question committed on `main` (07bd2da).
 - 2026-11-15 lead-architect (wave H run, session 2): synced `main` into the run branch (1f6f08d: #155 and `SVY-R49`; only the `Last directive` and `Last task` lines conflicted). The outcome reads `applied`, so #155 is `open: before T-0242`, and this task applies it. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 1f6f08d, and marked design note Open Question 22 answered in the same commit. Status `tests`.
 - 2026-11-15 rules-test-author: wrote `pkg/engine/cards_path_defile_test.go`: `TestCard_BlindDefile_AcceptedKillsItselfAndTheAttacker`, `TestCard_BlindDefile_DeclinedOrTimedOutKillsNothing` (subtests Declined, TimedOut), `TestCard_BlindDefile_TwoDefilesBothAccepted`, `TestCard_BlindDefile_DefileGoneBeforeResolutionKillsNothing`, `TestCard_BlindDefile_ReplacedSelfKillStillKillsTheAttacker`. Helpers requested: none. Cases left out: none. Before the implementation the Accepted, TwoDefiles, DefileGone and Replaced tests fail because the card has no ability; the Declined/TimedOut subtests pass already (the card does nothing), and stay as the guard for the optional question's no-effect path. The two-Defiles test answers by decision kind, so it does not pin when DecideOrder is asked relative to the optional questions. Status `tests-review`.
 - 2026-11-15 lead-architect (D4): tests approved. Each checks the outcome `SVY-R49` and #155 (a)–(e) give: (a) both die and no combat damage; (b) declined and timed out place nothing; (c) two Defiles, both die, one `DecideOrder`, one destroy event for the attacker; (d) the Defile gone before resolution leaves the attacker alive and its 3 damage dealt; (e) a replaced self-kill still kills the attacker (`SVY-R15`). Helpers checked: `eventsOfKind` and `EventDestroy` (`"destroy"`) exist, and a `DecideOrder` answer is a pick order. Status `ready`, dispatched to Flash.
+- 2026-11-15 kernel-engineer: implemented Blind Defile in `pkg/engine/cards/path.go` using HookAttacks, Watches: true, Watch: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}, Optional: true, and steps OpKill SubjectSelf followed by OpKill SubjectWatched with IfDone: true. Removed "Blind Defile" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Updated trigger-watching documentation comments in `pkg/engine/doc.go`. Reused existing shapes (HookAttacks, OpKill, SubjectSelf, SubjectWatched, IfDone, Watches, Watch). Ran `go test ./pkg/engine -run "BlindDefile|TestDefs"` (all pass), `go tool task check` (gofmt, vet, all tests, lint --all passed exit 0), and `go tool task sim` (200 games, clean termination, all invariants held). Status `review`.
