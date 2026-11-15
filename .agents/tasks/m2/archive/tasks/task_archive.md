@@ -247,3 +247,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0241 | A trigger on another asset's attack, and "that attacking unit" as a step subject: `Trigger.Watches`, `SubjectWatched` (wave H shape, sonnet; *Blind Defile*'s shape) | done |
 | T-0242 | *Blind Defile*: you may kill it; if you do, kill that attacking unit (#155, `SVY-R49`, wave H card, flash) | done |
 | T-0243 | A discard chosen by the ability's controller from an opponent's revealed hand: `Step.ControllerChooses`, `handPicks` ranks the hand that holds the options (#156, `SVY-R50`, wave H shape, sonnet; *Drifting Concept*'s shape) | done |
+| T-0244 | *Drifting Concept*: you choose a card from the opponent's revealed hand and they discard it (#156, `SVY-R50`, wave H card, flash) | done |

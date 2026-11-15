@@ -4,7 +4,7 @@ title: "Drifting Concept: when it deploys, you choose a card from the opponent's
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0244-drifting-concept
 depends_on: [T-0243]
 claims: [card:Drifting Concept]
@@ -17,7 +17,7 @@ requirements: [FR-MOD-001, FR-KWD-002g]
 
 ## Inputs
 - Card text: `data/cards/units-and-structures-animus.csv:19` (Animus unit, Spirit, R4 T0, Reserves, 3/4, yields 1/1, Ethereal).
-- Board directive #156 (`SVY-R50`, `open: before T-0244`), from the [outcome](../../../docs/design/outcomes/2026-11-15-wave-h-drifting-concept-revealed-hand-timeout.md) (`Status: applied: FRD 01 v3.27`). T-0243 (merge a0cd951) applied its kernel part, with tests (a)–(d) on a synthetic card in `pkg/engine/revealed_hand_test.go`. This task adds the real card, its card tests and the `doc.go:36` comment.
+- Board directive #156 (`SVY-R50`, `open: before T-0244`), from the [outcome](../../../../../docs/design/outcomes/2026-11-15-wave-h-drifting-concept-revealed-hand-timeout.md) (`Status: applied: FRD 01 v3.27`). T-0243 (merge a0cd951) applied its kernel part, with tests (a)–(d) on a synthetic card in `pkg/engine/revealed_hand_test.go`. This task adds the real card, its card tests and the `doc.go:36` comment.
 - FRD 01 v3.27, `FR-MOD-001` (from line 420):
   - §1 (line 421), §3 (line 424): choosing from an opponent's revealed hand is an inspection, so it is always asked, even with one card.
   - §6 *Choosing Cards from a Hand* (line 434, `SVY-R16`, `SVY-R50`): a timeout selects the card most recently added to that hand, whoever is choosing.
@@ -60,3 +60,4 @@ New tests go in `pkg/engine/cards_animus_drifting_test.go`. Use the real card (`
 - 2026-11-15 rules-test-author: wrote `pkg/engine/cards_animus_drifting_test.go`: TestCard_DriftingConcept_ControllerChoosesFromOpponentsHand, _TimeoutDiscardsMostRecentlyAdded, _OneCardIsStillAsked, _EmptyHandAsksNothing, _IsEthereal. Helpers requested: none (file-local `dcScene`, `dcDeploy`, `dcWantDiscarded`). Nothing left out. Four tests fail now with "needs rules the kernel does not implement yet"; IsEthereal passes (pins the CSV keyword). `go vet` clean, `cardtown lint rules` PASS. Status `tests-review`.
 - 2026-11-15 lead-architect (D4): tests approved. Each checks what `FR-MOD-001` and #156 give: the controller is asked one `Hidden` `DecideHand` whose options are the opponent's three cards, and the owner nothing (§3); a timeout discards the card most recently added to the opponent's hand (§6, `SVY-R50`, #156 (a)); a one-card hand is still asked (§1, §3, #156 (b)); an empty hand asks nothing and discards nothing (#156 (c)); the real card is Ethereal (`FR-KWD-002g`). Helpers checked: `askedKind` (`pile_trigger_test.go:61`) and `s.reject` (`scenario_test.go:110`) exist. Re-ran: the four rules tests fail with "needs rules the kernel does not implement yet", `IsEthereal` passes. Status `ready`, dispatched to Flash.
 - 2026-11-15 kernel-engineer: added Drifting Concept ability definition to `pkg/engine/cards/animus.go` (alphabetical order) using existing `HookDeploy`, `OpDiscard`, `SubjectOpponents`, and T-0243's `ControllerChooses: true`. Removed Drifting Concept from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Updated `pkg/engine/doc.go:36` comment with `choosing from a hand, your own or an opponent's revealed one (DecideHand, SVY-R16, SVY-R50),`. Verified: `go test ./pkg/engine -run "DriftingConcept|TestDefs"` PASS, `go tool task check` PASS, `go tool task sim` PASS, `go tool task sim-compare -- autoloop/m2-wave-h` PASS (starter and stress sims match byte for byte). Committed implementation as `feat(engine): Drifting Concept executable (T-0244)`. Status `review`.
+- 2026-11-15 lead-architect (D5): approved. The diff after the test commit touches only the three Allowed Files and matches the Shape exactly; no test edited. Re-ran in a review worktree: `go test ./pkg/engine -run "DriftingConcept|TestDefs"` ok, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. Merged into `autoloop/m2-wave-h` (6f7bca3). #156 applied. Status `done`.
