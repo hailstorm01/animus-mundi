@@ -9,3 +9,4 @@
 | # | Date | Task | Status | Merge | Review rounds | Directives added | Sim (starter) | Signal |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1 | 2026-11-15 | T-0241 (watching trigger and `SubjectWatched`, *Blind Defile*'s shape) | done | 4176846 | tests 2 (round 1: the gone-attacker test checked the stack before Step 2 triggers were flushed), code 1 | none | P0 58.5%, P1 39.5%, draws 2.0% (sim-compare byte-identical) | STOP: rules question for T-0242 (*Blind Defile*): do its two kills depend on each other? Run @game-designer (question queued in docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md, on `main` at 07bd2da) |
+| 2 | 2026-11-15 | T-0242 (*Blind Defile*) | done | 0adf9c2 | tests 1, code 1 | none | P0 58.5%, P1 39.5%, draws 2.0% (sim-compare byte-identical) | CONTINUE |

@@ -245,3 +245,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0239 | One function names a stack item: `Game.StackLabel`, `StackView.Label` (#153, wave F.3 harness, flash) | done |
 | T-0240 | `doc.go` says what waves E to F.2 built, and `deployedTo` becomes `zoneMatches` (#154, wave F.3 harness, flash) | done |
 | T-0241 | A trigger on another asset's attack, and "that attacking unit" as a step subject: `Trigger.Watches`, `SubjectWatched` (wave H shape, sonnet; *Blind Defile*'s shape) | done |
+| T-0242 | *Blind Defile*: you may kill it; if you do, kill that attacking unit (#155, `SVY-R49`, wave H card, flash) | done |

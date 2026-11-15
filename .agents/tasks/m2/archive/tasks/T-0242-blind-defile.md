@@ -4,7 +4,7 @@ title: "Blind Defile: whenever an opposing unit attacks, you may kill it; if you
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0242-blind-defile
 depends_on: [T-0241]
 claims: [card:Blind Defile]
@@ -17,7 +17,7 @@ requirements: [FR-CBT-002, FR-TRG-003, FR-TRG-005, FR-TGT-001, FR-MOD-001, FR-RE
 
 ## Inputs
 - Card text: `data/cards/units-and-structures-path.csv:7` (Path structure, Territory, R2 T0, Main Theater, 0/2, yields 0/2), reworded by `SVY-R49` (FRD 01 v3.26, commit 4e35317, merged into the run branch at 1f6f08d).
-- Board directive #155 (`SVY-R49`, `open: before T-0242`), from the [outcome](../../../docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md) (`Status: applied: FRD 01 v3.26`). Its tests (a)–(e) are the tests below.
+- Board directive #155 (`SVY-R49`, `open: before T-0242`), from the [outcome](../../../../../docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md) (`Status: applied: FRD 01 v3.26`). Its tests (a)–(e) are the tests below.
 - FRD 01 v3.26:
   - `FR-TGT-001` *"You May X. If You Do, Y"* (line 394): the self-kill is X, the attacker's kill is Y. If the Defile has left the battlefield before the trigger resolves, X selects nothing and the attacker is not killed. If the attacker has left, the Defile is still killed and Y does nothing (`SVY-R49`).
   - `FR-TRG-005` (line 463): the self-kill is not a cost; it is carried out when the trigger resolves.
@@ -72,3 +72,4 @@ New tests go in `pkg/engine/cards_path_defile_test.go`. Use the real card (`s.ca
 - 2026-11-15 rules-test-author: wrote `pkg/engine/cards_path_defile_test.go`: `TestCard_BlindDefile_AcceptedKillsItselfAndTheAttacker`, `TestCard_BlindDefile_DeclinedOrTimedOutKillsNothing` (subtests Declined, TimedOut), `TestCard_BlindDefile_TwoDefilesBothAccepted`, `TestCard_BlindDefile_DefileGoneBeforeResolutionKillsNothing`, `TestCard_BlindDefile_ReplacedSelfKillStillKillsTheAttacker`. Helpers requested: none. Cases left out: none. Before the implementation the Accepted, TwoDefiles, DefileGone and Replaced tests fail because the card has no ability; the Declined/TimedOut subtests pass already (the card does nothing), and stay as the guard for the optional question's no-effect path. The two-Defiles test answers by decision kind, so it does not pin when DecideOrder is asked relative to the optional questions. Status `tests-review`.
 - 2026-11-15 lead-architect (D4): tests approved. Each checks the outcome `SVY-R49` and #155 (a)–(e) give: (a) both die and no combat damage; (b) declined and timed out place nothing; (c) two Defiles, both die, one `DecideOrder`, one destroy event for the attacker; (d) the Defile gone before resolution leaves the attacker alive and its 3 damage dealt; (e) a replaced self-kill still kills the attacker (`SVY-R15`). Helpers checked: `eventsOfKind` and `EventDestroy` (`"destroy"`) exist, and a `DecideOrder` answer is a pick order. Status `ready`, dispatched to Flash.
 - 2026-11-15 kernel-engineer: implemented Blind Defile in `pkg/engine/cards/path.go` using HookAttacks, Watches: true, Watch: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}, Optional: true, and steps OpKill SubjectSelf followed by OpKill SubjectWatched with IfDone: true. Removed "Blind Defile" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Updated trigger-watching documentation comments in `pkg/engine/doc.go`. Reused existing shapes (HookAttacks, OpKill, SubjectSelf, SubjectWatched, IfDone, Watches, Watch). Ran `go test ./pkg/engine -run "BlindDefile|TestDefs"` (all pass), `go tool task check` (gofmt, vet, all tests, lint --all passed exit 0), and `go tool task sim` (200 games, clean termination, all invariants held). Status `review`.
+- 2026-11-15 lead-architect (D5): approved. The diff after the test commit touches only the three Allowed Files and matches the Shape exactly; no test edited. Re-ran in a review worktree: `go test ./pkg/engine -run "BlindDefile|TestDefs"` ok, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. Merged into `autoloop/m2-wave-h` (0adf9c2). #155 applied. Status `done`.
