@@ -408,6 +408,14 @@ func (g *Game) stepAssets(r *resolution, st ability.Step) []*Asset {
 		if a := g.Asset(r.it.Source); a != nil {
 			return []*Asset{a}
 		}
+	case ability.SubjectWatched:
+		// The asset whose event fired the trigger, if that same asset is still
+		// on the battlefield; not a target (FR-TGT-001, FR-ZON-004).
+		if it := r.it; it.Watched != 0 {
+			if a := g.Asset(it.Watched); a != nil {
+				return []*Asset{a}
+			}
+		}
 	case ability.SubjectAll:
 		var out []*Asset
 		for _, a := range g.assetsByID() {

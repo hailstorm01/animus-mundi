@@ -4,7 +4,7 @@ title: A trigger on another asset's attack, and "that attacking unit" as a step 
 kind: shape
 tier: sonnet
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0241-watch-opposing-attack
 depends_on: []
 claims: [shape:watching trigger (ability.Trigger.Watches and Watch; fireAttacks fires matching watchers), shape:watched-asset subject (ability.SubjectWatched, StackItem.Watched)]
@@ -70,3 +70,4 @@ In a new file `pkg/engine/watch_trigger_test.go`, with synthetic cards: a watche
   The other eight tests match the Tests list and `FR-CBT-002`, `FR-TRG-003`, `FR-TGT-001`, `SVY-R9`, `SVY-R48`.
 - 2026-11-15 rules-test-author: round 1 note 1 fixed: `TestFR_TGT_001_WatchedSubjectGoneDoesNothing` now calls `s.g.flushTriggers()` at the start of the `declareThen` callback, then checks the two stack items and removes the attacker. Nothing else changed. Set to `tests-review`.
 - 2026-11-15 lead-architect (wave H run, session 1): tests reviewed again (b648bc7): note 1 applied, the callback flushes Step 2 triggers first; nothing else changed. Nine tests (one with two subtests) match the Tests list. Set to `ready`.
+- 2026-11-15 kernel-engineer: built. `Trigger.Watches`/`Watch` and `SubjectWatched` (last Subject constant) in ability.go; `StackItem.Watched` in stack.go; `stepAssets` case reads `g.Asset(it.Watched)` (not a target); trigger.go: `pendingTrigger.watched`, `placeTrigger` copies it, `fireAttacks` fires watchers over `g.assetsByID()`. Gates stay in one place: the body of `fireHook` became `fireHookFor(src, hook, watched *Asset)` and `fireHook(src, hook)` calls it with nil, because an existing test (decision_source_trigger_test.go) calls the two-argument `fireHook`. `Watches != (watched != nil)` keeps self hooks and watchers apart; `matchesFilter(src.controller, src.id, t.Watch, watched)` judges the watch. Reused: matchesFilter, bufferTrigger, the flush's APNAP. Ran: the listed tests (ok), `go tool task check` (exit 0), `go tool task sim` (exit 0), `go tool task sim-compare -- autoloop/m2-wave-h` (byte-identical, PASS; its trailing `worktree remove` message is harmless noise). Reviewer: the Aggressive/own-trigger order is unchanged; watchers are buffered after them.

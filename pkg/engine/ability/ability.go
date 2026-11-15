@@ -196,7 +196,13 @@ type Trigger struct {
 	Cornered   bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
 	Optional   bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
 	Keyword    Keyword // the keyword this trigger comes from; zero for a printed ability
-	Effect     Effect
+	// Watches makes the trigger fire on the event of each battlefield asset matching Watch
+	// (judged against the trigger's controller and source when the event happens), never
+	// on its own source's event unless the source matches Watch. False, the zero value, is
+	// a self hook. Read only for HookAttacks so far.
+	Watches bool
+	Watch   Filter
+	Effect  Effect
 
 	// MaxPerTurn limits how often this trigger fires each turn, per asset, so only for a battlefield trigger; no pile trigger prints a limit (FR-TRN-001);
 	// 0 means no limit. A firing whose clauses later fizzle still counts.
@@ -349,6 +355,7 @@ const (
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
 	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
 	SubjectReplaced                  // the asset whose event a replacement replaces (Replacement.Steps only)
+	SubjectWatched                   // the asset whose event fired a watching trigger (Trigger.Watches), if that same asset is still on the battlefield; not a target
 )
 
 // Step applies one primitive.
