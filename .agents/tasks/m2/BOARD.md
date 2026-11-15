@@ -32,4 +32,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0244 | *Drifting Concept* (wave H card; directive #156) | queued |
+| T-0244 | *Drifting Concept* (wave H card; directive #156) | tests |
