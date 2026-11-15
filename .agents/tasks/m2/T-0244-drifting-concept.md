@@ -4,7 +4,7 @@ title: "Drifting Concept: when it deploys, you choose a card from the opponent's
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0244-drifting-concept
 depends_on: [T-0243]
 claims: [card:Drifting Concept]
