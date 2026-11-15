@@ -182,6 +182,23 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Blind Defile": {
+		Text: []string{"Whenever an opposing unit attacks, you may kill this structure. If you do, kill that attacking unit."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:     ability.HookAttacks,
+				Watches:  true,
+				Watch:    ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit},
+				Optional: true,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{Op: ability.OpKill, Subject: ability.SubjectSelf},
+						{Op: ability.OpKill, Subject: ability.SubjectWatched, IfDone: true},
+					},
+				},
+			},
+		},
+	},
 	"Boneyard Amalgam": {
 		Text:          []string{"This unit costs R1 less to deploy for each unit card in your discard pile."},
 		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}},

@@ -15,7 +15,6 @@ var NotYetExecutable = []string{
 	"Animoceps Node",
 	"Animoceps Spore Cloud",
 	"Animoceps Stalk",
-	"Blind Defile",
 	"Blindside",
 	"Brigand Highlander",
 	"Drifting Concept",
