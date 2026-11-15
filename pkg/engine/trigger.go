@@ -18,6 +18,8 @@ type pendingTrigger struct {
 	// awaits is an asset this trigger waits on: placed only if destroyAll destroys
 	// it before the flush (SVY-R19); 0 for none.
 	awaits int
+	// watched is the asset whose event fired this watching trigger; 0 for a self hook.
+	watched int
 }
 
 // sourcePos is where a trigger's source stood when it fired: its zone's rank
@@ -134,13 +136,24 @@ func (g *Game) confirmDestroyed(id int) {
 // It returns the entries it added, a slice of the buffer, so a caller can set a
 // field on each before the flush; the other callers ignore it.
 func (g *Game) fireHook(src triggerSource, hook ability.Hook) []pendingTrigger {
+	return g.fireHookFor(src, hook, nil)
+}
+
+// fireHookFor is fireHook for an event of watched: nil for src's own event.
+// With watched nil it fires src's self-hook triggers; with watched set it fires
+// only src's watching triggers (Trigger.Watches) whose Watch matches watched,
+// judged against src's controller and source, and records watched on each.
+func (g *Game) fireHookFor(src triggerSource, hook ability.Hook, watched *Asset) []pendingTrigger {
 	n := len(g.pending)
 	def := src.card.Ability
 	if def == nil {
 		return nil
 	}
 	for i, t := range def.Triggers {
-		if t.Hook != hook || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
+		if t.Hook != hook || t.Watches != (watched != nil) || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
+			continue
+		}
+		if watched != nil && !g.matchesFilter(src.controller, src.id, t.Watch, watched) {
 			continue
 		}
 		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !zoneMatches(src.zone, t.ToZone) {
@@ -163,7 +176,13 @@ func (g *Game) fireHook(src triggerSource, hook ability.Hook) []pendingTrigger {
 		}
 		g.bufferTrigger(src, fmt.Sprintf("%s: trigger %d", src.card.Name, i+1), t)
 	}
-	return g.pending[n:]
+	added := g.pending[n:]
+	if watched != nil {
+		for i := range added {
+			added[i].watched = watched.ID
+		}
+	}
+	return added
 }
 
 // bufferTrigger adds the fired trigger t to the buffer: src is its source, src's
@@ -178,13 +197,17 @@ func (g *Game) bufferTrigger(src triggerSource, label string, t ability.Trigger)
 
 // fireAttacks buffers a's Step 2 triggers: its Aggressive keyword trigger (an
 // ability.Aggressive trigger, read now, not at card load), if any, then its
-// printed attack triggers (FR-CBT-002).
+// printed attack triggers, then the attack triggers of every battlefield asset
+// that watches an attack like a's (FR-CBT-002).
 func (g *Game) fireAttacks(a *Asset) {
 	src := assetSource(a)
 	if n := g.Keywords(a).Aggressive; n > 0 {
 		g.bufferTrigger(src, fmt.Sprintf("%s: %s %d", src.card.Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
 	}
 	g.fireHook(src, ability.HookAttacks)
+	for _, w := range g.assetsByID() {
+		g.fireHookFor(assetSource(w), ability.HookAttacks, a)
+	}
 }
 
 // flushTriggers places the buffer on the stack: the active player's triggers
@@ -240,6 +263,7 @@ func (g *Game) placeTrigger(p pendingTrigger) {
 	}
 	item := p.stackItem(StackAbility)
 	item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
+	item.Watched = p.watched
 	item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.Keyword
 	g.push(item)
 }
