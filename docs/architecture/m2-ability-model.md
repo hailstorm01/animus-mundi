@@ -196,7 +196,21 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #153: one function names a stack item, through `SourceCard`, for the place event, the view and the play screen.
    - #154: the docs say what waves E to F.2 built, `deployedTo` becomes `inZone`, and Open Question 10 is re-checked.
 
-   #153 is a pure move with a new test, and #154 is docs, comments and a rename. Done when #153 and #154 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. After it, work resumes with the non-deck cards as 6k says.
+   #153 is a pure move with a new test, and #154 is docs, comments and a rename. Done when #153 and #154 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. After it, work resumes with the non-deck cards in wave H (6m).
+6m. **Wave H, the rest of the Animus and Path cards, added 2026-11-15 (user).** It goes after wave F.3 and finishes M2's card work: the 15 cards still on `cards.NotYetExecutable`, every one a non-deck card that #14 (b) held back from its survey wave, with the shapes #14 (b) deferred. It has no survey row of its own: each card keeps its survey row and wave letter, and wave H gathers them in the survey's wave order, B to G. A wave run of it (`go tool task wave-run -- -Wave H`) writes these header lines on its run file:
+   - **Cards:** Blind Defile; Drifting Concept; Hammerhand Bivouac; Blindside; Poisoned Rations; Rhapsody's Hollow; Animoceps Stalk; Animoceps Node; Melodic Pummeler; Hulking Incongruity; Brigand Highlander; Ancestral Monument; Mutation Swell; Solarheart Monk; Animoceps Spore Cloud
+   - **Deferred:** none
+   - **Kept:** all 15 (non-deck; #14, applied 2026-11-13: the remaining Animus and Path cards stay in M2, and the two starter factions are finished before Concordia and Soulless)
+
+   Card tasks go in that order, one survey wave's cards at a time. The shapes each one brings, from #14 (b) and the survey rows:
+   - **From wave B:** the opposing-unit-attacks hook (*Blind Defile*), `RevealHand` with a chosen discard (*Drifting Concept*), and the turn-start hook with a distributed armor pool among allied units in the same zone (*Hammerhand Bivouac*). The turn-start hook fires waiting directive #15 (turn-boundary triggers flush and resolve before the Draw Phase, `FR-TRN-001`), and *Bivouac* fires #141 (3): its zone is locked from the source's zone on placement (`SVY-R44`), through #141 (1)'s `LockedZone`.
+   - **From wave C:** the until-end-of-opponent's-turn duration (*Blindside*) and max-health modifiers (*Poisoned Rations*), both through `layers.go`'s `Modifier` and `Duration`.
+   - **From wave D:** `GainControl` (*Rhapsody's Hollow*).
+   - **From wave E:** same-zone auras for other assets, built once for all six cards: the aura reads its source's current zone (#141 (3)), excludes itself or includes itself as each card says, and filters by subtype (Horror) or by the Cornered gate. The first aura task builds the shape, and the rest reuse it. A second copy of the same-zone check would be a duplication finding.
+   - **From wave F:** "2 or 4" target counts for an untargeted kill picked on resolution, with a free deploy for each 2 killed (*Mutation Swell*, `SVY-R3`, `SVY-R16`, `SVY-R21`), and enter-discard from any zone (*Solarheart Monk*, survey gap G1).
+   - **From wave G:** damage redirection (*Animoceps Spore Cloud*), next to wave G's destruction replacement (`FR-REP-001` to `FR-REP-004`).
+
+   Re-check each card against its survey row and FRD 01 before writing its task. A rules question stops the run with a ruling stub (Runbook D6), and the D2 size rule may split a card's shape and card into two tasks. These cards aren't in the starter decks, so the starter sim's baseline shouldn't move; a task that changes it says why. Done when `cards.NotYetExecutable` is empty (M2's card done-when), no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
