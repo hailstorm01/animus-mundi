@@ -25,6 +25,9 @@
 //     per asset (Trigger.MaxPerTurn, FR-TRN-001), and Unbowed (FR-KWD-002a) fires
 //     on damage taken. A trigger may work from its card's discard pile instead of
 //     the battlefield (Trigger.ActiveZone, survey G1, FR-ZON-004). A trigger
+//     may watch another asset's attack instead of its own (Trigger.Watches,
+//     Trigger.Watch, FR-CBT-002), and its steps may act on that asset
+//     (SubjectWatched). A trigger
 //     may be modal ("choose N" modes, chosen on placement before its targets,
 //     FR-MOD-001 §5). An optional trigger that could do nothing if accepted
 //     (every step acts on a target slot, and no slot has a legal entity) is
