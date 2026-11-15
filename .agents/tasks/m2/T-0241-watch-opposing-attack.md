@@ -4,7 +4,7 @@ title: A trigger on another asset's attack, and "that attacking unit" as a step 
 kind: shape
 tier: sonnet
 wave: H
-status: tests-review
+status: tests
 branch: m2/autoloop-wave-h/T-0241-watch-opposing-attack
 depends_on: []
 claims: [shape:watching trigger (ability.Trigger.Watches and Watch; fireAttacks fires matching watchers), shape:watched-asset subject (ability.SubjectWatched, StackItem.Watched)]
@@ -65,3 +65,6 @@ In a new file `pkg/engine/watch_trigger_test.go`, with synthetic cards: a watche
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 1): written for *Blind Defile*'s shape (design note 6m, "From wave B"). The shape and the card touch six non-test files, so under the D2 size rule the card is T-0242 (`queued`), which also waits for the ruling question committed on `main` (07bd2da). Set to `tests`.
 - 2026-11-15 rules-test-author: tests written in `pkg/engine/watch_trigger_test.go`: TestFR_CBT_002_WatcherFiresOnOpposingUnitAttack, TestFR_CBT_002_WatcherIgnoresUnmatchedAttacks (subtests AlliedUnit, OpposingHeadquarters), TestFR_CBT_002_WatcherIsNotASelfHook, TestFR_TRG_003_OpposingWatcherResolvesBeforeAttackerTriggers, TestFR_TRG_003_TwoWatchersOneAttack, TestFR_TGT_001_WatchedSubjectKillsTheAttacker, TestFR_TGT_001_WatchedSubjectIsNotATarget, TestFR_TGT_001_WatchedSubjectGoneDoesNothing, TestFR_MOD_001_OptionalWatcherIsAsked. Helpers requested: none (small builders are in the test file; it reuses recordPlaced, declareThen, scriptPlan vars `no`, kindsOf). `go vet` fails only on the not-yet-existing `Trigger.Watches`/`Watch`, `SubjectWatched` and `StackItem.Watched`; `cardtown lint rules` passes. Left out: the "card comes back as a new asset" variant of the gone case (the test removes the attacker only; same-ID check is the engineer's `g.Asset(it.Watched)`), and watching hooks other than attacks (out of scope).
+- 2026-11-15 lead-architect (wave H run, session 1): tests reviewed (e462bea); set back to `tests`. Notes:
+  1. `TestFR_TGT_001_WatchedSubjectGoneDoesNothing` can't pass: `declareThen` runs its callback right after `declareAttack`, and Step 2 triggers are only buffered there; `resolveStack` places them (`flushTriggers`, [stack.go:112](../../../pkg/engine/stack.go)). So the stack holds only the Attack inside the callback, and the `len(s.g.Stack) != 2` check fails whatever the engine does. Call `s.g.flushTriggers()` at the start of the callback, then check the two items and remove the attacker. Everything else stays as it is.
+  The other eight tests match the Tests list and `FR-CBT-002`, `FR-TRG-003`, `FR-TGT-001`, `SVY-R9`, `SVY-R48`.
