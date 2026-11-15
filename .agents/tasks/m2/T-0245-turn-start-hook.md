@@ -4,7 +4,7 @@ title: A start-of-turn trigger that resolves in the Ready Phase, before the Draw
 kind: shape
 tier: sonnet
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0245-turn-start-hook
 depends_on: []
 claims: [hook:turn-start (ability.HookTurnStart; fireTurnStart fires it for every battlefield asset), shape:start-of-turn trigger resolution (beginTurn places and resolves the Ready Phase's triggers before the Draw Phase, directive #15 (1))]
@@ -69,3 +69,4 @@ In a new file `pkg/engine/turn_start_trigger_test.go`, with synthetic cards: a s
   1. `TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw` can't pass: the start trigger's steps are `scratchN(1)`, then `allDamage(1, allied)`, and `allied` (allied units) also matches the 1/1 Scratch Company that the first step just made from card A. Both it and *Fragile* die in the sweep after the item, so A is in the discard pile and `scratched(p, cards[0])` fails whatever the engine does. Put the damage step first (`allDamage(1, allied), scratchN(1)`: the sweep kills only *Fragile*, its death trigger then Scratches B, and the draw takes C), or exclude Scratch Company from the filter. Everything else stays as it is.
   The other six tests match the Tests list and `FR-TRN-001`, `FR-TRG-003`, `FR-TRG-004` and `SVY-R7`.
 - 2026-11-15 rules-test-author: fixed the note on TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw: the start trigger's damage step now runs before its Scratch step, so the damage no longer kills the new Scratch Company. The test expectations are unchanged. Nothing else changed.
+- 2026-11-15 lead-architect (wave H run, session 6): tests reviewed again (407cd65). Note 1 is applied: the cascade test's damage step now comes before its Scratch, so the sweep kills only *Fragile*. Nothing else changed. The seven tests match the Tests list. Set to `ready`.
