@@ -360,18 +360,19 @@ const (
 
 // Step applies one primitive.
 type Step struct {
-	Op          Op
-	Amount      Value
-	Subject     Subject
-	Bottom      bool    // OpPutOnDeck: the bottom of the deck instead of the top
-	Target      int     // SubjectTarget: index into Effect.Targets
-	Filter      Filter  // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile). OpLookTop: the card-level criteria a deployed card must meet
-	UpTo        int     // SubjectPick, OpLookTop: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
-	Dealer      int     // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
-	To          Zone    // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2). OpLookTop: the same override
-	Keyword     Keyword // OpGrantKeyword only: the keyword granted
-	IfDone      bool    // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
-	IfHandEmpty bool    // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
+	Op                Op
+	Amount            Value
+	Subject           Subject
+	Bottom            bool    // OpPutOnDeck: the bottom of the deck instead of the top
+	Target            int     // SubjectTarget: index into Effect.Targets
+	Filter            Filter  // SubjectAll: which assets. SubjectPick: which assets, or which cards in a discard pile (Filter.InPile). OpLookTop: the card-level criteria a deployed card must meet
+	UpTo              int     // SubjectPick, OpLookTop: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
+	Dealer            int     // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
+	To                Zone    // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2). OpLookTop: the same override
+	Keyword           Keyword // OpGrantKeyword only: the keyword granted
+	IfDone            bool    // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
+	ControllerChooses bool    // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand
+	IfHandEmpty       bool    // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
 }
 
 // DealerSlot returns the Effect.Targets index of the step's chosen dealer, and

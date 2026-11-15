@@ -15,7 +15,7 @@ const (
 	DecideMode                            // "Choose N" modes: fallback picks the first listed options
 	DecideOptional                        // "you may": fallback declines (no picks)
 	DecideOrder                           // order own triggers (FR-TRG-003): Min==Max==len(Options), fallback is collection order
-	DecideHand                            // choose cards from your own hand: not an inspection (fast path applies); fallback picks the cards most recently added (SVY-R16)
+	DecideHand                            // choose cards from a hand: from your own, not an inspection (fast path applies); from an opponent's revealed hand, Hidden (no fast path, FR-MOD-001 §3); fallback picks the cards most recently added to that hand (SVY-R16, SVY-R50)
 	DecidePick                            // untargeted pick from the battlefield or a discard pile as a step resolves (SVY-R3, SVY-R14): not a target, so Ward and the targeting checks skip it; same fallback as DecideTarget
 	DecideReplacement                     // choose which of several replacements applies to one event (FR-REP-001, SVY-R23), asked of the affected asset's controller: same fallback as DecideTarget, the first source in fixed order (SVY-R16), a source's own replacements in listed (printed) order
 	DecideSearch                          // choose a card from your own deck (FR-DEK-001): must choose (SVY-R37), a deck inspection so no fast path; fallback takes the first listed, the top card (SVY-R38)
@@ -187,10 +187,18 @@ func firstPicks(d Decision, order []int) []int {
 }
 
 // handPicks returns the indexes of the d.Min options whose cards come latest in
-// the deciding player's hand, most recent first (FR-MOD-001 §6, SVY-R16). It
-// draws nothing from g.rng.
+// the hand that holds them, most recent first (FR-MOD-001 §6, SVY-R16, SVY-R50):
+// the deciding player's own, or the opponent's one they inspect. It draws
+// nothing from g.rng.
 func (g *Game) handPicks(d Decision) []int {
-	hand := g.Players[d.Player].Hand
+	var hand []*Instance
+	for _, p := range g.Players {
+		for _, inst := range p.Hand {
+			if len(d.Options) > 0 && inst.ID == d.Options[0].Ref {
+				hand = p.Hand
+			}
+		}
+	}
 	pos := make(map[int]int, len(hand))
 	for i, inst := range hand {
 		pos[inst.ID] = i
