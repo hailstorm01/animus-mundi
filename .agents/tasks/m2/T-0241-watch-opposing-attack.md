@@ -4,7 +4,7 @@ title: A trigger on another asset's attack, and "that attacking unit" as a step 
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0241-watch-opposing-attack
 depends_on: []
 claims: [shape:watching trigger (ability.Trigger.Watches and Watch; fireAttacks fires matching watchers), shape:watched-asset subject (ability.SubjectWatched, StackItem.Watched)]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/watch_trigger_test.go`, with synthetic cards: a watche
 - 2026-11-15 lead-architect (wave H run, session 1): tests reviewed (e462bea); set back to `tests`. Notes:
   1. `TestFR_TGT_001_WatchedSubjectGoneDoesNothing` can't pass: `declareThen` runs its callback right after `declareAttack`, and Step 2 triggers are only buffered there; `resolveStack` places them (`flushTriggers`, [stack.go:112](../../../pkg/engine/stack.go)). So the stack holds only the Attack inside the callback, and the `len(s.g.Stack) != 2` check fails whatever the engine does. Call `s.g.flushTriggers()` at the start of the callback, then check the two items and remove the attacker. Everything else stays as it is.
   The other eight tests match the Tests list and `FR-CBT-002`, `FR-TRG-003`, `FR-TGT-001`, `SVY-R9`, `SVY-R48`.
+- 2026-11-15 rules-test-author: round 1 note 1 fixed: `TestFR_TGT_001_WatchedSubjectGoneDoesNothing` now calls `s.g.flushTriggers()` at the start of the `declareThen` callback, then checks the two stack items and removes the attacker. Nothing else changed. Set to `tests-review`.

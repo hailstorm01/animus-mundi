@@ -164,6 +164,7 @@ func TestFR_TGT_001_WatchedSubjectGoneDoesNothing(t *testing.T) {
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched(), ifDoneDraw)))
 	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
 	s.declareThen(s.attack(att, s.g.Players[1].HQ), func() {
+		s.g.flushTriggers()
 		if n := len(s.g.Stack); n != 2 {
 			t.Fatalf("the Attack and the watcher's trigger are on the stack: %d items", n)
 		}
