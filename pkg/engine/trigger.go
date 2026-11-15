@@ -210,6 +210,15 @@ func (g *Game) fireAttacks(a *Asset) {
 	}
 }
 
+// fireTurnStart buffers the start-of-turn triggers of every battlefield asset,
+// either player's (FR-TRN-001). fireHookFor holds the gates, so "at the start
+// of your turn" is a Turn: TurnYours gate.
+func (g *Game) fireTurnStart() {
+	for _, a := range g.assetsByID() {
+		g.fireHook(assetSource(a), ability.HookTurnStart)
+	}
+}
+
 // flushTriggers places the buffer on the stack: the active player's triggers
 // first, then the non-active player's on top (FR-TRG-003). Each player orders
 // their own triggers; a single trigger is not asked about. An optional trigger

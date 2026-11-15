@@ -11,7 +11,14 @@ func (g *Game) beginTurn() {
 			a.Exhausted = false
 		}
 	}
-	// No passive income (FR-RES-001). No executable card has start-of-turn triggers yet.
+	// No passive income (FR-RES-001).
+	// Start-of-turn triggers resolve completely, cascades included, before the
+	// Draw Phase (FR-TRN-001, FR-TRG-003, FR-TRG-004).
+	g.fireTurnStart()
+	g.resolveStack()
+	if g.Outcome.Over {
+		return
+	}
 
 	g.Phase = PhaseDraw
 	if !(g.Turn == 1 && g.Active == g.FirstPlayer) { // Turn 1 draw skip (FR-SET-004)

@@ -4,7 +4,7 @@ title: A start-of-turn trigger that resolves in the Ready Phase, before the Draw
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0245-turn-start-hook
 depends_on: []
 claims: [hook:turn-start (ability.HookTurnStart; fireTurnStart fires it for every battlefield asset), shape:start-of-turn trigger resolution (beginTurn places and resolves the Ready Phase's triggers before the Draw Phase, directive #15 (1))]
@@ -64,3 +64,10 @@ In a new file `pkg/engine/turn_start_trigger_test.go`, with synthetic cards: a s
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 6): written for *Hammerhand Bivouac*'s hook (design note 6m, "From wave B"). FRD 01 doesn't settle when an untargeted pool is split or what a timeout does with one, so the pool and the card wait for the ruling question committed on `main` (f8b574d, design note Open Question 24). The hook doesn't depend on it. Directive #15's trigger fired with this task: its part (1), the Ready Phase, is applied here; its draw and End Phase parts stay `waiting` on its row. Set to `tests`.
+- 2026-11-15 rules-test-author: wrote pkg/engine/turn_start_trigger_test.go: TestFR_TRN_001_StartOfTurnTriggerResolvesBeforeDraw, TestFR_TRN_001_StartOfYourTurnOnly, TestFR_TRN_001_StartOfTurnTriggerAfterReady, TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw, TestFR_TRG_003_StartOfTurnTriggersInAPNAPOrder, TestFR_TRG_003_TwoStartOfTurnTriggersAreOrdered, TestFR_TRN_001_MatchEndsDuringStartOfTurn. Helpers requested: none (small builders startTrigger, startSteps, startStructure stay in the test file). `go vet` fails only on the undefined `ability.HookTurnStart` the engineer adds. `cardtown lint rules` passes. Nothing left out. The AfterReady test installs its own chooser via `s.g.choosers[0]` to read the unit's state at the moment the target is asked.
+- 2026-11-15 lead-architect (wave H run, session 6): tests reviewed (661b242); set back to `tests`. Notes:
+  1. `TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw` can't pass: the start trigger's steps are `scratchN(1)`, then `allDamage(1, allied)`, and `allied` (allied units) also matches the 1/1 Scratch Company that the first step just made from card A. Both it and *Fragile* die in the sweep after the item, so A is in the discard pile and `scratched(p, cards[0])` fails whatever the engine does. Put the damage step first (`allDamage(1, allied), scratchN(1)`: the sweep kills only *Fragile*, its death trigger then Scratches B, and the draw takes C), or exclude Scratch Company from the filter. Everything else stays as it is.
+  The other six tests match the Tests list and `FR-TRN-001`, `FR-TRG-003`, `FR-TRG-004` and `SVY-R7`.
+- 2026-11-15 rules-test-author: fixed the note on TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw: the start trigger's damage step now runs before its Scratch step, so the damage no longer kills the new Scratch Company. The test expectations are unchanged. Nothing else changed.
+- 2026-11-15 lead-architect (wave H run, session 6): tests reviewed again (407cd65). Note 1 is applied: the cascade test's damage step now comes before its Scratch, so the sweep kills only *Fragile*. Nothing else changed. The seven tests match the Tests list. Set to `ready`.
+- 2026-11-15 kernel-engineer: added ability.HookTurnStart (end of the Hook constants), Game.fireTurnStart in trigger.go (fireHook per assetsByID asset), and in beginTurn, after the ready loop, fireTurnStart then resolveStack, returning before the Draw Phase if the match ended; removed the "no start-of-turn triggers yet" comment; doc.go lists the hook. Reused resolveStack and fireHook/assetsByID; no new loop. Ran: the seven listed tests pass; `go tool task check` passes; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-h` byte-identical. Reviewer: the first turn's beginTurn (setup) now also calls resolveStack, with an empty buffer for every printed card.
