@@ -93,7 +93,7 @@ func TestFR_TRN_001_StartOfTurnCascadeResolvesBeforeDraw(t *testing.T) {
 	s := newScene(t)
 	allied := ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}
 	s.put(0, ZoneMainTheater, mortal("Fragile", 1, 1, killedTrigger(scratchN(1))))
-	s.put(0, ZoneMainTheater, startStructure("Bivouac", startSteps(ability.TurnYours, scratchN(1), allDamage(1, allied))))
+	s.put(0, ZoneMainTheater, startStructure("Bivouac", startSteps(ability.TurnYours, allDamage(1, allied), scratchN(1))))
 	s.endTurn()
 	cards := s.onTop(0, vanilla("A", "B", "C")...)
 	s.endTurn()
