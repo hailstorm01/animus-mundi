@@ -1,20 +1,49 @@
-Status: open (lead-architect, 2026-11-15)
-Task / Directive: T-0242 (branch: m2/autoloop-wave-h/T-0242-blind-defile, not created yet; run branch autoloop/m2-wave-h)
-Cards: Blind Defile
+Status: applied: FRD 01 v3.26, 2026-11-15
+Directive: #155
+Rulings: SVY-R49
 
-### ❓ Open Ruling Question: do Blind Defile's two kills depend on each other? (2026-11-15)
+### 🎲 Design Outcome: Blind Defile's attacker kill depends on its self-kill (2026-11-15)
 
-- **Question:**
-  1. *Blind Defile* reads "Whenever an opposing unit attacks, you may kill this structure and that attacking unit." When its trigger resolves and the Defile has already left the battlefield, is the attacking unit still killed?
-  2. When its trigger resolves and the attacking unit has already left the battlefield (for example, a second *Blind Defile* of the same player resolved first and killed it), is the Defile still killed?
-  3. Should the card read in the `SVY-R14` form, "you may kill this structure. If you do, kill that attacking unit.", so that FRD 01's existing rule answers 1 (no) and 2 (yes, it dies, since "you may" was answered on placement and the kill of the structure is carried out on resolution)?
-- **Source:** wave H run (design note Deliverable 6m), the first wave H card, before its card task T-0242 is written. The shape it needs (a trigger on another asset's attack, and "that attacking unit" as a step subject) doesn't depend on the answer and is built first as T-0241.
-- **Cards affected:** *Blind Defile* (Path structure, `data/cards/units-and-structures-path.csv:7`: "Whenever an opposing unit attacks, you may kill this structure and that attacking unit."). It is in M2 (wave H, `cards.NotYetExecutable`) and in neither starter deck.
-- **Current FRD 01 & engine state:**
-  - `FR-TRG-005` (FRD 01 v3.25, line 460) names "*you may kill this structure*" on *Blind Defile* as the optional non-resource action that is "carried out when the trigger resolves (`SVY-R14`)". That treats the self-kill as `SVY-R14`'s X, but the card says "and", not "If you do", so FRD 01 doesn't say whether killing the attacker (the Y) depends on it.
-  - `SVY-R14` ("You May X. If You Do, Y", line 391) settles the dependency only for that wording: Y applies only if X was carried out, and a replaced X still counts (`SVY-R15`, line 518).
-  - Untargeted selections (line 388): "If nothing matches, only that clause does nothing." Read on its own, that makes each kill independent: each named asset still on the battlefield is killed. "That attacking unit" isn't "chosen", so it is no target (Ward and `FR-TGT-003` don't apply).
-  - `SVY-R9` / `FR-MOD-001` §7 (line 431): the "you may" is answered on placement. `SVY-R48` (line 432) doesn't skip it, because neither kill acts on a target.
-  - Engine: a kill step kills the assets it names that are still on the battlefield (`stepKill`, [effects.go:260](../../../pkg/engine/effects.go)); `Step.IfDone` makes a step run only if the step before it did something ([ability.go](../../../pkg/engine/ability/ability.go), `IfDone`). The card can be written either way; it is the choice between a plain second kill step and an `IfDone` one.
-  - Reach in M2: case 2 happens with two *Blind Defiles* under one player (both trigger on the same attack, `FR-CBT-002` Step 2, and the first to resolve kills the attacker). Case 1 can't happen in M2 except in principle: nothing in Animus or Path removes the Defile between its trigger's placement and its resolution, because its controller's triggers are placed above the active player's (`FR-TRG-003`) and no other M2 card watches an opposing attack.
-- **Lead's recommendation:** read it as `SVY-R14` (question 3, and reword the card text to match): the Defile is killed on resolution if it is still there, and the attacker is killed only if the Defile was (a replaced kill counts, `SVY-R15`). That keeps *Blind Defile* a trade, as the card intends, and needs no new rule. A second Defile then dies for nothing, which its controller can avoid by declining its "you may" on placement.
+- **Question:** Do *Blind Defile*'s two kills ("you may kill this structure and that attacking unit") depend on each other when one of the two has left the battlefield before the trigger resolves? Raised by lead-architect in the wave H run (design note Deliverable 6m) before card task T-0242 was written, as a `Status: open` stub at this path; design note Open Question 22.
+- **Rulings:**
+
+  | Ruling | Settles | Cards |
+  | :--- | :--- | :--- |
+  | `SVY-R49` | *Blind Defile*'s self-kill is `SVY-R14`'s X and its kill of the attacking unit is Y: the attacker dies only if the Defile was killed, and a replaced kill still counts (`SVY-R15`). If the Defile has left the battlefield before the trigger resolves, nothing is killed. If the attacker has left, the Defile is still killed. Card text in which one optional action pays for another says "If you do" (provisional). Wording for actions meant to happen independently of each other, even after the source has left, is not ruled. | Blind Defile (reworded) |
+
+- **Decisions (user, 2026-11-15):**
+  - "go with A": *Blind Defile* is read as `SVY-R14` (you may X. If you do, Y), and its text is reworded to match.
+  - On the wording convention, **provisional**: "that wording rule is fine for now. There's no non-empty stack interaction at the moment so the wordings have the same end result (both die), but it doesn't hurt to plan ahead." In M2 nothing can remove the Defile between its trigger's placement and resolution, and in the two-Defile case the second Defile dies under either reading, so the rewording changes no reachable M2 game.
+  - On its limits: "I do want to leave room for the possibility of stuff like Mangara of Corandor where you can bounce him in response to his own trigger and still exile something, but that would have pretty specific wording I think." So the convention covers only an optional action that pays for another. It does not say that "X and Y" always makes Y depend on X, nor that it never does. **What reopens it:** the first card designed whose actions should still happen after its source has left the battlefield (a Mangara-style "remove this and chosen asset"). Its wording, and what "and" means there, are ruled then.
+- **Cards affected:** *Blind Defile* (Path structure, `data/cards/units-and-structures-path.csv:7`). In M2 scope (wave H, on `cards.NotYetExecutable`), in neither starter deck.
+- **Alternatives rejected:**
+  - B, two independent kills (the literal "and"): when the Defile has already left, the attacker would die for free, which breaks the card as a trade. It also clashes with `FR-TRG-005`, which already treats the self-kill as `SVY-R14`'s X.
+  - C, all or nothing (neither dies if either has left): spares the second Defile in the two-Defile case, but needs a new kind of check on resolution and wordier text for one common card. The player can already avoid that case by declining the second "you may" on placement (`SVY-R9`).
+
+#### → `pm-frd-drafter` (FRD 01 and the ruling register)
+- **Superseded wording:**
+  - `data/cards/units-and-structures-path.csv:7`: *Blind Defile*'s "… you may kill this structure and that attacking unit." text.
+  - `docs/frd/01_Game_Rules_FRD.md:460` (`FR-TRG-005`): quotes only *"you may kill this structure"* on *Blind Defile*. Still true, but the quote is updated to the new text.
+  - `docs/design/m2_starter_set_ability_survey.md:182` (card row): "opposing unit attacks (may, kill self) → `KILL` attacking unit".
+- **FRD 01 changes (v3.25 → v3.26):**
+  1. `FR-TGT-001`, the **"You May X. If You Do, Y" (`SVY-R14`)** bullet (line 391): append: "*Blind Defile* (*"Whenever an opposing unit attacks, you may kill this structure. If you do, kill that attacking unit."*) is read the same way (`SVY-R49`): the kill of the Defile is X and the kill of the attacking unit is Y. If the Defile has left the battlefield before the trigger resolves, X selects nothing and the attacking unit is not killed. If the attacking unit has left, the Defile is still killed and Y does nothing, so a player with two Defiles who accepts both triggers loses the second Defile for nothing, unless they decline its *"you may"* on placement. Card text in which one optional action pays for another says *"If you do"* (`SVY-R49`). This does not settle a card whose actions are meant to happen independently of each other, even after its source has left the battlefield: that wording is ruled when such a card is designed."
+  2. `FR-TRG-005` (line 460): replace `(*"you may kill this structure"* on *Blind Defile*; …)` with `(*"you may kill this structure. If you do, kill that attacking unit."* on *Blind Defile*, `SVY-R49`; …)`, keeping the *Infested Apostle* example.
+  3. Revision summary, above v3.24 → v3.25, and bump the title to v3.26: `### Revision Summary (v3.25 -> v3.26): Blind Defile's Kills (2026-11-15)` with the item `1. **Blind Defile's Kills Depend on the Self-Kill (`SVY-R49`; `FR-TGT-001`, `FR-TRG-005`)**: the self-kill is `SVY-R14`'s X and the attacker's kill its Y. Card text in which one optional action pays for another says "If you do". Card text: *Blind Defile*.`
+- **Register rows:**
+  - Survey §4, add after R48: `| **R49** | Do *Blind Defile*'s two kills depend on each other when one has left the battlefield before the trigger resolves? (Open Question 22, before T-0242) | Blind Defile (reworded) | **Ruled (user, 2026-11-15).** Recorded in FRD 01 v3.26 as `SVY-R49` (`FR-TGT-001`, `FR-TRG-005`). The wording convention is provisional. |`
+  - Survey card row (line 182): the effect column becomes `opposing unit attacks (may) → KILL self; if done, KILL attacking unit (`SVY-R14`, `SVY-R49`)`.
+  - Keyword interaction matrix: none.
+- **Card text:**
+  - Old: `Whenever an opposing unit attacks, you may kill this structure and that attacking unit.`
+  - New: `Whenever an opposing unit attacks, you may kill this structure. If you do, kill that attacking unit.`
+- **Prompt to run:** `@pm-frd-drafter apply Design Outcome docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md`
+
+#### → `lead-architect` (build board directive)
+- **Directive row:**
+
+  | # | Directive | Source | Status |
+  | :---: | :--- | :--- | :--- |
+  | 155 | **Blind Defile's attacker kill depends on its self-kill (`SVY-R49`; `FR-TGT-001`, `FR-TRG-005`; design note Open Question 22).** In T-0242, write *Blind Defile* as an optional watcher on opposing unit attacks (T-0241's `Trigger.Watches`) with two steps: `OpKill` on the source, then `OpKill` on `SubjectWatched` with `IfDone`. No kernel change. Tests: (a) accepted, the Defile and the attacker both die; (b) declined or timed out, nothing dies (`FR-MOD-001` §6); (c) two Defiles, one attack, both accepted: the first kills itself and the attacker, the second Defile still dies and its Y does nothing; (d) the Defile gone before its trigger resolves (set up the stack item directly, since no M2 card reaches it): the attacker lives; (e) a replaced kill of the Defile still kills the attacker (`SVY-R15`, with a test replacement). Mark design note Open Question 22 answered, citing this outcome. **Checked for contradictions:** none. On `autoloop/m2-wave-h`, `pkg/engine/watch_trigger_test.go` (T-0241) pins only the watcher hook and the watched subject, and `TestFR_TGT_001_WatchedSubjectGoneDoesNothing` agrees with (c). `git grep -i defile` in `pkg` and `cmd` finds only the `cards.NotYetExecutable` entry. *Blind Defile* is in neither starter deck, so the sim baseline doesn't move. | User via game-designer, 2026-11-15 ([outcome](../../../docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md)) | waiting: docs/design/outcomes/2026-11-15-wave-h-blind-defile-kill-both.md applied (then open: before T-0242) |
+
+#### → `pm-lead` (portfolio)
+- **Milestone or scope impact:** None.
