@@ -4,7 +4,7 @@ title: "Drifting Concept: when it deploys, you choose a card from the opponent's
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0244-drifting-concept
 depends_on: [T-0243]
 claims: [card:Drifting Concept]
@@ -49,13 +49,14 @@ New tests go in `pkg/engine/cards_animus_drifting_test.go`. Use the real card (`
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "DriftingConcept|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Drifting Concept* is in neither starter deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "DriftingConcept|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Drifting Concept* is in neither starter deck)
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 4): queued, split off T-0243 under the D2 size rule (shape and card together touch seven non-test files). Waits for T-0243.
 - 2026-11-15 lead-architect (wave H run, session 5): T-0243 is `done` (merge a0cd951). Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 6512ae3, and dry-ran the definition (gates above). Re-read `BOARD.md` before committing: no directive added since; #156 is the one this task applies. Status `tests`.
 - 2026-11-15 rules-test-author: wrote `pkg/engine/cards_animus_drifting_test.go`: TestCard_DriftingConcept_ControllerChoosesFromOpponentsHand, _TimeoutDiscardsMostRecentlyAdded, _OneCardIsStillAsked, _EmptyHandAsksNothing, _IsEthereal. Helpers requested: none (file-local `dcScene`, `dcDeploy`, `dcWantDiscarded`). Nothing left out. Four tests fail now with "needs rules the kernel does not implement yet"; IsEthereal passes (pins the CSV keyword). `go vet` clean, `cardtown lint rules` PASS. Status `tests-review`.
 - 2026-11-15 lead-architect (D4): tests approved. Each checks what `FR-MOD-001` and #156 give: the controller is asked one `Hidden` `DecideHand` whose options are the opponent's three cards, and the owner nothing (§3); a timeout discards the card most recently added to the opponent's hand (§6, `SVY-R50`, #156 (a)); a one-card hand is still asked (§1, §3, #156 (b)); an empty hand asks nothing and discards nothing (#156 (c)); the real card is Ethereal (`FR-KWD-002g`). Helpers checked: `askedKind` (`pile_trigger_test.go:61`) and `s.reject` (`scenario_test.go:110`) exist. Re-ran: the four rules tests fail with "needs rules the kernel does not implement yet", `IsEthereal` passes. Status `ready`, dispatched to Flash.
+- 2026-11-15 kernel-engineer: added Drifting Concept ability definition to `pkg/engine/cards/animus.go` (alphabetical order) using existing `HookDeploy`, `OpDiscard`, `SubjectOpponents`, and T-0243's `ControllerChooses: true`. Removed Drifting Concept from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Updated `pkg/engine/doc.go:36` comment with `choosing from a hand, your own or an opponent's revealed one (DecideHand, SVY-R16, SVY-R50),`. Verified: `go test ./pkg/engine -run "DriftingConcept|TestDefs"` PASS, `go tool task check` PASS, `go tool task sim` PASS, `go tool task sim-compare -- autoloop/m2-wave-h` PASS (starter and stress sims match byte for byte). Committed implementation as `feat(engine): Drifting Concept executable (T-0244)`. Status `review`.
