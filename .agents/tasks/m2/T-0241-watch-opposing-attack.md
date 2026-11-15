@@ -4,7 +4,7 @@ title: A trigger on another asset's attack, and "that attacking unit" as a step 
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0241-watch-opposing-attack
 depends_on: []
 claims: [shape:watching trigger (ability.Trigger.Watches and Watch; fireAttacks fires matching watchers), shape:watched-asset subject (ability.SubjectWatched, StackItem.Watched)]
