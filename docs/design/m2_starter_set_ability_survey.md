@@ -106,6 +106,7 @@ Rulings follow the MTG-like intuitions used in earlier rulings. Ruled items are 
 | **R47** | A triggered ability is made optional with "you may", never with "up to one chosen". In a trigger, "up to N" is a count of targets. A Maneuver that does several things may use "up to" to make one of them optional | Devilhorn Captain, Necropolis Hunt, Stardust Colossus (outside M2) (reworded) | **Ruled (user, 2026-11-13).** Recorded in FRD 01 v3.25 as `SVY-R47` (`FR-TGT-002`). |
 | **R48** | A "you may" is not asked, and its trigger is not placed, when accepting could do nothing: every step acts only on the trigger's targets, and no target slot has a legal entity at placement | Devilhorn Captain, Necropolis Hunt, Chainbreaker Phalanx | **Ruled (user, 2026-11-14).** Recorded in FRD 01 v3.25 as `SVY-R48` (`FR-MOD-001` §1, §7). |
 | **R49** | Do *Blind Defile*'s two kills depend on each other when one has left the battlefield before the trigger resolves? (Open Question 22, before T-0242) | Blind Defile (reworded) | **Ruled (user, 2026-11-15).** Recorded in FRD 01 v3.26 as `SVY-R49` (`FR-TGT-001`, `FR-TRG-005`). The wording convention is provisional. |
+| **R50** | What does a timeout pick when you choose from an opponent's revealed hand? (Open Question 23, before the *Drifting Concept* task) | Drifting Concept; Mage Seeker's Inquisition (outside M2) | **Ruled (user, 2026-11-15).** The card most recently added to that Hand, whoever is choosing; extends `SVY-R16`. Recorded in FRD 01 v3.27 as `SVY-R50` (`FR-MOD-001` §6). |
 
 **Noted but unreachable:** whether "this Headquarters is dealt damage" (Animoceps Rager) uses the same threshold as Unbowed. No starter card can give a Headquarters Armor or Resistant. Default: same as `FR-KWD-002a`.
 
@@ -139,7 +140,7 @@ Hooks and primitives use FRD 02 names. "Rules" lists the distinguishing FRD 01 r
 | Spoil Forest Colossus | A2 | Triggered | deploy or attack → `HEAL 2` chosen asset | `FR-KWD-002d` | |
 | Craterfall Ancient | A2 | Triggered ×2 | attack (may) → `DEAL_DAMAGE` = own power to up to 2 other chosen assets; death → `DEAL_DAMAGE 4` all assets | `FR-TGT-002`, `FR-CBT-003` | Death trigger can destroy both HQs (Match Draw) |
 | Animoceps Shambler | B | Triggered | exhaust → `HEAL 1` chosen allied asset in Main Theater | `FR-CAP-001` | Every Readied→Exhausted change; generation triggers are placed after it (`SVY-R17`, KIM-S03 rationale) |
-| Drifting Concept | B | Triggered + Ethereal | deploy → `REVEAL_HAND` opponent, `DISCARD_CARD` chosen | `FR-MOD-001` §3 | |
+| Drifting Concept | B | Triggered + Ethereal | deploy → `REVEAL_HAND` opponent, `DISCARD_CARD` chosen | `FR-MOD-001` §3 | Always asked, even with one card (§1, §3); timeout picks the card most recently added to the opponent's hand (`SVY-R50`) |
 | Infested Apostle ★ | B | Triggered | deploy (may) → `KILL` an allied unit, self allowed (untargeted, on resolution); if done → `DEAL_DAMAGE 2` chosen opposing unit | `FR-TRG-005`, `FR-TGT-001` (`SVY-R14`) | Benchmark #9, but its `optionalCosts` is superseded: the kill is on resolution (`SVY-R14`) |
 | Animoceps Rager (HQ) | B | Triggered | HQ dealt damage → `SCRATCH 1`, once per turn | `FR-KWD-002a` (by analogy) | `maxPerTurn: 1` |
 | Disorienting Pulse | C | Maneuver | `RETURN_TO_HAND` chosen opposing unit in Main Theater | `FR-MNV-001`, `FR-ZON-005` | |
