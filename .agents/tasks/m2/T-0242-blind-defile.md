@@ -4,7 +4,7 @@ title: "Blind Defile: whenever an opposing unit attacks, you may kill it; if you
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0242-blind-defile
 depends_on: [T-0241]
 claims: [card:Blind Defile]
