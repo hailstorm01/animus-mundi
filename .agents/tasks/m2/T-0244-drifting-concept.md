@@ -4,7 +4,7 @@ title: "Drifting Concept: when it deploys, you choose a card from the opponent's
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0244-drifting-concept
 depends_on: [T-0243]
 claims: [card:Drifting Concept]
@@ -57,3 +57,4 @@ New tests go in `pkg/engine/cards_animus_drifting_test.go`. Use the real card (`
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 4): queued, split off T-0243 under the D2 size rule (shape and card together touch seven non-test files). Waits for T-0243.
 - 2026-11-15 lead-architect (wave H run, session 5): T-0243 is `done` (merge a0cd951). Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 6512ae3, and dry-ran the definition (gates above). Re-read `BOARD.md` before committing: no directive added since; #156 is the one this task applies. Status `tests`.
+- 2026-11-15 rules-test-author: wrote `pkg/engine/cards_animus_drifting_test.go`: TestCard_DriftingConcept_ControllerChoosesFromOpponentsHand, _TimeoutDiscardsMostRecentlyAdded, _OneCardIsStillAsked, _EmptyHandAsksNothing, _IsEthereal. Helpers requested: none (file-local `dcScene`, `dcDeploy`, `dcWantDiscarded`). Nothing left out. Four tests fail now with "needs rules the kernel does not implement yet"; IsEthereal passes (pins the CSV keyword). `go vet` clean, `cardtown lint rules` PASS. Status `tests-review`.
