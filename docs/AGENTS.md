@@ -12,7 +12,7 @@ This directory houses the specifications, decision records and card balance data
 - **M2 Starter Set Ability Survey:** `design/m2_starter_set_ability_survey.md`, which maps every Animus and Path card onto FRD 02's ability model and lists the M2 build waves, FRD 02 gaps and open ruling questions.
 - **Design Outcomes:** `design/outcomes/<YYYY-MM-DD>-<slug>.md`, one per `game-designer` discussion (also written as a `Status: open` stub by `lead-architect` when stopping on a rules question, so `@game-designer` picks it up automatically). Each records the user's decisions, the FRD 01 and register wording for `pm-frd-drafter`, and the board directive. The body is frozen once approved. `game-designer` dispatches the `pm-frd-drafter` subagent to apply the outcome and set its `Status:` line to `applied: …`.
 - **Frozen Technical Design Document:** `tdd/03_Card_Compiler_TDD.md`, design intent only, frozen with FRD 03. The TDD path is retired: M3 plans with a design note, as M2 did.
-- **Design Notes:** `architecture/<milestone>-<topic>.md`, one per milestone topic. `architecture/m2-ability-model.md` fixes the ability shape types, where card definitions live, and the M2 deliverable order.
+- **Design Notes:** `architecture/<milestone>-<topic>.md`, one per milestone topic. `architecture/m2-ability-model.md` fixes the ability shape types, where card definitions live, and the M2 deliverable order. `architecture/engine-structs.md` maps the structs, interfaces and files across `pkg/engine/...`.
 - **Architecture Decision Records:** `architecture/decisions/*.md`, one page per technical decision, written when the code that needs it is built.
 - **Card Data Sheets:** CSVs in `../data/cards/` across Concordia, Soulless, Path, Animus, HQ, and Common.
 
