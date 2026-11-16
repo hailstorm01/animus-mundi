@@ -496,6 +496,30 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Hammerhand Bivouac": {
+		Text: []string{"At the start of your turn, distribute 2 armor among allied units in the same zone."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookTurnStart,
+				Turn: ability.TurnYours,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpAddArmor,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectPick,
+							Split:   true,
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+								ZoneRef:    ability.ZoneRefSame,
+							},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Hammerhand Brigands": {
 		Text: []string{"Unbowed: Scratch 1."},
 		Triggers: []ability.Trigger{
