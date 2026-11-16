@@ -199,6 +199,28 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Blindside": {
+		Text: []string{"Chosen opposing unit gets -3 power until the end of your opponent's turn."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpModifyStat,
+					Amount:  ability.Value{N: -3},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+					Until:   ability.UntilEndOfOpponentTurn,
+				},
+			},
+		},
+	},
 	"Boneyard Amalgam": {
 		Text:          []string{"This unit costs R1 less to deploy for each unit card in your discard pile."},
 		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}},
