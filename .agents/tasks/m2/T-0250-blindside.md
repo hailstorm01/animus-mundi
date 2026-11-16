@@ -4,7 +4,7 @@ title: "Blindside: chosen opposing unit gets -3 power until the end of your oppo
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0250-blindside
 depends_on: [T-0249]
 claims: [card:Blindside]
@@ -36,7 +36,7 @@ New tests go in `pkg/engine/cards_path_blindside_test.go`. Use the real card (`s
 - Not this task: a target that leaves before resolution (`FR-TGT-003`). *Blindside* has no way to be responded to in a test without a synthetic responder, and the second target check is the same code every targeted Maneuver goes through.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- none expected. If the test author needs one, it names it here.
+- none. The tests use existing helpers only (`enactAction`, `offersEnact`, `inHand`, `chooseAsset`, `setPool`, `wantPower` from `opponent_turn_duration_test.go`).
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
@@ -51,3 +51,4 @@ New tests go in `pkg/engine/cards_path_blindside_test.go`. Use the real card (`s
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 10): queued, split off T-0249 under the D2 size rule (shape and card together touch six non-test files). Waits for T-0249.
 - 2026-11-15 lead-architect (wave H run, session 11): T-0249 is `done` (merge e1f7550), and the names it merged (`Step.Until`, `ability.UntilEndOfOpponentTurn`) are the ones planned. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 451e613 and dry-ran the definition (above). No new shape: `OpModifyStat` with a negative `Amount` already exists (*Ensnaring Mist*, `pkg/engine/cards/animus.go:304`). Dropped the fizzle case from the queued Covers (see Tests). Re-read `BOARD.md` before committing: no directive added since, none applies. Status `tests`.
+- 2026-11-15 rules-test-author: wrote `pkg/engine/cards_path_blindside_test.go`: `TestCard_Blindside_LastsThroughOpponentsTurn`, `_ReducedPowerInOpponentsAttack`, `_ClampsAtZero`, `_AlliedUnitIsNotATarget`, `_NotEnactableWithoutOpposingUnit`. No helpers requested; the file adds one local helper `blindside(s)`. Nothing left out beyond the task's own exclusion (FR-TGT-003). All five fail now for the right reason (card not yet executable). `cardtown lint rules` passes. Status `tests-review`.
