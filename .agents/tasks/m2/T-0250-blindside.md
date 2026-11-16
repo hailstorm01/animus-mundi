@@ -4,7 +4,7 @@ title: "Blindside: chosen opposing unit gets -3 power until the end of your oppo
 kind: card
 tier: flash
 wave: H
-status: tests
+status: done
 branch: m2/autoloop-wave-h/T-0250-blindside
 depends_on: [T-0249]
 claims: [card:Blindside]
@@ -36,18 +36,22 @@ New tests go in `pkg/engine/cards_path_blindside_test.go`. Use the real card (`s
 - Not this task: a target that leaves before resolution (`FR-TGT-003`). *Blindside* has no way to be responded to in a test without a synthetic responder, and the second target check is the same code every targeted Maneuver goes through.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- none expected. If the test author needs one, it names it here.
+- none. The tests use existing helpers only (`enactAction`, `offersEnact`, `inHand`, `chooseAsset`, `setPool`, `wantPower` from `opponent_turn_duration_test.go`).
 
 ## Allowed Files
 - `pkg/engine/cards/path.go`
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "Blindside|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Blindside* is in neither starter deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "Blindside|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Blindside* is in neither starter deck)
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 10): queued, split off T-0249 under the D2 size rule (shape and card together touch six non-test files). Waits for T-0249.
 - 2026-11-15 lead-architect (wave H run, session 11): T-0249 is `done` (merge e1f7550), and the names it merged (`Step.Until`, `ability.UntilEndOfOpponentTurn`) are the ones planned. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 451e613 and dry-ran the definition (above). No new shape: `OpModifyStat` with a negative `Amount` already exists (*Ensnaring Mist*, `pkg/engine/cards/animus.go:304`). Dropped the fizzle case from the queued Covers (see Tests). Re-read `BOARD.md` before committing: no directive added since, none applies. Status `tests`.
+- 2026-11-15 rules-test-author: wrote `pkg/engine/cards_path_blindside_test.go`: `TestCard_Blindside_LastsThroughOpponentsTurn`, `_ReducedPowerInOpponentsAttack`, `_ClampsAtZero`, `_AlliedUnitIsNotATarget`, `_NotEnactableWithoutOpposingUnit`. No helpers requested; the file adds one local helper `blindside(s)`. Nothing left out beyond the task's own exclusion (FR-TGT-003). All five fail now for the right reason (card not yet executable). `cardtown lint rules` passes. Status `tests-review`.
+- 2026-11-15 lead-architect (D4): tests approved. Each checks what `FR-LAY-003` (line 514, which names *Blindside*), `FR-TRN-001` 4c and `FR-LAY-001` give, on the real card: -3 lasts through player 1's turn and expires in its Sub-Phase 4c, not player 0's; player 1's attack deals the reduced power (1, not 4); power is clamped at 0 and returns to printed; only the opposing unit is offered and changed; with no opposing unit (none at all, or only an opposing structure) it isn't offered or enactable and stays in hand, and an opposing unit in Reserves makes it enactable. No existing test edited; `wantPower` reused from `opponent_turn_duration_test.go`. Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-15 kernel-engineer: added `Blindside` definition to `pkg/engine/cards/path.go` using existing `ability.OpModifyStat` with `Amount: -3` and `Until: ability.UntilEndOfOpponentTurn` on opposing unit target, and removed `Blindside` from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Ran `go test ./pkg/engine -run "Blindside|TestDefs"` (PASS), `go tool task check` (exit 0), `go tool task sim` (exit 0), and `go tool task sim-compare -- autoloop/m2-wave-h` ([PASS] byte-identical). Committed implementation as `feat(engine): Blindside Maneuver definition (T-0250)`. Status `review`.
+- 2026-11-15 lead-architect (D5): approved. The diff after the test commit touches only the two Allowed Files and is the planned definition: one `AllegianceOpposing` unit target and one `OpModifyStat` -3 `SubjectTarget` step with `Until: UntilEndOfOpponentTurn`, and the `NotYetExecutable` removal. No new shape, no test edited, no card name in engine code. Re-ran in a review worktree: `go test ./pkg/engine -run "Blindside|TestDefs"` ok (all five tests pass), `gofmt -l pkg cmd` clean, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. The Flash run had no refused commands. Merged into `autoloop/m2-wave-h`. Status `done`.
