@@ -1,6 +1,7 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
 // Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords
-// and the keywords a resolved step grants until end of turn. There are no auras (Layer 4) yet, so the pipeline
+// and the keywords a resolved step grants until end of turn. Layer 5 holds power
+// and Maximum Health modifiers. There are no auras (Layer 4) yet, so the pipeline
 // reduces to Layer 1 + Layer 3 + Layer 5 + Layer 6 clamping.
 
 package engine
@@ -12,14 +13,15 @@ import (
 )
 
 // Modifier is one change a resolved effect made to an asset's characteristics.
-// Layer is its FR-LAY-001 layer. A Layer 5 modifier adds Power to Combat Power;
-// a Layer 3 modifier grants Keywords.
+// Layer is its FR-LAY-001 layer. A Layer 5 modifier adds Power to Combat Power
+// and MaxHealth to Maximum Health (FR-LAY-002; it adds no damage); a Layer 3 modifier grants Keywords.
 type Modifier struct {
-	Layer    int
-	Power    int
-	Keywords Keywords
-	Until    ability.Duration
-	By       PlayerID // the controller of the ability whose step made it; read only for UntilEndOfOpponentTurn
+	Layer     int
+	Power     int
+	MaxHealth int
+	Keywords  Keywords
+	Until     ability.Duration
+	By        PlayerID // the controller of the ability whose step made it; read only for UntilEndOfOpponentTurn
 }
 
 // TempPower is the sum of a's Layer 5 power modifiers.
@@ -53,9 +55,16 @@ func (g *Game) Power(a *Asset) int {
 	return max(0, a.Printed().Power+a.TempPower())
 }
 
-// MaxHealth returns effective Maximum Health. It does not clamp (FR-LAY-002).
+// MaxHealth returns effective Maximum Health: printed Health plus the Layer 5
+// max-health modifiers. It does not clamp (FR-LAY-001, FR-LAY-002).
 func (g *Game) MaxHealth(a *Asset) int {
-	return a.Printed().Health
+	n := a.Printed().Health
+	for _, m := range a.Modifiers {
+		if m.Layer == 5 {
+			n += m.MaxHealth
+		}
+	}
+	return n
 }
 
 // CurrentHealth is Effective Maximum Health minus accumulated damage.
