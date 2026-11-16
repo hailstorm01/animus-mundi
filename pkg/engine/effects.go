@@ -252,14 +252,22 @@ func (g *Game) deckDrop(r *resolution, st ability.Step, take func(PlayerID, int)
 	return total
 }
 
-// stepModifyStat gives each Subject +Amount power until end of turn: a Layer 5
+// modifier fills in how long a modifier a step makes lasts (Step.Until) and who
+// made it (FR-LAY-003).
+func (r *resolution) modifier(st ability.Step, m Modifier) Modifier {
+	m.Until = st.Until
+	m.By = r.it.Controller
+	return m
+}
+
+// stepModifyStat gives each Subject +Amount power for Step.Until: a Layer 5
 // modifier, which expires in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		n := g.value(r.it.Source, st.Amount, nil)
-		a.Modifiers = append(a.Modifiers, Modifier{Layer: 5, Power: n, Until: UntilEndOfTurn})
-		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power until end of turn", a, n)
+		a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 5, Power: n}))
+		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power %s", a, n, st.Until)
 	}
 	return len(as)
 }
@@ -463,8 +471,8 @@ func (g *Game) stepMorphScratch(r *resolution, st ability.Step) int {
 	return n
 }
 
-// stepGrantKeyword gives each asset of stepAssets the step's keyword until end
-// of turn, as a Layer 3 modifier (FR-LAY-001, FR-LAY-003), and returns how many
+// stepGrantKeyword gives each asset of stepAssets the step's keyword for
+// Step.Until, as a Layer 3 modifier (FR-LAY-001, FR-LAY-003), and returns how many
 // it granted. A keyword with no flag in keywordDefs (KeywordNone, or Aggressive,
 // whose trigger comes only from the printed keyword) grants nothing.
 func (g *Game) stepGrantKeyword(r *resolution, st ability.Step) int {
@@ -482,8 +490,8 @@ func (g *Game) stepGrantKeyword(r *resolution, st ability.Step) int {
 	}
 	as := g.stepAssets(r, st)
 	for _, a := range as {
-		a.Modifiers = append(a.Modifiers, Modifier{Layer: 3, Keywords: granted, Until: UntilEndOfTurn})
-		g.logEvent(Event{Kind: EventKeyword, Player: -1, Target: a.ID}, "%s gains %s until end of turn", a, name)
+		a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 3, Keywords: granted}))
+		g.logEvent(Event{Kind: EventKeyword, Player: -1, Target: a.ID}, "%s gains %s %s", a, name, st.Until)
 	}
 	return len(as)
 }

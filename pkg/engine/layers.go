@@ -11,13 +11,6 @@ import (
 	"animus-mundi/pkg/engine/ability"
 )
 
-// Duration is how long a Modifier lasts (FR-LAY-003).
-type Duration int
-
-const (
-	UntilEndOfTurn Duration = iota // expires in Sub-Phase 4c (FR-TRN-001)
-)
-
 // Modifier is one change a resolved effect made to an asset's characteristics.
 // Layer is its FR-LAY-001 layer. A Layer 5 modifier adds Power to Combat Power;
 // a Layer 3 modifier grants Keywords.
@@ -25,7 +18,8 @@ type Modifier struct {
 	Layer    int
 	Power    int
 	Keywords Keywords
-	Until    Duration
+	Until    ability.Duration
+	By       PlayerID // the controller of the ability whose step made it; read only for UntilEndOfOpponentTurn
 }
 
 // TempPower is the sum of a's Layer 5 power modifiers.
@@ -39,9 +33,19 @@ func (a *Asset) TempPower() int {
 	return n
 }
 
-// expire removes a's modifiers that last d.
-func (a *Asset) expire(d Duration) {
-	a.Modifiers = slices.DeleteFunc(a.Modifiers, func(m Modifier) bool { return m.Until == d })
+// expireAtEndOf removes the modifiers Sub-Phase 4c of active's turn expires
+// (FR-TRN-001, FR-LAY-003): every one that lasts until end of turn, and every
+// one that lasts until the end of its maker's opponent's turn whose maker is
+// not active.
+func (a *Asset) expireAtEndOf(active PlayerID) {
+	a.Modifiers = slices.DeleteFunc(a.Modifiers, func(m Modifier) bool {
+		switch m.Until {
+		case ability.UntilEndOfOpponentTurn:
+			return m.By != active
+		default:
+			return true
+		}
+	})
 }
 
 // Power returns effective Combat Power, the only stat that clamps at 0.
