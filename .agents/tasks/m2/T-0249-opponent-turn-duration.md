@@ -4,7 +4,7 @@ title: "A temporary effect that lasts until the end of your opponent's turn (wav
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0249-opponent-turn-duration
 depends_on: []
 claims: [shape:full-round duration (ability.Duration on Step.Until: UntilEndOfTurn, the zero value, or UntilEndOfOpponentTurn, which expires in Sub-Phase 4c of a turn whose active player is an opponent of the ability's controller; read by OpModifyStat and OpGrantKeyword through one Modifier constructor)]
@@ -75,3 +75,4 @@ Existing tests stay as they are and must still pass (the move of `Duration` is p
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 10): *Blindside* is the next wave H card (wave C's, after wave B's three are `done`). Its survey row needs the full-round duration, which the kernel lacks: `layers.go` has only `UntilEndOfTurn`, and 4c expires only that. Searched `pkg/engine` and the task archive for an existing opponent's-turn duration: none (`grep -rn "OpponentTurn\|UntilEnd" pkg`). The duration moves to `ability` rather than getting a second enum there, so nothing is written twice; `By` records the ability controller, and one `expireAtEndOf` reads it, which matches 4c's wording directly (no turn counting). No ruling needed: `FR-LAY-003` and `FR-TRN-001` 4c settle both the on-turn and the off-turn case. Split the card off as T-0250 (`queued`) under the D2 size rule. Re-read `BOARD.md` before committing: no `open` directive; #15 (3) waits for a max-health modifier (*Poisoned Rations*), which this isn't. Status `tests`.
+- 2026-11-15 rules-test-author (wave H run): wrote `pkg/engine/opponent_turn_duration_test.go` (commit test(T-0249)): TestFR_LAY_003_OpponentTurnPowerLastsThroughOpponentsTurn, _OpponentTurnPowerOnAnAlliedUnit, _OpponentTurnIsTheAbilityControllersOpponent, TestFR_TRN_001_OpponentTurnModifierMadeOffTurnExpiresThatTurn, TestFR_LAY_003_OpponentTurnKeywordGrant, _UntilEndOfTurnUnchanged, _MixedDurationsExpireSeparately, _OpponentTurnModifierLeavesWithTheAsset (uses the full path: second Maneuver returns the unit, player 1 redeploys it), _OpponentTurnLogText (EventPower Detail suffix). Local helpers in the file: powerFor, enactOn, wantPower. Helpers requested: none. Left out: nothing. `go vet` fails only on the missing `ability.Duration`, `ability.UntilEndOfTurn`, `ability.UntilEndOfOpponentTurn` and `Step.Until`; `cardtown lint rules` passes.
