@@ -284,15 +284,16 @@ type Filter struct {
 	AtMost     int            // the bound of Stat ("power 3 or less" is StatPower, 3); means nothing while Stat is StatNone
 }
 
-// Stat is a stat a filter can bound (FR-TGT-001 "Dynamic Stats"). Power and
-// Requisition cost are values; a later stat (health) is another, read the same way: a card in a
-// pile by its printed value, an asset on the battlefield by its effective one.
+// Stat is a stat of the one vocabulary that a filter bound (Filter.Stat, FR-TGT-001
+// "Dynamic Stats") and a modify step (Step.Stat) both use. A filter reads a card in a
+// pile by its printed value and an asset on the battlefield by its effective one.
 type Stat int
 
 const (
 	StatNone        Stat = iota // the zero value: no stat criterion
 	StatPower                   // Combat Power
 	StatRequisition             // Requisition cost (FR-CRD-101)
+	StatMaxHealth               // Maximum Health (FR-LAY-002), not Current Health
 )
 
 // ZoneRef is a zone criterion read against the zone a stack item locked, not
@@ -373,7 +374,7 @@ const (
 	OpHeal                       // remove up to Amount accumulated damage from the Subject (FR-KWD-002d)
 	OpAddArmor                   // add Amount to the Subject's Armor pool (FR-LAY-002)
 	OpDiscard                    // its controller discards Amount cards of their choice from their own hand (FR-MOD-001 §1, §6; SVY-R16)
-	OpModifyStat                 // the Subject gets +Amount power for Step.Until (Layer 5, FR-LAY-001, FR-LAY-003). Other stats and durations come later
+	OpModifyStat                 // the Subject gets +Amount to Step.Stat (power, or Maximum Health) for Step.Until (Layer 5, FR-LAY-001, FR-LAY-002, FR-LAY-003)
 	OpKill                       // destroy the Subject at once, into its owner's discard pile (FR-LAY-002, FR-ZON-002); a Headquarters is skipped (no M2 card kills one)
 	OpMoveZone                   // move each Subject unit to Step.To, in its controller's battlefield, keeping its state (FR-ZON-002, FR-ZON-004). A unit already there, a Structure and a Headquarters don't move
 	OpSearchDeck                 // its controller chooses a card from their deck, the rest is shuffled and the card goes to their hand (FR-DEK-001, SVY-R37, SVY-R38). An empty deck is still shuffled
@@ -412,6 +413,7 @@ type Step struct {
 	IfDone            bool     // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 	ControllerChooses bool     // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand
 	Split             bool     // SubjectPick over assets with OpAddArmor only: Amount is a pool the ability's controller splits among the assets matching Filter as the step resolves, not a target (SVY-R51): each picked asset gets a positive whole share and the shares add up to Amount; one match takes it all unasked, none does nothing, and a timeout puts it all on the first in fixed order (SVY-R52). UpTo must be 0
+	Stat              Stat     // OpModifyStat only: the stat the step changes. StatNone (zero) and StatPower are Combat Power; StatMaxHealth is Maximum Health; no other stat is valid
 	Until             Duration // OpModifyStat, OpGrantKeyword: how long the modifier lasts; the zero value is until end of turn
 	IfHandEmpty       bool     // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
 }
