@@ -31,5 +31,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0252 | `OpModifyStat` on Maximum Health: `Step.Stat`, `ability.StatMaxHealth`, a `max-health` event (wave H shape, sonnet; *Poisoned Rations*' step) | tests |
 | T-0253 | *Poisoned Rations*: chosen unit gets -3 max health until end of turn (wave H card, flash) | queued |
