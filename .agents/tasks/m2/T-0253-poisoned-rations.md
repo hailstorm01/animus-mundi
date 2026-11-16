@@ -4,7 +4,7 @@ title: "Poisoned Rations: chosen unit gets -3 max health until end of turn (wave
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0253-poisoned-rations
 depends_on: [T-0251, T-0252]
 claims: [card:Poisoned Rations]
