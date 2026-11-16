@@ -251,3 +251,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0245 | A start-of-turn trigger that resolves in the Ready Phase, before the Draw Phase: `HookTurnStart` (#15 (1), wave H shape, sonnet; *Hammerhand Bivouac*'s hook) | done |
 | T-0246 | "In the same zone" on a stack item reads its source's zone, locked on placement: `ZoneRefSame` (#141 (3) for stack items, `SVY-R44`, wave H shape, sonnet; *Hammerhand Bivouac*'s zone) | done |
 | T-0247 | An untargeted pool split as it resolves: `Step.Split` (#157, `SVY-R51`, `SVY-R52`, wave H shape, sonnet; *Hammerhand Bivouac*'s pool) | done |
+| T-0248 | *Hammerhand Bivouac*: at the start of your turn, distribute 2 armor among allied units in the same zone (#157, wave H card, flash) | done |

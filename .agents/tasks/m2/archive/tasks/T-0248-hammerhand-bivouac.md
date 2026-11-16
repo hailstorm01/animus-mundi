@@ -17,7 +17,7 @@ requirements: [FR-TRN-001, FR-TGT-001, FR-TGT-002, FR-MOD-001]
 
 ## Inputs
 - Card text: `data/cards/units-and-structures-path.csv:17`.
-- Board directive #157 (`SVY-R51`, `SVY-R52`), from the [outcome](../../../docs/design/outcomes/2026-11-15-wave-h-bivouac-untargeted-pool.md) (`Status: applied: FRD 01 v3.28`). T-0247 (merge 732c9c5) built the pool shape, with tests (a)–(e) on a synthetic card in `pkg/engine/pool_test.go`. This task adds the real card and pins (a)–(f) on it.
+- Board directive #157 (`SVY-R51`, `SVY-R52`), from the [outcome](../../../../../docs/design/outcomes/2026-11-15-wave-h-bivouac-untargeted-pool.md) (`Status: applied: FRD 01 v3.28`). T-0247 (merge 732c9c5) built the pool shape, with tests (a)–(e) on a synthetic card in `pkg/engine/pool_test.go`. This task adds the real card and pins (a)–(f) on it.
 - FRD 01 v3.28: `FR-TRN-001` start-of-turn triggers (line 307); `SVY-R44` "in the same zone" locked on placement (line 398); `FR-TGT-002` *Distributed Pool Allocations* (line 409, `SVY-R51`); `FR-MOD-001` §1 (line 421) and §6 *Splitting a Pool* (line 437, `SVY-R52`: "A timed-out *Hammerhand Bivouac* gives both armor to the allied unit that entered the Main Theater earliest").
 - Code of the day (run branch at 4ee33d7): `Step.Split` (`pkg/engine/ability/ability.go:398`), `HookTurnStart` (`:149`), `TurnYours` (`:157`), `ZoneRefSame` (`:290`); `splitAssets` (`pkg/engine/targeting.go`), `stepAddArmor` (`pkg/engine/effects.go`); `NotYetExecutable` (`pkg/engine/cards/cards.go:20`).
 
