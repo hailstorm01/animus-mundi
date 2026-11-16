@@ -698,6 +698,25 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Poisoned Rations": {
+		Text: []string{"Chosen unit gets -3 max health until end of turn."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{Kinds: ability.KindUnit},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpModifyStat,
+					Stat:    ability.StatMaxHealth,
+					Amount:  ability.Value{N: -3},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Reaver's Rush": {
 		Text: []string{"Deploy chosen unit card with power 3 or less from your discard pile for free."},
 		Effect: ability.Effect{
