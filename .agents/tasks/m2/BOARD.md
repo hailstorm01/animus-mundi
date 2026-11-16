@@ -31,4 +31,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0253 | *Poisoned Rations*: chosen unit gets -3 max health until end of turn (wave H card, flash) | tests |
