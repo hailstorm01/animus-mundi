@@ -4,7 +4,7 @@ title: An untargeted pool split as it resolves (wave H shape, sonnet; directive 
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0247-bivouac-pool
 depends_on: [T-0245, T-0246]
 claims: [shape:untargeted distributed pool (Step.Split: a SubjectPick step whose Amount is a pool its controller splits among the assets matching its filter as it resolves, one point per pick, positive whole shares summing to the pool, SVY-R51; timeout puts the whole pool on the first in fixed order, SVY-R52)]
@@ -19,7 +19,7 @@ The pool directive #157 rules on (`SVY-R51`, `SVY-R52`), as a shape: a `SubjectP
 
 ## Inputs
 - FRD 01 v3.28: `FR-TGT-002` Distributed Pool Allocations (line 409, `SVY-R51`), `FR-TGT-003` Distributed Pool Evaporation (line 416), `FR-MOD-001` §1 (line 421) and §6 *Splitting a Pool* (line 437, `SVY-R52`), and §6's *Mandatory Targets and Untargeted Selections* fixed order just above it.
-- Board directive #157 (`open: before T-0247`), from the [outcome](../../../docs/design/outcomes/2026-11-15-wave-h-bivouac-untargeted-pool.md) (`Status: applied: FRD 01 v3.28`). Its tests (a)–(e) are pinned here on a synthetic card; T-0248 pins them on the real card, with (f).
+- Board directive #157 (`open: before T-0247`), from the [outcome](../../../../../docs/design/outcomes/2026-11-15-wave-h-bivouac-untargeted-pool.md) (`Status: applied: FRD 01 v3.28`). Its tests (a)–(e) are pinned here on a synthetic card; T-0248 pins them on the real card, with (f).
 - Code of the day (run branch at 08219ba):
   - `Step` (`pkg/engine/ability/ability.go:385`); `SubjectPick` (`:379`).
   - `pickAssets`, `pickFrom` (`pkg/engine/targeting.go:158`, `:185`); `assetDecision` (`:108`, oldest asset first); the `PerDiscard` repeated bounds (`:97`, `d.Min, d.Max, d.Repeats = n, n, true`).
@@ -61,10 +61,10 @@ New tests go in `pkg/engine/pool_test.go`. Use a synthetic structure (`startStru
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "UntargetedPool|PerDiscard"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card uses `Split` yet, and the `PerDiscard` change is a pure move)
+- [x] The listed tests pass: `go test ./pkg/engine -run "UntargetedPool|PerDiscard"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card uses `Split` yet, and the `PerDiscard` change is a pure move)
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 7): queued after T-0246, which it depends on for the locked zone. Directive #157 is `open: before T-0247` and is applied here.
@@ -72,3 +72,4 @@ New tests go in `pkg/engine/pool_test.go`. Use a synthetic structure (`startStru
 - 2026-11-15 rules-test-author (wave H run): wrote `pkg/engine/pool_test.go`: `TestFR_TGT_002_UntargetedPoolSplitAsItResolves` (3 subtests), `TestFR_TGT_002_UntargetedPoolRejectsWrongTotals` (3 subtests), `TestFR_MOD_001_UntargetedPoolOneMatchTakesAll`, `TestFR_TGT_002_UntargetedPoolNoMatchDoesNothing`, `TestFR_MOD_001_UntargetedPoolTimeoutPutsAllOnFirstInFixedOrder`, `TestFR_TGT_002_UntargetedPoolOffersOnlyLockedZone`. Local test-file helpers only (`poolStructure`, `poolScene`, `(*scene).runPool`, `picksAsked`); none requested for `scenario_test.go`. `go vet` fails only on the missing `ability.Step.Split` field (the shape itself). `cardtown lint rules` passes. No case left out. Status `tests-review`.
 - 2026-11-15 lead-architect (D4): tests approved. Each checks what `SVY-R51`, `SVY-R52` and #157 give: one `DecidePick` (not a target), `Repeats`, `Min == Max == 2`, over the two allied Main Theater units oldest first, and each answer's shares, with one `EventArmor` per receiving unit carrying its whole share (a); a total of 1 or 3 or a bad index is invalid and falls back as a timeout (a); one match takes both unasked (§1, b); no match does nothing and asks nothing (c); a timeout puts both on the unit that entered the Main Theater earliest, which is not the first option, so fixed order is told apart from option order (d); the options leave out the Reserves unit, the enemy and both Headquarters (e). Helpers checked: `startStructure`, `startSteps` (`turn_start_trigger_test.go`), `effectEvents` (`effect_events_test.go:15`); `s.moveTo` appends to `g.Theater` (`zones.go:258`). The file fails to compile only on `ability.Step.Split`, the field the task adds. Status `ready`, dispatched to `kernel-engineer` (sonnet).
 - 2026-11-15 kernel-engineer (sonnet): implemented the shape. `ability.Step.Split` (+ pointer in `SubjectPick`'s comment); `targeting.go`: `repeatedPicks` (the `PerDiscard` branch now uses it, a pure move), `pickAssetDecision` (extracted from `pickAssets`, which now calls it), `splitAssets` (pool <= 0 or no match asks nothing; asks the pick decision bounded by `repeatedPicks` through `pickFrom`, tallies picks into recipients in first-pick order; prompt `<card>: distribute <pool>`); `effects.go`: `stepAddArmor` with `Split` gives each recipient its share, one `EventArmor` per recipient, returns the recipient count; `doc.go` clause. Reused `choose`'s fast path, validity and fallback, `assetDecision`, `pickFrom`; no choice.go change, no new DecisionKind. Ran: `go test ./pkg/engine -run "UntargetedPool|PerDiscard"` ok; `go tool task check` passed; `go tool task sim` clean; `go tool task sim-compare -- autoloop/m2-wave-h` PASS byte for byte. Status `review`.
+- 2026-11-15 lead-architect (D5): approved. The diff after the test commit touches only the four Allowed Files and follows the Shape: `Step.Split`; `repeatedPicks`, which the `PerDiscard` bound now uses (a pure move); `pickAssetDecision`, the one pick decision `pickAssets` and `splitAssets` share; `splitAssets` tallies the per-point picks into shares in first-pick order; `stepAddArmor` with `Split` logs one `EventArmor` per recipient. No change to `choice.go`, no new `DecisionKind`, no test edited, no card name in engine code. Re-ran in a review worktree: `go test ./pkg/engine -run "UntargetedPool|PerDiscard"` ok, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. Merged into `autoloop/m2-wave-h` (732c9c5). #157 stays open for T-0248, the card. Status `done`.
