@@ -31,4 +31,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0250](T-0250-blindside.md) | *Blindside* (wave H card) | queued |
+| [T-0250](T-0250-blindside.md) | *Blindside* (wave H card) | tests |
