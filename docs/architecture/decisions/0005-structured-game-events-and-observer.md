@@ -37,6 +37,8 @@ Every accepted action emits one `action` event.
 
 **Addendum (T-0219).** `keyword` is an effect granting a battlefield asset a keyword until end of turn (`OpGrantKeyword`, `FR-LAY-001`): one event per asset granted, with `Target`, `Player` -1 and no `Card`, and text `<asset> gains <keyword> until end of turn` through the asset's `String`, so a face-down asset stays hidden. Additive: no starter or stress log changes until a card uses it.
 
+**Addendum (T-0252).** `max-health` is an effect changing a battlefield asset's Maximum Health for a duration (`OpModifyStat` with `Step.Stat` `StatMaxHealth`, `FR-LAY-002`): one event per asset changed, with `Target`, `Amount` (the change, signed), `Player` -1 and no `Card`, and text `<asset> gets <±n> max health <duration>` through the asset's `String`, so a face-down asset stays hidden. A power change keeps its `power` event. Additive: no starter or stress log changes until a card uses it.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences
