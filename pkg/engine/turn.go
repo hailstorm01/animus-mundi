@@ -35,12 +35,13 @@ func (g *Game) beginTurn() {
 func (g *Game) endTurn() {
 	g.Phase = PhaseEnd
 	// 4a/4b: no executable card has end-of-turn triggers yet.
-	// 4c: pools reset, "until end of turn" modifiers expire.
+	// 4c: pools reset, "until end of turn" modifiers expire, and so do "until the
+	// end of your opponent's turn" ones when this is that opponent's turn.
 	for _, p := range g.Players {
 		p.Req, p.Tac = 0, 0
 	}
 	for _, a := range g.Assets() {
-		a.expire(UntilEndOfTurn)
+		a.expireAtEndOf(g.Active)
 	}
 	// 4d: handover.
 	g.Active = g.Active.Opponent()
