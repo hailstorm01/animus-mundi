@@ -4,7 +4,7 @@ title: "Rhapsody's Hollow: T3, exhaust, kill this structure: gain control of cho
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0255-rhapsodys-hollow
 depends_on: [T-0254]
 claims: [card:Rhapsody's Hollow]
