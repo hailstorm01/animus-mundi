@@ -44,7 +44,7 @@
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. A later step on a pile slot acts on the asset an earlier
 //     OpDeployFree of the same resolution made of its card. SubjectPick is an untargeted pick made as the
-//     step resolves (SVY-R3), asked as a DecidePick and not a target, and a step with IfDone
+//     step resolves (SVY-R3), asked as a DecidePick and not a target (Step.Split makes a pick step's Amount a pool split among the matches as it resolves, SVY-R51, SVY-R52), and a step with IfDone
 //     runs only if the step before it did something ("if you do", SVY-R14), and a step with
 //     IfHandEmpty runs only if its controller has no cards in hand when it resolves. A damage
 //     step with Step.Dealer has an asset chosen for one of its slots deal the damage (SVY-R27).

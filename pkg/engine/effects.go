@@ -213,6 +213,14 @@ func (g *Game) stepHeal(r *resolution, st ability.Step) int {
 // stepAddArmor gives each asset the step acts on Armor.
 func (g *Game) stepAddArmor(r *resolution, st ability.Step) int {
 	n := g.value(r.it.Source, st.Amount, nil)
+	if st.Split {
+		as, shares := g.splitAssets(r, st, n)
+		for i, a := range as {
+			a.Armor += shares[i]
+			g.logEvent(Event{Kind: EventArmor, Player: -1, Target: a.ID, Amount: shares[i]}, "%s gains %d Armor", a, shares[i])
+		}
+		return len(as)
+	}
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		a.Armor += n

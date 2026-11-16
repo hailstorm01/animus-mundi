@@ -94,8 +94,16 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 		})
 	}
 	if t.PerDiscard {
-		d.Min, d.Max, d.Repeats = len(pl.discards), len(pl.discards), true
+		d = repeatedPicks(d, len(pl.discards))
 	}
+	return d
+}
+
+// repeatedPicks bounds d to exactly n picks, each of which may repeat an
+// option: the answer shape of a per-discard target slot and of a pool split
+// among the options one point per pick.
+func repeatedPicks(d Decision, n int) Decision {
+	d.Min, d.Max, d.Repeats = n, n, true
 	return d
 }
 
@@ -156,10 +164,42 @@ func (g *Game) pileDecision(p PlayerID, kind DecisionKind, prompt string, upTo i
 // asked, a timeout picks the first in fixed order); UpTo N picks up to N, always
 // asked, and a timeout picks none. With no match nothing is asked.
 func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
-	d, opts := g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
+	d, opts := g.pickAssetDecision(r, st)
+	return pickFrom(g, d, opts)
+}
+
+// pickAssetDecision is the decision of an untargeted asset pick: the options
+// are every battlefield asset matching st.Filter now, oldest first. Both
+// pickAssets and splitAssets ask it, so a pool's options are SubjectPick's.
+func (g *Game) pickAssetDecision(r *resolution, st ability.Step) (Decision, []*Asset) {
+	return g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
 		return g.matchesFilterAt(r.it.Controller, r.it.Source, r.it.Locked, st.Filter, a)
 	})
-	return pickFrom(g, d, opts)
+}
+
+// splitAssets is the untargeted pool (SVY-R51): the item's controller splits
+// pool among the assets matching st.Filter now, one point per pick, and the
+// result is each asset that got a share, in first-pick order, with its share.
+// It is not a target. With no pool or no match nothing is asked; one match
+// takes the whole pool unasked, and a timeout puts it all on the first option
+// in fixed order (SVY-R52), as choose's fast path and fallback give.
+func (g *Game) splitAssets(r *resolution, st ability.Step, pool int) ([]*Asset, []int) {
+	if pool <= 0 {
+		return nil, nil
+	}
+	d, opts := g.pickAssetDecision(r, st)
+	d.Prompt = fmt.Sprintf("%s: distribute %d", cardName(r.it.Inst), pool)
+	var as []*Asset
+	var shares []int
+	for _, a := range pickFrom(g, repeatedPicks(d, pool), opts) {
+		if i := slices.Index(as, a); i >= 0 {
+			shares[i]++
+			continue
+		}
+		as = append(as, a)
+		shares = append(shares, 1)
+	}
+	return as, shares
 }
 
 // pickPrompt is the prompt of an untargeted pick step.
