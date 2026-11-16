@@ -4,7 +4,7 @@ title: "Rhapsody's Hollow: T3, exhaust, kill this structure: gain control of cho
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0255-rhapsodys-hollow
 depends_on: [T-0254]
 claims: [card:Rhapsody's Hollow]
@@ -43,13 +43,14 @@ New tests go in `pkg/engine/cards_animus_rhapsodys_hollow_test.go`. Use the real
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "RhapsodysHollow|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Rhapsody's Hollow* is in neither starter deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "RhapsodysHollow|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (*Rhapsody's Hollow* is in neither starter deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 15): queued, split off T-0254 under the D2 size rule. Waits for T-0254.
 - 2026-11-16 lead-architect (wave H run, session 16): T-0254 is `done` (merge 9178485) with the names planned (`OpGainControl`, `EventControl`). Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 49a6e82 and dry-ran the definition (above). No sync needed (`main` is already in the run branch). Directives: none `open`; the `waiting` ones were checked and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook here; #71: "chosen opposing unit" is not an each-player effect; #91 (2), #106, #120, #141 (3) aura half and #142 name cards or shapes this task doesn't touch). No new shape: the costs are *Sinuous Growth*'s and *Cliff of Portents*', the step is T-0254's. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
 - 2026-11-16 rules-test-author: wrote `pkg/engine/cards_animus_rhapsodys_hollow_test.go`: `TestCard_RhapsodysHollow_GainsControlOfOpposingUnit`, `_OnlyOpposingMainTheaterUnitsOffered`, `_NotOfferedWithoutTarget` (4 subtests), `_CostsNeedTacticsAndReadied` (2 subtests), `_TargetLeftMainTheaterBeforeResolution`. Helpers requested: none. `go vet` is clean; the tests fail now only because the card has no ability. Left out: nothing. Note: the Exhausted-Hollow subtest checks inline instead of `actNotOffered`, whose `a.Exhausted` check would fail on a Hollow that starts Exhausted. The scene helper is named `hollowScene` (`rhScene` is taken by `revealed_hand_test.go`). Status `tests-review`.
 - 2026-11-16 lead-architect (D4): tests approved, round 1. Each checks what the cited rules give, on the real card: player 1's damaged Readied Main Theater unit stays the same asset in the Main Theater, now controlled by player 0, owned by player 1, Readied with its damage, with one `control` event; the Hollow is killed into its owner's discard and exactly T3 is paid (`FR-ZON-002` `:254`, `FR-ZON-003` `:229`, `FR-ACT-001`); the one target question offers only player 1's two Main Theater units, not an allied unit, a Reserves unit or a structure, and only the chosen one changes (`FR-TGT-001`); with no opposing Main Theater unit nothing is offered or paid (`SVY-R36`); R5 T2 and an Exhausted Hollow can't pay (`FR-ACT-001`, `FR-ACT-002`); a target moved to Reserves after placement stays player 1's with no `control` event, and the costs stay paid (`FR-TGT-003`). The inline Exhausted check is right: `actNotOffered` asserts the source is not Exhausted afterwards, which a Hollow that starts Exhausted fails. No existing test edited. As a sanity check I ran the tests against the Shape's definition in a throwaway worktree: all pass, and the test file is gofmt-clean. Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented Rhapsody's Hollow in `pkg/engine/cards/animus.go` as planned with costs `CostResources` {Tac: 3}, `CostExhaustSelf`, and `CostKillSelf`, and an effect with target `{Filter: {Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, Zone: ability.ZoneMainTheater}}` and step `{Op: ability.OpGainControl, Subject: ability.SubjectTarget, Target: 0}`. Reused standard costs (`CostResources`, `CostExhaustSelf`, `CostKillSelf`), `Filter` and T-0254's `OpGainControl`. Removed "Rhapsody's Hollow" from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Verified: `go test ./pkg/engine -run "RhapsodysHollow|TestDefs"` passed; `go tool task check` passed (gofmt, `go vet`, all package tests, `cardtown lint --all`); `go tool task sim` passed (200 games, all invariants held); `go tool task sim-compare -- autoloop/m2-wave-h` passed byte-identical starter and stress sims. Status `review`.
