@@ -4,7 +4,7 @@ title: "Maximum Health modifiers in Layer 5, and the death sweep after Sub-Phase
 kind: shape
 tier: sonnet
 wave: H
-status: tests-review
+status: done
 branch: m2/autoloop-wave-h/T-0251-max-health-modifier-and-4c-sweep
 depends_on: []
 claims: [shape:Layer 5 Maximum Health modifier (Modifier.MaxHealth, summed by Game.MaxHealth, unclamped), shape:End Phase 4c death sweep with its flush and resolve cycle (#15 (3))]
@@ -59,10 +59,10 @@ Existing tests stay as they are and must still pass.
 - `pkg/engine/turn.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "MaxHealth|FourC"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card makes a max-health modifier yet, so nothing can be lethal at 4c that wasn't before, and the 4c sweep finds nothing in a sim)
+- [x] The listed tests pass: `go test ./pkg/engine -run "MaxHealth|FourC"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card makes a max-health modifier yet, so nothing can be lethal at 4c that wasn't before, and the 4c sweep finds nothing in a sim)
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 12): *Poisoned Rations* is the next wave H card (wave C's, after *Blindside*). Its survey row (`docs/design/m2_starter_set_ability_survey.md:197`) needs a max-health modifier, which the kernel lacks: `MaxHealth` reads printed Health only (`layers.go:57`), `Modifier` has no health field and `OpModifyStat` changes power only. Searched `pkg/engine` and the task archive for an existing health modifier: none (`git grep -n "MaxHealth"` finds only the reader, `IsLethal`, `EffectiveState` and the snapshot). That fires #15 (3), set `open` on the board in this commit and applied here. The whole shape (layer, 4c sweep, the step with `ability.StatMaxHealth` read by filters too, its event kind) touches six non-test files, and the card two more, so split under the D2 size rule: this task (the layer and the sweep), T-0252 (`OpModifyStat` on Maximum Health, `queued`), T-0253 (*Poisoned Rations*, `queued`). No ruling needed: `FR-LAY-002` settles the layer, the unclamped value and the restore on expiry; #15 (user-approved audit) settles where the 4c sweep's triggers resolve. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
@@ -73,3 +73,4 @@ Existing tests stay as they are and must still pass.
   1. In `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover`, make the death trigger's resolution visible in the log: give the `HookKilled` trigger a step that logs an event, for example `{Op: ability.OpScratch, Amount: ability.Value{N: 1}}` (logs `EventScratch` with `Player` 0, `zones.go:63`), in place of or after the draw. Assert that event comes before the next turn's `EventTurnStart`, and that the new Scratch Company is on the battlefield. Keep the empty-stack check; keep the hand check only if the draw stays.
   2. In that test and in `testExpiryAtFourC`, require the next turn's `EventTurnStart` to exist (`ts >= 0`, fatal otherwise) before comparing indexes, so a missing turn-start can't pass the ordering check.
 - 2026-11-15 rules-test-author (round 2): applied both D4 notes in `pkg/engine/max_health_test.go` only. (1) `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover` now uses a `HookKilled` trigger of Scratch 1: asserts player 0's `EventScratch` comes before the next `EventTurnStart`, face-down Scratch Companies grew by 1, and the stack is empty; the hand check went with the draw. (2) That test and `testExpiryAtFourC` fatally require the next `EventTurnStart` (`ts >= 0`) before comparing indexes. No helpers requested. `go test ./pkg/engine -run "MaxHealth|FourC"` passes (all 8), `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
+- 2026-11-15 lead-architect (D4 round 2, then D5): tests approved. `b420c9e1` changes only `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover` and `testExpiryAtFourC`, as the two notes asked: the death trigger is now Scratch 1, whose `scratch` event must come before the next `turn-start`, with one more face-down Scratch Company and an empty stack, and both tests require the `turn-start` event before comparing. No other test changed. The implementation commit 2dd44498 needed no change, so the task went straight to code review. Code approved: 2dd44498 touches only the two Allowed Files and follows the Shape. `Modifier.MaxHealth` is summed by `MaxHealth` over Layer 5 modifiers, unclamped, and `expireAtEndOf` is unchanged. In `endTurn`, after 4c's expiry: `deathSweep`, then `resolveStack` (flush, resolve and sweep after each item), with a return before 4d if the match ended. No card name and no test edit (`git diff 22eb98c4 2dd44498 -- pkg/engine/max_health_test.go` is empty). Re-ran in a review worktree: the listed tests ok, `gofmt -l pkg cmd` clean, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. #15 (3) is applied with this merge. Merged into `autoloop/m2-wave-h`. Status `done`.
