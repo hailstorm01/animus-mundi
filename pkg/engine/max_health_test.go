@@ -156,7 +156,10 @@ func testExpiryAtFourC(t *testing.T, p PlayerID) {
 	if d < 0 {
 		t.Fatalf("the destruction is logged as a destroy event (FR-LAY-002)")
 	}
-	if ts >= 0 && d > ts {
+	if ts < 0 {
+		t.Fatalf("the next turn begins after the End Phase, so a turn-start event is logged (FR-TRN-001)")
+	}
+	if d > ts {
 		t.Errorf("the destroy event comes before the next turn's turn-start (FR-TRN-001 4c before 4d)")
 	}
 }
@@ -169,35 +172,42 @@ func TestFR_TRN_001_ExpiryAtFourCDestroysInTheEndPhase(t *testing.T) {
 
 func TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover(t *testing.T) {
 	// Covers: FR-LAY-002, FR-TRG-004
+	// The trigger is "Scratch 1": a successful draw is secret and logs no
+	// event, but a Scratch logs an event and puts a face-down Scratch Company
+	// on the battlefield.
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, mortal("Mortal Holder", 1, 2, killedTrigger(drawN(1))))
+	s.onTop(0, vanilla("Top A", "Top B")...)
+	a := s.put(0, ZoneMainTheater, mortal("Mortal Holder", 1, 2, killedTrigger(scratchN(1))))
 	addMaxHealth(a, 2)
 	a.Damage = 3
-	hand := len(s.g.Players[0].Hand)
+	faceDown := faceDownCount(s.g.Players[0])
 	from := len(s.g.Log)
 	s.endTurn()
 	if s.alive(a) {
 		t.Fatalf("precondition: the unit is destroyed at 4c")
 	}
-	if got := len(s.g.Players[0].Hand); got != hand+1 {
-		t.Errorf("its death trigger (draw 1) resolves in the End Phase: hand %d -> %d, want %d (FR-LAY-002, FR-TRN-001)", hand, got, hand+1)
+	if got := faceDownCount(s.g.Players[0]); got != faceDown+1 {
+		t.Errorf("its death trigger (Scratch 1) resolves in the End Phase: face-down Scratch Companies %d -> %d, want %d (FR-LAY-002, FR-TRN-001)", faceDown, got, faceDown+1)
 	}
 	if len(s.g.Stack) != 0 {
 		t.Errorf("the stack is empty after the End Phase (FR-TRN-001), has %d", len(s.g.Stack))
 	}
 	ts := firstEventAfter(s.g.Log, from, EventTurnStart)
-	drew := -1
+	if ts < 0 {
+		t.Fatalf("the next turn begins after the End Phase, so a turn-start event is logged (FR-TRN-001)")
+	}
+	scratch := -1
 	for i := from; i < len(s.g.Log); i++ {
-		if s.g.Log[i].Kind == EventDraw && s.g.Log[i].Player == 0 {
-			drew = i
+		if s.g.Log[i].Kind == EventScratch && s.g.Log[i].Player == 0 {
+			scratch = i
 			break
 		}
 	}
-	if drew < 0 {
-		t.Fatalf("player 0's draw is logged")
+	if scratch < 0 {
+		t.Fatalf("the death trigger's Scratch is logged for player 0")
 	}
-	if ts >= 0 && drew > ts {
-		t.Errorf("the draw comes before the next turn's turn-start (FR-TRN-001 4c before 4d)")
+	if scratch > ts {
+		t.Errorf("the trigger resolves before the next turn's turn-start (FR-TRN-001 4c before 4d)")
 	}
 }
 

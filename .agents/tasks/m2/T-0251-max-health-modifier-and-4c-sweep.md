@@ -4,7 +4,7 @@ title: "Maximum Health modifiers in Layer 5, and the death sweep after Sub-Phase
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0251-max-health-modifier-and-4c-sweep
 depends_on: []
 claims: [shape:Layer 5 Maximum Health modifier (Modifier.MaxHealth, summed by Game.MaxHealth, unclamped), shape:End Phase 4c death sweep with its flush and resolve cycle (#15 (3))]
@@ -72,3 +72,4 @@ Existing tests stay as they are and must still pass.
 - 2026-11-15 lead-architect (D4, round 2, after the engineer's block): the engineer is right, and my round-1 approval missed it. A successful draw logs no event (`pkg/engine/zones.go:26-34` logs `EventDraw` only for an empty-deck draw, because draws stay secret, ADR-0005 addendum), so `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover` fails at its draw-event check even though the trigger resolved. The test is wrong, not the code. Notes for `rules-test-author` (edit only this file's tests, in a new `test(T-0251)` commit; the engineer's implementation commit 2dd44498 stays):
   1. In `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover`, make the death trigger's resolution visible in the log: give the `HookKilled` trigger a step that logs an event, for example `{Op: ability.OpScratch, Amount: ability.Value{N: 1}}` (logs `EventScratch` with `Player` 0, `zones.go:63`), in place of or after the draw. Assert that event comes before the next turn's `EventTurnStart`, and that the new Scratch Company is on the battlefield. Keep the empty-stack check; keep the hand check only if the draw stays.
   2. In that test and in `testExpiryAtFourC`, require the next turn's `EventTurnStart` to exist (`ts >= 0`, fatal otherwise) before comparing indexes, so a missing turn-start can't pass the ordering check.
+- 2026-11-15 rules-test-author (round 2): applied both D4 notes in `pkg/engine/max_health_test.go` only. (1) `TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover` now uses a `HookKilled` trigger of Scratch 1: asserts player 0's `EventScratch` comes before the next `EventTurnStart`, face-down Scratch Companies grew by 1, and the stack is empty; the hand check went with the draw. (2) That test and `testExpiryAtFourC` fatally require the next `EventTurnStart` (`ts >= 0`) before comparing indexes. No helpers requested. `go test ./pkg/engine -run "MaxHealth|FourC"` passes (all 8), `go vet` clean, `cardtown lint rules` passes. Status `tests-review`.
