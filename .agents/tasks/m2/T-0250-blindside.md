@@ -4,7 +4,7 @@ title: "Blindside: chosen opposing unit gets -3 power until the end of your oppo
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0250-blindside
 depends_on: [T-0249]
 claims: [card:Blindside]
