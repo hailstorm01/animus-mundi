@@ -517,6 +517,38 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Rhapsody's Hollow": {
+		Text: []string{
+			"T3, exhaust, kill this structure: Gain control of chosen opposing unit in the Main Theater.",
+		},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 3},
+					{Kind: ability.CostExhaustSelf},
+					{Kind: ability.CostKillSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindUnit,
+								Zone:       ability.ZoneMainTheater,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpGainControl,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Shifting Impossibility": {
 		Text: []string{"If an allied Scratch Company unit would be killed, return it to its owner's hand and deal 1 damage to this unit instead."},
 		Replacements: []ability.Replacement{
