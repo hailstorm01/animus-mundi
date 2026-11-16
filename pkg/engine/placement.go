@@ -122,8 +122,16 @@ func deployPermission(c *Card) *ability.Static {
 // activatedPlacement is the placement of the printed ability act of asset a,
 // activated by pid, for both its legality check and declaring it.
 func activatedPlacement(pid PlayerID, a *Asset, act ability.Activated) placement {
-	return placement{controller: pid, source: a.ID, inst: a.Inst, label: a.Printed().Name, costs: act.Costs}
+	pl := placement{controller: pid, source: a.ID, inst: a.Inst, label: a.Printed().Name, costs: act.Costs}
+	if act.Effect.ReadsZoneRef(ability.ZoneRefSame) {
+		pl.locked = zoneLock(a)
+	}
+	return pl
 }
+
+// zoneLock is the zone a's source-relative filters lock: a's zone and
+// controller (SVY-R44, SVY-R45).
+func zoneLock(a *Asset) *LockedZone { return &LockedZone{Zone: a.Zone, Player: a.Controller} }
 
 // slotsLegal reports whether the exactly-one slots of ts can all be filled at
 // once now: one legal entity each, with every "another" slot's entity

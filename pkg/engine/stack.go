@@ -17,7 +17,9 @@ const (
 )
 
 // LockedZone is the zone a stack item's source-relative filters read, locked
-// once (SVY-R44, SVY-R45). Player is the owner of a Reserves or Headquarters
+// once (SVY-R44, SVY-R45): a move trigger locks its destination ("in that
+// zone"); a trigger or activated ability whose effect reads "in the same zone"
+// locks its source's zone on placement. Player is the owner of a Reserves or Headquarters
 // Zone; it is unused for the shared Main Theater (FR-ZON-001).
 type LockedZone struct {
 	Zone   Zone
@@ -40,7 +42,7 @@ type StackItem struct {
 	Tracked bool            // StackAbility: a death trigger or a trigger from its card's discard pile, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
 	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed trigger or an activated ability
 	Watched int             // StackAbility: the asset ID of the asset whose event fired its watching trigger (ability.SubjectWatched); 0 for none
-	Locked  *LockedZone     // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45); nil if it locked none
+	Locked  *LockedZone     // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45): a move trigger's destination, or the source's zone for an effect that reads "in the same zone"; nil if it locked none
 }
 
 // PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so
