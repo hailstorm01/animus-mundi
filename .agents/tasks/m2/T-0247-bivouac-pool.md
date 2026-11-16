@@ -4,7 +4,7 @@ title: An untargeted pool split as it resolves (wave H shape, sonnet; directive 
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0247-bivouac-pool
 depends_on: [T-0245, T-0246]
 claims: [shape:untargeted distributed pool (Step.Split: a SubjectPick step whose Amount is a pool its controller splits among the assets matching its filter as it resolves, one point per pick, positive whole shares summing to the pool, SVY-R51; timeout puts the whole pool on the first in fixed order, SVY-R52)]
@@ -69,3 +69,4 @@ New tests go in `pkg/engine/pool_test.go`. Use a synthetic structure (`startStru
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 7): queued after T-0246, which it depends on for the locked zone. Directive #157 is `open: before T-0247` and is applied here.
 - 2026-11-15 lead-architect (wave H run, session 8): T-0245 and T-0246 are `done`. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 08219ba, and split the card off as T-0248 (`queued`) under the D2 size rule. The pool reuses `choose`'s `Repeats` bounds, fast path and fallback, which already give `SVY-R52`; the new code is the tally into shares, and `repeatedPicks` keeps the "n picks with repeats" bound in one place (`PerDiscard` moves to it). Searched `pkg/engine` and the task archive for an existing pool or distribute: none (as #157 found). No Ward test: Ward only stops an opposing controller's targets (`filter.go:81`), and the pool's filter is allied. Marked design note Open Question 24 answered. Re-read `BOARD.md` before committing: no directive added since; #157 is the one this task and T-0248 apply. Status `tests`.
+- 2026-11-15 rules-test-author (wave H run): wrote `pkg/engine/pool_test.go`: `TestFR_TGT_002_UntargetedPoolSplitAsItResolves` (3 subtests), `TestFR_TGT_002_UntargetedPoolRejectsWrongTotals` (3 subtests), `TestFR_MOD_001_UntargetedPoolOneMatchTakesAll`, `TestFR_TGT_002_UntargetedPoolNoMatchDoesNothing`, `TestFR_MOD_001_UntargetedPoolTimeoutPutsAllOnFirstInFixedOrder`, `TestFR_TGT_002_UntargetedPoolOffersOnlyLockedZone`. Local test-file helpers only (`poolStructure`, `poolScene`, `(*scene).runPool`, `picksAsked`); none requested for `scenario_test.go`. `go vet` fails only on the missing `ability.Step.Split` field (the shape itself). `cardtown lint rules` passes. No case left out. Status `tests-review`.
