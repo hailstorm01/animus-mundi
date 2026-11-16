@@ -4,7 +4,7 @@ title: "Maximum Health modifiers in Layer 5, and the death sweep after Sub-Phase
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0251-max-health-modifier-and-4c-sweep
 depends_on: []
 claims: [shape:Layer 5 Maximum Health modifier (Modifier.MaxHealth, summed by Game.MaxHealth, unclamped), shape:End Phase 4c death sweep with its flush and resolve cycle (#15 (3))]
@@ -66,3 +66,4 @@ Existing tests stay as they are and must still pass.
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 12): *Poisoned Rations* is the next wave H card (wave C's, after *Blindside*). Its survey row (`docs/design/m2_starter_set_ability_survey.md:197`) needs a max-health modifier, which the kernel lacks: `MaxHealth` reads printed Health only (`layers.go:57`), `Modifier` has no health field and `OpModifyStat` changes power only. Searched `pkg/engine` and the task archive for an existing health modifier: none (`git grep -n "MaxHealth"` finds only the reader, `IsLethal`, `EffectiveState` and the snapshot). That fires #15 (3), set `open` on the board in this commit and applied here. The whole shape (layer, 4c sweep, the step with `ability.StatMaxHealth` read by filters too, its event kind) touches six non-test files, and the card two more, so split under the D2 size rule: this task (the layer and the sweep), T-0252 (`OpModifyStat` on Maximum Health, `queued`), T-0253 (*Poisoned Rations*, `queued`). No ruling needed: `FR-LAY-002` settles the layer, the unclamped value and the restore on expiry; #15 (user-approved audit) settles where the 4c sweep's triggers resolve. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
+- 2026-11-15 rules-test-author: tests written in `pkg/engine/max_health_test.go` (local helpers `addMaxHealth`, `sweepNow`, `firstEventAfter`, `destroyIndexFor` live in that file): TestFR_LAY_002_MaxHealthModifierChangesEffectiveMaxHealth, TestFR_LAY_001_MaxHealthDoesNotClamp, TestFR_LAY_002_MaxHealthAtZeroIsLethalWithoutDamage, TestFR_LAY_002_MaxHealthReductionExpiresAndRestores, TestFR_TRN_001_ExpiryAtFourCDestroysInTheEndPhase (both players, as subtests), TestFR_TRN_001_FourCDeathTriggersResolveBeforeHandover, TestFR_TRN_001_FourCSweepLossEndsTheMatch, TestFR_TRN_001_NoFourCDeathWithoutExpiry. Helpers requested for scenario_test.go: none. `go vet` fails only on the missing `Modifier.MaxHealth` field (the shape itself). Loss test asserts no turn-start event after the end and `Turn` unchanged. Destroy events are matched by asset ID or card name. `cardtown lint rules` passes. No cases left out.
