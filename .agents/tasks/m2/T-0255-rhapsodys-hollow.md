@@ -4,7 +4,7 @@ title: "Rhapsody's Hollow: T3, exhaust, kill this structure: gain control of cho
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0255-rhapsodys-hollow
 depends_on: [T-0254]
 claims: [card:Rhapsody's Hollow]
@@ -51,3 +51,4 @@ New tests go in `pkg/engine/cards_animus_rhapsodys_hollow_test.go`. Use the real
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 15): queued, split off T-0254 under the D2 size rule. Waits for T-0254.
 - 2026-11-16 lead-architect (wave H run, session 16): T-0254 is `done` (merge 9178485) with the names planned (`OpGainControl`, `EventControl`). Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 49a6e82 and dry-ran the definition (above). No sync needed (`main` is already in the run branch). Directives: none `open`; the `waiting` ones were checked and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook here; #71: "chosen opposing unit" is not an each-player effect; #91 (2), #106, #120, #141 (3) aura half and #142 name cards or shapes this task doesn't touch). No new shape: the costs are *Sinuous Growth*'s and *Cliff of Portents*', the step is T-0254's. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_animus_rhapsodys_hollow_test.go`: `TestCard_RhapsodysHollow_GainsControlOfOpposingUnit`, `_OnlyOpposingMainTheaterUnitsOffered`, `_NotOfferedWithoutTarget` (4 subtests), `_CostsNeedTacticsAndReadied` (2 subtests), `_TargetLeftMainTheaterBeforeResolution`. Helpers requested: none. `go vet` is clean; the tests fail now only because the card has no ability. Left out: nothing. Note: the Exhausted-Hollow subtest checks inline instead of `actNotOffered`, whose `a.Exhausted` check would fail on a Hollow that starts Exhausted. The scene helper is named `hollowScene` (`rhScene` is taken by `revealed_hand_test.go`). Status `tests-review`.
