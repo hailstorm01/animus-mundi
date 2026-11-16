@@ -254,3 +254,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0248 | *Hammerhand Bivouac*: at the start of your turn, distribute 2 armor among allied units in the same zone (#157, wave H card, flash) | done |
 | T-0249 | A temporary effect that lasts until the end of your opponent's turn: `ability.Duration`, `Step.Until`, `Modifier.By` (`FR-LAY-003`, `FR-TRN-001` 4c, wave H shape, sonnet; *Blindside*'s duration) | done |
 | T-0250 | *Blindside*: chosen opposing unit gets -3 power until the end of your opponent's turn (wave H card, flash) | done |
+| T-0251 | Maximum Health modifiers in Layer 5, and the death sweep after Sub-Phase 4c (`FR-LAY-002`, `FR-TRN-001` 4c, #15 (3); wave H shape, sonnet; *Poisoned Rations*' layer) | done |
