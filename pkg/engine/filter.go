@@ -56,12 +56,14 @@ func cardStat(s ability.Stat, c *Card) int {
 		return c.Power
 	case ability.StatRequisition:
 		return c.ReqCost
+	case ability.StatMaxHealth:
+		return c.Health
 	}
 	return 0
 }
 
 // assetStat is an asset's effective value of s (Layer 6, FR-TGT-001); 0 for
-// StatNone. Requisition cost is the cost printed on what the asset is now (a
+// StatNone. Maximum Health is Game.MaxHealth, not Current Health. Requisition cost is the cost printed on what the asset is now (a
 // face-down unit's is the Scratch Company face's, 0): no layer changes a
 // Requisition cost, so printed is effective.
 func (g *Game) assetStat(s ability.Stat, a *Asset) int {
@@ -70,6 +72,8 @@ func (g *Game) assetStat(s ability.Stat, a *Asset) int {
 		return g.Power(a)
 	case ability.StatRequisition:
 		return a.Printed().ReqCost
+	case ability.StatMaxHealth:
+		return g.MaxHealth(a)
 	}
 	return 0
 }

@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"fmt"
 	"slices"
 
 	"animus-mundi/pkg/engine/ability"
@@ -260,14 +261,24 @@ func (r *resolution) modifier(st ability.Step, m Modifier) Modifier {
 	return m
 }
 
-// stepModifyStat gives each Subject +Amount power for Step.Until: a Layer 5
-// modifier, which expires in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0.
+// stepModifyStat gives each Subject +Amount to Step.Stat for Step.Until: a Layer 5
+// modifier, which expires in Sub-Phase 4c (FR-LAY-001, FR-LAY-003). Power clamps at 0;
+// Maximum Health doesn't (FR-LAY-001), and Maximum Health 0 or less is lethal at the
+// sweep after the item (FR-LAY-002). Any other stat is a definition bug.
 func (g *Game) stepModifyStat(r *resolution, st ability.Step) int {
 	as := g.stepAssets(r, st)
 	for _, a := range as {
 		n := g.value(r.it.Source, st.Amount, nil)
-		a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 5, Power: n}))
-		g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power %s", a, n, st.Until)
+		switch st.Stat {
+		case ability.StatNone, ability.StatPower:
+			a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 5, Power: n}))
+			g.logEvent(Event{Kind: EventPower, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d power %s", a, n, st.Until)
+		case ability.StatMaxHealth:
+			a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 5, MaxHealth: n}))
+			g.logEvent(Event{Kind: EventMaxHealth, Player: -1, Target: a.ID, Amount: n}, "%s gets %+d max health %s", a, n, st.Until)
+		default:
+			panic(fmt.Sprintf("engine: OpModifyStat on stat %d", st.Stat))
+		}
 	}
 	return len(as)
 }
