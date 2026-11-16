@@ -32,6 +32,7 @@ func TestEventKinds_ValuesAreTheSchema(t *testing.T) {
 		{EventMaxHealth, "max-health"},
 		{EventFaceDown, "face-down"},
 		{EventKeyword, "keyword"},
+		{EventControl, "control"},
 		{EventCardMove, "card-move"},
 		{EventResult, "result"},
 		{EventMatchEnd, "match-end"},
