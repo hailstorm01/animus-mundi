@@ -32,4 +32,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0248](T-0248-hammerhand-bivouac.md) | *Hammerhand Bivouac* (wave H card; directive #157) | queued |
+| [T-0248](T-0248-hammerhand-bivouac.md) | *Hammerhand Bivouac* (wave H card; directive #157) | tests |
