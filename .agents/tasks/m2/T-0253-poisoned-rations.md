@@ -4,7 +4,7 @@ title: "Poisoned Rations: chosen unit gets -3 max health until end of turn (wave
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0253-poisoned-rations
 depends_on: [T-0251, T-0252]
 claims: [card:Poisoned Rations]
@@ -52,3 +52,4 @@ New tests go in `pkg/engine/cards_path_poisoned_rations_test.go`. Use the real c
 - 2026-11-15 lead-architect (wave H run, session 12): queued, split off T-0251 under the D2 size rule. Waits for T-0251 and T-0252.
 - 2026-11-16 lead-architect (wave H run, session 15): T-0251 and T-0252 are `done` (merges 6676322, 9cde374), and the names T-0252 merged (`Step.Stat`, `ability.StatMaxHealth`) are the ones planned. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at fa1edd3 and dry-ran the definition (above). No sync needed (`main` has nothing the run branch lacks). Directives: none `open`; the `waiting` ones were checked and none has fired (#15 (2): no draw or end-of-turn hook here; #71: "chosen unit" is not an each-player effect; #91 (2), #106, #120, #141 (3) aura half and #142 name cards or shapes this task doesn't touch). No new shape: the step is T-0252's. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
 - 2026-11-16 rules-test-author: wrote `pkg/engine/cards_path_poisoned_rations_test.go` (commit test(T-0253)): TestCard_PoisonedRations_KillsHealthThreeWithoutDamage, _KillsDamagedUnit, _SurvivorRestoredAtEndOfTurn (both scenes), _AlliedUnitIsATarget, _NotEnactableWithoutUnit (four cases). Local helper `poisonedRations(s)` (gives the card, sets R0 T3). Helpers requested: none. Cases left out: none beyond the task's "Not this task" list. Tests compile, `cardtown lint rules` passes, and they fail on "needs rules the kernel does not implement yet" until the definition lands. Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 1. Each checks what `FR-LAY-002` (`:507`, which names *Poisoned Rations*: Maximum Health 0 is lethal at the sweep with no damage; `:509`: no damage counters, restored in 4c) and `FR-MNV-001` give, on the real card: Health 3 dies with no `damage` event and goes to its owner's discard; Health 5 with 2 damage dies; Health 5 survives at 2/2/0 and is 5/5/0 after the turn ends; Health 6 with 1 damage is 3/2/1, then 6/5/1; both an allied and an enemy unit are offered and only the chosen one changes; with no unit (none at all, or only structures) it isn't offered or enactable and stays in hand, and one unit of either side in Reserves makes it enactable. `chooseAsset` in the one-unit scenes is harmless when no question is asked. No existing test edited; `mhWant`, `mhEventsNaming` and `targetOffers` reused. Status `ready`, dispatched to `kernel-engineer` (flash).
