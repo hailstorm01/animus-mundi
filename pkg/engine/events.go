@@ -289,6 +289,7 @@ const (
 	EventMaxHealth     = "max-health" // an effect changed an asset's Maximum Health for a duration (FR-LAY-002)
 	EventFaceDown      = "face-down"  // an effect turned a battlefield unit face down (FR-ENT-103)
 	EventKeyword       = "keyword"    // an effect granted a keyword until end of turn (FR-LAY-001)
+	EventControl       = "control"    // an effect gave a player control of a battlefield unit (FR-ZON-002)
 	EventCardMove      = "card-move"  // an effect moved a card out of a discard pile to Zone; deck searches and draws stay secret
 	EventResult        = "result"
 	EventMatchEnd      = "match-end"

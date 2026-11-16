@@ -112,6 +112,8 @@ func (g *Game) runStep(r *resolution, st ability.Step) int {
 		return g.stepGrantKeyword(r, st)
 	case ability.OpLookTop:
 		return g.stepLookTop(r, st)
+	case ability.OpGainControl:
+		return g.stepGainControl(r, st)
 	}
 	return 0
 }
@@ -161,6 +163,25 @@ func (g *Game) stepMoveZone(r *resolution, st ability.Step) int {
 		}
 		g.moveOnBattlefield(a, to)
 		g.logEvent(Event{Kind: EventMove, Player: -1, Target: a.ID, Zone: to.String()}, "%s moves to %s", a, to)
+		n++
+	}
+	return n
+}
+
+// stepGainControl gives the ability's controller control of each Subject unit
+// in the Main Theater that an opponent controls (FR-ZON-002, FR-ZON-003). The
+// Main Theater is shared, so the unit stays where it is with its arrival
+// number, readiness, damage, Armor, modifiers and owner (SVY-R7). A unit in
+// Reserves, a Structure, a Headquarters and a unit already controlled by the
+// controller are skipped.
+func (g *Game) stepGainControl(r *resolution, st ability.Step) int {
+	n := 0
+	for _, a := range g.stepAssets(r, st) {
+		if a.Printed().Type != TypeUnit || a.Zone != ZoneMainTheater || a.Controller == r.it.Controller {
+			continue
+		}
+		a.Controller = r.it.Controller
+		g.logEvent(Event{Kind: EventControl, Player: int(r.it.Controller), Target: a.ID}, "player %d gains control of %s", int(r.it.Controller), a)
 		n++
 	}
 	return n

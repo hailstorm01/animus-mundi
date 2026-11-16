@@ -382,6 +382,7 @@ const (
 	OpMorphScratch               // turn each Subject unit face down in place: it becomes the 1/1/1/1 Infantry Scratch Company whose only ability is Deploys Exhausted, and keeps its zone, controller, readiness, damage, Armor and Layer 5 modifiers (FR-ENT-103). A unit already face down, a Structure and a Headquarters are skipped
 	OpGrantKeyword               // the Subject gains Step.Keyword for Step.Until (Layer 3, FR-LAY-001, FR-LAY-003)
 	OpLookTop                    // its controller looks at the top Amount cards of their deck and, in one hidden prompt, chooses which are deployed for free (up to UpTo, or exactly one when UpTo is 0 and one is eligible), each card matching Filter's card-level criteria, the zone of each, and the order the rest go to the bottom (FR-MOD-001 §4, SVY-R41-SVY-R43)
+	OpGainControl                // its controller gains control of each Subject unit in the Main Theater that an opponent controls; it keeps its zone, readiness, owner and state (FR-ZON-002, FR-ZON-003). A unit in Reserves, a Structure, a Headquarters and a unit the controller already controls are skipped
 )
 
 // Subject is what a step acts on.
