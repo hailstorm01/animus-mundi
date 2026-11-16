@@ -1,8 +1,8 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
 // Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords
 // and the keywords a resolved step grants until end of turn. Layer 5 holds power
-// and Maximum Health modifiers. There are no auras (Layer 4) yet, so the pipeline
-// reduces to Layer 1 + Layer 3 + Layer 5 + Layer 6 clamping.
+// and Maximum Health modifiers. Layer 4 holds power auras (auras). The power
+// pipeline is Layer 1 + Layer 4 + Layer 5, clamped at 0 by Layer 6.
 
 package engine
 
@@ -50,9 +50,37 @@ func (a *Asset) expireAtEndOf(active PlayerID) {
 	})
 }
 
-// Power returns effective Combat Power, the only stat that clamps at 0.
+// Power returns effective Combat Power, the only stat that clamps at 0: the sum
+// of Layer 1 (printed), Layer 4 (auras) and Layer 5 (modifiers), clamped by
+// Layer 6.
 func (g *Game) Power(a *Asset) int {
-	return max(0, a.Printed().Power+a.TempPower())
+	n := a.Printed().Power + a.TempPower()
+	for _, st := range g.auras(a) {
+		n += st.Power
+	}
+	return max(0, n)
+}
+
+// auras returns every power aura that applies to battlefield asset a, oldest
+// source first (FR-LAY-001). It is the one reader of which auras apply: a face-up
+// battlefield source's printed StaticAura applies when its Filter, relative to the
+// source's current controller, matches a. A ZoneRefSame criterion reads the
+// source's current zone through zoneLock (SVY-R44). A face-down source has no
+// Ability, so it gives none.
+func (g *Game) auras(a *Asset) []ability.Static {
+	var out []ability.Static
+	for _, src := range g.Assets() {
+		d := src.Printed().Ability
+		if d == nil {
+			continue
+		}
+		for _, st := range d.Statics {
+			if st.Kind == ability.StaticAura && g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), st.Filter, a) {
+				out = append(out, st)
+			}
+		}
+	}
+	return out
 }
 
 // MaxHealth returns effective Maximum Health: printed Health plus the Layer 5

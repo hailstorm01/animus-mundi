@@ -38,8 +38,9 @@ type Def struct {
 	// CostReduction is the card's own hand-active cost reduction (FR-CST-001),
 	// read by Game.EffectiveCost. It is zero for a card without one.
 	CostReduction CostReduction
-	// Statics lists the printed static abilities, in printed order. Only a
-	// discard-active deploy permission is a kind so far.
+	// Statics lists the printed static abilities, in printed order: a
+	// discard-active deploy permission and a battlefield power aura are the kinds
+	// so far.
 	Statics []Static
 }
 
@@ -52,6 +53,11 @@ const (
 	// by ...": its owner may deploy it from ActiveZone as a manual Deploy, paying
 	// Costs in addition to its deployment costs (FR-TRN-003, FR-CST-001).
 	StaticDeployPermission StaticKind = iota + 1
+	// StaticAura is a continuous Layer 4 aura of a face-up battlefield asset
+	// (FR-LAY-001): every battlefield asset matching Filter, relative to the
+	// source's controller, has +Power Combat Power. A ZoneRefSame criterion reads
+	// the source's current zone (SVY-R44). ActiveZone is ZoneAny, the battlefield.
+	StaticAura
 )
 
 // Static is one printed static ability.
@@ -64,6 +70,12 @@ type Static struct {
 	// declaration (FR-TRN-003a). Their filters stay battlefield filters, relative
 	// to the payer.
 	Costs []Cost
+	// Filter is an aura's: which assets it applies to, relative to the source's
+	// controller; Other excludes the source. Its Stat stays StatNone, since a
+	// Layer 4 value read by a Layer 4 filter has no defined order.
+	Filter Filter
+	// Power is an aura's Layer 4 power.
+	Power int
 }
 
 // CostReduction lowers the card's own Requisition cost while it is in its owner's
@@ -279,7 +291,7 @@ type Filter struct {
 	Scratch    ScratchCompany // ScratchAny (zero) means any unit; else only Scratch Company units, or none
 	Other      bool           // excludes the ability's own source asset ("other")
 	Zone       Zone           // ZoneAny (zero) means any battlefield zone; ZoneDiscard means cards in a discard pile; else only assets in that zone
-	ZoneRef    ZoneRef        // ZoneRefNone (zero) means no source-relative zone criterion; else only assets in the zone the stack item locked
+	ZoneRef    ZoneRef        // ZoneRefNone (zero) means no source-relative zone criterion; else only assets in the zone the stack item locked (an aura: its source's current zone)
 	Stat       Stat           // StatNone (zero) means no stat criterion; else the entity's value of that stat must be AtMost or less
 	AtMost     int            // the bound of Stat ("power 3 or less" is StatPower, 3); means nothing while Stat is StatNone
 }
@@ -298,7 +310,8 @@ const (
 
 // ZoneRef is a zone criterion read against the zone a stack item locked, not
 // the source's current zone (FR-TGT-001, FR-TGT-003). A stack item locks one
-// zone, set by the ZoneRef its effect reads.
+// zone, set by the ZoneRef its effect reads. A continuous aura is not a stack
+// item: it reads its source's current zone (SVY-R44).
 type ZoneRef int
 
 const (

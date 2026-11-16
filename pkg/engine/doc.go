@@ -71,6 +71,10 @@
 //     from your discard pile by ...", Def.Statics with ability.StaticDeployPermission):
 //     its owner deploys it as an ActDeploy with From: ZoneDiscard, and the
 //     permission's Costs are paid on declaration (FR-TRN-003, FR-TRN-003a).
+//   - Power auras (Def.Statics with ability.StaticAura): a face-up battlefield
+//     asset gives +Power in Layer 4 to every battlefield asset its Filter
+//     matches, read by Game.Power through Game.auras; "in the same zone" is the
+//     source's current zone (FR-LAY-001, SVY-R44).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
@@ -83,7 +87,7 @@
 //
 // Not built yet:
 //   - Continuous abilities other than a card's own Cornered keywords and its own
-//     hand-active cost reduction (auras, and "Cornered: This unit has +2 power."),
+//     hand-active cost reduction (keyword auras, and "Cornered: This unit has +2 power."),
 //     Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
