@@ -4,7 +4,7 @@ title: "Layer 4 power auras: StaticAura with a Filter and Power, read by g.Power
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0256-same-zone-power-aura
 depends_on: []
 claims: [shape:StaticAura (a continuous Layer 4 aura of a face-up battlefield asset, Static.Filter relative to its controller and Static.Power; g.auras, the one reader of which auras apply to an asset; ZoneRefSame on an aura reads its source's current zone through zoneLock and inLocked)]
@@ -70,10 +70,10 @@ Existing tests stay as they are and must still pass.
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "Aura"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints a `StaticAura`, so every log is byte-identical)
+- [x] The listed tests pass: `go test ./pkg/engine -run "Aura"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints a `StaticAura`, so every log is byte-identical)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 17): written against the run branch at f87d28f. *Animoceps Stalk* is next in Deliverable 6m's order (wave E, the first same-zone aura). No ruling needed: `SVY-R44`'s last sentence (`FR-TGT-001` `:398`) settles the aura's zone (the source's current one), `FR-ZON-001` makes Reserves each player's own, `FR-LAY-001` puts auras in Layer 4, evaluated continuously, with Layer 6 clamping the sum, and the survey rows (`:162-164`) say who excludes or includes itself. Split from the cards under the D2 size rule (shape and cards touch five non-test files); T-0257, the three power-aura cards (identical shapes), queued in this commit. Reuse: the same-zone check is `matchesFilterAt` with `zoneLock(src)`, the lock stack items already use, so no second zone check; `g.Power` is the one effective-power read, so no reader changes. Searched `pkg/engine` and the task archive for an aura or a Layer 4 value: none. Three non-test files. Directives: #141 (3)'s aura half fires with this task (the first whose plan builds a same-zone aura; T-0257's `cards:` include three), set `open` in this commit and applied when T-0256 merges. The other `waiting` ones were checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.
@@ -85,3 +85,4 @@ Existing tests stay as they are and must still pass.
   2. `layers.go`, the file comment's "Layer 4 holds power auras (auras)." repeats itself: make it "Layer 4 holds power auras (`Game.auras`)."
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
 - 2026-11-16 kernel-engineer (sonnet): fixed review round 1, comments only in `pkg/engine/layers.go`. (1) `auras` comment now says it returns the auras in `g.Assets()` order, which the Layer 4 sum does not depend on; no sort added. (2) File comment now reads "Layer 4 holds power auras (`Game.auras`)." Ran `go tool task check` (passes) and `go tool task sim-compare -- autoloop/m2-wave-h` (PASS, byte-identical). Status review.
+- 2026-11-16 lead-architect (D5): approved, round 2. The round-1 fix changes only the two comments in `layers.go` (the `auras` order is `g.Assets()`', which a sum doesn't depend on; the file comment names `Game.auras`). After `test(T-0256)` only the Allowed Files changed, and no test was edited. The code follows the Shape: `StaticAura` with `Static.Filter` and `Static.Power`; one reader, `g.auras`, testing each face-up source's aura with `matchesFilterAt(src.Controller, src.ID, zoneLock(src), …)`, so the same-zone check is the one stack items use; `Game.Power` sums Layers 1, 4 and 5 and clamps at 0. No card name, no new package, no duplicate (nothing else adds a Layer 4 value or reads `Statics` for auras). Gates re-run in a review worktree: `gofmt -l pkg cmd` clean; `go test ./pkg/engine -run Aura` ok; `go tool task check` exit 0; `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%); `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`. Merged into `autoloop/m2-wave-h` (327c9ec). #141 (3)'s aura half applied, so #141 is fully applied and archived. Status `done`. Next: T-0257 (*Animoceps Stalk*, *Animoceps Node*, *Melodic Pummeler*), queued, to be written against the code of the day.
