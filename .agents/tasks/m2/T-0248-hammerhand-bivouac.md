@@ -4,7 +4,7 @@ title: "Hammerhand Bivouac: at the start of your turn, distribute 2 armor among 
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0248-hammerhand-bivouac
 depends_on: [T-0245, T-0246, T-0247]
 claims: [card:Hammerhand Bivouac]
@@ -52,3 +52,4 @@ New tests go in `pkg/engine/cards_path_bivouac_test.go`. Use the real card (`s.c
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 8): queued, split off T-0247 under the D2 size rule (shape and card together touch six non-test files). Waits for T-0247.
 - 2026-11-15 lead-architect (wave H run, session 9): T-0247 is `done` (merge 732c9c5), and the field names it merged are the ones planned. Wrote Inputs, Shape, Tests and Allowed Files against the run branch at 4ee33d7 and dry-ran the definition (above). No new shape: searched `pkg/engine/cards` for another pool card, none. Re-read `BOARD.md` before committing: no directive added since; #157 is the one this task applies. Status `tests`.
+- 2026-11-15 rules-test-author: wrote pkg/engine/cards_path_bivouac_test.go: TestCard_HammerhandBivouac_SplitsAmongAlliedMainTheaterUnits (3 subtests), _OneUnitTakesBothUnasked, _NoAlliedUnitDoesNothing, _TimeoutPutsBothOnEarliestEntered, _OffersOnlyMainTheaterUnits, _ArmorPersistsAndAccumulates. Reuses runPool/picksAsked from pool_test.go. Helpers requested: none. Cases left out: none. go vet clean, cardtown lint rules PASS; tests fail until the card is defined (NoAlliedUnitDoesNothing passes trivially now).
