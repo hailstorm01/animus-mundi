@@ -213,9 +213,12 @@ func TestFR_TGT_001_SameZoneWithoutSourceMatchesNothing(t *testing.T) {
 	res0 := s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
 	main1 := s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
 	pile := unit("Remnant", 1, 1, Keywords{})
-	pile.Ability = &ability.Def{Triggers: []ability.Trigger{pileTrigger(false, allStep(ability.OpAddArmor, 1, sameUnits))}}
+	pile.Ability = &ability.Def{Triggers: []ability.Trigger{pileTrigger(false, drawN(1), allStep(ability.OpAddArmor, 1, sameUnits))}}
 	s.enactWith([]*Card{pile}, discardN(1))
 	s.g.resolveStack()
+	if got := len(s.g.Players[0].Hand); got != 1 {
+		t.Fatalf("precondition: the pile trigger resolved and its first step drew 1 card, so player 0's hand is 1, got %d", got)
+	}
 	why := "a trigger from a card in a discard pile has no battlefield source, locks nothing, and \"in the same zone\" matches nothing (SVY-R44)"
 	tzWantArmor(t, main0, 0, why)
 	tzWantArmor(t, res0, 0, why)
