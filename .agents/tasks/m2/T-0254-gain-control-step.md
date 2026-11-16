@@ -1,0 +1,71 @@
+---
+id: T-0254
+title: "OpGainControl: the ability's controller gains control of each Subject unit in the Main Theater, and a control event (wave H shape, sonnet)"
+kind: shape
+tier: sonnet
+wave: H
+status: tests
+branch: m2/autoloop-wave-h/T-0254-gain-control-step
+depends_on: []
+claims: [shape:OpGainControl (a step giving the ability's controller control of each Subject unit in the Main Theater, keeping its zone, readiness, owner and state; EventControl)]
+cards: []
+requirements: [FR-ZON-002, FR-ZON-003, FR-SET-004, FR-TRN-001, FR-CBT-001, FR-KWD-002e]
+---
+
+## Goal
+A step can change an asset's controller: `OpGainControl` gives the ability's controller control of each Subject unit in the Main Theater that an opponent controls (`FR-ZON-002` Control Transfer Scope & Spatial Invariance, `FR-ZON-003` Ownership vs. Control). The unit keeps its zone, readiness, damage, Armor, modifiers and owner. Everything that already reads `Asset.Controller` then follows by itself: its new controller may attack, March or activate with it at once (`FR-SET-004`), a March out of the Main Theater takes it to its current controller's Reserves, it readies in its new controller's Ready Phase (`FR-TRN-001`), it counts for the new controller's Main Theater total (`FR-KWD-002e`), and it still goes to its owner's discard pile when destroyed (`FR-ZON-002` Destruction). Each unit changed logs one new `control` event (ADR-0005 addendum, written with this task).
+
+*Rhapsody's Hollow*, the card, is T-0255.
+
+## Inputs
+- FRD 01 (`docs/frd/01_Game_Rules_FRD.md`): `FR-ZON-002` (line 250): Control Transfer Scope & Spatial Invariance (`:254`), Destruction (`:255`); `FR-ZON-003` (line 226): Ownership vs. Control (`:229`); `FR-SET-004` (line 180, no summoning sickness); `FR-TRN-001` (line 301): Ready Phase (`:305`, the active player's controlled assets ready); `FR-CBT-001` (line 570, "opposing" means controlled by an opponent of the attacker's controller); `FR-KWD-002e` (`:515`, Cornered counts the assets each player controls in the Main Theater); `FR-CBT-002` Step 3 (`:595`, `SVY-R8`: a control change on either side fizzles a pending attack, already built by T-0053).
+- ADR-0005 (`docs/architecture/decisions/0005-structured-game-events-and-observer.md`): the T-0254 addendum added in this task's commit (`control`).
+- Survey: wave D row (`docs/design/m2_starter_set_ability_survey.md:32`, `GAIN_CONTROL`), card row (`:158`).
+- Code of the day (run branch at a61570d):
+  - `pkg/engine/state.go`: `Instance.Owner` (`:60`), `Asset.Controller` (`:69`); `Game.Theater` is one shared slice (`:127`), and only `Player.Reserves` and `Player.HQ` are stored per player.
+  - `pkg/engine/zones.go`: `removeFromBattlefield` (`:217`) finds a Reserves or Headquarters asset by `Controller`; `placeOnBattlefield` (`:252`); `newAsset` (`:243`) is the only code that sets `Controller` today. Destruction already goes to `inst.Owner` (`:139`, `:153`).
+  - `pkg/engine/ability/ability.go`: the `Op` const block (`:368-386`), `Step` (`:402-419`).
+  - `pkg/engine/effects.go`: `runStep` (`:83-117`), `stepMoveZone` (`:152-168`, the model: skip what the step can't apply to, count the rest, one event each), `stepAssets` (`:429`), `stepGrantKeyword` (`:489`).
+  - `pkg/engine/events.go`: the event-kind constants (`:265-294`), `EventKeyword` at `:291`.
+  - Searched `pkg/engine` (non-test) for `Controller =` and `Controller:`: only `newAsset` sets an asset's controller. The task archive has no control-changing step (T-0053 only reads the current controller). No existing equivalent.
+
+## Shape (the lead's plan)
+- `pkg/engine/ability/ability.go`: `OpGainControl` after `OpLookTop` in the `Op` const block, commented: the ability's controller gains control of each Subject unit in the Main Theater controlled by an opponent; it keeps its zone, readiness, owner and state (`FR-ZON-002`, `FR-ZON-003`). A unit in Reserves, a Structure, a Headquarters and a unit the controller already controls are skipped.
+- `pkg/engine/effects.go`: `runStep` dispatches `OpGainControl` to a new `stepGainControl(r, st)`: for each asset of `g.stepAssets(r, st)` that is a unit (`a.Printed().Type == TypeUnit`), in `ZoneMainTheater`, with `a.Controller != r.it.Controller`, set `a.Controller = r.it.Controller`, log `Event{Kind: EventControl, Player: int(r.it.Controller), Target: a.ID}` with text `"player %d gains control of %s"` (the controller, the asset), and count it. Return the count. The skips make the step itself apply the Main Theater scope of `FR-ZON-002`, whatever its Subject's filter says, as `stepMoveZone` skips Structures. No other state changes, and nothing is removed from or placed into a zone: the Main Theater is shared, so the unit stays where it is with its arrival number (`SVY-R7`). No sweep call: the sweep after each stack item already runs.
+- `pkg/engine/events.go`: `EventControl = "control"` after `EventKeyword`, commented: an effect gave a player control of a battlefield unit (`FR-ZON-002`).
+- Not this task: the card (T-0255). No change to `zones.go`, `turn.go`, `combat.go` or `actions.go`: each already reads `Asset.Controller`, and the tests below pin that they do.
+
+## Tests (shape tasks: written by rules-test-author; engineers never edit these)
+New tests go in `pkg/engine/gain_control_test.go`. Cards are synthetic (`unit`, `structure` in `scenario_test.go`). Player 0 is the active player. Write a local helper for the step, `{Op: ability.OpGainControl, Subject: ability.SubjectTarget, Target: 0}`, and enact it on one opposing unit with a free Maneuver as `enactOn` does (`opponent_turn_duration_test.go:23-30`); where the target must be in the Main Theater, give the target filter `Zone: ability.ZoneMainTheater`. For steps over many assets, use `SubjectAll` with an explicit `Filter` from an `effectSource` (`effect_events_test.go:31-34`), activated with `activate(src, 0)`. Use `s.put`, `s.putScratch`, `s.endTurn()`, `effectEvents`, and `s.g.LegalActions()` (`actions.go:257`) for which actions are offered.
+
+- `TestFR_ZON_002_GainControlTakesOpposingUnit`: player 1's Readied unit (power 3, Health 5) in the Main Theater with `Damage` 1, Armor 2 and a Layer 5 `Modifier{Layer: 5, Power: 1}`. After the Maneuver resolves: the same `*Asset` (same ID) is still in `g.Theater`, `Controller` 0, `Inst.Owner` 1, `Zone` Main Theater, Readied, `Damage` 1, Armor 2, power 4 (the modifier kept).
+- `TestFR_ZON_002_GainControlKeepsReadiness`: two scenes: a Readied unit stays Readied; an Exhausted unit stays Exhausted.
+- `TestFR_SET_004_GainedUnitActsAtOnce`: after gaining player 1's Readied unit, in the same Main Phase, player 0 may March it and may attack player 1's Headquarters with it (both actions legal for player 0). Player 1 has no Guardian.
+- `TestFR_ZON_002_GainedUnitMarchesToNewControllersReserves`: after gaining it, player 0 Marches the unit: it is in `Players[0].Reserves`, not `Players[1].Reserves`, and Exhausted.
+- `TestFR_ZON_002_GainedUnitDiesToOwnersDiscard`: after gaining it, a second free Maneuver of player 0 kills it (`OpKill` on an allied unit): its card is in player 1's discard pile, and not in player 0's.
+- `TestFR_TRN_001_GainedUnitReadiesInNewControllersReadyPhase`: gain player 1's Exhausted unit. After player 0's `s.endTurn()` (player 1's Ready Phase) it is still Exhausted; after player 1's `s.endTurn()` (player 0's Ready Phase) it is Readied.
+- `TestFR_KWD_002e_GainedUnitCountsForNewController`: player 0 has one unit in the Main Theater and player 1 has two, so player 0 is Cornered. After player 0 gains one of player 1's units, the Main Theater holds two units controlled by player 0 and one by player 1: player 1 is Cornered and player 0 is not (read with `s.g.cornered(p)`, `layers.go:108`).
+- `TestFR_ZON_002_GainControlOnlyMainTheaterUnits`: an `effectSource` step `{Op: ability.OpGainControl, Subject: ability.SubjectAll}` with an empty `Filter` (every asset), over: player 1's unit in the Main Theater, player 1's unit in its Reserves, player 1's structure in the Main Theater, player 1's Headquarters, and player 0's own unit in the Main Theater (the source counts too). Only player 1's Main Theater unit changes controller; the Reserves unit stays in `Players[1].Reserves` under player 1, the structure and Headquarters stay player 1's, and exactly one `control` event is logged from the activation.
+- `TestEffectEvents_ControlLogsTheChange`: the event of `TestFR_ZON_002_GainControlTakesOpposingUnit`'s kind: one `EventControl` event, with `Player` 0, `Target` the unit's ID, `Card` empty, and `Detail` `"player 0 gains control of " + a.String()`.
+- `TestEffectEvents_ControlFaceDownAssetStaysHidden`: gain player 1's face-down Scratch Company (`s.putScratch(1)`, then moved to the Main Theater with `s.g.moveOnBattlefield` or put there directly as the existing face-down tests do): it changes controller, stays face down, and its `control` event has `Card` empty, a `Detail` that ends with `fd.String()`, and no hidden card name.
+- `TestFR_ZON_002_GainControlStepCountsForIfDone`: the step returns how many units changed controller, so `IfDone` reads it. Two scenes, each an `effectSource` ability with steps `[{Op: ability.OpGainControl, Subject: ability.SubjectAll, Filter: <f>}, {Op: ability.OpDraw, Amount: ability.Value{N: 1}, IfDone: true}]` and cards in player 0's deck: with `f` matching opposing units and player 1's unit in the Main Theater, player 0's hand grows by one; with `f` matching allied units only (player 0's own units, already its own), the hand doesn't grow.
+- Named edit of an existing test, in the `test(T-0254)` commit: `TestEventKinds_ValuesAreTheSchema` (`pkg/engine/eventkinds_test.go`) gains `{EventControl, "control"}` right after `{EventKeyword, "keyword"}`. No other existing test changes.
+
+Existing tests stay as they are and must still pass.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- none expected. Helpers local to the new file live in it.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go`
+- `pkg/engine/effects.go`
+- `pkg/engine/events.go`
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run "GainControl|GainedUnit|Control|EventKinds"`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card uses `OpGainControl`, so every log is byte-identical)
+
+## Log
+- 2026-11-16 lead-architect (wave H run, session 15): written against the run branch at a61570d. *Rhapsody's Hollow* is next in Deliverable 6m's order (wave D's `GainControl`). No ruling needed: `FR-ZON-002` (`:254`) settles the scope (opposing units in the Main Theater), that zone, readiness and owner don't change, the March to the current controller's Reserves and the owner's discard; `FR-SET-004` lets the unit act at once; `SVY-R8` already covers a pending attack, and `SVY-R36` the activation's target check. Split from the card under the D2 size rule (shape and card touch five non-test files); T-0255, the card, queued in this commit. Reuse: the step follows `stepMoveZone`'s skip-and-count form and reads `stepAssets`; no zone storage changes, because the only zone a control change can apply to, the Main Theater, is shared. Searched `pkg/engine` and the task archive for a control-changing step: none. Three non-test files. ADR-0005 addendum for `control` added in this commit. Directives: none `open`; the `waiting` ones were checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook here; #71: no each-player effect; #91 (2), #106, #120, #141 (3) aura half and #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.

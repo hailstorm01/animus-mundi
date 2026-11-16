@@ -39,6 +39,8 @@ Every accepted action emits one `action` event.
 
 **Addendum (T-0252).** `max-health` is an effect changing a battlefield asset's Maximum Health for a duration (`OpModifyStat` with `Step.Stat` `StatMaxHealth`, `FR-LAY-002`): one event per asset changed, with `Target`, `Amount` (the change, signed), `Player` -1 and no `Card`, and text `<asset> gets <±n> max health <duration>` through the asset's `String`, so a face-down asset stays hidden. A power change keeps its `power` event. Additive: no starter or stress log changes until a card uses it.
 
+**Addendum (T-0254).** `control` is an effect giving the ability's controller control of a battlefield unit (`OpGainControl`, `FR-ZON-002`): one event per unit whose controller changed, with `Player` the new controller, `Target`, and no `Card`, and text `player <n> gains control of <asset>` through the asset's `String`, so a face-down asset stays hidden. The unit keeps its zone, readiness and owner, so no other event goes with it. Additive: no starter or stress log changes until a card uses it.
+
 **Storage model.** Events are the permanent record. Full state is stored only in turn-start snapshots. Any other point is rebuilt by replaying the match-start record and the decision and action events on the same build (#19). The build revision makes "same build" checkable. Events have JSON tags, and T-0021 writes them as JSON Lines, one event per line, `match-start` first.
 
 ## Consequences
