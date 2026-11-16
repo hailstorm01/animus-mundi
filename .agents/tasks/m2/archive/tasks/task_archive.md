@@ -249,3 +249,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0243 | A discard chosen by the ability's controller from an opponent's revealed hand: `Step.ControllerChooses`, `handPicks` ranks the hand that holds the options (#156, `SVY-R50`, wave H shape, sonnet; *Drifting Concept*'s shape) | done |
 | T-0244 | *Drifting Concept*: you choose a card from the opponent's revealed hand and they discard it (#156, `SVY-R50`, wave H card, flash) | done |
 | T-0245 | A start-of-turn trigger that resolves in the Ready Phase, before the Draw Phase: `HookTurnStart` (#15 (1), wave H shape, sonnet; *Hammerhand Bivouac*'s hook) | done |
+| T-0246 | "In the same zone" on a stack item reads its source's zone, locked on placement: `ZoneRefSame` (#141 (3) for stack items, `SVY-R44`, wave H shape, sonnet; *Hammerhand Bivouac*'s zone) | done |
