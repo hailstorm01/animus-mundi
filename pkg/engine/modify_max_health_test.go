@@ -224,13 +224,13 @@ func TestFR_TGT_001_MaxHealthAtMostReadsEffectiveMaxHealthOnTheBattlefield(t *te
 func TestFR_TGT_001_MaxHealthAtMostOffersPileCardsByPrintedHealth(t *testing.T) {
 	// Covers: FR-LAY-001, FR-ZON-004
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("H3", 1, 3, Keywords{}), unit("H4", 1, 4, Keywords{}))
+	mine := s.inDiscard(0, unit("H2", 1, 2, Keywords{}), unit("H3", 1, 3, Keywords{}), unit("H4", 1, 4, Keywords{}))
 	pile := ability.Target{Filter: mhMax3(ppAllyUnitCards)}
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{pile}, ptStep(ability.OpReturnToHand, 0)))
 	d := paTargetAsk(t, s)
-	want := ppInstIDs(mine[0])
+	want := ppInstIDs(mine[0], mine[1])
 	if got := ppRefs(d); !slices.Equal(paSorted(got), paSorted(want)) {
-		t.Errorf("'Maximum Health 3 or less' offers the discard-pile unit of printed Health 3 and not Health 4: got %v, want %v (FR-LAY-001, FR-TGT-001)", got, want)
+		t.Errorf("'Maximum Health 3 or less' offers the discard-pile units of printed Health 2 and 3 (inclusive bound) and not Health 4: got %v, want %v (FR-LAY-001, FR-TGT-001)", got, want)
 	}
 }
