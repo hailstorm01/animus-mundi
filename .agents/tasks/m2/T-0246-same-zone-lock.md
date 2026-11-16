@@ -4,7 +4,7 @@ title: '"In the same zone" on a stack item reads its source''s zone, locked on p
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0246-same-zone-lock
 depends_on: [T-0205, T-0206, T-0245]
 claims: [shape:zone criterion "in the same zone" (ability.ZoneRefSame; a trigger or activated ability that reads it locks its source's zone on placement, last-known if gone, SVY-R44)]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/same_zone_test.go`, with synthetic cards. `that_zone_t
 
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 7): written for *Hammerhand Bivouac*'s zone (design note 6m, "From wave B"; #141 (3), stack-item half). Synced `main` twice: 2bfc7d6 added directive #157 (the Bivouac pool ruling), and a3a4d84 applied its outcome (FRD 01 v3.28, `SVY-R51`, `SVY-R52`), so #157 is now `open: before T-0247`. T-0247 (the pool and the card, `queued`) reads `StackItem.Locked` from this task, so it goes second; the D2 size rule keeps the two apart (four non-test files here, the pool's decision and step there). The lock is set only for an effect that reads `ZoneRefSame`, because `TestFR_TGT_001_NoLockWithoutMove` and `TestFR_TGT_001_ThatZoneWithoutLockMatchesNothing` require a deploy trigger to lock nothing. Set to `tests`.
+- 2026-11-15 rules-test-author: tests written in pkg/engine/same_zone_test.go (not compiling until ability.ZoneRefSame exists; `go vet` reports only that). Tests: TestFR_TGT_001_SameZoneAllStepReadsSourceZone, TestFR_TGT_001_SameZoneLocksOwnReserves, TestFR_TGT_001_SameZoneLockedOnPlacement, TestFR_ZON_004_SameZoneLastKnownZone, TestFR_TGT_001_SameZoneTargetOffersSourceZoneOnly, TestFR_TGT_003_SameZoneTargetOutlivesSource, TestFR_TGT_003_SameZoneTargetLeftZoneIsIllegal, TestFR_ACT_001_SameZoneActivatedAbility (three subtests), TestFR_TGT_001_SameZoneWithoutSourceMatchesNothing. Helpers requested: none (test-local `szDeploy`, `szTargetDeployer`; reuses tz*, flushedItems, wantLocked, armorStep, allStep, pileTrigger, enactWith). Notes: the source-0 case uses a discard-pile trigger (HookDiscardedFromHand, ActiveZone discard) enacted via a Maneuver, since no `pileSource` helper exists; the last-known test kills its source with a deploy-trigger OpKill on a chosen ally; the "locked on placement" test uses a unit that moves itself (a structure cannot move). No cases left out.
