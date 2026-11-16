@@ -1,7 +1,7 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
 // Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords
 // and the keywords a resolved step grants until end of turn. Layer 5 holds power
-// and Maximum Health modifiers. Layer 4 holds power auras (auras). The power
+// and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`). The power
 // pipeline is Layer 1 + Layer 4 + Layer 5, clamped at 0 by Layer 6.
 
 package engine
@@ -61,9 +61,10 @@ func (g *Game) Power(a *Asset) int {
 	return max(0, n)
 }
 
-// auras returns every power aura that applies to battlefield asset a, oldest
-// source first (FR-LAY-001). It is the one reader of which auras apply: a face-up
-// battlefield source's printed StaticAura applies when its Filter, relative to the
+// auras returns every power aura that applies to battlefield asset a, in
+// g.Assets() order, which the sum of Layer 4 does not depend on (FR-LAY-001). It
+// is the one reader of which auras apply: a face-up battlefield source's printed
+// StaticAura applies when its Filter, relative to the
 // source's current controller, matches a. A ZoneRefSame criterion reads the
 // source's current zone through zoneLock (SVY-R44). A face-down source has no
 // Ability, so it gives none.

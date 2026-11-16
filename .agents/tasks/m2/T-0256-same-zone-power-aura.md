@@ -4,7 +4,7 @@ title: "Layer 4 power auras: StaticAura with a Filter and Power, read by g.Power
 kind: shape
 tier: sonnet
 wave: H
-status: changes
+status: review
 branch: m2/autoloop-wave-h/T-0256-same-zone-power-aura
 depends_on: []
 claims: [shape:StaticAura (a continuous Layer 4 aura of a face-up battlefield asset, Static.Filter relative to its controller and Static.Power; g.auras, the one reader of which auras apply to an asset; ZoneRefSame on an aura reads its source's current zone through zoneLock and inLocked)]
@@ -84,3 +84,4 @@ Existing tests stay as they are and must still pass.
   1. `layers.go`, `auras`' comment says "oldest source first", but `g.Assets()` walks Headquarters, then Reserves, then the Main Theater, not by age. Say what it does: the auras in `g.Assets()` order, which a sum doesn't depend on. Keep `g.Assets()`; don't sort on every `Power` read.
   2. `layers.go`, the file comment's "Layer 4 holds power auras (auras)." repeats itself: make it "Layer 4 holds power auras (`Game.auras`)."
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
+- 2026-11-16 kernel-engineer (sonnet): fixed review round 1, comments only in `pkg/engine/layers.go`. (1) `auras` comment now says it returns the auras in `g.Assets()` order, which the Layer 4 sum does not depend on; no sort added. (2) File comment now reads "Layer 4 holds power auras (`Game.auras`)." Ran `go tool task check` (passes) and `go tool task sim-compare -- autoloop/m2-wave-h` (PASS, byte-identical). Status review.
