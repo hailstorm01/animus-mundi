@@ -43,6 +43,17 @@ func (g *Game) endTurn() {
 	for _, a := range g.Assets() {
 		a.expireAtEndOf(g.Active)
 	}
+	// After 4c nothing is resolving, so the expiry's deaths are settled now: sweep,
+	// then flush and resolve the death triggers, cascades included, before the
+	// handover (FR-LAY-002, directive #15 (3)).
+	g.deathSweep()
+	if g.Outcome.Over {
+		return
+	}
+	g.resolveStack()
+	if g.Outcome.Over {
+		return
+	}
 	// 4d: handover.
 	g.Active = g.Active.Opponent()
 	g.Turn++
