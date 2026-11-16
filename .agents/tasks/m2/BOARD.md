@@ -31,5 +31,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0254 | `OpGainControl`: the ability's controller gains control of each Subject unit in the Main Theater, and a `control` event (`FR-ZON-002`, `FR-ZON-003`; wave H shape, sonnet; *Rhapsody's Hollow*'s step) | tests |
 | T-0255 | *Rhapsody's Hollow*: T3, exhaust, kill this structure: gain control of chosen opposing unit in the Main Theater (wave H card, flash) | queued |
