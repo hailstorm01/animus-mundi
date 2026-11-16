@@ -4,7 +4,7 @@ title: "OpModifyStat on Maximum Health: Step.Stat, ability.StatMaxHealth, a max-
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0252-modify-max-health-step
 depends_on: [T-0251]
 claims: [shape:OpModifyStat on Maximum Health (Step.Stat naming the stat a modify step changes; ability.StatMaxHealth in the one Stat vocabulary, read by filters too; EventMaxHealth)]
@@ -75,3 +75,4 @@ Existing tests stay as they are and must still pass.
 ## Log
 - 2026-11-15 lead-architect (wave H run, session 12): queued, split off T-0251 under the D2 size rule (the whole max-health shape touches six non-test files). Waits for T-0251.
 - 2026-11-15 lead-architect (wave H run, session 13): T-0251 is `done` (merge 6676322), so this task is written against the code of the day (run branch at 34b604d). Directives: none `open`. The `waiting` ones were checked against the repo and none has fired (#15 (2): no draw or end-of-turn hook here; #71, #91 (2), #106, #120, #141 (3) aura half and #142 name cards or shapes no task touches yet). Reuse: `Step.Stat` takes the existing `ability.Stat` type, and `StatMaxHealth` is read by the existing `cardStat`/`assetStat`, so one stat vocabulary serves filters and modify steps; the modifier goes through `r.modifier` and T-0251's `Modifier.MaxHealth`. Searched `pkg/engine` and the task archive for a max-health step or a health filter: none. Four non-test files, within the D2 size rule. ADR-0005 addendum for `max-health` added in this commit. No ruling needed: `FR-LAY-002` settles the modifier and its lethality, and `FR-TGT-001` lets a stat bound be on Maximum Health. Re-read `BOARD.md` before committing: no directive added since. Status `tests`.
+- 2026-11-16 rules-test-author: tests written in pkg/engine/modify_max_health_test.go: TestFR_LAY_002_ModifyStepLowersMaxHealth, TestFR_LAY_002_ModifyStepRaisesMaxHealth, TestFR_LAY_002_ModifyStepToZeroMaxHealthDestroysAtTheSweep, TestFR_LAY_002_ModifyStepMaxHealthExpiresAndRestores, TestFR_LAY_003_ModifyStepMaxHealthUntilEndOfOpponentTurn, TestEffectEvents_MaxHealthLogsTheChange (+2/-1 subtests), TestEffectEvents_MaxHealthFaceDownAssetStaysHidden, TestFR_LAY_001_ModifyStepStatPowerIsPower, TestFR_TGT_001_MaxHealthAtMostReadsEffectiveMaxHealthOnTheBattlefield, TestFR_TGT_001_MaxHealthAtMostOffersPileCardsByPrintedHealth. Edited TestEventKinds_ValuesAreTheSchema (eventkinds_test.go) as named. Helpers requested: none (reused powerFor, enactOn, onAlliedKinds, effectSource, paTargetAsk, etc.). Missing production symbols only: Step.Stat, ability.StatMaxHealth, EventMaxHealth. Cases left out: none. cardtown lint rules passes.
