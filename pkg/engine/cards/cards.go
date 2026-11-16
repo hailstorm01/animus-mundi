@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Hulking Incongruity",
 	"Melodic Pummeler",
 	"Mutation Swell",
-	"Poisoned Rations",
 	"Rhapsody's Hollow",
 	"Solarheart Monk",
 }
