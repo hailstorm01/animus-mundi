@@ -258,3 +258,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0252 | `OpModifyStat` on Maximum Health: `Step.Stat`, `ability.StatMaxHealth`, a `max-health` event (wave H shape, sonnet; *Poisoned Rations*' step) | done |
 | T-0253 | *Poisoned Rations*: chosen unit gets -3 max health until end of turn (wave H card, flash) | done |
 | T-0254 | `OpGainControl`: the ability's controller gains control of each Subject unit in the Main Theater, and a `control` event (`FR-ZON-002`, `FR-ZON-003`; wave H shape, sonnet; *Rhapsody's Hollow*'s step) | done |
+| T-0255 | *Rhapsody's Hollow*: T3, exhaust, kill this structure: gain control of chosen opposing unit in the Main Theater (wave H card, flash) | done |
