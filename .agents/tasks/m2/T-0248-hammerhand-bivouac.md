@@ -4,7 +4,7 @@ title: "Hammerhand Bivouac: at the start of your turn, distribute 2 armor among 
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0248-hammerhand-bivouac
 depends_on: [T-0245, T-0246, T-0247]
 claims: [card:Hammerhand Bivouac]
