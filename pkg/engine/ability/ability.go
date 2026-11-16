@@ -376,7 +376,7 @@ const (
 	SubjectOpponents                 // each opponent of the ability's controller (OpScratch, OpDraw, OpDiscard, OpSearchDeck)
 	SubjectTarget                    // each entity chosen for Effect.Targets[Step.Target], in pick order; for an asset step, a pile slot's card that an earlier step of this resolution deployed is the asset it became
 	SubjectAll                       // every battlefield asset matching Step.Filter when the step resolves; not a target (FR-TGT-002)
-	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14)
+	SubjectPick                      // the entities matching Step.Filter, picked by the ability's controller as the step resolves: battlefield assets, or cards in a discard pile if Filter.InPile. One, or with Step.UpTo up to N, possibly none. Not a target (SVY-R3, SVY-R14). With Step.Split, Amount is a pool split among the matches (SVY-R51)
 	SubjectReplaced                  // the asset whose event a replacement replaces (Replacement.Steps only)
 	SubjectWatched                   // the asset whose event fired a watching trigger (Trigger.Watches), if that same asset is still on the battlefield; not a target
 )
@@ -395,6 +395,7 @@ type Step struct {
 	Keyword           Keyword // OpGrantKeyword only: the keyword granted
 	IfDone            bool    // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 	ControllerChooses bool    // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand
+	Split             bool    // SubjectPick over assets with OpAddArmor only: Amount is a pool the ability's controller splits among the assets matching Filter as the step resolves, not a target (SVY-R51): each picked asset gets a positive whole share and the shares add up to Amount; one match takes it all unasked, none does nothing, and a timeout puts it all on the first in fixed order (SVY-R52). UpTo must be 0
 	IfHandEmpty       bool    // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")
 }
 
