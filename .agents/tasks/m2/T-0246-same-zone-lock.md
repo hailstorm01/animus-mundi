@@ -4,7 +4,7 @@ title: '"In the same zone" on a stack item reads its source''s zone, locked on p
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0246-same-zone-lock
 depends_on: [T-0205, T-0206, T-0245]
 claims: [shape:zone criterion "in the same zone" (ability.ZoneRefSame; a trigger or activated ability that reads it locks its source's zone on placement, last-known if gone, SVY-R44)]
@@ -72,3 +72,4 @@ In a new file `pkg/engine/same_zone_test.go`, with synthetic cards. `that_zone_t
 - 2026-11-15 lead-architect (wave H run, session 7): tests reviewed (58b1244); set back to `tests`. Notes:
   1. `TestFR_TGT_001_SameZoneWithoutSourceMatchesNothing` passes whatever the engine does, even if the pile trigger never fires: every assertion is "0 armor", which also holds when nothing resolved. Give the trigger a first step whose result the test can see (for example `scratchN(1)`, then check that player 0 gained a Scratch Company in Reserves, or a draw and the hand size), and assert it, so the test shows the trigger resolved and its "in the same zone" step acted on nothing. Everything else stays as it is.
   The other eight tests match the Tests list, line 398 (`SVY-R44`), `FR-TGT-003` (line 412), `FR-ZON-004` and `SVY-R36`. The deviations the Log names (a pile trigger through a Maneuver's discard, a deploy trigger that kills the source, a unit that moves itself) are fine.
+- 2026-11-15 rules-test-author: review note 1 fixed. TestFR_TGT_001_SameZoneWithoutSourceMatchesNothing's pile trigger now has a first step drawN(1); the test fails unless player 0's hand is 1 (the trigger resolved), then asserts the same-zone armor step reached nothing. Nothing else changed.
