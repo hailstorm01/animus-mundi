@@ -280,14 +280,36 @@ const (
 )
 
 // ZoneRef is a zone criterion read against the zone a stack item locked, not
-// the source's current zone (FR-TGT-001, FR-TGT-003). A later "in the same zone"
-// (SVY-R44) is another value, read the same way.
+// the source's current zone (FR-TGT-001, FR-TGT-003). A stack item locks one
+// zone, set by the ZoneRef its effect reads.
 type ZoneRef int
 
 const (
 	ZoneRefNone ZoneRef = iota // the zero value: no source-relative zone criterion
 	ZoneRefThat                // "in that zone": the zone locked as a move's destination (SVY-R45)
+	ZoneRefSame                // "in the same zone": the zone the item's source was in when the item was placed (SVY-R44)
 )
+
+// ReadsZoneRef reports whether any filter of e reads r: its Targets' filters,
+// its Steps' filters, and each of its Modes, recursively.
+func (e Effect) ReadsZoneRef(r ZoneRef) bool {
+	for _, t := range e.Targets {
+		if t.Filter.ZoneRef == r {
+			return true
+		}
+	}
+	for _, s := range e.Steps {
+		if s.Filter.ZoneRef == r {
+			return true
+		}
+	}
+	for _, m := range e.Modes {
+		if m.ReadsZoneRef(r) {
+			return true
+		}
+	}
+	return false
+}
 
 // InPile reports whether f chooses cards in a discard pile rather than assets
 // on the battlefield (Zone is ZoneDiscard). Every target, pick and filter check
