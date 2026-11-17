@@ -4,7 +4,7 @@ title: "Hulking Incongruity: allied Horror units in the same zone have Resistant
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0259-hulking-incongruity
 depends_on: [T-0258]
 claims: [card:Hulking Incongruity]
@@ -95,3 +95,13 @@ Tests:
   - Helpers requested: none. They vet clean and fail as expected (card has no aura yet). `cardtown lint rules`: no new `TestFR_*`, so nothing to trace.
   - Cases left out: none beyond the task's "Not this task" list.
   - Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 1.
+  - Each test checks what the cited rules and the survey row give, on the real card:
+    - The Incongruity grants Resistant 1 to allied Horror units in its zone, itself included, and any one matching subtype is enough (`FR-LAY-001`, survey `:165`).
+    - It grants nothing to a non-Horror unit, a Horror structure, a Horror unit in another zone or an opposing Horror unit, and it adds no power.
+    - The grant adds to printed Resistant (`FR-REP-004` Stage 2's total).
+    - The grant follows the source's current zone (`SVY-R44`, last sentence).
+    - A covered unit takes 3 − 1 = 2 combat damage (`FR-KWD-002b`).
+  - No existing test edited. The file-comment change is the one the task asked for.
+  - Sanity check in a throwaway worktree: the four tests fail without the card and pass with the Shape's definition, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
