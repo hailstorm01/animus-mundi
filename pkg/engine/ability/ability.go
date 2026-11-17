@@ -193,8 +193,9 @@ const (
 	HookExhausted                         // this asset exhausted: changed from Readied to Exhausted, for any reason (SVY-R17, FR-CAP-001)
 	HookCombatKill                        // this asset attacked, its combat damage left the defender lethal, and the death sweep after the Attack destroyed it; a replaced death is not a kill (FR-CBT-002 Step 3, SVY-R19)
 	HookMoves                             // this unit moved to a new battlefield zone, by March or by a step that moves it (OpMoveZone); entering the battlefield, by any deploy, is not moving (SVY-R1, FR-ZON-002)
-	HookDiscardedFromHand                 // this card was put into its owner's discard pile from their hand, by a discard step or a discard cost (FR-ZON-004); fires only triggers with ActiveZone ZoneDiscard
+	HookDiscardedFromHand                 // this card was put into its owner's discard pile from their hand, by a discard step or a discard cost (FR-ZON-004): the narrower "from your hand" gate; a discard from hand fires this hook and HookEntersDiscard; fires only triggers with ActiveZone ZoneDiscard
 	HookTurnStart                         // a turn began: fired in the Ready Phase after the active player's assets ready, for every battlefield asset; "at the start of your turn" is this hook with Turn: TurnYours (FR-TRN-001)
+	HookEntersDiscard                     // this card was put into its owner's discard pile, from any zone (a hand, the battlefield, the stack), by any route (FR-ZON-004, FR-ZON-005); fires only triggers with ActiveZone ZoneDiscard
 )
 
 // TurnOwner gates a trigger on whose turn it is when its event happens.

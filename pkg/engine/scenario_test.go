@@ -84,11 +84,12 @@ func (s *scene) onTop(p PlayerID, cards ...*Card) []*Instance {
 }
 
 // inDiscard puts new instances of cards on top of p's discard pile, in order.
+// It is setup: it appends directly and fires no enters-discard trigger.
 func (s *scene) inDiscard(p PlayerID, cards ...*Card) []*Instance {
 	insts := make([]*Instance, len(cards))
 	for i, c := range cards {
 		insts[i] = &Instance{ID: s.g.newID(), Card: c, Owner: p}
-		s.g.putCard(insts[i], ZoneDiscard, false)
+		s.g.Players[p].Discard = append(s.g.Players[p].Discard, insts[i])
 	}
 	return insts
 }

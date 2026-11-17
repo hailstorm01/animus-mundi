@@ -86,6 +86,12 @@ func (g *Game) fireDiscarded(inst *Instance) {
 	g.fireHook(pileSource(g, inst), ability.HookDiscardedFromHand)
 }
 
+// fireEntersDiscard buffers inst's enters-discard triggers (FR-ZON-004,
+// FR-ZON-005). putCard calls it after inst is in its owner's discard pile.
+func (g *Game) fireEntersDiscard(inst *Instance) {
+	g.fireHook(pileSource(g, inst), ability.HookEntersDiscard)
+}
+
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
 // is a's controller now. They wait for the flush after the item's sweep.
 func (g *Game) fireDeploy(a *Asset) { g.fireHook(assetSource(a), ability.HookDeploy) }
