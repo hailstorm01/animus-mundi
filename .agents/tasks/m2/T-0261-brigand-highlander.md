@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
@@ -95,3 +95,11 @@ Tests:
 - 2026-11-16 rules-test-author: wrote `pkg/engine/cards_path_highlander_test.go`: `TestCard_BrigandHighlander_PlusTwoPowerOnlyWhileCornered`, `TestCard_BrigandHighlander_CorneredAttackDealsFour`, `TestCard_BrigandHighlander_NotCorneredAttackDealsTwo`.
   - Helpers requested: none. Cases left out: those the task assigns to T-0260 (Reserves, clamp, aura, mid-combat gate, sweep, face-down).
   - Compiles; the Cornered power and attack-four tests fail until the card definition exists (Highlander is NotYetExecutable); `cardtown lint rules` passes. Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 1.
+  - Each test checks what the cited rules and the survey row give, on the real card:
+    - Power 2 at 1 against 1, 4 at 1 against 2, and 2 again once the second enemy leaves the Main Theater (`FR-KWD-002e`, `FR-LAY-001`).
+    - The line grants no keywords, Cornered or not.
+    - A Cornered attack deals 2 + 2 = 4, and an attack at 1 against 1 deals 2 (`FR-LAY-003`, `FR-CBT-002`).
+  - `highlanderCombat` is setup only, local to the test file. No existing test edited.
+  - Sanity check in the review worktree: with the Shape's definition and removal applied (then reverted), the three tests and `TestDefs_MatchRulesText` pass. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
