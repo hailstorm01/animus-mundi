@@ -4,7 +4,7 @@ title: "Solarheart Monk: an enter-discard trigger, chosen asset heals 2 (wave H 
 kind: card
 tier: flash
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0268-solarheart-monk
 depends_on: [T-0267]
 claims: [card:Solarheart Monk]
@@ -66,10 +66,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "SolarheartMonk|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "SolarheartMonk|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-17 lead-architect (wave H run, session 29): queued, split off T-0267 under the D2 size rule. Write its Inputs, Tests and Allowed Files against the code of the day once T-0267 is `done`.
@@ -85,3 +85,32 @@ Tests:
   - No new shape: the card is T-0267's `HookEntersDiscard` with *Spoil Forest Colossus*' heal slot and step.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-17 rules-test-author: wrote `pkg/engine/cards_path_solarheart_monk_test.go`: `TestCard_SolarheartMonk_PrintedStats`, `_DiscardedFromHandHealsChosenAsset`, `_DestroyedOnTheBattlefieldHeals`, `_DestroyedScratchCompanyHeals`, `_ControlledMonkIsItsOwnersTrigger`, `_ReturnedToHandHealsNothing`.
+  - Helpers requested: none. File-local helpers: `monkPicker`, `hasOptionRef`, `hurtUnit`.
+  - Left out: nothing beyond the task's "Not this task" list.
+  - `go vet` clean, `cardtown lint rules` PASS. Five tests fail until the card is executable; the returned-to-hand test passes already (it pins a negative).
+  - Status `tests-review`.
+- 2026-11-17 lead-architect (D4, session 30): tests approved, round 1.
+  - Each test checks what the cited rules give, on the real card:
+    - Printed stats: Path unit, Specialist and Devilhorn, Requisition 8, Tactics 0, Reserves only, 6/8, yields 2/2, `Supported`.
+    - Discarded from hand: one target decision for player 0 over any asset, both sides and both Headquarters (`FR-TGT-001`); the chosen enemy unit heals 2 and the other keeps its damage (`FR-KWD-002d`).
+    - Killed by a step on the battlefield, and destroyed as a face-down Scratch Company whose card is the Monk: one placement each, the heal lands (`FR-ZON-004` `:267`, `FR-ZON-005`).
+    - Controlled by player 0, owned by player 1: in player 1's pile, player 1 picks the target (`FR-ZON-002`, `FR-ZON-003`).
+    - Returned to hand: no placement, no heal (`FR-ZON-004`).
+  - Only the new file; no existing test edited.
+  - Sanity check in the review worktree: with the Shape's definition applied, `go test ./pkg/engine -run "SolarheartMonk|TestDefs"` passes; without it, five of the six fail (the returned-to-hand negative passes either way). The change was reverted.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-17 kernel-engineer (flash): implemented Solarheart Monk.
+  - Changes:
+    - Added definition for "Solarheart Monk" in `pkg/engine/cards/path.go` between Saboteur and Steel Rain, with Text matching the CSV, a single Trigger on `HookEntersDiscard` with `ActiveZone: ZoneDiscard`, one Target slot with `Filter: ability.Filter{}` (any asset, FR-TGT-001), and one Step with `Op: ability.OpHeal`, `Amount: Value{N: 2}`, `Subject: SubjectTarget`, `Target: 0` (FR-KWD-002d).
+    - Removed "Solarheart Monk" from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
+  - Reuse:
+    - `HookEntersDiscard` from T-0267.
+    - Target slot and Step structure as in Spoil Forest Colossus (`cards/animus.go:697-707`).
+    - Pile trigger active zone `ZoneDiscard` as in Eerie Remnant (`cards/path.go:501`).
+  - Verification:
+    - `go test ./pkg/engine -run "SolarheartMonk|TestDefs"` PASS.
+    - `go tool task check` PASS (gofmt, go vet, all unit & package tests, full cardtown lint suite).
+    - `go tool task sim` PASS (200 games clean playout, all invariants held).
+    - `go tool task sim-compare -- autoloop/m2-wave-h` PASS (starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included).
+  - Status `review`.
