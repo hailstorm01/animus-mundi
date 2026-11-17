@@ -2,7 +2,7 @@
 // Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords,
 // the keywords a resolved step grants until end of turn, and auras' keyword
 // grants (`Game.auras`). Layer 5 holds power
-// and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`). The power
+// and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`) and a card's own Cornered power. The power
 // pipeline is Layer 1 + Layer 4 + Layer 5, clamped at 0 by Layer 6.
 
 package engine
@@ -52,10 +52,10 @@ func (a *Asset) expireAtEndOf(active PlayerID) {
 }
 
 // Power returns effective Combat Power, the only stat that clamps at 0: the sum
-// of Layer 1 (printed), Layer 4 (auras) and Layer 5 (modifiers), clamped by
-// Layer 6.
+// of Layer 1 (printed), Layer 4 (the card's own Cornered power and auras) and
+// Layer 5 (modifiers), clamped by Layer 6.
 func (g *Game) Power(a *Asset) int {
-	n := a.Printed().Power + a.TempPower()
+	n := a.Printed().Power + a.TempPower() + g.whileCornered(a).Power
 	for _, st := range g.auras(a) {
 		n += st.Power
 	}
@@ -109,10 +109,9 @@ func (g *Game) CurrentHealth(a *Asset) int {
 // still receives auras' grants.
 func (g *Game) Keywords(a *Asset) Keywords {
 	kw := a.Printed().Keywords
-	if d := a.Printed().Ability; d != nil && d.Cornered != (ability.CorneredKeywords{}) && g.cornered(a.Controller) {
-		kw.Aggressive += d.Cornered.Aggressive
-		kw.Resistant += d.Cornered.Resistant
-	}
+	wc := g.whileCornered(a)
+	kw.Aggressive += wc.Aggressive
+	kw.Resistant += wc.Resistant
 	for _, st := range g.auras(a) {
 		kw.Resistant += st.Resistant
 	}
@@ -135,6 +134,18 @@ func (k *Keywords) add(o Keywords) {
 			*d.flag(k) = *d.flag(k) || *d.flag(&o)
 		}
 	}
+}
+
+// whileCornered returns what the card of a gives while its controller is
+// Cornered: the zero value for a face-down asset (its face has no Ability) or
+// when the controller is not Cornered. It is the one reader of that gate, live,
+// for Keywords and Power (FR-KWD-002e, FR-LAY-003).
+func (g *Game) whileCornered(a *Asset) ability.WhileCornered {
+	d := a.Printed().Ability
+	if d == nil || d.Cornered == (ability.WhileCornered{}) || !g.cornered(a.Controller) {
+		return ability.WhileCornered{}
+	}
+	return d.Cornered
 }
 
 // cornered reports whether p is Cornered: the opponent controls strictly more
