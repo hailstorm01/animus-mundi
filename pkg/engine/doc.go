@@ -76,7 +76,9 @@
 //     asset gives +Power in Layer 4 and +Resistant as a Layer 3 keyword grant
 //     to every battlefield asset its Filter matches, read by Game.Power and
 //     Game.Keywords through Game.auras; "in the same zone" is the
-//     source's current zone (FR-LAY-001, SVY-R44).
+//     source's current zone (FR-LAY-001, SVY-R44). An aura's Cornered grant
+//     counts while the matched asset's controller is Cornered, through
+//     Game.whileCornered (FR-KWD-002e).
 //   - Ward on targets, and last-known effective state for effects whose
 //     source has left the battlefield.
 //   - Destruction replacement (FR-REP-001): a face-up asset's printed "would be
@@ -89,8 +91,7 @@
 //
 // Not built yet:
 //   - Continuous abilities other than a card's own Cornered abilities and its own
-//     hand-active cost reduction (Cornered-gated auras ("have Cornered: Resistant 1.")),
-//     Regroup N, replacement effects other than destruction replacement and the
+//     hand-active cost reduction, Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set
 //     and cannot be deployed or enacted.

@@ -56,7 +56,8 @@ const (
 	// StaticAura is a continuous aura of a face-up battlefield asset
 	// (FR-LAY-001): every battlefield asset matching Filter, relative to the
 	// source's controller, has +Power Combat Power (Layer 4) and +Resistant
-	// Resistant (a Layer 3 keyword grant). A ZoneRefSame criterion reads
+	// Resistant (a Layer 3 keyword grant), and also Cornered while that asset's
+	// controller is Cornered (FR-KWD-002e). A ZoneRefSame criterion reads
 	// the source's current zone (SVY-R44). ActiveZone is ZoneAny, the battlefield.
 	StaticAura
 )
@@ -82,6 +83,11 @@ type Static struct {
 	// Filter matches, a Layer 3 grant (FR-LAY-001, survey G2). It may be
 	// negative, like printed Resistant; 0 grants nothing.
 	Resistant int
+	// Cornered is an aura's Cornered grant: every asset Filter matches has it
+	// only while that asset's controller is Cornered (FR-KWD-002e, SVY-R18).
+	// Its keywords are a Layer 3 grant and its power Layer 4, as for
+	// Def.Cornered; the zero value grants nothing.
+	Cornered WhileCornered
 }
 
 // CostReduction lowers the card's own Requisition cost while it is in its owner's
@@ -92,8 +98,8 @@ type CostReduction struct {
 	Per Filter
 }
 
-// WhileCornered is what a card has only while its controller is Cornered, 0 for
-// absent. g.Keywords adds the keywords as a Layer 3 grant and g.Power the Power
+// WhileCornered is what a card has, or an aura grants, only while the asset's
+// controller is Cornered, 0 for absent, read through g.whileCornered. g.Keywords adds the keywords as a Layer 3 grant and g.Power the Power
 // in Layer 4, on a face-up asset (FR-LAY-001); the gate is locked for a
 // simultaneous step (FR-LAY-003). Power may be negative, like any static power;
 // the clamp is Layer 6's.
@@ -101,6 +107,14 @@ type WhileCornered struct {
 	Aggressive int
 	Resistant  int
 	Power      int
+}
+
+// Add returns w plus o, field by field.
+func (w WhileCornered) Add(o WhileCornered) WhileCornered {
+	w.Aggressive += o.Aggressive
+	w.Resistant += o.Resistant
+	w.Power += o.Power
+	return w
 }
 
 // Activated is one printed "[Cost]: [Effect]." ability of a battlefield asset.
