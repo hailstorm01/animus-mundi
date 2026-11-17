@@ -4,7 +4,7 @@ title: "Ancestral Monument: \"Other allied assets in the same zone have Cornered
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0263-ancestral-monument
 depends_on: [T-0262]
 claims: [card:Ancestral Monument]
