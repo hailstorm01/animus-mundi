@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -93,10 +93,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (none of the three is in a starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (none of the three is in a starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 17): queued with T-0256, split off under the D2 size rule. Written in full once T-0256 is `done`.
@@ -130,3 +130,15 @@ Tests:
   - No existing test edited.
   - Sanity check in a throwaway worktree: the seven tests fail without the cards and pass with the Shape's definitions, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
   - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented same-zone power auras Animoceps Stalk, Animoceps Node, Melodic Pummeler (commit 0ed4c870). Status `review`.
+  - Added ability definitions in `pkg/engine/cards/animus.go` using existing `ability.StaticAura` (T-0256) and `ability.Filter` (`Allegiance: AllegianceAllied`, `ZoneRef: ZoneRefSame`, `Power: 1`):
+    - `Animoceps Node`: `Kinds: KindUnit`
+    - `Animoceps Stalk`: `Other: true`
+    - `Melodic Pummeler`: `Kinds: KindUnit`, `Subtypes: []string{"Horror"}`
+  - Removed all three cards from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
+  - Reused: `ability.StaticAura`, `ability.ZoneRefSame`, `ability.AllegianceAllied`, `ability.KindUnit`, and `Game.auras`/`Game.Power` layer 4 evaluation.
+  - Verification results:
+    - `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`: pass (1.12s)
+    - `go tool task check`: pass (gofmt, vet, test across all packages, and cardtown lint --all)
+    - `go tool task sim`: pass (200 games, P0 58.5%, P1 39.5%, draws 2.0%, 0 invariant violations)
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: [PASS] starter and stress sims match byte for byte, exit codes included
