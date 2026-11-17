@@ -4,7 +4,7 @@ title: "Mutation Swell: a counted kill cost {2, 4} on allied Scratch Company uni
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0266-mutation-swell
 depends_on: [T-0264, T-0265]
 claims: [card:Mutation Swell]
@@ -129,3 +129,16 @@ Tests:
     - `go tool task sim`: PASS (200 games, P0 58.5% P1 39.5% draws 2.0%, all invariants held)
     - `go tool task sim-compare -- autoloop/m2-wave-h`: PASS (starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included)
   - Status `review`.
+- 2026-11-17 lead-architect (D5, session 28): approved, round 1.
+  - After `test(T-0266)` (54e2240), only the two Allowed Files and this task file changed (plus the board's status cell). No test was edited.
+  - The code is the planned definition: `ExtraCosts` one `CostKill` with `Counts: []int{2, 4}` on allied Scratch Company units, one target slot on allied unit cards in the discard pile with `PerKilled: 2` and `Different: true`, and one `OpDeployFree` on it with no `To`, placed between *Melodic Pummeler* and *Portent Scrivener*. The card is removed from `NotYetExecutable`.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch:
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "MutationSwell|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- 1543471c` (the run branch before the merge) `[PASS]`.
+  - The Flash run had no refused commands (exit 0, no `denied_actions`).
+  - Merged into `autoloop/m2-wave-h` (dffdba3). Directive #158 is fully applied and archived.
+  - Status `done`.
