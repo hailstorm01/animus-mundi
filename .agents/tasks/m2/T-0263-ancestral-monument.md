@@ -4,7 +4,7 @@ title: "Ancestral Monument: \"Other allied assets in the same zone have Cornered
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0263-ancestral-monument
 depends_on: [T-0262]
 claims: [card:Ancestral Monument]
@@ -74,10 +74,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AncestralMonument|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "AncestralMonument|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 23): queued, split off from T-0262 under the D2 size rule.
@@ -106,3 +106,14 @@ Tests:
   - No existing test edited; one new file.
   - Sanity check in a throwaway worktree: the tests fail without the card (the `not cornered` subtest passes either way, as it should) and pass with the Shape's definition, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
   - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented Ancestral Monument, status `review`.
+  - Reused: T-0256's `ability.StaticAura` with filter `ability.Filter{Allegiance: ability.AllegianceAllied, Other: true, ZoneRef: ability.ZoneRefSame}` and T-0262's `Cornered: ability.WhileCornered{Resistant: 1}`.
+  - Diff shows:
+    - `pkg/engine/cards/cards.go`: removed `"Ancestral Monument"` from `NotYetExecutable`.
+    - `pkg/engine/cards/path.go`: added `"Ancestral Monument"` definition alphabetically after `"Ambush Tactics"` and before `"Arkha, Sun's Fury"` with exact CSV text and a single `StaticAura` entry granting `WhileCornered{Resistant: 1}`.
+  - Commands and results:
+    - `go test ./pkg/engine -run "AncestralMonument|TestDefs"`: passed (exit 0).
+    - `go tool task check`: passed (gofmt, go vet, all unit/scenario/linter tests clean; exit 0).
+    - `go tool task sim`: passed clean (P0 58.5%, P1 39.5%, draws 2.0%; exit 0).
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: [PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included (exit 0).
+  - Reviewer note: the card uses existing primitives only; no new shapes, fields, or card-name logic.
