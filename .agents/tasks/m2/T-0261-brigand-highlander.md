@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
@@ -74,10 +74,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 21): queued with T-0260, split off under the D2 size rule.
@@ -103,3 +103,14 @@ Tests:
   - `highlanderCombat` is setup only, local to the test file. No existing test edited.
   - Sanity check in the review worktree: with the Shape's definition and removal applied (then reverted), the three tests and `TestDefs_MatchRulesText` pass. The test file is gofmt-clean.
   - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented Brigand Highlander (commit 6678e7d6).
+  - Reused existing shape: `ability.WhileCornered{Power: 2}` from T-0260 on `Def.Cornered`. No new shapes or fields added.
+  - Diff:
+    - `pkg/engine/cards/path.go`: added `"Brigand Highlander"` with `Text: []string{"Cornered: This unit has +2 power."}` and `Cornered: ability.WhileCornered{Power: 2}` between `Boneyard Scavenger` and `Broken Horn Armorer`.
+    - `pkg/engine/cards/cards.go`: removed `"Brigand Highlander"` from `NotYetExecutable`.
+  - Commands and results:
+    - `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`: pass (ok animus-mundi/pkg/engine 0.946s).
+    - `go tool task check`: pass (gofmt, go vet, all unit/integration tests, all cardtown linters pass).
+    - `go tool task sim`: pass (P0 wins 58.5%, P1 wins 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: pass (`[PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included`).
+  - Status `review`.
