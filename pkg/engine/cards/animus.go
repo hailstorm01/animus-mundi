@@ -500,6 +500,40 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Mutation Swell": {
+		Text: []string{"As an additional cost to enact this maneuver, kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a different chosen unit card from your discard pile for free."},
+		ExtraCosts: []ability.Cost{
+			{
+				Kind: ability.CostKill,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					Scratch:    ability.ScratchOnly,
+				},
+				Counts: []int{2, 4},
+			},
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneDiscard,
+					},
+					PerKilled: 2,
+					Different: true,
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDeployFree,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 	"Portent Scrivener": {
 		Text: []string{"When this unit is killed on your turn, draw a card."},
 		Triggers: []ability.Trigger{
