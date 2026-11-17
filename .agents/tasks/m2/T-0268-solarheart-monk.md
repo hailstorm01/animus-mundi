@@ -4,7 +4,7 @@ title: "Solarheart Monk: an enter-discard trigger, chosen asset heals 2 (wave H 
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0268-solarheart-monk
 depends_on: [T-0267]
 claims: [card:Solarheart Monk]
