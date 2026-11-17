@@ -4,7 +4,7 @@ title: "Hulking Incongruity: allied Horror units in the same zone have Resistant
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0259-hulking-incongruity
 depends_on: [T-0258]
 claims: [card:Hulking Incongruity]
@@ -91,3 +91,7 @@ Tests:
   - No new shape: the card is T-0256's `StaticAura` with T-0258's `Static.Resistant` and *Melodic Pummeler*'s filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote four tests in `pkg/engine/cards_animus_auras_test.go` (after the Pummeler tests; file comment updated): `TestCard_HulkingIncongruity_AlliedHorrorUnitsInItsZone`, `_AddsToPrintedResistant`, `_FollowsItsZone`, `_CoveredUnitTakesOneLess`.
+  - Helpers requested: none. They vet clean and fail as expected (card has no aura yet). `cardtown lint rules`: no new `TestFR_*`, so nothing to trace.
+  - Cases left out: none beyond the task's "Not this task" list.
+  - Status `tests-review`.
