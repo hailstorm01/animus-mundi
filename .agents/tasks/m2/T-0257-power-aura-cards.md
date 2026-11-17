@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -93,10 +93,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (none of the three is in a starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (none of the three is in a starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 17): queued with T-0256, split off under the D2 size rule. Written in full once T-0256 is `done`.
@@ -112,3 +112,33 @@ Tests:
   - No new shape: each card is T-0256's `StaticAura` with its own filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_animus_auras_test.go`, status `tests-review`.
+  - Tests: `TestCard_AnimocepsStalk_OtherAlliedAssetsInItsZone`, `TestCard_AnimocepsStalk_TwoStalksBuffEachOther`, `TestCard_AnimocepsStalk_FollowsItsZone`, `TestCard_AnimocepsNode_AlliedUnitsInItsZone`, `TestCard_AnimocepsNode_FollowsItsZone`, `TestCard_MelodicPummeler_AlliedHorrorUnitsInItsZone`, `TestCard_MelodicPummeler_FollowsItsZone`.
+  - Helpers requested: none (local `auraSub` lives in the new file; `wantPower` reused).
+  - Left out: nothing beyond the task's own exclusions. `go vet` is clean, `cardtown lint rules` passes. Node, Pummeler tests fail now and the Stalk ones partly pass or fail until the cards are defined.
+- 2026-11-16 lead-architect (D4): tests returned, round 1. Every other assertion checks what the cited rules and survey rows give. One note:
+  1. `TestCard_AnimocepsNode_AlliedUnitsInItsZone` expects the face-down Scratch Company to have `scratch.Inst.Card.Power+1`, which is the hidden card's printed power. A face-down asset has the Scratch Company face's characteristics (`FR-ZON-005`): power 1. So the expected value is the literal `2`, with the reason "a face-down Scratch Company (power 1) is a unit". The test passes today only because `putScratch`'s hidden filler also has power 1. Change only that line, in a new `test(T-0257)` commit.
+  - Status `tests`.
+- 2026-11-16 rules-test-author: D4 round 1, note 1 fixed. In `TestCard_AnimocepsNode_AlliedUnitsInItsZone` the Scratch Company's expected power is now the literal 2 (face-down characteristics, power 1, plus the aura; FR-ZON-005). No other change. Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 2.
+  - Note 1 is fixed in its own `test(T-0257)` commit (82124a9): the face-down Scratch Company's expected power is the literal 2 (`FR-ZON-005`). No other line changed.
+  - Each test checks what the cited rules and survey rows give, on the real cards:
+    - The Stalk buffs other allied assets of any kind in its current zone. It doesn't buff itself, its other-zone allies or opposing assets. Two Stalks buff each other.
+    - The Node buffs allied units only (a Scratch Company too). It doesn't buff itself or an allied structure.
+    - The Pummeler buffs allied Horror units in its zone, itself included, and any one matching subtype is enough. It doesn't buff non-Horror units, Horror structures, other-zone allies or opposing Horror units.
+    - Each aura follows its source's current zone (`SVY-R44`, last sentence). Reserves are each player's own (`FR-ZON-001`).
+  - No existing test edited.
+  - Sanity check in a throwaway worktree: the seven tests fail without the cards and pass with the Shape's definitions, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented same-zone power auras Animoceps Stalk, Animoceps Node, Melodic Pummeler (commit 0ed4c870). Status `review`.
+  - Added ability definitions in `pkg/engine/cards/animus.go` using existing `ability.StaticAura` (T-0256) and `ability.Filter` (`Allegiance: AllegianceAllied`, `ZoneRef: ZoneRefSame`, `Power: 1`):
+    - `Animoceps Node`: `Kinds: KindUnit`
+    - `Animoceps Stalk`: `Other: true`
+    - `Melodic Pummeler`: `Kinds: KindUnit`, `Subtypes: []string{"Horror"}`
+  - Removed all three cards from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
+  - Reused: `ability.StaticAura`, `ability.ZoneRefSame`, `ability.AllegianceAllied`, `ability.KindUnit`, and `Game.auras`/`Game.Power` layer 4 evaluation.
+  - Verification results:
+    - `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"`: pass (1.12s)
+    - `go tool task check`: pass (gofmt, vet, test across all packages, and cardtown lint --all)
+    - `go tool task sim`: pass (200 games, P0 58.5%, P1 39.5%, draws 2.0%, 0 invariant violations)
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: [PASS] starter and stress sims match byte for byte, exit codes included
