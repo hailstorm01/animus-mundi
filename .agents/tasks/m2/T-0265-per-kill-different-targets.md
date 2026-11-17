@@ -4,23 +4,63 @@ title: "Target slots that repeat per kill and pick different entities: Target.Pe
 kind: shape
 tier: sonnet
 wave: H
-status: queued
+status: tests
 branch: m2/autoloop-wave-h/T-0265-per-kill-different-targets
 depends_on: [T-0264]
-claims: [shape:per-kill target slots (Target.PerKilled: a slot chosen once for every k assets the placement's counted kill cost kills), shape:different repeated targets (Target.Different: a repeated slot's picks are different entities, SVY-R54), shape:legal cost counts (the counts offered and the enact check narrowed to those whose per-kill slots can be filled)]
+claims: [shape:per-kill target slots (Target.PerKilled: a slot chosen once for every k assets the placement's counted kill cost kills), shape:different repeated targets (Target.Different: a per-kill slot's picks are different entities, SVY-R54), shape:legal cost counts (legalCounts: the counts offered and the enact check narrowed to those whose targets can be filled)]
 cards: []
-requirements: [FR-TGT-001, FR-TGT-003, FR-TRN-003a, FR-MNV-001, FR-MOD-001, SVY-R2, SVY-R4, SVY-R11, SVY-R29, SVY-R53, SVY-R54]
+requirements: [FR-TGT-001, FR-TRN-003a, FR-MNV-001, FR-MOD-001, SVY-R4, SVY-R29, SVY-R53, SVY-R54]
 ---
 
 ## Goal
-*"For every 2 units killed this way, deploy a different chosen unit card from your discard pile for free."* (*Mutation Swell*, directive #158 (2)). A target slot can be chosen once for every k assets the placement's counted kill cost (T-0264's `Cost.Counts`) kills, on placement, after the count is chosen. A slot marked *"different"* picks a different entity for each repetition and is legal only with that many different legal entities (`SVY-R54`); without it, the repetitions stay independent (`SVY-R4`, *Steel Rain*). The counts T-0264 offers, and the enact check, are narrowed to the counts whose per-kill slots can be filled (`SVY-R53`, `SVY-R29`). A timeout takes the first different legal entities in fixed order, top of the pile first for cards in a discard pile (`SVY-R54`, `FR-MOD-001` §6).
+*"For every 2 units killed this way, deploy a different chosen unit card from your discard pile for free."* (*Mutation Swell*, directive #158 (2)). A target slot can be chosen once for every k assets the placement's counted kill cost (T-0264's `Cost.Counts`, `placement.count`) kills, on placement, after the count is chosen. A slot marked *"different"* picks a different entity for each repetition and is legal only with that many different legal entities (`SVY-R54`); without it the repetitions stay independent, as *Steel Rain*'s do (`SVY-R4`). The counts T-0264 offers on declaration, and the enact check, are narrowed to the counts that can be paid **and** whose targets can be filled (`SVY-R53`, `SVY-R29`). A timeout takes the first listed legal count, then the first different legal entities in fixed order, top of the pile first for cards in a discard pile (`SVY-R54`, `FR-MOD-001` §6).
 
-Covers (to be written in full against the code of the day before it leaves `queued`):
-- `ability.Target` gains `PerKilled int` (k > 0: `pl.count / k` picks) and `Different bool` (with `PerKilled` or `PerDiscard`: the picks are distinct, `Repeats` false). The one rule "a slot repeated per cost unit" stays in `targetDecision` / `repeatedPicks`: `PerDiscard` and `PerKilled` give the number of repetitions, not two copies of the repeat logic (D2.0).
-- `chooseTargets` and `slotsLegal` handle a per-kill slot; the legal counts (a `legalCounts(pl, e)` in `placement.go`, built on T-0264's `payableCounts`) feed `declare`'s `chooseCostCount` and `placeable`.
-- `doc.go`: the targeting bullet (`:52-53`) names `PerKilled` and `Different`.
-- Tests (synthetic Maneuvers, a counted kill cost {2, 4} and one per-kill slot of k = 2 on allied unit cards in the discard pile): not legal with 2 kills payable and no unit card in the pile; with 4 payable and only 1 unit card, only 2 is offered (asked nothing); with 4 and 2 cards, the slot asks for 2 different cards (`Min` = `Max` = 2, no repeats) and an answer repeating one card is invalid; the timeout takes the top two different cards of the pile; a `Different` `PerDiscard` slot picks distinct entities; `PerDiscard` without `Different` still repeats (`per_discard_test.go` unchanged).
-- Allowed Files (expected): `pkg/engine/ability/ability.go`, `pkg/engine/targeting.go`, `pkg/engine/placement.go`, `pkg/engine/doc.go`.
+### Shape
+- **`ability.Target`** ([ability.go:297-314](../../../pkg/engine/ability/ability.go)) gains:
+  - `PerKilled int`: 0 means none. k > 0 chooses the slot `pl.count / k` times, once for every k assets the placement's counted kill cost kills (`SVY-R53`). `UpTo` stays 0 with it, and it is never set together with `PerDiscard`. With no counted kill cost (`pl.count` 0, so on every trigger) or no legal entity, the slot stays empty and asks nothing, as a `PerDiscard` slot does.
+  - `Different bool`: read only with `PerKilled`. The repetitions pick different entities (`Repeats` false, `Min` = `Max` = the repetitions), not independent ones (`SVY-R54`). No card prints a "different" per-discard clause, so it is not defined with `PerDiscard`; say so in its comment.
+- **One repeat rule** (D2.0): the number of repetitions of a repeated slot is computed in one place (for example a `repetitions(pl, t) (n int, ok bool)` in `targeting.go`: `len(pl.discards)` for `PerDiscard`, `pl.count / t.PerKilled` for `PerKilled`). `targetDecision` ([targeting.go:79-100](../../../pkg/engine/targeting.go)) bounds the decision through `repeatedPicks` for both, then clears `Repeats` for a `Different` slot, and `chooseTargets`' empty-slot skip (`targeting.go:41`) reads the same count. No second copy of the `PerDiscard` logic. Prompt: `"%s: choose %d different for target %d"` for a `Different` slot, the existing `"(%d times)"` form otherwise.
+- **Legality:**
+  - `slotsLegal` ([placement.go:148](../../../pkg/engine/placement.go)): a per-kill slot is not exactly-one. At `pl.count` > 0 it needs at least `pl.count / k` options when `Different`, at least one otherwise; at `pl.count` 0 it never makes `slotsLegal` false. An "another" slot after it needs only a legal entity of its own (as after a `PerDiscard` slot). `Another` on a repeated slot itself stays undefined (no card); `withoutRefs`' bound recompute must not be reached for a `Different` slot by any tested path.
+  - Factor the tail of `placeable` (`placement.go:189-192`: `ChooseN` legal modes, or `slotsLegal` on `e.Targets`) into one function (for example `targetsLegal(pl, e)`), and add **`legalCounts(pl placement, e ability.Effect) []int`** in `placement.go`: `payableCounts(pl)` (the one judge of what can be paid, T-0264) filtered to the counts n for which `targetsLegal` holds with `pl.count = n`, in printed order. Nil without a counted kill cost.
+  - `placeable`: after `costsPayable`, a placement with a counted kill cost (`countedKillCost(pl) != nil`) needs `len(legalCounts(pl, e)) > 0`; any other uses `targetsLegal` as today.
+  - `declare` ([placement.go:50-58](../../../pkg/engine/placement.go)): `pl.count = g.chooseCostCount(pl, g.legalCounts(pl, e))`. `chooseCostCount` is unchanged: one legal count is taken unasked, a timeout takes the first listed.
+- **Not this task:** the *Mutation Swell* definition and its card tests (T-0266). `choice.go` needs no change: `firstPicks` already takes the first `Min` distinct options in fixed order for a non-`Repeats` decision, and `fixedOrderPositions` ranks pile cards from the top (`state.go:254`).
+- **`doc.go`**: the targeting bullet (`:50-53`) names `PerKilled` and `Different` (`SVY-R53`, `SVY-R54`), and the Maneuver bullet's counted-cost sentence (`:57-59`) says the counts offered are those whose targets can be filled.
+
+## Inputs
+- FRD 01: `FR-TGT-001` *Repeated Targets* (`docs/frd/01_Game_Rules_FRD.md:406`, `SVY-R4`, `SVY-R54`); `FR-MNV-001` *A Maneuver Needs Its Required Targets* (`:378`, `SVY-R29`, the *Mutation Swell* 2-or-4 sentence, `SVY-R53`); `FR-TRN-003a` (`:379`, the count chosen on declaration with the cost and the targets); the *Mutation Swell* sub-bullet (`:401`); `FR-MOD-001` §6 *Choice of Cost Counts* (`:442`).
+- Rulings: `SVY-R4`, `SVY-R29`, `SVY-R53`, `SVY-R54` (`docs/design/m2_starter_set_ability_survey.md:62`, `:112-113`); outcome `docs/design/outcomes/2026-11-16-wave-h-mutation-swell-kill-count.md`; directive #158 (2).
+- Code of the day (run branch at `bc79b5a`): `pkg/engine/ability/ability.go` (`Target`, `Cost.Counts`, `Cost.Counted`), `pkg/engine/targeting.go` (`chooseTargets`, `targetDecision`, `repeatedPicks`, `pileDecision`), `pkg/engine/placement.go` (`placement.count`, `declare`, `slotsLegal`, `placeable`, `legalModes`), `pkg/engine/costs.go` (`countedKillCost`, `payableCounts`, `chooseCostCount`), `pkg/engine/choice.go` (`firstPicks`, `fixedOrderPicks`, `soleAnswer`).
+- Existing tests to copy setup from: `pkg/engine/kill_count_cost_test.go` (`killCountManeuverOf`, `alliedScratchFilter`, `kcCountScript`), `pkg/engine/per_discard_test.go`. From T-0264's round 1: a synthetic Maneuver needs a step `Card.Supported` accepts, and two cost kills that both trigger ask a `DecideOrder` the script must answer or time out.
+
+## Tests (written by rules-test-author; engineers never edit these)
+New file `pkg/engine/per_kill_target_test.go`. Synthetic Maneuvers: the counted kill cost {2, 4} on allied Scratch Company units (T-0264's `killCountManeuverOf`) and one target slot on allied unit cards in the discard pile (`Filter{Allegiance: allied, Kinds: unit, Zone: ZoneDiscard}`) with `PerKilled: 2`, `Different: true` unless the test says otherwise, and a step acting on that slot (for example `OpDeployFree` on `SubjectTarget` 0). No test here depends on the killed units' own cards (T-0266 pins `SVY-R2` on the card).
+- `TestFR_MNV_001_PerKilledSlotNeedsItsTargets`: with 2 allied Scratch Company units and no unit card in the pile, the Maneuver can't be enacted (`SVY-R29`, `SVY-R53`); with one unit card added it can.
+- `TestFR_TGT_001_PerKilledCountsNarrowedToFillableTargets`: 4 allied Scratch Company units and 1 unit card in the pile: no count is asked (only 2 is legal, taken unasked), 2 units are killed, and the slot is filled with that card, asked nothing (`SVY-R53`, `FR-MOD-001` §1).
+- `TestFR_TGT_001_PerKilledCountsBothOfferedWithEnoughTargets`: 4 units and 2 unit cards: the count decision offers both "kill 2" and "kill 4" (`SVY-R53`).
+- `TestFR_TGT_001_PerKilledSlotChoosesOncePerTwoKilled`: 4 units and 3 unit cards: choosing 2 gives a target decision with `Min` = `Max` = 1; choosing 4 gives `Min` = `Max` = 2 with `Repeats` false and all 3 cards as options, and the two cards answered fill the slot and are both acted on (`SVY-R53`, `SVY-R54`).
+- `TestFR_TGT_001_PerKilledDifferentRejectsARepeat`: count 4 with 3 unit cards, the answer repeats one card: the answer is invalid (`EventInvalidAnswer`) and the fallback takes the top two cards of the pile (`SVY-R54`, `FR-MOD-001` §6).
+- `TestFR_MOD_001_PerKilledDifferentTimeout`: with 4 units and 3 unit cards, every decision timed out: the count is 2 (the first listed), the first two allied Scratch Company units in fixed order are killed, and the slot takes the top card of the pile; with 4 answered and the target timed out, the top two different cards are taken (`SVY-R54`).
+- `TestFR_TGT_001_PerKilledWithoutDifferentRepeats`: `PerKilled: 2`, `Different` false, 4 units and 1 unit card: "kill 4" is legal, and the target decision has `Min` = `Max` = 2 with `Repeats` true, so the one card is taken twice unasked (`SVY-R4`).
+- `TestFR_TGT_001_PerKilledSlotOnTriggerChoosesNothing`: a triggered ability (no costs) with a per-kill slot is placed with the slot empty and asks nothing (`FR-TGT-003`).
+- Unchanged and still passing: `per_discard_test.go` (a `PerDiscard` slot still repeats, `SVY-R4`) and `kill_count_cost_test.go` (without a per-kill slot, the counts offered are exactly the payable ones).
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected. Setup helpers local to the new test file stay in that file.
+
+## Allowed Files
+- `pkg/engine/ability/ability.go`
+- `pkg/engine/targeting.go`
+- `pkg/engine/placement.go`
+- `pkg/engine/doc.go`
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run 'PerKilled|PerDiscard|KillCountCost'`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card uses the new fields yet, so the starter and stress sims are byte-identical)
 
 ## Log
-- 2026-11-17 lead-architect (wave H run, session 26): queued with T-0264, split off under the D2 size rule. Write its Inputs, Tests and Allowed Files against the code of the day once T-0264 is `done`. Directive #158 (2).
+- 2026-11-17 lead-architect (wave H run, session 26): queued with T-0264, split off under the D2 size rule. Directive #158 (2).
+- 2026-11-17 lead-architect (wave H run, session 27): written in full against the run branch at `bc79b5a` (T-0264 merged at `9ef40c0`). Dropped the planned "`Different` `PerDiscard`" test: no card prints a different per-discard clause, and a discard count above the different legal entities has no ruling, so `Different` is defined only with `PerKilled`. Set `status: tests`; branch created from the run branch; dispatching `rules-test-author`.

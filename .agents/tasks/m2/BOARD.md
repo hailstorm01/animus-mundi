@@ -31,5 +31,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0265 | Per-kill target slots that pick different entities: `Target.PerKilled`, `Target.Different`, and the counts narrowed to those whose targets can be filled (`FR-TGT-001`, `SVY-R53`, `SVY-R54`; wave H shape, sonnet; *Mutation Swell*'s targets; #158 (2)) | queued |
+| T-0265 | Per-kill target slots that pick different entities: `Target.PerKilled`, `Target.Different`, and the counts narrowed to those whose targets can be filled (`FR-TGT-001`, `SVY-R53`, `SVY-R54`; wave H shape, sonnet; *Mutation Swell*'s targets; #158 (2)) | tests |
 | T-0266 | *Mutation Swell* (wave H card, flash; #158 (3), (4)) | queued |
