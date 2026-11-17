@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
@@ -74,10 +74,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 21): queued with T-0260, split off under the D2 size rule.
@@ -92,3 +92,25 @@ Tests:
   - No new shape: the card is T-0260's `WhileCornered.Power`, the third `Def.Cornered` card after *Allshan* and *Macabre Dancers*.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_path_highlander_test.go`: `TestCard_BrigandHighlander_PlusTwoPowerOnlyWhileCornered`, `TestCard_BrigandHighlander_CorneredAttackDealsFour`, `TestCard_BrigandHighlander_NotCorneredAttackDealsTwo`.
+  - Helpers requested: none. Cases left out: those the task assigns to T-0260 (Reserves, clamp, aura, mid-combat gate, sweep, face-down).
+  - Compiles; the Cornered power and attack-four tests fail until the card definition exists (Highlander is NotYetExecutable); `cardtown lint rules` passes. Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 1.
+  - Each test checks what the cited rules and the survey row give, on the real card:
+    - Power 2 at 1 against 1, 4 at 1 against 2, and 2 again once the second enemy leaves the Main Theater (`FR-KWD-002e`, `FR-LAY-001`).
+    - The line grants no keywords, Cornered or not.
+    - A Cornered attack deals 2 + 2 = 4, and an attack at 1 against 1 deals 2 (`FR-LAY-003`, `FR-CBT-002`).
+  - `highlanderCombat` is setup only, local to the test file. No existing test edited.
+  - Sanity check in the review worktree: with the Shape's definition and removal applied (then reverted), the three tests and `TestDefs_MatchRulesText` pass. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented Brigand Highlander (commit 6678e7d6).
+  - Reused existing shape: `ability.WhileCornered{Power: 2}` from T-0260 on `Def.Cornered`. No new shapes or fields added.
+  - Diff:
+    - `pkg/engine/cards/path.go`: added `"Brigand Highlander"` with `Text: []string{"Cornered: This unit has +2 power."}` and `Cornered: ability.WhileCornered{Power: 2}` between `Boneyard Scavenger` and `Broken Horn Armorer`.
+    - `pkg/engine/cards/cards.go`: removed `"Brigand Highlander"` from `NotYetExecutable`.
+  - Commands and results:
+    - `go test ./pkg/engine -run "BrigandHighlander|TestDefs"`: pass (ok animus-mundi/pkg/engine 0.946s).
+    - `go tool task check`: pass (gofmt, go vet, all unit/integration tests, all cardtown linters pass).
+    - `go tool task sim`: pass (P0 wins 58.5%, P1 wins 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: pass (`[PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included`).
+  - Status `review`.
