@@ -4,7 +4,7 @@ title: "Solarheart Monk: an enter-discard trigger, chosen asset heals 2 (wave H 
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0268-solarheart-monk
 depends_on: [T-0267]
 claims: [card:Solarheart Monk]
@@ -114,3 +114,14 @@ Tests:
     - `go tool task sim` PASS (200 games clean playout, all invariants held).
     - `go tool task sim-compare -- autoloop/m2-wave-h` PASS (starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included).
   - Status `review`.
+- 2026-11-17 lead-architect (D5, session 30): approved, round 1.
+  - After `test(T-0268)` (9991fcc), only the two Allowed Files and this task file changed (plus the board's status cell). No test was edited.
+  - The code is the planned definition: one `HookEntersDiscard` trigger with `ActiveZone: ZoneDiscard`, not optional, one target slot with an empty filter, one `OpHeal` 2 on it, placed between *Saboteur* and *Steel Rain*. The card is removed from `NotYetExecutable`.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch (eb0cded):
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "SolarheartMonk|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- 473587fb` (the run branch before the merge) `[PASS]`.
+  - Status `done`, merged (eb0cded).

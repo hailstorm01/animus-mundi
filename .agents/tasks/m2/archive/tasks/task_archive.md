@@ -271,3 +271,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0265 | Per-kill target slots that pick different entities: `Target.PerKilled`, `Target.Different`, and the counts narrowed to those whose targets can be filled (`FR-TGT-001`, `SVY-R53`, `SVY-R54`; wave H shape, sonnet; *Mutation Swell*'s targets; #158 (2)) | done |
 | T-0266 | *Mutation Swell*: a counted kill cost {2, 4} on allied Scratch Company units, one different chosen unit card from the discard pile per 2 killed, deployed for free (`FR-TRN-003a`, `SVY-R53`, `SVY-R54`; wave H card, flash; #158 (3), (4)) | done |
 | T-0267 | `HookEntersDiscard`: a pile trigger fired by `putCard` whenever its card is put into its owner's discard pile, from any zone (`FR-ZON-004`, `FR-ZON-005`; wave H shape, sonnet; *Solarheart Monk*'s hook) | done |
+| T-0268 | *Solarheart Monk*: an enter-discard trigger, chosen asset heals 2 (`FR-ZON-004`, `FR-KWD-002d`; wave H card, flash) | done |

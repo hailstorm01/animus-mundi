@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0268](T-0268-solarheart-monk.md) | Solarheart Monk (wave H card) | ready |
