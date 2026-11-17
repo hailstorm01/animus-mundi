@@ -4,7 +4,7 @@ title: "Ancestral Monument: \"Other allied assets in the same zone have Cornered
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0263-ancestral-monument
 depends_on: [T-0262]
 claims: [card:Ancestral Monument]
@@ -96,3 +96,13 @@ Tests:
   - Tests: `TestCard_AncestralMonument_OtherAlliedAssetsInItsZoneWhileCornered`, `TestCard_AncestralMonument_AddsToPrintedResistant`, `TestCard_AncestralMonument_FollowsItsZone`, `TestCard_AncestralMonument_CorneredUnitTakesOneLess` (subtests `cornered`, `not cornered`).
   - Helpers requested: none. `gofmt` and `go vet` are clean, `cardtown lint rules` passes. The tests fail now as expected (the card is not yet executable; the `not cornered` subtest passes).
   - Cases left out: none beyond those the task lists as not this task.
+- 2026-11-16 lead-architect (D4): tests approved, round 1.
+  - Each test checks what the cited rules and the survey row give, on the real card:
+    - The Monument grants Resistant 1 to an allied unit and an allied structure in its zone only while player 0 is Cornered, counting the Monument itself among player 0's Main Theater assets (3 against 3, 3 against 4, back to 3 against 3; `FR-KWD-002e`, `SVY-R18`).
+    - It grants nothing to itself (`Other`), to an allied unit in another zone or to a foe, and it adds no power (`FR-LAY-001`).
+    - The grant adds to printed Resistant (`FR-REP-004` Stage 2's total).
+    - The grant follows the source's current zone (`SVY-R44`, last sentence).
+    - A covered unit takes 3 − 1 = 2 combat damage while its controller is Cornered, and 3 while not (`FR-KWD-002b`, `FR-LAY-003`).
+  - No existing test edited; one new file.
+  - Sanity check in a throwaway worktree: the tests fail without the card (the `not cornered` subtest passes either way, as it should) and pass with the Shape's definition, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
