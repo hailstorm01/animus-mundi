@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0257](T-0257-power-aura-cards.md) | *Animoceps Stalk*, *Animoceps Node*, *Melodic Pummeler* (wave H cards) | tests |

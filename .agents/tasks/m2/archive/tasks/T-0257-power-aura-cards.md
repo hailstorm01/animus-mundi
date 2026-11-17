@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -142,3 +142,15 @@ Tests:
     - `go tool task check`: pass (gofmt, vet, test across all packages, and cardtown lint --all)
     - `go tool task sim`: pass (200 games, P0 58.5%, P1 39.5%, draws 2.0%, 0 invariant violations)
     - `go tool task sim-compare -- autoloop/m2-wave-h`: [PASS] starter and stress sims match byte for byte, exit codes included
+- 2026-11-16 lead-architect (D5): approved.
+  - The diff after the test commit touches only the two Allowed Files and is the planned definitions: three `StaticAura` statics, each Power 1. Stalk is allied, `Other`, `ZoneRefSame`. Node is allied units, `ZoneRefSame`. Pummeler is allied Horror units, `ZoneRefSame`. All three are removed from `NotYetExecutable`.
+  - No new shape, no test edited after `test(T-0257)`, no card name in engine code, no duplicate.
+  - Re-ran in a review worktree:
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "AnimocepsStalk|AnimocepsNode|MelodicPummeler|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- autoloop/m2-wave-h` `[PASS]`.
+  - The Flash run had no refused commands (`denied_actions` empty).
+  - Merged into `autoloop/m2-wave-h` (b6953b7).
+  - Status `done`.
