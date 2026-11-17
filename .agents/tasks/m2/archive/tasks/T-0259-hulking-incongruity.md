@@ -4,7 +4,7 @@ title: "Hulking Incongruity: allied Horror units in the same zone have Resistant
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0259-hulking-incongruity
 depends_on: [T-0258]
 claims: [card:Hulking Incongruity]
@@ -116,3 +116,16 @@ Tests:
     - `go tool task sim`: pass (P0 58.5%, P1 39.5%, draws 2.0%, match length 27.2 turns, all invariants held).
     - `go tool task sim-compare -- autoloop/m2-wave-h`: pass (`[PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included`).
   - Status `review`.
+- 2026-11-16 lead-architect (D5): approved, round 1.
+  - After `test(T-0259)` (dabb1ec), only the two Allowed Files and this task file changed. No test was edited.
+  - The code is the planned definition: one `StaticAura` static with allied Horror units, `ZoneRefSame`, `Resistant: 1` and no power, placed between *Fungal Evangelist* and *Infested Apostle*. The card is removed from `NotYetExecutable`.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch:
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "HulkingIncongruity|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- dfeee9d5` (the run branch before the merge) `[PASS]`.
+  - The Flash run had no refused commands (`denied_actions` empty, exit 0).
+  - Merged into `autoloop/m2-wave-h` (7ee3738).
+  - Status `done`.

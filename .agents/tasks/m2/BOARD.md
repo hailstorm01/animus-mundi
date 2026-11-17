@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0259](T-0259-hulking-incongruity.md) | *Hulking Incongruity* (wave H card) | tests |
