@@ -4,7 +4,7 @@ title: "Cornered-gated aura grants: StaticAura's Static.Cornered, summed into th
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0262-aura-cornered-grant
 depends_on: [T-0258, T-0260]
 claims: [shape:StaticAura Cornered grant (Static.Cornered: every asset an aura's Filter matches has the aura's WhileCornered while that asset's controller is Cornered, read through g.whileCornered and g.auras)]
@@ -62,10 +62,10 @@ Existing tests stay as they are and must still pass.
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AuraCornered"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints an aura with `Cornered`, so every log is byte-identical)
+- [x] The listed tests pass: `go test ./pkg/engine -run "AuraCornered"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints an aura with `Cornered`, so every log is byte-identical)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 23): written against the run branch at 815a54b. *Ancestral Monument* is next in Deliverable 6m's order (wave E, after T-0261's *Brigand Highlander*). No ruling needed: `FR-KWD-002e` and `SVY-R18` give a Cornered keyword to the asset only while its controller is Cornered, and "other allied assets" makes that controller the source's too; G2 puts the keyword grant in Layer 3; `SVY-R44` gives the aura its source's current zone. Reuse: `Static.Cornered` is the existing `WhileCornered`, and `g.whileCornered` the one gate, now summing `g.auras`, the one aura reader, so `Keywords`, `Power` and everything reading them need no change; `Trigger.Cornered` is a trigger gate, a different rule. Split from the card under the D2 size rule; T-0263, *Ancestral Monument*, queued in this commit. Three non-test files. Directives: none `open`; each `waiting` one was checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.
@@ -78,3 +78,4 @@ Existing tests stay as they are and must still pass.
   3. `pkg/engine/layers.go`, `Game.Power`'s comment: rewrap its first two lines to the file's width.
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
 - 2026-11-16 kernel-engineer: round 1 changes, comments only. (1) `WhileCornered` comment in ability.go rewrapped; it now says a card's own `Def.Cornered` counts on a face-up asset only and an aura's grant on every asset it matches, face-down included. (2) doc.go "Not built yet" first bullet rewrapped. (3) `Game.Power` comment in layers.go rewrapped. No code change. Commands: `go tool task fmt` then `go tool task check` passed (incl. lint); `go tool task sim-compare -- autoloop/m2-wave-h` [PASS] byte for byte.
+- 2026-11-16 lead-architect (D5): approved, round 2. The round-1 fix changes only comments: `WhileCornered`'s now says a card's own `Def.Cornered` counts on a face-up asset only and an aura's grant on every asset it matches, and the `doc.go` bullet and `Game.Power`'s comment are rewrapped. After the `test(T-0262)` commits only the Allowed Files changed, and no test was edited. The code follows the Shape: `Static.Cornered`, a `WhileCornered`, is summed by `Game.whileCornered`, still the one Cornered gate, over `g.auras`, the one aura reader, so the same-zone check, the face-down rule and the controller rule are T-0256's, and damage, combat, filters, the sweep, the snapshot and the view read it through `Game.Keywords` and `Game.Power` unchanged. No card name, no new package, no duplicate (`Trigger.Cornered` is a trigger gate, a different rule). Gates re-run on the merged run branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%); `go tool task sim-compare -- e6f7f2b8` (the run branch before the merge) `[PASS]`. Merged into `autoloop/m2-wave-h` (1904eca). Status `done`. Next: T-0263 (*Ancestral Monument*), queued, to be written against the code of the day.

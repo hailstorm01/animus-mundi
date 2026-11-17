@@ -30,5 +30,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0262 | Cornered-gated aura grants: `Static.Cornered` on `ability.StaticAura`, summed into `Game.whileCornered` through `Game.auras` (`FR-KWD-002e`, `FR-LAY-001`, `FR-LAY-003`, `SVY-R18`; wave H shape, sonnet; *Ancestral Monument*'s shape) | tests |
 | T-0263 | *Ancestral Monument*: other allied assets in the same zone have Cornered: Resistant 1, on `Static.Cornered` (wave H card, flash) | queued |
