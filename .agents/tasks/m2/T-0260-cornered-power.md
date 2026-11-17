@@ -4,7 +4,7 @@ title: "A card's own Cornered power: `Def.Cornered` (renamed `ability.WhileCorne
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: review
 branch: m2/autoloop-wave-h/T-0260-cornered-power
 depends_on: [T-0180, T-0256]
 claims: [shape:own Cornered power (WhileCornered.Power: a card's own "Cornered: This unit has +N power.", Layer 4, read by Game.Power), rename:ability.CorneredKeywords -> ability.WhileCornered]
@@ -87,3 +87,4 @@ Existing tests (with the renames above) must still pass.
 - 2026-11-16 lead-architect (D6, block answered): the block is the lead's miss, not the engineer's. My search for `CorneredKeywords` filtered its output and dropped two test files outside `pkg/engine`: `pkg/sim/monitor_keywords_test.go:122` and `pkg/view/view_test.go:1122` (now the only references left, `git grep CorneredKeywords`). Both are added above under **Edits to existing tests**, the rename only. An edit to an existing test must come from the test author in a `test(T-0260)` commit, so status `tests`: `rules-test-author` adds a second `test(T-0260)` commit with exactly those two renames. The implementation commit f05fb0e stands; once the tests are approved, the engineer re-runs the gates and hands off for review.
 - 2026-11-16 rules-test-author (round 2): made exactly the two named edits, `ability.CorneredKeywords` -> `ability.WhileCornered` in `pkg/sim/monitor_keywords_test.go:122` and `pkg/view/view_test.go:1122`, the rename only, in commit 00e330de. No other test touched; no new tests or helpers. `go vet ./...` is clean; `go test ./pkg/sim ./pkg/view` passes (sim ok, view ok). Status `tests-review`.
 - 2026-11-16 lead-architect (D4): tests approved, round 2. `test(T-0260)` 00e330d changes exactly the two lines named under **Edits to existing tests** (`pkg/sim/monitor_keywords_test.go:122`, `pkg/view/view_test.go:1122`), the rename only; `git grep CorneredKeywords` now finds only the unrelated test name `TestFR_LAY_003_SimultaneousDamageLocksCorneredKeywords`. Status `ready`; the engineer re-runs the gates on f05fb0e and hands off for review.
+- 2026-11-16 kernel-engineer (sonnet): round 2 re-run on f05fb0e plus the two test renames (00e330de); no code changed. Leftovers case: none, branch had no worktree; opened a scratch one. Gates: `go test ./pkg/engine -run "Cornered"` ok; `go tool task check` exit 0 (gofmt, vet, tests, lint); `go tool task sim` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h` PASS, byte-identical. Reviewer: look at `Game.whileCornered`, read by `Game.Power` and `Game.Keywords`.
