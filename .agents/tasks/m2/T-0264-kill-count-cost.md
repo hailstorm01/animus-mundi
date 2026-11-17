@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: blocked
+status: tests
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -82,3 +82,7 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
   1. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver has an empty step list, so `Card.Supported()` (`pkg/engine/card.go:122`, "a Maneuver is executable only through its Effect") makes `Enact` fail with "needs rules the kernel does not implement yet" before any cost is read. Fix: give the test Maneuver a step (e.g. one draw), or the lead rules whether `Supported` should accept a step-less Maneuver (`card.go` is not an Allowed File).
   2. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: `s.script(0)` has no answers, but two death triggers of the same controller fire together from the one kill, and `flushTriggers` (`trigger.go:250`) asks that controller a `DecideOrder` when it has two or more (FR-TRG-003). That is existing, correct behaviour, independent of Counts, so the script needs one answer (e.g. `Answer{Timeout: true}`, or an explicit order) for the order decision.
   Status blocked; the implementation is committed on this branch for the lead to build on after the tests are fixed.
+- 2026-11-17 lead-architect (D6, block answered): both are test defects my D4 missed, confirmed on the run branch; the implementation commit 785972d stands. Status `tests`, round 2, for `rules-test-author`, in a second `test(T-0264)` commit that changes only these two tests in `pkg/engine/kill_count_cost_test.go`:
+  1. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver has no step, and `Card.Supported` (`pkg/engine/card.go:122-131`) rejects a Maneuver without a step or a mode, so it is never enacted. Give its effect one step that doesn't touch the target slot, `drawN(1)` (as `killCountManeuver` has), keeping the target slot and every assertion.
+  2. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: both cost kills' death triggers are player 0's and fire together, so `flushTriggers` (`pkg/engine/trigger.go:250-254`) asks player 0 a `DecideOrder` (`FR-TRG-003`), and `s.script(0)` has no answer for it. Script one `Answer{Timeout: true}` for that decision (collection order), and fix the comment, which says nothing is asked. The assertions stay.
+  Then the engineer re-runs the gates on 785972d and hands off for review.
