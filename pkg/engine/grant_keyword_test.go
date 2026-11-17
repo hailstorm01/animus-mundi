@@ -68,7 +68,7 @@ func TestFR_LAY_001_GrantedKeywordIsEffective(t *testing.T) {
 func TestFR_LAY_001_GrantedKeywordAddsToCornered(t *testing.T) {
 	s := newScene(t)
 	card := unit("Dancer", 2, 6, Keywords{})
-	card.Ability = &ability.Def{Cornered: ability.CorneredKeywords{Resistant: 1}}
+	card.Ability = &ability.Def{Cornered: ability.WhileCornered{Resistant: 1}}
 	u := s.put(0, ZoneMainTheater, card)
 	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
 	s.put(1, ZoneMainTheater, unit("Second Foe", 1, 5, Keywords{}))
