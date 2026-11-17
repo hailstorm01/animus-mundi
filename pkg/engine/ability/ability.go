@@ -39,7 +39,7 @@ type Def struct {
 	// read by Game.EffectiveCost. It is zero for a card without one.
 	CostReduction CostReduction
 	// Statics lists the printed static abilities, in printed order: a
-	// discard-active deploy permission and a battlefield power aura are the kinds
+	// discard-active deploy permission and a battlefield aura are the kinds
 	// so far.
 	Statics []Static
 }
@@ -53,9 +53,10 @@ const (
 	// by ...": its owner may deploy it from ActiveZone as a manual Deploy, paying
 	// Costs in addition to its deployment costs (FR-TRN-003, FR-CST-001).
 	StaticDeployPermission StaticKind = iota + 1
-	// StaticAura is a continuous Layer 4 aura of a face-up battlefield asset
+	// StaticAura is a continuous aura of a face-up battlefield asset
 	// (FR-LAY-001): every battlefield asset matching Filter, relative to the
-	// source's controller, has +Power Combat Power. A ZoneRefSame criterion reads
+	// source's controller, has +Power Combat Power (Layer 4) and +Resistant
+	// Resistant (a Layer 3 keyword grant). A ZoneRefSame criterion reads
 	// the source's current zone (SVY-R44). ActiveZone is ZoneAny, the battlefield.
 	StaticAura
 )
@@ -71,11 +72,16 @@ type Static struct {
 	// to the payer.
 	Costs []Cost
 	// Filter is an aura's: which assets it applies to, relative to the source's
-	// controller; Other excludes the source. Its Stat stays StatNone, since a
-	// Layer 4 value read by a Layer 4 filter has no defined order.
+	// controller; Other excludes the source. Its Stat stays StatNone, and it
+	// stays free of keyword criteria, since a Layer 3 or 4 value read by its own
+	// filter has no defined order.
 	Filter Filter
 	// Power is an aura's Layer 4 power.
 	Power int
+	// Resistant is an aura's keyword grant: +Resistant Resistant to every asset
+	// Filter matches, a Layer 3 grant (FR-LAY-001, survey G2). It may be
+	// negative, like printed Resistant; 0 grants nothing.
+	Resistant int
 }
 
 // CostReduction lowers the card's own Requisition cost while it is in its owner's
