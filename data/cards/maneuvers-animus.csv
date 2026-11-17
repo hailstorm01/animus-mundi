@@ -9,7 +9,7 @@ Return chosen unit card from your discard pile to your hand.","UNCOMMON","false"
 "Deafening Aria","MANEUVER","ANIMUS","0","2","Deal 1 damage to all opposing units in the Main Theater.","COMMON","false"
 "Ensnaring Mist","MANEUVER","ANIMUS","0","2","Move chosen unit to its controller's Reserves.
 Chosen unit gets -1 power until end of turn.","UNCOMMON","false"
-"Mutation Swell","MANEUVER","ANIMUS","0","3","Kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a unit card from your discard pile for free.","RARE","false"
+"Mutation Swell","MANEUVER","ANIMUS","0","3","As an additional cost to enact this maneuver, kill 2 or 4 allied Scratch Company units. For every 2 units killed this way, deploy a different chosen unit card from your discard pile for free.","RARE","false"
 "Rhapsody's Embrace","MANEUVER","ANIMUS","0","3","As an additional cost to enact this maneuver, kill an allied unit.
 Kill chosen opposing unit.","COMMON","false"
 "Despoiler's Emergence","MANEUVER","ANIMUS","0","4","Deal 4 damage to all opposing assets in the Main Theater.
