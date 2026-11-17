@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: tests
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -116,3 +116,6 @@ Tests:
   - Tests: `TestCard_AnimocepsStalk_OtherAlliedAssetsInItsZone`, `TestCard_AnimocepsStalk_TwoStalksBuffEachOther`, `TestCard_AnimocepsStalk_FollowsItsZone`, `TestCard_AnimocepsNode_AlliedUnitsInItsZone`, `TestCard_AnimocepsNode_FollowsItsZone`, `TestCard_MelodicPummeler_AlliedHorrorUnitsInItsZone`, `TestCard_MelodicPummeler_FollowsItsZone`.
   - Helpers requested: none (local `auraSub` lives in the new file; `wantPower` reused).
   - Left out: nothing beyond the task's own exclusions. `go vet` is clean, `cardtown lint rules` passes. Node, Pummeler tests fail now and the Stalk ones partly pass or fail until the cards are defined.
+- 2026-11-16 lead-architect (D4): tests returned, round 1. Every other assertion checks what the cited rules and survey rows give. One note:
+  1. `TestCard_AnimocepsNode_AlliedUnitsInItsZone` expects the face-down Scratch Company to have `scratch.Inst.Card.Power+1`, which is the hidden card's printed power. A face-down asset has the Scratch Company face's characteristics (`FR-ZON-005`): power 1. So the expected value is the literal `2`, with the reason "a face-down Scratch Company (power 1) is a unit". The test passes today only because `putScratch`'s hidden filler also has power 1. Change only that line, in a new `test(T-0257)` commit.
+  - Status `tests`.
