@@ -4,7 +4,7 @@ title: "Solarheart Monk: an enter-discard trigger, chosen asset heals 2 (wave H 
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0268-solarheart-monk
 depends_on: [T-0267]
 claims: [card:Solarheart Monk]
@@ -90,3 +90,13 @@ Tests:
   - Left out: nothing beyond the task's "Not this task" list.
   - `go vet` clean, `cardtown lint rules` PASS. Five tests fail until the card is executable; the returned-to-hand test passes already (it pins a negative).
   - Status `tests-review`.
+- 2026-11-17 lead-architect (D4, session 30): tests approved, round 1.
+  - Each test checks what the cited rules give, on the real card:
+    - Printed stats: Path unit, Specialist and Devilhorn, Requisition 8, Tactics 0, Reserves only, 6/8, yields 2/2, `Supported`.
+    - Discarded from hand: one target decision for player 0 over any asset, both sides and both Headquarters (`FR-TGT-001`); the chosen enemy unit heals 2 and the other keeps its damage (`FR-KWD-002d`).
+    - Killed by a step on the battlefield, and destroyed as a face-down Scratch Company whose card is the Monk: one placement each, the heal lands (`FR-ZON-004` `:267`, `FR-ZON-005`).
+    - Controlled by player 0, owned by player 1: in player 1's pile, player 1 picks the target (`FR-ZON-002`, `FR-ZON-003`).
+    - Returned to hand: no placement, no heal (`FR-ZON-004`).
+  - Only the new file; no existing test edited.
+  - Sanity check in the review worktree: with the Shape's definition applied, `go test ./pkg/engine -run "SolarheartMonk|TestDefs"` passes; without it, five of the six fail (the returned-to-hand negative passes either way). The change was reverted.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
