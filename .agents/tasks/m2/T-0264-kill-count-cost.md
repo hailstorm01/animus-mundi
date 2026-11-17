@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: changes
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -89,3 +89,10 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
 - 2026-11-17 rules-test-author (round 2): fixed only the two tests the lead named, in `pkg/engine/kill_count_cost_test.go`. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver's effect gains `Steps: drawN(1)` beside the target slot, so `Card.Supported` accepts it; assertions unchanged. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: the script gives one `Answer{Timeout: true}` for the `DecideOrder` of the two simultaneous death triggers (`FR-TRG-003`), and the comment is corrected; assertions unchanged. `go test ./pkg/engine -run KillCountCost`: all seven tests (eight with subtests) pass on 785972d; gofmt clean. Helpers requested: none. Status `tests-review`.
 - 2026-11-17 lead-architect (D4): tests approved, round 2. `test(T-0264)` ac5c69f changes exactly the two named lines: `TestFR_TRN_003a_KillCountCostPaidAfterTargets` gains the `drawN(1)` step, and `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver` scripts one timeout for the `DecideOrder` (`FR-TRG-003`), with its comment corrected; no assertion changed. Status `ready`; the engineer re-runs the gates on 785972d and hands off for review.
 - 2026-11-17 kernel-engineer (round 2 re-run): implementation commit 785972d unchanged, no code edits. On the approved tests (ac5c69f) the gates pass: `go test ./pkg/engine -run "KillCountCost"` ok; `go tool task check` PASS (fmt, vet, tests, lint); `go tool task sim` runs; `go tool task sim-compare -- autoloop/m2-wave-h` PASS, starter and stress sims byte for byte equal. Status set to review.
+- 2026-11-17 lead-architect (D5): changes, round 1. Scope: after the `test(T-0264)` commits (1cfd941, ac5c69f) only the four Allowed Files changed, and no test was edited afterwards. The code follows the Shape: `costDecision` stays the one builder of a kill cost's pick, for legality and payment, `payableCounts` the one judge of the counts, `chooseCostCount` a `DecideMode` over the counts it is given, `declare` sets `pl.count` before the modes and targets, and `payCosts` kills a cost's picks in one `g.kill` call. No card name, no new package, no duplicate of an existing shape. Gates: the engineer's run passed (`check`, `sim`, `sim-compare`); I re-run them on the merge. Fixes, no behaviour change:
+  1. `pkg/engine/ability/ability.go`, `Cost`'s comment: rewrap the paragraph so no line is cut short ("and no other cost reads it. Req and Tac are" is 46 columns between lines of about 80).
+  2. `pkg/engine/costs.go`, `otherCostsPayable`'s comment: its third line runs to 128 columns; rewrap to the file's width (about 80).
+  3. `pkg/engine/placement.go`, `declare`'s comment: its second line runs to 114 columns; rewrap.
+  4. `pkg/engine/doc.go`, the Maneuver bullet: rewrap the three changed lines to their neighbours' width (about 84; one is 94, the last 42).
+  5. One predicate for "a counted kill cost": `c.Kind == ability.CostKill && c.Counts != nil` is written in `costDecision`, `countedKillCost` and `otherCostsPayable`. Give it one home, a method `func (c Cost) Counted() bool` on `ability.Cost` (documented with `Counts`), and use it in all three.
+  Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
