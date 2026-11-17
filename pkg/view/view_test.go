@@ -1119,7 +1119,7 @@ func TestView_KeywordBehindCorneredShowsOnlyWhileCornered(t *testing.T) {
 	s := newScene(t)
 	g := s.g
 	c := testUnit("Alpha Brawler", 2, 2, engine.Keywords{})
-	c.Ability = &ability.Def{Cornered: ability.CorneredKeywords{Aggressive: 3}}
+	c.Ability = &ability.Def{Cornered: ability.WhileCornered{Aggressive: 3}}
 	brawler := s.put(0, engine.ZoneMainTheater, c)
 	s.put(1, engine.ZoneMainTheater, testUnit("Beta One", 1, 1, engine.Keywords{}))
 
