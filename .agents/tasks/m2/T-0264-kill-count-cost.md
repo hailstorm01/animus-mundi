@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -86,3 +86,4 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
   1. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver has no step, and `Card.Supported` (`pkg/engine/card.go:122-131`) rejects a Maneuver without a step or a mode, so it is never enacted. Give its effect one step that doesn't touch the target slot, `drawN(1)` (as `killCountManeuver` has), keeping the target slot and every assertion.
   2. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: both cost kills' death triggers are player 0's and fire together, so `flushTriggers` (`pkg/engine/trigger.go:250-254`) asks player 0 a `DecideOrder` (`FR-TRG-003`), and `s.script(0)` has no answer for it. Script one `Answer{Timeout: true}` for that decision (collection order), and fix the comment, which says nothing is asked. The assertions stay.
   Then the engineer re-runs the gates on 785972d and hands off for review.
+- 2026-11-17 rules-test-author (round 2): fixed only the two tests the lead named, in `pkg/engine/kill_count_cost_test.go`. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver's effect gains `Steps: drawN(1)` beside the target slot, so `Card.Supported` accepts it; assertions unchanged. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: the script gives one `Answer{Timeout: true}` for the `DecideOrder` of the two simultaneous death triggers (`FR-TRG-003`), and the comment is corrected; assertions unchanged. `go test ./pkg/engine -run KillCountCost`: all seven tests (eight with subtests) pass on 785972d; gofmt clean. Helpers requested: none. Status `tests-review`.
