@@ -59,12 +59,70 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 		verb = "exhaust"
 	}
 	prompt := fmt.Sprintf("%s: choose an asset to %s (additional cost)", pl.label, verb)
-	return g.assetDecision(pl.controller, DecidePick, prompt, 0, func(a *Asset) bool {
+	counted := c.Kind == ability.CostKill && c.Counts != nil && pl.count > 0
+	if counted {
+		prompt = fmt.Sprintf("%s: choose %d assets to kill (additional cost)", pl.label, pl.count)
+	}
+	d, opts := g.assetDecision(pl.controller, DecidePick, prompt, 0, func(a *Asset) bool {
 		if c.Kind == ability.CostExhaust && a.Exhausted {
 			return false
 		}
 		return g.matchesFilter(pl.controller, pl.source, c.Filter, a)
 	})
+	if counted {
+		d.Min, d.Max = pl.count, pl.count
+	}
+	return d, opts
+}
+
+// countedKillCost returns pl's kill cost that offers a choice of counts, or nil.
+// A placement has at most one.
+func countedKillCost(pl placement) *ability.Cost {
+	var found *ability.Cost
+	for i, c := range pl.costs {
+		if c.Kind != ability.CostKill || c.Counts == nil {
+			continue
+		}
+		if found != nil {
+			panic("engine: a placement has two counted kill costs")
+		}
+		found = &pl.costs[i]
+	}
+	return found
+}
+
+// payableCounts returns the counts of pl's counted kill cost that can be paid
+// now, in printed order: those that at least that many assets matching its
+// filter can pay (SVY-R53). It is the one judge of which counts can be paid. Nil
+// without a counted kill cost.
+func (g *Game) payableCounts(pl placement) []int {
+	c := countedKillCost(pl)
+	if c == nil {
+		return nil
+	}
+	_, opts := g.costDecision(pl, *c)
+	var out []int
+	for _, n := range c.Counts {
+		if len(opts) >= n {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
+// chooseCostCount has pl's controller choose the count its counted kill cost
+// pays among counts, on declaration before the targets (SVY-R53). A single count
+// is taken unasked (FR-MOD-001 §1) and a timeout takes the first listed (SVY-R54).
+// It returns 0, asking nothing, when counts is empty.
+func (g *Game) chooseCostCount(pl placement, counts []int) int {
+	if len(counts) == 0 {
+		return 0
+	}
+	d := Decision{Player: pl.controller, Kind: DecideMode, Prompt: pl.label + ": choose how many to kill (additional cost)", Min: 1, Max: 1}
+	for _, n := range counts {
+		d.Options = append(d.Options, Option{Label: fmt.Sprintf("kill %d", n), Ref: 0})
+	}
+	return counts[g.choose(d)[0]]
 }
 
 // chooseCostDiscards has pl's controller pick the hand cards its discard cost
@@ -159,7 +217,7 @@ func (g *Game) PlayCost(inst *Instance) (req, tac int, ok bool) {
 
 // otherCostsPayable reports whether every cost of pl except its resources can be
 // paid now: exhausting the source needs it Readied (CostExhaustSelf), and a kill
-// or exhaust cost needs at least one option (SVY-R29). A discard cost is always
+// or exhaust cost needs at least one option, a counted kill cost one payable count (SVY-R29, SVY-R53). A discard cost is always
 // payable, because discarding none pays it, and so is killing the source
 // (CostKillSelf).
 func (g *Game) otherCostsPayable(pl placement) bool {
@@ -171,6 +229,12 @@ func (g *Game) otherCostsPayable(pl placement) bool {
 			continue // discarding none pays it; killing the source always can
 		case ability.CostExhaustSelf:
 			if a := g.Asset(pl.source); a == nil || a.Exhausted {
+				return false
+			}
+			continue
+		}
+		if c.Kind == ability.CostKill && c.Counts != nil {
+			if len(g.payableCounts(pl)) == 0 {
 				return false
 			}
 			continue
@@ -213,15 +277,16 @@ func (g *Game) payCosts(pl placement) {
 			continue
 		}
 		d, opts := g.costDecision(pl, c)
-		for _, a := range pickFrom(g, d, opts) {
-			switch c.Kind {
-			case ability.CostKill:
-				g.kill([]*Asset{a})
-			case ability.CostExhaust:
+		picked := pickFrom(g, d, opts)
+		switch c.Kind {
+		case ability.CostKill:
+			g.kill(picked)
+		case ability.CostExhaust:
+			for _, a := range picked {
 				g.exhaust(a)
-			default:
-				panic(fmt.Sprintf("engine: unknown cost kind %d", c.Kind))
 			}
+		default:
+			panic(fmt.Sprintf("engine: unknown cost kind %d", c.Kind))
 		}
 	}
 }

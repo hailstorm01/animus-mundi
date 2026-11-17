@@ -131,7 +131,7 @@ type Activated struct {
 type CostKind int
 
 const (
-	CostKill        CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a)
+	CostKill        CostKind = iota + 1 // kill one allied asset matching Cost.Filter, chosen by the payer, or with Cost.Counts N different ones, N chosen on declaration (FR-TRN-003a, SVY-R53)
 	CostExhaust                         // exhaust one Readied allied asset matching Cost.Filter, chosen by the payer (FR-TRN-003a, SVY-R17)
 	CostDiscard                         // discard up to Cost.UpTo cards of the payer's choice from their own hand, possibly none (FR-TRN-003a)
 	CostResources                       // pay Cost.Req Requisition and Cost.Tac Tactics (FR-ACT-001)
@@ -142,13 +142,18 @@ const (
 // Cost is one cost, paid when its card or ability is declared (FR-TRN-003a,
 // FR-ACT-001). Filter is relative to the payer and is a battlefield filter
 // (never InPile); the kill and exhaust costs read it. UpTo is the most cards
-// the discard cost discards (UpTo > 0); no other cost reads it. Req and Tac are
+// the discard cost discards (UpTo > 0); no other cost reads it. Counts is the
+// printed counts of a kill cost that offers a choice ("kill 2 or 4"), in printed
+// order, each > 0: the payer chooses one on declaration among those that can be
+// paid and kills that many different assets together (SVY-R53); nil kills one,
+// and no other cost reads it. Req and Tac are
 // the Requisition and Tactics the resources cost pays; no other cost reads them.
 // Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
 type Cost struct {
 	Kind   CostKind
 	Filter Filter
 	UpTo   int
+	Counts []int
 	Req    int
 	Tac    int
 }

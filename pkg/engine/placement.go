@@ -21,6 +21,7 @@ type placement struct {
 	costs      []ability.Cost // costs paid with this placement: a Maneuver's additional costs (FR-TRN-003a) or an activated ability's (FR-ACT-001); a trigger has none
 	locked     *LockedZone    // zone locked for source-relative filters (SVY-R44, SVY-R45); nil if none
 	discards   []*Instance    // hand cards its discard cost picked on declaration, in pick order; nil without one
+	count      int            // the count its counted kill cost pays, chosen on declaration (SVY-R53); 0 without one
 	zone       Zone           // a deploy's declared battlefield zone; zero for every other placement
 }
 
@@ -42,12 +43,13 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 }
 
 // declare runs the declare sequence for an effect declared by a manual action,
-// in rules order: the discard cost's cards are picked, e's modes and targets are
+// in rules order: the discard cost's cards are picked, the kill cost's count is chosen, e's modes and targets are
 // chosen and filled into a stack item of this kind, the item goes on the stack,
 // and the costs are paid (FR-TRN-003, FR-TRN-003a, FR-ACT-001).
 func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 	defer g.askFor(g.shownCard(pl.source, pl.inst))()
 	pl.discards = g.chooseCostDiscards(pl)
+	pl.count = g.chooseCostCount(pl, g.payableCounts(pl))
 	item := pl.stackItem(kind)
 	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
 	g.push(item)

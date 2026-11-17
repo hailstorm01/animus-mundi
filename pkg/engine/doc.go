@@ -54,7 +54,9 @@
 //   - Maneuvers (ActEnact, FR-MNV-001): modes and targets are chosen on placement,
 //     as a trigger's are, the effect resolves as a StackManeuver item, and the card
 //     then goes to its owner's discard pile. A Maneuver may print additional costs
-//     to kill, exhaust or discard (Def.ExtraCosts), paid on declaration (FR-TRN-003a).
+//     to kill, exhaust or discard (Def.ExtraCosts), paid on declaration (FR-TRN-003a); a kill
+//     cost may offer a choice of counts (Cost.Counts), chosen on declaration before the
+//     targets and paid in full (SVY-R53).
 //   - Activated abilities (ActActivate, FR-ACT-001, FR-ACT-002): a printed
 //     "[Cost]: [Effect]." ability of a battlefield asset (Def.Activated), activated
 //     on an empty stack. On declaration its targets are chosen, it goes on the stack
