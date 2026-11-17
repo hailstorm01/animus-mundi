@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
