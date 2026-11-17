@@ -30,5 +30,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0260 | A card's own Cornered power: `WhileCornered.Power` (renamed from `ability.CorneredKeywords`) on `Def.Cornered`, Layer 4, read by `Game.Power` (`FR-KWD-002e`, `FR-LAY-001`, `FR-LAY-003`; wave H shape, sonnet; *Brigand Highlander*'s shape) | tests |
 | T-0261 | *Brigand Highlander*: "Cornered: This unit has +2 power.", on `WhileCornered.Power` (wave H card, flash) | queued |

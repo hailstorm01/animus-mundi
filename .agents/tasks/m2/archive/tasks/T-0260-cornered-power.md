@@ -4,7 +4,7 @@ title: "A card's own Cornered power: `Def.Cornered` (renamed `ability.WhileCorne
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0260-cornered-power
 depends_on: [T-0180, T-0256]
 claims: [shape:own Cornered power (WhileCornered.Power: a card's own "Cornered: This unit has +N power.", Layer 4, read by Game.Power), rename:ability.CorneredKeywords -> ability.WhileCornered]
@@ -74,10 +74,10 @@ Existing tests (with the renames above) must still pass.
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "Cornered"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card prints a Cornered power yet, and the rename changes no value, so every log is byte-identical)
+- [x] The listed tests pass: `go test ./pkg/engine -run "Cornered"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no card prints a Cornered power yet, and the rename changes no value, so every log is byte-identical)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 21): written against the run branch at 54200ea. *Brigand Highlander* is next in Deliverable 6m's order (wave E, after T-0259's *Hulking Incongruity*). No ruling needed: "this unit" while its own controller is Cornered is `FR-KWD-002e`; a static ability's power is Layer 4 (`FR-LAY-001`'s pipeline); and the live gate already gives `FR-LAY-003`'s lock, since combat reads both powers before damage and deaths wait for the sweep. Reuse: the shape extends #117's `Def.Cornered`, the one shape for a card's own continuous Cornered abilities, rather than a self-only `StaticAura` (which would be a second way to write "Cornered: Resistant 1." on *Macabre Dancers*, a duplicate under D2.0); `Game.Power` is the one power read, so combat, damage, filters, the sweep and the view need no change. The rename to `WhileCornered` is there because the type no longer holds only keywords; its test edits are named above. Split from the card under the D2 size rule (five non-test files with `cards/cards.go`); T-0261, *Brigand Highlander*, queued in this commit. Four non-test files. Directives: none `open`; each `waiting` one was checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.
@@ -88,3 +88,4 @@ Existing tests (with the renames above) must still pass.
 - 2026-11-16 rules-test-author (round 2): made exactly the two named edits, `ability.CorneredKeywords` -> `ability.WhileCornered` in `pkg/sim/monitor_keywords_test.go:122` and `pkg/view/view_test.go:1122`, the rename only, in commit 00e330de. No other test touched; no new tests or helpers. `go vet ./...` is clean; `go test ./pkg/sim ./pkg/view` passes (sim ok, view ok). Status `tests-review`.
 - 2026-11-16 lead-architect (D4): tests approved, round 2. `test(T-0260)` 00e330d changes exactly the two lines named under **Edits to existing tests** (`pkg/sim/monitor_keywords_test.go:122`, `pkg/view/view_test.go:1122`), the rename only; `git grep CorneredKeywords` now finds only the unrelated test name `TestFR_LAY_003_SimultaneousDamageLocksCorneredKeywords`. Status `ready`; the engineer re-runs the gates on f05fb0e and hands off for review.
 - 2026-11-16 kernel-engineer (sonnet): round 2 re-run on f05fb0e plus the two test renames (00e330de); no code changed. Leftovers case: none, branch had no worktree; opened a scratch one. Gates: `go test ./pkg/engine -run "Cornered"` ok; `go tool task check` exit 0 (gofmt, vet, tests, lint); `go tool task sim` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h` PASS, byte-identical. Reviewer: look at `Game.whileCornered`, read by `Game.Power` and `Game.Keywords`.
+- 2026-11-16 lead-architect (D5): approved, round 1. Scope: `test(T-0260)` ca25ce1 and 00e330d change only tests (the new `cornered_power_test.go` and the four named renames), the implementation f05fb0e only the four Allowed Files, and nothing after the test commits touches a test. The code follows the Shape: `WhileCornered` gains `Power`; `Game.whileCornered` is the one reader of the face-up, own-controller, Cornered gate, and both `Game.Power` (Layer 4, before the clamp) and `Game.Keywords` read it, so the gate the old `Keywords` held inline moved rather than being copied. No card name, no new package, no duplicate: `StaticAura` has no self-only scope, and `Game.Power` stays the one power read, so combat, damage, filters, the sweep and the view needed no change. Gates re-run on the merged run branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%); `go tool task sim-compare -- 5aec6253` (the run branch before the merge) `[PASS]`. Merged into `autoloop/m2-wave-h` (05c6b53). Design note `Static` and Layers updated. Status `done`. Next: T-0261 (*Brigand Highlander*), queued, to be written against the code of the day.
