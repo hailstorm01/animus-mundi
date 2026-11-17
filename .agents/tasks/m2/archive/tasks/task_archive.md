@@ -267,3 +267,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0261 | *Brigand Highlander*: "Cornered: This unit has +2 power.", on `WhileCornered.Power` (wave H card, flash) | done |
 | T-0262 | Cornered-gated aura grants: `Static.Cornered` on `ability.StaticAura`, summed into `Game.whileCornered` through `Game.auras` (`FR-KWD-002e`, `FR-LAY-001`, `FR-LAY-003`, `SVY-R18`; wave H shape, sonnet; *Ancestral Monument*'s shape) | done |
 | T-0263 | *Ancestral Monument*: other allied assets in the same zone have Cornered: Resistant 1, on `Static.Cornered` (wave H card, flash) | done |
+| T-0264 | A kill cost with a choice of counts: `Cost.Counts` on `CostKill`, chosen on declaration among the payable counts and paid in full (`FR-TRN-003a`, `SVY-R53`, `SVY-R54`; wave H shape, sonnet; *Mutation Swell*'s cost; #158 (1)) | done |

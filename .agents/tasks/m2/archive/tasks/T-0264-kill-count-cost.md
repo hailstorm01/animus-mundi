@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -69,10 +69,10 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "KillCountCost"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints `Counts`, and a one-asset kill through one `g.kill` call is the same kill, so every log is byte-identical)
+- [x] The listed tests pass: `go test ./pkg/engine -run "KillCountCost"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints `Counts`, and a one-asset kill through one `g.kill` call is the same kill, so every log is byte-identical)
 
 ## Log
 - 2026-11-17 lead-architect (wave H run, session 26): written against the run branch at 5ba2588, after syncing `main` (aa105b0 added #158; 0fbc984 applied its outcome, FRD 01 v3.29), so #158 is `open: before T-0264`. *Mutation Swell* is next in Deliverable 6m's order (wave F bullet, after T-0263's *Ancestral Monument*). No ruling needed: `SVY-R53` makes the kills an additional cost chosen on declaration and paid in full, and `SVY-R54` gives the timeout. Reuse: `costDecision` stays the one builder of a kill cost's pick, for legality and payment, `payableCounts` the one judge of the counts, and `DecideMode`'s "first listed" fallback is the count's; no new decision kind. Split under the D2 size rule: T-0265 (the per-kill "different" targets, #158 (2)) and T-0266 (*Mutation Swell*, #158 (3), (4)) queued in this commit. #158 (5) applied in this commit (design note Open Question 25 answered, Deliverable 6m's line 210 rewritten). Four non-test files. Directives: #158 `open: before T-0264`, applied by T-0264 to T-0266; each `waiting` one was checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2): no cost on a mode; #106: no deck search; #120: no mandatory discard; #142: no tuck). Status `tests`.
@@ -97,3 +97,4 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
   5. One predicate for "a counted kill cost": `c.Kind == ability.CostKill && c.Counts != nil` is written in `costDecision`, `countedKillCost` and `otherCostsPayable`. Give it one home, a method `func (c Cost) Counted() bool` on `ability.Cost` (documented with `Counts`), and use it in all three.
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
 - 2026-11-17 kernel-engineer (changes round 1): answered the five notes, no behaviour change, no test edited. (1) `Cost`'s comment in `ability.go` rewrapped. (2) `otherCostsPayable`'s comment in `costs.go` rewrapped. (3) `declare`'s comment in `placement.go` rewrapped. (4) the Maneuver bullet in `doc.go` rewrapped. (5) new `func (c Cost) Counted() bool` in `ability.go` (`c.Kind == CostKill && c.Counts != nil`), used in `costDecision`, `countedKillCost` and `otherCostsPayable`; no other copy of the predicate remains. `go tool task check` PASS (fmt, vet, tests, lint); `go tool task sim-compare -- autoloop/m2-wave-h` PASS, byte for byte. Status review.
+- 2026-11-17 lead-architect (D5): approved, round 2. The round-1 fix c4899b3 rewraps the four comments and gives "a counted kill cost" one home, `ability.Cost.Counted()`, used by `costDecision`, `countedKillCost` and `otherCostsPayable`; no behaviour change. After the `test(T-0264)` commits only the Allowed Files changed, and no test was edited. The code follows the Shape (round-1 entry). Gates re-run on the merged run branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%); `go tool task sim-compare -- 35403aae` (the run branch before the merge) `[PASS]`. Merged into `autoloop/m2-wave-h` (9ef40c0). Status `done`. Next: T-0265 (per-kill "different" targets, #158 (2)), queued, to be written against the code of the day.
