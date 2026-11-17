@@ -4,7 +4,7 @@ title: "Target slots that repeat per kill and pick different entities: Target.Pe
 kind: shape
 tier: sonnet
 wave: H
-status: changes
+status: review
 branch: m2/autoloop-wave-h/T-0265-per-kill-different-targets
 depends_on: [T-0264]
 claims: [shape:per-kill target slots (Target.PerKilled: a slot chosen once for every k assets the placement's counted kill cost kills), shape:different repeated targets (Target.Different: a per-kill slot's picks are different entities, SVY-R54), shape:legal cost counts (legalCounts: the counts offered and the enact check narrowed to those whose targets can be filled)]
@@ -70,3 +70,4 @@ New file `pkg/engine/per_kill_target_test.go`. Synthetic Maneuvers: the counted 
 - 2026-11-17 lead-architect (D5 round 1, session 27): changes. Scope, fences, reuse and rules fidelity pass. Only Allowed Files changed, the tests are unchanged since `39db7a9`, and `repetitions` is the one repeat rule. My re-runs of `go tool task check`, `go tool task sim` (P0 58.5%, P1 39.5%, draws 2.0%) and `go tool task sim-compare -- autoloop/m2-wave-h` (byte-identical) pass. Two comment fixes, no code change:
   1. `chooseTargets`' doc comment (`targeting.go:12-26`) still describes only a `PerDiscard` slot ("with no discards ... one pick for each card discarded ... repeats included (SVY-R4)"), but the code now applies the same rule to a `PerKilled` slot. Describe a repeated slot generally: it is chosen `repetitions` times, once per card discarded (`PerDiscard`, `SVY-R4`) or once for every `PerKilled` assets the counted kill cost kills (`SVY-R53`). With zero repetitions or no options it asks nothing and stays empty. Its picks may repeat unless the slot is `Different`, whose picks are different entities (`SVY-R54`).
   2. `repeatedPicks`' comment (`targeting.go:123-125`) names only "a per-discard target slot" and a pool. Add the per-kill slot, and note that `targetDecision` clears `Repeats` for a `Different` slot.
+- 2026-11-17 kernel-engineer (D5 round 1 fixes): review. Comment-only change in `pkg/engine/targeting.go`, no code or test touched. (1) `chooseTargets` doc now describes a repeated slot generally: chosen `repetitions` times, once per discard (`PerDiscard`, SVY-R4) or once per `PerKilled` assets killed (SVY-R53); zero repetitions or no options asks nothing; picks may repeat unless `Different` (SVY-R54). (2) `repeatedPicks` doc names the per-kill slot and notes `targetDecision` clears `Repeats` for a `Different` slot. Ran `go tool task check`: passes (fmt, vet, tests, lint).

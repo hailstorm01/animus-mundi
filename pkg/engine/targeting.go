@@ -17,10 +17,12 @@ import (
 // and a timeout picks none (SVY-R11). A slot with no legal entity stays empty
 // and asks nothing: deploying never requires a target (FR-TGT-003). A slot
 // whose filter names ZoneDiscard chooses cards in discard piles, and its Refs
-// are card instance IDs. A PerDiscard slot with no discards or no options asks
-// nothing and stays empty; otherwise it is asked once, with one pick for each
-// card discarded, and every pick's Ref is appended in pick order, repeats
-// included (SVY-R4). An "another" slot (Target.Another, SVY-R34) is never
+// are card instance IDs. A repeated slot is chosen repetitions times: once for
+// each card discarded (PerDiscard, SVY-R4), or once for every PerKilled assets
+// the counted kill cost kills (SVY-R53). With zero repetitions or no options it
+// asks nothing and stays empty; otherwise it is asked once, and every pick's
+// Ref is appended in pick order. Its picks may repeat unless the slot is
+// Different, whose picks are different entities (SVY-R54). An "another" slot (Target.Another, SVY-R34) is never
 // offered the entity chosen for the slot it follows, so a single remaining
 // option is taken unasked, a timeout takes the first remaining one in fixed
 // order, and with none left it stays empty and asks nothing.
@@ -121,8 +123,9 @@ func repetitions(pl placement, t ability.Target) (n int, ok bool) {
 }
 
 // repeatedPicks bounds d to exactly n picks, each of which may repeat an
-// option: the answer shape of a per-discard target slot and of a pool split
-// among the options one point per pick.
+// option: the answer shape of a per-discard or per-kill target slot and of a
+// pool split among the options one point per pick. targetDecision clears
+// Repeats again for a Different slot (SVY-R54).
 func repeatedPicks(d Decision, n int) Decision {
 	d.Min, d.Max, d.Repeats = n, n, true
 	return d
