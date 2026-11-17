@@ -4,7 +4,7 @@ title: "Mutation Swell: a counted kill cost {2, 4} on allied Scratch Company uni
 kind: card
 tier: flash
 wave: H
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h/T-0266-mutation-swell
 depends_on: [T-0264, T-0265]
 claims: [card:Mutation Swell]
@@ -81,10 +81,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "MutationSwell|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "MutationSwell|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-17 lead-architect (wave H run, session 26): queued with T-0264, split off under the D2 size rule. Write its Inputs, Tests and Done When against the code of the day once T-0265 is `done`. Directive #158 (3), (4); when it merges, #158 is fully applied and moves to the archive.
@@ -114,3 +114,18 @@ Tests:
   - Only the new file; no existing test edited.
   - Sanity check in the review worktree: with the Shape's definition applied, `go test ./pkg/engine -run "MutationSwell|TestDefs"` passes; without it, the card's tests fail. The change was reverted.
   - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-17 kernel-engineer: implemented Mutation Swell (feat(engine): Mutation Swell card definition (T-0266), e9e8dfef).
+  - Diff shows:
+    - `pkg/engine/cards/animus.go`: added "Mutation Swell" definition after "Melodic Pummeler" and before "Portent Scrivener" with `ExtraCosts` of `CostKill` on allied Scratch Company units with `Counts: []int{2, 4}`, `Effect.Targets` for allied unit cards in discard pile with `PerKilled: 2` and `Different: true`, and `Effect.Steps` with `OpDeployFree` on `SubjectTarget` 0 into printed zones.
+    - `pkg/engine/cards/cards.go`: removed "Mutation Swell" from `NotYetExecutable`.
+    - No changes outside allowed files; no test files modified; no new shapes or fields introduced.
+  - Reused:
+    - `CostKill` with `Counts` and `Scratch: ScratchOnly` (T-0264).
+    - `PerKilled` and `Different` (T-0265).
+    - `OpDeployFree` on `SubjectTarget` (as used in Reaver's Rush).
+  - Commands run:
+    - `go test ./pkg/engine -run "MutationSwell|TestDefs"`: PASS (ok animus-mundi/pkg/engine 1.058s)
+    - `go tool task check`: PASS (fmt-check, vet, all package tests, and all cardtown linters pass)
+    - `go tool task sim`: PASS (200 games, P0 58.5% P1 39.5% draws 2.0%, all invariants held)
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: PASS (starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included)
+  - Status `review`.
