@@ -4,7 +4,7 @@ title: "Ancestral Monument: \"Other allied assets in the same zone have Cornered
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0263-ancestral-monument
 depends_on: [T-0262]
 claims: [card:Ancestral Monument]
@@ -92,3 +92,7 @@ Tests:
   - No new shape: the card is T-0256's `StaticAura` with T-0262's `Static.Cornered` and the "other allied assets in the same zone" filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_path_monument_test.go`, status `tests-review`.
+  - Tests: `TestCard_AncestralMonument_OtherAlliedAssetsInItsZoneWhileCornered`, `TestCard_AncestralMonument_AddsToPrintedResistant`, `TestCard_AncestralMonument_FollowsItsZone`, `TestCard_AncestralMonument_CorneredUnitTakesOneLess` (subtests `cornered`, `not cornered`).
+  - Helpers requested: none. `gofmt` and `go vet` are clean, `cardtown lint rules` passes. The tests fail now as expected (the card is not yet executable; the `not cornered` subtest passes).
+  - Cases left out: none beyond those the task lists as not this task.
