@@ -4,7 +4,7 @@ title: "Mutation Swell: a counted kill cost {2, 4} on allied Scratch Company uni
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0266-mutation-swell
 depends_on: [T-0264, T-0265]
 claims: [card:Mutation Swell]
@@ -104,3 +104,13 @@ Tests:
   - `TestCard_MutationSwell_NotEnactableWithoutItsCostAndTargets`, `_OnlyTwoOfferedWhenFourCantBeFilled` (`three units`, `one unit card`), `_KillFourDeploysTwoDifferent`, `_KilledUnitsCardsAreNotTargets`, `_ReplacedKillsStillDeploy`, `_GoneTargetSkippedOtherDeploys`, `_Timeout` (`everything timed out`, `count 4 answered, target timed out`).
   - Reuses `pkCard`, `pkScript`, `pkPick`, `pkAsks`, `pkDeployed`, `dfUnit`, `kcRefs`; local helpers `msScene` and `msSortedRefs` stay in the new file.
   - Left out as the task said: repeated answer, per-kill slot on a trigger, per-kill slot without `Different`; Shifting Impossibility's own fate in the replaced-kills test.
+- 2026-11-17 lead-architect (D4, session 28): tests approved, round 1.
+  - Each test checks what the cited rules give, on the real card:
+    - Not enactable with one allied Scratch Company, or with two and no allied unit card in player 0's pile; a Maneuver in the pile and the opponent's unit card don't count; offered once a unit card is added (`FR-MNV-001`, `SVY-R29`, `SVY-R53`).
+    - With 3 Scratch Companies, or with 4 and one unit card, only "kill 2" is legal and is taken unasked; the kill pick takes exactly 2 (`SVY-R53`, `FR-MOD-001` §1).
+    - "kill 2" then "kill 4" offered; count 4 asks one target decision, `Min` = `Max` = 2, not `Repeats`, over exactly the pile's unit cards; each deploys into its printed zone (`SVY-R54`, `FR-TRN-003a` 1).
+    - The killed Scratch Companies' cards are not options (`SVY-R2`); replaced kills still pay and both targets deploy (`SVY-R15`, `SVY-R21`); a target gone by resolution is skipped and the other deploys (`FR-TGT-003`, `SVY-R53`).
+    - Timeouts take count 2, the Reserves Scratch Companies first, the top pile cards, and Reserves for a both-zones card (`SVY-R54`, `SVY-R16`, `SVY-R43`).
+  - Only the new file; no existing test edited.
+  - Sanity check in the review worktree: with the Shape's definition applied, `go test ./pkg/engine -run "MutationSwell|TestDefs"` passes; without it, the card's tests fail. The change was reverted.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
