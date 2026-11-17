@@ -10,6 +10,20 @@ func init() {
 
 // animusDefs holds ability definitions for Animus cards.
 var animusDefs = map[string]*ability.Def{
+	"Animoceps Node": {
+		Text: []string{"Allied units in the same zone have +1 power."},
+		Statics: []ability.Static{
+			{
+				Kind: ability.StaticAura,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					ZoneRef:    ability.ZoneRefSame,
+				},
+				Power: 1,
+			},
+		},
+	},
 	"Animoceps Shambler": {
 		Text: []string{"Whenever this unit exhausts, chosen allied asset in the Main Theater heals 1."},
 		Triggers: []ability.Trigger{
@@ -55,6 +69,20 @@ var animusDefs = map[string]*ability.Def{
 						Scratch:    ability.ScratchOnly,
 					},
 				},
+			},
+		},
+	},
+	"Animoceps Stalk": {
+		Text: []string{"Other allied assets in the same zone have +1 power."},
+		Statics: []ability.Static{
+			{
+				Kind: ability.StaticAura,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Other:      true,
+					ZoneRef:    ability.ZoneRefSame,
+				},
+				Power: 1,
 			},
 		},
 	},
@@ -439,6 +467,21 @@ var animusDefs = map[string]*ability.Def{
 						},
 					},
 				},
+			},
+		},
+	},
+	"Melodic Pummeler": {
+		Text: []string{"Allied Horror units in the same zone have +1 power."},
+		Statics: []ability.Static{
+			{
+				Kind: ability.StaticAura,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					Subtypes:   []string{"Horror"},
+					ZoneRef:    ability.ZoneRefSame,
+				},
+				Power: 1,
 			},
 		},
 	},
