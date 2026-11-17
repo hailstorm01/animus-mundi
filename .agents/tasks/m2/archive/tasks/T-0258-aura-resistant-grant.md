@@ -4,7 +4,7 @@ title: "Aura keyword grants: StaticAura's Static.Resistant, a Layer 3 grant read
 kind: shape
 tier: sonnet
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0258-aura-resistant-grant
 depends_on: [T-0256]
 claims: [shape:StaticAura keyword grant (Static.Resistant: every asset an aura's Filter matches has +Resistant N, a Layer 3 keyword grant read by g.Keywords through g.auras)]
@@ -62,10 +62,10 @@ Existing tests stay as they are and must still pass.
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "Aura"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints an aura with `Resistant`, so every log is byte-identical)
+- [x] The listed tests pass: `go test ./pkg/engine -run "Aura"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints an aura with `Resistant`, so every log is byte-identical)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 19): written against the run branch at 51fef91. *Hulking Incongruity* is next in Deliverable 6m's order (wave E, after T-0257's power auras). No ruling needed: FRD 01's pipeline and `FR-LAY-001` put keyword grants in Layer 3 (survey G2 settles the FRD 02 difference), `FR-REP-004` Stage 2 subtracts total Resistant, `SVY-R44` gives the aura its source's current zone, and the survey row (`:165`) says it includes itself. Split from the card under the D2 size rule (shape and card touch five non-test files); T-0259, *Hulking Incongruity*, queued in this commit. Reuse: `g.auras` is the one reader of which auras apply, and `g.Keywords` the one keyword read, so damage, combat, the sweep, the snapshot and the view need no change; `OpGrantKeyword` is a one-shot modifier, a different rule. Three non-test files. Directives: none `open`; each `waiting` one was checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.
@@ -77,3 +77,4 @@ Existing tests stay as they are and must still pass.
   2. The file comment's first sentence lost a comma: "Layer 3 holds a card's Cornered keywords the keywords a resolved step grants …" should read "Layer 3 holds a card's Cornered keywords, the keywords a resolved step grants until end of turn, and auras' keyword grants (`Game.auras`)."
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
 - 2026-11-16 kernel-engineer (round 1): (1) `Game.Keywords`' comment now says a face-down asset has no Cornered keywords of its own, since its face has no Ability, but still receives auras' grants. (2) The file comment's missing comma after "Cornered keywords" is restored. Comment-only changes in layers.go. `go tool task check` passed; `go tool task sim-compare -- autoloop/m2-wave-h` PASS byte for byte.
+- 2026-11-16 lead-architect (D5): approved, round 2. The round-1 fix changes only the two comments in `layers.go` (`Game.Keywords`: a face-down asset has no Cornered keywords of its own but still receives auras' grants; the file comment's comma). After `test(T-0258)` only the Allowed Files changed, and no test was edited. The code follows the Shape: `Static.Resistant`, summed by `Game.Keywords` over `g.auras(a)`, the one aura reader, so the same-zone check, the face-down rule and the controller rule are T-0256's, and damage, combat, the sweep, the snapshot and the view read the grant through `g.Keywords` unchanged. No card name, no new package, no duplicate (`OpGrantKeyword` is a one-shot modifier, a different rule). Gates re-run on the merged run branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%); `go tool task sim-compare -- 4e3ac397` (the run branch before the merge) `[PASS]`. Merged into `autoloop/m2-wave-h` (5c519e8). Status `done`. Next: T-0259 (*Hulking Incongruity*), queued, to be written against the code of the day.

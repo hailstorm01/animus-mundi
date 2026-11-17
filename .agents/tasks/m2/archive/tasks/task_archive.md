@@ -261,3 +261,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0255 | *Rhapsody's Hollow*: T3, exhaust, kill this structure: gain control of chosen opposing unit in the Main Theater (wave H card, flash) | done |
 | T-0256 | Layer 4 power auras: `ability.StaticAura` (`Static.Filter`, `Static.Power`), read by `Game.Power` through one reader, `Game.auras`; "in the same zone" on an aura is the source's current zone (`FR-LAY-001`, `SVY-R44`; wave H shape, sonnet; the power auras' shape) | done |
 | T-0257 | *Animoceps Stalk*, *Animoceps Node*, *Melodic Pummeler*: same-zone power auras on `ability.StaticAura` (wave H cards, flash) | done |
+| T-0258 | Aura keyword grants: `Static.Resistant` on `ability.StaticAura`, a Layer 3 grant read by `Game.Keywords` through `Game.auras` (`FR-LAY-001`, `FR-REP-004`, `SVY-R44`; wave H shape, sonnet; the keyword auras' shape) | done |

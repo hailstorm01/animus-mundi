@@ -30,5 +30,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0258](T-0258-aura-resistant-grant.md) | Aura keyword grants: `Static.Resistant`, a Layer 3 grant read by `g.Keywords` through `g.auras` (wave H shape) | tests |
 | [T-0259](T-0259-hulking-incongruity.md) | *Hulking Incongruity* (wave H card) | queued |
