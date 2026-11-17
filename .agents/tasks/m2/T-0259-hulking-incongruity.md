@@ -4,7 +4,7 @@ title: "Hulking Incongruity: allied Horror units in the same zone have Resistant
 kind: card
 tier: flash
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0259-hulking-incongruity
 depends_on: [T-0258]
 claims: [card:Hulking Incongruity]
@@ -73,10 +73,10 @@ Tests:
 - `pkg/engine/cards/cards.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "HulkingIncongruity|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "HulkingIncongruity|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 19): queued with T-0258, split off under the D2 size rule.
@@ -91,3 +91,28 @@ Tests:
   - No new shape: the card is T-0256's `StaticAura` with T-0258's `Static.Resistant` and *Melodic Pummeler*'s filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote four tests in `pkg/engine/cards_animus_auras_test.go` (after the Pummeler tests; file comment updated): `TestCard_HulkingIncongruity_AlliedHorrorUnitsInItsZone`, `_AddsToPrintedResistant`, `_FollowsItsZone`, `_CoveredUnitTakesOneLess`.
+  - Helpers requested: none. They vet clean and fail as expected (card has no aura yet). `cardtown lint rules`: no new `TestFR_*`, so nothing to trace.
+  - Cases left out: none beyond the task's "Not this task" list.
+  - Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 1.
+  - Each test checks what the cited rules and the survey row give, on the real card:
+    - The Incongruity grants Resistant 1 to allied Horror units in its zone, itself included, and any one matching subtype is enough (`FR-LAY-001`, survey `:165`).
+    - It grants nothing to a non-Horror unit, a Horror structure, a Horror unit in another zone or an opposing Horror unit, and it adds no power.
+    - The grant adds to printed Resistant (`FR-REP-004` Stage 2's total).
+    - The grant follows the source's current zone (`SVY-R44`, last sentence).
+    - A covered unit takes 3 − 1 = 2 combat damage (`FR-KWD-002b`).
+  - No existing test edited. The file-comment change is the one the task asked for.
+  - Sanity check in a throwaway worktree: the four tests fail without the card and pass with the Shape's definition, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-16 kernel-engineer (flash): implemented Hulking Incongruity definition and removed from NotYetExecutable.
+  - Diff:
+    - `pkg/engine/cards/animus.go`: added "Hulking Incongruity" entry between "Fungal Evangelist" and "Infested Apostle" with `Statics: []ability.Static{{Kind: ability.StaticAura, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Subtypes: []string{"Horror"}, ZoneRef: ability.ZoneRefSame}, Resistant: 1}}`.
+    - `pkg/engine/cards/cards.go`: removed "Hulking Incongruity" from `NotYetExecutable`.
+  - Reused: `ability.StaticAura`, `ability.Filter` (`AllegianceAllied`, `KindUnit`, `Subtypes: ["Horror"]`, `ZoneRefSame` from Melodic Pummeler), and `Static.Resistant: 1` (T-0258).
+  - Gates:
+    - `go test ./pkg/engine -run "HulkingIncongruity|TestDefs"`: pass (1.089s).
+    - `go tool task check`: pass (gofmt, `go vet`, all tests, and cardtown linter --all pass).
+    - `go tool task sim`: pass (P0 58.5%, P1 39.5%, draws 2.0%, match length 27.2 turns, all invariants held).
+    - `go tool task sim-compare -- autoloop/m2-wave-h`: pass (`[PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included`).
+  - Status `review`.

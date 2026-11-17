@@ -433,6 +433,21 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Hulking Incongruity": {
+		Text: []string{"Allied Horror units in the same zone have Resistant 1."},
+		Statics: []ability.Static{
+			{
+				Kind: ability.StaticAura,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					Subtypes:   []string{"Horror"},
+					ZoneRef:    ability.ZoneRefSame,
+				},
+				Resistant: 1,
+			},
+		},
+	},
 	"Infested Apostle": {
 		Text: []string{"When this unit deploys, you may kill an allied unit. If you do, deal 2 damage to chosen opposing unit."},
 		Triggers: []ability.Trigger{

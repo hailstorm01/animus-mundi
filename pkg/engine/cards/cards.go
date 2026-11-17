@@ -14,7 +14,6 @@ var NotYetExecutable = []string{
 	"Ancestral Monument",
 	"Animoceps Spore Cloud",
 	"Brigand Highlander",
-	"Hulking Incongruity",
 	"Mutation Swell",
 	"Solarheart Monk",
 }
