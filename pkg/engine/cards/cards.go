@@ -13,7 +13,6 @@ var Defs = map[string]*ability.Def{}
 var NotYetExecutable = []string{
 	"Ancestral Monument",
 	"Animoceps Spore Cloud",
-	"Brigand Highlander",
 	"Mutation Swell",
 	"Solarheart Monk",
 }

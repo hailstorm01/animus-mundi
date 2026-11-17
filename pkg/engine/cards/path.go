@@ -255,6 +255,10 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Brigand Highlander": {
+		Text:     []string{"Cornered: This unit has +2 power."},
+		Cornered: ability.WhileCornered{Power: 2},
+	},
 	"Broken Horn Armorer": {
 		Text: []string{"Whenever this unit moves to a new zone, chosen asset in that zone gains 1 armor."},
 		Triggers: []ability.Trigger{
