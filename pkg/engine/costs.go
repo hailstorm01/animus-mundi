@@ -59,7 +59,7 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 		verb = "exhaust"
 	}
 	prompt := fmt.Sprintf("%s: choose an asset to %s (additional cost)", pl.label, verb)
-	counted := c.Kind == ability.CostKill && c.Counts != nil && pl.count > 0
+	counted := c.Counted() && pl.count > 0
 	if counted {
 		prompt = fmt.Sprintf("%s: choose %d assets to kill (additional cost)", pl.label, pl.count)
 	}
@@ -80,7 +80,7 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 func countedKillCost(pl placement) *ability.Cost {
 	var found *ability.Cost
 	for i, c := range pl.costs {
-		if c.Kind != ability.CostKill || c.Counts == nil {
+		if !c.Counted() {
 			continue
 		}
 		if found != nil {
@@ -217,9 +217,9 @@ func (g *Game) PlayCost(inst *Instance) (req, tac int, ok bool) {
 
 // otherCostsPayable reports whether every cost of pl except its resources can be
 // paid now: exhausting the source needs it Readied (CostExhaustSelf), and a kill
-// or exhaust cost needs at least one option, a counted kill cost one payable count (SVY-R29, SVY-R53). A discard cost is always
-// payable, because discarding none pays it, and so is killing the source
-// (CostKillSelf).
+// or exhaust cost needs at least one option, a counted kill cost one payable
+// count (SVY-R29, SVY-R53). A discard cost is always payable, because
+// discarding none pays it, and so is killing the source (CostKillSelf).
 func (g *Game) otherCostsPayable(pl placement) bool {
 	for _, c := range pl.costs {
 		switch c.Kind {
@@ -233,7 +233,7 @@ func (g *Game) otherCostsPayable(pl placement) bool {
 			}
 			continue
 		}
-		if c.Kind == ability.CostKill && c.Counts != nil {
+		if c.Counted() {
 			if len(g.payableCounts(pl)) == 0 {
 				return false
 			}

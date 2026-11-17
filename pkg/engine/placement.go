@@ -43,9 +43,10 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 }
 
 // declare runs the declare sequence for an effect declared by a manual action,
-// in rules order: the discard cost's cards are picked, the kill cost's count is chosen, e's modes and targets are
-// chosen and filled into a stack item of this kind, the item goes on the stack,
-// and the costs are paid (FR-TRN-003, FR-TRN-003a, FR-ACT-001).
+// in rules order: the discard cost's cards are picked, the kill cost's count is
+// chosen, e's modes and targets are chosen and filled into a stack item of this
+// kind, the item goes on the stack, and the costs are paid (FR-TRN-003,
+// FR-TRN-003a, FR-ACT-001).
 func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 	defer g.askFor(g.shownCard(pl.source, pl.inst))()
 	pl.discards = g.chooseCostDiscards(pl)

@@ -146,9 +146,9 @@ const (
 // printed counts of a kill cost that offers a choice ("kill 2 or 4"), in printed
 // order, each > 0: the payer chooses one on declaration among those that can be
 // paid and kills that many different assets together (SVY-R53); nil kills one,
-// and no other cost reads it. Req and Tac are
-// the Requisition and Tactics the resources cost pays; no other cost reads them.
-// Choosing what pays a cost is not targeting, so Ward doesn't restrict it.
+// and no other cost reads it. Req and Tac are the Requisition and Tactics the
+// resources cost pays; no other cost reads them. Choosing what pays a cost is
+// not targeting, so Ward doesn't restrict it.
 type Cost struct {
 	Kind   CostKind
 	Filter Filter
@@ -156,6 +156,12 @@ type Cost struct {
 	Counts []int
 	Req    int
 	Tac    int
+}
+
+// Counted reports whether c is a kill cost that offers a choice of counts
+// (Counts is set, SVY-R53).
+func (c Cost) Counted() bool {
+	return c.Kind == CostKill && c.Counts != nil
 }
 
 // Would is the event a replacement replaces.

@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: changes
+status: review
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -96,3 +96,4 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
   4. `pkg/engine/doc.go`, the Maneuver bullet: rewrap the three changed lines to their neighbours' width (about 84; one is 94, the last 42).
   5. One predicate for "a counted kill cost": `c.Kind == ability.CostKill && c.Counts != nil` is written in `costDecision`, `countedKillCost` and `otherCostsPayable`. Give it one home, a method `func (c Cost) Counted() bool` on `ability.Cost` (documented with `Counts`), and use it in all three.
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
+- 2026-11-17 kernel-engineer (changes round 1): answered the five notes, no behaviour change, no test edited. (1) `Cost`'s comment in `ability.go` rewrapped. (2) `otherCostsPayable`'s comment in `costs.go` rewrapped. (3) `declare`'s comment in `placement.go` rewrapped. (4) the Maneuver bullet in `doc.go` rewrapped. (5) new `func (c Cost) Counted() bool` in `ability.go` (`c.Kind == CostKill && c.Counts != nil`), used in `costDecision`, `countedKillCost` and `otherCostsPayable`; no other copy of the predicate remains. `go tool task check` PASS (fmt, vet, tests, lint); `go tool task sim-compare -- autoloop/m2-wave-h` PASS, byte for byte. Status review.
