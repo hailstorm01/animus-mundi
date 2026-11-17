@@ -148,7 +148,9 @@ func (g *Game) takeCard(inst *Instance) bool {
 
 // putCard puts inst into its owner's pile to, which is ZoneDeck, ZoneHand or
 // ZoneDiscard. On the deck, bottom chooses the bottom over the top (index 0).
-// Hand and discard always add at the end.
+// Hand and discard always add at the end. This is the one place a card enters a
+// discard pile, so putting into ZoneDiscard fires its enters-discard triggers
+// (FR-ZON-004) whatever the route, including routes added later.
 func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
 	p := g.Players[inst.Owner]
 	switch to {
@@ -162,6 +164,7 @@ func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
 		p.Hand = append(p.Hand, inst)
 	case ZoneDiscard:
 		p.Discard = append(p.Discard, inst)
+		g.fireEntersDiscard(inst)
 	default:
 		panic(fmt.Sprintf("engine: putCard to zone %v, which is not a pile", to))
 	}
