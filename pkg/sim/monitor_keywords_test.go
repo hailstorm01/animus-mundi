@@ -119,7 +119,7 @@ func TestMonitorKeywords_Case5_TargetInNoSnapshot(t *testing.T) {
 // FR-KWD-002b check is a damage event that reports the grant.
 func TestMonitorKeywords_CorneredResistantInRealGames(t *testing.T) {
 	hide := unit("Hide", 2, 4, engine.Keywords{})
-	hide.Ability = &ability.Def{Cornered: ability.CorneredKeywords{Resistant: 1}}
+	hide.Ability = &ability.Def{Cornered: ability.WhileCornered{Resistant: 1}}
 	var main []*engine.Card
 	for range 10 {
 		main = append(main, hide, unit("Vanilla", 3, 2, engine.Keywords{}))

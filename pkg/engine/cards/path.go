@@ -65,7 +65,7 @@ var pathDefs = map[string]*ability.Def{
 				},
 			},
 		},
-		Cornered: ability.CorneredKeywords{Aggressive: 3},
+		Cornered: ability.WhileCornered{Aggressive: 3},
 	},
 	"Ambush Tactics": {
 		Text: []string{
@@ -637,7 +637,7 @@ var pathDefs = map[string]*ability.Def{
 				},
 			},
 		},
-		Cornered: ability.CorneredKeywords{Resistant: 1},
+		Cornered: ability.WhileCornered{Resistant: 1},
 	},
 	"Necropolis Hunt": {
 		Text: []string{"When this unit is killed, you may deal damage equal to its power to chosen non-Headquarters asset."},

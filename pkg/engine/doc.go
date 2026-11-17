@@ -61,9 +61,10 @@
 //     as a StackAbility item and its costs are paid, including CostResources,
 //     CostExhaustSelf and CostKillSelf (declare, SVY-R2). It is offered only if placeable holds: its
 //     costs are payable and each required target or mode has a legal choice (SVY-R36).
-//   - A card's own Cornered keywords ("Cornered: Aggressive 3.", Def.Cornered):
-//     g.Keywords adds them as a Layer 3 grant on a face-up asset while its controller
-//     is Cornered (FR-LAY-001, FR-KWD-002e, SVY-R18).
+//   - A card's own Cornered abilities ("Cornered: Aggressive 3.", "Cornered: This unit
+//     has +2 power.", Def.Cornered): g.Keywords adds the keywords as a Layer 3 grant and
+//     g.Power the power in Layer 4, on a face-up asset, while its controller is
+//     Cornered (FR-LAY-001, FR-KWD-002e, SVY-R18).
 //   - A card's own hand-active cost reduction ("costs R1 less to deploy for each
 //     unit card in your discard pile", Def.CostReduction): EffectiveCost lowers its
 //     Requisition cost while it is in its owner's hand (FR-CST-001).
@@ -87,8 +88,8 @@
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Continuous abilities other than a card's own Cornered keywords and its own
-//     hand-active cost reduction (Cornered-gated auras ("have Cornered: Resistant 1."), and "Cornered: This unit has +2 power."),
+//   - Continuous abilities other than a card's own Cornered abilities and its own
+//     hand-active cost reduction (Cornered-gated auras ("have Cornered: Resistant 1.")),
 //     Regroup N, replacement effects other than destruction replacement and the
 //     damage pipeline (damage redirection), and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported set

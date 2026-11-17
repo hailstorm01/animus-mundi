@@ -31,10 +31,10 @@ type Def struct {
 	// Activated lists the printed activated abilities, in printed order
 	// (FR-ACT-001).
 	Activated []Activated
-	// Cornered lists the keywords the card has while its controller is Cornered,
-	// as in "Cornered: Aggressive 3." (SVY-R18, FR-KWD-002e). It is zero for a
-	// card without one.
-	Cornered CorneredKeywords
+	// Cornered is what the card has while its controller is Cornered: keywords, as
+	// in "Cornered: Aggressive 3.", and power, as in "Cornered: This unit has +2
+	// power." (SVY-R18, FR-KWD-002e). It is zero for a card without one.
+	Cornered WhileCornered
 	// CostReduction is the card's own hand-active cost reduction (FR-CST-001),
 	// read by Game.EffectiveCost. It is zero for a card without one.
 	CostReduction CostReduction
@@ -92,12 +92,15 @@ type CostReduction struct {
 	Per Filter
 }
 
-// CorneredKeywords are the keywords a card has only while its controller is
-// Cornered, 0 for absent. g.Keywords adds them as a Layer 3 grant on a face-up
-// asset (FR-LAY-001); their gate is locked for a simultaneous step (FR-LAY-003).
-type CorneredKeywords struct {
+// WhileCornered is what a card has only while its controller is Cornered, 0 for
+// absent. g.Keywords adds the keywords as a Layer 3 grant and g.Power the Power
+// in Layer 4, on a face-up asset (FR-LAY-001); the gate is locked for a
+// simultaneous step (FR-LAY-003). Power may be negative, like any static power;
+// the clamp is Layer 6's.
+type WhileCornered struct {
 	Aggressive int
 	Resistant  int
+	Power      int
 }
 
 // Activated is one printed "[Cost]: [Effect]." ability of a battlefield asset.
