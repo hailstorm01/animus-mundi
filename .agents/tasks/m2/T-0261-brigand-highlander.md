@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
@@ -92,3 +92,6 @@ Tests:
   - No new shape: the card is T-0260's `WhileCornered.Power`, the third `Def.Cornered` card after *Allshan* and *Macabre Dancers*.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_path_highlander_test.go`: `TestCard_BrigandHighlander_PlusTwoPowerOnlyWhileCornered`, `TestCard_BrigandHighlander_CorneredAttackDealsFour`, `TestCard_BrigandHighlander_NotCorneredAttackDealsTwo`.
+  - Helpers requested: none. Cases left out: those the task assigns to T-0260 (Reserves, clamp, aura, mid-combat gate, sweep, face-down).
+  - Compiles; the Cornered power and attack-four tests fail until the card definition exists (Highlander is NotYetExecutable); `cardtown lint rules` passes. Status `tests-review`.
