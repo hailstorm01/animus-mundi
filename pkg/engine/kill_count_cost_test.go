@@ -201,7 +201,7 @@ func TestFR_TRN_003a_KillCountCostPaidAfterTargets(t *testing.T) {
 	a := s.putScratch(0)
 	b := s.putScratch(0)
 	inst := s.give(0, killCountManeuverOf(alliedScratchFilter,
-		ability.Effect{Targets: []ability.Target{{Filter: pileFilter}}}, 2, 4))
+		ability.Effect{Targets: []ability.Target{{Filter: pileFilter}}, Steps: []ability.Step{drawN(1)}}, 2, 4))
 	kcCountScript(s, 0)
 	s.do(enactAction(inst))
 	for _, d := range s.asked(0) {
@@ -230,7 +230,9 @@ func TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver(t *testing.T) {
 	m1 := s.put(0, ZoneMainTheater, mortal("Martyr One", 1, 1, killedTrigger(hqDamage(2))))
 	m2 := s.put(0, ZoneMainTheater, mortal("Martyr Two", 1, 1, killedTrigger(hqDamage(2))))
 	inst := s.give(0, killCountManeuverOf(alliedUnitFilter, steps(hqDamage(1)), 2))
-	s.script(0) // both units are taken for a count of 2: nothing is asked
+	// Both units are taken for a count of 2, and both death triggers are player 0's and
+	// fire together, so player 0 is asked their order (FR-TRG-003): take collection order.
+	s.script(0, Answer{Timeout: true})
 	s.do(enactAction(inst))
 	if s.alive(m1) || s.alive(m2) {
 		t.Fatalf("precondition: both allied units were killed as the cost")
