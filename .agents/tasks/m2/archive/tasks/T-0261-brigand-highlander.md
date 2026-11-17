@@ -4,7 +4,7 @@ title: "Brigand Highlander: \"Cornered: This unit has +2 power.\", on T-0260's `
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0261-brigand-highlander
 depends_on: [T-0260]
 claims: [card:Brigand Highlander]
@@ -114,3 +114,16 @@ Tests:
     - `go tool task sim`: pass (P0 wins 58.5%, P1 wins 39.5%, draws 2.0%).
     - `go tool task sim-compare -- autoloop/m2-wave-h`: pass (`[PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included`).
   - Status `review`.
+- 2026-11-16 lead-architect (D5): approved, round 1.
+  - After `test(T-0261)` (5c26a17), only the two Allowed Files and this task file changed. No test was edited.
+  - The code is the planned definition: `Cornered: ability.WhileCornered{Power: 2}` and the CSV `Text`, between *Boneyard Scavenger* and *Broken Horn Armorer*. The card is removed from `NotYetExecutable`.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch:
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "BrigandHighlander|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- ee15adc2` (the run branch before the merge) `[PASS]`.
+  - The Flash run had no refused commands (`denied_actions` absent, exit 0).
+  - Merged into `autoloop/m2-wave-h` (d099746).
+  - Status `done`.

@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0261 | *Brigand Highlander*: "Cornered: This unit has +2 power.", on `WhileCornered.Power` (wave H card, flash) | tests |
