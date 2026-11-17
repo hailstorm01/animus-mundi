@@ -4,7 +4,7 @@ title: "Cornered-gated aura grants: StaticAura's Static.Cornered, summed into th
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0262-aura-cornered-grant
 depends_on: [T-0258, T-0260]
 claims: [shape:StaticAura Cornered grant (Static.Cornered: every asset an aura's Filter matches has the aura's WhileCornered while that asset's controller is Cornered, read through g.whileCornered and g.auras)]
@@ -69,3 +69,4 @@ Existing tests stay as they are and must still pass.
 
 ## Log
 - 2026-11-16 lead-architect (wave H run, session 23): written against the run branch at 815a54b. *Ancestral Monument* is next in Deliverable 6m's order (wave E, after T-0261's *Brigand Highlander*). No ruling needed: `FR-KWD-002e` and `SVY-R18` give a Cornered keyword to the asset only while its controller is Cornered, and "other allied assets" makes that controller the source's too; G2 puts the keyword grant in Layer 3; `SVY-R44` gives the aura its source's current zone. Reuse: `Static.Cornered` is the existing `WhileCornered`, and `g.whileCornered` the one gate, now summing `g.auras`, the one aura reader, so `Keywords`, `Power` and everything reading them need no change; `Trigger.Cornered` is a trigger gate, a different rule. Split from the card under the D2 size rule; T-0263, *Ancestral Monument*, queued in this commit. Three non-test files. Directives: none `open`; each `waiting` one was checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142 name cards or shapes no task touches yet). `main` has no commits the run branch lacks. Status `tests`.
+- 2026-11-16 rules-test-author: tests written in `pkg/engine/aura_cornered_test.go`: `TestFR_KWD_002e_AuraCorneredGrantOnlyWhileCornered`, `TestFR_LAY_001_AuraCorneredGrantMatchesFilter`, `TestFR_LAY_001_AuraCorneredGrantAddsToOwnCornered` (with a `power` subtest), `TestFR_ZON_005_AuraCorneredGrantFaceDown` (with a `face-down source` subtest), `TestFR_LAY_003_AuraCorneredResistantLockedForCombat`. Helpers local to the file (`corneredAura`, `monument`, `(*scene).foes`); none requested for scenario_test.go. The file fails to compile only on the missing `ability.Static.Cornered`. `cardtown lint rules` passes. Nothing left out. Status `tests-review`.
