@@ -4,7 +4,7 @@ title: "Solarheart Monk: an enter-discard trigger, chosen asset heals 2 (wave H 
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0268-solarheart-monk
 depends_on: [T-0267]
 claims: [card:Solarheart Monk]
@@ -85,3 +85,8 @@ Tests:
   - No new shape: the card is T-0267's `HookEntersDiscard` with *Spoil Forest Colossus*' heal slot and step.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-17 rules-test-author: wrote `pkg/engine/cards_path_solarheart_monk_test.go`: `TestCard_SolarheartMonk_PrintedStats`, `_DiscardedFromHandHealsChosenAsset`, `_DestroyedOnTheBattlefieldHeals`, `_DestroyedScratchCompanyHeals`, `_ControlledMonkIsItsOwnersTrigger`, `_ReturnedToHandHealsNothing`.
+  - Helpers requested: none. File-local helpers: `monkPicker`, `hasOptionRef`, `hurtUnit`.
+  - Left out: nothing beyond the task's "Not this task" list.
+  - `go vet` clean, `cardtown lint rules` PASS. Five tests fail until the card is executable; the returned-to-hand test passes already (it pins a negative).
+  - Status `tests-review`.
