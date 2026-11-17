@@ -4,7 +4,7 @@ title: "Mutation Swell: a counted kill cost {2, 4} on allied Scratch Company uni
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0266-mutation-swell
 depends_on: [T-0264, T-0265]
 claims: [card:Mutation Swell]
@@ -100,3 +100,7 @@ Tests:
   - No new shape: the card is T-0264's `Cost.Counts`, T-0265's `PerKilled` and `Different`, and the `OpDeployFree` step *Reaver's Rush* uses.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-17 rules-test-author: wrote `pkg/engine/cards_animus_mutation_swell_test.go` (8 tests, 11 with subtests), all as planned in Tests. `go vet ./pkg/engine` is clean, no helpers needed; they fail now because the card is still in `NotYetExecutable` ("needs rules the kernel does not implement yet"). No `TestFR_*` added, so `cardtown lint rules` has nothing new to trace (the binary was not on PATH here).
+  - `TestCard_MutationSwell_NotEnactableWithoutItsCostAndTargets`, `_OnlyTwoOfferedWhenFourCantBeFilled` (`three units`, `one unit card`), `_KillFourDeploysTwoDifferent`, `_KilledUnitsCardsAreNotTargets`, `_ReplacedKillsStillDeploy`, `_GoneTargetSkippedOtherDeploys`, `_Timeout` (`everything timed out`, `count 4 answered, target timed out`).
+  - Reuses `pkCard`, `pkScript`, `pkPick`, `pkAsks`, `pkDeployed`, `dfUnit`, `kcRefs`; local helpers `msScene` and `msSortedRefs` stay in the new file.
+  - Left out as the task said: repeated answer, per-kill slot on a trigger, per-kill slot without `Different`; Shifting Impossibility's own fate in the replaced-kills test.
