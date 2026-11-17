@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -112,3 +112,7 @@ Tests:
   - No new shape: each card is T-0256's `StaticAura` with its own filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-16 rules-test-author: wrote `pkg/engine/cards_animus_auras_test.go`, status `tests-review`.
+  - Tests: `TestCard_AnimocepsStalk_OtherAlliedAssetsInItsZone`, `TestCard_AnimocepsStalk_TwoStalksBuffEachOther`, `TestCard_AnimocepsStalk_FollowsItsZone`, `TestCard_AnimocepsNode_AlliedUnitsInItsZone`, `TestCard_AnimocepsNode_FollowsItsZone`, `TestCard_MelodicPummeler_AlliedHorrorUnitsInItsZone`, `TestCard_MelodicPummeler_FollowsItsZone`.
+  - Helpers requested: none (local `auraSub` lives in the new file; `wantPower` reused).
+  - Left out: nothing beyond the task's own exclusions. `go vet` is clean, `cardtown lint rules` passes. Node, Pummeler tests fail now and the Stalk ones partly pass or fail until the cards are defined.
