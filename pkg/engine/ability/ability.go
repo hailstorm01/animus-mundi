@@ -305,6 +305,17 @@ type Target struct {
 	// stays 0 with it. With no cards discarded, or no legal entity, the slot
 	// stays empty.
 	PerDiscard bool
+	// PerKilled 0 means none. k > 0 chooses the slot once for every k assets the
+	// placement's counted kill cost kills (Cost.Counts), that is pl.count / k
+	// times, after the count is chosen (SVY-R53). UpTo stays 0 with it, and it is
+	// never set together with PerDiscard. With no counted kill cost (on every
+	// trigger) or no legal entity, the slot stays empty, as a PerDiscard slot does.
+	PerKilled int
+	// Different is read only with PerKilled: the repetitions pick different
+	// entities, not independent ones, and the slot is legal only with that many
+	// different legal entities (SVY-R54). It is not defined with PerDiscard: no
+	// card prints a "different" per-discard clause.
+	Different bool
 	// Another 0 means none. k > 0 makes this slot pick an entity different from
 	// the one chosen for Effect.Targets[k-1], the earlier slot of the same
 	// clause ("another chosen X", SVY-R34); k-1 is less than this slot's own

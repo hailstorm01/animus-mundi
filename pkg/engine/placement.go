@@ -50,7 +50,7 @@ func (g *Game) chooseOnPlacement(pl placement, e ability.Effect) (ability.Effect
 func (g *Game) declare(pl placement, e ability.Effect, kind StackKind) {
 	defer g.askFor(g.shownCard(pl.source, pl.inst))()
 	pl.discards = g.chooseCostDiscards(pl)
-	pl.count = g.chooseCostCount(pl, g.payableCounts(pl))
+	pl.count = g.chooseCostCount(pl, g.legalCounts(pl, e))
 	item := pl.stackItem(kind)
 	item.Effect, item.Chosen = g.chooseOnPlacement(pl, e)
 	g.push(item)
@@ -143,19 +143,33 @@ func zoneLock(a *Asset) *LockedZone { return &LockedZone{Zone: a.Zone, Player: a
 // slot order, not each slot alone. An "up to N" slot never makes it false
 // (design note Open Question 11), nor does a PerDiscard slot: its controller
 // can discard none, which needs no target, and the count is not known before
-// the discard is picked (SVY-R29). An "another" slot that follows one of them
-// needs only a legal entity of its own.
+// the discard is picked (SVY-R29). A PerKilled slot needs nothing at count 0,
+// else one legal entity, or with Different as many different ones as it has
+// repetitions (SVY-R53, SVY-R54). An "another" slot that follows a repeated
+// slot needs only a legal entity of its own.
 func (g *Game) slotsLegal(pl placement, ts []ability.Target) bool {
 	opts := make([][]Option, len(ts))
 	for i, t := range ts {
 		opts[i] = g.targetDecision(pl, i, t).Options
 	}
 	assigned := make([]int, len(ts))
-	exactlyOne := func(t ability.Target) bool { return t.UpTo == 0 && !t.PerDiscard }
+	exactlyOne := func(t ability.Target) bool {
+		_, repeated := repetitions(pl, t)
+		return t.UpTo == 0 && !repeated
+	}
 	var fill func(i int) bool
 	fill = func(i int) bool {
 		if i == len(ts) {
 			return true
+		}
+		if n, repeated := repetitions(pl, ts[i]); repeated && ts[i].PerKilled > 0 && n > 0 {
+			need := 1
+			if ts[i].Different {
+				need = n
+			}
+			if len(opts[i]) < need {
+				return false
+			}
 		}
 		if !exactlyOne(ts[i]) {
 			return fill(i + 1)
@@ -186,10 +200,33 @@ func (g *Game) placeable(pl placement, e ability.Effect) bool {
 	if !g.costsPayable(pl) {
 		return false
 	}
+	if countedKillCost(pl) != nil {
+		return len(g.legalCounts(pl, e)) > 0
+	}
+	return g.targetsLegal(pl, e)
+}
+
+// targetsLegal reports whether e's modes or targets can be filled now: at
+// least ChooseN legal modes, or slotsLegal on its targets.
+func (g *Game) targetsLegal(pl placement, e ability.Effect) bool {
 	if len(e.Modes) > 0 {
 		return len(g.legalModes(pl, e)) >= e.ChooseN
 	}
 	return g.slotsLegal(pl, e.Targets)
+}
+
+// legalCounts returns the counts of pl's counted kill cost that can be paid
+// (payableCounts) and whose targets can be filled with that count (SVY-R53),
+// in printed order. It is nil without a counted kill cost.
+func (g *Game) legalCounts(pl placement, e ability.Effect) []int {
+	var out []int
+	for _, n := range g.payableCounts(pl) {
+		pl.count = n
+		if g.targetsLegal(pl, e) {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // couldDoNothing reports whether e, placed as pl, could do nothing if its

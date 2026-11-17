@@ -17,10 +17,12 @@ import (
 // and a timeout picks none (SVY-R11). A slot with no legal entity stays empty
 // and asks nothing: deploying never requires a target (FR-TGT-003). A slot
 // whose filter names ZoneDiscard chooses cards in discard piles, and its Refs
-// are card instance IDs. A PerDiscard slot with no discards or no options asks
-// nothing and stays empty; otherwise it is asked once, with one pick for each
-// card discarded, and every pick's Ref is appended in pick order, repeats
-// included (SVY-R4). An "another" slot (Target.Another, SVY-R34) is never
+// are card instance IDs. A repeated slot is chosen repetitions times: once for
+// each card discarded (PerDiscard, SVY-R4), or once for every PerKilled assets
+// the counted kill cost kills (SVY-R53). With zero repetitions or no options it
+// asks nothing and stays empty; otherwise it is asked once, and every pick's
+// Ref is appended in pick order. Its picks may repeat unless the slot is
+// Different, whose picks are different entities (SVY-R54). An "another" slot (Target.Another, SVY-R34) is never
 // offered the entity chosen for the slot it follows, so a single remaining
 // option is taken unasked, a timeout takes the first remaining one in fixed
 // order, and with none left it stays empty and asks nothing.
@@ -38,7 +40,7 @@ func (g *Game) chooseTargets(pl placement, e ability.Effect) [][]int {
 		if t.UpTo > 0 && len(d.Options) == 0 {
 			continue
 		}
-		if t.PerDiscard && (len(pl.discards) == 0 || len(d.Options) == 0) {
+		if n, ok := repetitions(pl, t); ok && (n == 0 || len(d.Options) == 0) {
 			continue
 		}
 		for _, k := range g.choose(d) {
@@ -80,8 +82,12 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 	if t.UpTo > 0 {
 		prompt = fmt.Sprintf("%s: choose up to %d for target %d", pl.label, t.UpTo, i+1)
 	}
-	if t.PerDiscard {
-		prompt = fmt.Sprintf("%s: choose target %d (%d times)", pl.label, i+1, len(pl.discards))
+	n, repeated := repetitions(pl, t)
+	if repeated {
+		prompt = fmt.Sprintf("%s: choose target %d (%d times)", pl.label, i+1, n)
+		if t.Different {
+			prompt = fmt.Sprintf("%s: choose %d different for target %d", pl.label, n, i+1)
+		}
 	}
 	var d Decision
 	if t.Filter.InPile() {
@@ -93,15 +99,33 @@ func (g *Game) targetDecision(pl placement, i int, t ability.Target) Decision {
 			return g.legalTarget(pl.controller, pl.source, pl.locked, t.Filter, a)
 		})
 	}
-	if t.PerDiscard {
-		d = repeatedPicks(d, len(pl.discards))
+	if repeated {
+		d = repeatedPicks(d, n)
+		if t.Different {
+			d.Repeats = false
+		}
 	}
 	return d
 }
 
+// repetitions is the one place the number of times a repeated target slot is
+// chosen is computed: once for each card pl discarded (PerDiscard, SVY-R4), or
+// once for every PerKilled assets its counted kill cost kills (SVY-R53). ok is
+// false for a slot that is not repeated.
+func repetitions(pl placement, t ability.Target) (n int, ok bool) {
+	switch {
+	case t.PerDiscard:
+		return len(pl.discards), true
+	case t.PerKilled > 0:
+		return pl.count / t.PerKilled, true
+	}
+	return 0, false
+}
+
 // repeatedPicks bounds d to exactly n picks, each of which may repeat an
-// option: the answer shape of a per-discard target slot and of a pool split
-// among the options one point per pick.
+// option: the answer shape of a per-discard or per-kill target slot and of a
+// pool split among the options one point per pick. targetDecision clears
+// Repeats again for a Different slot (SVY-R54).
 func repeatedPicks(d Decision, n int) Decision {
 	d.Min, d.Max, d.Repeats = n, n, true
 	return d
