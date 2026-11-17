@@ -1,8 +1,9 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
 // Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords,
 // the keywords a resolved step grants until end of turn, and auras' keyword
-// grants (`Game.auras`). Layer 5 holds power
-// and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`) and a card's own Cornered power. The power
+// grants (`Game.auras`) and their Cornered keyword grants. Layer 5 holds power
+// and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`), their
+// Cornered power and a card's own Cornered power. The power
 // pipeline is Layer 1 + Layer 4 + Layer 5, clamped at 0 by Layer 6.
 
 package engine
@@ -52,8 +53,8 @@ func (a *Asset) expireAtEndOf(active PlayerID) {
 }
 
 // Power returns effective Combat Power, the only stat that clamps at 0: the sum
-// of Layer 1 (printed), Layer 4 (the card's own Cornered power and auras) and
-// Layer 5 (modifiers), clamped by Layer 6.
+// of Layer 1 (printed), Layer 4 (the card's own Cornered power, auras and their
+// Cornered grants) and Layer 5 (modifiers), clamped by Layer 6.
 func (g *Game) Power(a *Asset) int {
 	n := a.Printed().Power + a.TempPower() + g.whileCornered(a).Power
 	for _, st := range g.auras(a) {
@@ -104,9 +105,9 @@ func (g *Game) CurrentHealth(a *Asset) int {
 
 // Keywords returns the asset's effective keywords: the printed ones, plus the
 // card's Cornered keywords while its controller is Cornered (SVY-R18), plus the
-// Resistant of each aura that applies (Game.auras, Layer 3). A face-down asset
-// has no Cornered keywords of its own, since its face has no Ability, but it
-// still receives auras' grants.
+// Resistant of each aura that applies (Game.auras, Layer 3). The Cornered part
+// includes auras' Cornered grants. A face-down asset has no Cornered keywords of
+// its own, since its face has no Ability, but it still receives auras' grants.
 func (g *Game) Keywords(a *Asset) Keywords {
 	kw := a.Printed().Keywords
 	wc := g.whileCornered(a)
@@ -136,16 +137,23 @@ func (k *Keywords) add(o Keywords) {
 	}
 }
 
-// whileCornered returns what the card of a gives while its controller is
-// Cornered: the zero value for a face-down asset (its face has no Ability) or
-// when the controller is not Cornered. It is the one reader of that gate, live,
-// for Keywords and Power (FR-KWD-002e, FR-LAY-003).
+// whileCornered returns what a has while its controller is Cornered: the zero
+// value when it is not, else the card's own Cornered abilities (none for a
+// face-down asset, whose face has no Ability) plus the Cornered of each aura
+// that applies (Game.auras). It is the one reader of that gate, live, for
+// Keywords and Power (FR-KWD-002e, FR-LAY-003).
 func (g *Game) whileCornered(a *Asset) ability.WhileCornered {
-	d := a.Printed().Ability
-	if d == nil || d.Cornered == (ability.WhileCornered{}) || !g.cornered(a.Controller) {
-		return ability.WhileCornered{}
+	var wc ability.WhileCornered
+	if !g.cornered(a.Controller) {
+		return wc
 	}
-	return d.Cornered
+	if d := a.Printed().Ability; d != nil {
+		wc = d.Cornered
+	}
+	for _, st := range g.auras(a) {
+		wc = wc.Add(st.Cornered)
+	}
+	return wc
 }
 
 // cornered reports whether p is Cornered: the opponent controls strictly more
