@@ -30,5 +30,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0267](T-0267-enters-discard-hook.md) | HookEntersDiscard: a pile trigger fired whenever its card is put into its owner's discard pile, from any zone (wave H shape) | tests |
 | [T-0268](T-0268-solarheart-monk.md) | Solarheart Monk (wave H card) | queued |
