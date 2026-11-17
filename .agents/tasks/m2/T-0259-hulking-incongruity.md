@@ -4,7 +4,7 @@ title: "Hulking Incongruity: allied Horror units in the same zone have Resistant
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0259-hulking-incongruity
 depends_on: [T-0258]
 claims: [card:Hulking Incongruity]
