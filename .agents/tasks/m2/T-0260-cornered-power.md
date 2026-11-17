@@ -4,7 +4,7 @@ title: "A card's own Cornered power: `Def.Cornered` (renamed `ability.WhileCorne
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0260-cornered-power
 depends_on: [T-0180, T-0256]
 claims: [shape:own Cornered power (WhileCornered.Power: a card's own "Cornered: This unit has +N power.", Layer 4, read by Game.Power), rename:ability.CorneredKeywords -> ability.WhileCornered]
