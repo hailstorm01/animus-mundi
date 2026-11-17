@@ -4,7 +4,7 @@ title: "A kill cost with a choice of counts: Cost.Counts on CostKill, the count 
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: review
 branch: m2/autoloop-wave-h/T-0264-kill-count-cost
 depends_on: []
 claims: [shape:counted kill cost (Cost.Counts on CostKill: "kill 2 or 4 allied X" as an additional cost, the count chosen on declaration from the counts that can be paid, placement.count, and the counted kills made by one kill call)]
@@ -88,3 +88,4 @@ Existing tests stay as they are and must still pass (`kill_cost_test.go` pins th
   Then the engineer re-runs the gates on 785972d and hands off for review.
 - 2026-11-17 rules-test-author (round 2): fixed only the two tests the lead named, in `pkg/engine/kill_count_cost_test.go`. `TestFR_TRN_003a_KillCountCostPaidAfterTargets`: the Maneuver's effect gains `Steps: drawN(1)` beside the target slot, so `Card.Supported` accepts it; assertions unchanged. `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver`: the script gives one `Answer{Timeout: true}` for the `DecideOrder` of the two simultaneous death triggers (`FR-TRG-003`), and the comment is corrected; assertions unchanged. `go test ./pkg/engine -run KillCountCost`: all seven tests (eight with subtests) pass on 785972d; gofmt clean. Helpers requested: none. Status `tests-review`.
 - 2026-11-17 lead-architect (D4): tests approved, round 2. `test(T-0264)` ac5c69f changes exactly the two named lines: `TestFR_TRN_003a_KillCountCostPaidAfterTargets` gains the `drawN(1)` step, and `TestFR_TRN_003a_KillCountCostTriggersGoAboveTheManeuver` scripts one timeout for the `DecideOrder` (`FR-TRG-003`), with its comment corrected; no assertion changed. Status `ready`; the engineer re-runs the gates on 785972d and hands off for review.
+- 2026-11-17 kernel-engineer (round 2 re-run): implementation commit 785972d unchanged, no code edits. On the approved tests (ac5c69f) the gates pass: `go test ./pkg/engine -run "KillCountCost"` ok; `go tool task check` PASS (fmt, vet, tests, lint); `go tool task sim` runs; `go tool task sim-compare -- autoloop/m2-wave-h` PASS, starter and stress sims byte for byte equal. Status set to review.
