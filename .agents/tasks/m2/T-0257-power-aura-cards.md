@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -119,3 +119,4 @@ Tests:
 - 2026-11-16 lead-architect (D4): tests returned, round 1. Every other assertion checks what the cited rules and survey rows give. One note:
   1. `TestCard_AnimocepsNode_AlliedUnitsInItsZone` expects the face-down Scratch Company to have `scratch.Inst.Card.Power+1`, which is the hidden card's printed power. A face-down asset has the Scratch Company face's characteristics (`FR-ZON-005`): power 1. So the expected value is the literal `2`, with the reason "a face-down Scratch Company (power 1) is a unit". The test passes today only because `putScratch`'s hidden filler also has power 1. Change only that line, in a new `test(T-0257)` commit.
   - Status `tests`.
+- 2026-11-16 rules-test-author: D4 round 1, note 1 fixed. In `TestCard_AnimocepsNode_AlliedUnitsInItsZone` the Scratch Company's expected power is now the literal 2 (face-down characteristics, power 1, plus the aura; FR-ZON-005). No other change. Status `tests-review`.
