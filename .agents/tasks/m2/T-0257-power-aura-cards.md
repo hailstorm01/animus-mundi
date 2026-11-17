@@ -4,7 +4,7 @@ title: "Animoceps Stalk, Animoceps Node, Melodic Pummeler: same-zone power auras
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0257-power-aura-cards
 depends_on: [T-0256]
 claims: [card:Animoceps Stalk, card:Animoceps Node, card:Melodic Pummeler]
@@ -120,3 +120,13 @@ Tests:
   1. `TestCard_AnimocepsNode_AlliedUnitsInItsZone` expects the face-down Scratch Company to have `scratch.Inst.Card.Power+1`, which is the hidden card's printed power. A face-down asset has the Scratch Company face's characteristics (`FR-ZON-005`): power 1. So the expected value is the literal `2`, with the reason "a face-down Scratch Company (power 1) is a unit". The test passes today only because `putScratch`'s hidden filler also has power 1. Change only that line, in a new `test(T-0257)` commit.
   - Status `tests`.
 - 2026-11-16 rules-test-author: D4 round 1, note 1 fixed. In `TestCard_AnimocepsNode_AlliedUnitsInItsZone` the Scratch Company's expected power is now the literal 2 (face-down characteristics, power 1, plus the aura; FR-ZON-005). No other change. Status `tests-review`.
+- 2026-11-16 lead-architect (D4): tests approved, round 2.
+  - Note 1 is fixed in its own `test(T-0257)` commit (82124a9): the face-down Scratch Company's expected power is the literal 2 (`FR-ZON-005`). No other line changed.
+  - Each test checks what the cited rules and survey rows give, on the real cards:
+    - The Stalk buffs other allied assets of any kind in its current zone. It doesn't buff itself, its other-zone allies or opposing assets. Two Stalks buff each other.
+    - The Node buffs allied units only (a Scratch Company too). It doesn't buff itself or an allied structure.
+    - The Pummeler buffs allied Horror units in its zone, itself included, and any one matching subtype is enough. It doesn't buff non-Horror units, Horror structures, other-zone allies or opposing Horror units.
+    - Each aura follows its source's current zone (`SVY-R44`, last sentence). Reserves are each player's own (`FR-ZON-001`).
+  - No existing test edited.
+  - Sanity check in a throwaway worktree: the seven tests fail without the cards and pass with the Shape's definitions, together with `TestDefs_MatchRulesText`. The test file is gofmt-clean.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
