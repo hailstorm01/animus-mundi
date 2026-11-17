@@ -61,7 +61,7 @@ func TestCard_AnimocepsNode_AlliedUnitsInItsZone(t *testing.T) {
 	res := s.put(0, ZoneReserves, unit("Reserve Ally", 2, 5, Keywords{}))
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
 	s.wantPower(u, 3, "an allied unit in the Node's zone has +1 power")
-	s.wantPower(scratch, scratch.Inst.Card.Power+1, "a face-down Scratch Company is a unit")
+	s.wantPower(scratch, 2, "a face-down Scratch Company (power 1) is a unit")
 	s.wantPower(node, 3, "the Node is a structure, so it does not buff itself")
 	s.wantPower(st, 1, "an allied structure is not a unit")
 	s.wantPower(res, 2, "an allied unit in Reserves is not in the Node's zone")
