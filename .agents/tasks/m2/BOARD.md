@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0263 | *Ancestral Monument*: other allied assets in the same zone have Cornered: Resistant 1, on `Static.Cornered` (wave H card, flash) | tests |

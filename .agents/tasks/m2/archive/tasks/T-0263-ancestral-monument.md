@@ -4,7 +4,7 @@ title: "Ancestral Monument: \"Other allied assets in the same zone have Cornered
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0263-ancestral-monument
 depends_on: [T-0262]
 claims: [card:Ancestral Monument]
@@ -117,3 +117,16 @@ Tests:
     - `go tool task sim`: passed clean (P0 58.5%, P1 39.5%, draws 2.0%; exit 0).
     - `go tool task sim-compare -- autoloop/m2-wave-h`: [PASS] starter and stress sims match autoloop/m2-wave-h byte for byte, exit codes included (exit 0).
   - Reviewer note: the card uses existing primitives only; no new shapes, fields, or card-name logic.
+- 2026-11-16 lead-architect (D5): approved, round 1.
+  - After `test(T-0263)` (87dd090), only the two Allowed Files and this task file changed. No test was edited.
+  - The code is the planned definition: one `StaticAura` static with the "other allied assets in the same zone" filter (`AllegianceAllied`, `Other`, `ZoneRefSame`, zero `Kinds`) and `Cornered: ability.WhileCornered{Resistant: 1}`, no power and no unconditional Resistant, placed between *Ambush Tactics* and *Arkha, Sun's Fury*. The card is removed from `NotYetExecutable`.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch:
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "AncestralMonument|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%).
+    - `go tool task sim-compare -- 3d48c6cd` (the run branch before the merge) `[PASS]`.
+  - The Flash run had no refused commands (`denied_actions` empty, exit 0).
+  - Merged into `autoloop/m2-wave-h` (33ed292).
+  - Status `done`.
