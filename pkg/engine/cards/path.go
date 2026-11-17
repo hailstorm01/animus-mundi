@@ -143,6 +143,16 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Ancestral Monument": {
+		Text: []string{"Other allied assets in the same zone have Cornered: Resistant 1."},
+		Statics: []ability.Static{
+			{
+				Kind:     ability.StaticAura,
+				Filter:   ability.Filter{Allegiance: ability.AllegianceAllied, Other: true, ZoneRef: ability.ZoneRefSame},
+				Cornered: ability.WhileCornered{Resistant: 1},
+			},
+		},
+	},
 	"Arkha, Sun's Fury": {
 		Text: []string{"Whenever this unit attacks, you may put a unit card from your discard pile on the bottom of your deck. If you do, deal 3 damage to chosen opposing Headquarters."},
 		Triggers: []ability.Trigger{
