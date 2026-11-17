@@ -4,7 +4,7 @@ title: "Target slots that repeat per kill and pick different entities: Target.Pe
 kind: shape
 tier: sonnet
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0265-per-kill-different-targets
 depends_on: [T-0264]
 claims: [shape:per-kill target slots (Target.PerKilled: a slot chosen once for every k assets the placement's counted kill cost kills), shape:different repeated targets (Target.Different: a per-kill slot's picks are different entities, SVY-R54), shape:legal cost counts (legalCounts: the counts offered and the enact check narrowed to those whose targets can be filled)]
@@ -64,3 +64,4 @@ New file `pkg/engine/per_kill_target_test.go`. Synthetic Maneuvers: the counted 
 ## Log
 - 2026-11-17 lead-architect (wave H run, session 26): queued with T-0264, split off under the D2 size rule. Directive #158 (2).
 - 2026-11-17 lead-architect (wave H run, session 27): written in full against the run branch at `bc79b5a` (T-0264 merged at `9ef40c0`). Dropped the planned "`Different` `PerDiscard`" test: no card prints a different per-discard clause, and a discard count above the different legal entities has no ruling, so `Different` is defined only with `PerKilled`. Set `status: tests`; branch created from the run branch; dispatching `rules-test-author`.
+- 2026-11-17 rules-test-author: wrote `pkg/engine/per_kill_target_test.go`: TestFR_MNV_001_PerKilledSlotNeedsItsTargets, TestFR_TGT_001_PerKilledCountsNarrowedToFillableTargets, TestFR_TGT_001_PerKilledCountsBothOfferedWithEnoughTargets, TestFR_TGT_001_PerKilledSlotChoosesOncePerTwoKilled, TestFR_TGT_001_PerKilledDifferentRejectsARepeat, TestFR_MOD_001_PerKilledDifferentTimeout, TestFR_TGT_001_PerKilledWithoutDifferentRepeats, TestFR_TGT_001_PerKilledSlotOnTriggerChoosesNothing. Helpers requested: none (file-local `pk*` helpers). `go vet` fails only on the missing `ability.Target.PerKilled`/`Different` fields; `cardtown lint rules` passes. Note: in WithoutDifferentRepeats the spec's 1-card case is answered unasked, so Min/Max/Repeats cannot be observed there; the test asserts no target ask and the card deployed, and a second sub-test with 2 cards pins Min=Max=2, Repeats true. Pile top is taken as the last of `Player.Discard` (as `lastDiscard` does).
