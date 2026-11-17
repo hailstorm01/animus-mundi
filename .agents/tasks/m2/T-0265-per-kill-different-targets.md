@@ -4,7 +4,7 @@ title: "Target slots that repeat per kill and pick different entities: Target.Pe
 kind: shape
 tier: sonnet
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0265-per-kill-different-targets
 depends_on: [T-0264]
 claims: [shape:per-kill target slots (Target.PerKilled: a slot chosen once for every k assets the placement's counted kill cost kills), shape:different repeated targets (Target.Different: a per-kill slot's picks are different entities, SVY-R54), shape:legal cost counts (legalCounts: the counts offered and the enact check narrowed to those whose targets can be filled)]
