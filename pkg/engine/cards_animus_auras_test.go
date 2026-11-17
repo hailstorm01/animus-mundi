@@ -2,7 +2,7 @@ package engine
 
 import "testing"
 
-// Tests for T-0257, the same-zone power auras Animoceps Stalk, Animoceps Node
+// Tests for T-0259 (Hulking Incongruity) and T-0257, the same-zone power auras Animoceps Stalk, Animoceps Node
 // and Melodic Pummeler (FR-LAY-001, FR-TGT-001 SVY-R44, FR-ZON-001). Player 0
 // is the active player. Expected power is printed power plus the aura.
 
@@ -110,4 +110,57 @@ func TestCard_MelodicPummeler_FollowsItsZone(t *testing.T) {
 	s.wantPower(mainH, 4, "the Pummeler is now in the Main Theater")
 	s.wantPower(resH, 3, "the Pummeler left Reserves")
 	s.wantPower(pum, 5, "the Pummeler still buffs itself")
+}
+
+func TestCard_HulkingIncongruity_AlliedHorrorUnitsInItsZone(t *testing.T) {
+	// Covers: FR-LAY-001
+	s := newScene(t)
+	inc := s.put(0, ZoneReserves, s.card("Hulking Incongruity"))
+	h := s.put(0, ZoneReserves, auraSub("Horror", 3, "Horror"))
+	multi := s.put(0, ZoneReserves, auraSub("Treefolk Horror", 3, "Treefolk", "Horror"))
+	plain := s.put(0, ZoneReserves, auraSub("Plain", 3, "Treefolk"))
+	hs := structure("Horror Wall", 3, 5, Keywords{})
+	hs.Subtypes = []string{"Horror"}
+	hstruct := s.put(0, ZoneReserves, hs)
+	mainH := s.put(0, ZoneMainTheater, auraSub("Main Horror", 3, "Horror"))
+	foeH := s.put(1, ZoneReserves, auraSub("Foe Horror", 3, "Horror"))
+	s.wantResistant(inc, 1, "the Incongruity is a Horror unit in its own zone, so it covers itself")
+	s.wantResistant(h, 1, "an allied Horror unit in the zone has Resistant 1")
+	s.wantResistant(multi, 1, "any one matching subtype is enough")
+	s.wantResistant(plain, 0, "a non-Horror unit gains nothing")
+	s.wantResistant(hstruct, 0, "a Horror structure is not a unit")
+	s.wantResistant(mainH, 0, "a Horror unit in another zone gains nothing")
+	s.wantResistant(foeH, 0, "an opposing Horror unit gains nothing")
+	s.wantPower(inc, 2, "the Incongruity keeps its printed power 2")
+	s.wantPower(h, 3, "the grant adds Resistant, not power")
+}
+
+func TestCard_HulkingIncongruity_AddsToPrintedResistant(t *testing.T) {
+	// Covers: FR-REP-004
+	s := newScene(t)
+	s.put(0, ZoneReserves, s.card("Hulking Incongruity"))
+	h := s.put(0, ZoneReserves, horrorUnit("Armoured Horror", 3, 5, 2))
+	s.wantResistant(h, 3, "printed Resistant 2 plus the aura's 1 is the total subtracted in Stage 2")
+}
+
+func TestCard_HulkingIncongruity_FollowsItsZone(t *testing.T) {
+	// Covers: FR-TGT-001 (SVY-R44)
+	s := newScene(t)
+	inc := s.put(0, ZoneReserves, s.card("Hulking Incongruity"))
+	mainH := s.put(0, ZoneMainTheater, auraSub("Main Horror", 3, "Horror"))
+	resH := s.put(0, ZoneReserves, auraSub("Res Horror", 3, "Horror"))
+	s.moveTo(inc, ZoneMainTheater)
+	s.wantResistant(mainH, 1, "the Incongruity is now in the Main Theater")
+	s.wantResistant(resH, 0, "the Incongruity left Reserves")
+	s.wantResistant(inc, 1, "the Incongruity still covers itself")
+}
+
+func TestCard_HulkingIncongruity_CoveredUnitTakesOneLess(t *testing.T) {
+	// Covers: FR-KWD-002b, FR-REP-004
+	s := newScene(t)
+	s.put(1, ZoneMainTheater, s.card("Hulking Incongruity"))
+	d := s.put(1, ZoneMainTheater, horrorUnit("D", 0, 5, 0))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, Keywords{}))
+	s.do(s.attack(att, d))
+	s.wantDamage(d, 2)
 }
