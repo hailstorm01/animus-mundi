@@ -90,11 +90,11 @@
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Continuous abilities other than a card's own Cornered abilities and its own
-//     hand-active cost reduction, Regroup N, replacement effects other than destruction replacement and the
-//     damage pipeline (damage redirection), and match
-//     clocks. Cards whose text needs any of these load with Card.Unsupported set
-//     and cannot be deployed or enacted.
+//   - Continuous abilities other than a card's own Cornered abilities and its
+//     own hand-active cost reduction, Regroup N, replacement effects other than
+//     destruction replacement and the damage pipeline (damage redirection), and
+//     match clocks. Cards whose text needs any of these load with
+//     Card.Unsupported set and cannot be deployed or enacted.
 //     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
 //
 // Files:

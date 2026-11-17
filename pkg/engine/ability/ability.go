@@ -99,10 +99,12 @@ type CostReduction struct {
 }
 
 // WhileCornered is what a card has, or an aura grants, only while the asset's
-// controller is Cornered, 0 for absent, read through g.whileCornered. g.Keywords adds the keywords as a Layer 3 grant and g.Power the Power
-// in Layer 4, on a face-up asset (FR-LAY-001); the gate is locked for a
-// simultaneous step (FR-LAY-003). Power may be negative, like any static power;
-// the clamp is Layer 6's.
+// controller is Cornered, 0 for absent, read through g.whileCornered.
+// g.Keywords adds the keywords as a Layer 3 grant and g.Power the Power in
+// Layer 4 (FR-LAY-001). A card's own Def.Cornered counts on a face-up asset
+// only; an aura's grant counts on every asset it matches, face-down included.
+// The gate is locked for a simultaneous step (FR-LAY-003). Power may be
+// negative, like any static power; the clamp is Layer 6's.
 type WhileCornered struct {
 	Aggressive int
 	Resistant  int

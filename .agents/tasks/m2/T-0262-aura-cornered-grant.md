@@ -4,7 +4,7 @@ title: "Cornered-gated aura grants: StaticAura's Static.Cornered, summed into th
 kind: shape
 tier: sonnet
 wave: H
-status: changes
+status: review
 branch: m2/autoloop-wave-h/T-0262-aura-cornered-grant
 depends_on: [T-0258, T-0260]
 claims: [shape:StaticAura Cornered grant (Static.Cornered: every asset an aura's Filter matches has the aura's WhileCornered while that asset's controller is Cornered, read through g.whileCornered and g.auras)]
@@ -77,3 +77,4 @@ Existing tests stay as they are and must still pass.
   2. `pkg/engine/doc.go`, "Not built yet": rewrap the first bullet so no line is longer than its neighbours (the line "hand-active cost reduction, Regroup N, replacement effects other than destruction replacement and the" was left long).
   3. `pkg/engine/layers.go`, `Game.Power`'s comment: rewrap its first two lines to the file's width.
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
+- 2026-11-16 kernel-engineer: round 1 changes, comments only. (1) `WhileCornered` comment in ability.go rewrapped; it now says a card's own `Def.Cornered` counts on a face-up asset only and an aura's grant on every asset it matches, face-down included. (2) doc.go "Not built yet" first bullet rewrapped. (3) `Game.Power` comment in layers.go rewrapped. No code change. Commands: `go tool task fmt` then `go tool task check` passed (incl. lint); `go tool task sim-compare -- autoloop/m2-wave-h` [PASS] byte for byte.

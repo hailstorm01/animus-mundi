@@ -53,8 +53,8 @@ func (a *Asset) expireAtEndOf(active PlayerID) {
 }
 
 // Power returns effective Combat Power, the only stat that clamps at 0: the sum
-// of Layer 1 (printed), Layer 4 (the card's own Cornered power, auras and their Cornered grants) and
-// Layer 5 (modifiers), clamped by Layer 6.
+// of Layer 1 (printed), Layer 4 (the card's own Cornered power, auras and their
+// Cornered grants) and Layer 5 (modifiers), clamped by Layer 6.
 func (g *Game) Power(a *Asset) int {
 	n := a.Printed().Power + a.TempPower() + g.whileCornered(a).Power
 	for _, st := range g.auras(a) {
