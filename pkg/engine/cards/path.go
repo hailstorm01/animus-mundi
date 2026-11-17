@@ -872,6 +872,30 @@ var pathDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Solarheart Monk": {
+		Text: []string{"When this card is put into your discard pile, chosen asset heals 2."},
+		Triggers: []ability.Trigger{
+			{
+				Hook:       ability.HookEntersDiscard,
+				ActiveZone: ability.ZoneDiscard,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpHeal,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Steel Rain": {
 		Text: []string{
 			"As an additional cost to enact this maneuver, discard up to 3 cards.",
