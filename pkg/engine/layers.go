@@ -1,5 +1,5 @@
 // Layers: effective characteristics through the six-layer pipeline (FR-LAY-001).
-// Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords
+// Nothing grants types (Layer 2), and Layer 3 holds a card's Cornered keywords,
 // the keywords a resolved step grants until end of turn, and auras' keyword
 // grants (`Game.auras`). Layer 5 holds power
 // and Maximum Health modifiers. Layer 4 holds power auras (`Game.auras`). The power
@@ -104,8 +104,9 @@ func (g *Game) CurrentHealth(a *Asset) int {
 
 // Keywords returns the asset's effective keywords: the printed ones, plus the
 // card's Cornered keywords while its controller is Cornered (SVY-R18), plus the
-// Resistant of each aura that applies (Game.auras, Layer 3). A
-// face-down asset has none, since its face has no Ability.
+// Resistant of each aura that applies (Game.auras, Layer 3). A face-down asset
+// has no Cornered keywords of its own, since its face has no Ability, but it
+// still receives auras' grants.
 func (g *Game) Keywords(a *Asset) Keywords {
 	kw := a.Printed().Keywords
 	if d := a.Printed().Ability; d != nil && d.Cornered != (ability.CorneredKeywords{}) && g.cornered(a.Controller) {

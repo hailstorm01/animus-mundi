@@ -4,7 +4,7 @@ title: "Aura keyword grants: StaticAura's Static.Resistant, a Layer 3 grant read
 kind: shape
 tier: sonnet
 wave: H
-status: changes
+status: review
 branch: m2/autoloop-wave-h/T-0258-aura-resistant-grant
 depends_on: [T-0256]
 claims: [shape:StaticAura keyword grant (Static.Resistant: every asset an aura's Filter matches has +Resistant N, a Layer 3 keyword grant read by g.Keywords through g.auras)]
@@ -76,3 +76,4 @@ Existing tests stay as they are and must still pass.
   1. `Game.Keywords`' comment ends "A face-down asset has none, since its face has no Ability." That is no longer true: a face-down asset now receives a face-up source's aura grant (an "other allied assets" aura matches a face-down Scratch Company, as T-0256's `TestFR_LAY_001_FaceDownSourceHasNoAura` shows for power). Say what holds: a face-down asset has no Cornered keywords of its own, since its face has no Ability, but it still receives auras' grants.
   2. The file comment's first sentence lost a comma: "Layer 3 holds a card's Cornered keywords the keywords a resolved step grants …" should read "Layer 3 holds a card's Cornered keywords, the keywords a resolved step grants until end of turn, and auras' keyword grants (`Game.auras`)."
   Re-run `go tool task check` and `go tool task sim-compare -- autoloop/m2-wave-h` after the fix.
+- 2026-11-16 kernel-engineer (round 1): (1) `Game.Keywords`' comment now says a face-down asset has no Cornered keywords of its own, since its face has no Ability, but still receives auras' grants. (2) The file comment's missing comma after "Cornered keywords" is restored. Comment-only changes in layers.go. `go tool task check` passed; `go tool task sim-compare -- autoloop/m2-wave-h` PASS byte for byte.
