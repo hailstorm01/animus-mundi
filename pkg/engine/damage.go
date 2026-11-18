@@ -17,13 +17,16 @@ func (r DamageResult) Taken() bool { return r.Absorbed+r.Committed > 0 }
 
 // dealDamage routes one discrete damage instance through the 5-stage
 // mitigation sequence (FR-REP-004). It never destroys anything; destruction
-// waits for the state-based death sweep (FR-LAY-002).
+// waits for the state-based death sweep (FR-LAY-002). Stage 1 may move the damage
+// to another target (redirectDamage); then Stages 2 to 5, the damage event and the
+// damage-taken triggers all name the new target, and the source is unchanged.
 func (g *Game) dealDamage(source, target *Asset, raw int, combat bool) DamageResult {
 	r := DamageResult{Raw: raw}
+
+	// Stage 1: target redirection.
+	target = g.redirectDamage(target)
 	kw := g.Keywords(target)
 	armorBefore := target.Armor
-
-	// Stage 1: target redirection. No executable card redirects damage yet.
 
 	// Stage 2: flat Resistant N. Negative Resistant amplifies, even 0 raw damage.
 	dmg := max(0, raw-kw.Resistant)

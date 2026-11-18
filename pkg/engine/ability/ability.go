@@ -168,12 +168,15 @@ func (c Cost) Counted() bool {
 type Would int
 
 const (
-	WouldBeDestroyed Would = iota + 1 // an asset matching the replacement's Filter would be destroyed, by the death sweep (being lethal) or by a kill step (FR-REP-001, FR-LAY-002, SVY-R15)
+	WouldBeDestroyed   Would = iota + 1 // an asset matching the replacement's Filter would be destroyed, by the death sweep (being lethal) or by a kill step (FR-REP-001, FR-LAY-002, SVY-R15)
+	WouldBeDealtDamage                  // damage would be dealt to an asset matching the replacement's Filter; it is dealt to the replacement's source instead, before the target's defenses apply (FR-REP-004 Stage 1); Steps stays empty
 )
 
 // Replacement is one printed replacement effect. If an asset matching Filter
-// would be destroyed (Event), do Steps instead (FR-REP-001). Filter is relative
-// to the controller of the replacement's source. Steps run inline, never on the
+// would be destroyed (Event), do Steps instead (FR-REP-001); if it would be dealt
+// damage, the damage is dealt to the source instead (FR-REP-004 Stage 1). Filter
+// is relative to the controller of the replacement's source, and a ZoneRefSame
+// criterion reads the source's current zone (SVY-R44). Steps run inline, never on the
 // stack, with that source as their source: SubjectSelf is the source, and
 // SubjectReplaced is the asset whose event is replaced.
 type Replacement struct {

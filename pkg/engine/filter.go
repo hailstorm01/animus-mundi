@@ -137,7 +137,7 @@ func inLocked(a *Asset, lock *LockedZone) bool {
 }
 
 // matchesFilter is matchesFilterAt without a locked zone, for callers that have
-// no stack item (costs, replacements).
+// no stack item (costs).
 func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
 	return g.matchesFilterAt(ctl, src, nil, f, a)
 }
