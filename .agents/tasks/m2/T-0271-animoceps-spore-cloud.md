@@ -4,7 +4,7 @@ title: "Animoceps Spore Cloud: one WouldBeDealtDamage replacement over allied un
 kind: card
 tier: flash
 wave: H
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h/T-0271-animoceps-spore-cloud
 depends_on: [T-0269, T-0270]
 claims: [card:Animoceps Spore Cloud]
@@ -111,3 +111,8 @@ Tests:
   - No new shape: T-0269's `WouldBeDealtDamage` with *Animoceps Node*'s filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-18 rules-test-author: wrote `pkg/engine/cards_animus_spore_cloud_test.go`, the seven listed tests. Status `tests-review`.
+  - Tests: `TestCard_AnimocepsSporeCloud_` `PrintedStats`, `EffectDamageToAlliedUnitLandsOnTheCloud`, `CombatHitOnAlliedDefenderLandsOnTheCloud`, `UnitInAnotherZoneIsNotCovered`, `EnemyUnitsAreNotCovered`, `AlliedStructuresAreNotCovered`, `TwoCloudsTheUnitsControllerChooses`, `FaceDownCloudRedirectsNothing`.
+  - Helpers requested: none. `go vet` is clean; `cardtown lint rules` passes.
+  - Today PrintedStats, the effect, the combat and the two-Clouds tests fail (the card is unsupported); the other four pass vacuously and guard the card once it is executable.
+  - Left out: nothing beyond the task's "Not this task" list.
