@@ -148,6 +148,8 @@ func (m *Monitors) Event(e engine.Event) {
 	switch e.Kind {
 	case engine.EventDecision:
 		m.checkTargetDecision(e)
+	case engine.EventReplace:
+		m.recordReplace(e)
 	case engine.EventCombat:
 		m.openCombat(e)
 	case engine.EventDamage:

@@ -9,6 +9,7 @@ type combatPair struct {
 	att, def         int  // asset IDs
 	attPow, defPow   int  // effective power in the last settled snapshot, -1 if not there
 	attDone, defDone bool // the attacker-to-defender and defender-to-attacker events have come
+	redOrig, redTo   int  // pending redirect: original target and redirecting asset (both 0 when none)
 }
 
 // openCombat starts a combat exchange: the next two damage events are its
@@ -27,6 +28,14 @@ func (m *Monitors) openCombat(e engine.Event) {
 	m.combat = cp
 }
 
+// recordReplace remembers a damage redirection for the next combat damage
+// event in an open exchange (FR-REP-004 Stage 1).
+func (m *Monitors) recordReplace(e engine.Event) {
+	if m.combat.left > 0 {
+		m.combat.redOrig, m.combat.redTo = e.Target, e.Source
+	}
+}
+
 // checkCombatDamage matches a Combat damage event to the open exchange.
 func (m *Monitors) checkCombatDamage(e engine.Event) {
 	const mon = monDamage
@@ -36,11 +45,13 @@ func (m *Monitors) checkCombatDamage(e engine.Event) {
 		return
 	}
 	c.left--
+	orig, to := c.redOrig, c.redTo
+	c.redOrig, c.redTo = 0, 0
 	var want int
 	switch {
-	case e.Source == c.att && e.Target == c.def && !c.attDone:
+	case e.Source == c.att && (e.Target == c.def || (orig == c.def && to != 0 && e.Target == to)) && !c.attDone:
 		c.attDone, want = true, c.attPow
-	case e.Source == c.def && e.Target == c.att && !c.defDone:
+	case e.Source == c.def && (e.Target == c.att || (orig == c.att && to != 0 && e.Target == to)) && !c.defDone:
 		c.defDone, want = true, c.defPow
 	default:
 		m.fail(mon, e.Seq, "combat damage from %d to %d is not the attacker %d / defender %d exchange", e.Source, e.Target, c.att, c.def)

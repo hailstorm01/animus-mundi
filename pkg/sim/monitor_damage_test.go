@@ -240,3 +240,102 @@ func TestDamage_Case4_RealGamesAreClean(t *testing.T) {
 		}
 	}
 }
+
+func TestDamage_RedirectedCombat(t *testing.T) {
+	board := baseSnap(0, 0,
+		powered(10, "Vanilla", 0, 3, 0),
+		powered(11, "Vanilla", 1, 2, 0),
+		powered(12, "Plated", 1, 2, 2),
+		powered(13, "Vanilla", 0, 3, 0),
+	)
+	rep := func(src, tgt int) engine.Event {
+		return engine.Event{Kind: "replace", Player: -1, Source: src, Target: tgt}
+	}
+
+	t.Run("redirected attacker half", func(t *testing.T) {
+		f, _ := damageCase(board,
+			combatEvent(10, 11),
+			rep(12, 11),
+			dmgEvent(10, 12, 3, true, 2, 2, 1),
+			dmgEvent(11, 10, 2, true, 0, 0, 2),
+		)
+		wantClean(t, "redirected attacker half", f.m)
+		wantCounts(t, "redirected attacker half", f.m, "damage-sequence", "FR-CBT-002", "FR-KWD-002k")
+	})
+
+	t.Run("redirected defender half", func(t *testing.T) {
+		f, _ := damageCase(board,
+			combatEvent(10, 11),
+			dmgEvent(10, 11, 3, true, 0, 0, 3),
+			rep(13, 10),
+			dmgEvent(11, 13, 2, true, 0, 0, 2),
+		)
+		wantClean(t, "redirected defender half", f.m)
+	})
+
+	t.Run("redirected hit with the wrong raw", func(t *testing.T) {
+		f, seq := damageCase(board,
+			combatEvent(10, 11),
+			dmgEvent(11, 10, 2, true, 0, 0, 2),
+			rep(12, 11),
+			dmgEvent(10, 12, 5, true, 2, 2, 3),
+		)
+		wantViolation(t, "wrong raw", f.m, "damage-sequence", damageRules, seq)
+		if v := f.m.Violation(); v != nil && !strings.Contains(v.Detail, "want the dealer's effective power 3") {
+			t.Errorf("got detail %q, want it to contain %q", v.Detail, "want the dealer's effective power 3")
+		}
+	})
+
+	t.Run("no replace event, no redirect", func(t *testing.T) {
+		f, seq := damageCase(board,
+			combatEvent(10, 11),
+			dmgEvent(10, 12, 3, true, 2, 2, 1),
+		)
+		wantViolation(t, "no replace", f.m, "damage-sequence", damageRules, seq)
+		if v := f.m.Violation(); v != nil && !strings.Contains(v.Detail, "is not the attacker 10 / defender 11 exchange") {
+			t.Errorf("got detail %q, want it to contain %q", v.Detail, "is not the attacker 10 / defender 11 exchange")
+		}
+	})
+
+	t.Run("redirect from another target does not apply", func(t *testing.T) {
+		f, seq := damageCase(board,
+			combatEvent(10, 11),
+			rep(12, 13),
+			dmgEvent(10, 12, 3, true, 2, 2, 1),
+		)
+		wantViolation(t, "redirect from other target", f.m, "damage-sequence", damageRules, seq)
+		if v := f.m.Violation(); v != nil && !strings.Contains(v.Detail, "is not the attacker 10 / defender 11 exchange") {
+			t.Errorf("got detail %q, want it to contain %q", v.Detail, "is not the attacker 10 / defender 11 exchange")
+		}
+	})
+
+	t.Run("redirect consumed by next damage event", func(t *testing.T) {
+		f, seq := damageCase(board,
+			combatEvent(10, 11),
+			rep(12, 10),
+			dmgEvent(10, 11, 3, true, 0, 0, 3),
+			dmgEvent(11, 12, 2, true, 2, 2, 0),
+		)
+		wantViolation(t, "redirect consumed", f.m, "damage-sequence", damageRules, seq)
+		if v := f.m.Violation(); v != nil && !strings.Contains(v.Detail, "is not the attacker 10 / defender 11 exchange") {
+			t.Errorf("got detail %q, want it to contain %q", v.Detail, "is not the attacker 10 / defender 11 exchange")
+		}
+	})
+
+	t.Run("replace event outside exchange", func(t *testing.T) {
+		f1, _ := damageCase(board,
+			rep(12, 11),
+			dmgEvent(10, 12, 3, false, 2, 2, 1),
+		)
+		wantClean(t, "outside exchange non-combat", f1.m)
+
+		f2, seq2 := damageCase(board,
+			rep(12, 11),
+			dmgEvent(10, 12, 3, true, 2, 2, 1),
+		)
+		wantViolation(t, "outside exchange combat", f2.m, "damage-sequence", damageRules, seq2)
+		if v := f2.m.Violation(); v != nil && !strings.Contains(v.Detail, "outside a combat exchange") {
+			t.Errorf("got detail %q, want it to contain %q", v.Detail, "outside a combat exchange")
+		}
+	})
+}
