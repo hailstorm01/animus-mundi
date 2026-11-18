@@ -4,7 +4,7 @@ title: "Sim damage monitor: a redirected combat hit is still the exchange's atta
 kind: harness
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0270-monitor-redirected-combat-damage
 depends_on: [T-0269]
 claims: [monitor:checkCombatDamage accepts a combat damage event redirected by the replace event before it]
@@ -56,3 +56,4 @@ Cases 1, 2 and 7's first half fail before the implementation (1 and 2 report a p
 - 2026-11-18 lead-architect (wave H run, session 31): queued with T-0269, split off under the D2 size rule (T-0269 already has four non-test files). Depends on T-0269 for the `replace` event's shape. Goes before T-0271, so the card never runs under a monitor that misreads it.
 - 2026-11-18 lead-architect (wave H run, session 32): Inputs, Shape and Acceptance Cases written against the run branch at d8309229; status `ready`, dispatched to Flash. Branch created from the run branch.
 - 2026-11-18 kernel-engineer: added TestDamage_RedirectedCombat in pkg/sim/monitor_damage_test.go covering acceptance cases 1-7 (confirmed failing on cases 1, 2, 3 before implementation and committed as test(T-0270)). Added recordReplace in pkg/sim/monitor_damage.go and wired engine.EventReplace in pkg/sim/monitor.go event switch. combatPair records pending redirection (redOrig, redTo) when left > 0, and checkCombatDamage consumes the pending redirection and allows matching redirected attacker or defender damage to the redirecting asset while verifying the dealer's power. Ran go test ./pkg/sim -run Damage (pass), go tool task check (pass), go tool task sim (clean), and go tool task sim-compare -- autoloop/m2-wave-h (pass, starter and stress sims match byte-for-byte). Status set to review.
+- 2026-11-18 lead-architect (wave H run, session 32): reviewed `git diff autoloop/m2-wave-h...` and approved, round 1. Scope: `monitor.go`, `monitor_damage.go` and the new `TestDamage_RedirectedCombat` in the `test(T-0270)` commit only; all seven acceptance cases are in it, and at f099275d it fails (cases 1, 2, 3). Asset IDs start at 1 (`state.go:193`), so 0 is a safe "no redirect" value. Re-ran in a review worktree: `go tool task check` (exit 0), `go tool task sim` (clean, P0 58.5%, P1 39.5%, draws 2.0%), `go tool task sim-compare -- autoloop/m2-wave-h` (byte-identical). Merged as 85a4ee7. Next: T-0271, *Animoceps Spore Cloud*.
