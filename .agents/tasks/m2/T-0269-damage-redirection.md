@@ -1,0 +1,80 @@
+---
+id: T-0269
+title: "Damage redirection: a WouldBeDealtDamage replacement deals the damage to its source instead, in dealDamage's Stage 1 (wave H shape, sonnet)"
+kind: shape
+tier: sonnet
+wave: H
+status: tests
+branch: m2/autoloop-wave-h/T-0269-damage-redirection
+depends_on: []
+claims: [replacement:WouldBeDealtDamage (damage that would be dealt to an asset matching the replacement's Filter is dealt to the replacement's source instead, FR-REP-004 Stage 1), damage:Stage 1 redirection in dealDamage (redirectDamage)]
+cards: []
+requirements: [FR-REP-001, FR-REP-002, FR-REP-003, FR-REP-004, FR-CBT-002, FR-LAY-002, FR-MOD-001, SVY-R23, SVY-R44]
+---
+
+## Goal
+A printed replacement can say "Redirect all damage that would be dealt to [assets matching a filter] to this [asset]" (`FR-REP-004` Stage 1, survey wave G). A new replacement event, `ability.WouldBeDealtDamage`, makes every damage instance that would be dealt to an asset its `Filter` matches (relative to the source's controller; "in the same zone" is the source's current zone, `SVY-R44`) be dealt to the replacement's source instead, before Stage 2, so Stages 2 to 5 use the new target's defenses and the new target's damage-taken triggers fire. The original target takes nothing. Combat damage stays combat damage, and its source stays the dealer. When several redirections apply to one instance, the affected asset's controller chooses one (`SVY-R23`, the existing `DecideReplacement`).
+
+*Animoceps Spore Cloud*, the card, is T-0271. The sim's damage monitor learns redirected combat damage in T-0270.
+
+## Inputs
+- FRD 01 (`docs/frd/01_Game_Rules_FRD.md`):
+  - `FR-REP-001`–`FR-REP-003` (line 529): Inline Event Substitution (`:530`, damage redirection named as a replacement, off the stack), Single Application per Discrete Event (`:531`), Simultaneous Replacement Conflicts & Controller Choice (`:532`: the affected asset's controller chooses, nothing asked when one applies, timeout per `FR-MOD-001` §6), Damage vs. Destruction Precedence (`:538`: "Damage redirected away from an asset in Stage 1 never causes that asset to face destruction").
+  - `FR-REP-004` (line 540): Stage 1 (`:562`: "the uncommitted damage moves to the new target, and Stages 2–5 evaluate using the **new target's** defenses (`Resistant`, `Stalwart`, `Armor`, and `Health`)"), Stage 5 (`:566-568`: damage-taken triggers on the target that took it; the source still counts as having dealt damage to the redirected target).
+  - `FR-CBT-002` Step 3: the defender's retaliation is its own instance; the attacker's combat kill needs the defender lethal (`HookCombatKill`, `SVY-R19`).
+  - `SVY-R44` (FRD 01 `FR-TGT-001`; outcome `docs/design/outcomes/2026-11-09-wave-f-same-zone-source.md`): "A continuous ability isn't on the stack and uses its source's current zone", naming *Animoceps Spore Cloud*.
+- Survey: `docs/design/m2_starter_set_ability_survey.md` wave G (`:35`) and the card row (`:171`: "`WOULD_TAKE_DAMAGE` on allied units in same zone → `REDIRECT_DAMAGE_TARGET` self"). FRD 02 benchmark #3 (`docs/frd/reference/02_Benchmark_Card_Blueprints.md:87-111`).
+- Design note: `docs/architecture/m2-ability-model.md:56` ("`dealDamage` Stage 1 asks redirection replacements (not built yet)") and wave H (`:200`, `:211`).
+- No new ruling needed: the card's one redirection lands on a Structure, which its own filter of units never matches, so redirected damage is never redirected again by an M2 card. Two copies in one zone are `SVY-R23`'s controller choice.
+- Code of the day (run branch at e008353c):
+  - `pkg/engine/ability/ability.go`: `Would` and `WouldBeDestroyed` (`:167-172`), `Replacement` and its comment (`:174-184`), `Filter.ZoneRef` (`:342`), `ZoneRef` (`:359-363`).
+  - `pkg/engine/replace.go`: `replacementsFor` (`:31-51`, matches with `matchesFilter`, so a `ZoneRef` criterion never matches today), `replacedQueue` (`:57-70`), `replaceDeath` (`:95-118`), `chooseReplacement` (`:120-140`, its prompt names a destruction).
+  - `pkg/engine/damage.go`: `dealDamage` (`:18-62`), Stage 1 placeholder comment (`:26`); `kw` and `armorBefore` are read from the target before Stage 1 (`:23-24`).
+  - `pkg/engine/filter.go`: `matchesFilter`'s comment (`:139-140`, "for callers that have no stack item (costs, replacements)"), `matchesFilterAt` (`:149`), `inLocked` (`:132-137`). `pkg/engine/placement.go:137`: `zoneLock`, which `Game.auras` already uses for a continuous ability's current zone (`layers.go:73-88`).
+  - Callers of `dealDamage`: combat (`combat.go:108-109`) and `stepDealDamage` (`effects.go:217`). Neither reads the result's target.
+  - `EventReplace` (`events.go:280`); the replacement tests count its events (`replacement_test.go:65-75`, `:334-341`).
+
+## Shape (the lead's plan)
+- `pkg/engine/ability/ability.go`: `WouldBeDealtDamage` after `WouldBeDestroyed`, commented: damage would be dealt to an asset matching the replacement's Filter; the damage is dealt to the replacement's source instead, before the target's defenses apply (`FR-REP-004` Stage 1); `Steps` stays empty. `Replacement`'s comment covers both events and says that a `ZoneRefSame` criterion reads the source's current zone (`SVY-R44`).
+- `pkg/engine/replace.go`:
+  - `replacementsFor(a, ev ability.Would, used)`: takes the event, keeps only replacements with `r.Event == ev`, and matches through `g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), r.Filter, a)`, as `Game.auras` does, so "in the same zone" reads the source's current zone for every replacement. No destruction replacement prints a `ZoneRef`, so nothing changes for them. `replacedQueue` and `replaceDeath` pass `ability.WouldBeDestroyed`.
+  - `chooseReplacement(a, opts, what)`: the prompt names the event (`"the destruction of %s"` or `"the damage dealt to %s"`). Same options, labels and fallback.
+  - New `redirectDamage(target *Asset) *Asset`: the replacements for `WouldBeDealtDamage` on `target` (a nil `used`; an option whose source is `target` itself is dropped), none → `target`; one → it; several → `chooseReplacement` asks `target`'s controller. It logs an `EventReplace` (`Player`: the source's controller, `Source`: the source, `Target`: the original target), "%s redirects the damage dealt to %s", and returns the source. Its comment says Stage 1 runs once per instance: FRD 01 doesn't say whether redirected damage can be redirected again, and no M2 card can reach that case; a card that could needs a ruling first.
+  - The file comment names damage redirection too.
+- `pkg/engine/damage.go`: Stage 1 calls `target = g.redirectDamage(target)` first; `kw` and `armorBefore` are read after it, from the new target. The source, `raw` and `combat` don't change. The damage event and `fireDamaged` name the new target. The dealDamage comment says so.
+- `pkg/engine/filter.go`: `matchesFilter`'s comment drops "replacements" (comment only).
+- Not changed: `combat.go` and `effects.go` (their calls go through `dealDamage`), `choice.go` (`DecideReplacement` already says "one event"). Not this task: the card (T-0271), `doc.go` (T-0271 updates it with the card), the sim monitor (T-0270).
+
+## Tests (shape tasks: written by rules-test-author; engineers never edit these)
+New tests go in `pkg/engine/redirect_test.go`. Cards are synthetic. Write a local helper `redirector(name string, health int, kw Keywords) *Card`: a `structure` printing one `ability.Replacement{Event: ability.WouldBeDealtDamage, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, ZoneRef: ability.ZoneRefSame}}` ("Redirect all damage that would be dealt to allied units in the same zone to this structure."). Reuse `structure`, `unit`, `trigUnit`, `s.put`, `s.moveTo`, `s.attack`, `s.do`, `s.script`, `s.enactWith`, `effectSource`, `allDamage`, `killTarget`, `drawN`, `eventsOfKind`, `replacementAsks`, `wantOffered`, `s.wantDamage`, `s.alive` (all exist). Player 0 is the active player. Read damage from `Asset.Damage` and Armor from `Asset.Armor`.
+
+- `TestFR_REP_004_RedirectDealsEffectDamageToTheSource`: player 0's redirector (Health 9) and a unit (Health 5, `Damage` 4) in player 0's Main Theater. A step of player 0 deals 3 damage to that unit (a targeted step or one whose subject is just that unit). The unit has `Damage` 4 and is still on the battlefield after the stack and the sweep (`FR-REP-001` `:538`); the redirector has `Damage` 3. The log has one `replace` event (Source the redirector, Target the unit) before the `damage` event, whose Target is the redirector and whose Source is the step's source.
+- `TestFR_REP_004_RedirectedDamageUsesTheNewTargetsDefenses`: the redirector has Resistant 1 and Armor 1 (Keywords), the allied unit has Armor 2. 3 effect damage to the unit: the unit keeps Armor 2 and `Damage` 0; the redirector loses its 1 Armor and has `Damage` 1 (3 − 1 Resistant = 2, 1 absorbed, 1 committed; Stage 1 then Stages 2–5 on the new target, `:562`).
+- `TestFR_REP_004_RedirectedCombatDamageStaysCombatDamage` (`FR-REP-004` Stage 3, `FR-CBT-002`): the redirector and the defending unit are player 1's, in player 1's Main Theater, and player 0 attacks. Player 0's attacker with power 4 and Health 10 attacks the allied unit (power 2); the redirector has Stalwart. The redirector has `Damage` 1 (Stalwart capped combat damage), the defending unit `Damage` 0, and the attacker `Damage` 2 (retaliation is its own instance, not redirected, since the attacker isn't the redirector's ally). The redirected `damage` event has `Combat` true.
+- `TestFR_REP_004_RedirectedLethalCombatDamageIsNoCombatKill` (`FR-CBT-002` Step 3, `HookCombatKill`): as above, but the redirector has Health 3 and no Stalwart, and the attacker prints a `HookCombatKill` trigger that draws 1. The redirector is destroyed at the sweep, the defending unit survives, and the attacker's trigger is never placed (its controller draws nothing).
+- `TestFR_REP_004_RedirectReadsTheSourcesCurrentZone` (`SVY-R44`): (a) the redirector in the Main Theater and an allied unit in player 0's Reserves: damage to the unit is not redirected. (b) The redirector put in player 0's Reserves (`s.put` there, or `s.moveTo`) with the allied unit in Reserves: redirected. (c) The redirector in player 0's Reserves and an allied unit in the Main Theater: not redirected. (d) The redirector moved from the Main Theater to player 0's Reserves after setup (`s.moveTo`): damage to an allied unit in the Main Theater is no longer redirected, and to one in Reserves it is.
+- `TestFR_REP_004_RedirectAppliesOnlyToWhatItsFilterMatches`: the redirector in player 0's Main Theater. Damage to (a) an enemy unit in the Main Theater, (b) another allied structure in the Main Theater, (c) player 0's Headquarters: none is redirected (no `replace` event; each target takes its damage; the redirector `Damage` 0).
+- `TestFR_REP_004_EveryInstanceIsRedirectedSeparately` (`FR-REP-003`, `FR-REP-004`): two allied units and the redirector in player 0's Main Theater, and one enemy unit there. One step deals 1 damage to all assets (`allDamage(1, ability.Filter{})`). The redirector has `Damage` 3 (its own instance and the two allied units'), the two allied units 0, the enemy unit 1; the log has two `replace` events.
+- `TestFR_REP_004_DamageTakenTriggersFireOnTheNewTarget` (`FR-REP-004` Stage 5, `HookDamaged`): the allied unit prints a `HookDamaged` trigger that draws 1, and the redirector prints one too (on its card's `Ability.Triggers`, beside its replacement). 2 effect damage to the unit: only the redirector's trigger is placed (player 0 draws exactly 1).
+- `TestFR_REP_001_TwoRedirectionsTheAffectedControllerChooses` (`SVY-R23`): two redirectors, "Cloud A" put first and "Cloud B" second, and an allied unit in player 0's Main Theater. 2 effect damage to the unit: player 0 is asked one `DecideReplacement` (`replacementAsks`) whose options are Cloud A then Cloud B (`wantOffered`). (a) Answer Cloud B: Cloud B has `Damage` 2, Cloud A 0, one `replace` event. (b) Unscripted (the fallback): Cloud A has `Damage` 2.
+- `TestFR_REP_004_KillIsNotRedirected` (`FR-REP-001`, `FR-LAY-002`): a kill step on the allied unit (`killTarget()` or an `OpKill` on it) destroys it; the redirector has `Damage` 0 and there is no `replace` event.
+
+Existing tests stay as they are and must still pass (`replacement_test.go`, the *Shifting Impossibility* card tests, and every damage test).
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- none
+
+## Allowed Files
+- `pkg/engine/ability/ability.go` (`WouldBeDealtDamage`, `Replacement`'s comment)
+- `pkg/engine/replace.go` (`replacementsFor`'s event and zone, `chooseReplacement`'s prompt, `redirectDamage`, the file comment)
+- `pkg/engine/damage.go` (Stage 1)
+- `pkg/engine/filter.go` (`matchesFilter`'s comment only)
+
+## Done When
+- [ ] The listed tests pass: `go test ./pkg/engine -run "Redirect|Replacement|Replace|Impossibility|Damage"`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (no starter or stress card prints `WouldBeDealtDamage`, and no destruction replacement prints a `ZoneRef`, so every log is byte-identical)
+
+## Log
+- 2026-11-18 lead-architect (wave H run, session 31): written against the run branch at e008353c. *Animoceps Spore Cloud* is the last card on `cards.NotYetExecutable` and the last of the wave H Deliverable's card order (design note `:201`, `:211`). No ruling needed: `FR-REP-004` Stage 1 (`:562`) fixes what a redirect does and whose defenses apply, `FR-REP-001` (`:532`) who chooses between two, `FR-REP-001` (`:538`) that the original target faces no destruction, and `SVY-R44` names this card for the current-zone reading. Checked against Overkill (`FR-KWD-002p`, Concordia and Soulless only, outside M2) and `HookCombatKill` (needs the defender lethal, which a redirect prevents). Whether redirected damage can be redirected again is open in FRD 01 but out of M2's reach (the only redirector is a Structure and filters units), so Stage 1 runs once and the code comment says so. Reuse: `replacementsFor`, `chooseReplacement` and `DecideReplacement` carry both events, and `zoneLock` is the one current-zone reader `Game.auras` already uses; searched `pkg/engine` and the task archive for another redirect (`grep -i redirect`: only Guardian's attack redirection, which is targeting, `FR-KWD-002j`, and the Stage 1 placeholder). Split under the D2 size rule: the shape (four non-test files, this task), the sim damage monitor (T-0270, harness, queued: `checkCombatDamage` fails a combat damage event whose target isn't the defender, which the Animus stress deck reaches once the card is executable) and the card with `doc.go` (T-0271, queued). Directives: none `open`; the `waiting` ones were checked against the repo and none has fired (#6, #7: mode is `serial`; #15 (2): no draw or end-of-turn hook; #71: no each-player effect; #91 (2), #106, #120, #142: no task touches a mode cost, a deck search with criteria, a mandatory discard cost or a tuck). `main` has no commits the run branch lacks. Status `tests`.
