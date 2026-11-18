@@ -1,4 +1,4 @@
-// Replacement effects: destruction replacement at the death sweep (FR-REP-001, SVY-R20 to SVY-R22).
+// Replacement effects: destruction replacement at the death sweep (FR-REP-001, SVY-R20 to SVY-R22) and damage redirection in dealDamage's Stage 1 (FR-REP-004).
 
 package engine
 
@@ -9,7 +9,7 @@ import (
 	"animus-mundi/pkg/engine/ability"
 )
 
-// replacementOption is one replacement that applies to a destruction, with the
+// replacementOption is one replacement that applies to an event, with the
 // asset that prints it.
 type replacementOption struct {
 	src *Asset
@@ -28,12 +28,13 @@ type usedKey struct {
 // death sweep, or one kill step (FR-REP-003, SVY-R24).
 type usedReplacements map[usedKey]bool
 
-// replacementsFor returns every replacement that applies to a's destruction now,
+// replacementsFor returns every replacement of event ev that applies to a now,
 // oldest source first, each source's replacements in printed order: those printed
 // by a face-up asset on the battlefield whose filter a matches, except those
 // already used on a in this window (FR-REP-003, SVY-R24). A source that is
-// itself lethal still applies until the sweep destroys it (SVY-R20).
-func (g *Game) replacementsFor(a *Asset, used usedReplacements) []replacementOption {
+// itself lethal still applies until the sweep destroys it (SVY-R20). A ZoneRef
+// criterion reads the source's current zone (SVY-R44).
+func (g *Game) replacementsFor(a *Asset, ev ability.Would, used usedReplacements) []replacementOption {
 	var out []replacementOption
 	for _, src := range g.assetsByID() {
 		if src.Printed().Ability == nil {
@@ -42,7 +43,7 @@ func (g *Game) replacementsFor(a *Asset, used usedReplacements) []replacementOpt
 		reps := src.Printed().Ability.Replacements
 		for i := range reps {
 			r := &reps[i]
-			if r.Event == ability.WouldBeDestroyed && g.matchesFilter(src.Controller, src.ID, r.Filter, a) && !used[usedKey{a.ID, src.ID, r}] {
+			if r.Event == ev && g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), r.Filter, a) && !used[usedKey{a.ID, src.ID, r}] {
 				out = append(out, replacementOption{src: src, rep: r})
 			}
 		}
@@ -57,7 +58,7 @@ func (g *Game) replacementsFor(a *Asset, used usedReplacements) []replacementOpt
 func (g *Game) replacedQueue(dying []*Asset, used usedReplacements) []*Asset {
 	var queued [2][]*Asset
 	for _, a := range g.assetsByID() {
-		if slices.Contains(dying, a) && len(g.replacementsFor(a, used)) > 0 {
+		if slices.Contains(dying, a) && len(g.replacementsFor(a, ability.WouldBeDestroyed, used)) > 0 {
 			queued[a.Controller] = append(queued[a.Controller], a)
 		}
 	}
@@ -97,13 +98,13 @@ func (g *Game) replaceDeaths(dying []*Asset, dies func(*Asset) bool, used usedRe
 // stack, with its source as their source. It reports whether it did. When several
 // apply, a's controller chooses one (chooseReplacement, SVY-R23).
 func (g *Game) replaceDeath(a *Asset, used usedReplacements) bool {
-	opts := g.replacementsFor(a, used)
+	opts := g.replacementsFor(a, ability.WouldBeDestroyed, used)
 	if len(opts) == 0 {
 		return false
 	}
 	pick := opts[0]
 	if len(opts) > 1 {
-		pick = g.chooseReplacement(a, opts)
+		pick = g.chooseReplacement(a, opts, fmt.Sprintf("the destruction of %s", a))
 	}
 	src, rep := pick.src, pick.rep
 	used[usedKey{a.ID, src.ID, rep}] = true
@@ -116,10 +117,10 @@ func (g *Game) replaceDeath(a *Asset, used usedReplacements) bool {
 }
 
 // chooseReplacement asks a's controller which of several replacements applies to
-// its destruction (FR-REP-001, SVY-R23). A timeout picks the first source in the
+// the event what names (FR-REP-001, SVY-R23). A timeout picks the first source in the
 // FR-MOD-001 §6 fixed order, a source's own replacements in printed order
 // (DecideReplacement's fallback).
-func (g *Game) chooseReplacement(a *Asset, opts []replacementOption) replacementOption {
+func (g *Game) chooseReplacement(a *Asset, opts []replacementOption, what string) replacementOption {
 	options := make([]Option, len(opts))
 	for i, o := range opts {
 		label := o.src.String()
@@ -133,7 +134,33 @@ func (g *Game) chooseReplacement(a *Asset, opts []replacementOption) replacement
 		options[i] = Option{Label: label, Ref: o.src.ID}
 	}
 	picks := g.choose(Decision{Player: a.Controller, Kind: DecideReplacement,
-		Prompt:  fmt.Sprintf("choose which replacement applies to the destruction of %s", a),
+		Prompt:  "choose which replacement applies to " + what,
 		Options: options, Min: 1, Max: 1})
 	return opts[picks[0]]
+}
+
+// redirectDamage is Stage 1 of dealDamage (FR-REP-004): it returns the asset that
+// damage about to be dealt to target is dealt to instead, the source of a
+// WouldBeDealtDamage replacement that applies. One applies: it is used. Several:
+// target's controller chooses (chooseReplacement, SVY-R23). None: target. A source
+// never redirects damage to itself. Stage 1 runs once per instance: FRD 01 doesn't
+// say whether redirected damage can be redirected again, and no M2 card can reach
+// that case; a card that could needs a ruling first.
+func (g *Game) redirectDamage(target *Asset) *Asset {
+	var opts []replacementOption
+	for _, o := range g.replacementsFor(target, ability.WouldBeDealtDamage, nil) {
+		if o.src != target {
+			opts = append(opts, o)
+		}
+	}
+	if len(opts) == 0 {
+		return target
+	}
+	pick := opts[0]
+	if len(opts) > 1 {
+		pick = g.chooseReplacement(target, opts, fmt.Sprintf("the damage dealt to %s", target))
+	}
+	g.logEvent(Event{Kind: EventReplace, Player: int(pick.src.Controller), Source: pick.src.ID, Target: target.ID},
+		"%s redirects the damage dealt to %s", pick.src, target)
+	return pick.src
 }
