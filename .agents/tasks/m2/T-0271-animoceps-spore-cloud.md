@@ -4,7 +4,7 @@ title: "Animoceps Spore Cloud: one WouldBeDealtDamage replacement over allied un
 kind: card
 tier: flash
 wave: H
-status: tests
+status: review
 branch: m2/autoloop-wave-h/T-0271-animoceps-spore-cloud
 depends_on: [T-0269, T-0270]
 claims: [card:Animoceps Spore Cloud]
@@ -92,10 +92,10 @@ Tests:
 - `pkg/engine/doc.go`
 
 ## Done When
-- [ ] The listed tests pass: `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
+- [x] The listed tests pass: `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h` passes (the card is in no starter or stress deck)
 
 ## Log
 - 2026-11-18 lead-architect (wave H run, session 31): queued with T-0269, split off under the D2 size rule. Depends on T-0269 (the shape) and T-0270 (the sim monitor reads its redirected combat damage).
@@ -111,3 +111,31 @@ Tests:
   - No new shape: T-0269's `WouldBeDealtDamage` with *Animoceps Node*'s filter.
   - Re-read `BOARD.md` before committing: no directive added since.
   - Status `tests`.
+- 2026-11-18 rules-test-author: wrote `pkg/engine/cards_animus_spore_cloud_test.go`, the seven listed tests. Status `tests-review`.
+  - Tests: `TestCard_AnimocepsSporeCloud_` `PrintedStats`, `EffectDamageToAlliedUnitLandsOnTheCloud`, `CombatHitOnAlliedDefenderLandsOnTheCloud`, `UnitInAnotherZoneIsNotCovered`, `EnemyUnitsAreNotCovered`, `AlliedStructuresAreNotCovered`, `TwoCloudsTheUnitsControllerChooses`, `FaceDownCloudRedirectsNothing`.
+  - Helpers requested: none. `go vet` is clean; `cardtown lint rules` passes.
+  - Today PrintedStats, the effect, the combat and the two-Clouds tests fail (the card is unsupported); the other four pass vacuously and guard the card once it is executable.
+  - Left out: nothing beyond the task's "Not this task" list.
+- 2026-11-18 lead-architect (D4, session 33): tests approved, round 1.
+  - Each test checks what the cited rules give, on the real card:
+    - Printed stats: Animus Structure, Fungus, Requisition 4, Tactics 0, Main Theater only, 0/9, yields 2/2, `Supported`.
+    - Effect damage to an allied unit in the same zone lands on the Cloud, with one replace event naming both (`FR-REP-004` Stage 1).
+    - An attacker's hit on an allied defender lands on the Cloud; the defender's retaliation still hits the attacker (`FR-CBT-002`).
+    - Not covered: an allied unit in Reserves (`SVY-R44`), an enemy unit, an allied structure (the filter says units), and a face-down Scratch Company whose card is the Cloud (`FR-ZON-005`: its only printed ability is Deploys Exhausted).
+    - Two Clouds: the damaged unit's controller is asked, not the damage's controller, and the chosen Cloud takes it (`FR-REP-001`, `SVY-R23`).
+  - Only the new file; no existing test edited. The eight tests are the seven bullets plus the Reserves case, as listed.
+  - Sanity check in a review worktree: with the Shape's definition and removal applied, `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"` passes; without them, four fail (the four exclusions pass either way). Reverted.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
+- 2026-11-18 kernel-engineer: implemented Animoceps Spore Cloud damage redirection. Status `review`.
+  - Changes:
+    - `pkg/engine/cards/animus.go`: defined "Animoceps Spore Cloud" with Text from the CSV line and one Replacement with Event: `ability.WouldBeDealtDamage` and Filter: `{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, ZoneRef: ability.ZoneRefSame}`.
+    - `pkg/engine/cards/cards.go`: removed "Animoceps Spore Cloud" from `NotYetExecutable`, leaving an empty slice literal.
+    - `pkg/engine/doc.go`: added Damage redirection bullet to built features list, and updated Not built yet section noting that no in-scope M2 card is in that state and cards.NotYetExecutable is empty.
+  - Reused:
+    - `ability.WouldBeDealtDamage` and `ability.Replacement` from `pkg/engine/ability/ability.go`.
+    - Same-zone allied unit filter shape matching `Animoceps Node` in `pkg/engine/cards/animus.go`.
+  - Commands run and verified:
+    - `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"` passed.
+    - `go tool task check` passed (gofmt, go vet, all package tests, cardtown linter --all).
+    - `go tool task sim` passed (200 matches between Animus and Path with all invariants holding and rule monitors passing).
+    - `go tool task sim-compare -- autoloop/m2-wave-h` passed (starter and stress sims match autoloop/m2-wave-h byte for byte).

@@ -50,6 +50,19 @@ var animusDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Animoceps Spore Cloud": {
+		Text: []string{"Redirect all damage that would be dealt to allied units in the same zone to this structure."},
+		Replacements: []ability.Replacement{
+			{
+				Event: ability.WouldBeDealtDamage,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					ZoneRef:    ability.ZoneRefSame,
+				},
+			},
+		},
+	},
 	"Animoceps Spores": {
 		Text: []string{
 			"Scratch 2, then return an allied Scratch Company unit to its owner's hand.",

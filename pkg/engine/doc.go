@@ -92,15 +92,21 @@
 //     order (SVY-R22). When several apply to one death, its controller chooses
 //     (DecideReplacement, SVY-R23). A replacement applies at most once to a given
 //     asset per sweep or kill step (SVY-R24).
+//   - Damage redirection (FR-REP-004 Stage 1): a face-up asset's printed
+//     WouldBeDealtDamage replacement deals each damage instance that would be
+//     dealt to an asset its Filter matches to the source instead, before any
+//     defense, so the source's defenses apply; "in the same zone" is the
+//     source's current zone (SVY-R44). When several apply, the damaged asset's
+//     controller chooses (DecideReplacement, SVY-R23).
 //   - Triggered abilities on a Headquarters, through the same self hooks.
 //
 // Not built yet:
-//   - Continuous abilities other than a card's own Cornered abilities and its
-//     own hand-active cost reduction, Regroup N, replacement effects other than
-//     destruction replacement and the damage pipeline (damage redirection), and
-//     match clocks. Cards whose text needs any of these load with
-//     Card.Unsupported set and cannot be deployed or enacted.
-//     cards.NotYetExecutable lists the in-scope M2 cards still in that state.
+//   - Continuous abilities other than auras, a card's own Cornered abilities
+//     and its own hand-active cost reduction, Regroup N, replacement effects
+//     other than destruction replacement and damage redirection, and match
+//     clocks. Cards whose text needs any of these load with Card.Unsupported
+//     set and cannot be deployed or enacted. No in-scope M2 card is in that
+//     state, so cards.NotYetExecutable is empty.
 //
 // Files:
 //   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
