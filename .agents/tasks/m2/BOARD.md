@@ -30,5 +30,5 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0270](T-0270-monitor-redirected-combat-damage.md) | Sim damage monitor reads a redirected combat hit (wave H harness, flash) | queued |
+| [T-0270](T-0270-monitor-redirected-combat-damage.md) | Sim damage monitor reads a redirected combat hit (wave H harness, flash) | ready |
 | [T-0271](T-0271-animoceps-spore-cloud.md) | *Animoceps Spore Cloud* (wave H card, flash) | queued |
