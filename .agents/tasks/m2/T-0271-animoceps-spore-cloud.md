@@ -4,7 +4,7 @@ title: "Animoceps Spore Cloud: one WouldBeDealtDamage replacement over allied un
 kind: card
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0271-animoceps-spore-cloud
 depends_on: [T-0269, T-0270]
 claims: [card:Animoceps Spore Cloud]
