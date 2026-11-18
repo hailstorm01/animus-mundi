@@ -4,7 +4,7 @@ title: "Animoceps Spore Cloud: one WouldBeDealtDamage replacement over allied un
 kind: card
 tier: flash
 wave: H
-status: review
+status: done
 branch: m2/autoloop-wave-h/T-0271-animoceps-spore-cloud
 depends_on: [T-0269, T-0270]
 claims: [card:Animoceps Spore Cloud]
@@ -139,3 +139,14 @@ Tests:
     - `go tool task check` passed (gofmt, go vet, all package tests, cardtown linter --all).
     - `go tool task sim` passed (200 matches between Animus and Path with all invariants holding and rule monitors passing).
     - `go tool task sim-compare -- autoloop/m2-wave-h` passed (starter and stress sims match autoloop/m2-wave-h byte for byte).
+- 2026-11-18 lead-architect (D5, session 33): approved, round 1.
+  - After `test(T-0271)` (2b523c5), only the three Allowed Files and this task file changed (plus the board's status cell). No test was edited.
+  - The code is the planned definition: one `WouldBeDealtDamage` replacement with *Animoceps Node*'s allied-units-in-the-same-zone filter and no steps, between *Animoceps Shambler* and *Animoceps Spores*. `NotYetExecutable` is an empty slice literal. `doc.go` has the planned built bullet and not-built bullet, word for word.
+  - No new shape, no card name in engine code, no duplicate.
+  - Re-ran on the merged run branch (2af7dfb):
+    - `gofmt -l pkg cmd` clean.
+    - `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"` ok.
+    - `go tool task check` exit 0.
+    - `go tool task sim` exit 0 (P0 58.5%, P1 39.5%, draws 2.0%; 50/50 Animus starter cards executable).
+    - `go tool task sim-compare -- 55ec5660` (the run branch before the merge) `[PASS]`.
+  - Status `done`, merged (2af7dfb). `cards.NotYetExecutable` is now empty.

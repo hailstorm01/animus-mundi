@@ -30,4 +30,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0271](T-0271-animoceps-spore-cloud.md) | *Animoceps Spore Cloud* (wave H card, flash) | ready |

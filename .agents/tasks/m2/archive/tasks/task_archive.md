@@ -274,3 +274,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0268 | *Solarheart Monk*: an enter-discard trigger, chosen asset heals 2 (`FR-ZON-004`, `FR-KWD-002d`; wave H card, flash) | done |
 | T-0269 | Damage redirection: `WouldBeDealtDamage`, a replacement whose source takes the damage instead, in `dealDamage`'s Stage 1 (`FR-REP-004`, `SVY-R23`, `SVY-R44`; wave H shape, sonnet; *Animoceps Spore Cloud*'s shape) | done |
 | T-0270 | Sim damage monitor: a redirected combat hit is still the exchange's attacker-to-defender instance (`FR-CBT-002`, `FR-REP-004`; wave H harness, flash) | done |
+| T-0271 | *Animoceps Spore Cloud*: one `WouldBeDealtDamage` replacement over allied units in the same zone (`FR-REP-004`, `SVY-R23`, `SVY-R44`; wave H card, flash) | done |
