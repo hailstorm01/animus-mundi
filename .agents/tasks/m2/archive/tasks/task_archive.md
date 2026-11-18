@@ -272,3 +272,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0266 | *Mutation Swell*: a counted kill cost {2, 4} on allied Scratch Company units, one different chosen unit card from the discard pile per 2 killed, deployed for free (`FR-TRN-003a`, `SVY-R53`, `SVY-R54`; wave H card, flash; #158 (3), (4)) | done |
 | T-0267 | `HookEntersDiscard`: a pile trigger fired by `putCard` whenever its card is put into its owner's discard pile, from any zone (`FR-ZON-004`, `FR-ZON-005`; wave H shape, sonnet; *Solarheart Monk*'s hook) | done |
 | T-0268 | *Solarheart Monk*: an enter-discard trigger, chosen asset heals 2 (`FR-ZON-004`, `FR-KWD-002d`; wave H card, flash) | done |
+| T-0269 | Damage redirection: `WouldBeDealtDamage`, a replacement whose source takes the damage instead, in `dealDamage`'s Stage 1 (`FR-REP-004`, `SVY-R23`, `SVY-R44`; wave H shape, sonnet; *Animoceps Spore Cloud*'s shape) | done |
