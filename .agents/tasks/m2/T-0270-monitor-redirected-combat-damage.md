@@ -4,7 +4,7 @@ title: "Sim damage monitor: a redirected combat hit is still the exchange's atta
 kind: harness
 tier: flash
 wave: H
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h/T-0270-monitor-redirected-combat-damage
 depends_on: [T-0269]
 claims: [monitor:checkCombatDamage accepts a combat damage event redirected by the replace event before it]
