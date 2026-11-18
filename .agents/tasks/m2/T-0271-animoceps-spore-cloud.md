@@ -4,7 +4,7 @@ title: "Animoceps Spore Cloud: one WouldBeDealtDamage replacement over allied un
 kind: card
 tier: flash
 wave: H
-status: tests-review
+status: ready
 branch: m2/autoloop-wave-h/T-0271-animoceps-spore-cloud
 depends_on: [T-0269, T-0270]
 claims: [card:Animoceps Spore Cloud]
@@ -116,3 +116,13 @@ Tests:
   - Helpers requested: none. `go vet` is clean; `cardtown lint rules` passes.
   - Today PrintedStats, the effect, the combat and the two-Clouds tests fail (the card is unsupported); the other four pass vacuously and guard the card once it is executable.
   - Left out: nothing beyond the task's "Not this task" list.
+- 2026-11-18 lead-architect (D4, session 33): tests approved, round 1.
+  - Each test checks what the cited rules give, on the real card:
+    - Printed stats: Animus Structure, Fungus, Requisition 4, Tactics 0, Main Theater only, 0/9, yields 2/2, `Supported`.
+    - Effect damage to an allied unit in the same zone lands on the Cloud, with one replace event naming both (`FR-REP-004` Stage 1).
+    - An attacker's hit on an allied defender lands on the Cloud; the defender's retaliation still hits the attacker (`FR-CBT-002`).
+    - Not covered: an allied unit in Reserves (`SVY-R44`), an enemy unit, an allied structure (the filter says units), and a face-down Scratch Company whose card is the Cloud (`FR-ZON-005`: its only printed ability is Deploys Exhausted).
+    - Two Clouds: the damaged unit's controller is asked, not the damage's controller, and the chosen Cloud takes it (`FR-REP-001`, `SVY-R23`).
+  - Only the new file; no existing test edited. The eight tests are the seven bullets plus the Reserves case, as listed.
+  - Sanity check in a review worktree: with the Shape's definition and removal applied, `go test ./pkg/engine -run "AnimocepsSporeCloud|TestDefs"` passes; without them, four fail (the four exclusions pass either way). Reverted.
+  - Status `ready`, dispatched to `kernel-engineer` (flash).
