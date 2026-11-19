@@ -4,7 +4,7 @@ title: "`Card.Deployable`, and `DiscardCard` finds a card through `pileCard` (di
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (a), (b))
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0286-deployable-and-discard-lookup
 depends_on: [T-0285]
 claims: [func:engine.Card.Deployable]
@@ -144,3 +144,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 6: `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly 4 lines (actions.go 1/1, card.go 6/0, freedeploy.go 1/1, zones.go 2/4).
     - Case 7: `git -C W diff autoloop/m2-wave-h.2 --stat` listed only the 4 engine files and the task file.
     - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task sim` passed (200 playouts, invariants held); `go -C W tool task check` passed all stages (fmt-check, vet, test, waverun, cardtown lint --all).
+- 2026-11-19, lead-architect (wave H.2 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 607c182. Flash run `174583a7-38df-42d0-8823-2ba1359a3fa5`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0286-deployable-and-discard-lookup` (8dd798b):
+  - Scope: the four Allowed Files and this file. The implementation commit (6246e49) holds only the four non-test files, and all four blobs match the lead's dry run (`card.go` 9bb2fc9, `actions.go` 46396bd, `freedeploy.go` 4fcebd3, `zones.go` 0b61b4d). No test file changed.
+  - Fences and reuse: `check` and `freeDeployZones` call `Card.Deployable` and compare no card type for it; `DiscardCard` has no ID loop of its own and calls `pileCard`, the one ID lookup in a pile. Nothing old survives, and nothing forwards (ADR 0007).
+  - Re-run by the reviewer in a review worktree of the task branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.2` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #173 (a) and (b) are applied; #173 stays on the board for (c) and (d), T-0287, which is next.

@@ -289,3 +289,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0283 | `ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `StackItem.Keyword` become `FromKeyword` (directive #171; wave H.2 harness, flash, pure rename) | done |
 | T-0284 | Each linter input path is written once: `specdoc.FRDDir`, `specdoc.RulesFRD`, `cardsheet.Dir` (directive #172 (a); wave H.2 harness, flash, a move) | done |
 | T-0285 | `cardtown lint` asks the linters what they read: `fences.Reads`, `rules.Reads` (directive #172 (b); wave H.2 harness, flash) | done |
+| T-0286 | `Card.Deployable`, and `DiscardCard` finds a card through `pileCard` (directive #173 (a), (b); wave H.2 harness, flash, pure move) | done |
