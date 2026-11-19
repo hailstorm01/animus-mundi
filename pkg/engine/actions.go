@@ -81,7 +81,7 @@ func (g *Game) Apply(a Action) error {
 	case ActActivate:
 		as := g.Asset(a.Asset)
 		act := as.Printed().Ability.Activated[a.Ability]
-		g.declare(activatedPlacement(a.Player, as, act), act.Effect, StackAbility)
+		g.declare(g.activatedPlacement(a.Player, as, act), act.Effect, StackAbility)
 	case ActMarch:
 		as := g.Asset(a.Asset)
 		g.exhaust(as)
@@ -169,7 +169,7 @@ func (g *Game) check(a Action) error {
 			return illegal("%s has no activated ability %d", as, a.Ability)
 		}
 		act := def.Activated[a.Ability]
-		if !g.placeable(activatedPlacement(a.Player, as, act), act.Effect) {
+		if !g.placeable(g.activatedPlacement(a.Player, as, act), act.Effect) {
 			return illegal("a cost of %s ability %d cannot be paid, or a required target or mode has no legal choice (FR-ACT-001, SVY-R36)", as, a.Ability)
 		}
 	case ActMarch:

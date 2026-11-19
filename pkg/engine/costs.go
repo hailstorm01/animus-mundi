@@ -171,7 +171,7 @@ func (g *Game) ActivatedCost(a *Asset, i int) (req, tac int, ok bool) {
 			tac += c.Tac
 		}
 	}
-	return req, tac, g.otherCostsPayable(activatedPlacement(a.Controller, a, act))
+	return req, tac, g.otherCostsPayable(g.activatedPlacement(a.Controller, a, act))
 }
 
 // DiscardDeployCost returns the Requisition and Tactics that deploying inst from

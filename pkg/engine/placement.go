@@ -124,12 +124,29 @@ func deployPermission(c *Card) *ability.Static {
 
 // activatedPlacement is the placement of the printed ability act of asset a,
 // activated by pid, for both its legality check and declaring it.
-func activatedPlacement(pid PlayerID, a *Asset, act ability.Activated) placement {
+func (g *Game) activatedPlacement(pid PlayerID, a *Asset, act ability.Activated) placement {
 	pl := placement{controller: pid, source: a.ID, inst: a.Inst, label: a.Printed().Name, costs: act.Costs}
-	if act.Effect.ReadsZoneRef(ability.ZoneRefSame) {
-		pl.locked = zoneLock(a)
-	}
+	pl.locked = g.sameZoneLock(act.Effect, a.ID, pl.locked)
 	return pl
+}
+
+// sameZoneLock is the zone lock an item whose effect e reads "in the same
+// zone" takes on placement: the zone of its source now, or its last-known zone
+// if it has left, and none for a source in a pile (SVY-R44, FR-ZON-004). For
+// any other effect it is held, the lock the placement already has. Activated
+// abilities and triggers both lock through it.
+func (g *Game) sameZoneLock(e ability.Effect, source int, held *LockedZone) *LockedZone {
+	if !e.ReadsZoneRef(ability.ZoneRefSame) {
+		return held
+	}
+	src := g.Asset(source)
+	if src == nil {
+		src = g.LastKnown(source)
+	}
+	if src == nil {
+		return nil
+	}
+	return zoneLock(src)
 }
 
 // zoneLock is the zone a's source-relative filters lock: a's zone and
