@@ -214,11 +214,6 @@ func runLint(args []string) {
 	}
 }
 
-// isRulesPath reports whether a change can affect executable rules traceability.
-func isRulesPath(pLower string) bool {
-	return pLower == strings.ToLower(specdoc.FRDDir+"/"+specdoc.RulesFRD) || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
-}
-
 // lintSelection is which linters a lint run runs, and the changed FRD documents and card
 // sheets that the FRD, sheet and syntax linters then read.
 type lintSelection struct {
@@ -262,10 +257,10 @@ func selectChanged(paths []string, gitErr error) lintSelection {
 	var s lintSelection
 	for _, path := range paths {
 		pLower := strings.ToLower(filepath.ToSlash(path))
-		if isRulesPath(pLower) {
+		if rules.Reads(pLower) {
 			s.rules = true
 		}
-		if isFencesPath(pLower) {
+		if fences.Reads(pLower) {
 			s.fences = true
 		}
 		if strings.HasPrefix(pLower, specdoc.FRDDir+"/") && strings.HasSuffix(pLower, ".md") {
@@ -278,13 +273,4 @@ func selectChanged(paths []string, gitErr error) lintSelection {
 	s.sheets = len(s.changedCsvs) > 0
 	s.syntax = s.sheets
 	return s
-}
-
-// isFencesPath reports whether a change can affect the package fences: any Go file under
-// pkg/, cmd/ or tools/ (the alias check reads them all), plus the data inputs.
-func isFencesPath(pLower string) bool {
-	return ((strings.HasPrefix(pLower, "pkg/") || strings.HasPrefix(pLower, "cmd/") || strings.HasPrefix(pLower, "tools/")) && strings.HasSuffix(pLower, ".go")) ||
-		(strings.HasPrefix(pLower, cardsheet.Dir+"/") && strings.HasSuffix(pLower, ".csv")) ||
-		pLower == specdoc.FRDDir+"/"+specdoc.MatrixFile ||
-		pLower == "docs/design/"+fences.SurveyFile
 }
