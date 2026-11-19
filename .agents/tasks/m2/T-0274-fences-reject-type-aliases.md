@@ -4,7 +4,7 @@ title: "`cardtown lint fences` rejects type aliases (directive #165, ADR 0007; w
 kind: harness
 tier: flash
 wave: H.1 (board directive #165)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.1/T-0274-fences-reject-type-aliases
 depends_on: [T-0273]
 claims: [func:fences.checkAliases, var:fences.aliasRoots, func:isFencesPath]
@@ -320,10 +320,31 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `cmd/cardtown/lint_test.go` (Test edits 2 and 3 only; the `test(T-0274)` commit only)
 
 ## Done When
-- [ ] Cases 1-10 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-10 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-18, lead-architect (wave H.1 run, session 3): written in full against ee15b7f for #165. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task (#165, #160, #161, #166, #167, #168, #162, #163 and #164 are `open: before the next Deliverables task`). Harness, so it skips `tests` and goes straight to `ready`. Tier `flash`, because the edits and the test files are exact and were dry-run. Test edits 1-3 are the only changes to existing tests: the PASS line names the new check, and `isFencesPath` must cover the files the check reads. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and the `-run` patterns with `|` or brackets are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142: not fired. Next: `kernel-engineer` on Flash.
+- 2026-11-18, kernel-engineer: implemented T-0274 (directive #165, ADR 0007).
+  - Changes:
+    - Added `pkg/toolchain/linter/fences/aliases.go` defining `aliasRoots` (`pkg`, `cmd`, `tools`) and `checkAliases(repoRoot)` parsing non-test Go files with `ast.Inspect` to reject type aliases (`*ast.TypeSpec` with `Assign.IsValid()`), citing ADR 0007.
+    - Updated `pkg/toolchain/linter/fences/fences.go`: `Analyze` calls `checkAliases` and aggregates alias violations; `Lint` prints updated PASS line including `and type aliases.`.
+    - Updated `cmd/cardtown/lint.go`: `isFencesPath` includes any Go file under `pkg/`, `cmd/`, or `tools/`.
+    - Added tests in `pkg/toolchain/linter/fences/aliases_test.go` (`TestFences_Case41` to `TestFences_Case47`).
+    - Updated `pkg/toolchain/linter/fences/fences_test.go` (`TestFences_Case36_PassLine`) and `cmd/cardtown/lint_test.go` (`TestIsFencesPath`, `TestSelectChanged_Case1_Paths`).
+  - Reused:
+    - `goFilesUnder` in `pkg/toolchain/linter/fences/fences.go` for non-test Go file discovery.
+  - Acceptance cases:
+    - Case 1: `go -C W test ./pkg/toolchain/linter/fences/ ./cmd/cardtown/` failed at `test(T-0274)` before Edits 1-3 (Case36, Case41-47, TestIsFencesPath, TestSelectChanged_Case1_Paths failed).
+    - Case 2: `go -C W test ./pkg/toolchain/linter/fences/ -run "TestFences_Case4[1-4]"` passed (`ok animus-mundi/pkg/toolchain/linter/fences 0.600s`).
+    - Case 3: `go -C W test ./pkg/toolchain/linter/fences/ -run "TestFences_Case4[5-6]"` passed (`ok animus-mundi/pkg/toolchain/linter/fences 0.637s`).
+    - Case 4: `go -C W test ./pkg/toolchain/linter/fences/ -run "TestFences_Case3[5-6]|TestFences_Case47"` passed (`ok animus-mundi/pkg/toolchain/linter/fences 0.597s`).
+    - Case 5: `go -C W test ./cmd/cardtown/ -run "TestIsFencesPath|TestSelectChanged"` passed (`ok animus-mundi/cmd/cardtown 0.748s`).
+    - Case 6: `go -C W run ./cmd/cardtown lint fences` passed (exit 0, `[PASS] Package code is free of card names, invalid markers, disallowed imports and type aliases.`).
+    - Case 7: `go -C W tool task sim-compare -- autoloop/m2-wave-h.1` passed (`[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`).
+    - Case 8: `git -C W diff autoloop/m2-wave-h.1 --numstat -- pkg cmd` printed exactly the 6 expected files with matching stat numbers.
+    - Case 9: `git -C W diff autoloop/m2-wave-h.1 --stat` confirmed only the 6 files and the task file changed.
+    - Case 10: `gofmt -l W/cmd W/pkg` clean; `go -C W tool task sim` passed (200/200 games, all invariants hold); `go -C W tool task check` passed cleanly (fmt-check, vet, all tests, cardtown lint --all).
+  - Status moved to `review`. Ready for `lead-architect`.
