@@ -4,7 +4,7 @@ title: "`doc.go`'s Files list says what wave H and #159 to #162 built (directive
 kind: harness
 tier: flash
 wave: H.1 (board directive #163)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.1/T-0279-doc-go-files
 depends_on: [T-0278]
 claims: [file:pkg/engine/doc.go]
@@ -90,10 +90,33 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None: comments only. No test file changes.
 
 ## Done When
-- [ ] Cases 1-7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.1 run, session 8): written in full against b5779c6 for #163 (f). Session 8's first attempt (scratch `20261118-215328-8`) committed #163 (a)-(e) and (g) in the design note (b5779c6) and dry-ran this edit, then ended before writing a task or a run-file row; its two worktrees were clean apart from that dry run and were removed. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #163 and #164 are `open: before the next Deliverables task`. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edit is exact and was dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with parentheses are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook: `git grep` for one finds nothing), #71, #91 (2), #106, #120, #142 (wave H.1 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (Gemini Flash): implemented directive #163 (f) comment updates in `pkg/engine/doc.go` (committed as `1a065025 docs(engine): doc.go Files list names redirectDamage, sameZoneLock, matchesFromSource and checkShapeReads (T-0279)`). No new shapes declared; comments only.
+  Acceptance cases verified:
+  1. `git -C W grep -n "replace.go: destruction replacement and damage redirection" -- pkg/engine/doc.go`:
+     `pkg/engine/doc.go:136://     and match loss. replace.go: destruction replacement and damage redirection` (1 line)
+  2. The new names in Files list:
+     - `git -C W grep -n "(redirectDamage)" -- pkg/engine/doc.go`: `pkg/engine/doc.go:137://     (redirectDamage). layers.go: derived power, health and keywords,` (1 line)
+     - `git -C W grep -n "(sameZoneLock)" -- pkg/engine/doc.go`: `pkg/engine/doc.go:121://     effect on placement (sameZoneLock). costs.go: a card's cost and` (1 line)
+     - `git -C W grep -n "(matchesFromSource)" -- pkg/engine/doc.go`: `pkg/engine/doc.go:126://     source (matchesFromSource). effects.go: running a resolved ability's steps.` (1 line)
+     - `git -C W grep -n "checkShapeReads, which rejects" -- pkg/engine/doc.go`: `pkg/engine/doc.go:129://     cardload.go: the CSV loader, and checkShapeReads, which rejects a definition` (1 line)
+  3. Steps line names `Step.Keywords`:
+     - `git -C W grep -n "OpGrantKeyword (the keywords of Step.Keywords" -- pkg/engine/doc.go`: `pkg/engine/doc.go:43://     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103), OpGrantKeyword (the keywords of Step.Keywords granted until end of turn, FR-LAY-001) and OpLookTop (a look at the top cards with free deploys and a bottom order, FR-MOD-001 §4), with "all" steps, source-power values, the` (1 line)
+     - `git -C W grep -n "OpGrantKeyword (a keyword granted" -- pkg/engine/doc.go`: prints nothing (exit code 1)
+  4. Exactly the edit:
+     - `git -C W diff autoloop/m2-wave-h.1 --numstat -- pkg docs`: `10	6	pkg/engine/doc.go` (1 line)
+     - `git -C W rev-parse HEAD:pkg/engine/doc.go`: `8de0e5daf06981a571e71a468ebab8f60ae6c4a6`
+  5. Nothing else changed:
+     - `git -C W diff autoloop/m2-wave-h.1 --stat`: lists only `pkg/engine/doc.go` and `.agents/tasks/m2/T-0279-doc-go-files.md`
+  6. Sims byte-identical:
+     - `go -C W tool task sim-compare -- autoloop/m2-wave-h.1`: `[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`
+  7. Linters and tests:
+     - `gofmt -l W/pkg`: clean (no output)
+     - `go -C W tool task check`: PASS (gofmt, vet, tests, full cardtown linter suite)
+     - `go -C W tool task sim`: PASS (200 starter games, all invariants holding)
