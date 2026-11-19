@@ -31,5 +31,5 @@ A move is one task. Updating references doesn't count toward the D2 size rule's 
 
 - Moves produce large but mechanical diffs, including renames in test files that the task names as authorized edits. Review checks that the old name is gone (`git grep`) rather than reading each line.
 - `cardtown lint fences` rejects type alias declarations in non-test Go code (board directive #165). Forwarding wrappers can't be detected mechanically, so plans (lead-architect D2) and reviews (D5, Runbook E) reject them.
-- The three wrappers listed above predate this record. Removing them is a separate decision for the user; until then they are known exceptions, not precedents.
+- The three wrappers listed above predate this record. The user scheduled their removal the same day: board directives #166 to #168, in wave H.1.
 - Revisit this if a package gains outside consumers, for example a published client SDK in M5. A compatibility alias may then be the lesser cost, and it needs its own record.
