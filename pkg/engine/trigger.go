@@ -83,24 +83,24 @@ func activeIn(src Zone, z ability.Zone) bool {
 // fireDiscarded buffers inst's discarded-from-hand triggers (FR-ZON-004).
 // discardCards calls it after inst is in its owner's discard pile.
 func (g *Game) fireDiscarded(inst *Instance) {
-	g.fireHook(pileSource(g, inst), ability.HookDiscardedFromHand)
+	g.fireHook(pileSource(g, inst), ability.HookDiscardedFromHand, nil)
 }
 
 // fireEntersDiscard buffers inst's enters-discard triggers (FR-ZON-004,
 // FR-ZON-005). putCard calls it after inst is in its owner's discard pile.
 func (g *Game) fireEntersDiscard(inst *Instance) {
-	g.fireHook(pileSource(g, inst), ability.HookEntersDiscard)
+	g.fireHook(pileSource(g, inst), ability.HookEntersDiscard, nil)
 }
 
 // fireDeploy buffers a's own deploy triggers (self hook only). The controller
 // is a's controller now. They wait for the flush after the item's sweep.
-func (g *Game) fireDeploy(a *Asset) { g.fireHook(assetSource(a), ability.HookDeploy) }
+func (g *Game) fireDeploy(a *Asset) { g.fireHook(assetSource(a), ability.HookDeploy, nil) }
 
 // fireMoved buffers a's own move triggers (self hook only). moveOnBattlefield
 // calls it after a is placed in its new zone (SVY-R1, FR-ZON-002).
 // Each trigger locks the zone a moved to, its own value, fixed by the event (SVY-R45).
 func (g *Game) fireMoved(a *Asset) {
-	added := g.fireHook(assetSource(a), ability.HookMoves)
+	added := g.fireHook(assetSource(a), ability.HookMoves, nil)
 	for i := range added {
 		added[i].locked = zoneLock(a)
 	}
@@ -109,20 +109,20 @@ func (g *Game) fireMoved(a *Asset) {
 // fireKilled buffers a's own death triggers. The deathSweep calls it before a
 // leaves the battlefield, so the controller is a's last-known controller. A
 // face-down asset fires nothing (FR-ZON-004).
-func (g *Game) fireKilled(a *Asset) { g.fireHook(assetSource(a), ability.HookKilled) }
+func (g *Game) fireKilled(a *Asset) { g.fireHook(assetSource(a), ability.HookKilled, nil) }
 
 // fireDamaged buffers a's own damage-taken triggers (Unbowed). dealDamage calls it
 // when a took damage, so the controller is a's controller now, kept if a then dies.
-func (g *Game) fireDamaged(a *Asset) { g.fireHook(assetSource(a), ability.HookDamaged) }
+func (g *Game) fireDamaged(a *Asset) { g.fireHook(assetSource(a), ability.HookDamaged, nil) }
 
 // fireExhausted buffers a's own exhaust triggers. exhaust calls it after a becomes Exhausted.
-func (g *Game) fireExhausted(a *Asset) { g.fireHook(assetSource(a), ability.HookExhausted) }
+func (g *Game) fireExhausted(a *Asset) { g.fireHook(assetSource(a), ability.HookExhausted, nil) }
 
 // fireCombatKill buffers att's own combat-kill triggers. resolveAttack calls it when
 // the attacker's combat damage left def lethal; the triggers wait on def's
 // destruction, because a replaced death is not a kill (SVY-R19).
 func (g *Game) fireCombatKill(att, def *Asset) {
-	added := g.fireHook(assetSource(att), ability.HookCombatKill)
+	added := g.fireHook(assetSource(att), ability.HookCombatKill, nil)
 	for i := range added {
 		added[i].awaits = def.ID
 	}
@@ -137,19 +137,15 @@ func (g *Game) confirmDestroyed(id int) {
 	}
 }
 
-// fireHook buffers src's own triggers for hook in printed order: the one place
-// a trigger's gates are checked. A face-down asset has no printed abilities.
-// It returns the entries it added, a slice of the buffer, so a caller can set a
-// field on each before the flush; the other callers ignore it.
-func (g *Game) fireHook(src triggerSource, hook ability.Hook) []pendingTrigger {
-	return g.fireHookFor(src, hook, nil)
-}
-
-// fireHookFor is fireHook for an event of watched: nil for src's own event.
-// With watched nil it fires src's self-hook triggers; with watched set it fires
-// only src's watching triggers (Trigger.Watches) whose Watch matches watched,
-// judged against src's controller and source, and records watched on each.
-func (g *Game) fireHookFor(src triggerSource, hook ability.Hook, watched *Asset) []pendingTrigger {
+// fireHook buffers src's triggers for hook in printed order: the one place a
+// trigger's gates are checked. A face-down asset has no printed abilities.
+// watched is the asset whose event it is: nil for src's own event, which fires
+// src's self-hook triggers; set, it fires only src's watching triggers
+// (Trigger.Watches) whose Watch matches watched, judged against src's
+// controller and source, and records watched on each. It returns the entries
+// it added, a slice of the buffer, so a caller can set a field on each before
+// the flush; the other callers ignore it.
+func (g *Game) fireHook(src triggerSource, hook ability.Hook, watched *Asset) []pendingTrigger {
 	n := len(g.pending)
 	def := src.card.Ability
 	if def == nil {
@@ -210,18 +206,18 @@ func (g *Game) fireAttacks(a *Asset) {
 	if n := g.Keywords(a).Aggressive; n > 0 {
 		g.bufferTrigger(src, fmt.Sprintf("%s: %s %d", src.card.Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
 	}
-	g.fireHook(src, ability.HookAttacks)
+	g.fireHook(src, ability.HookAttacks, nil)
 	for _, w := range g.assetsByID() {
-		g.fireHookFor(assetSource(w), ability.HookAttacks, a)
+		g.fireHook(assetSource(w), ability.HookAttacks, a)
 	}
 }
 
 // fireTurnStart buffers the start-of-turn triggers of every battlefield asset,
-// either player's (FR-TRN-001). fireHookFor holds the gates, so "at the start
+// either player's (FR-TRN-001). fireHook holds the gates, so "at the start
 // of your turn" is a Turn: TurnYours gate.
 func (g *Game) fireTurnStart() {
 	for _, a := range g.assetsByID() {
-		g.fireHook(assetSource(a), ability.HookTurnStart)
+		g.fireHook(assetSource(a), ability.HookTurnStart, nil)
 	}
 }
 

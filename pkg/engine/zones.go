@@ -74,31 +74,22 @@ func (g *Game) discardFromHand(chooser, owner PlayerID, n int, upTo bool) []*Ins
 	return picked
 }
 
-// chooseDiscards has player pid pick n cards of their choice from their own
-// hand, or the whole hand if it holds fewer, and returns them in pick order.
-// It moves nothing. Choosing from your own hand is not an inspection, so a hand
-// of exactly that many cards is picked without asking (FR-MOD-001 §1, §6;
-// SVY-R16). With upTo it picks up to n cards, possibly none: the choice is
-// asked whenever the hand isn't empty, and a timeout picks none (FR-MOD-001 §6,
-// FR-TRN-003a).
-func (g *Game) chooseDiscards(pid PlayerID, n int, upTo bool) []*Instance {
-	return g.chooseHandCards(pid, pid, n, upTo)
-}
-
 // chooseHandCards has player chooser pick n cards from owner's hand, or the
 // whole hand if it holds fewer, and returns them in pick order. It moves
-// nothing. A chooser who isn't the owner inspects the owner's revealed hand
+// nothing. Choosing from your own hand is not an inspection, so an owner's
+// hand of exactly n cards is picked without asking (FR-MOD-001 §1, §6;
+// SVY-R16). A chooser who isn't the owner inspects the owner's revealed hand
 // (FR-MOD-001 §3), so the decision is Hidden and asked even for a hand of
-// exactly n cards (§1, SVY-R50); chooseDiscards covers the owner choosing.
-// Every hand-discard decision is built here.
+// exactly n cards (§1, SVY-R50). With upTo it picks up to n cards, possibly
+// none: the choice is asked whenever the hand isn't empty, and a timeout picks
+// none (FR-MOD-001 §6, FR-TRN-003a). Every hand-discard decision is built here.
 func (g *Game) chooseHandCards(chooser, owner PlayerID, n int, upTo bool) []*Instance {
-	pid := chooser
 	hand := g.Players[owner].Hand
 	n = min(n, len(hand))
 	if n <= 0 {
 		return nil
 	}
-	d := Decision{Player: pid, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n, Hidden: chooser != owner}
+	d := Decision{Player: chooser, Kind: DecideHand, Prompt: "Discard a card", Min: n, Max: n, Hidden: chooser != owner}
 	if n > 1 {
 		d.Prompt = fmt.Sprintf("Discard %d cards", n)
 	}

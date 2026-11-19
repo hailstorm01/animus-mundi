@@ -141,7 +141,7 @@ func (g *Game) chooseCostDiscards(pl placement) []*Instance {
 			panic("engine: a placement has two discard costs")
 		}
 		found = true
-		picked = g.chooseDiscards(pl.controller, c.UpTo, true)
+		picked = g.chooseHandCards(pl.controller, pl.controller, c.UpTo, true)
 	}
 	return picked
 }
