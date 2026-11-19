@@ -120,8 +120,8 @@ func TestPlay_PrintScreenNamesEachStackItemsCard(t *testing.T) {
 		{Kind: "Ability", Controller: 1, Source: 12, Card: "Devilhorn Captain", Label: "ability of Devilhorn Captain"},
 		{Kind: "Ability", Controller: 0, Source: 7, Card: "Ripper Pack", Label: "Aggressive trigger of Ripper Pack"},
 		{Kind: "Ability", Controller: 0, Source: 5},
-		{Kind: "Deploy", Controller: 0, Card: "Chainbreaker Irregular", Zone: "Reserves"},
-		{Kind: "Maneuver", Controller: 0, Card: "Disorienting Pulse"},
+		{Kind: "Deploy", Controller: 0, Card: "Chainbreaker Irregular", Zone: "Reserves", Label: "Deploy of Chainbreaker Irregular"},
+		{Kind: "Maneuver", Controller: 0, Card: "Disorienting Pulse", Label: "Maneuver Disorienting Pulse"},
 		{Kind: "March", Controller: 1, Source: 9, Zone: "Reserves"},
 		{Kind: "Attack", Controller: 1, Source: 7, Target: 3},
 		{Kind: "Scratch", Controller: 0, Source: 1},
@@ -133,7 +133,7 @@ func TestPlay_PrintScreenNamesEachStackItemsCard(t *testing.T) {
 		"  Aggressive trigger of Ripper Pack (Player 0, Source 7)\n" +
 		"  Ability (Player 0, Source 5)\n" +
 		"  Deploy of Chainbreaker Irregular to Reserves (Player 0)\n" +
-		"  Maneuver: Disorienting Pulse (Player 0)\n" +
+		"  Maneuver Disorienting Pulse (Player 0)\n" +
 		"  March (Player 1, Source 9)\n" +
 		"  Attack (Player 1, Source 7)\n" +
 		"  Scratch (Player 0, Source 1)\n"
