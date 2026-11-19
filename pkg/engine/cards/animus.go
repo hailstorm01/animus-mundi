@@ -457,7 +457,7 @@ var animusDefs = map[string]*ability.Def{
 					Subtypes:   []string{"Horror"},
 					ZoneRef:    ability.ZoneRefSame,
 				},
-				Resistant: 1,
+				Keywords: ability.Keywords{Resistant: 1},
 			},
 		},
 	},

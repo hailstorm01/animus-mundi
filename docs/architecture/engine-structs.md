@@ -215,7 +215,7 @@ flowchart LR
         Replacement["Replacement"]
         Static["Static"]
         CostReduction["CostReduction"]
-        CorneredKeywords["CorneredKeywords"]
+        WhileCornered["WhileCornered"]
         Cost["Cost"]
         Effect["Effect"]
         Target["Target"]
@@ -239,7 +239,7 @@ flowchart LR
     Def -->|"Replacements []Replacement"| Replacement
     Def -->|"Statics []Static"| Static
     Def -->|"CostReduction"| CostReduction
-    Def -->|"Cornered"| CorneredKeywords
+    Def -->|"Cornered"| WhileCornered
     Def -->|"ExtraCosts []Cost"| Cost
     Def -->|"Effect (Maneuvers)"| Effect
 
@@ -299,7 +299,7 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | | [`snapshot.go`](../../pkg/engine/snapshot.go) | `Snapshot`, `PlayerSnap`, `AssetSnap`, `CardSnap` | `Snapshot()`, `snapshot()`, `clone()` |
 | **Verification & Build** | [`invariants.go`](../../pkg/engine/invariants.go) | *(none)* | `CheckInvariants` |
 | | [`buildinfo.go`](../../pkg/engine/buildinfo.go) | *(none)* | `BuildInfo` |
-| **Ability Shapes & Cards** | [`ability/ability.go`](../../pkg/engine/ability/ability.go) | `Def`, `Trigger`, `Activated`, `Replacement`, `Static`, `CostReduction`, `CorneredKeywords`, `Cost`, `Effect`, `Target`, `Step`, `Filter`, `Value` (+ enums) | Pure data shapes for printed abilities (`Aggressive(n)` constructor) |
+| **Ability Shapes & Cards** | [`ability/ability.go`](../../pkg/engine/ability/ability.go) | `Def`, `Trigger`, `Activated`, `Replacement`, `Static`, `CostReduction`, `WhileCornered`, `Cost`, `Effect`, `Target`, `Step`, `Filter`, `Value` (+ enums) | Pure data shapes for printed abilities (`Aggressive(n)` constructor) |
 | | [`ability/keywords.go`](../../pkg/engine/ability/keywords.go) | `Keywords`, `keywordDef` | The standalone keyword set, its printed names, `Lines`, `Add`, `ParseKeywordLine` |
 | | [`cards/cards.go`](../../pkg/engine/cards/cards.go) (+ `animus.go`, `path.go`, `headquarters.go`) | *(none; `Defs` map & `NotYetExecutable` slice)* | Card-name-keyed `ability.Def` values |
 

@@ -78,7 +78,7 @@
 //     its owner deploys it as an ActDeploy with From: ZoneDiscard, and the
 //     permission's Costs are paid on declaration (FR-TRN-003, FR-TRN-003a).
 //   - Auras (Def.Statics with ability.StaticAura): a face-up battlefield
-//     asset gives +Power in Layer 4 and +Resistant as a Layer 3 keyword grant
+//     asset gives +Power in Layer 4 and its Keywords as a Layer 3 grant
 //     to every battlefield asset its Filter matches, read by Game.Power and
 //     Game.Keywords through Game.auras; "in the same zone" is the
 //     source's current zone (FR-LAY-001, SVY-R44). An aura's Cornered grant

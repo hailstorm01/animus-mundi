@@ -55,8 +55,8 @@ const (
 	StaticDeployPermission StaticKind = iota + 1
 	// StaticAura is a continuous aura of a face-up battlefield asset
 	// (FR-LAY-001): every battlefield asset matching Filter, relative to the
-	// source's controller, has +Power Combat Power (Layer 4) and +Resistant
-	// Resistant (a Layer 3 keyword grant), and also Cornered while that asset's
+	// source's controller, has +Power Combat Power (Layer 4) and Keywords
+	// (a Layer 3 keyword grant), and also Cornered while that asset's
 	// controller is Cornered (FR-KWD-002e). A ZoneRefSame criterion reads
 	// the source's current zone (SVY-R44). ActiveZone is ZoneAny, the battlefield.
 	StaticAura
@@ -79,10 +79,11 @@ type Static struct {
 	Filter Filter
 	// Power is an aura's Layer 4 power.
 	Power int
-	// Resistant is an aura's keyword grant: +Resistant Resistant to every asset
-	// Filter matches, a Layer 3 grant (FR-LAY-001, survey G2). It may be
-	// negative, like printed Resistant; 0 grants nothing.
-	Resistant int
+	// Keywords is an aura's keyword grant: every asset Filter matches has them,
+	// a Layer 3 grant folded through Keywords.Add (FR-LAY-001, survey G2).
+	// Resistant may be negative, like printed Resistant; the zero value grants
+	// nothing.
+	Keywords Keywords
 	// Cornered is an aura's Cornered grant: every asset Filter matches has it
 	// only while that asset's controller is Cornered (FR-KWD-002e, SVY-R18).
 	// Its keywords are a Layer 3 grant and its power Layer 4, as for
@@ -106,15 +107,13 @@ type CostReduction struct {
 // The gate is locked for a simultaneous step (FR-LAY-003). Power may be
 // negative, like any static power; the clamp is Layer 6's.
 type WhileCornered struct {
-	Aggressive int
-	Resistant  int
-	Power      int
+	Keywords Keywords
+	Power    int
 }
 
-// Add returns w plus o, field by field.
+// Add returns w plus o: the keywords folded through Keywords.Add, the power summed.
 func (w WhileCornered) Add(o WhileCornered) WhileCornered {
-	w.Aggressive += o.Aggressive
-	w.Resistant += o.Resistant
+	w.Keywords.Add(o.Keywords)
 	w.Power += o.Power
 	return w
 }
