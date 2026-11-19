@@ -92,7 +92,6 @@ type StackView struct {
 	Card       string  // Deploy: the card on the stack; Ability: its source card; Maneuver: the card on the stack
 	Zone       string  // Deploy: the declared zone; March: the origin zone
 	Target     int     // Attack: the primary defender (asset ID)
-	Keyword    string  // Ability: the keyword its trigger came from ("Aggressive"); empty for a printed ability
 	Label      string  // what the item is, as the engine's place event words it (Game.StackLabel): "ability of X", "Aggressive trigger of X", "Deploy of X", "March", ...
 	Chosen     [][]int // Ability, Maneuver: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
 	// ChosenCards: Ability, Maneuver: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
@@ -204,7 +203,6 @@ func stackView(g *engine.Game, it *engine.StackItem) StackView {
 	case engine.StackAttack:
 		s.Target = it.Target
 	case engine.StackAbility:
-		s.Keyword = it.Keyword.String()
 		// A face-down source names only the Scratch face (Game.SourceCard).
 		if c := g.SourceCard(it); c != nil {
 			s.Card = c.Name
