@@ -35,4 +35,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0285](T-0285-linters-say-what-they-read.md) | `cardtown lint` asks the linters what they read: `fences.Reads`, `rules.Reads` (directive #172 (b)) | queued |
+| [T-0285](T-0285-linters-say-what-they-read.md) | `cardtown lint` asks the linters what they read: `fences.Reads`, `rules.Reads` (directive #172 (b)) | ready |
