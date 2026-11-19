@@ -4,7 +4,7 @@ title: "`cardtown lint fences` rejects type aliases (directive #165, ADR 0007; w
 kind: harness
 tier: flash
 wave: H.1 (board directive #165)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0274-fences-reject-type-aliases
 depends_on: [T-0273]
 claims: [func:fences.checkAliases, var:fences.aliasRoots, func:isFencesPath]
