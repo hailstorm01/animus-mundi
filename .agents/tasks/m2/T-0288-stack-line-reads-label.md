@@ -4,7 +4,7 @@ title: "The play screen's stack listing prints `StackLabel` for every item (dire
 kind: harness
 tier: flash
 wave: H.2 (board directive #174)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0288-stack-line-reads-label
 depends_on: [T-0287]
 claims: [func:main.stackLine]
