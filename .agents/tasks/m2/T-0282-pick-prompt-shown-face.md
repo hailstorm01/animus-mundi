@@ -4,7 +4,7 @@ title: "Pick prompts name the card the stack item shows, through `sourceName` (d
 kind: harness
 tier: flash
 wave: H.2 (board directive #170)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0282-pick-prompt-shown-face
 depends_on: [T-0281]
 claims: [func:Game.sourceName, func:Game.pickPrompt]
