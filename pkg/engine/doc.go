@@ -40,7 +40,7 @@
 //     FR-ZON-005), from the scope askFor opens, and its match record carries
 //     that card's name (DecisionRecord.Source).
 //   - Steps OpScratch, OpDraw, OpDiscard, OpReturnToHand, OpPutOnDeck,
-//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103), OpGrantKeyword (a keyword granted until end of turn, FR-LAY-001) and OpLookTop (a look at the top cards with free deploys and a bottom order, FR-MOD-001 §4), with "all" steps, source-power values, the
+//     OpDealDamage, OpHeal, OpAddArmor, OpModifyStat, OpKill (inline destruction), OpMoveZone, OpSearchDeck, OpDeployFree (a free deploy from a discard pile, FR-TRN-003a), OpMorphScratch (a face-down transformation, FR-ENT-103), OpGrantKeyword (the keywords of Step.Keywords granted until end of turn, FR-LAY-001) and OpLookTop (a look at the top cards with free deploys and a bottom order, FR-MOD-001 §4), with "all" steps, source-power values, the
 //     deploy-zone gate, the TurnYours gate, the Cornered gate, SubjectSelf (tracked in discard,
 //     FR-ZON-004) and SubjectOpponents. A later step on a pile slot acts on the asset an earlier
 //     OpDeployFree of the same resolution made of its card. SubjectPick is an untargeted pick made as the
@@ -117,20 +117,24 @@
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
 //     an effect, its modes and then its targets, the card it shows as its
 //     source (shownCard, SourceCard), and whether an optional trigger could do
-//     nothing (couldDoNothing). costs.go: a card's cost and
+//     nothing (couldDoNothing), and the one lock of an "in the same zone"
+//     effect on placement (sameZoneLock). costs.go: a card's cost and
 //     a placement's costs. resources.go: Requisition and Tactics, generating and
 //     converting them, and paying with them. targeting.go: target choice and
 //     untargeted picks. filter.go: checking assets and discard-pile cards against
-//     an ability's filter. effects.go: running a resolved ability's steps.
+//     an ability's filter, and a continuous ability's filter read from its
+//     source (matchesFromSource). effects.go: running a resolved ability's steps.
 //     freedeploy.go: free deploys and the look at the top cards.
 //   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
-//     cardload.go: the CSV loader. The keyword set, its names and line parser are in
-//     pkg/engine/ability (keywords.go).
+//     cardload.go: the CSV loader, and checkShapeReads, which rejects a definition
+//     that sets a field where nothing reads it. The keyword set, its names, line
+//     parser and fold are in pkg/engine/ability (keywords.go).
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions,
 //     and the askFor scope that names their source card.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
 //     damage.go: the damage pipeline. sweep.go: the death sweep, destruction
-//     and match loss. replace.go: destruction replacement. layers.go: derived power, health and keywords,
+//     and match loss. replace.go: destruction replacement and damage redirection
+//     (redirectDamage). layers.go: derived power, health and keywords,
 //     the Cornered check and EffectiveState, and an asset's Modifier list with
 //     each modifier's Duration.
 //     invariants.go: state checks.
