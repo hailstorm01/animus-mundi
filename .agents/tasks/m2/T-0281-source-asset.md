@@ -4,7 +4,7 @@ title: "One lookup of the source asset or its last-known record, `sourceAsset` (
 kind: harness
 tier: flash
 wave: H.2 (board directive #169)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0281-source-asset
 depends_on: [T-0280]
 claims: [func:Game.sourceAsset, func:Game.itemSource]
