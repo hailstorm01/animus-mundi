@@ -40,4 +40,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0273 | Cornered and aura grants are `ability.Keywords` sets, and `Game.Keywords` folds once (#159 part 2; wave H.1 harness, sonnet, no behavior change) | queued |
+| T-0273 | Cornered and aura grants are `ability.Keywords` sets, and `Game.Keywords` folds once (#159 part 2; wave H.1 harness, sonnet, no behavior change) | ready |
