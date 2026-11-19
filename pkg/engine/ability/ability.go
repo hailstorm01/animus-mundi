@@ -73,7 +73,7 @@ type Static struct {
 	// to the payer.
 	Costs []Cost
 	// Filter is an aura's: which assets it applies to, relative to the source's
-	// controller; Other excludes the source. Its Stat stays StatNone, and it
+	// controller; Other excludes the source. Its Stat stays StatNone (LoadCards rejects it otherwise), and it
 	// stays free of keyword criteria, since a Layer 3 or 4 value read by its own
 	// filter has no defined order.
 	Filter Filter
@@ -263,7 +263,7 @@ type Trigger struct {
 	// Watches makes the trigger fire on the event of each battlefield asset matching Watch
 	// (judged against the trigger's controller and source when the event happens), never
 	// on its own source's event unless the source matches Watch. False, the zero value, is
-	// a self hook. Read only for HookAttacks so far.
+	// a self hook. Read only for HookAttacks so far; LoadCards rejects it on any other hook.
 	Watches bool
 	Watch   Filter
 	Effect  Effect
@@ -471,8 +471,8 @@ type Step struct {
 	To                Zone     // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2). OpLookTop: the same override
 	Keywords          Keywords // OpGrantKeyword only: the keywords granted
 	IfDone            bool     // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
-	ControllerChooses bool     // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand
-	Split             bool     // SubjectPick over assets with OpAddArmor only: Amount is a pool the ability's controller splits among the assets matching Filter as the step resolves, not a target (SVY-R51): each picked asset gets a positive whole share and the shares add up to Amount; one match takes it all unasked, none does nothing, and a timeout puts it all on the first in fixed order (SVY-R52). UpTo must be 0
+	ControllerChooses bool     // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand. LoadCards rejects it on any other op
+	Split             bool     // SubjectPick over assets with OpAddArmor only: Amount is a pool the ability's controller splits among the assets matching Filter as the step resolves, not a target (SVY-R51): each picked asset gets a positive whole share and the shares add up to Amount; one match takes it all unasked, none does nothing, and a timeout puts it all on the first in fixed order (SVY-R52). UpTo must be 0. LoadCards rejects Split anywhere else
 	Stat              Stat     // OpModifyStat only: the stat the step changes. StatNone (zero) and StatPower are Combat Power; StatMaxHealth is Maximum Health; no other stat is valid
 	Until             Duration // OpModifyStat, OpGrantKeyword: how long the modifier lasts; the zero value is until end of turn
 	IfHandEmpty       bool     // runs only if the ability's controller has no cards in hand when the step resolves ("if you have no cards in hand")

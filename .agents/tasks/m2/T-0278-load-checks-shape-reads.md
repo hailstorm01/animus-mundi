@@ -4,7 +4,7 @@ title: "`LoadCards` rejects a card definition that sets a field where nothing re
 kind: harness
 tier: sonnet
 wave: H.1 (board directive #162)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.1/T-0278-load-checks-shape-reads
 depends_on: [T-0277]
 claims: [func:checkShapeReads]
@@ -72,3 +72,4 @@ Each case is a test in `pkg/engine/card_test.go`. Use the existing `fixtureDir`,
 
 ## Log
 - 2026-11-18 lead-architect (wave H.1, session 7): wrote the task for directive #162 and set it `ready` (a harness task, so it skips `tests`). I made it tier `sonnet`, not `flash`, because the checker has to reach every place a step can sit, `Modes` included, and a place it misses fails silently. The acceptance cases put the same bad step in each place. `main` (7a8e4f5) has nothing the run branch lacks, so there was no sync. #163 and #164 stay `open: before the next Deliverables task`, with #163 next.
+- 2026-11-18 kernel-engineer (sonnet): wrote the acceptance tests first (commit decbb69a); before the code, `go test ./pkg/engine -run "TestLoadCards_"` failed the 7 rejection tests and the every-step table, and the load-ok case passed as expected. Then added `checkShapeReads` plus `checkEffectReads` (recurses into Modes) and `checkStepReads` in `cardload.go`, called from `loadCards` after Text is claimed; error is `card %q: <field> <rule>`. Added a short "LoadCards rejects ..." clause to the four field comments in `ability.go` and `checkShapeReads` to the `cardload.go` row of `engine-structs.md`. Reuse: no existing checker or step walker (`ReadsZoneRef` walks Modes but answers a different question). Extra table rows beyond the task: nested modes and trigger/activated modes. Ran: `go tool task check` PASS, `go tool task sim` clean, `go tool task sim-compare -- autoloop/m2-wave-h.1` [PASS]. Review: the error strings start with a capital field name (Go lint ST1005 style), deliberate per the task's `<field>` format.
