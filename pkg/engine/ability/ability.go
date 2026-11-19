@@ -367,22 +367,31 @@ const (
 	ZoneRefSame                // "in the same zone": the zone the item's source was in when the item was placed (SVY-R44)
 )
 
-// ReadsZoneRef reports whether any filter of e reads r: its Targets' filters,
-// its Steps' filters, and each of its Modes, recursively.
-func (e Effect) ReadsZoneRef(r ZoneRef) bool {
-	for _, t := range e.Targets {
-		if t.Filter.ZoneRef == r {
-			return true
-		}
-	}
-	for _, s := range e.Steps {
-		if s.Filter.ZoneRef == r {
-			return true
-		}
-	}
+// Parts returns e and each of its Modes' parts, recursively, depth first in
+// printed order. It is the one walk into an effect's modes: every check that
+// reads each part's Targets or Steps (ReadsZoneRef, the card loader's checks)
+// ranges over it.
+func (e Effect) Parts() []Effect {
+	parts := []Effect{e}
 	for _, m := range e.Modes {
-		if m.ReadsZoneRef(r) {
-			return true
+		parts = append(parts, m.Parts()...)
+	}
+	return parts
+}
+
+// ReadsZoneRef reports whether any filter of e reads r: its Targets' filters
+// and its Steps' filters, in e and each of its Modes (Parts).
+func (e Effect) ReadsZoneRef(r ZoneRef) bool {
+	for _, p := range e.Parts() {
+		for _, t := range p.Targets {
+			if t.Filter.ZoneRef == r {
+				return true
+			}
+		}
+		for _, s := range p.Steps {
+			if s.Filter.ZoneRef == r {
+				return true
+			}
 		}
 	}
 	return false
