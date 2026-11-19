@@ -233,3 +233,91 @@ func TestScene_CardHelper(t *testing.T) {
 		t.Fatalf("got %q", c.Name)
 	}
 }
+
+// shapeDef is a def on "Test Unit" that claims lineA and carries the given parts.
+func shapeDef(d ability.Def) map[string]*ability.Def {
+	d.Text = []string{lineA}
+	return map[string]*ability.Def{"Test Unit": &d}
+}
+
+func badSplit() ability.Step {
+	return ability.Step{Op: ability.OpDealDamage, Subject: ability.SubjectPick, Split: true}
+}
+
+// T-0278: a field set where no engine code reads it is a load error.
+func TestLoadCards_WatchesOffAttacksRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Triggers: []ability.Trigger{
+		{Hook: ability.HookDeploy, Watches: true},
+	}}), "Test Unit", "Trigger.Watches")
+}
+
+func TestLoadCards_SplitOffAddArmorRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Effect: ability.Effect{Steps: []ability.Step{badSplit()}}}),
+		"Test Unit", "Step.Split")
+}
+
+func TestLoadCards_SplitWithUpToRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+		{Op: ability.OpAddArmor, Subject: ability.SubjectPick, UpTo: 2, Split: true},
+	}}}), "Test Unit", "Step.Split")
+}
+
+func TestLoadCards_SplitOffPickRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+		{Op: ability.OpAddArmor, Subject: ability.SubjectAll, Split: true},
+	}}}), "Test Unit", "Step.Split")
+}
+
+func TestLoadCards_SplitOverPileRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+		{Op: ability.OpAddArmor, Subject: ability.SubjectPick, Split: true, Filter: ability.Filter{Zone: ability.ZoneDiscard}},
+	}}}), "Test Unit", "Step.Split")
+}
+
+func TestLoadCards_ControllerChoosesOffDiscardRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Effect: ability.Effect{Steps: []ability.Step{
+		{Op: ability.OpDraw, Subject: ability.SubjectController, Amount: ability.Value{N: 1}, ControllerChooses: true},
+	}}}), "Test Unit", "Step.ControllerChooses")
+}
+
+func TestLoadCards_AuraFilterStatRejected(t *testing.T) {
+	wantLoadError(t, shapeDef(ability.Def{Statics: []ability.Static{
+		{Kind: ability.StaticAura, Filter: ability.Filter{Stat: ability.StatPower, AtMost: 3}, Power: 1},
+	}}), "Test Unit", "Static.Filter.Stat")
+}
+
+func TestLoadCards_ShapeCheckReachesEveryStep(t *testing.T) {
+	bad := ability.Effect{Steps: []ability.Step{badSplit()}}
+	rows := []struct {
+		name string
+		def  ability.Def
+	}{
+		{"effect steps", ability.Def{Effect: bad}},
+		{"effect mode", ability.Def{Effect: ability.Effect{Modes: []ability.Effect{bad}, ChooseN: 1}}},
+		{"nested mode", ability.Def{Effect: ability.Effect{Modes: []ability.Effect{{Modes: []ability.Effect{bad}, ChooseN: 1}}, ChooseN: 1}}},
+		{"trigger steps", ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookDeploy, Effect: bad}}}},
+		{"trigger mode", ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookDeploy, Effect: ability.Effect{Modes: []ability.Effect{bad}, ChooseN: 1}}}}},
+		{"activated steps", ability.Def{Activated: []ability.Activated{{Effect: bad}}}},
+		{"activated mode", ability.Def{Activated: []ability.Activated{{Effect: ability.Effect{Modes: []ability.Effect{bad}, ChooseN: 1}}}}},
+		{"replacement steps", ability.Def{Replacements: []ability.Replacement{{Steps: []ability.Step{badSplit()}}}}},
+	}
+	for _, r := range rows {
+		t.Run(r.name, func(t *testing.T) {
+			wantLoadError(t, shapeDef(r.def), "Test Unit", "Step.Split")
+		})
+	}
+}
+
+func TestLoadCards_ShapeReadsWhereReadLoad(t *testing.T) {
+	defs := shapeDef(ability.Def{
+		Triggers: []ability.Trigger{{Hook: ability.HookAttacks, Watches: true}},
+		Effect: ability.Effect{Steps: []ability.Step{
+			{Op: ability.OpAddArmor, Subject: ability.SubjectPick, Split: true},
+			{Op: ability.OpDiscard, Subject: ability.SubjectController, ControllerChooses: true},
+		}},
+		Statics: []ability.Static{{Kind: ability.StaticAura, Power: 1}},
+	})
+	if got := mustLoad(t, defs)["Test Unit"].Ability; got != defs["Test Unit"] {
+		t.Fatalf("Ability = %p, want the def pointer %p", got, defs["Test Unit"])
+	}
+}
