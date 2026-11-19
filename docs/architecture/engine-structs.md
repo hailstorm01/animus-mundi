@@ -291,7 +291,7 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | | [`placement.go`](../../pkg/engine/placement.go) | `placement` | `declare`, `chooseOnPlacement`, `placeable`, `couldDoNothing`, `chooseModes`, `SourceCard` |
 | | [`costs.go`](../../pkg/engine/costs.go) | *(none)* | `EffectiveCost`, `PlayCost`, `ActivatedCost`, `DiscardDeployCost`, `costsPayable`, `payCosts` |
 | | [`targeting.go`](../../pkg/engine/targeting.go) | *(none)* | `chooseTargets`, `targetDecision`, `pickAssets`, `pickCards` |
-| | [`filter.go`](../../pkg/engine/filter.go) | *(none)* | `legalTarget`, `matchesFilterAt`, `matchesCard`, `cardMeets` |
+| | [`filter.go`](../../pkg/engine/filter.go) | *(none)* | `legalTarget`, `matchesFromSource`, `matchesFilterAt`, `matchesCard`, `cardMeets` |
 | | [`effects.go`](../../pkg/engine/effects.go) | `resolution` | `resolveAbility`, `runSteps`, `step<Op>` methods, `stepAssets`, `stepCards`, `value` |
 | | [`freedeploy.go`](../../pkg/engine/freedeploy.go) | `lookOutcome` | `stepDeployFree`, `stepLookTop`, `freeDeployZones` |
 | **Choices, Events & Snapshots** | [`choice.go`](../../pkg/engine/choice.go) | `Decision`, `Option`, `Answer`, `Chooser` (+ `DecisionKind`) | `choose`, `askFor`, `fallbackPicks`, `RandomChooser` |

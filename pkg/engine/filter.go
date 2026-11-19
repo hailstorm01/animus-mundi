@@ -136,16 +136,19 @@ func inLocked(a *Asset, lock *LockedZone) bool {
 	return lock.Zone == ZoneMainTheater || a.Controller == lock.Player
 }
 
-// matchesFilter is matchesFilterAt without a locked zone, for callers that have
-// no stack item (costs).
-func (g *Game) matchesFilter(ctl PlayerID, src int, f ability.Filter, a *Asset) bool {
-	return g.matchesFilterAt(ctl, src, nil, f, a)
+// matchesFromSource reports whether battlefield asset a meets f, the filter of
+// a printed continuous ability of asset src: judged against src's current
+// controller, and a ZoneRef criterion against src's current zone (SVY-R44).
+// Auras and replacements both read their filters through it.
+func (g *Game) matchesFromSource(src *Asset, f ability.Filter, a *Asset) bool {
+	return g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), f, a)
 }
 
 // matchesFilterAt reports whether battlefield asset a meets every criterion of f
 // (allegiance relative to ctl, kinds, subtypes, Scratch, Other: not the source asset
 // src, Stat: its effective value, Zone: currently in that battlefield zone, ZoneRef: in lock's zone, never the source's current one). Targeting adds Ward on top (legalTarget); an untargeted "all" step uses
-// this alone.
+// this alone. Costs and watching triggers have no stack item and pass a nil
+// lock; a continuous ability reads its filter through matchesFromSource.
 func (g *Game) matchesFilterAt(ctl PlayerID, src int, lock *LockedZone, f ability.Filter, a *Asset) bool {
 	if f.Other && a.ID == src {
 		return false

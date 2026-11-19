@@ -67,7 +67,7 @@ func (g *Game) costDecision(pl placement, c ability.Cost) (Decision, []*Asset) {
 		if c.Kind == ability.CostExhaust && a.Exhausted {
 			return false
 		}
-		return g.matchesFilter(pl.controller, pl.source, c.Filter, a)
+		return g.matchesFilterAt(pl.controller, pl.source, nil, c.Filter, a)
 	})
 	if counted {
 		d.Min, d.Max = pl.count, pl.count

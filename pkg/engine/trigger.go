@@ -159,7 +159,7 @@ func (g *Game) fireHookFor(src triggerSource, hook ability.Hook, watched *Asset)
 		if t.Hook != hook || t.Watches != (watched != nil) || !activeIn(src.zone, t.ActiveZone) || (t.Turn == ability.TurnYours && g.Active != src.controller) {
 			continue
 		}
-		if watched != nil && !g.matchesFilter(src.controller, src.id, t.Watch, watched) {
+		if watched != nil && !g.matchesFilterAt(src.controller, src.id, nil, t.Watch, watched) {
 			continue
 		}
 		if (hook == ability.HookDeploy || hook == ability.HookMoves) && !zoneMatches(src.zone, t.ToZone) {
