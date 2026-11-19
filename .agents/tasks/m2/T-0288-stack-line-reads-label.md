@@ -4,7 +4,7 @@ title: "The play screen's stack listing prints `StackLabel` for every item (dire
 kind: harness
 tier: flash
 wave: H.2 (board directive #174)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0288-stack-line-reads-label
 depends_on: [T-0287]
 claims: [func:main.stackLine]
@@ -146,10 +146,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - No test is added. Every other test passes unedited.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 8): written against 16dccc8 for #174; T-0287 is `done`, so #173 is `applied`.
@@ -159,3 +159,15 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - #175 edits the same function next, and #176 then documents the wave; neither goes into this task.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented T-0288 per instructions.
+  - Applied Edits 2-3 to cmd/cardtown/play_test.go and cmd/cardtown/play_source_test.go.
+  - Ran Acceptance Case 1: `go test ./cmd/cardtown -run TestPlay_PrintScreen -v` failed in exactly `TestPlay_PrintScreenNamesEachStackItemsCard` and `TestPlay_PrintScreenManeuverStackLine` (the other three passed). Committed as `test(T-0288): the stack listing's Maneuver line reads its Label`.
+  - Applied Edit 1 to cmd/cardtown/play_screen.go (stackLine reads item.Label).
+  - Ran Acceptance Case 2: `go test ./cmd/cardtown -run TestPlay_PrintScreen -v` passed all 5 tests. Committed as `refactor(cardtown): the play screen's stack listing prints StackLabel for every item (T-0288)`.
+  - Ran Acceptance Case 3: `git grep -n "Deploy of" -- pkg cmd ":!*_test.go"` printed exactly 3 lines in stack.go:79, stack.go:87, and view.go:95.
+  - Ran Acceptance Case 4: `git grep -n "Maneuver:" -- cmd/cardtown/play_screen.go` printed nothing; `git grep -n "Maneuver" -- cmd/cardtown/play_screen.go` printed exactly 2 lines (play_screen.go:96 and play_screen.go:106).
+  - Ran Acceptance Case 5: `git diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` printed 3 3 cmd/cardtown/play_source_test.go and 2 2 cmd/cardtown/play_test.go in the test commit.
+  - Ran Acceptance Case 6: `git diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed 16 13 cmd/cardtown/play_screen.go, 3 3 cmd/cardtown/play_source_test.go, and 2 2 cmd/cardtown/play_test.go.
+  - Ran Acceptance Case 7: `git diff autoloop/m2-wave-h.2 --stat` lists only play_screen.go, play_source_test.go, play_test.go, and the task file.
+  - Ran Acceptance Case 8: `go tool task sim-compare -- autoloop/m2-wave-h.2` passed with `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+  - Ran Acceptance Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed (all packages ok, linter checks PASSED); `go tool task sim` passed.
