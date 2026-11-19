@@ -4,7 +4,7 @@ title: "`ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `S
 kind: harness
 tier: flash
 wave: H.2 (board directive #171)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0283-keyword-trigger
 depends_on: [T-0282]
 claims: [type:ability.KeywordTrigger, field:ability.Trigger.FromKeyword, field:engine.StackItem.FromKeyword]
@@ -378,10 +378,30 @@ Authorized reference-only edits (#171), in the `test(T-0283)` commit; no test is
 - `pkg/view/view_test.go` (Edit 7): `TestView_AbilityItemShowsItsKeyword`
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 3): written in full against 6cf38a1 for #171, next in wave H.2's order after #170 (T-0282, `done`). `main` (1859fe4) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #172, #173 and #174 are `open: before the next Deliverables task`. #171 is `open`, not `open: before`, but the run file gives wave H.2's order as board order, and the blocking directives #172-#174 each say they come after it, so it goes first. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (wave H.2 run, session 3): implemented directive #171.
+  - Commits:
+    - e48477a6 test(T-0283): tests name KeywordTrigger and FromKeyword
+    - bf8808a9 refactor(engine): ability.Keyword becomes KeywordTrigger, its fields FromKeyword (T-0283)
+  - Changes:
+    - Renamed enum type `Keyword` to `KeywordTrigger` and its constants `KeywordNone` / `KeywordAggressive` to `KeywordTriggerNone` / `KeywordTriggerAggressive` in `pkg/engine/ability/ability.go`.
+    - Renamed fields `Trigger.Keyword` and `StackItem.Keyword` to `FromKeyword` with type `KeywordTrigger` in `pkg/engine/ability/ability.go` and `pkg/engine/stack.go`.
+    - Updated references in `pkg/engine/ability/keywords.go`, `pkg/engine/trigger.go`, and `pkg/engine/stack.go`.
+    - Updated reference tests in `pkg/engine/aggressive_item_test.go`, `pkg/engine/cards_path_allshan_test.go`, `pkg/engine/cornered_keywords_test.go`, `pkg/engine/stack_label_test.go`, `pkg/engine/watch_trigger_test.go`, `pkg/view/stack_label_test.go`, and `pkg/view/view_test.go`.
+  - Reuse: pure rename and reference updates as prescribed by directive #171; no new shapes added.
+  - Verification:
+    - Case 1: `go -C W vet ./pkg/engine/` at test commit failed with `aggressive_item_test.go:53:72: (*items)[1].FromKeyword undefined`.
+    - Case 2: `git -C W grep -n -w -e Keyword -e KeywordNone -e KeywordAggressive -- "*.go"` printed exactly 3 lines in `pkg/toolchain/` referencing "Keyword interaction matrix".
+    - Case 3: `git -C W grep -n "type KeywordTrigger int" -- pkg` printed `pkg/engine/ability/ability.go:214:type KeywordTrigger int`; `git -C W grep -n -w FromKeyword -- pkg ':!*_test.go'` printed exactly the 6 lines (`ability.go:249`, `:263`, `stack.go:43`, `:98`, `:99`, `trigger.go:279`).
+    - Case 4: `go -C W test ./pkg/... ./cmd/...` passed, and `git -C W diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` printed exactly the 7 test files with expected numstats.
+    - Case 5: `go -C W tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+    - Case 6: `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly the 11 modified Go files.
+    - Case 7: `git -C W diff autoloop/m2-wave-h.2 --stat` showed only the 11 code/test files plus this task file.
+    - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` and `go -C W tool task sim` passed.
+  - Status moved to `review`. Ready for review.
