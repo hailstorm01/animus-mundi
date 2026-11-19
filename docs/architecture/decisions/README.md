@@ -32,3 +32,4 @@ What becomes easier, what becomes harder, and what would make us revisit this.
 - [0004. Abilities as data values in Go, interpreted by the kernel](0004-abilities-as-data-in-go.md)
 - [0005. Structured game events, one read-only observer, and turn-start snapshots](0005-structured-game-events-and-observer.md)
 - [0006. Attack events carry no secondary target](0006-attacks-carry-no-secondary-target.md)
+- [0007. A move or rename updates every reference; no aliases or forwarding shims](0007-moves-update-every-reference.md)
