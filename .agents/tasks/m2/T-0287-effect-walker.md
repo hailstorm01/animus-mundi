@@ -4,7 +4,7 @@ title: "One walker over an `Effect` and its `Modes`, and `checkStepReads` asks `
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (c), (d))
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0287-effect-walker
 depends_on: [T-0286]
 claims: [func:ability.Effect.Parts]
