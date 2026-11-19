@@ -209,15 +209,13 @@ const (
 	TurnYours                  // only during the trigger controller's own turn
 )
 
-// Keyword names a keyword: the one a trigger comes from (Aggressive, a keyword
-// that is a triggered ability) or one a step grants (Stalwart, OpGrantKeyword).
-// The zero value is a printed ability.
+// Keyword names a keyword that is a triggered ability, the one a trigger comes
+// from (Aggressive, FR-KWD-002f). The zero value is a printed ability.
 type Keyword int
 
 const (
 	KeywordNone       Keyword = iota // the zero value: a printed ability
 	KeywordAggressive                // "Aggressive N" (FR-KWD-002f)
-	KeywordStalwart                  // "Stalwart" (FR-KWD-002c)
 )
 
 // String returns the keyword's printed name, or "" for KeywordNone.
@@ -225,8 +223,6 @@ func (k Keyword) String() string {
 	switch k {
 	case KeywordAggressive:
 		return "Aggressive"
-	case KeywordStalwart:
-		return "Stalwart"
 	}
 	return ""
 }
@@ -444,7 +440,7 @@ const (
 	OpSearchDeck                 // its controller chooses a card from their deck, the rest is shuffled and the card goes to their hand (FR-DEK-001, SVY-R37, SVY-R38). An empty deck is still shuffled
 	OpDeployFree                 // put each Subject card, still in its discard pile, onto the battlefield for free under the ability's controller, with no stack item and no costs (FR-TRN-003a, FR-CST-001): into Step.To if set, else its printed zone, chosen by the controller when it prints both Reserves and the Main Theater (SVY-R43)
 	OpMorphScratch               // turn each Subject unit face down in place: it becomes the 1/1/1/1 Infantry Scratch Company whose only ability is Deploys Exhausted, and keeps its zone, controller, readiness, damage, Armor and Layer 5 modifiers (FR-ENT-103). A unit already face down, a Structure and a Headquarters are skipped
-	OpGrantKeyword               // the Subject gains Step.Keyword for Step.Until (Layer 3, FR-LAY-001, FR-LAY-003)
+	OpGrantKeyword               // the Subject gains Step.Keywords for Step.Until (Layer 3, FR-LAY-001, FR-LAY-003)
 	OpLookTop                    // its controller looks at the top Amount cards of their deck and, in one hidden prompt, chooses which are deployed for free (up to UpTo, or exactly one when UpTo is 0 and one is eligible), each card matching Filter's card-level criteria, the zone of each, and the order the rest go to the bottom (FR-MOD-001 §4, SVY-R41-SVY-R43)
 	OpGainControl                // its controller gains control of each Subject unit in the Main Theater that an opponent controls; it keeps its zone, readiness, owner and state (FR-ZON-002, FR-ZON-003). A unit in Reserves, a Structure, a Headquarters and a unit the controller already controls are skipped
 )
@@ -474,7 +470,7 @@ type Step struct {
 	UpTo              int      // SubjectPick, OpLookTop: 0 picks exactly one; N > 0 picks up to N distinct entities (assets or cards), possibly none
 	Dealer            int      // OpDealDamage only. 0: the ability's source deals the damage. k > 0: the asset chosen for the exactly-one slot Effect.Targets[k-1] deals it, and ValueSourcePower reads that asset's power (SVY-R27)
 	To                Zone     // OpMoveZone: ZoneReserves or ZoneMainTheater, the unit's controller's. OpDeployFree: ZoneReserves or ZoneMainTheater overrides the card's printed Deployment Zones (FR-TRN-003a 2). OpLookTop: the same override
-	Keyword           Keyword  // OpGrantKeyword only: the keyword granted
+	Keywords          Keywords // OpGrantKeyword only: the keywords granted
 	IfDone            bool     // runs only if the step just before it did at least one thing ("if you do", SVY-R14, SVY-R15)
 	ControllerChooses bool     // OpDiscard only: the ability's controller, not each step player, chooses the cards from each step player's hand; with SubjectOpponents the opponent's hand, revealed to the controller for the choice, so always asked even with one card (FR-MOD-001 §3, SVY-R50). False: each step player chooses from their own hand
 	Split             bool     // SubjectPick over assets with OpAddArmor only: Amount is a pool the ability's controller splits among the assets matching Filter as the step resolves, not a target (SVY-R51): each picked asset gets a positive whole share and the shares add up to Amount; one match takes it all unasked, none does nothing, and a timeout puts it all on the first in fixed order (SVY-R52). UpTo must be 0

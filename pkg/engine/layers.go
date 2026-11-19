@@ -21,7 +21,7 @@ type Modifier struct {
 	Layer     int
 	Power     int
 	MaxHealth int
-	Keywords  Keywords
+	Keywords  ability.Keywords
 	Until     ability.Duration
 	By        PlayerID // the controller of the ability whose step made it; read only for UntilEndOfOpponentTurn
 }
@@ -108,7 +108,7 @@ func (g *Game) CurrentHealth(a *Asset) int {
 // Resistant of each aura that applies (Game.auras, Layer 3). The Cornered part
 // includes auras' Cornered grants. A face-down asset has no Cornered keywords of
 // its own, since its face has no Ability, but it still receives auras' grants.
-func (g *Game) Keywords(a *Asset) Keywords {
+func (g *Game) Keywords(a *Asset) ability.Keywords {
 	kw := a.Printed().Keywords
 	wc := g.whileCornered(a)
 	kw.Aggressive += wc.Aggressive
@@ -118,23 +118,10 @@ func (g *Game) Keywords(a *Asset) Keywords {
 	}
 	for _, m := range a.Modifiers {
 		if m.Layer == 3 {
-			kw.add(m.Keywords)
+			kw.Add(m.Keywords)
 		}
 	}
 	return kw
-}
-
-// add folds o into k: a flag is set, a number is added. It walks keywordDefs,
-// so a later keyword needs no new line here.
-func (k *Keywords) add(o Keywords) {
-	for _, d := range keywordDefs {
-		switch {
-		case d.num != nil:
-			*d.num(k) += *d.num(&o)
-		case d.flag != nil:
-			*d.flag(k) = *d.flag(k) || *d.flag(&o)
-		}
-	}
 }
 
 // whileCornered returns what a has while its controller is Cornered: the zero
@@ -173,7 +160,7 @@ func (g *Game) IsLethal(a *Asset) bool {
 type EffectiveState struct {
 	Power     int
 	MaxHealth int
-	Keywords  Keywords
+	Keywords  ability.Keywords
 }
 
 // effectiveState reads a's effective characteristics now.

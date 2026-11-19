@@ -4,7 +4,7 @@ title: The keyword set moves to ability.Keywords, and a step grants a Keywords s
 kind: harness
 tier: sonnet
 wave: H.1 (board directive #159, structural review 13, finding 1)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.1/T-0272-keywords-in-ability
 depends_on: []
 claims: [type:ability.Keywords, file:pkg/engine/ability/keywords.go, func:ability.ParseKeywordLine, method:ability.Keywords.Lines, method:ability.Keywords.Add, field:ability.Step.Keywords, func:stepGrantKeyword]
@@ -84,3 +84,4 @@ The test commit doesn't compile until the move lands; that is its failing state.
 
 ## Log
 - 2026-11-18 lead-architect (wave H.1 session 1): written from directive #159. The directive allows the move and the reshaping of `WhileCornered`, `Static` and `Step` as two tasks; `Step` comes into this one because `stepGrantKeyword` reads `keywordDefs` by name, which `engine` can't see once it moves, and anything else would need a bridge (ADR 0007). T-0273, the rest of #159, is queued. Harness, so no `tests` step: status `ready`. Tier `sonnet`: the rename spans about 130 test files.
+- 2026-11-18 kernel-engineer: implemented. Reuse search: the move is of existing code (`Keywords`, `keywordDefs`, `Lines`, `add`, `ParseKeywordLine`); no new shape beyond `Step.Keywords`. Test commit 68487c6f-amended (129 test files: `Keywords` type and literals to `ability.Keywords` by a script that skipped strings, comments, `.Keywords` selectors and `Keywords:` keys; `ability` import added where missing, then gofmt, which puts it before `testing` in the one block where there was no separate group; plus the named edits to `grant_keyword_test.go` (Case 1 `TestFR_LAY_001_GrantedKeywordSetIsEffective`, Case 2 `TestFR_LAY_001_EmptyGrantGrantsNothing`), `keywords_test.go`, `opponent_turn_duration_test.go`). Implementation: new `ability/keywords.go` (Stalwart's name is the literal; Aggressive's still `KeywordAggressive.String()`); `Keyword` loses `KeywordStalwart`; `Step.Keywords`; `card.go`, `cardload.go`, `layers.go` (`Add` replaces `add`), `snapshot.go`, `cards/path.go`, `doc.go`, `engine-structs.md` updated; `stepGrantKeyword` returns 0 for the zero set, else grants the set and logs `strings.Join(Lines(), ", ")`. `gofmt` also realigned a few comment columns in `cards/path.go`. No alias or wrapper. Commands: `go build ./...`, `go vet ./...` clean; Done When `go test -run` ok; Case 4 greps find nothing in Go code (only task, board, ADR and archive docs mention the old names); `go tool task check` exit 0; `go tool task sim` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.1` PASS byte for byte. Look at: the import grouping in the renamed tests, and the empty-set test comparing `Keywords` structs.

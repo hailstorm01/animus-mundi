@@ -23,8 +23,6 @@ flowchart TB
 
     subgraph card_go["card.go (+ cardload.go)"]
         Card["Card"]
-        Keywords["Keywords"]
-        keywordDef["keywordDef (unexported)"]
     end
 
     subgraph state_go["state.go"]
@@ -100,12 +98,14 @@ flowchart TB
         CardSnap["CardSnap"]
     end
 
-    subgraph ability_pkg["pkg/engine/ability (ability.go)"]
+    subgraph ability_pkg["pkg/engine/ability (ability.go, keywords.go)"]
         AbilityDef["ability.Def"]
         AbilityTrigger["ability.Trigger"]
         AbilityEffect["ability.Effect"]
         AbilityCost["ability.Cost"]
         AbilityReplacement["ability.Replacement"]
+        Keywords["ability.Keywords"]
+        keywordDef["keywordDef (unexported)"]
     end
 
     %% Setup & Deck relationships
@@ -273,8 +273,8 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | Category | File | Structs / Interfaces Defined | Primary Responsibility (Methods on `*Game`) |
 | :--- | :--- | :--- | :--- |
 | **Core State** | [`state.go`](../../pkg/engine/state.go) | `Game`, `Player`, `Asset`, `Instance`, `Outcome`, `lastKnownRecord`, `firingKey` (+ `PlayerID`, `Zone`, `Phase`) | State lookups (`Assets`, `assetsByID`, `fixedOrderPositions`), `LastKnown`, `exhaust` |
-| **Cards & Decks** | [`card.go`](../../pkg/engine/card.go) | `Card`, `Keywords`, `keywordDef` (+ `CardType`) | Printed characteristics, Scratch Company face, `Supported()` |
-| | [`cardload.go`](../../pkg/engine/cardload.go) | *(none)* | `LoadCards`, CSV parsing, `ParseKeywordLine`, attaching `cards.Defs` |
+| **Cards & Decks** | [`card.go`](../../pkg/engine/card.go) | `Card` (+ `CardType`) | Printed characteristics, Scratch Company face, `Supported()` |
+| | [`cardload.go`](../../pkg/engine/cardload.go) | *(none)* | `LoadCards`, CSV parsing, attaching `cards.Defs` |
 | | [`deck.go`](../../pkg/engine/deck.go) | `DeckList` | `LoadDeck`, `ValidateDeck` |
 | | [`setup.go`](../../pkg/engine/setup.go) | `Config` | `NewGame` (HQ placement, first-player choice, draw 6, mulligan) |
 | **Turn & Zones** | [`turn.go`](../../pkg/engine/turn.go) | *(none)* | `beginTurn`, `endTurn` (Ready, Draw, Main, End 4a–4d) |
@@ -300,5 +300,6 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | **Verification & Build** | [`invariants.go`](../../pkg/engine/invariants.go) | *(none)* | `CheckInvariants` |
 | | [`buildinfo.go`](../../pkg/engine/buildinfo.go) | *(none)* | `BuildInfo` |
 | **Ability Shapes & Cards** | [`ability/ability.go`](../../pkg/engine/ability/ability.go) | `Def`, `Trigger`, `Activated`, `Replacement`, `Static`, `CostReduction`, `CorneredKeywords`, `Cost`, `Effect`, `Target`, `Step`, `Filter`, `Value` (+ enums) | Pure data shapes for printed abilities (`Aggressive(n)` constructor) |
+| | [`ability/keywords.go`](../../pkg/engine/ability/keywords.go) | `Keywords`, `keywordDef` | The standalone keyword set, its printed names, `Lines`, `Add`, `ParseKeywordLine` |
 | | [`cards/cards.go`](../../pkg/engine/cards/cards.go) (+ `animus.go`, `path.go`, `headquarters.go`) | *(none; `Defs` map & `NotYetExecutable` slice)* | Card-name-keyed `ability.Def` values |
 

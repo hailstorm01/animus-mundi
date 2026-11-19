@@ -5,6 +5,7 @@ package engine
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"animus-mundi/pkg/engine/ability"
 )
@@ -503,27 +504,17 @@ func (g *Game) stepMorphScratch(r *resolution, st ability.Step) int {
 	return n
 }
 
-// stepGrantKeyword gives each asset of stepAssets the step's keyword for
+// stepGrantKeyword gives each asset of stepAssets the step's Keywords for
 // Step.Until, as a Layer 3 modifier (FR-LAY-001, FR-LAY-003), and returns how many
-// it granted. A keyword with no flag in keywordDefs (KeywordNone, or Aggressive,
-// whose trigger comes only from the printed keyword) grants nothing.
+// it granted. An empty set grants nothing.
 func (g *Game) stepGrantKeyword(r *resolution, st ability.Step) int {
-	name := st.Keyword.String()
-	var granted Keywords
-	found := false
-	for _, d := range keywordDefs {
-		if name != "" && d.name == name && d.flag != nil {
-			*d.flag(&granted) = true
-			found = true
-		}
-	}
-	if !found {
+	if st.Keywords == (ability.Keywords{}) {
 		return 0
 	}
 	as := g.stepAssets(r, st)
 	for _, a := range as {
-		a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 3, Keywords: granted}))
-		g.logEvent(Event{Kind: EventKeyword, Player: -1, Target: a.ID}, "%s gains %s %s", a, name, st.Until)
+		a.Modifiers = append(a.Modifiers, r.modifier(st, Modifier{Layer: 3, Keywords: st.Keywords}))
+		g.logEvent(Event{Kind: EventKeyword, Player: -1, Target: a.ID}, "%s gains %s %s", a, strings.Join(st.Keywords.Lines(), ", "), st.Until)
 	}
 	return len(as)
 }
