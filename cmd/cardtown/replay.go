@@ -12,6 +12,7 @@ import (
 	"animus-mundi/pkg/engine"
 	"animus-mundi/pkg/eventlog"
 	"animus-mundi/pkg/sim"
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 )
 
 // runReplay rebuilds one recorded game from a `cardtown sim -events` file and
@@ -53,7 +54,7 @@ func runReplay(args []string) {
 	}
 
 	repoRoot := findRepoRoot()
-	cards, err := engine.LoadCards(filepath.Join(repoRoot, "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join(repoRoot, cardsheet.Dir))
 	if err != nil {
 		fail("loading cards: %v", err)
 	}

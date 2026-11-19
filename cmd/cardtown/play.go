@@ -12,6 +12,7 @@ import (
 
 	"animus-mundi/pkg/engine"
 	"animus-mundi/pkg/sim"
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 	"animus-mundi/pkg/view"
 )
 
@@ -50,7 +51,7 @@ func runPlay(args []string, in io.Reader, out io.Writer) (exitCode int) {
 	}
 
 	repoRoot := findRepoRoot()
-	cards, err := engine.LoadCards(filepath.Join(repoRoot, "data", "cards"))
+	cards, err := engine.LoadCards(filepath.Join(repoRoot, cardsheet.Dir))
 	if err != nil {
 		fmt.Fprintf(out, "[ERROR] loading cards: %v\n", err)
 		return 1

@@ -17,7 +17,7 @@ type MatrixItem struct {
 
 // ReadMatrix returns the KIM- rows of the keyword matrix's Open Items and Rulings tables, in file order.
 func ReadMatrix(repoRoot string) ([]MatrixItem, error) {
-	lines, err := ReadLines(filepath.Join(repoRoot, "docs", "frd", MatrixFile))
+	lines, err := ReadLines(filepath.Join(repoRoot, FRDDir, MatrixFile))
 	if err != nil {
 		return nil, err
 	}

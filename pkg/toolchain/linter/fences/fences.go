@@ -120,7 +120,7 @@ func Analyze(repoRoot string) (*Report, error) {
 
 // loadCardNames reads every card name in data/cards except the exempt ones, sorted by name.
 func loadCardNames(repoRoot string) ([]cardInfo, error) {
-	cardsDir := filepath.Join(repoRoot, "data", "cards")
+	cardsDir := filepath.Join(repoRoot, cardsheet.Dir)
 	info, err := os.Stat(cardsDir)
 	if err != nil {
 		return nil, fmt.Errorf("reading data/cards directory: %w", err)
