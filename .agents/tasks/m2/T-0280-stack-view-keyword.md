@@ -4,7 +4,7 @@ title: "`view.StackView.Keyword` goes (directive #164; wave H.1 harness, flash, 
 kind: harness
 tier: flash
 wave: H.1 (board directive #164)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0280-stack-view-keyword
 depends_on: [T-0279]
 claims: [field:view.StackView.Keyword]
