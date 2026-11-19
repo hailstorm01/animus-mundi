@@ -4,7 +4,7 @@ title: "`ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `S
 kind: harness
 tier: flash
 wave: H.2 (board directive #171)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0283-keyword-trigger
 depends_on: [T-0282]
 claims: [type:ability.KeywordTrigger, field:ability.Trigger.FromKeyword, field:engine.StackItem.FromKeyword]
@@ -405,3 +405,8 @@ Authorized reference-only edits (#171), in the `test(T-0283)` commit; no test is
     - Case 7: `git -C W diff autoloop/m2-wave-h.2 --stat` showed only the 11 code/test files plus this task file.
     - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` and `go -C W tool task sim` passed.
   - Status moved to `review`. Ready for review.
+- 2026-11-19, lead-architect (wave H.2 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 2787369. Flash run `7b198333-52ef-4bbe-bdfb-04e8eed1c5c8`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0283-keyword-trigger` (1b3f48f):
+  - Scope: the four Allowed Files, the seven authorized test files and this file. The test commit (e48477a) holds only the seven test files, and the implementation commit (bf8808a) only `ability.go`, `keywords.go`, `stack.go` and `trigger.go`; all eleven blobs match the lead's dry run, whose test-only state failed `go vet ./pkg/engine/` as case 1 says. No test is added, renamed or removed.
+  - Fences and reuse: nothing is added. ADR 0007: `git grep -n -w -e Keyword -e KeywordNone -e KeywordAggressive -- "*.go"` finds only the three "Keyword interaction matrix" words in `pkg/toolchain`; no alias, re-export or forwarding wrapper keeps an old name.
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 4d129e2d` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - Docs: the design note's Stack paragraph now names the field `FromKeyword` (the lead's file, updated in the `done` commit, as Inputs said). #171 is `applied` (T-0283) and moves to the directive archive.

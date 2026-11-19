@@ -286,3 +286,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0280 | `view.StackView.Keyword` goes (directive #164; wave H.1 harness, flash, pure removal) | done |
 | T-0281 | One lookup of the source asset or its last-known record, `sourceAsset` (directive #169; wave H.2 harness, flash, pure move) | done |
 | T-0282 | Pick prompts name the card the stack item shows, through `sourceName` (directive #170; wave H.2 harness, flash) | done |
+| T-0283 | `ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `StackItem.Keyword` become `FromKeyword` (directive #171; wave H.2 harness, flash, pure rename) | done |
