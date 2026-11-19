@@ -18,6 +18,7 @@ Implements exactly one task, makes its tests pass, and hands it back for review.
 - **The tests are the spec.** Make the task's tests pass by implementing the rule they check. Never special-case a test's inputs.
 - **Reuse before writing.** Before adding anything, search `pkg/engine` for an existing shape: an effect, hook, target filter or helper that already does it. A second implementation of an existing shape is a review failure.
 - **Stay inside the task.** Change only the files under `Allowed Files`, plus the helpers under `Helpers Needed` in `pkg/engine/scenario_test.go`.
+- **No bridges for old names** ([ADR 0007](../../../docs/architecture/decisions/0007-moves-update-every-reference.md)). When you move or rename a declaration, or change its signature, update every reference and delete the old name. Never add a type alias (`type X = Y`), a re-export, or a wrapper that forwards to the new declaration so old callers keep compiling. If a reference sits outside `Allowed Files`, that's the "needs a file outside `Allowed Files`" stop condition (§3, step 7), not a reason for a wrapper.
 - **Card tasks never add shapes.** If a card needs an effect, hook, condition or targeting rule that does not exist yet, stop (§3, step 7).
 - **No card-name logic.** Engine code never branches on, or contains, a card's name. Cards are data built from shapes, as fixed by `docs/architecture/m2-ability-model.md`.
 
