@@ -4,7 +4,7 @@ title: "One read of a continuous ability's filter, `matchesFromSource`, and `mat
 kind: harness
 tier: flash
 wave: H.1 (board directives #161, #168)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0276-matches-from-source
 depends_on: [T-0275]
 claims: [func:Game.matchesFromSource, func:Game.matchesFilter]
