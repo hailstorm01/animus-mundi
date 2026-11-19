@@ -4,7 +4,7 @@ title: "One \"in the same zone\" lock on placement, `sameZoneLock` (directive #1
 kind: harness
 tier: flash
 wave: H.1 (board directive #160)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0275-same-zone-lock
 depends_on: [T-0274]
 claims: [func:Game.sameZoneLock, func:Game.activatedPlacement, func:Game.placeTrigger]
@@ -166,3 +166,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     5. `git diff autoloop/m2-wave-h.1 --numstat -- pkg`: `2 2 pkg/engine/actions.go`, `1 1 pkg/engine/costs.go`, `21 4 pkg/engine/placement.go`, `1 12 pkg/engine/trigger.go`.
     6. `git diff autoloop/m2-wave-h.1 --stat`: only the four files of case 5 plus task file.
     7. `gofmt -l pkg`: no output; `go tool task check`: all linters, tests, and vet PASSED; `go tool task sim`: 200/200 games completed, all invariants holding.
+- 2026-11-18, lead-architect (wave H.1 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as 5e70a43. Flash run `10bbd8b5-981e-481b-bad2-92592ccc77a2`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0275-same-zone-lock` (8046cbf):
+  - Scope: the four Allowed Files and this file. The implementation commit (ac78dde) holds only `actions.go` a4d07c1, `costs.go` 098a962, `placement.go` f1d7b70 and `trigger.go` 0115bf0, and every blob matches the lead's dry run. No test file changed.
+  - Fences and placement: `sameZoneLock` sits in `placement.go` beside `zoneLock`. Nothing outside `pkg/engine` changes. Reuse: `ReadsZoneRef(ability.ZoneRefSame)` is now called only in `sameZoneLock` (`placement.go:139`). ADR 0007: `activatedPlacement`'s signature changed, and all three callers now call `g.activatedPlacement`. No plain-function form or wrapper is left. Rules fidelity: the activated path's callers each pass the live battlefield asset, so `g.Asset(a.ID)` is `a` and the lock is the same. No cost reads `pl.locked`.
+  - Re-run by the reviewer on the merge (its tree is the task tip's, because the run branch hadn't moved): `gofmt -l pkg cmd` clean; cases 1, 2 and 3's test-file check as listed; `go tool task check` exit 0; `go tool task sim-compare -- ffadcde5` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #160 is `applied` (T-0275) and moves to the directive archive.
