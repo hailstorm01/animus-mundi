@@ -139,7 +139,7 @@ func (g *Game) check(a Action) error {
 		if a.pile() == ZoneDiscard && deployPermission(c) == nil {
 			return illegal("%s has no permission to be deployed from the discard pile (FR-TRN-003)", c.Name)
 		}
-		if c.Type != TypeUnit && c.Type != TypeStructure {
+		if !c.Deployable() {
 			return illegal("%s cannot be deployed", c.Name)
 		}
 		if a.Zone == ZoneHeadquarters || !slices.Contains(c.DeployZones, a.Zone) {

@@ -167,10 +167,8 @@ func (g *Game) putCard(inst *Instance, to Zone, bottom bool) {
 // uses it to show a chosen card that is still there.
 func (g *Game) DiscardCard(id int) *Instance {
 	for _, pl := range g.Players {
-		for _, inst := range pl.Discard {
-			if inst.ID == id {
-				return inst
-			}
+		if inst := pileCard(pl, id, ZoneDiscard); inst != nil {
+			return inst
 		}
 	}
 	return nil
