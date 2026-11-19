@@ -4,7 +4,7 @@ title: "One lookup of the source asset or its last-known record, `sourceAsset` (
 kind: harness
 tier: flash
 wave: H.2 (board directive #169)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.2/T-0281-source-asset
 depends_on: [T-0280]
 claims: [func:Game.sourceAsset, func:Game.itemSource]
@@ -139,10 +139,28 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None added or edited: a pure move. Every existing test passes unedited.
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 1): written in full against 1859fe4 for #169, wave H.2's first directive. Run file created. `main` (1859fe4) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #169, #170, #172, #173 and #174 are `open: before the next Deliverables task`. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (wave H.2 run, session 1): implemented #169 as pure move.
+  - Implemented Edits 1-4:
+    - Added `(g *Game) sourceAsset(id int) *Asset` in `pkg/engine/state.go` after `Game.Asset` with doc comment citing FR-ZON-004, FR-REP-004 Stage 5, FR-CBT-002 Step 3, and SVY-R44.
+    - Updated `stepDealDamage` in `pkg/engine/effects.go` to call `g.sourceAsset(r.it.Source)` and removed `itemSource`.
+    - Updated `sameZoneLock` in `pkg/engine/placement.go` to call `g.sourceAsset(source)`.
+    - Updated `resolveAttack` in `pkg/engine/combat.go` to call `g.sourceAsset(it.Source)`.
+  - Reused `Game.Asset` and `Game.LastKnown` inside `sourceAsset`. Search verified no other calls to `itemSource` or `LastKnown` in non-test engine code.
+  - Verified acceptance cases:
+    - Case 1: `git -C W grep -n itemSource -- "*.go"` printed nothing (exit 1).
+    - Case 2: `git -C W grep -n "g.LastKnown(" -- "pkg/engine/*.go" ":!*_test.go"` printed exactly `pkg/engine/state.go:310:	return g.LastKnown(id)`.
+    - Case 3: `git -C W grep -n "g.sourceAsset(" -- pkg/engine` printed exactly 3 callers (combat.go:89, effects.go:206, placement.go:142).
+    - Case 4: `go -C W test ./pkg/... ./cmd/...` passed with exit 0; `git -C W diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` printed nothing.
+    - Case 5: `go -C W tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+    - Case 6: `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly the 4 expected lines (1 1 combat.go, 1 12 effects.go, 1 4 placement.go, 13 0 state.go).
+    - Case 7: `git -C W diff autoloop/m2-wave-h.2 --stat` showed only the 4 engine files and the task file.
+    - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` passed (fmt-check, vet, tests, lint); `go -C W tool task sim` passed (200/200 games, all invariants holding).
+  - Committed implementation as `refactor(engine): one source-asset lookup, sourceAsset (T-0281)` (`cc729b7d`).
+  - Status moved to `review`.

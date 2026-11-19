@@ -86,7 +86,7 @@ func (g *Game) resolveAttack(it *StackItem) {
 	// last-known controller once it has left), not the declaring player
 	// (FR-CBT-002 Step 3). A control change on either side fizzles the attack.
 	attController := it.Controller
-	if a := g.itemSource(it); a != nil {
+	if a := g.sourceAsset(it.Source); a != nil {
 		attController = a.Controller
 	}
 	if def == nil || !inCombatZone(def) || def.Controller == attController {

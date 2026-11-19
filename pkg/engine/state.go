@@ -297,6 +297,19 @@ func (g *Game) Asset(id int) *Asset {
 	return nil
 }
 
+// sourceAsset returns the battlefield asset with this ID, or its last-known
+// record once it has left the battlefield (FR-ZON-004), so a damage event still
+// names and attributes its source (FR-REP-004 Stage 5), an attack still knows
+// its attacker's controller (FR-CBT-002 Step 3), and a same-zone lock still
+// finds its source's zone (SVY-R44). It is nil only for an ID that was never an
+// asset.
+func (g *Game) sourceAsset(id int) *Asset {
+	if a := g.Asset(id); a != nil {
+		return a
+	}
+	return g.LastKnown(id)
+}
+
 // TheaterOf returns the Main Theater assets controlled by p.
 func (g *Game) TheaterOf(p PlayerID) []*Asset {
 	var out []*Asset
