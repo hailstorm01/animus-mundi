@@ -4,7 +4,7 @@ title: "Each linter input path is written once: `specdoc.FRDDir`, `specdoc.Rules
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (a))
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0284-input-path-constants
 depends_on: [T-0283]
 claims: [const:specdoc.FRDDir, const:specdoc.RulesFRD, const:cardsheet.Dir]
