@@ -4,7 +4,7 @@ title: "`fireHook` takes `watched` and `fireHookFor` goes; `chooseDiscards` goes
 kind: harness
 tier: flash
 wave: H.1 (board directives #166, #167)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.1/T-0277-one-fire-hook
 depends_on: [T-0276]
 claims: [func:Game.fireHook, func:Game.fireHookFor, func:Game.chooseDiscards, func:Game.chooseHandCards]
@@ -237,10 +237,26 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/decision_source_trigger_test.go`: the authorized edit to `TestDecisionSource_FlushInsideAScopeOrdersWithNone` (Edit 1), in the `test(T-0277)` commit. No other test file changes.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-18, lead-architect (wave H.1 run, session 6): written in full against 69d56d9 for #166 and #167. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #166, #167, #162, #163 and #164 are `open: before the next Deliverables task`. #166 and #167 share this task, as #167 allows: together they touch two non-test files that aren't reference-only, within the D2 size rule. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with parentheses are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.1 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-18, kernel-engineer (flash): implemented directives #166 and #167 across two commits:
+  1. `1f46b149 test(T-0277): the flush-scope test passes nil as fireHook's watched asset`: Edit 1 in `pkg/engine/decision_source_trigger_test.go` passing `nil` as `fireHook`'s watched asset.
+  2. `7f9e868e refactor(engine): fireHook takes watched and fireHookFor goes; chooseDiscards goes (T-0277)`:
+     - `pkg/engine/trigger.go`: removed `fireHookFor`, renamed `fireHookFor` to `fireHook(src triggerSource, hook ability.Hook, watched *Asset) []pendingTrigger`, updated 10 callers (`fireDiscarded`, `fireEntersDiscard`, `fireDeploy`, `fireMoved`, `fireKilled`, `fireDamaged`, `fireExhausted`, `fireCombatKill`, `fireAttacks`, `fireTurnStart`) to pass `nil` or the watched asset `a`, updated comment.
+     - `pkg/engine/zones.go`: removed `chooseDiscards` forwarding wrapper, folded documentation comments into `chooseHandCards`, removed leftover `pid := chooser` using `chooser` directly in `Decision`.
+     - `pkg/engine/costs.go`: updated `chooseCostDiscards` to call `chooseHandCards(pl.controller, pl.controller, c.UpTo, true)` directly.
+  - Acceptance Cases & verification:
+    1. Case 1: at `test(T-0277)` commit, `go vet ./pkg/engine/` failed with `vet.exe: pkg\engine\decision_source_trigger_test.go:145:53: too many arguments in call to s.g.fireHook`.
+    2. Case 2: `git grep -n "fireHook(src triggerSource" -- pkg` printed exactly one line: `pkg/engine/trigger.go:148:func (g *Game) fireHook(src triggerSource, hook ability.Hook, watched *Asset) []pendingTrigger {`.
+    3. Case 3: `git grep -n fireHookFor -- "*.go"` printed nothing (exit code 1); `git grep -n chooseDiscards -- "*.go"` printed nothing (exit code 1).
+    4. Case 4: `git grep -n "pid := chooser" -- pkg` printed nothing (exit code 1).
+    5. Case 5: `go test ./pkg/...` passed; `git diff autoloop/m2-wave-h.1 --numstat -- "*_test.go"` printed exactly `1	1	pkg/engine/decision_source_trigger_test.go`.
+    6. Case 6: `go tool task sim-compare -- autoloop/m2-wave-h.1` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`.
+    7. Case 7: `git diff autoloop/m2-wave-h.1 --numstat -- pkg docs` printed exactly 4 lines (`costs.go`, `decision_source_trigger_test.go`, `trigger.go`, `zones.go`).
+    8. Case 8: `git diff autoloop/m2-wave-h.1 --stat` printed only the 4 files of Case 7 and this task file.
+    9. Case 9: `gofmt -l pkg` printed nothing; `go tool task check` passed (fmt-check, vet, test, build, lint --all); `go tool task sim` passed (200 games, 0 invariant violations).

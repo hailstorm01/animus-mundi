@@ -142,7 +142,7 @@ func TestDecisionSource_FlushInsideAScopeOrdersWithNone(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneReserves, trigUnit("Source", deployTrigger(drawN(1)), deployTrigger(scratchN(1))))
 	outer := unit("Outer", 1, 1, ability.Keywords{})
-	s.g.fireHook(assetSource(src), ability.HookDeploy)
+	s.g.fireHook(assetSource(src), ability.HookDeploy, nil)
 	s.script(0, Answer{Picks: []int{0, 1}})
 	closeOuter := s.g.askFor(outer)
 	s.g.flushTriggers()
