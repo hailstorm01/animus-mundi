@@ -4,7 +4,7 @@ title: "`fireHook` takes `watched` and `fireHookFor` goes; `chooseDiscards` goes
 kind: harness
 tier: flash
 wave: H.1 (board directives #166, #167)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0277-one-fire-hook
 depends_on: [T-0276]
 claims: [func:Game.fireHook, func:Game.fireHookFor, func:Game.chooseDiscards, func:Game.chooseHandCards]
