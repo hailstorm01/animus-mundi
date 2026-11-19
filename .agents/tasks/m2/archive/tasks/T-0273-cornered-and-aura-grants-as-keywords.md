@@ -4,7 +4,7 @@ title: Cornered and aura grants are ability.Keywords sets, and Game.Keywords fol
 kind: harness
 tier: sonnet
 wave: H.1 (board directive #159, structural review 13, finding 1)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0273-cornered-and-aura-grants-as-keywords
 depends_on: [T-0272]
 claims: [type:ability.WhileCornered, field:ability.Static.Keywords, func:Game.Keywords, func:Game.whileCornered]
@@ -82,3 +82,4 @@ The test commit doesn't compile until the reshape lands; that is its failing sta
 - 2026-11-18 lead-architect (wave H.1 session 1): queued as the second part of #159 (the directive's own split; D2.4), after T-0272.
 - 2026-11-18 lead-architect (wave H.1 session 2): wrote Inputs, Edits, Acceptance Cases, Tests and Allowed Files against `autoloop/m2-wave-h.1` c1b7bf8; `ready` (harness: no `tests` step). Dispatching `kernel-engineer` (sonnet) on `m2/autoloop-wave-h.1/T-0273-cornered-and-aura-grants-as-keywords`.
 - 2026-11-18 kernel-engineer (sonnet): `review`. Test commit first (mechanical reshape of the listed tests, plus `TestFR_LAY_001_AuraGrantsAnyKeywordSet` and `TestFR_KWD_002e_CorneredGrantsAnyKeywordSet`; it did not compile). Then: `WhileCornered{Keywords, Power}` with `Add` folding through `Keywords.Add`; `Static.Resistant` became `Static.Keywords`; `Game.Keywords` folds printed, Cornered, each aura's and each Layer 3 modifier's keywords through `Keywords.Add`; card definitions in cards/path.go and cards/animus.go, doc.go, the `auras` comment and `engine-structs.md` (`CorneredKeywords` to `WhileCornered`) updated. Reused `Keywords.Add`; no new shapes. Ran: Acceptance Case 4 greps (nothing found), `go tool task check` (pass), `go tool task sim` (clean), `go tool task sim-compare -- autoloop/m2-wave-h.1` (byte-identical), the Done When `go test -run` (pass).
+- 2026-11-18 lead-architect (wave H.1 session 2): review round 1, approved. Diff touches only Allowed Files; the `test(T-0273)` commit holds exactly the listed reshapes and the two new tests, and no test changed after it. No old field survives (Acceptance Case 4 greps clean; the one regex hit is the test name `TestFR_LAY_003_SimultaneousDamageLocksCorneredKeywords`). Re-ran in a review worktree: `go tool task check` pass; `go tool task sim` P0 58.5%, P1 39.5%, draws 2.0% (unchanged); `go tool task sim-compare -- autoloop/m2-wave-h.1` byte-identical. Merged into `autoloop/m2-wave-h.1` (75f0ab0). #159 applied and archived.
