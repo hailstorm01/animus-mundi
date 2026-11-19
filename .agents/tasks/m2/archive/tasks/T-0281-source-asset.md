@@ -4,7 +4,7 @@ title: "One lookup of the source asset or its last-known record, `sourceAsset` (
 kind: harness
 tier: flash
 wave: H.2 (board directive #169)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0281-source-asset
 depends_on: [T-0280]
 claims: [func:Game.sourceAsset, func:Game.itemSource]
@@ -164,3 +164,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` passed (fmt-check, vet, tests, lint); `go -C W tool task sim` passed (200/200 games, all invariants holding).
   - Committed implementation as `refactor(engine): one source-asset lookup, sourceAsset (T-0281)` (`cc729b7d`).
   - Status moved to `review`.
+- 2026-11-19, lead-architect (wave H.2 run, session 1, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 63c5b3c. Flash run `a7ea2c46-74ec-4e53-8afc-c8679b36f08b`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0281-source-asset` (d6d453b):
+  - Scope: the four Allowed Files and this file. The implementation commit (cc729b7) holds only `combat.go` 31164e4, `effects.go` 7f6b828, `placement.go` 0698ee2 and `state.go` e84a3ca; every blob matches the lead's dry run. No test file changed.
+  - Fences and placement: `sourceAsset` sits in `state.go` beside `Game.Asset`, the file `doc.go` gives core lookups. Reuse and ADR 0007: `git grep -n itemSource -- "*.go"` finds nothing; `g.LastKnown(` in non-test engine code is called only at `state.go:310`, in `sourceAsset`; no alias or wrapper is added.
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 13c977ce` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #169 is `applied` (T-0281) and moves to the directive archive.
