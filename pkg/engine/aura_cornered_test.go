@@ -23,7 +23,7 @@ func corneredAura(name string, power, health int, f ability.Filter, c ability.Wh
 
 // monument is "other allied assets in the same zone have Cornered: Resistant 1".
 func monument(name string) *Card {
-	return corneredAura(name, 0, 9, otherAlliedSame, ability.WhileCornered{Resistant: 1})
+	return corneredAura(name, 0, 9, otherAlliedSame, ability.WhileCornered{Keywords: ability.Keywords{Resistant: 1}})
 }
 
 // foes puts n player 1 units in the Main Theater and returns them.
@@ -71,7 +71,7 @@ func TestFR_LAY_001_AuraCorneredGrantMatchesFilter(t *testing.T) {
 func TestFR_LAY_001_AuraCorneredGrantAddsToOwnCornered(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, monument("Source"))
-	own := corneredCard("Own", 2, 9, ability.WhileCornered{Resistant: 1})
+	own := corneredCard("Own", 2, 9, ability.WhileCornered{Keywords: ability.Keywords{Resistant: 1}})
 	own.Keywords.Resistant = 1
 	u := s.put(0, ZoneMainTheater, own)
 	s.foes(3)

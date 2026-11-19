@@ -69,7 +69,7 @@ func (g *Game) Power(a *Asset) int {
 // StaticAura applies when its Filter, relative to the
 // source's current controller, matches a. A ZoneRefSame criterion reads the
 // source's current zone through zoneLock (SVY-R44). A face-down source has no
-// Ability, so it gives none. Each caller reads the field it needs (Power, Resistant).
+// Ability, so it gives none. Each caller reads the field it needs (Power, Keywords, Cornered).
 func (g *Game) auras(a *Asset) []ability.Static {
 	var out []ability.Static
 	for _, src := range g.Assets() {
@@ -103,18 +103,17 @@ func (g *Game) CurrentHealth(a *Asset) int {
 	return g.MaxHealth(a) - a.Damage
 }
 
-// Keywords returns the asset's effective keywords: the printed ones, plus the
-// card's Cornered keywords while its controller is Cornered (SVY-R18), plus the
-// Resistant of each aura that applies (Game.auras, Layer 3). The Cornered part
-// includes auras' Cornered grants. A face-down asset has no Cornered keywords of
+// Keywords returns the asset's effective keywords: the printed set (Layer 1),
+// folded with the card's own and auras' Cornered keywords while its controller
+// is Cornered (Game.whileCornered, SVY-R18), each applying aura's Keywords
+// (Game.auras) and each Layer 3 modifier's, all through Keywords.Add
+// (FR-LAY-001). A face-down asset has no Cornered keywords of
 // its own, since its face has no Ability, but it still receives auras' grants.
 func (g *Game) Keywords(a *Asset) ability.Keywords {
 	kw := a.Printed().Keywords
-	wc := g.whileCornered(a)
-	kw.Aggressive += wc.Aggressive
-	kw.Resistant += wc.Resistant
+	kw.Add(g.whileCornered(a).Keywords)
 	for _, st := range g.auras(a) {
-		kw.Resistant += st.Resistant
+		kw.Add(st.Keywords)
 	}
 	for _, m := range a.Modifiers {
 		if m.Layer == 3 {
