@@ -28,9 +28,9 @@ func newDealerBoard(t *testing.T) *dealerBoard {
 	s := newScene(t)
 	return &dealerBoard{
 		s: s,
-		x: s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{})),
-		y: s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{})),
-		z: s.put(1, ZoneMainTheater, unit("Z", 2, 30, Keywords{})),
+		x: s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{})),
+		y: s.put(1, ZoneMainTheater, unit("Y", 1, 30, ability.Keywords{})),
+		z: s.put(1, ZoneMainTheater, unit("Z", 2, 30, ability.Keywords{})),
 	}
 }
 

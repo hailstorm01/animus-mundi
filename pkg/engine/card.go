@@ -1,10 +1,9 @@
-// Card types: CardType, Keywords and Card, with the Scratch Company face.
+// Card types: CardType and Card, with the Scratch Company face.
 
 package engine
 
 import (
 	"slices"
-	"strconv"
 	"strings"
 
 	"animus-mundi/pkg/engine/ability"
@@ -24,60 +23,6 @@ func (t CardType) String() string {
 	return [...]string{"Unit", "Structure", "Maneuver", "Headquarters"}[t]
 }
 
-// Keywords holds the standalone keyword values printed on (or granted to) an
-// entity. Numeric keywords use 0 for "absent"; Resistant may be negative.
-type Keywords struct {
-	Resistant        int  `json:"resistant,omitempty"`
-	Stalwart         bool `json:"stalwart,omitempty"`
-	Aggressive       int  `json:"aggressive,omitempty"`
-	Ethereal         bool `json:"ethereal,omitempty"`
-	Ward             bool `json:"ward,omitempty"`
-	Versatile        bool `json:"versatile,omitempty"`
-	Guardian         bool `json:"guardian,omitempty"`
-	Armor            int  `json:"armor,omitempty"`
-	DeploysExhausted bool `json:"deploysExhausted,omitempty"`
-}
-
-// keywordDef is one standalone keyword: its printed name and its Keywords
-// field. A numeric keyword (num) prints its N, as in "Resistant 2"; a flag
-// keyword prints its name alone.
-type keywordDef struct {
-	name string
-	num  func(*Keywords) *int
-	flag func(*Keywords) *bool
-}
-
-// keywordDefs lists the standalone keywords in printed order. ParseKeywordLine
-// and Keywords.Lines both walk it, so each keyword's name is written only here,
-// or, for a keyword that is a triggered ability, in ability.Keyword.
-var keywordDefs = []keywordDef{
-	{name: "Resistant", num: func(k *Keywords) *int { return &k.Resistant }},
-	{name: ability.KeywordStalwart.String(), flag: func(k *Keywords) *bool { return &k.Stalwart }},
-	{name: ability.KeywordAggressive.String(), num: func(k *Keywords) *int { return &k.Aggressive }},
-	{name: "Ethereal", flag: func(k *Keywords) *bool { return &k.Ethereal }},
-	{name: "Ward", flag: func(k *Keywords) *bool { return &k.Ward }},
-	{name: "Versatile", flag: func(k *Keywords) *bool { return &k.Versatile }},
-	{name: "Guardian", flag: func(k *Keywords) *bool { return &k.Guardian }},
-	{name: "Armor", num: func(k *Keywords) *int { return &k.Armor }},
-	{name: "Deploys Exhausted", flag: func(k *Keywords) *bool { return &k.DeploysExhausted }},
-}
-
-// Lines lists k's standalone keywords in printed form and order, never nil.
-func (k Keywords) Lines() []string {
-	out := []string{}
-	for _, d := range keywordDefs {
-		switch {
-		case d.num != nil:
-			if n := *d.num(&k); n != 0 {
-				out = append(out, d.name+" "+strconv.Itoa(n))
-			}
-		case *d.flag(&k):
-			out = append(out, d.name)
-		}
-	}
-	return out
-}
-
 // Card holds a card's printed characteristics (FR-CRD-101).
 type Card struct {
 	Name        string
@@ -93,7 +38,7 @@ type Card struct {
 	DeployZones []Zone
 	Rarity      string
 	RulesText   string
-	Keywords    Keywords
+	Keywords    ability.Keywords
 
 	// Unsupported lists rules-text lines the kernel cannot execute.
 	// A card with unsupported lines cannot be deployed.
@@ -139,7 +84,7 @@ var scratchFace = &Card{
 	Power:    1, Health: 1, ReqYield: 1, TacYield: 1,
 	DeployZones: []Zone{ZoneReserves},
 	// The face prints Deploys Exhausted (FR-ZON-005, FR-KWD-002l, KIM-S01).
-	Keywords: Keywords{DeploysExhausted: true},
+	Keywords: ability.Keywords{DeploysExhausted: true},
 }
 
 // ScratchFace returns a copy of the face-down Scratch Company characteristics (FR-ZON-005).

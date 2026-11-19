@@ -22,7 +22,7 @@ func startSteps(turn ability.TurnOwner, steps ...ability.Step) ability.Trigger {
 
 // startStructure is a structure printing the given triggers in order.
 func startStructure(name string, trigs ...ability.Trigger) *Card {
-	c := structure(name, 1, 9, Keywords{})
+	c := structure(name, 1, 9, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
 }
@@ -59,8 +59,8 @@ func TestFR_TRN_001_StartOfYourTurnOnly(t *testing.T) {
 
 func TestFR_TRN_001_StartOfTurnTriggerAfterReady(t *testing.T) {
 	s := newScene(t)
-	tapped := s.put(0, ZoneMainTheater, unit("Tired", 1, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("Fresh", 1, 5, Keywords{}))
+	tapped := s.put(0, ZoneMainTheater, unit("Tired", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Fresh", 1, 5, ability.Keywords{}))
 	allied := ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}
 	s.put(0, ZoneMainTheater, startStructure("Bivouac",
 		startTrigger(ability.TurnYours, ability.Effect{Targets: []ability.Target{{Filter: allied}}, Steps: []ability.Step{armorStep(1, 0)}})))

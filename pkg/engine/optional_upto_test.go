@@ -31,11 +31,11 @@ func newArena(t *testing.T, heroPower int, trigs ...ability.Trigger) *arena {
 	t.Helper()
 	s := newScene(t)
 	a := &arena{s: s}
-	a.hero = s.put(0, ZoneMainTheater, striker("Hero", heroPower, 30, Keywords{}, trigs...))
-	a.dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
-	a.e1 = s.put(1, ZoneMainTheater, unit("E1", 0, 5, Keywords{}))
-	a.e2 = s.put(1, ZoneMainTheater, unit("E2", 0, 30, Keywords{}))
-	a.a1 = s.put(0, ZoneMainTheater, unit("A1", 0, 30, Keywords{}))
+	a.hero = s.put(0, ZoneMainTheater, striker("Hero", heroPower, 30, ability.Keywords{}, trigs...))
+	a.dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, ability.Keywords{}))
+	a.e1 = s.put(1, ZoneMainTheater, unit("E1", 0, 5, ability.Keywords{}))
+	a.e2 = s.put(1, ZoneMainTheater, unit("E2", 0, 30, ability.Keywords{}))
+	a.a1 = s.put(0, ZoneMainTheater, unit("A1", 0, 30, ability.Keywords{}))
 	return a
 }
 
@@ -398,7 +398,7 @@ func TestFR_TGT_002_UpToWithOneLegalOptionIsStillAsked(t *testing.T) {
 	// and Min != Max means no fast path (T-0006).
 	oppStructure := ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindStructure}
 	a := upToArena(t, upTo(2, oppStructure))
-	st := a.s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 9, Keywords{}))
+	st := a.s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 9, ability.Keywords{}))
 	a.s.scriptPlan(0, nil, nil, pick(st))
 	a.attack()
 	asked := a.s.asked(0)
@@ -412,7 +412,7 @@ func TestFR_TGT_002_UpToWithOneLegalOptionIsStillAsked(t *testing.T) {
 
 	// Declining the one option is valid and deals nothing.
 	b := upToArena(t, upTo(2, oppStructure))
-	b.s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 9, Keywords{}))
+	b.s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 9, ability.Keywords{}))
 	b.s.scriptPlan(0, nil, nil, pick())
 	b.attack()
 	wantNoNonCombatDamage(t, b.s.g, "picking none of one option")
@@ -497,7 +497,7 @@ func TestFR_MOD_001_UpToTimeoutAndNoChooserPickNone(t *testing.T) {
 func TestFR_KWD_002h_UpToOptionsExcludeOpposingWardAssets(t *testing.T) {
 	// Covers: SVY-R11
 	a := upToArena(t)
-	warded := a.s.put(1, ZoneMainTheater, unit("Warded", 0, 30, Keywords{Ward: true}))
+	warded := a.s.put(1, ZoneMainTheater, unit("Warded", 0, 30, ability.Keywords{Ward: true}))
 	a.s.scriptPlan(0, nil, nil, pick(a.e1, a.e2))
 	a.attack()
 	d := a.s.asked(0)[0]

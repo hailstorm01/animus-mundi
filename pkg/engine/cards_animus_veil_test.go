@@ -27,8 +27,8 @@ func vrHQ(s *scene, p PlayerID) *Asset {
 func TestCard_VeilRender_DiscardDeployKillsTheChosenAlliedUnit(t *testing.T) {
 	// Covers: FR-TRN-003a
 	s := newScene(t)
-	main := s.put(0, ZoneMainTheater, unit("Main Unit", 1, 5, Keywords{}))
-	res := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, Keywords{}))
+	main := s.put(0, ZoneMainTheater, unit("Main Unit", 1, 5, ability.Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, s.card("Veil Render"))[0]
 	p := s.g.Players[0]
 	s.setPool(0, 2, 3)
@@ -85,8 +85,8 @@ func TestCard_VeilRender_ScratchCompanyCanPay(t *testing.T) {
 func TestCard_VeilRender_NotDeployableWithoutAnAlliedUnit(t *testing.T) {
 	// Covers: SVY-R46, SVY-R29
 	s := newScene(t)
-	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, s.card("Veil Render"))[0]
 	p := s.g.Players[0]
 	s.setPool(0, 5, 5)
@@ -111,10 +111,10 @@ func TestCard_VeilRender_NotDeployableWithoutAnAlliedUnit(t *testing.T) {
 func TestCard_VeilRender_TimedOutCostKillsTheFirstAlliedUnit(t *testing.T) {
 	// Covers: FR-MOD-001, SVY-R46, SVY-R16
 	s := newScene(t)
-	main := s.put(0, ZoneMainTheater, unit("Main Unit", 1, 5, Keywords{}))
-	a := s.put(0, ZoneReserves, unit("Unit A", 1, 5, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("Unit B", 1, 5, Keywords{}))
-	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
+	main := s.put(0, ZoneMainTheater, unit("Main Unit", 1, 5, ability.Keywords{}))
+	a := s.put(0, ZoneReserves, unit("Unit A", 1, 5, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("Unit B", 1, 5, ability.Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, s.card("Veil Render"))[0]
 	s.setPool(0, 3, 3)
 	s.script(0, Answer{Timeout: true})
@@ -197,7 +197,7 @@ func TestCard_VeilRender_ReplacedKillStillPays(t *testing.T) {
 func TestCard_VeilRender_HandDeployHasNoKill(t *testing.T) {
 	// Covers: FR-TRN-003
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	inst := s.give(0, s.card("Veil Render"))
 	s.setPool(0, 3, 3)
 	s.script(0)
@@ -219,7 +219,7 @@ func TestCard_VeilRender_HandDeployHasNoKill(t *testing.T) {
 func TestCard_VeilRender_FreeDeployWaivesTheKill(t *testing.T) {
 	// Covers: FR-TRN-003a, FR-CST-001
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, s.card("Veil Render"))[0]
 	man := s.give(0, dfManeuver(0, 0, ability.ZoneAny))
 	s.setPool(0, 3, 3)
@@ -242,7 +242,7 @@ func TestCard_VeilRender_FreeDeployWaivesTheKill(t *testing.T) {
 func TestCard_VeilRender_NotFromTheOpponentsPile(t *testing.T) {
 	// Covers: FR-TRN-003
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(1, s.card("Veil Render"))[0]
 	s.setPool(0, 5, 5)
 	if n := ddOffers(s.g, inst); n != 0 {

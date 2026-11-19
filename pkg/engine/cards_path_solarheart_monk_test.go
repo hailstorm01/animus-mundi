@@ -47,7 +47,7 @@ func hasOptionRef(d Decision, ref int) bool {
 }
 
 func hurtUnit(s *scene, p PlayerID, z Zone, name string) *Asset {
-	a := s.put(p, z, unit(name, 1, 5, Keywords{}))
+	a := s.put(p, z, unit(name, 1, 5, ability.Keywords{}))
 	a.Damage = 3
 	return a
 }
@@ -73,7 +73,7 @@ func TestCard_SolarheartMonk_PrintedStats(t *testing.T) {
 	if c.ReqYield != 2 || c.TacYield != 2 {
 		t.Errorf("yields 2/2, got %d/%d", c.ReqYield, c.TacYield)
 	}
-	if !reflect.DeepEqual(c.Keywords, Keywords{}) {
+	if !reflect.DeepEqual(c.Keywords, ability.Keywords{}) {
 		t.Errorf("prints no keywords, got %+v", c.Keywords)
 	}
 	if !c.Supported() {
@@ -132,7 +132,7 @@ func TestCard_SolarheartMonk_DestroyedScratchCompanyHeals(t *testing.T) {
 	down := s.putScratch(1)
 	down.Inst.Card = s.card(monkName)
 	s.moveTo(down, ZoneMainTheater)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	s.do(s.attack(att, down))
 	if s.alive(down) {
 		t.Fatalf("precondition: the Scratch Company is destroyed by the attack")

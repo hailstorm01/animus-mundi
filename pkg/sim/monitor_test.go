@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"bytes"
 	"errors"
 	"reflect"
@@ -26,23 +27,23 @@ var (
 
 // monitorDecks gives both seats the same small pool of named cards.
 func monitorDecks() [2]engine.DeckList {
-	dud := unit("Dud", 1, 1, engine.Keywords{})
+	dud := unit("Dud", 1, 1, ability.Keywords{})
 	dud.ReqYield, dud.TacYield = 0, 0
 	pool := []*engine.Card{
-		unit("Vanilla", 2, 2, engine.Keywords{}),
-		unit("Ghost", 2, 1, engine.Keywords{Ethereal: true}),
-		unit("Bodyguard", 0, 4, engine.Keywords{Guardian: true}),
-		structure("Bastion", 0, 6, engine.Keywords{}),
-		unit("Slowpoke", 3, 3, engine.Keywords{DeploysExhausted: true}),
-		unit("Plated", 2, 1, engine.Keywords{Armor: 2}),
-		unit("Sneak", 1, 2, engine.Keywords{Versatile: true}),
+		unit("Vanilla", 2, 2, ability.Keywords{}),
+		unit("Ghost", 2, 1, ability.Keywords{Ethereal: true}),
+		unit("Bodyguard", 0, 4, ability.Keywords{Guardian: true}),
+		structure("Bastion", 0, 6, ability.Keywords{}),
+		unit("Slowpoke", 3, 3, ability.Keywords{DeploysExhausted: true}),
+		unit("Plated", 2, 1, ability.Keywords{Armor: 2}),
+		unit("Sneak", 1, 2, ability.Keywords{Versatile: true}),
 		dud,
 	}
 	return [2]engine.DeckList{{HQ: hq(3, 20), Main: pool}, {HQ: hq(3, 20), Main: pool}}
 }
 
 // cardKeywords is the keywords of the card with this name in the test pools.
-func cardKeywords(card string) engine.Keywords {
+func cardKeywords(card string) ability.Keywords {
 	for _, d := range [][2]engine.DeckList{monitorDecks(), damageDecks()} {
 		for _, c := range d[0].Main {
 			if c.Name == card {
@@ -50,7 +51,7 @@ func cardKeywords(card string) engine.Keywords {
 			}
 		}
 	}
-	return engine.Keywords{}
+	return ability.Keywords{}
 }
 
 // snapAsset is a face-up asset with its card's keywords, as the engine reports them.

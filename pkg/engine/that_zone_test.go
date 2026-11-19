@@ -32,10 +32,10 @@ func tzScene(t *testing.T, watcher *Card, watcherZone Zone) *tzField {
 	s := newScene(t)
 	f := &tzField{s: s}
 	f.w = s.put(0, watcherZone, watcher)
-	f.main0 = s.put(0, ZoneMainTheater, unit("Main0", 1, 5, Keywords{}))
-	f.main1 = s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
-	f.res0 = s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
-	f.res1 = s.put(1, ZoneReserves, unit("Res1", 1, 5, Keywords{}))
+	f.main0 = s.put(0, ZoneMainTheater, unit("Main0", 1, 5, ability.Keywords{}))
+	f.main1 = s.put(1, ZoneMainTheater, unit("Main1", 1, 5, ability.Keywords{}))
+	f.res0 = s.put(0, ZoneReserves, unit("Res0", 1, 5, ability.Keywords{}))
+	f.res1 = s.put(1, ZoneReserves, unit("Res1", 1, 5, ability.Keywords{}))
 	return f
 }
 
@@ -111,7 +111,7 @@ func tzWantArmor(t *testing.T, a *Asset, want int, why string) {
 // tzTargetWatcher prints "whenever this moves, target an asset in that zone;
 // it gains 1 armor".
 func tzTargetWatcher() *Card {
-	return striker("Watcher", 1, 5, Keywords{}, ability.Trigger{
+	return striker("Watcher", 1, 5, ability.Keywords{}, ability.Trigger{
 		Hook:   ability.HookMoves,
 		ToZone: ability.ZoneAny,
 		Effect: ability.Effect{
@@ -122,11 +122,11 @@ func tzTargetWatcher() *Card {
 }
 
 func tzAllWatcher() *Card {
-	return striker("Watcher", 1, 5, Keywords{}, moveTrigger(ability.ZoneAny, allStep(ability.OpAddArmor, 1, thatZone)))
+	return striker("Watcher", 1, 5, ability.Keywords{}, moveTrigger(ability.ZoneAny, allStep(ability.OpAddArmor, 1, thatZone)))
 }
 
 func tzPickWatcher() *Card {
-	return striker("Watcher", 1, 5, Keywords{}, moveTrigger(ability.ZoneAny,
+	return striker("Watcher", 1, 5, ability.Keywords{}, moveTrigger(ability.ZoneAny,
 		ability.Step{Op: ability.OpKill, Subject: ability.SubjectPick, Filter: thatZone, UpTo: 1}))
 }
 
@@ -229,11 +229,11 @@ func TestFR_TGT_001_ThatZonePickOffersLockedZone(t *testing.T) {
 func TestFR_TGT_001_ThatZoneWithoutLockMatchesNothing(t *testing.T) {
 	// Covers: SVY-R45
 	s := newScene(t)
-	main0 := s.put(0, ZoneMainTheater, unit("Main0", 1, 5, Keywords{}))
-	res0 := s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
-	main1 := s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
+	main0 := s.put(0, ZoneMainTheater, unit("Main0", 1, 5, ability.Keywords{}))
+	res0 := s.put(0, ZoneReserves, unit("Res0", 1, 5, ability.Keywords{}))
+	main1 := s.put(1, ZoneMainTheater, unit("Main1", 1, 5, ability.Keywords{}))
 	tzScript(s, main0.ID, res0.ID, main1.ID)
-	c := striker("Deployer", 1, 5, Keywords{}, ability.Trigger{
+	c := striker("Deployer", 1, 5, ability.Keywords{}, ability.Trigger{
 		Hook: ability.HookDeploy,
 		Effect: ability.Effect{
 			Targets: []ability.Target{{Filter: thatZone}},

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"reflect"
 	"testing"
 )
@@ -23,7 +24,7 @@ func hollowScene(t *testing.T) (*scene, *Asset) {
 func TestCard_RhapsodysHollow_GainsControlOfOpposingUnit(t *testing.T) {
 	// Covers: FR-ZON-002, FR-ZON-003, FR-ACT-001
 	s, h := hollowScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	foe.Damage = 1
 	s.script(0, Answer{Picks: []int{0}})
 	from := len(s.g.Log)
@@ -60,11 +61,11 @@ func TestCard_RhapsodysHollow_GainsControlOfOpposingUnit(t *testing.T) {
 func TestCard_RhapsodysHollow_OnlyOpposingMainTheaterUnitsOffered(t *testing.T) {
 	// Covers: FR-TGT-001
 	s, h := hollowScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
-	s.put(1, ZoneReserves, unit("Reserve", 2, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
-	a := s.put(1, ZoneMainTheater, unit("FoeA", 2, 5, Keywords{}))
-	b := s.put(1, ZoneMainTheater, unit("FoeB", 3, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
+	s.put(1, ZoneReserves, unit("Reserve", 2, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
+	a := s.put(1, ZoneMainTheater, unit("FoeA", 2, 5, ability.Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("FoeB", 3, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.do(activate(h, 0))
 	asks := s.asked(0)
@@ -95,17 +96,17 @@ func TestCard_RhapsodysHollow_NotOfferedWithoutTarget(t *testing.T) {
 	})
 	t.Run("only an allied unit", func(t *testing.T) {
 		s, h := hollowScene(t)
-		s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
 		actNotOffered(t, s, h, 0, "only an allied unit in the Main Theater")
 	})
 	t.Run("only an opposing unit in Reserves", func(t *testing.T) {
 		s, h := hollowScene(t)
-		s.put(1, ZoneReserves, unit("Reserve", 2, 5, Keywords{}))
+		s.put(1, ZoneReserves, unit("Reserve", 2, 5, ability.Keywords{}))
 		actNotOffered(t, s, h, 0, "only an opposing unit in its Reserves")
 	})
 	t.Run("only an opposing structure", func(t *testing.T) {
 		s, h := hollowScene(t)
-		s.put(1, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
 		actNotOffered(t, s, h, 0, "only an opposing structure in the Main Theater")
 	})
 }
@@ -114,13 +115,13 @@ func TestCard_RhapsodysHollow_CostsNeedTacticsAndReadied(t *testing.T) {
 	// Covers: FR-ACT-001, FR-ACT-002
 	t.Run("Requisition cannot pay Tactics", func(t *testing.T) {
 		s, h := hollowScene(t)
-		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 		s.setPool(0, 5, 2)
 		actNotOffered(t, s, h, 0, "R5 T2 cannot pay T3")
 	})
 	t.Run("Exhausted", func(t *testing.T) {
 		s, h := hollowScene(t)
-		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 		h.Exhausted = true
 		if offersActivate(s.g, h, 0) {
 			t.Errorf("an Exhausted Hollow cannot pay its exhaust cost, so Activate is not offered (FR-ACT-002)")
@@ -135,7 +136,7 @@ func TestCard_RhapsodysHollow_CostsNeedTacticsAndReadied(t *testing.T) {
 func TestCard_RhapsodysHollow_TargetLeftMainTheaterBeforeResolution(t *testing.T) {
 	// Covers: FR-TGT-003, FR-ACT-001
 	s, h := hollowScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	moved := false
 	s.g.obs = &recorder{onEvent: func(e Event) {

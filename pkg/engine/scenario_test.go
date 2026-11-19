@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -16,12 +17,12 @@ func hq(power, health int) *Card {
 		Power: power, Health: health, ReqYield: 1, TacYield: 2, DeployZones: []Zone{ZoneHeadquarters}}
 }
 
-func unit(name string, power, health int, kw Keywords) *Card {
+func unit(name string, power, health int, kw ability.Keywords) *Card {
 	return &Card{Name: name, Type: TypeUnit, Power: power, Health: health, ReqYield: 1, TacYield: 1,
 		DeployZones: []Zone{ZoneReserves, ZoneMainTheater}, Keywords: kw}
 }
 
-func structure(name string, power, health int, kw Keywords) *Card {
+func structure(name string, power, health int, kw ability.Keywords) *Card {
 	return &Card{Name: name, Type: TypeStructure, Power: power, Health: health, ReqYield: 2, TacYield: 2,
 		DeployZones: []Zone{ZoneMainTheater}, Keywords: kw}
 }
@@ -29,7 +30,7 @@ func structure(name string, power, health int, kw Keywords) *Card {
 func filler(n int) []*Card {
 	out := make([]*Card, n)
 	for i := range out {
-		out[i] = unit("Filler", 1, 1, Keywords{})
+		out[i] = unit("Filler", 1, 1, ability.Keywords{})
 	}
 	return out
 }
@@ -66,7 +67,7 @@ func (s *scene) put(p PlayerID, zone Zone, c *Card) *Asset {
 // putScratch places a face-down, Exhausted Scratch Company in p's Reserves,
 // built as the kernel's Deploy Scratch Company does, and returns it.
 func (s *scene) putScratch(p PlayerID) *Asset {
-	a := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: unit("Filler", 1, 1, Keywords{}), Owner: p},
+	a := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: unit("Filler", 1, 1, ability.Keywords{}), Owner: p},
 		Controller: p, FaceDown: true, Exhausted: true}
 	s.g.placeOnBattlefield(a, ZoneReserves)
 	return a

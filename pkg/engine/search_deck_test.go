@@ -25,7 +25,7 @@ func (s *scene) namedDeck(p PlayerID, n int) []*Instance {
 	s.g.Players[p].Deck = nil
 	cards := make([]*Card, n)
 	for i := range cards {
-		cards[i] = unit(fmt.Sprintf("Card %d", i), 1, 1, Keywords{})
+		cards[i] = unit(fmt.Sprintf("Card %d", i), 1, 1, ability.Keywords{})
 	}
 	return s.onTop(p, cards...)
 }
@@ -155,8 +155,8 @@ func TestFR_MOD_001_SearchTimeoutTakesTopCard(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newScene(t)
 			insts := s.namedDeck(0, 3)
-			s.put(0, ZoneMainTheater, structure("Bystander", 0, 3, Keywords{}))
-			s.inDiscard(0, unit("Discarded", 1, 1, Keywords{}))
+			s.put(0, ZoneMainTheater, structure("Bystander", 0, 3, ability.Keywords{}))
+			s.inDiscard(0, unit("Discarded", 1, 1, ability.Keywords{}))
 			a := s.searcher(0, searchStep())
 			if tc.chooser {
 				s.script(0, Answer{Timeout: true})

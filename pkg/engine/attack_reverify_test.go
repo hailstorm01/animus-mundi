@@ -58,8 +58,8 @@ func newSides(t *testing.T) *sides {
 	t.Helper()
 	s := newScene(t)
 	b := &sides{s: s}
-	b.att = s.put(0, ZoneMainTheater, striker("Attacker", 3, 9, Keywords{}, mayDraw()))
-	b.def = s.put(1, ZoneMainTheater, unit("Defender", 2, 9, Keywords{}))
+	b.att = s.put(0, ZoneMainTheater, striker("Attacker", 3, 9, ability.Keywords{}, mayDraw()))
+	b.def = s.put(1, ZoneMainTheater, unit("Defender", 2, 9, ability.Keywords{}))
 	return b
 }
 
@@ -102,9 +102,9 @@ func TestFR_TGT_003_TargetThatGainsWardBeforeResolutionIsIllegal(t *testing.T) {
 	// Covers: FR-KWD-002h
 	s := newScene(t)
 	hit := attackTrig(false, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(3, 0))
-	hero := s.put(0, ZoneMainTheater, striker("Hero", 0, 9, Keywords{}, hit, mayDraw()))
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 9, Keywords{}))
+	hero := s.put(0, ZoneMainTheater, striker("Hero", 0, 9, ability.Keywords{}, hit, mayDraw()))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, ability.Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 9, ability.Keywords{}))
 	picked := false
 	grantAfterPick := func() {
 		if !picked {
@@ -129,8 +129,8 @@ func TestFR_TGT_003_TargetThatGainsWardBeforeResolutionIsIllegal(t *testing.T) {
 // Covers: FR-TGT-003
 func TestFR_CBT_002_CombatantsSwapSidesStillResolves(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Hero", 3, 9, Keywords{}, mayDraw()))
-	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Hero", 3, 9, ability.Keywords{}, mayDraw()))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 9, ability.Keywords{}))
 	s.midStack(func() { att.Controller, def.Controller = 1, 0 }, nil)
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 3) // the defender is still an opposing asset of the attacker's current controller

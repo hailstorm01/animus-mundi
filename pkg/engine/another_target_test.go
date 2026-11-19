@@ -63,7 +63,7 @@ func TestFR_MNV_001_AnotherSlotNeedsTwoDifferentUnitsToEnact(t *testing.T) {
 	// Covers: SVY-R34, SVY-R29, FR-TGT-002, FR-KWD-002h
 	s := newScene(t)
 	inst := s.give(0, maneuver("Ambush", 0, 0, anotherEffect()))
-	s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
 	if offersEnact(s.g, inst) {
 		t.Errorf("an \"another\" slot with one unit on the battlefield cannot be filled with a different entity, so the Maneuver is not a legal action (SVY-R34, SVY-R29)")
 	}
@@ -71,15 +71,15 @@ func TestFR_MNV_001_AnotherSlotNeedsTwoDifferentUnitsToEnact(t *testing.T) {
 	if !inHand(s.g.Players[0], inst) {
 		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
 	}
-	s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Y", 1, 30, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with two units both slots can be filled with different entities, so the Maneuver is a legal action (SVY-R34)")
 	}
 
 	s2 := newScene(t)
 	inst2 := s2.give(0, maneuver("Ambush", 0, 0, anotherEffect()))
-	s2.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
-	s2.put(1, ZoneMainTheater, unit("Warded", 1, 30, Keywords{Ward: true}))
+	s2.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
+	s2.put(1, ZoneMainTheater, unit("Warded", 1, 30, ability.Keywords{Ward: true}))
 	if offersEnact(s2.g, inst2) {
 		t.Errorf("an opposing Ward unit is never a legal target, so one legal entity is left and the Maneuver is not a legal action (SVY-R34, FR-KWD-002h)")
 	}
@@ -90,9 +90,9 @@ func TestFR_MOD_001_AnotherSlotNeedsTwoUnits(t *testing.T) {
 	build := func(units int) (*dealerBoard, *Instance) {
 		s := newScene(t)
 		b := &dealerBoard{s: s}
-		b.x = s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
+		b.x = s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
 		if units > 1 {
-			b.y = s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{}))
+			b.y = s.put(1, ZoneMainTheater, unit("Y", 1, 30, ability.Keywords{}))
 		}
 		inst := s.give(0, maneuver("Ambush", 0, 0, ability.Effect{
 			Modes: []ability.Effect{anotherKillMode(), anotherEffect()}, ChooseN: 1}))
@@ -163,8 +163,8 @@ func TestFR_MOD_001_AnotherSlotTimeoutTakesNextDifferent(t *testing.T) {
 func TestFR_TGT_002_AnotherSlotSingleRemainingOptionIsTakenUnasked(t *testing.T) {
 	// Covers: SVY-R34, FR-MOD-001
 	s := newScene(t)
-	x := s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
-	y := s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{}))
+	x := s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
+	y := s.put(1, ZoneMainTheater, unit("Y", 1, 30, ability.Keywords{}))
 	inst := s.give(0, maneuver("Ambush", 0, 0, anotherEffect()))
 	s.scriptModal(0, nil, nil, nil, pick(y))
 	s.do(enactAction(inst))

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"reflect"
 	"testing"
 )
@@ -19,9 +20,9 @@ func highlanderCombat(t *testing.T, cornered bool) (s *scene, hl, def *Asset) {
 	t.Helper()
 	s = newScene(t)
 	hl = s.put(0, ZoneMainTheater, s.card("Brigand Highlander"))
-	def = s.put(1, ZoneMainTheater, unit("Defender", 0, 20, Keywords{}))
+	def = s.put(1, ZoneMainTheater, unit("Defender", 0, 20, ability.Keywords{}))
 	if cornered {
-		s.put(1, ZoneMainTheater, unit("Second Foe", 0, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Foe", 0, 5, ability.Keywords{}))
 	}
 	return s, hl, def
 }
@@ -30,9 +31,9 @@ func highlanderCombat(t *testing.T, cornered bool) (s *scene, hl, def *Asset) {
 func TestCard_BrigandHighlander_PlusTwoPowerOnlyWhileCornered(t *testing.T) {
 	s := newScene(t)
 	hl := s.put(0, ZoneMainTheater, s.card("Brigand Highlander"))
-	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{}))
 	s.wantPower(hl, 2, "1 against 1 is not Cornered, so printed power only")
-	second := s.put(1, ZoneMainTheater, unit("Second Foe", 0, 5, Keywords{}))
+	second := s.put(1, ZoneMainTheater, unit("Second Foe", 0, 5, ability.Keywords{}))
 	s.wantPower(hl, 4, "Cornered (1 against 2): printed 2 plus the Cornered +2")
 	if got, want := s.g.Keywords(hl), hl.Printed().Keywords; !reflect.DeepEqual(got, want) {
 		t.Errorf("the Cornered line grants power only, no keywords, while Cornered: got %+v, want printed %+v", got, want)

@@ -11,7 +11,7 @@ var alliedHorrorSame = ability.Filter{Allegiance: ability.AllegianceAllied, Kind
 
 // horrorUnit is a Horror unit printing Resistant r.
 func horrorUnit(name string, power, health, r int) *Card {
-	c := unit(name, power, health, Keywords{Resistant: r})
+	c := unit(name, power, health, ability.Keywords{Resistant: r})
 	c.Subtypes = []string{"Horror"}
 	return c
 }
@@ -36,7 +36,7 @@ func TestFR_LAY_001_AuraGrantsResistantToMatchesInSameZone(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneReserves, resistAuraHorror("Source", 0, 5, 1))
 	other := s.put(0, ZoneReserves, horrorUnit("Other Horror", 2, 5, 0))
-	plain := s.put(0, ZoneReserves, unit("Plain", 2, 5, Keywords{}))
+	plain := s.put(0, ZoneReserves, unit("Plain", 2, 5, ability.Keywords{}))
 	main := s.put(0, ZoneMainTheater, horrorUnit("Main Horror", 2, 5, 0))
 	foe := s.put(1, ZoneReserves, horrorUnit("Foe Horror", 2, 5, 0))
 	s.wantResistant(src, 1, "without other the source is in its own filter")
@@ -95,7 +95,7 @@ func TestFR_REP_004_AuraResistantReducesDamage(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, resistAuraHorror("Source", 0, 5, 1))
 	d := s.put(1, ZoneMainTheater, horrorUnit("D", 0, 5, 0))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, ability.Keywords{}))
 	s.do(s.attack(att, d))
 	s.wantDamage(d, 2)
 	if e := damageEvent(t, s, d); e.Resistant != 1 || e.Amount != 2 {

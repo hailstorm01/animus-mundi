@@ -94,9 +94,9 @@ func damageTo(log []Event, target *Asset) []Event {
 func raiderScene(t *testing.T, health int, trigs ...ability.Trigger) (s *scene, raider, dummy, victim *Asset) {
 	t.Helper()
 	s = newScene(t)
-	raider = s.put(0, ZoneMainTheater, striker("Raider", 3, health, Keywords{Aggressive: 2}, trigs...))
-	dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
-	victim = s.put(1, ZoneMainTheater, unit("Victim", 0, 20, Keywords{}))
+	raider = s.put(0, ZoneMainTheater, striker("Raider", 3, health, ability.Keywords{Aggressive: 2}, trigs...))
+	dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
+	victim = s.put(1, ZoneMainTheater, unit("Victim", 0, 20, ability.Keywords{}))
 	return s, raider, dummy, victim
 }
 
@@ -171,7 +171,7 @@ type deathBoard struct {
 func powerDeath(t *testing.T, power, aggr int, attacking bool) deathBoard {
 	t.Helper()
 	s := newScene(t)
-	c := unit("Zealot", power, 3, Keywords{Aggressive: aggr})
+	c := unit("Zealot", power, 3, ability.Keywords{Aggressive: aggr})
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{{
 		Hook: ability.HookKilled,
 		Effect: ability.Effect{
@@ -183,9 +183,9 @@ func powerDeath(t *testing.T, power, aggr int, attacking bool) deathBoard {
 	b.s = s
 	if attacking {
 		b.dead = s.put(0, ZoneMainTheater, c)
-		wall := s.put(1, ZoneMainTheater, unit("Wall", 4, 20, Keywords{}))
-		b.bystander = s.put(1, ZoneMainTheater, unit("Bystander", 0, 20, Keywords{}))
-		keep := s.put(0, ZoneMainTheater, structure("Ally Keep", 0, 20, Keywords{}))
+		wall := s.put(1, ZoneMainTheater, unit("Wall", 4, 20, ability.Keywords{}))
+		b.bystander = s.put(1, ZoneMainTheater, unit("Bystander", 0, 20, ability.Keywords{}))
+		keep := s.put(0, ZoneMainTheater, structure("Ally Keep", 0, 20, ability.Keywords{}))
 		b.others = []*Asset{wall, b.bystander, keep}
 		s.scriptAnyOf(0, nil, b.bystander)
 		s.scriptAnyOf(1, nil)
@@ -193,9 +193,9 @@ func powerDeath(t *testing.T, power, aggr int, attacking bool) deathBoard {
 	} else {
 		s.endTurn()
 		b.dead = s.put(0, ZoneMainTheater, c)
-		hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 20, Keywords{}))
-		b.bystander = s.put(1, ZoneMainTheater, unit("Bystander", 0, 20, Keywords{}))
-		keep := s.put(0, ZoneMainTheater, structure("Ally Keep", 0, 20, Keywords{}))
+		hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 20, ability.Keywords{}))
+		b.bystander = s.put(1, ZoneMainTheater, unit("Bystander", 0, 20, ability.Keywords{}))
+		keep := s.put(0, ZoneMainTheater, structure("Ally Keep", 0, 20, ability.Keywords{}))
 		b.others = []*Asset{hitter, b.bystander, keep}
 		s.scriptAnyOf(0, nil, b.bystander)
 		s.scriptAnyOf(1, nil)
@@ -288,15 +288,15 @@ func newAllBoard(t *testing.T, hqDamage [2]int, emptyDecks bool) *allBoard {
 	s.g.Players[1].HQ.Damage = hqDamage[1]
 	b := &allBoard{s: s}
 	b.ancient = s.put(0, ZoneMainTheater, mortal("Ancient", 0, 1, killedTrigger(allDamage(4, ability.Filter{}))))
-	b.wall = s.put(1, ZoneMainTheater, unit("Wall", 5, 30, Keywords{}))
+	b.wall = s.put(1, ZoneMainTheater, unit("Wall", 5, 30, ability.Keywords{}))
 	b.allyFodder = s.put(0, ZoneMainTheater, mortal("Ally Fodder", 0, 4, killedTrigger(drawN(1))))
-	b.allyResist = s.put(0, ZoneMainTheater, unit("Ally Resistant", 0, 10, Keywords{Resistant: 1}))
-	b.allyArmor = s.put(0, ZoneMainTheater, structure("Ally Armored Keep", 0, 10, Keywords{Armor: 2}))
+	b.allyResist = s.put(0, ZoneMainTheater, unit("Ally Resistant", 0, 10, ability.Keywords{Resistant: 1}))
+	b.allyArmor = s.put(0, ZoneMainTheater, structure("Ally Armored Keep", 0, 10, ability.Keywords{Armor: 2}))
 	b.allySc = s.putScratch(0)
-	b.ward = s.put(1, ZoneMainTheater, unit("Warded", 0, 10, Keywords{Ward: true}))
-	b.stalwart = s.put(1, ZoneMainTheater, unit("Stalwart", 0, 10, Keywords{Stalwart: true}))
+	b.ward = s.put(1, ZoneMainTheater, unit("Warded", 0, 10, ability.Keywords{Ward: true}))
+	b.stalwart = s.put(1, ZoneMainTheater, unit("Stalwart", 0, 10, ability.Keywords{Stalwart: true}))
 	b.enemyFodder = s.put(1, ZoneMainTheater, mortal("Enemy Fodder", 0, 4, killedTrigger(drawN(1))))
-	b.enemyKeep = s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 4, Keywords{}))
+	b.enemyKeep = s.put(1, ZoneMainTheater, structure("Enemy Keep", 0, 4, ability.Keywords{}))
 	b.enemySc = s.putScratch(1)
 	for _, a := range s.g.Assets() {
 		if a != b.ancient {
@@ -390,7 +390,7 @@ func TestFR_TRG_004_AllAssetsDeathTriggersCascade(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
 	ancient := s.put(0, ZoneMainTheater, mortal("Ancient", 0, 1, killedTrigger(allDamage(4, ability.Filter{}))))
-	wall := s.put(1, ZoneMainTheater, unit("Wall", 5, 30, Keywords{}))
+	wall := s.put(1, ZoneMainTheater, unit("Wall", 5, 30, ability.Keywords{}))
 	survivor := s.put(0, ZoneMainTheater, mortal("Survivor", 0, 5, killedTrigger(drawN(1))))
 	echo := s.put(1, ZoneMainTheater, mortal("Echo", 0, 4,
 		killedTrigger(allDamage(1, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))))
@@ -511,7 +511,7 @@ func TestFR_TGT_002_FilteredAllAlliedUnitsIncludesTheSourceItself(t *testing.T) 
 
 func TestFR_TGT_002_FilteredAllWithNoMatchDoesNothingAndAsksNothing(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.script(1)
 	s.deployFromHand(0, trigUnit("Sweeper", targetTrigger(nil,
@@ -529,7 +529,7 @@ func TestFR_TGT_002_FilteredAllWithNoMatchDoesNothingAndAsksNothing(t *testing.T
 
 func TestFR_KWD_002h_FilteredAllHitsOpposingWardUnits(t *testing.T) {
 	s := newScene(t)
-	w := s.put(1, ZoneMainTheater, unit("Warded", 0, 5, Keywords{Ward: true}))
+	w := s.put(1, ZoneMainTheater, unit("Warded", 0, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	s.deployFromHand(0, trigUnit("Sweeper", targetTrigger(nil,
 		allDamage(2, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))))

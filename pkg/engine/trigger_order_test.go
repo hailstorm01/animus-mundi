@@ -26,14 +26,14 @@ import (
 
 // pingedBowed is a unit with 9 Health printing one Unbowed trigger.
 func pingedBowed(name string) *Card {
-	return bowed(name, 1, 9, Keywords{}, unbowed(nil, scratchN(1)))
+	return bowed(name, 1, 9, ability.Keywords{}, unbowed(nil, scratchN(1)))
 }
 
 // allySweeper is a Reserves unit whose deploy trigger deals 1 damage to every
 // allied unit, itself included (9 Health, so it survives and has no trigger of
 // its own to place).
 func allySweeper() *Card {
-	c := unit("Sweeper", 1, 9, Keywords{})
+	c := unit("Sweeper", 1, 9, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	step := allDamage(1, ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit})
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{deployTrigger(step)}}
@@ -137,7 +137,7 @@ func TestFR_TRG_003_MultiTargetTriggersFallBackToSourcePositionNotPickOrder(t *t
 		return Answer{Picks: picks}
 	}
 	two := ability.Target{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Scratch: ability.ScratchExcluded, Other: true}, UpTo: 2}
-	c := unit("Pinger", 1, 9, Keywords{})
+	c := unit("Pinger", 1, 9, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{targetTrigger([]ability.Target{two}, dmgTo(1, 0))}}
 	s.deployFromHand(0, c)
@@ -158,7 +158,7 @@ func TestFR_TRG_003_DeathAndUnbowedTriggersFallBackToSourcePosition(t *testing.T
 	// TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone.
 	s := newScene(t)
 	survivor := s.put(0, ZoneMainTheater, pingedBowed("Survivor"))
-	plain := s.put(0, ZoneReserves, unit("Plain", 1, 1, Keywords{}))
+	plain := s.put(0, ZoneReserves, unit("Plain", 1, 1, ability.Keywords{}))
 	dying := s.put(0, ZoneReserves, mortal("Dying", 1, 1, killedTrigger(scratchN(1))))
 	if survivor.ID >= dying.ID {
 		t.Fatalf("setup: the survivor must be older than the dying unit")
@@ -209,8 +209,8 @@ func TestFR_TRG_003_SweepRemovalsDoNotReorderTriggersInOneZone(t *testing.T) {
 	// before Dying, so its trigger is placed first. After the two Plain units
 	// leave, Dying would stand ahead of where Survivor stood when its Unbowed fired.
 	s := newScene(t)
-	plainA := s.put(0, ZoneReserves, unit("PlainA", 1, 1, Keywords{}))
-	plainB := s.put(0, ZoneReserves, unit("PlainB", 1, 1, Keywords{}))
+	plainA := s.put(0, ZoneReserves, unit("PlainA", 1, 1, ability.Keywords{}))
+	plainB := s.put(0, ZoneReserves, unit("PlainB", 1, 1, ability.Keywords{}))
 	survivor := s.put(0, ZoneReserves, pingedBowed("Survivor"))
 	dying := s.put(0, ZoneReserves, mortal("Dying", 1, 1, killedTrigger(scratchN(1))))
 	s.deployFromHand(0, allySweeper())

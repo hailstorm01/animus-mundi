@@ -32,10 +32,10 @@ var pathDefs = map[string]*ability.Def{
 					To:      ability.ZoneMainTheater,
 				},
 				{
-					Op:      ability.OpGrantKeyword,
-					Subject: ability.SubjectTarget,
-					Target:  0,
-					Keyword: ability.KeywordStalwart,
+					Op:       ability.OpGrantKeyword,
+					Subject:  ability.SubjectTarget,
+					Target:   0,
+					Keywords: ability.Keywords{Stalwart: true},
 				},
 				{
 					Op:      ability.OpModifyStat,

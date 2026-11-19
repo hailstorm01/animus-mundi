@@ -34,7 +34,7 @@ func (s *scene) effectSource(step ability.Step) *Asset {
 }
 
 func (s *scene) wall() *Asset {
-	return s.put(0, ZoneMainTheater, structure("Wall", 0, 9, Keywords{}))
+	return s.put(0, ZoneMainTheater, structure("Wall", 0, 9, ability.Keywords{}))
 }
 
 // wantAssetEvents checks one event per asset, in order: its target, its amount
@@ -142,7 +142,7 @@ func TestEffectEvents_CardMoveNamesTheCardWhileItIsPublic(t *testing.T) {
 	} {
 		t.Run(c.zone.String(), func(t *testing.T) {
 			s := newScene(t)
-			inst := s.inDiscard(0, unit("Relic", 1, 1, Keywords{}))[0]
+			inst := s.inDiscard(0, unit("Relic", 1, 1, ability.Keywords{}))[0]
 			a := s.put(0, ZoneMainTheater, actUnit("Recaller", nil, ability.Activated{
 				Effect: ability.Effect{Targets: []ability.Target{pile}, Steps: []ability.Step{ptStep(c.op, 0)}},
 			}))
@@ -178,7 +178,7 @@ func TestEffectEvents_CardMoveNamesTheCardWhileItIsPublic(t *testing.T) {
 // never names a card that went into a hand.
 func TestEffectEvents_CardNoLongerInTheDiscardPileLogsNothing(t *testing.T) {
 	s := newScene(t)
-	inst := s.give(0, unit("Relic", 1, 1, Keywords{}))
+	inst := s.give(0, unit("Relic", 1, 1, ability.Keywords{}))
 	r := &resolution{it: &StackItem{Controller: 0}, cards: [][]*Instance{{inst}}}
 	from := len(s.g.Log)
 	if n := s.g.runStep(r, ptStep(ability.OpPutOnDeck, 0)); n != 0 {

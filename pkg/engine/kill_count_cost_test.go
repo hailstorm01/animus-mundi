@@ -81,7 +81,7 @@ func TestFR_TRN_003a_KillCountCostNeedsTheLowestCount(t *testing.T) {
 	s := newScene(t)
 	inst := s.give(0, killCountManeuver())
 	s.putScratch(0)
-	s.put(0, ZoneMainTheater, unit("Allied Regular", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Allied Regular", 1, 5, ability.Keywords{}))
 	s.putScratch(1)
 	s.putScratch(1)
 	if offersEnact(s.g, inst) {
@@ -197,7 +197,7 @@ func TestFR_TRN_003a_KillCountCostPaidAfterTargets(t *testing.T) {
 	// Covers: SVY-R2, SVY-R53
 	s := newScene(t)
 	pileFilter := ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}
-	x := s.inDiscard(0, unit("X", 1, 1, Keywords{}))[0]
+	x := s.inDiscard(0, unit("X", 1, 1, ability.Keywords{}))[0]
 	a := s.putScratch(0)
 	b := s.putScratch(0)
 	inst := s.give(0, killCountManeuverOf(alliedScratchFilter,

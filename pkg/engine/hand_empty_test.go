@@ -29,7 +29,7 @@ func handEmptyScene(t *testing.T, n int, ss ...ability.Step) (*scene, *Instance,
 	inst := s.give(0, maneuver("Gated", 0, 0, steps(ss...)))
 	var others []*Instance
 	for i := 0; i < n; i++ {
-		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, Keywords{})))
+		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, ability.Keywords{})))
 	}
 	return s, inst, others
 }
@@ -102,7 +102,7 @@ func TestFR_MNV_001_HandEmptyReadsTheControllersHand(t *testing.T) {
 	})
 	t.Run("controller hand empty, opponent holds cards", func(t *testing.T) {
 		s, inst, _ := handEmptyScene(t, 0, handEmpty(hqPing()))
-		s.give(1, unit("Theirs", 1, 1, Keywords{}))
+		s.give(1, unit("Theirs", 1, 1, ability.Keywords{}))
 		s.do(enactAction(inst))
 		if got := pingCount(s); got != 1 {
 			t.Errorf("\"you\" is the controller, whose hand is empty: %d pings, want 1 (FR-MNV-001)", got)
@@ -133,7 +133,7 @@ func TestFR_TRN_003a_DiscardCostThenHandEmptyStep(t *testing.T) {
 		s := newScene(t)
 		s.g.Players[0].Hand = nil
 		inst := s.give(0, discardCostManeuver("Steel Rain", 1, 1, 3, steps(handEmpty(hqPing()))))
-		o := []*Instance{s.give(0, unit("A", 1, 1, Keywords{})), s.give(0, unit("B", 1, 1, Keywords{}))}
+		o := []*Instance{s.give(0, unit("A", 1, 1, ability.Keywords{})), s.give(0, unit("B", 1, 1, ability.Keywords{}))}
 		s.g.Players[0].Req, s.g.Players[0].Tac = 1, 1
 		return s, inst, o
 	}

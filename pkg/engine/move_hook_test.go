@@ -27,7 +27,7 @@ func moveTrigger(to ability.Zone, steps ...ability.Step) ability.Trigger {
 
 // moveWatcher is a unit printing a "whenever this moves, Scratch 1" trigger.
 func moveWatcher(name string) *Card {
-	return striker(name, 1, 5, Keywords{}, moveTrigger(ability.ZoneAny, scratchN(1)))
+	return striker(name, 1, 5, ability.Keywords{}, moveTrigger(ability.ZoneAny, scratchN(1)))
 }
 
 // selfDamage is "this deals 1 damage to itself", a step observed through the
@@ -79,7 +79,7 @@ func TestFR_ZON_002_MarchFiresMoveTrigger(t *testing.T) {
 
 func TestFR_ZON_002_MoveStepFiresMoveTrigger(t *testing.T) {
 	s := newScene(t)
-	w := s.put(0, ZoneReserves, striker("Watcher", 1, 5, Keywords{}, moveTrigger(ability.ZoneAny, selfDamage())))
+	w := s.put(0, ZoneReserves, striker("Watcher", 1, 5, ability.Keywords{}, moveTrigger(ability.ZoneAny, selfDamage())))
 	s.moveTargetFree(w, ability.ZoneMainTheater, scratchN(1))
 	if got := s.g.Asset(w.ID); got == nil || got.Zone != ZoneMainTheater {
 		t.Fatalf("precondition: the move step moves the watcher to the Main Theater, got %v", got)
@@ -110,7 +110,7 @@ func TestFR_ZON_002_DeployIsNotMoving(t *testing.T) {
 func TestFR_ZON_002_MovesToZoneGate(t *testing.T) {
 	// Covers: SVY-R1
 	s := newScene(t)
-	w := s.put(0, ZoneReserves, striker("Watcher", 1, 5, Keywords{}, moveTrigger(ability.ZoneMainTheater, scratchN(1))))
+	w := s.put(0, ZoneReserves, striker("Watcher", 1, 5, ability.Keywords{}, moveTrigger(ability.ZoneMainTheater, scratchN(1))))
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: w.ID})
 	s.wantScratches(0, 1, "a trigger that watches for moving to the Main Theater fires when its unit marches into it (FR-ZON-002)")
 
@@ -152,7 +152,7 @@ func TestFR_TRG_004_MoveTriggerCascades(t *testing.T) {
 	s := newScene(t)
 	b := s.put(0, ZoneReserves, moveWatcher("Second"))
 	reserveUnits := ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneReserves}
-	a := s.put(0, ZoneReserves, striker("First", 1, 5, Keywords{}, ability.Trigger{
+	a := s.put(0, ZoneReserves, striker("First", 1, 5, ability.Keywords{}, ability.Trigger{
 		Hook:   ability.HookMoves,
 		ToZone: ability.ZoneMainTheater,
 		Effect: ability.Effect{

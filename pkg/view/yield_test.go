@@ -1,6 +1,7 @@
 package view_test
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"testing"
 
 	"animus-mundi/pkg/engine"
@@ -27,17 +28,17 @@ func everyAsset(v view.View) []view.AssetView {
 func TestView_AssetShowsItsPrintedYields(t *testing.T) {
 	s := newScene(t)
 	g := s.g
-	unit := testUnit("Alpha Yielder", 2, 3, engine.Keywords{})
+	unit := testUnit("Alpha Yielder", 2, 3, ability.Keywords{})
 	unit.ReqYield, unit.TacYield = 2, 0
 	a0 := s.put(0, engine.ZoneReserves, unit)
 	depot := &engine.Card{Name: "Beta Depot", Type: engine.TypeStructure, Health: 4, ReqYield: 0, TacYield: 3,
 		DeployZones: []engine.Zone{engine.ZoneReserves}}
 	a1 := s.put(1, engine.ZoneReserves, depot)
-	hidden := testUnit("Alpha Hidden Miner", 4, 4, engine.Keywords{})
+	hidden := testUnit("Alpha Hidden Miner", 4, 4, ability.Keywords{})
 	hidden.ReqYield, hidden.TacYield = 0, 3
 	fd := &engine.Asset{ID: s.id(), Inst: s.inst(0, hidden), Controller: 0, Zone: engine.ZoneMainTheater, FaceDown: true}
 	g.Theater = append(g.Theater, fd)
-	theirs := s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, engine.Keywords{}))
+	theirs := s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, ability.Keywords{}))
 
 	want := map[int][2]int{
 		g.Players[0].HQ.ID: {1, 2}, // testHQ prints R1 T2

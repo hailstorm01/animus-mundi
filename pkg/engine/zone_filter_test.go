@@ -32,12 +32,12 @@ type zoneBoard struct {
 
 func (s *scene) zoneBoard() zoneBoard {
 	return zoneBoard{
-		mtUnit0:    s.put(0, ZoneMainTheater, unit("Ally MT Unit", 1, 5, Keywords{})),
-		mtStruct0:  s.put(0, ZoneMainTheater, structure("Ally MT Structure", 0, 5, Keywords{})),
-		mtUnit1:    s.put(1, ZoneMainTheater, unit("Enemy MT Unit", 1, 5, Keywords{})),
-		mtStruct1:  s.put(1, ZoneMainTheater, structure("Enemy MT Structure", 0, 5, Keywords{})),
-		rsUnit0:    s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{})),
-		rsUnit1:    s.put(1, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, Keywords{})),
+		mtUnit0:    s.put(0, ZoneMainTheater, unit("Ally MT Unit", 1, 5, ability.Keywords{})),
+		mtStruct0:  s.put(0, ZoneMainTheater, structure("Ally MT Structure", 0, 5, ability.Keywords{})),
+		mtUnit1:    s.put(1, ZoneMainTheater, unit("Enemy MT Unit", 1, 5, ability.Keywords{})),
+		mtStruct1:  s.put(1, ZoneMainTheater, structure("Enemy MT Structure", 0, 5, ability.Keywords{})),
+		rsUnit0:    s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, ability.Keywords{})),
+		rsUnit1:    s.put(1, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, ability.Keywords{})),
 		rsScratch1: s.putScratch(1),
 	}
 }
@@ -64,7 +64,7 @@ func TestFR_TGT_001_MainTheaterZoneOffersOnlyMainTheaterAssetsOfEitherSide(t *te
 func TestFR_TGT_001_ZoneCombinesWithAllegianceAndKindsAsAConjunction(t *testing.T) {
 	s := newScene(t)
 	b := s.zoneBoard()
-	extra := s.put(1, ZoneMainTheater, unit("Second Enemy MT Unit", 1, 5, Keywords{}))
+	extra := s.put(1, ZoneMainTheater, unit("Second Enemy MT Unit", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, extra)
 	s.deployTargeter(0, []ability.Target{tgtZone(ability.AllegianceOpposing, ability.KindUnit, true, ability.ZoneMainTheater)}, dmgTo(1, 0))
 	asked := s.asked(0)
@@ -107,8 +107,8 @@ func TestFR_TGT_001_NoZoneCriterionStillMeansAnyBattlefieldZone(t *testing.T) {
 
 func TestFR_TGT_003_NoAssetInTheMainTheaterAsksNothingAndOtherClausesRun(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, Keywords{}))
-	s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{}))
+	s.put(1, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, ability.Keywords{}))
 	cards := s.onTop(0, vanilla("A")...)
 	s.script(0)
 	c := trigUnit("Source", targetTrigger([]ability.Target{tgtZone(ability.AllegianceAny, 0, false, ability.ZoneMainTheater)}, dmgTo(2, 0), drawN(1)))
@@ -135,9 +135,9 @@ func TestFR_TGT_003_NoAssetInTheMainTheaterAsksNothingAndOtherClausesRun(t *test
 func TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal(t *testing.T) {
 	s := newScene(t)
 	hit := attackTrig(false, []ability.Target{tgtZone(ability.AllegianceOpposing, ability.KindUnit, false, ability.ZoneMainTheater)}, dmgTo(3, 0))
-	hero := s.put(0, ZoneMainTheater, striker("Hero", 0, 9, Keywords{}, hit, mayDraw()))
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 9, Keywords{}))
+	hero := s.put(0, ZoneMainTheater, striker("Hero", 0, 9, ability.Keywords{}, hit, mayDraw()))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, ability.Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 9, ability.Keywords{}))
 	s.midStack(func() { s.moveTo(victim, ZoneReserves) }, victim)
 	s.do(s.attack(hero, dummy))
 	if victim.Zone != ZoneReserves {
@@ -151,8 +151,8 @@ func TestFR_TGT_003_TargetThatLeavesTheMainTheaterBeforeResolutionIsIllegal(t *t
 // is not redirected to another asset in the Main Theater.
 func TestFR_TGT_003_TargetDestroyedBeforeResolutionTakesNoDamageAndNothingIsRedirected(t *testing.T) {
 	s := newScene(t)
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, Keywords{}))
-	bystander := s.put(1, ZoneMainTheater, unit("Bystander", 1, 9, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, ability.Keywords{}))
+	bystander := s.put(1, ZoneMainTheater, unit("Bystander", 1, 9, ability.Keywords{}))
 	inMT := []ability.Target{tgtZone(ability.AllegianceOpposing, ability.KindUnit, true, ability.ZoneMainTheater)}
 	hit := targetTrigger(inMT, dmgTo(3, 0))
 	killer := targetTrigger(inMT, dmgTo(1, 0))

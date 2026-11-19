@@ -63,10 +63,10 @@ func (s *scene) iydWantAlive(why string, as ...*Asset) {
 func TestFR_TGT_001_UntargetedPickIsMadeOnResolutionFromWhatMatchesThen(t *testing.T) {
 	// Covers: SVY-R3, SVY-R14
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 0, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("B", 0, 5, Keywords{}))
-	c := s.put(0, ZoneMainTheater, unit("C", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 0, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 0, 5, ability.Keywords{}))
+	c := s.put(0, ZoneMainTheater, unit("C", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	// Target 0 is Y's (one opposing unit, so no question); target 1 is the
 	// ally that a first kill step removes before the pick resolves.
 	targets := []ability.Target{{Filter: iydEnemy}, {Filter: iydAlly}}
@@ -96,8 +96,8 @@ func TestFR_TGT_001_UntargetedPickIsMadeOnResolutionFromWhatMatchesThen(t *testi
 func TestFR_TGT_001_UntargetedPickIgnoresWard(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	w := s.put(1, ZoneMainTheater, unit("Warded", 0, 5, Keywords{Ward: true}))
-	p := s.put(1, ZoneMainTheater, unit("Plain", 0, 5, Keywords{}))
+	w := s.put(1, ZoneMainTheater, unit("Warded", 0, 5, ability.Keywords{Ward: true}))
+	p := s.put(1, ZoneMainTheater, unit("Plain", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, nil, pick(w))
 	s.iydDeploy(iydTrigger(false, nil, iydPick(iydEnemy, 0)))
 	asks := s.asked(0)
@@ -114,8 +114,8 @@ func TestFR_TGT_001_UntargetedPickIgnoresWard(t *testing.T) {
 func TestFR_TGT_001_UntargetedPickMayPickTheSource(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	other := s.put(0, ZoneMainTheater, unit("Other Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	other := s.put(0, ZoneMainTheater, unit("Other Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	allies := ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit} // Other unset
 	// The chooser says yes to "you may" and picks the newest option, which is the source.
 	s.asks = map[PlayerID][]Decision{}
@@ -148,7 +148,7 @@ func TestFR_TGT_001_UntargetedPickMayPickTheSource(t *testing.T) {
 func TestFR_MOD_001_SinglePickWithOneMatchIsNotAsked(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.script(0)
 	s.iydDeploy(iydTrigger(false, nil, iydPick(iydEnemy, 0)))
 	if n := len(s.asked(0)); n != 0 {
@@ -160,8 +160,8 @@ func TestFR_MOD_001_SinglePickWithOneMatchIsNotAsked(t *testing.T) {
 func TestFR_MOD_001_SinglePickTimeoutPicksFirstInFixedOrder(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
-	older := s.put(0, ZoneMainTheater, unit("Older Theater", 0, 5, Keywords{}))
-	newer := s.put(0, ZoneReserves, unit("Newer Reserves", 0, 5, Keywords{}))
+	older := s.put(0, ZoneMainTheater, unit("Older Theater", 0, 5, ability.Keywords{}))
+	newer := s.put(0, ZoneReserves, unit("Newer Reserves", 0, 5, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.iydDeploy(iydTrigger(false, nil, iydPick(iydAlly, 0)))
 	if n := len(s.asked(0)); n != 1 {
@@ -174,7 +174,7 @@ func TestFR_MOD_001_SinglePickTimeoutPicksFirstInFixedOrder(t *testing.T) {
 func TestFR_MOD_001_UpToPickTimeoutPicksNone(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.iydDeploy(iydTrigger(false, nil, iydPick(iydEnemy, 1)))
 	asks := s.asked(0)
@@ -204,8 +204,8 @@ func TestFR_TGT_001_UntargetedPickWithNoMatchDoesNothing(t *testing.T) {
 
 func TestFR_LAY_002_KillDestroysAtOnceDuringResolution(t *testing.T) {
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
-	o := s.put(1, ZoneMainTheater, unit("Other", 0, 5, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
+	o := s.put(1, ZoneMainTheater, unit("Other", 0, 5, ability.Keywords{}))
 	kill := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget}
 	all := ability.Step{Op: ability.OpDealDamage, Amount: ability.Value{N: 2}, Subject: ability.SubjectAll, Filter: iydEnemy}
 	s.scriptPlan(0, nil, nil, pick(v))
@@ -243,7 +243,7 @@ func TestFR_LAY_002_KilledScratchCompanyGoesFaceUpToItsOwnersDiscard(t *testing.
 func TestFR_LAY_002_KillSkipsAHeadquarters(t *testing.T) {
 	// Pins the documented M2 limit, not a rule.
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
 	killAll := ability.Step{Op: ability.OpKill, Subject: ability.SubjectAll,
 		Filter: ability.Filter{Allegiance: ability.AllegianceAllied}}
 	c := s.iydDeploy(iydTrigger(false, nil, killAll))
@@ -261,8 +261,8 @@ func TestFR_LAY_002_KillSkipsAHeadquarters(t *testing.T) {
 func TestFR_TRG_005_IfYouDoRunsYWhenXWasDone(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes})
 	s.iydDeploy(iydTrigger(true, iydOneOpp, iydPick(iydAlly, 0), iydIfDone(dmgTo(2, 0))))
 	s.iydWantDead("X killed the ally", a)
@@ -272,8 +272,8 @@ func TestFR_TRG_005_IfYouDoRunsYWhenXWasDone(t *testing.T) {
 func TestFR_TRG_005_IfYouDoSkipsYWhenXPickedNothing(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, timeoutPick)
 	s.iydDeploy(iydTrigger(true, iydOneOpp, iydPick(iydAlly, 1), iydIfDone(dmgTo(2, 0))))
 	s.iydWantAlive("X picked nothing on a timeout", a)
@@ -283,7 +283,7 @@ func TestFR_TRG_005_IfYouDoSkipsYWhenXPickedNothing(t *testing.T) {
 func TestFR_TRG_005_IfYouDoSkipsYWhenNothingMatchesX(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes})
 	s.iydDeploy(iydTrigger(true, iydOneOpp, iydPick(iydAlly, 0), iydIfDone(dmgTo(2, 0))))
 	s.wantDamage(v, 0)
@@ -294,7 +294,7 @@ func TestFR_TRG_004_DeathTriggersOfAnXKillArePlacedAfterTheTriggerFinishes(t *te
 	s := newScene(t)
 	hit := ability.Step{Op: ability.OpDealDamage, Amount: ability.Value{N: 3}, Subject: ability.SubjectAll, Filter: iydEnemy}
 	d := s.put(0, ZoneMainTheater, mortal("Doomed", 0, 1, killedTrigger(hit)))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 10, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 10, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes})
 	s.iydDeploy(iydTrigger(true, iydOneOpp, iydPick(iydAlly, 0), iydIfDone(dmgTo(2, 0))))
 	s.iydWantDead("X killed it", d)
@@ -309,7 +309,7 @@ func TestFR_TRG_005_IfYouDoFollowsADiscardCount(t *testing.T) {
 	disc := ability.Step{Op: ability.OpDiscard, Amount: ability.Value{N: 1}}
 	t.Run("a card in hand", func(t *testing.T) {
 		s, insts := discardScene(t, []string{"Card"})
-		v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+		v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 		s.scriptPlan(0, nil, []Answer{yes})
 		s.iydDeploy(iydTrigger(true, iydOneOpp, disc, iydIfDone(dmgTo(2, 0))))
 		if !inDiscardPile(s.g.Players[0], insts[0]) {
@@ -319,7 +319,7 @@ func TestFR_TRG_005_IfYouDoFollowsADiscardCount(t *testing.T) {
 	})
 	t.Run("an empty hand", func(t *testing.T) {
 		s, _ := discardScene(t, nil)
-		v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+		v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 		s.scriptPlan(0, nil, []Answer{yes})
 		s.iydDeploy(iydTrigger(true, iydOneOpp, disc, iydIfDone(dmgTo(2, 0))))
 		s.wantDamage(v, 0)

@@ -25,7 +25,7 @@ var (
 
 // redirector is a structure printing the redirection above, with the given
 // Maximum Health and keywords, and any triggers.
-func redirector(name string, health int, kw Keywords, trigs ...ability.Trigger) *Card {
+func redirector(name string, health int, kw ability.Keywords, trigs ...ability.Trigger) *Card {
 	c := structure(name, 0, health, kw)
 	c.Ability = &ability.Def{Triggers: trigs, Replacements: []ability.Replacement{redirectEvent}}
 	return c
@@ -47,8 +47,8 @@ func wantNoReplace(t *testing.T, s *scene) {
 
 func TestFR_REP_004_RedirectDealsEffectDamageToTheSource(t *testing.T) {
 	s := newScene(t)
-	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
-	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
+	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
 	u.Damage = 4
 	s.dealToAlliedUnits(3)
 	if !s.alive(u) {
@@ -71,8 +71,8 @@ func TestFR_REP_004_RedirectDealsEffectDamageToTheSource(t *testing.T) {
 
 func TestFR_REP_004_RedirectedDamageUsesTheNewTargetsDefenses(t *testing.T) {
 	s := newScene(t)
-	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{Resistant: 1, Armor: 1}))
-	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{Armor: 2}))
+	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{Resistant: 1, Armor: 1}))
+	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{Armor: 2}))
 	s.dealToAlliedUnits(3)
 	if u.Armor != 2 || u.Damage != 0 {
 		t.Errorf("the original target's Armor and Damage are untouched: Armor %d (want 2), Damage %d (want 0) (FR-REP-004 Stage 1)", u.Armor, u.Damage)
@@ -85,9 +85,9 @@ func TestFR_REP_004_RedirectedDamageUsesTheNewTargetsDefenses(t *testing.T) {
 
 func TestFR_REP_004_RedirectedCombatDamageStaysCombatDamage(t *testing.T) {
 	s := newScene(t)
-	red := s.put(1, ZoneMainTheater, redirector("Cloud", 9, Keywords{Stalwart: true}))
-	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 4, 10, Keywords{}))
+	red := s.put(1, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{Stalwart: true}))
+	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 4, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(red, 1) // Stalwart caps combat damage at 1, so the damage stayed combat damage
 	s.wantDamage(def, 0)
@@ -110,9 +110,9 @@ func TestFR_REP_004_RedirectedCombatDamageStaysCombatDamage(t *testing.T) {
 // Covers: FR-CBT-002
 func TestFR_REP_004_RedirectedLethalCombatDamageIsNoCombatKill(t *testing.T) {
 	s := newScene(t)
-	red := s.put(1, ZoneMainTheater, redirector("Cloud", 3, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 4, 10, Keywords{}, combatKillTrigger(drawN(1))))
+	red := s.put(1, ZoneMainTheater, redirector("Cloud", 3, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 4, 10, ability.Keywords{}, combatKillTrigger(drawN(1))))
 	deck := len(s.g.Players[0].Deck)
 	s.do(s.attack(att, def))
 	if s.alive(red) {
@@ -145,8 +145,8 @@ func TestFR_REP_004_RedirectReadsTheSourcesCurrentZone(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			s := newScene(t)
-			red := s.put(0, c.redZone, redirector("Cloud", 9, Keywords{}))
-			u := s.put(0, c.unitZone, unit("Ward", 1, 5, Keywords{}))
+			red := s.put(0, c.redZone, redirector("Cloud", 9, ability.Keywords{}))
+			u := s.put(0, c.unitZone, unit("Ward", 1, 5, ability.Keywords{}))
 			if c.moveRedTo != 0 {
 				s.moveTo(red, c.moveRedTo)
 			}
@@ -169,8 +169,8 @@ func TestFR_REP_004_RedirectReadsTheSourcesCurrentZone(t *testing.T) {
 func TestFR_REP_004_RedirectAppliesOnlyToWhatItsFilterMatches(t *testing.T) {
 	t.Run("an enemy unit", func(t *testing.T) {
 		s := newScene(t)
-		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
-		foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
+		foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 		s.enactWith(nil, allDamage(2, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))
 		s.wantDamage(foe, 2)
 		s.wantDamage(red, 0)
@@ -178,8 +178,8 @@ func TestFR_REP_004_RedirectAppliesOnlyToWhatItsFilterMatches(t *testing.T) {
 	})
 	t.Run("another allied structure", func(t *testing.T) {
 		s := newScene(t)
-		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
-		wall := s.put(0, ZoneMainTheater, structure("Wall", 0, 9, Keywords{}))
+		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
+		wall := s.put(0, ZoneMainTheater, structure("Wall", 0, 9, ability.Keywords{}))
 		s.enactWith(nil, allDamage(2, ability.Filter{Kinds: ability.KindStructure}))
 		s.wantDamage(wall, 2)
 		s.wantDamage(red, 2) // its own damage as a structure, nothing redirected onto it
@@ -187,7 +187,7 @@ func TestFR_REP_004_RedirectAppliesOnlyToWhatItsFilterMatches(t *testing.T) {
 	})
 	t.Run("the allied Headquarters", func(t *testing.T) {
 		s := newScene(t)
-		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
+		red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
 		s.enactWith(nil, allDamage(2, ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindHeadquarters}))
 		s.wantDamage(s.g.Players[0].HQ, 2)
 		s.wantDamage(red, 0)
@@ -198,10 +198,10 @@ func TestFR_REP_004_RedirectAppliesOnlyToWhatItsFilterMatches(t *testing.T) {
 // Covers: FR-REP-003
 func TestFR_REP_004_EveryInstanceIsRedirectedSeparately(t *testing.T) {
 	s := newScene(t)
-	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
-	u1 := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
-	u2 := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
+	u1 := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	s.enactWith(nil, allDamage(1, ability.Filter{Kinds: ability.KindUnit}))
 	s.wantDamage(u1, 0)
 	s.wantDamage(u2, 0)
@@ -215,8 +215,8 @@ func TestFR_REP_004_EveryInstanceIsRedirectedSeparately(t *testing.T) {
 func TestFR_REP_004_DamageTakenTriggersFireOnTheNewTarget(t *testing.T) {
 	s := newScene(t)
 	damaged := ability.Trigger{Hook: ability.HookDamaged, Effect: ability.Effect{Steps: []ability.Step{drawN(1)}}}
-	s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}, damaged))
-	s.put(0, ZoneMainTheater, striker("Ward", 1, 5, Keywords{}, damaged))
+	s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}, damaged))
+	s.put(0, ZoneMainTheater, striker("Ward", 1, 5, ability.Keywords{}, damaged))
 	deck := len(s.g.Players[0].Deck)
 	s.dealToAlliedUnits(2)
 	if got := deck - len(s.g.Players[0].Deck); got != 1 {
@@ -228,9 +228,9 @@ func TestFR_REP_004_DamageTakenTriggersFireOnTheNewTarget(t *testing.T) {
 func TestFR_REP_001_TwoRedirectionsTheAffectedControllerChooses(t *testing.T) {
 	setup := func(t *testing.T) (s *scene, a, b, u *Asset) {
 		s = newScene(t)
-		a = s.put(0, ZoneMainTheater, redirector("Cloud A", 9, Keywords{}))
-		b = s.put(0, ZoneMainTheater, redirector("Cloud B", 9, Keywords{}))
-		u = s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
+		a = s.put(0, ZoneMainTheater, redirector("Cloud A", 9, ability.Keywords{}))
+		b = s.put(0, ZoneMainTheater, redirector("Cloud B", 9, ability.Keywords{}))
+		u = s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
 		return
 	}
 	t.Run("the controller picks the second", func(t *testing.T) {
@@ -261,8 +261,8 @@ func TestFR_REP_001_TwoRedirectionsTheAffectedControllerChooses(t *testing.T) {
 // Covers: FR-REP-001, FR-LAY-002
 func TestFR_REP_004_KillIsNotRedirected(t *testing.T) {
 	s := newScene(t)
-	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, Keywords{}))
-	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
+	red := s.put(0, ZoneMainTheater, redirector("Cloud", 9, ability.Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
 		if d.Kind == DecideTarget {
 			return Answer{Picks: []int{0}}

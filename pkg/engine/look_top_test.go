@@ -21,7 +21,7 @@ var ltFilter = ability.Filter{Kinds: ability.KindUnit, Stat: ability.StatRequisi
 
 // ltEligible is an eligible unit: Requisition cost 3, printing both zones.
 func ltEligible(name string) *Card {
-	c := unit(name, 2, 2, Keywords{})
+	c := unit(name, 2, 2, ability.Keywords{})
 	c.ReqCost = 3
 	return c
 }

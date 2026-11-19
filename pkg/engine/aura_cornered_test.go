@@ -16,7 +16,7 @@ import (
 
 // corneredAura is a unit printing the aura "assets matching f have Cornered: c".
 func corneredAura(name string, power, health int, f ability.Filter, c ability.WhileCornered) *Card {
-	card := unit(name, power, health, Keywords{})
+	card := unit(name, power, health, ability.Keywords{})
 	card.Ability = &ability.Def{Statics: []ability.Static{{Kind: ability.StaticAura, Filter: f, Cornered: c}}}
 	return card
 }
@@ -30,7 +30,7 @@ func monument(name string) *Card {
 func (s *scene) foes(n int) []*Asset {
 	var out []*Asset
 	for i := 0; i < n; i++ {
-		out = append(out, s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{})))
+		out = append(out, s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{})))
 	}
 	return out
 }
@@ -38,7 +38,7 @@ func (s *scene) foes(n int) []*Asset {
 func TestFR_KWD_002e_AuraCorneredGrantOnlyWhileCornered(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, monument("Source"))
-	a := s.put(0, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 2, 5, ability.Keywords{}))
 	s.foes(1)
 	s.wantResistant(a, 0, "2 against 1 in the Main Theater: player 0 is not Cornered, so the grant is not active")
 	more := s.foes(2)
@@ -53,9 +53,9 @@ func TestFR_KWD_002e_AuraCorneredGrantOnlyWhileCornered(t *testing.T) {
 func TestFR_LAY_001_AuraCorneredGrantMatchesFilter(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, monument("Source"))
-	unitMT := s.put(0, ZoneMainTheater, unit("Unit", 2, 5, Keywords{}))
-	structMT := s.put(0, ZoneMainTheater, structure("Struct", 0, 5, Keywords{}))
-	unitRes := s.put(0, ZoneReserves, unit("Reserve Unit", 2, 5, Keywords{}))
+	unitMT := s.put(0, ZoneMainTheater, unit("Unit", 2, 5, ability.Keywords{}))
+	structMT := s.put(0, ZoneMainTheater, structure("Struct", 0, 5, ability.Keywords{}))
+	unitRes := s.put(0, ZoneReserves, unit("Reserve Unit", 2, 5, ability.Keywords{}))
 	foes := s.foes(4)
 	s.wantResistant(unitMT, 1, "3 against 4: Cornered, allied unit in the source's zone matches")
 	s.wantResistant(structMT, 1, "zero Kinds matches an allied structure too")
@@ -83,7 +83,7 @@ func TestFR_LAY_001_AuraCorneredGrantAddsToOwnCornered(t *testing.T) {
 	t.Run("power", func(t *testing.T) {
 		s := newScene(t)
 		s.put(0, ZoneMainTheater, corneredAura("Source", 0, 9, otherAlliedSame, ability.WhileCornered{Power: 2}))
-		u := s.put(0, ZoneMainTheater, unit("U", 2, 9, Keywords{}))
+		u := s.put(0, ZoneMainTheater, unit("U", 2, 9, ability.Keywords{}))
 		foes := s.foes(3)
 		s.wantPower(u, 4, "Cornered: printed 2 plus the aura's Cornered power 2 (Layer 4)")
 		s.moveTo(foes[0], ZoneReserves)
@@ -93,17 +93,17 @@ func TestFR_LAY_001_AuraCorneredGrantAddsToOwnCornered(t *testing.T) {
 
 func TestFR_ZON_005_AuraCorneredGrantFaceDown(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{}))
 	s.put(0, ZoneReserves, monument("Source"))
 	down := s.putScratch(0)
 	s.wantResistant(down, 1, "player 0 is Cornered (0 against 1); a face-down asset receives the grant though its face has no Ability")
 
 	t.Run("face-down source", func(t *testing.T) {
 		s := newScene(t)
-		s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{}))
 		hidden := s.putScratch(0)
 		hidden.Inst.Card = monument("Hidden Aura")
-		ally := s.put(0, ZoneReserves, unit("Ally", 2, 5, Keywords{}))
+		ally := s.put(0, ZoneReserves, unit("Ally", 2, 5, ability.Keywords{}))
 		s.wantResistant(ally, 0, "a face-down source has no abilities, so its printed aura grants nothing")
 	})
 }
@@ -111,10 +111,10 @@ func TestFR_ZON_005_AuraCorneredGrantFaceDown(t *testing.T) {
 func TestFR_LAY_003_AuraCorneredResistantLockedForCombat(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, monument("Source"))
-	d := s.put(1, ZoneMainTheater, unit("D", 5, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 1, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("P1", 0, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("P2", 0, 5, Keywords{}))
+	d := s.put(1, ZoneMainTheater, unit("D", 5, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 1, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("P1", 0, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("P2", 0, 5, ability.Keywords{}))
 	s.wantResistant(d, 1, "3 against 2: player 1 is Cornered, so D has the aura's Resistant 1")
 	s.do(s.attack(att, d))
 	if s.alive(att) {

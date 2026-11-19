@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -92,10 +93,10 @@ func TestCard_AllshansBattleTrance_ExpiresInSubPhase4c(t *testing.T) {
 func TestCard_AllshansBattleTrance_StalwartTakesOneCombatDamage(t *testing.T) {
 	// Covers: FR-KWD-002c
 	s, bt := btScene(t)
-	c := unit("Rider", 2, 9, Keywords{})
+	c := unit("Rider", 2, 9, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	s.inDiscard(0, c)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 20, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 20, ability.Keywords{}))
 	s.script(0)
 	s.do(enactAction(bt))
 	a := assetOf(s.g, c)
@@ -111,7 +112,7 @@ func TestCard_AllshansBattleTrance_GuerrillasDeployTriggerFires(t *testing.T) {
 	s, bt := btScene(t)
 	g := s.card("Devilhorn Guerrillas")
 	s.inDiscard(0, g)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	s.script(0)
 	s.do(enactAction(bt))
 	if n := btZoneAsks(s); n != 0 {
@@ -135,7 +136,7 @@ func TestCard_AllshansBattleTrance_VeilRenderPaysNoKill(t *testing.T) {
 	s, bt := btScene(t)
 	vr := s.card("Veil Render")
 	s.inDiscard(0, vr)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 	s.script(0)
 	s.do(enactAction(bt))
 	a := assetOf(s.g, vr)
@@ -168,7 +169,7 @@ func TestCard_AllshansBattleTrance_NotEnactableWithoutAUnitCard(t *testing.T) {
 	})
 	t.Run("only a Maneuver and a Structure card", func(t *testing.T) {
 		s, bt := btScene(t)
-		s.inDiscard(0, maneuver("Spell", 0, 0, steps()), structure("Wall1", 1, 3, Keywords{}))
+		s.inDiscard(0, maneuver("Spell", 0, 0, steps()), structure("Wall1", 1, 3, ability.Keywords{}))
 		notOffered(t, s, bt, "only a Maneuver card and a Structure card in the pile")
 	})
 	t.Run("only the opponent's pile", func(t *testing.T) {
@@ -188,7 +189,7 @@ func TestCard_AllshansBattleTrance_NotEnactableWithoutAUnitCard(t *testing.T) {
 func TestCard_AllshansBattleTrance_TargetLeftThePile(t *testing.T) {
 	// Covers: FR-TGT-003, FR-TRN-003a
 	s, bt := btScene(t)
-	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, Keywords{}))
+	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, ability.Keywords{}))
 	c := rrUnit("Leaves", 3)
 	inst := s.inDiscard(0, c)[0]
 	s.script(0)

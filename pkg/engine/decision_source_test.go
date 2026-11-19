@@ -28,8 +28,8 @@ func wantSources(t *testing.T, ds []Decision, want *Card) {
 
 func TestDecisionSource_ManeuverTargets(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("X", 1, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Y", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("X", 1, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Y", 1, 9, ability.Keywords{}))
 	c := maneuver("Ambush", 0, 0, anotherEffect())
 	c.RulesText = "Chosen unit deals damage equal to its power to another chosen unit."
 	inst := s.give(0, c)
@@ -46,8 +46,8 @@ func TestDecisionSource_ManeuverTargets(t *testing.T) {
 
 func TestDecisionSource_ManeuverModes(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("X", 1, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Y", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("X", 1, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Y", 1, 9, ability.Keywords{}))
 	c := maneuver("Pick One", 0, 0, ability.Effect{Modes: []ability.Effect{returnMode(), dealerMode()}, ChooseN: 1})
 	inst := s.give(0, c)
 	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{0}})
@@ -62,8 +62,8 @@ func TestDecisionSource_ActivatedCostPicks(t *testing.T) {
 	s := newScene(t)
 	costs := []ability.Cost{{Kind: ability.CostDiscard, UpTo: 1}, {Kind: ability.CostKill, Filter: alliedUnitFilter}}
 	a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility(costs, drawN(1))))
-	s.put(0, ZoneMainTheater, unit("Fodder", 1, 1, Keywords{}))
-	s.give(0, unit("Spare", 1, 1, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Fodder", 1, 1, ability.Keywords{}))
+	s.give(0, unit("Spare", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{}}, Answer{Picks: []int{1}})
 	s.do(activate(a, 0))
 	wantSources(t, s.asked(0), a.Inst.Card)
@@ -74,8 +74,8 @@ func TestDecisionSource_ActivatedCostPicks(t *testing.T) {
 
 func TestDecisionSource_DeployCostPick(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("A", 1, 1, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("B", 1, 1, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("A", 1, 1, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("B", 1, 1, ability.Keywords{}))
 	c := killCostUnit("Sacrificer", 0, 0)
 	inst := s.give(0, c)
 	s.script(0, Answer{Picks: []int{0}})
@@ -85,7 +85,7 @@ func TestDecisionSource_DeployCostPick(t *testing.T) {
 
 func TestDecisionSource_ScopesNestAndAnExplicitSourceStays(t *testing.T) {
 	s := newScene(t)
-	outer, inner, own := unit("Outer", 1, 1, Keywords{}), unit("Inner", 1, 1, Keywords{}), unit("Own", 1, 1, Keywords{})
+	outer, inner, own := unit("Outer", 1, 1, ability.Keywords{}), unit("Inner", 1, 1, ability.Keywords{}), unit("Own", 1, 1, ability.Keywords{})
 	ask := func(src *Card) *Card {
 		s.script(0, Answer{Picks: []int{0}})
 		s.g.choose(Decision{Player: 0, Kind: DecideTarget, Prompt: "pick", Min: 1, Max: 1, Source: src,
@@ -118,7 +118,7 @@ func TestDecisionSource_ScopesNestAndAnExplicitSourceStays(t *testing.T) {
 
 func TestSourceCard(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Hidden", 1, 1, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Hidden", 1, 1, ability.Keywords{}))
 	it := &StackItem{Kind: StackAbility, Controller: 0, Source: a.ID, Inst: a.Inst}
 	if got := s.g.SourceCard(it); got != a.Inst.Card {
 		t.Errorf("a face-up source asset: %v, want its card", got)
@@ -127,7 +127,7 @@ func TestSourceCard(t *testing.T) {
 	if got := s.g.SourceCard(it); got != scratchFace {
 		t.Errorf("a face-down source asset: %v, want the Scratch face (FR-ZON-005)", got)
 	}
-	gone := s.inDiscard(0, unit("Gone", 1, 1, Keywords{}))[0]
+	gone := s.inDiscard(0, unit("Gone", 1, 1, ability.Keywords{}))[0]
 	if got := s.g.SourceCard(&StackItem{Kind: StackAbility, Source: 999, Inst: gone}); got != gone.Card {
 		t.Errorf("a source asset that has left the battlefield: %v, want its card instance's card", got)
 	}

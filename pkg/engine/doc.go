@@ -124,7 +124,8 @@
 //     an ability's filter. effects.go: running a resolved ability's steps.
 //     freedeploy.go: free deploys and the look at the top cards.
 //   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
-//     cardload.go: the CSV loader and keyword lines.
+//     cardload.go: the CSV loader. The keyword set, its names and line parser are in
+//     pkg/engine/ability (keywords.go).
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions,
 //     and the askFor scope that names their source card.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.

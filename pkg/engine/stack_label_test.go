@@ -15,10 +15,10 @@ import (
 
 func TestStackLabel_EachKind(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Open Source", 1, 1, Keywords{}))
-	d := s.give(0, unit("Deployed", 1, 1, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Open Source", 1, 1, ability.Keywords{}))
+	d := s.give(0, unit("Deployed", 1, 1, ability.Keywords{}))
 	m := s.give(0, maneuver("Played", 0, 0, anotherEffect()))
-	gone := s.inDiscard(0, unit("Gone", 1, 1, Keywords{}))[0]
+	gone := s.inDiscard(0, unit("Gone", 1, 1, ability.Keywords{}))[0]
 	for _, tc := range []struct {
 		it   *StackItem
 		want string
@@ -40,7 +40,7 @@ func TestStackLabel_EachKind(t *testing.T) {
 
 func TestStackLabel_FaceDownSourceShowsOnlyTheScratchFace(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Hidden Source", 1, 1, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Hidden Source", 1, 1, ability.Keywords{}))
 	a.FaceDown = true
 	it := &StackItem{Kind: StackAbility, Controller: 0, Source: a.ID, Inst: a.Inst}
 	if got, want := s.g.StackLabel(it), "ability of Scratch Company"; got != want {
@@ -68,7 +68,7 @@ func TestStackLabel_FaceDownSourceShowsOnlyTheScratchFace(t *testing.T) {
 
 func TestStackLabel_FaceUpSourcePlaceEventNamesItsInstance(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Open Source", 1, 1, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Open Source", 1, 1, ability.Keywords{}))
 	s.g.push(&StackItem{Kind: StackAbility, Controller: 0, Source: a.ID, Inst: a.Inst, Keyword: ability.KeywordAggressive})
 	pl := eventsOfKind(s.g.Log, "place")
 	if len(pl) == 0 {

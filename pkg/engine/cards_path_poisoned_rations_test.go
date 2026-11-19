@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -19,7 +20,7 @@ func poisonedRations(s *scene) *Instance {
 func TestCard_PoisonedRations_KillsHealthThreeWithoutDamage(t *testing.T) {
 	// Covers: FR-LAY-002, FR-MNV-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 3, ability.Keywords{}))
 	inst := poisonedRations(s)
 	from := len(s.g.Log)
 	chooseAsset(s, foe)
@@ -38,7 +39,7 @@ func TestCard_PoisonedRations_KillsHealthThreeWithoutDamage(t *testing.T) {
 func TestCard_PoisonedRations_KillsDamagedUnit(t *testing.T) {
 	// Covers: FR-LAY-002
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	foe.Damage = 2
 	inst := poisonedRations(s)
 	chooseAsset(s, foe)
@@ -51,7 +52,7 @@ func TestCard_PoisonedRations_KillsDamagedUnit(t *testing.T) {
 func TestCard_PoisonedRations_SurvivorRestoredAtEndOfTurn(t *testing.T) {
 	// Covers: FR-LAY-002, FR-LAY-003, FR-TRN-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	inst := poisonedRations(s)
 	chooseAsset(s, foe)
 	s.do(enactAction(inst))
@@ -63,7 +64,7 @@ func TestCard_PoisonedRations_SurvivorRestoredAtEndOfTurn(t *testing.T) {
 	mhWant(t, s, foe, 5, 5, 0, "after the end of the turn (Sub-Phase 4c)")
 
 	s2 := newScene(t)
-	hurt := s2.put(1, ZoneMainTheater, unit("Hurt", 2, 6, Keywords{}))
+	hurt := s2.put(1, ZoneMainTheater, unit("Hurt", 2, 6, ability.Keywords{}))
 	hurt.Damage = 1
 	inst2 := poisonedRations(s2)
 	chooseAsset(s2, hurt)
@@ -79,8 +80,8 @@ func TestCard_PoisonedRations_SurvivorRestoredAtEndOfTurn(t *testing.T) {
 func TestCard_PoisonedRations_AlliedUnitIsATarget(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	inst := poisonedRations(s)
 	chooseAsset(s, ally)
 	s.do(enactAction(inst))
@@ -101,14 +102,14 @@ func TestCard_PoisonedRations_NotEnactableWithoutUnit(t *testing.T) {
 	}{
 		{"no unit at all", func(s *scene) {}, false},
 		{"only structures", func(s *scene) {
-			s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
-			s.put(1, ZoneMainTheater, structure("FWall", 0, 3, Keywords{}))
+			s.put(0, ZoneMainTheater, structure("AWall", 0, 3, ability.Keywords{}))
+			s.put(1, ZoneMainTheater, structure("FWall", 0, 3, ability.Keywords{}))
 		}, false},
 		{"one opposing unit in Reserves", func(s *scene) {
-			s.put(1, ZoneReserves, unit("Foe", 1, 3, Keywords{}))
+			s.put(1, ZoneReserves, unit("Foe", 1, 3, ability.Keywords{}))
 		}, true},
 		{"one allied unit in Reserves", func(s *scene) {
-			s.put(0, ZoneReserves, unit("Ally", 1, 3, Keywords{}))
+			s.put(0, ZoneReserves, unit("Ally", 1, 3, ability.Keywords{}))
 		}, true},
 	}
 	for _, c := range cases {

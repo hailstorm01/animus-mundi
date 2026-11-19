@@ -22,7 +22,7 @@ func unbowed(targets []ability.Target, steps ...ability.Step) ability.Trigger {
 }
 
 // bowed is a unit printing the given Unbowed triggers.
-func bowed(name string, power, health int, kw Keywords, trigs ...ability.Trigger) *Card {
+func bowed(name string, power, health int, kw ability.Keywords, trigs ...ability.Trigger) *Card {
 	c := unit(name, power, health, kw)
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
@@ -56,8 +56,8 @@ func (s *scene) wantScratches(p PlayerID, want int, why string) {
 
 func TestFR_KWD_002a_UnbowedFiresWhenHealthDamageIsCommitted(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Bowed", 1, 5, Keywords{}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Bowed", 1, 5, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 2)
 	s.wantScratches(1, 1, "damage committed to Health fires Unbowed once for the instance, not once per point (FR-KWD-002a)")
@@ -67,8 +67,8 @@ func TestFR_KWD_002a_UnbowedFiresWhenHealthDamageIsCommitted(t *testing.T) {
 // Covers: FR-KWD-002a, FR-KWD-002k
 func TestFR_REP_004_UnbowedFiresWhenArmorAbsorbsAllTheDamage(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Armored", 1, 5, Keywords{Armor: 3}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Armored", 1, 5, ability.Keywords{Armor: 3}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 0)
 	if def.Armor != 1 {
@@ -80,8 +80,8 @@ func TestFR_REP_004_UnbowedFiresWhenArmorAbsorbsAllTheDamage(t *testing.T) {
 // Covers: FR-KWD-002a, FR-KWD-002b
 func TestFR_REP_004_UnbowedDoesNotFireWhenResistantReducesDamageToZero(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 5, Keywords{Resistant: 2}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 5, ability.Keywords{Resistant: 2}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 0)
 	s.wantScratches(1, 0, "damage reduced to 0 at Stage 2 means no damage-taken trigger (FR-REP-004 Stage 5, FR-KWD-002a)")
@@ -90,8 +90,8 @@ func TestFR_REP_004_UnbowedDoesNotFireWhenResistantReducesDamageToZero(t *testin
 // Covers: FR-KWD-002a, FR-KWD-002b
 func TestFR_REP_004_UnbowedStillFiresWhenResistantLeavesSomeDamage(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 5, Keywords{Resistant: 2}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 5, ability.Keywords{Resistant: 2}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 1)
 	s.wantScratches(1, 1, "3 damage less Resistant 2 leaves 1, which is taken (FR-REP-004 Stage 5)")
@@ -100,8 +100,8 @@ func TestFR_REP_004_UnbowedStillFiresWhenResistantLeavesSomeDamage(t *testing.T)
 // Covers: FR-KWD-002a, FR-KWD-002c
 func TestFR_REP_004_UnbowedFiresWhenStalwartCapsDamageToOne(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Stalwart", 1, 5, Keywords{Stalwart: true}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Stalwart", 1, 5, ability.Keywords{Stalwart: true}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 1)
 	s.wantScratches(1, 1, "damage capped to 1 is still taken, so Unbowed fires once (Unb x Stw, FR-REP-004 Stage 5)")
@@ -109,8 +109,8 @@ func TestFR_REP_004_UnbowedFiresWhenStalwartCapsDamageToOne(t *testing.T) {
 
 func TestFR_REP_004_UnbowedDoesNotFireOnAZeroPowerAttack(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 5, Keywords{}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 5, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 0)
 	s.wantScratches(1, 0, "0 raw damage commits and absorbs nothing, so nothing is taken (FR-REP-004 Stage 5)")
@@ -119,8 +119,8 @@ func TestFR_REP_004_UnbowedDoesNotFireOnAZeroPowerAttack(t *testing.T) {
 // Covers: FR-KWD-002a, FR-KWD-002b
 func TestFR_REP_004_UnbowedFiresWhenNegativeResistantAmplifiesZeroToOne(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Brittle", 0, 5, Keywords{Resistant: -1}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Brittle", 0, 5, ability.Keywords{Resistant: -1}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 1)
 	s.wantScratches(1, 1, "Resistant -1 amplifies 0 to 1 at Stage 2, and that 1 is taken (FR-REP-004 Stage 2 and 5)")
@@ -128,9 +128,9 @@ func TestFR_REP_004_UnbowedFiresWhenNegativeResistantAmplifiesZeroToOne(t *testi
 
 func TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, bowed("Bystander", 1, 5, Keywords{}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, bowed("Bystander", 1, 5, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	s.wantScratches(1, 0, "Unbowed fires for damage to its own asset only (FR-KWD-002a)")
 }
@@ -140,8 +140,8 @@ func TestFR_KWD_002a_OnlyTheAssetThatTookDamageFires(t *testing.T) {
 // Covers: FR-REP-004, FR-CBT-002
 func TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, bowed("Attacker", 2, 9, Keywords{}, unbowed(nil, scratchN(1))))
-	def := s.put(1, ZoneMainTheater, bowed("Defender", 2, 9, Keywords{}, unbowed(nil, scratchN(2))))
+	att := s.put(0, ZoneMainTheater, bowed("Attacker", 2, 9, ability.Keywords{}, unbowed(nil, scratchN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Defender", 2, 9, ability.Keywords{}, unbowed(nil, scratchN(2))))
 	s.do(s.attack(att, def))
 	s.wantScratches(0, 1, "the attacker took retaliation damage, so its Unbowed fires (FR-REP-004 Stage 5)")
 	s.wantScratches(1, 2, "the defender took combat damage, so its Unbowed fires (FR-REP-004 Stage 5)")
@@ -150,8 +150,8 @@ func TestFR_KWD_002a_BothCombatantsFireTheirOwnUnbowed(t *testing.T) {
 // Covers: FR-REP-004, FR-CBT-002
 func TestFR_KWD_002a_RetaliationOnTheAttackerFiresItsUnbowed(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, bowed("Attacker", 2, 9, Keywords{}, unbowed(nil, scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, bowed("Attacker", 2, 9, ability.Keywords{}, unbowed(nil, scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(att, 2)
 	s.wantScratches(0, 1, "retaliation damage to the attacker fires the attacker's Unbowed (FR-REP-004)")
@@ -161,7 +161,7 @@ func TestFR_KWD_002a_RetaliationOnTheAttackerFiresItsUnbowed(t *testing.T) {
 
 func TestFR_KWD_002a_NonCombatDamageFiresUnbowedOnce(t *testing.T) {
 	s := newScene(t)
-	def := s.put(1, ZoneMainTheater, bowed("Bowed", 1, 9, Keywords{}, unbowed(nil, scratchN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Bowed", 1, 9, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	src := trigUnit("Source", targetTrigger([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(3, 0)))
 	s.deployFromHand(0, src)
 	s.wantDamage(def, 3)
@@ -171,7 +171,7 @@ func TestFR_KWD_002a_NonCombatDamageFiresUnbowedOnce(t *testing.T) {
 // Covers: FR-KWD-002b
 func TestFR_REP_004_NonCombatDamageReducedToZeroDoesNotFireUnbowed(t *testing.T) {
 	s := newScene(t)
-	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 9, Keywords{Resistant: 5}, unbowed(nil, scratchN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Resister", 1, 9, ability.Keywords{Resistant: 5}, unbowed(nil, scratchN(1))))
 	src := trigUnit("Source", targetTrigger([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(3, 0)))
 	s.deployFromHand(0, src)
 	s.wantDamage(def, 0)
@@ -180,9 +180,9 @@ func TestFR_REP_004_NonCombatDamageReducedToZeroDoesNotFireUnbowed(t *testing.T)
 
 func TestFR_KWD_002a_TwoSeparateDamageInstancesFireTwice(t *testing.T) {
 	s := newScene(t)
-	a1 := s.put(0, ZoneMainTheater, unit("Hitter One", 1, 9, Keywords{}))
-	a2 := s.put(0, ZoneMainTheater, unit("Hitter Two", 1, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 9, Keywords{}, unbowed(nil, scratchN(1))))
+	a1 := s.put(0, ZoneMainTheater, unit("Hitter One", 1, 9, ability.Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Hitter Two", 1, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 9, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(a1, def))
 	s.wantScratches(1, 1, "the first damage instance fires Unbowed once (FR-KWD-002a)")
 	s.do(s.attack(a2, def))
@@ -193,8 +193,8 @@ func TestFR_KWD_002a_TwoSeparateDamageInstancesFireTwice(t *testing.T) {
 
 func TestFR_KWD_002a_SurvivorHealsItselfAfterTheDamageIsCommitted(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Dancer", 0, 5, Keywords{}, unbowed(nil, healSelf(2))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Dancer", 0, 5, ability.Keywords{}, unbowed(nil, healSelf(2))))
 	s.do(s.attack(att, def))
 	if !s.alive(def) {
 		t.Fatalf("precondition: the defender survives 3 damage on 5 Health")
@@ -204,8 +204,8 @@ func TestFR_KWD_002a_SurvivorHealsItselfAfterTheDamageIsCommitted(t *testing.T) 
 
 func TestFR_KWD_002a_SurvivorGainsArmorFromItsOwnUnbowed(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Revenant", 0, 5, Keywords{}, unbowed(nil, armorSelf(2))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Revenant", 0, 5, ability.Keywords{}, unbowed(nil, armorSelf(2))))
 	s.do(s.attack(att, def))
 	if def.Armor != 2 {
 		t.Errorf("a surviving asset's Unbowed: gains 2 armor leaves Armor %d, want 2 (FR-KWD-002a)", def.Armor)
@@ -217,8 +217,8 @@ func TestFR_KWD_002a_SurvivorGainsArmorFromItsOwnUnbowed(t *testing.T) {
 // Covers: FR-ZON-004
 func TestFR_KWD_002a_LethalDamageStillFiresAndANonSelfStepResolves(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Martyr", 1, 1, Keywords{}, unbowed(nil, scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Martyr", 1, 1, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the defender is destroyed by 3 damage on 1 Health")
@@ -229,8 +229,8 @@ func TestFR_KWD_002a_LethalDamageStillFiresAndANonSelfStepResolves(t *testing.T)
 // Covers: FR-ZON-004, FR-TGT-003
 func TestFR_KWD_002a_LethalDamageSelfHealFizzlesButSiblingStepsResolve(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Dancer", 1, 1, Keywords{}, unbowed(nil, healSelf(2), scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Dancer", 1, 1, ability.Keywords{}, unbowed(nil, healSelf(2), scratchN(1))))
 	inst := def.Inst
 	s.do(s.attack(att, def))
 	if s.alive(def) {
@@ -248,8 +248,8 @@ func TestFR_KWD_002a_LethalDamageSelfHealFizzlesButSiblingStepsResolve(t *testin
 // Covers: FR-ZON-004, FR-TGT-003
 func TestFR_KWD_002a_LethalDamageSelfArmorFizzlesButSiblingStepsResolve(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Revenant", 1, 1, Keywords{}, unbowed(nil, armorSelf(2), scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Revenant", 1, 1, ability.Keywords{}, unbowed(nil, armorSelf(2), scratchN(1))))
 	inst := def.Inst
 	s.do(s.attack(att, def))
 	if s.alive(def) {
@@ -264,9 +264,9 @@ func TestFR_KWD_002a_LethalDamageSelfArmorFizzlesButSiblingStepsResolve(t *testi
 // Covers: FR-ZON-004, FR-TGT-001
 func TestFR_KWD_002a_LethalDamageChosenTargetStepResolvesFromDiscard(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	other := s.put(0, ZoneMainTheater, unit("Other Ally", 1, 5, Keywords{}))
-	captain := s.put(1, ZoneMainTheater, bowed("Captain", 1, 1, Keywords{},
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	other := s.put(0, ZoneMainTheater, unit("Other Ally", 1, 5, ability.Keywords{}))
+	captain := s.put(1, ZoneMainTheater, bowed("Captain", 1, 1, ability.Keywords{},
 		unbowed([]ability.Target{tgt(ability.AllegianceAny, ability.KindUnit|ability.KindStructure, false)}, dmgTo(1, 0))))
 	s.scriptRefs(1, nil, other)
 	s.script(0)
@@ -288,9 +288,9 @@ func TestFR_KWD_002a_LethalDamageChosenTargetStepResolvesFromDiscard(t *testing.
 func TestFR_KWD_002a_LethalDamageTriggerBelongsToTheLastKnownController(t *testing.T) {
 	s := newScene(t)
 	s.endTurn() // player 1 is active
-	att := s.put(1, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(1, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	// Owned by player 1 and controlled by player 0.
-	def := s.putControlled(1, 0, bowed("Captured", 1, 1, Keywords{}, unbowed(nil, scratchN(1))))
+	def := s.putControlled(1, 0, bowed("Captured", 1, 1, ability.Keywords{}, unbowed(nil, scratchN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the captured asset is destroyed")
@@ -309,8 +309,8 @@ func TestFR_TRG_003_UnbowedTriggersFollowApnapNonActivePlayerResolvesFirst(t *te
 	s := newScene(t)
 	s.g.Players[0].Deck = nil
 	s.g.Players[1].Deck = nil
-	att := s.put(0, ZoneMainTheater, bowed("Attacker", 1, 9, Keywords{}, unbowed(nil, drawN(1))))
-	def := s.put(1, ZoneMainTheater, bowed("Defender", 1, 9, Keywords{}, unbowed(nil, drawN(1))))
+	att := s.put(0, ZoneMainTheater, bowed("Attacker", 1, 9, ability.Keywords{}, unbowed(nil, drawN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Defender", 1, 9, ability.Keywords{}, unbowed(nil, drawN(1))))
 	s.do(s.attack(att, def))
 	if !s.g.Outcome.Over || s.g.Outcome.Draw || s.g.Outcome.Winner != 0 {
 		t.Errorf("the non-active player's damage-taken trigger resolves first (FR-TRG-003): player 1 draws from an empty deck and loses, outcome %+v", s.g.Outcome)
@@ -322,8 +322,8 @@ func TestFR_TRG_004_UnbowedTriggerResolvesAfterTheDamageIsCommitted(t *testing.T
 	// trigger resolved before the damage was committed, the heal would find
 	// nothing to remove and 3 damage would remain.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, bowed("Dancer", 0, 5, Keywords{}, unbowed(nil, healSelf(5))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Dancer", 0, 5, ability.Keywords{}, unbowed(nil, healSelf(5))))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 0)
 	if len(s.g.Stack) != 0 {
@@ -334,9 +334,9 @@ func TestFR_TRG_004_UnbowedTriggerResolvesAfterTheDamageIsCommitted(t *testing.T
 // Covers: FR-TGT-001
 func TestFR_TRG_004_UnbowedDamageCascadesIntoAnotherUnbowed(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	b := s.put(0, ZoneMainTheater, bowed("Other Bowed", 1, 5, Keywords{}, unbowed(nil, scratchN(1))))
-	def := s.put(1, ZoneMainTheater, bowed("Captain", 1, 5, Keywords{},
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, bowed("Other Bowed", 1, 5, ability.Keywords{}, unbowed(nil, scratchN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Captain", 1, 5, ability.Keywords{},
 		unbowed([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(1, 0))))
 	s.scriptRefs(1, nil, b)
 	s.script(0)

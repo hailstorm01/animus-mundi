@@ -50,8 +50,8 @@ func targetOffers(s *scene) map[int]bool {
 func TestCard_DevilhornSanction_KillsChosenOpposingUnit(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TGT-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
-	other := s.put(1, ZoneMainTheater, unit("Other", 1, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
+	other := s.put(1, ZoneMainTheater, unit("Other", 1, 3, ability.Keywords{}))
 	inst := enactFor(s, "Devilhorn Sanction")
 	chooseAsset(s, foe)
 	s.do(enactAction(inst))
@@ -69,7 +69,7 @@ func TestCard_DevilhornSanction_KillsChosenOpposingUnit(t *testing.T) {
 func TestCard_DevilhornSanction_KillsInReservesAndFaceDown(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	res := s.put(1, ZoneReserves, unit("Reserve", 1, 3, Keywords{}))
+	res := s.put(1, ZoneReserves, unit("Reserve", 1, 3, ability.Keywords{}))
 	chooseAsset(s, res)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	if s.alive(res) || !inDiscardPile(s.g.Players[1], res.Inst) {
@@ -88,7 +88,7 @@ func TestCard_DevilhornSanction_KillsInReservesAndFaceDown(t *testing.T) {
 func TestCard_DevilhornSanction_IgnoresHealthAndArmor(t *testing.T) {
 	// Covers: FR-MNV-001
 	s := newScene(t)
-	tank := s.put(1, ZoneMainTheater, unit("Tank", 1, 30, Keywords{Armor: 9}))
+	tank := s.put(1, ZoneMainTheater, unit("Tank", 1, 30, ability.Keywords{Armor: 9}))
 	chooseAsset(s, tank)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	if s.alive(tank) {
@@ -102,10 +102,10 @@ func TestCard_DevilhornSanction_IgnoresHealthAndArmor(t *testing.T) {
 func TestCard_DevilhornSanction_OnlyOpposingUnitsAreOffered(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
-	st := s.put(1, ZoneMainTheater, structure("EWall", 0, 3, Keywords{}))
-	u1 := s.put(1, ZoneMainTheater, unit("E1", 1, 3, Keywords{}))
-	u2 := s.put(1, ZoneReserves, unit("E2", 1, 3, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("EWall", 0, 3, ability.Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("E1", 1, 3, ability.Keywords{}))
+	u2 := s.put(1, ZoneReserves, unit("E2", 1, 3, ability.Keywords{}))
 	chooseAsset(s, u1)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	got := targetOffers(s)
@@ -122,9 +122,9 @@ func TestCard_DevilhornSanction_OnlyOpposingUnitsAreOffered(t *testing.T) {
 func TestCard_DevilhornSanction_WardUnitCannotBeChosen(t *testing.T) {
 	// Covers: FR-KWD-002h
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
-	plain := s.put(1, ZoneMainTheater, unit("Plain", 1, 3, Keywords{}))
-	plain2 := s.put(1, ZoneMainTheater, unit("Plain2", 1, 3, Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 3, ability.Keywords{Ward: true}))
+	plain := s.put(1, ZoneMainTheater, unit("Plain", 1, 3, ability.Keywords{}))
+	plain2 := s.put(1, ZoneMainTheater, unit("Plain2", 1, 3, ability.Keywords{}))
 	chooseAsset(s, plain)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	got := targetOffers(s)
@@ -145,14 +145,14 @@ func TestCard_DevilhornSanction_NotEnactableWithoutLegalTarget(t *testing.T) {
 	}{
 		{"no opposing unit", func(s *scene) {}, false},
 		{"only an opposing Ward unit", func(s *scene) {
-			s.put(1, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+			s.put(1, ZoneMainTheater, unit("Warded", 1, 3, ability.Keywords{Ward: true}))
 		}, false},
 		{"only allied units and opposing structures", func(s *scene) {
-			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
-			s.put(1, ZoneMainTheater, structure("EWall", 0, 3, Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
+			s.put(1, ZoneMainTheater, structure("EWall", 0, 3, ability.Keywords{}))
 		}, false},
 		{"one plain opposing unit", func(s *scene) {
-			s.put(1, ZoneReserves, unit("Foe", 1, 3, Keywords{}))
+			s.put(1, ZoneReserves, unit("Foe", 1, 3, ability.Keywords{}))
 		}, true},
 	}
 	for _, c := range cases {
@@ -192,7 +192,7 @@ func TestCard_DevilhornSanction_ShiftingImpossibilityReplacesTheKill(t *testing.
 func TestCard_DevilhornSanction_PaysThreeTactics(t *testing.T) {
 	// Covers: FR-MNV-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 	chooseAsset(s, foe)
 	s.do(enactAction(enactFor(s, "Devilhorn Sanction")))
 	if p := s.g.Players[0]; p.Tac != 2 || p.Req != 3 {
@@ -397,9 +397,9 @@ func TestCard_ImprovisedOrders_PaysTwoTactics(t *testing.T) {
 func TestCard_TacticalWithdrawal_ReturnsChosenAlliedUnitThenDraws(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TGT-001, FR-ZON-004
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
-	other := s.put(0, ZoneMainTheater, unit("Other", 1, 3, Keywords{}))
-	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
+	other := s.put(0, ZoneMainTheater, unit("Other", 1, 3, ability.Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, ability.Keywords{}))[0]
 	inst := enactFor(s, "Tactical Withdrawal")
 	chooseAsset(s, ally)
 	s.do(enactAction(inst))
@@ -424,8 +424,8 @@ func TestCard_TacticalWithdrawal_ReturnsChosenAlliedUnitThenDraws(t *testing.T) 
 func TestCard_TacticalWithdrawal_ChoosingNoneStillDraws(t *testing.T) {
 	// Covers: FR-TGT-002, SVY-R11
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
-	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, ability.Keywords{}))[0]
 	s.script(0, Answer{Picks: []int{}})
 	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
 	p := s.g.Players[0]
@@ -440,9 +440,9 @@ func TestCard_TacticalWithdrawal_ChoosingNoneStillDraws(t *testing.T) {
 func TestCard_TacticalWithdrawal_EnactableWithNoAlliedUnit(t *testing.T) {
 	// Covers: SVY-R29, FR-TGT-002
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
-	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
-	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))[0]
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, ability.Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, ability.Keywords{}))[0]
 	inst := enactFor(s, "Tactical Withdrawal")
 	if !offersEnact(s.g, inst) {
 		t.Fatalf("an \"up to\" slot never stops an Enact, even with no allied unit (SVY-R29)")
@@ -463,10 +463,10 @@ func TestCard_TacticalWithdrawal_EnactableWithNoAlliedUnit(t *testing.T) {
 func TestCard_TacticalWithdrawal_OnlyAlliedUnitsAreOffered(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, Keywords{}))
-	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, Keywords{}))
-	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, ability.Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, ability.Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 	chooseAsset(s, u1)
 	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
 	got := targetOffers(s)
@@ -483,7 +483,7 @@ func TestCard_TacticalWithdrawal_OnlyAlliedUnitsAreOffered(t *testing.T) {
 func TestCard_TacticalWithdrawal_AlliedWardUnitCanBeChosen(t *testing.T) {
 	// Covers: FR-KWD-002h
 	s := newScene(t)
-	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 3, Keywords{Ward: true}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 3, ability.Keywords{Ward: true}))
 	chooseAsset(s, ward)
 	s.do(enactAction(enactFor(s, "Tactical Withdrawal")))
 	if !targetOffers(s)[ward.ID] {
@@ -526,8 +526,8 @@ func TestCard_TacticalWithdrawal_PaysOneTactics(t *testing.T) {
 
 // armorPair puts two plain allied units (printed power 2, Health 5) in the Main Theater.
 func armorPair(s *scene) (*Asset, *Asset) {
-	a := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("Other", 2, 5, ability.Keywords{}))
 	return a, b
 }
 
@@ -537,10 +537,10 @@ func armorPair(s *scene) (*Asset, *Asset) {
 func armorOffers(t *testing.T, name string) {
 	t.Helper()
 	s := newScene(t)
-	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, Keywords{}))
-	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, Keywords{}))
-	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	u1 := s.put(0, ZoneReserves, unit("A1", 1, 3, ability.Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("A2", 1, 3, ability.Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("AWall", 0, 3, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 	chooseAsset(s, u1)
 	s.do(enactAction(enactFor(s, name)))
 	got := targetOffers(s)
@@ -564,11 +564,11 @@ func armorNotEnactable(t *testing.T, name string) {
 	}{
 		{"no unit at all", func(s *scene) {}, false},
 		{"only an allied structure and opposing units", func(s *scene) {
-			s.put(0, ZoneMainTheater, structure("AWall", 0, 3, Keywords{}))
-			s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+			s.put(0, ZoneMainTheater, structure("AWall", 0, 3, ability.Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 		}, false},
 		{"one allied unit", func(s *scene) {
-			s.put(0, ZoneReserves, unit("Ally", 1, 3, Keywords{}))
+			s.put(0, ZoneReserves, unit("Ally", 1, 3, ability.Keywords{}))
 		}, true},
 	}
 	for _, c := range cases {
@@ -631,8 +631,8 @@ func TestCard_ChainbreakersTenacity_OnlyAlliedUnitsAreOffered(t *testing.T) {
 func TestCard_ChainbreakersTenacity_AlliedWardUnitCanBeChosen(t *testing.T) {
 	// Covers: FR-KWD-002h
 	s := newScene(t)
-	ward := s.put(0, ZoneMainTheater, unit("Warded", 2, 5, Keywords{Ward: true}))
-	plain := s.put(0, ZoneMainTheater, unit("Plain", 2, 5, Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 2, 5, ability.Keywords{Ward: true}))
+	plain := s.put(0, ZoneMainTheater, unit("Plain", 2, 5, ability.Keywords{}))
 	chooseAsset(s, ward)
 	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
 	got := targetOffers(s)
@@ -653,7 +653,7 @@ func TestCard_ChainbreakersTenacity_FaceDownScratchCompanyCanBeChosen(t *testing
 	// Covers: FR-ZON-005, FR-TGT-001
 	s := newScene(t)
 	sc := s.putScratch(0)
-	s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Other", 2, 5, ability.Keywords{}))
 	chooseAsset(s, sc)
 	s.do(enactAction(enactFor(s, "Chainbreaker's Tenacity")))
 	if got := s.g.Power(sc); got != 2 || sc.Armor != 2 {
@@ -696,8 +696,8 @@ func TestCard_Fortify_ChosenAllyGainsThreeArmor(t *testing.T) {
 func TestCard_Fortify_ArmorStacksAndOutlastsTheTurn(t *testing.T) {
 	// Covers: FR-LAY-002, FR-KWD-002k
 	s := newScene(t)
-	armored := s.put(0, ZoneMainTheater, unit("Armored", 2, 5, Keywords{Armor: 2}))
-	s.put(0, ZoneMainTheater, unit("Other", 2, 5, Keywords{}))
+	armored := s.put(0, ZoneMainTheater, unit("Armored", 2, 5, ability.Keywords{Armor: 2}))
+	s.put(0, ZoneMainTheater, unit("Other", 2, 5, ability.Keywords{}))
 	chooseAsset(s, armored)
 	s.do(enactAction(enactFor(s, "Fortify")))
 	if armored.Armor != 5 {
@@ -765,7 +765,7 @@ func steelRainScene(t *testing.T, n int) (*scene, *Instance, []*Instance) {
 	inst := enactFor(s, "Steel Rain")
 	var others []*Instance
 	for i := 0; i < n; i++ {
-		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, Keywords{})))
+		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, ability.Keywords{})))
 	}
 	return s, inst, others
 }
@@ -773,8 +773,8 @@ func steelRainScene(t *testing.T, n int) (*scene, *Instance, []*Instance) {
 func TestCard_SteelRain_DealsTwoToAChosenAssetPerDiscard(t *testing.T) {
 	// Covers: FR-TRN-003a, FR-MNV-001, FR-TGT-001, SVY-R4
 	s, inst, others := steelRainScene(t, 4)
-	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 9, Keywords{}))
-	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 9, Keywords{}))
+	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 9, ability.Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 9, ability.Keywords{}))
 	pdScript(s, 2, false, a, b)
 	s.do(enactAction(inst))
 	s.wantDamage(a, 2)
@@ -798,8 +798,8 @@ func TestCard_SteelRain_DealsTwoToAChosenAssetPerDiscard(t *testing.T) {
 func TestCard_SteelRain_SameAssetForEveryDiscard(t *testing.T) {
 	// Covers: SVY-R4, FR-REP-004
 	s, inst, _ := steelRainScene(t, 3)
-	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	pdScript(s, 3, false, u1, u1, u1)
 	s.do(enactAction(inst))
 	s.wantDamage(u1, 6)
@@ -814,11 +814,11 @@ func TestCard_SteelRain_ChosenAssetIsAnyAsset(t *testing.T) {
 	// Covers: FR-TGT-001, FR-KWD-002h
 	s, inst, _ := steelRainScene(t, 2)
 	own, opp := s.g.Players[0].HQ, s.g.Players[1].HQ
-	allyUnit := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
-	allyStruct := s.put(0, ZoneMainTheater, structure("Ally Wall", 0, 9, Keywords{}))
-	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, Keywords{Ward: true}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
-	foeWard := s.put(1, ZoneMainTheater, unit("Warded Foe", 1, 9, Keywords{Ward: true}))
+	allyUnit := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
+	allyStruct := s.put(0, ZoneMainTheater, structure("Ally Wall", 0, 9, ability.Keywords{}))
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, ability.Keywords{Ward: true}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("Warded Foe", 1, 9, ability.Keywords{Ward: true}))
 	pdScript(s, 2, false, foe, foe)
 	s.do(enactAction(inst))
 	var d *Decision
@@ -848,8 +848,8 @@ func TestCard_SteelRain_ChosenAssetIsAnyAsset(t *testing.T) {
 func TestCard_SteelRain_DiscardingNoneDealsNothing(t *testing.T) {
 	// Covers: SVY-R4, FR-TRN-003a
 	s, inst, others := steelRainScene(t, 2)
-	s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	pdScript(s, 0, false)
 	s.do(enactAction(inst))
 	for _, d := range s.asked(0) {
@@ -872,7 +872,7 @@ func TestCard_SteelRain_EmptyHandAfterTheDiscardDrawsTwo(t *testing.T) {
 		draws    bool
 	}{{3, true}, {2, false}} {
 		s, inst, _ := steelRainScene(t, 3)
-		s.put(1, ZoneMainTheater, unit("Victim", 1, 9, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Victim", 1, 9, ability.Keywords{}))
 		top := s.onTop(0, vanilla("D1", "D2", "D3")...)
 		foeHQ := s.g.Players[1].HQ
 		pdScript(s, tc.discards, false, foeHQ, foeHQ, foeHQ)
@@ -891,7 +891,7 @@ func TestCard_SteelRain_EmptyHandAfterTheDiscardDrawsTwo(t *testing.T) {
 func TestCard_SteelRain_AloneInHandDrawsTwo(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TRN-003a, SVY-R16
 	s, inst, _ := steelRainScene(t, 0)
-	s.put(1, ZoneMainTheater, unit("Victim", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 9, ability.Keywords{}))
 	top := s.onTop(0, vanilla("D1", "D2", "D3")...)
 	if !offersEnact(s.g, inst) {
 		t.Fatalf("Steel Rain alone in hand is offered: it may discard up to 3 cards, i.e. none")
@@ -912,8 +912,8 @@ func TestCard_SteelRain_AloneInHandDrawsTwo(t *testing.T) {
 func TestCard_SteelRain_TimeoutConcentratesOnTheFirstLegalAsset(t *testing.T) {
 	// Covers: SVY-R32, FR-MOD-001
 	s, inst, _ := steelRainScene(t, 3)
-	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	pdScript(s, 3, true)
 	s.do(enactAction(inst))
 	s.wantDamage(s.g.Players[0].HQ, 6)
@@ -925,7 +925,7 @@ func TestCard_SteelRain_TimeoutConcentratesOnTheFirstLegalAsset(t *testing.T) {
 func TestCard_SteelRain_PaysFourTactics(t *testing.T) {
 	// Covers: FR-MNV-001
 	s, inst, _ := steelRainScene(t, 1)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	p := s.g.Players[0]
 	p.Tac = 3
 	if offersEnact(s.g, inst) {
@@ -967,10 +967,10 @@ func newATBoard(t *testing.T) *atBoard {
 	s := newScene(t)
 	return &atBoard{
 		s: s,
-		a: s.put(1, ZoneMainTheater, unit("A", 2, 30, Keywords{})),
-		b: s.put(1, ZoneMainTheater, unit("B", 3, 30, Keywords{})),
-		c: s.put(1, ZoneMainTheater, unit("C", 4, 30, Keywords{})),
-		d: s.put(1, ZoneMainTheater, unit("D", 5, 30, Keywords{})),
+		a: s.put(1, ZoneMainTheater, unit("A", 2, 30, ability.Keywords{})),
+		b: s.put(1, ZoneMainTheater, unit("B", 3, 30, ability.Keywords{})),
+		c: s.put(1, ZoneMainTheater, unit("C", 4, 30, ability.Keywords{})),
+		d: s.put(1, ZoneMainTheater, unit("D", 5, 30, ability.Keywords{})),
 	}
 }
 
@@ -1055,7 +1055,7 @@ func TestCard_AmbushTactics_ChosenUnitDealsItsPowerToAnother(t *testing.T) {
 func TestCard_AmbushTactics_DealerUsesItsCurrentPower(t *testing.T) {
 	// Covers: SVY-R27, FR-TGT-003, FR-LAY-001
 	b := newATBoard(t)
-	x := b.s.put(0, ZoneMainTheater, unit("X", 3, 30, Keywords{}))
+	x := b.s.put(0, ZoneMainTheater, unit("X", 3, 30, ability.Keywords{}))
 	boost := enactFor(b.s, "Chainbreaker's Tenacity")
 	chooseAsset(b.s, x)
 	b.s.do(enactAction(boost))
@@ -1153,15 +1153,15 @@ func TestCard_AmbushTactics_AnotherUnitIsADifferentUnit(t *testing.T) {
 func TestCard_AmbushTactics_ChosenUnitIsAnyUnit(t *testing.T) {
 	// Covers: FR-TGT-001, FR-KWD-002h
 	s := newScene(t)
-	alliedMT := s.put(0, ZoneMainTheater, unit("AlliedMT", 2, 30, Keywords{}))
-	alliedRes := s.put(0, ZoneReserves, unit("AlliedRes", 2, 30, Keywords{}))
-	alliedWard := s.put(0, ZoneMainTheater, unit("AlliedWard", 2, 30, Keywords{Ward: true}))
-	foeMT := s.put(1, ZoneMainTheater, unit("FoeMT", 2, 30, Keywords{}))
-	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 2, 30, Keywords{}))
-	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 2, 30, Keywords{Ward: true}))
+	alliedMT := s.put(0, ZoneMainTheater, unit("AlliedMT", 2, 30, ability.Keywords{}))
+	alliedRes := s.put(0, ZoneReserves, unit("AlliedRes", 2, 30, ability.Keywords{}))
+	alliedWard := s.put(0, ZoneMainTheater, unit("AlliedWard", 2, 30, ability.Keywords{Ward: true}))
+	foeMT := s.put(1, ZoneMainTheater, unit("FoeMT", 2, 30, ability.Keywords{}))
+	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 2, 30, ability.Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 2, 30, ability.Keywords{Ward: true}))
 	sc := s.putScratch(0)
-	foeStruct := s.put(1, ZoneMainTheater, structure("FoeStruct", 0, 30, Keywords{}))
-	allyStruct := s.put(0, ZoneMainTheater, structure("AllyStruct", 0, 30, Keywords{}))
+	foeStruct := s.put(1, ZoneMainTheater, structure("FoeStruct", 0, 30, ability.Keywords{}))
+	allyStruct := s.put(0, ZoneMainTheater, structure("AllyStruct", 0, 30, ability.Keywords{}))
 	inst := enactFor(s, "Ambush Tactics")
 	s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 1)}, pick(foeMT), pick(foeRes))
 	s.do(enactAction(inst))
@@ -1196,7 +1196,7 @@ func TestCard_AmbushTactics_LegalityNeedsUnits(t *testing.T) {
 		s := newScene(t)
 		var first *Asset
 		for i := 0; i < units; i++ {
-			a := s.put(1, ZoneMainTheater, unit(string(rune('A'+i)), 2+i, 30, Keywords{}))
+			a := s.put(1, ZoneMainTheater, unit(string(rune('A'+i)), 2+i, 30, ability.Keywords{}))
 			if first == nil {
 				first = a
 			}
@@ -1252,9 +1252,9 @@ func TestCard_AmbushTactics_ModeTimeoutTakesTheFirstTwoListed(t *testing.T) {
 func TestCard_AmbushTactics_TargetTimeoutsTakeFixedOrder(t *testing.T) {
 	// Covers: FR-MOD-001, SVY-R34, FR-TGT-002
 	s := newScene(t)
-	p := s.put(0, ZoneMainTheater, unit("P", 2, 30, Keywords{}))
-	q := s.put(1, ZoneMainTheater, unit("Q", 3, 30, Keywords{}))
-	r := s.put(1, ZoneMainTheater, unit("R", 4, 30, Keywords{}))
+	p := s.put(0, ZoneMainTheater, unit("P", 2, 30, ability.Keywords{}))
+	q := s.put(1, ZoneMainTheater, unit("Q", 3, 30, ability.Keywords{}))
+	r := s.put(1, ZoneMainTheater, unit("R", 4, 30, ability.Keywords{}))
 	inst := enactFor(s, "Ambush Tactics")
 	s.scriptModal(0, nil, nil, []Answer{modeAnswer(2, 3)}, timeoutPick, timeoutPick, timeoutPick)
 	s.do(enactAction(inst))
@@ -1269,7 +1269,7 @@ func TestCard_AmbushTactics_FaceDownScratchCompanyGoesBackAsItsCard(t *testing.T
 	// Covers: FR-ZON-005, FR-ZON-004
 	s := newScene(t)
 	sc := s.putScratch(0)
-	other := s.put(1, ZoneMainTheater, unit("Other", 2, 30, Keywords{}))
+	other := s.put(1, ZoneMainTheater, unit("Other", 2, 30, ability.Keywords{}))
 	inst := enactFor(s, "Ambush Tactics")
 	s.scriptModal(0, nil, nil, []Answer{modeAnswer(0, 3)}, pick(other), pick(sc))
 	s.do(enactAction(inst))
@@ -1378,9 +1378,9 @@ func pincerOffers(s *scene) (slot0, slot1 map[int]bool) {
 func TestCard_PincerTactics_DamagesTwoAlliesAndAnAsset(t *testing.T) {
 	// Covers: FR-MNV-001, FR-REP-004
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("B", 1, 5, Keywords{}))
-	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("B", 1, 5, ability.Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, ability.Keywords{}))
 	inst := enactFor(s, "Pincer Tactics")
 	pincerChoose(s, []*Asset{a, b}, c)
 	s.do(enactAction(inst))
@@ -1398,7 +1398,7 @@ func TestCard_PincerTactics_DamagesTwoAlliesAndAnAsset(t *testing.T) {
 func TestCard_PincerTactics_SameUnitTakesOneAndTwo(t *testing.T) {
 	// Covers: SVY-R35, FR-TGT-002, FR-TGT-003
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 6, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 6, ability.Keywords{}))
 	pincerChoose(s, []*Asset{a}, a)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
 	s.wantDamage(a, 3)
@@ -1411,7 +1411,7 @@ func TestCard_PincerTactics_SameUnitTakesOneAndTwo(t *testing.T) {
 func TestCard_PincerTactics_SameUnitDiesInTheSweepAfterBothSteps(t *testing.T) {
 	// Covers: SVY-R35, FR-TGT-003
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 3, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 3, ability.Keywords{}))
 	a.Damage = 2 // one health left
 	pincerChoose(s, []*Asset{a}, a)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
@@ -1424,9 +1424,9 @@ func TestCard_PincerTactics_SameUnitDiesInTheSweepAfterBothSteps(t *testing.T) {
 func TestCard_PincerTactics_UpToTwoMayBeNoneOrOne(t *testing.T) {
 	// Covers: FR-TGT-002, SVY-R11
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
-	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, ability.Keywords{}))
 	pincerChoose(s, []*Asset{}, c)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
 	s.wantDamage(a, 0)
@@ -1434,9 +1434,9 @@ func TestCard_PincerTactics_UpToTwoMayBeNoneOrOne(t *testing.T) {
 	s.wantDamage(c, 2)
 
 	s2 := newScene(t)
-	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	b2 := s2.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
-	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	b2 := s2.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
+	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, ability.Keywords{}))
 	pincerChoose(s2, []*Asset{a2}, c2)
 	s2.do(enactAction(enactFor(s2, "Pincer Tactics")))
 	s2.wantDamage(a2, 1)
@@ -1447,9 +1447,9 @@ func TestCard_PincerTactics_UpToTwoMayBeNoneOrOne(t *testing.T) {
 func TestCard_PincerTactics_AlliedUnitsAreDistinct(t *testing.T) {
 	// Covers: SVY-R11, FR-TGT-002
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
-	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
+	c := s.put(1, ZoneMainTheater, unit("C", 1, 5, ability.Keywords{}))
 	pincerChoose(s, []*Asset{a, a}, c)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
 	for _, d := range s.asked(0) {
@@ -1463,8 +1463,8 @@ func TestCard_PincerTactics_AlliedUnitsAreDistinct(t *testing.T) {
 	s.wantDamage(c, 2)
 
 	s2 := newScene(t)
-	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, Keywords{}))
+	a2 := s2.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	c2 := s2.put(1, ZoneMainTheater, unit("C", 1, 5, ability.Keywords{}))
 	pincerChoose(s2, []*Asset{a2}, c2)
 	s2.do(enactAction(enactFor(s2, "Pincer Tactics")))
 	s2.wantDamage(a2, 1)
@@ -1473,14 +1473,14 @@ func TestCard_PincerTactics_AlliedUnitsAreDistinct(t *testing.T) {
 func TestCard_PincerTactics_FirstSlotOffersAlliedUnitsOnly(t *testing.T) {
 	// Covers: FR-TGT-001, FR-KWD-002h
 	s := newScene(t)
-	main := s.put(0, ZoneMainTheater, unit("Main", 1, 5, Keywords{}))
-	res := s.put(0, ZoneReserves, unit("Res", 1, 5, Keywords{}))
-	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	main := s.put(0, ZoneMainTheater, unit("Main", 1, 5, ability.Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Res", 1, 5, ability.Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	sc := s.putScratch(0)
-	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	foeSc := s.putScratch(1)
-	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
+	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, ability.Keywords{}))
 	pincerChoose(s, []*Asset{main}, foe)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
 	got, _ := pincerOffers(s)
@@ -1499,14 +1499,14 @@ func TestCard_PincerTactics_FirstSlotOffersAlliedUnitsOnly(t *testing.T) {
 func TestCard_PincerTactics_SecondSlotIsAnyNonScratchAsset(t *testing.T) {
 	// Covers: FR-TGT-001, FR-KWD-002h
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
-	allyRes := s.put(0, ZoneReserves, unit("AllyRes", 1, 5, Keywords{}))
-	allyWard := s.put(0, ZoneMainTheater, unit("AllyWard", 1, 5, Keywords{Ward: true}))
-	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
-	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 1, 5, Keywords{}))
-	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, Keywords{}))
-	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, Keywords{Ward: true}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
+	allyRes := s.put(0, ZoneReserves, unit("AllyRes", 1, 5, ability.Keywords{}))
+	allyWard := s.put(0, ZoneMainTheater, unit("AllyWard", 1, 5, ability.Keywords{Ward: true}))
+	wall := s.put(0, ZoneMainTheater, structure("AWall", 0, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
+	foeRes := s.put(1, ZoneReserves, unit("FoeRes", 1, 5, ability.Keywords{}))
+	foeWall := s.put(1, ZoneMainTheater, structure("FWall", 0, 5, ability.Keywords{}))
+	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	sc := s.putScratch(0)
 	foeSc := s.putScratch(1)
 	pincerChoose(s, []*Asset{ally}, foe)
@@ -1527,7 +1527,7 @@ func TestCard_PincerTactics_SecondSlotIsAnyNonScratchAsset(t *testing.T) {
 func TestCard_PincerTactics_EnactableWithNoUnits(t *testing.T) {
 	// Covers: SVY-R29, FR-MNV-001
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, structure("AWall", 0, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, structure("AWall", 0, 5, ability.Keywords{}))
 	inst := enactFor(s, "Pincer Tactics")
 	if !offersEnact(s.g, inst) {
 		t.Fatalf("an up-to slot never stops an Enact, and a Headquarters is a legal non-Scratch asset (SVY-R29)")
@@ -1544,7 +1544,7 @@ func TestCard_PincerTactics_EnactableWithNoUnits(t *testing.T) {
 func TestCard_PincerTactics_ArmorAbsorbsTheDamage(t *testing.T) {
 	// Covers: FR-REP-004
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{Armor: 1}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{Armor: 1}))
 	foeHQ := s.g.Players[1].HQ
 	pincerChoose(s, []*Asset{a}, foeHQ)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
@@ -1570,8 +1570,8 @@ func TestCard_PincerTactics_DamageTriggersUnbowed(t *testing.T) {
 func TestCard_PincerTactics_TargetTimeoutsTakeFixedOrder(t *testing.T) {
 	// Covers: FR-MOD-001, SVY-R16
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	b := s.put(1, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 	pincerChoose(s, nil, nil)
 	s.do(enactAction(enactFor(s, "Pincer Tactics")))
 	s.wantDamage(a, 0)

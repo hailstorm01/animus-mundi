@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"reflect"
 	"testing"
 )
@@ -45,7 +46,7 @@ func TestCard_SinuousGrowth_ReturnsTheChosenCard(t *testing.T) {
 
 func TestCard_SinuousGrowth_ListsFungusOrPlantCardsOfAnyType(t *testing.T) {
 	s, a := sgScene(t)
-	other := unit("Other Subtype", 1, 1, Keywords{})
+	other := unit("Other Subtype", 1, 1, ability.Keywords{})
 	other.Subtypes = []string{"Mutant"}
 	piles := s.inDiscard(0,
 		s.card("Animoceps Shambler"),
@@ -68,7 +69,7 @@ func TestCard_SinuousGrowth_ListsFungusOrPlantCardsOfAnyType(t *testing.T) {
 
 func TestCard_SinuousGrowth_OwnCardCannotBeChosen(t *testing.T) {
 	// Covers: SVY-R2, SVY-R36
-	other := unit("Other Subtype", 1, 1, Keywords{})
+	other := unit("Other Subtype", 1, 1, ability.Keywords{})
 	other.Subtypes = []string{"Mutant"}
 	t.Run("empty pile", func(t *testing.T) {
 		s, a := sgScene(t)

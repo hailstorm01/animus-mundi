@@ -2,7 +2,11 @@
 
 package engine
 
-import "slices"
+import (
+	"slices"
+
+	"animus-mundi/pkg/engine/ability"
+)
 
 // CardSnap is a card instance in a hidden or off-battlefield zone.
 type CardSnap struct {
@@ -13,20 +17,20 @@ type CardSnap struct {
 // AssetSnap is a battlefield asset. Card is always the real card name, even
 // when the asset is face-down; Power, MaxHealth and Keywords are effective.
 type AssetSnap struct {
-	ID         int      `json:"id"`
-	Inst       int      `json:"inst"`
-	Card       string   `json:"card"`
-	Owner      int      `json:"owner"`
-	Controller int      `json:"controller"`
-	Zone       string   `json:"zone"`
-	Exhausted  bool     `json:"exhausted"`
-	FaceDown   bool     `json:"faceDown"`
-	Damage     int      `json:"damage"`
-	Armor      int      `json:"armor"`
-	TempPower  int      `json:"tempPower"`
-	Power      int      `json:"power"`
-	MaxHealth  int      `json:"maxHealth"`
-	Keywords   Keywords `json:"keywords"`
+	ID         int              `json:"id"`
+	Inst       int              `json:"inst"`
+	Card       string           `json:"card"`
+	Owner      int              `json:"owner"`
+	Controller int              `json:"controller"`
+	Zone       string           `json:"zone"`
+	Exhausted  bool             `json:"exhausted"`
+	FaceDown   bool             `json:"faceDown"`
+	Damage     int              `json:"damage"`
+	Armor      int              `json:"armor"`
+	TempPower  int              `json:"tempPower"`
+	Power      int              `json:"power"`
+	MaxHealth  int              `json:"maxHealth"`
+	Keywords   ability.Keywords `json:"keywords"`
 }
 
 // PlayerSnap is one seat in a Snapshot.

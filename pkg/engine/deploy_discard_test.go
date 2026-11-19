@@ -28,7 +28,7 @@ func ddPermission() ability.Static {
 // ddUnit is a Reserves-only Unit costing req Requisition and tac Tactics that
 // prints only the discard deploy permission.
 func ddUnit(name string, req, tac int) *Card {
-	c := unit(name, 1, 1, Keywords{})
+	c := unit(name, 1, 1, ability.Keywords{})
 	c.ReqCost, c.TacCost = req, tac
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Statics: []ability.Static{ddPermission()}}
@@ -62,7 +62,7 @@ func TestFR_TRN_003_DiscardDeployPaysItsKillCostAfterThePush(t *testing.T) {
 			Steps:   []ability.Step{drawN(1)},
 		},
 	}))
-	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 1, 5, Keywords{}))
+	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, ddUnit("Phoenix", 2, 1))[0]
 	p := s.g.Players[0]
 	s.setPool(0, 2, 1)
@@ -152,10 +152,10 @@ func TestFR_TRN_003a_DiscardDeployReplacedKillStaysPaid(t *testing.T) {
 
 func TestFR_TRN_003_DiscardDeployNeedsThePermission(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.setPool(0, 5, 5)
 	p := s.g.Players[0]
-	plain := unit("Plain", 1, 1, Keywords{})
+	plain := unit("Plain", 1, 1, ability.Keywords{})
 	plain.DeployZones = []Zone{ZoneReserves}
 	wrong := ddUnit("WrongZone", 1, 1)
 	wrong.Ability.Statics[0].ActiveZone = ability.ZoneReserves
@@ -176,7 +176,7 @@ func TestFR_TRN_003_DiscardDeployNeedsThePermission(t *testing.T) {
 
 func TestFR_TRN_003_DiscardDeployOnlyFromYourOwnPile(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.setPool(0, 5, 5)
 	inst := s.inDiscard(1, ddUnit("Phoenix", 1, 1))[0]
 	if n := ddOffers(s.g, inst); n != 0 {
@@ -191,7 +191,7 @@ func TestFR_TRN_003_DiscardDeployOnlyFromYourOwnPile(t *testing.T) {
 func TestFR_TRN_003_DiscardDeployNeedsAnEmptyStack(t *testing.T) {
 	// Covers: FR-QUE-001
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.setPool(0, 5, 5)
 	inst := s.inDiscard(0, ddUnit("Phoenix", 1, 1))[0]
 	if n := ddOffers(s.g, inst); n != 1 {
@@ -220,7 +220,7 @@ func TestFR_TRN_003a_DiscardDeployCostsMustBePayable(t *testing.T) {
 	if !inDiscard(p, inst) || p.Req != 5 || p.Tac != 5 {
 		t.Errorf("a rejected Deploy changes nothing: in discard %v, pool R%d T%d, want true, R5 T5 (SVY-R29)", inDiscard(p, inst), p.Req, p.Tac)
 	}
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.setPool(0, 1, 0)
 	if n := ddOffers(s.g, inst); n != 0 {
 		t.Errorf("one Requisition short of R2, the discard deploy is not offered: %d (FR-TRN-003)", n)
@@ -240,9 +240,9 @@ func TestFR_CST_001_HandReductionDoesNotApplyInThePile(t *testing.T) {
 	c.Ability.CostReduction = ability.CostReduction{Req: 1, Per: ability.Filter{
 		Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard}}
 	s := newScene(t)
-	s.inDiscard(0, unit("Fodder A", 1, 1, Keywords{}), unit("Fodder B", 1, 1, Keywords{}))
+	s.inDiscard(0, unit("Fodder A", 1, 1, ability.Keywords{}), unit("Fodder B", 1, 1, ability.Keywords{}))
 	inst := s.inDiscard(0, c)[0]
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	p := s.g.Players[0]
 	if req, tac := s.g.EffectiveCost(inst); req != 2 || tac != 1 {
 		t.Errorf("a hand-active reduction does not apply in the discard pile: effective cost R%d T%d, want R2 T1 (FR-CST-001)", req, tac)
@@ -262,7 +262,7 @@ func TestFR_CST_001_HandReductionDoesNotApplyInThePile(t *testing.T) {
 
 func TestFR_TRN_003_HandDeployIgnoresThePermission(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	inst := s.give(0, ddUnit("Phoenix", 2, 1))
 	s.setPool(0, 2, 1)
 	s.script(0) // any decision asked is an error
@@ -287,7 +287,7 @@ func TestFR_TRN_003_HandDeployIgnoresThePermission(t *testing.T) {
 
 func TestFR_TRN_003_DiscardDeployOfferedForEachZone(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.setPool(0, 5, 5)
 	c := ddUnit("Phoenix", 1, 1)
 	c.DeployZones = []Zone{ZoneReserves, ZoneMainTheater}
@@ -310,7 +310,7 @@ func TestFR_TRN_003_DiscardDeployOfferedForEachZone(t *testing.T) {
 
 func TestFR_TRN_003_DeployFromAnotherZoneIsIllegal(t *testing.T) {
 	s := newScene(t)
-	inst := s.give(0, unit("Plain", 1, 1, Keywords{}))
+	inst := s.give(0, unit("Plain", 1, 1, ability.Keywords{}))
 	s.setPool(0, 5, 5)
 	s.reject(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves, From: ZoneMainTheater})
 	if !inHand(s.g.Players[0], inst) {
@@ -321,8 +321,8 @@ func TestFR_TRN_003_DeployFromAnotherZoneIsIllegal(t *testing.T) {
 func TestFR_CST_001_FreeDeployWaivesThePermissionCost(t *testing.T) {
 	// Covers: FR-TRN-003a
 	s := newScene(t)
-	a1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, Keywords{}))
-	a2 := s.put(0, ZoneMainTheater, unit("Ally Two", 1, 5, Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, ability.Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Ally Two", 1, 5, ability.Keywords{}))
 	inst := s.inDiscard(0, ddUnit("Phoenix", 2, 1))[0]
 	man := s.give(0, dfManeuver(0, 0, ability.ZoneAny))
 	s.setPool(0, 3, 3)

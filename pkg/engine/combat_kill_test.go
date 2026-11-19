@@ -28,8 +28,8 @@ func combatKillTrigger(steps ...ability.Step) ability.Trigger {
 
 func TestFR_CBT_002_CombatKillTriggerFiresWhenTheAttackerKillsTheDefender(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, Keywords{}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, ability.Keywords{}, combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the defender is destroyed by the combat damage")
@@ -40,8 +40,8 @@ func TestFR_CBT_002_CombatKillTriggerFiresWhenTheAttackerKillsTheDefender(t *tes
 
 func TestFR_CBT_002_CombatKillTriggerFiresWhenTheDefenderIsAStructure(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Wrecker", 3, 9, Keywords{}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 3, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Wrecker", 3, 9, ability.Keywords{}, combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 3, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the structure is destroyed by the combat damage")
@@ -53,7 +53,7 @@ func TestFR_CBT_002_CombatKillTriggerFiresFromAHeadquartersAttacker(t *testing.T
 	s := newScene(t)
 	p := s.g.Players[0]
 	p.HQ.Inst.Card.Ability = &ability.Def{Triggers: []ability.Trigger{combatKillTrigger(scratchN(1))}}
-	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, ability.Keywords{}))
 	s.do(s.attack(p.HQ, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the Headquarters' combat damage (3) destroys the unit")
@@ -63,8 +63,8 @@ func TestFR_CBT_002_CombatKillTriggerFiresFromAHeadquartersAttacker(t *testing.T
 
 func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheDefenderSurvives(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 2, 9, Keywords{}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 2, 9, ability.Keywords{}, combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if !s.alive(def) {
 		t.Fatalf("precondition: the defender survives the combat damage")
@@ -75,8 +75,8 @@ func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheDefenderSurvives(t *testi
 func TestFR_CBT_002_CombatKillTriggerDoesNotFireForTheDefender(t *testing.T) {
 	// The defender's retaliation destroys the attacker, and the defender survives.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Rash Attacker", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, striker("Avenger", 5, 9, Keywords{}, combatKillTrigger(scratchN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Rash Attacker", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, striker("Avenger", 5, 9, ability.Keywords{}, combatKillTrigger(scratchN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(att) || !s.alive(def) {
 		t.Fatalf("precondition: retaliation destroys the attacker and the defender survives (attacker alive=%v, defender alive=%v)", s.alive(att), s.alive(def))
@@ -90,8 +90,8 @@ func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheAttackFizzles(t *testing.
 	// then fizzles and deals no combat damage.
 	s := newScene(t)
 	opposing := allDamage(99, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit})
-	att := s.put(0, ZoneMainTheater, striker("Sniper", 3, 9, Keywords{}, attackTrigger(opposing), combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Sniper", 3, 9, ability.Keywords{}, attackTrigger(opposing), combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 0, 3, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(def) {
 		t.Fatalf("precondition: the defender is destroyed by the attack trigger before the Attack resolves")
@@ -107,7 +107,7 @@ func TestFR_TRG_003_CombatKillTriggerAndTheDefendersDeathTriggerAreAPNAP(t *test
 	s := newScene(t)
 	s.g.Players[0].Deck = nil
 	s.g.Players[1].Deck = nil
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, Keywords{}, combatKillTrigger(drawN(1))))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, ability.Keywords{}, combatKillTrigger(drawN(1))))
 	def := s.put(1, ZoneMainTheater, mortal("Victim", 0, 3, killedTrigger(drawN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(def) {

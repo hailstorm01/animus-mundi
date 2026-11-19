@@ -36,7 +36,7 @@ func discardCostScene(t *testing.T, upTo, n int) (*scene, *Instance, []*Instance
 	inst := s.give(0, discardCostManeuver("Steel Rain", 1, 1, upTo, steps(hqPing())))
 	var others []*Instance
 	for i := 0; i < n; i++ {
-		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, Keywords{})))
+		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, ability.Keywords{})))
 	}
 	p := s.g.Players[0]
 	p.Req, p.Tac = 1, 1

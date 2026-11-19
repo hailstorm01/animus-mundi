@@ -53,8 +53,8 @@ func TestProgress_Case2_Preferences(t *testing.T) {
 		// An affordable card and a readied asset: Deploy.
 		s := newScene(t)
 		s.g.Players[0].Hand = nil
-		s.give(0, unit("Free", 1, 1, engine.Keywords{}))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.give(0, unit("Free", 1, 1, ability.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		if got := ProgressPolicy(seed)(s.g, s.g.LegalActions()); got.Kind != engine.ActDeploy {
 			t.Errorf("seed %d: affordable card in hand, got %s, want Deploy", seed, got.Kind)
 		}
@@ -62,11 +62,11 @@ func TestProgress_Case2_Preferences(t *testing.T) {
 		// Nothing affordable, a 2R card in hand, pool 0: Generate Requisition.
 		s = newScene(t)
 		s.g.Players[0].Hand = nil
-		costly := unit("Costly", 1, 1, engine.Keywords{})
+		costly := unit("Costly", 1, 1, ability.Keywords{})
 		costly.ReqCost = 2
 		s.give(0, costly)
 		s.g.Players[0].Req, s.g.Players[0].Tac = 0, 0
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
 		if got.Kind != engine.ActGenerate || got.Resource != engine.Requisition {
 			t.Errorf("seed %d: short on engine.Requisition, got %+v, want Generate Requisition", seed, got)
@@ -100,7 +100,7 @@ func TestProgress_Case6_EnactsManeuvers(t *testing.T) {
 		s := newScene(t)
 		s.g.Players[0].Hand = nil
 		m := s.give(0, drawManeuver("Study", 0, 0))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		if seed <= 8 {
 			got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
 			if got.Kind != engine.ActEnact || got.Card != m.ID {
@@ -111,9 +111,9 @@ func TestProgress_Case6_EnactsManeuvers(t *testing.T) {
 		// Case 2: a unit and a Maneuver: both kinds are offered, nothing else.
 		s = newScene(t)
 		s.g.Players[0].Hand = nil
-		s.give(0, unit("Free", 1, 1, engine.Keywords{}))
+		s.give(0, unit("Free", 1, 1, ability.Keywords{}))
 		s.give(0, drawManeuver("Study", 0, 0))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
 		switch got.Kind {
 		case engine.ActDeploy:
@@ -131,7 +131,7 @@ func TestProgress_Case6_EnactsManeuvers(t *testing.T) {
 			s.g.Players[0].Hand = nil
 			s.give(0, drawManeuver("Costly", 0, 2))
 			s.g.Players[0].Req, s.g.Players[0].Tac = 0, 0
-			worker := unit("Worker", 1, 1, engine.Keywords{})
+			worker := unit("Worker", 1, 1, ability.Keywords{})
 			worker.TacYield = 1
 			s.put(0, engine.ZoneReserves, worker)
 			got = ProgressPolicy(seed)(s.g, s.g.LegalActions())
@@ -250,7 +250,7 @@ func TestProgress_Case5_TerminatesAndHolds(t *testing.T) {
 
 func TestProgress_ActivationIsAnAct(t *testing.T) {
 	activator := func() *engine.Card {
-		c := unit("Engine", 1, 3, engine.Keywords{})
+		c := unit("Engine", 1, 3, ability.Keywords{})
 		c.Ability = &ability.Def{Activated: []ability.Activated{{
 			Costs:  []ability.Cost{{Kind: ability.CostResources, Req: 1}},
 			Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpDraw, Amount: ability.Value{N: 1}}}},
@@ -262,7 +262,7 @@ func TestProgress_ActivationIsAnAct(t *testing.T) {
 		s.g.Players[0].Hand = nil
 		s.put(0, engine.ZoneReserves, activator())
 		if withHand {
-			s.give(0, unit("Free", 0, 1, engine.Keywords{}))
+			s.give(0, unit("Free", 0, 1, ability.Keywords{}))
 		}
 		for _, a := range s.g.Assets() {
 			a.Exhausted = true
@@ -298,7 +298,7 @@ func TestProgress_ActivationIsAnAct(t *testing.T) {
 
 // costlyUnit is a vanilla unit costing req Requisition.
 func costlyUnit(req int) *engine.Card {
-	c := unit("Costly", 1, 1, engine.Keywords{})
+	c := unit("Costly", 1, 1, ability.Keywords{})
 	c.ReqCost = req
 	return c
 }
@@ -315,7 +315,7 @@ func emptyPool(s *scene, keepHQ bool) {
 
 // activator is a unit with the activated ability "req R, tac T, exhaust: draw 1".
 func activator(req, tac int) *engine.Card {
-	c := unit("Engine", 1, 3, engine.Keywords{})
+	c := unit("Engine", 1, 3, ability.Keywords{})
 	c.Ability = &ability.Def{Activated: []ability.Activated{{
 		Costs: []ability.Cost{
 			{Kind: ability.CostResources, Req: req, Tac: tac},
@@ -335,8 +335,8 @@ func TestProgress_UnreachableCardTapsNothing(t *testing.T) {
 		s := newScene(t)
 		emptyPool(s, true)
 		s.give(0, costlyUnit(3))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
-		s.put(0, engine.ZoneMainTheater, unit("Fighter", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
+		s.put(0, engine.ZoneMainTheater, unit("Fighter", 1, 1, ability.Keywords{}))
 		// The Fighter yields Tactics only in the Main Theater, so it adds no reach.
 		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
 		switch got.Kind {
@@ -361,7 +361,7 @@ func TestProgress_ReachRespectsTheZoneLimit(t *testing.T) {
 		emptyPool(s, false)
 		s.give(0, drawManeuver("Costly", 1, 2))
 		for range 2 {
-			worker := unit("Worker", 1, 1, engine.Keywords{})
+			worker := unit("Worker", 1, 1, ability.Keywords{})
 			worker.TacYield = 2
 			s.put(0, engine.ZoneReserves, worker)
 		}
@@ -378,8 +378,8 @@ func TestProgress_ReachCountsConversion(t *testing.T) {
 		s := newScene(t)
 		emptyPool(s, false)
 		s.give(0, drawManeuver("Study", 0, 1))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		policy := ProgressPolicy(seed)
 		for _, want := range []engine.ActionKind{engine.ActGenerate, engine.ActGenerate, engine.ActConvert, engine.ActEnact} {
 			got := policy(s.g, s.g.LegalActions())
@@ -400,10 +400,10 @@ func TestProgress_NoTapBreaksReach(t *testing.T) {
 	for seed := uint64(1); seed <= 32; seed++ {
 		s := newScene(t)
 		emptyPool(s, true)
-		c := unit("Costly", 1, 1, engine.Keywords{})
+		c := unit("Costly", 1, 1, ability.Keywords{})
 		c.ReqCost, c.TacCost = 1, 1
 		s.give(0, c)
-		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{}))
+		s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 		got := ProgressPolicy(seed)(s.g, s.g.LegalActions())
 		if got.Kind != engine.ActGenerate {
 			t.Errorf("seed %d: 1R 1T is reachable, got %s, want Generate", seed, got.Kind)
@@ -493,7 +493,7 @@ func TestProgress_SavingHoldsMarchesOutOfReserves(t *testing.T) {
 		}
 		return n
 	}
-	worker := func(s *scene) { s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, engine.Keywords{})) }
+	worker := func(s *scene) { s.put(0, engine.ZoneReserves, unit("Worker", 1, 1, ability.Keywords{})) }
 
 	if n := marches(func(s *scene) { s.give(0, costlyUnit(9)); worker(s) }); n == 0 || n > 32 {
 		t.Errorf("saving: %d of 64 marches, want some and at most half", n)
@@ -503,7 +503,7 @@ func TestProgress_SavingHoldsMarchesOutOfReserves(t *testing.T) {
 	}
 	noYield := func(s *scene) {
 		s.give(0, costlyUnit(9))
-		w := unit("Worker", 1, 1, engine.Keywords{})
+		w := unit("Worker", 1, 1, ability.Keywords{})
 		w.ReqYield = 0
 		s.put(0, engine.ZoneReserves, w)
 	}

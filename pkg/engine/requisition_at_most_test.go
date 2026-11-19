@@ -25,7 +25,7 @@ func raMax3(f ability.Filter) ability.Filter {
 
 // raUnit is a synthetic unit with the given Requisition cost and power.
 func raUnit(name string, cost, power int) *Card {
-	c := unit(name, power, 5, Keywords{})
+	c := unit(name, power, 5, ability.Keywords{})
 	c.ReqCost = cost
 	return c
 }
@@ -36,7 +36,7 @@ func TestFR_TGT_001_RequisitionAtMostOffersPileCardsByPrintedCost(t *testing.T) 
 	// Power is varied against cost: the cost-4 card has power 1 and the
 	// cost-2 card power 5, so reading power instead of cost fails.
 	mine := s.inDiscard(0, raUnit("C2", 2, 5), raUnit("C3", 3, 3),
-		raUnit("C4", 4, 1), structure("Wall", 0, 3, Keywords{}))
+		raUnit("C4", 4, 1), structure("Wall", 0, 3, ability.Keywords{}))
 	s.inDiscard(1, raUnit("Theirs1", 1, 1))
 	pile := ability.Target{Filter: raMax3(ppAllyUnitCards)}
 	s.script(0, Answer{Picks: []int{0}})
@@ -52,7 +52,7 @@ func TestFR_TGT_001_RequisitionAtMostPilePickReadsPrintedCost(t *testing.T) {
 	// Covers: SVY-R3, FR-ZON-004
 	s := newScene(t)
 	mine := s.inDiscard(0, raUnit("C2", 2, 5), raUnit("C3", 3, 3),
-		raUnit("C4", 4, 1), structure("Wall", 0, 3, Keywords{}))
+		raUnit("C4", 4, 1), structure("Wall", 0, 3, ability.Keywords{}))
 	s.inDiscard(1, raUnit("Theirs1", 1, 1))
 	s.ppScript(Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, raMax3(ppAllyUnitCards), 0)))

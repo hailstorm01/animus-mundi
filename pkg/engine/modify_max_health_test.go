@@ -46,7 +46,7 @@ func mhEventsNaming(s *scene, from int, kind string, a *Asset) int {
 
 func TestFR_LAY_002_ModifyStepLowersMaxHealth(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	from := len(s.g.Log)
 	enactOn(s, ability.AllegianceOpposing, mhStep(-3, ability.UntilEndOfTurn))
 	mhWant(t, s, foe, 2, 2, 0, "after -3 Maximum Health")
@@ -58,7 +58,7 @@ func TestFR_LAY_002_ModifyStepLowersMaxHealth(t *testing.T) {
 
 func TestFR_LAY_002_ModifyStepRaisesMaxHealth(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 	ally.Damage = 2
 	enactOn(s, ability.AllegianceAllied, mhStep(2, ability.UntilEndOfTurn))
 	mhWant(t, s, ally, 5, 3, 2, "after +2 Maximum Health on a unit with 2 damage")
@@ -67,7 +67,7 @@ func TestFR_LAY_002_ModifyStepRaisesMaxHealth(t *testing.T) {
 func TestFR_LAY_002_ModifyStepToZeroMaxHealthDestroysAtTheSweep(t *testing.T) {
 	// Covers: FR-LAY-002 Current Health & Lethal Destruction
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 	from := len(s.g.Log)
 	enactOn(s, ability.AllegianceOpposing, mhStep(-3, ability.UntilEndOfTurn))
 	if s.alive(foe) {
@@ -81,7 +81,7 @@ func TestFR_LAY_002_ModifyStepToZeroMaxHealthDestroysAtTheSweep(t *testing.T) {
 	}
 
 	s2 := newScene(t)
-	tough := s2.put(1, ZoneMainTheater, unit("Tough", 1, 4, Keywords{}))
+	tough := s2.put(1, ZoneMainTheater, unit("Tough", 1, 4, ability.Keywords{}))
 	enactOn(s2, ability.AllegianceOpposing, mhStep(-3, ability.UntilEndOfTurn))
 	if !s2.alive(tough) {
 		t.Fatalf("a Health 4 unit given -3 Maximum Health survives (Current Health 1, FR-LAY-002)")
@@ -92,7 +92,7 @@ func TestFR_LAY_002_ModifyStepToZeroMaxHealthDestroysAtTheSweep(t *testing.T) {
 func TestFR_LAY_002_ModifyStepMaxHealthExpiresAndRestores(t *testing.T) {
 	// Covers: FR-LAY-003
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	ally.Damage = 2
 	enactOn(s, ability.AllegianceAllied, mhStep(-2, ability.UntilEndOfTurn))
 	if !s.alive(ally) {
@@ -108,7 +108,7 @@ func TestFR_LAY_002_ModifyStepMaxHealthExpiresAndRestores(t *testing.T) {
 
 func TestFR_LAY_003_ModifyStepMaxHealthUntilEndOfOpponentTurn(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 	enactOn(s, ability.AllegianceAllied, mhStep(2, ability.UntilEndOfOpponentTurn))
 	mhWant(t, s, ally, 5, 5, 0, "right after resolution")
 	s.endTurn()
@@ -120,7 +120,7 @@ func TestFR_LAY_003_ModifyStepMaxHealthUntilEndOfOpponentTurn(t *testing.T) {
 	mhWant(t, s, ally, 3, 3, 0, "after the opponent's turn ended (FR-LAY-003)")
 
 	s2 := newScene(t)
-	a2 := s2.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	a2 := s2.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 	enactOn(s2, ability.AllegianceAllied, mhStep(2, ability.UntilEndOfTurn))
 	mhWant(t, s2, a2, 5, 5, 0, "zero Until, right after resolution")
 	s2.endTurn()
@@ -176,7 +176,7 @@ func TestEffectEvents_MaxHealthFaceDownAssetStaysHidden(t *testing.T) {
 
 func TestFR_LAY_001_ModifyStepStatPowerIsPower(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 4, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 4, ability.Keywords{}))
 	step := powerFor(2, ability.UntilEndOfTurn)
 	step.Stat = ability.StatPower
 	from := len(s.g.Log)
@@ -204,12 +204,12 @@ func mhMax3(f ability.Filter) ability.Filter {
 func TestFR_TGT_001_MaxHealthAtMostReadsEffectiveMaxHealthOnTheBattlefield(t *testing.T) {
 	// Covers: FR-LAY-002
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
-	lowered := s.put(1, ZoneMainTheater, unit("Lowered", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Plain", 1, 5, ability.Keywords{}))
+	lowered := s.put(1, ZoneMainTheater, unit("Lowered", 1, 5, ability.Keywords{}))
 	lowered.Modifiers = []Modifier{{Layer: 5, MaxHealth: -2}} // effective 3
-	hurt3 := s.put(1, ZoneMainTheater, unit("Hurt3", 1, 3, Keywords{}))
+	hurt3 := s.put(1, ZoneMainTheater, unit("Hurt3", 1, 3, ability.Keywords{}))
 	hurt3.Damage = 2 // Maximum Health 3, Current Health 1
-	hurt4 := s.put(1, ZoneMainTheater, unit("Hurt4", 1, 4, Keywords{}))
+	hurt4 := s.put(1, ZoneMainTheater, unit("Hurt4", 1, 4, ability.Keywords{}))
 	hurt4.Damage = 3 // Maximum Health 4, Current Health 1
 	slot := ability.Target{Filter: mhMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})}
 	s.script(0, Answer{Picks: []int{0}})
@@ -224,7 +224,7 @@ func TestFR_TGT_001_MaxHealthAtMostReadsEffectiveMaxHealthOnTheBattlefield(t *te
 func TestFR_TGT_001_MaxHealthAtMostOffersPileCardsByPrintedHealth(t *testing.T) {
 	// Covers: FR-LAY-001, FR-ZON-004
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("H2", 1, 2, Keywords{}), unit("H3", 1, 3, Keywords{}), unit("H4", 1, 4, Keywords{}))
+	mine := s.inDiscard(0, unit("H2", 1, 2, ability.Keywords{}), unit("H3", 1, 3, ability.Keywords{}), unit("H4", 1, 4, ability.Keywords{}))
 	pile := ability.Target{Filter: mhMax3(ppAllyUnitCards)}
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{pile}, ptStep(ability.OpReturnToHand, 0)))

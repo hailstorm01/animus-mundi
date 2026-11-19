@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -26,13 +27,13 @@ func snapOf(t *testing.T, s Snapshot, id int) AssetSnap {
 // an asset with no keywords reports none.
 func TestEffectiveKeywords_Case1_FaceUp(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Att", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Tough Wall", 2, 9, Keywords{Resistant: 1, Stalwart: true}))
+	att := s.put(0, ZoneMainTheater, unit("Att", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Tough Wall", 2, 9, ability.Keywords{Resistant: 1, Stalwart: true}))
 	snap := s.g.Snapshot()
-	if got, want := snapOf(t, snap, def.ID).Keywords, (Keywords{Resistant: 1, Stalwart: true}); got != want {
+	if got, want := snapOf(t, snap, def.ID).Keywords, (ability.Keywords{Resistant: 1, Stalwart: true}); got != want {
 		t.Errorf("defender's snapshot keywords = %+v, want %+v", got, want)
 	}
-	if got := snapOf(t, snap, att.ID).Keywords; got != (Keywords{}) {
+	if got := snapOf(t, snap, att.ID).Keywords; got != (ability.Keywords{}) {
 		t.Errorf("attacker's snapshot keywords = %+v, want none", got)
 	}
 	s.do(s.attack(att, def))
@@ -53,8 +54,8 @@ func TestEffectiveKeywords_Case1_FaceUp(t *testing.T) {
 // snapshot saw them.
 func TestEffectiveKeywords_Case2_FaceDownDiffersFromTheCard(t *testing.T) {
 	s := newScene(t)
-	src := s.put(0, ZoneMainTheater, unit("Src", 1, 9, Keywords{}))
-	wall := s.put(1, ZoneMainTheater, unit("Tough Wall", 2, 9, Keywords{Resistant: 1, Stalwart: true}))
+	src := s.put(0, ZoneMainTheater, unit("Src", 1, 9, ability.Keywords{}))
+	wall := s.put(1, ZoneMainTheater, unit("Tough Wall", 2, 9, ability.Keywords{Resistant: 1, Stalwart: true}))
 	if got := snapOf(t, s.g.Snapshot(), wall.ID).Keywords.Resistant; got != 1 {
 		t.Fatalf("face-up snapshot Resistant = %d, want 1", got)
 	}
@@ -80,8 +81,8 @@ func TestEffectiveKeywords_Case2_FaceDownDiffersFromTheCard(t *testing.T) {
 // written, and a target with neither keyword writes neither field.
 func TestEffectiveKeywords_Case3_JSON(t *testing.T) {
 	s := newScene(t)
-	src := s.put(0, ZoneMainTheater, unit("Src", 1, 9, Keywords{}))
-	frail := s.put(1, ZoneMainTheater, unit("Frail", 1, 9, Keywords{Resistant: -1, Stalwart: true}))
+	src := s.put(0, ZoneMainTheater, unit("Src", 1, 9, ability.Keywords{}))
+	frail := s.put(1, ZoneMainTheater, unit("Frail", 1, 9, ability.Keywords{Resistant: -1, Stalwart: true}))
 	s.g.dealDamage(src, frail, 1, false)
 	s.g.dealDamage(frail, src, 1, false)
 	dmg := damageEvents(s.g.Log)
@@ -117,7 +118,7 @@ func TestEffectiveKeywords_Case3_JSON(t *testing.T) {
 	if err := json.Unmarshal(snap, &back); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := snapOf(t, back, frail.ID).Keywords, (Keywords{Resistant: -1, Stalwart: true}); got != want {
+	if got, want := snapOf(t, back, frail.ID).Keywords, (ability.Keywords{Resistant: -1, Stalwart: true}); got != want {
 		t.Errorf("snapshot keywords after a round trip = %+v, want %+v", got, want)
 	}
 }

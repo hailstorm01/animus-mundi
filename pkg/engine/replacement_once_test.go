@@ -27,7 +27,7 @@ func damageInsteadReplacement() ability.Replacement {
 
 // damageInsteadStructure has enough Health to take every point the tests deal it.
 func damageInsteadStructure() *Card {
-	c := structure("Damage Instead", 1, 10, Keywords{})
+	c := structure("Damage Instead", 1, 10, ability.Keywords{})
 	c.Ability = &ability.Def{Replacements: []ability.Replacement{damageInsteadReplacement()}}
 	return c
 }
@@ -42,7 +42,7 @@ func wantInvariants(t *testing.T, s *scene) {
 func TestFR_REP_003_ReplacementAppliesOncePerSweep(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, damageInsteadStructure())
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.sweep(0, alliedUnits)
 	wantReplaced(t, s, u)
 	if s.alive(u) || !inDiscard(s.g.Players[0], u.Inst) {
@@ -58,7 +58,7 @@ func TestFR_REP_003_NextPassAppliesAnotherReplacement(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, damageInsteadStructure())
 	b := s.put(0, ZoneMainTheater, damageInsteadStructure())
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1}})
 	s.sweep(0, alliedUnits)
 	asks := replacementAsks(s, 0)
@@ -80,7 +80,7 @@ func TestFR_REP_003_NextPassAppliesAnotherReplacement(t *testing.T) {
 
 func TestFR_REP_003_ReplacementThatHealsSaves(t *testing.T) {
 	s := newScene(t)
-	src := structure("Healing Guardian", 1, 10, Keywords{})
+	src := structure("Healing Guardian", 1, 10, ability.Keywords{})
 	src.Ability = &ability.Def{Replacements: []ability.Replacement{{
 		Event:  ability.WouldBeDestroyed,
 		Filter: alliedUnits,
@@ -89,7 +89,7 @@ func TestFR_REP_003_ReplacementThatHealsSaves(t *testing.T) {
 		},
 	}}}
 	s.put(0, ZoneMainTheater, src)
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.sweep(0, alliedUnits)
 	wantReplaced(t, s, u)
 	if !s.alive(u) {
@@ -108,7 +108,7 @@ func TestFR_REP_003_KillThenSweepAppliesAgain(t *testing.T) {
 	// once more at the sweep after the item, then the next pass destroys it.
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, damageInsteadStructure())
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.killer(0, allDamage(1, alliedUnits), killStep(alliedUnits))
 	wantReplaced(t, s, u, u)
 	if s.alive(u) || !inDiscard(s.g.Players[0], u.Inst) {
@@ -123,7 +123,7 @@ func TestFR_REP_003_ReplacementSavesFromAKill(t *testing.T) {
 	// the replacement, so it is saved.
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, damageInsteadStructure())
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 3, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 3, ability.Keywords{}))
 	s.killer(0, killStep(alliedUnits))
 	wantReplaced(t, s, u)
 	if !s.alive(u) {

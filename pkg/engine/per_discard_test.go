@@ -30,7 +30,7 @@ func perDiscardScene(t *testing.T, f ability.Filter, n int) (*scene, *Instance, 
 	inst := s.give(0, perDiscardManeuver(f))
 	var others []*Instance
 	for i := 0; i < n; i++ {
-		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, Keywords{})))
+		others = append(others, s.give(0, unit(string(rune('A'+i)), 1, 1, ability.Keywords{})))
 	}
 	return s, inst, others
 }
@@ -90,8 +90,8 @@ func TestFR_TGT_001_PerDiscardSlotChoosesOncePerDiscard(t *testing.T) {
 	// Covers: SVY-R3, SVY-R4
 	for _, n := range []int{0, 1, 3} {
 		s, inst, _ := perDiscardScene(t, ability.Filter{}, 3)
-		u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-		u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+		u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+		u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 		targets := make([]*Asset, n)
 		for i := range targets {
 			targets[i] = u1
@@ -126,8 +126,8 @@ func TestFR_TGT_001_PerDiscardSlotChoosesOncePerDiscard(t *testing.T) {
 func TestFR_TGT_001_PerDiscardSameAssetEachTime(t *testing.T) {
 	// Covers: SVY-R4, FR-REP-004
 	s, inst, _ := perDiscardScene(t, ability.Filter{}, 3)
-	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	pdScript(s, 3, false, u1, u1, u1)
 	s.do(enactAction(inst))
 	s.wantDamage(u1, 6)
@@ -141,8 +141,8 @@ func TestFR_TGT_001_PerDiscardSameAssetEachTime(t *testing.T) {
 func TestFR_TGT_001_PerDiscardSplitAcrossAssets(t *testing.T) {
 	// Covers: SVY-R4
 	s, inst, _ := perDiscardScene(t, ability.Filter{}, 3)
-	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 9, Keywords{}))
-	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 9, Keywords{}))
+	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 9, ability.Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 9, ability.Keywords{}))
 	pdScript(s, 3, false, a, b, a)
 	s.do(enactAction(inst))
 	s.wantDamage(a, 4)
@@ -156,8 +156,8 @@ func TestFR_TGT_001_PerDiscardSplitAcrossAssets(t *testing.T) {
 func TestFR_MOD_001_PerDiscardTimeoutConcentrates(t *testing.T) {
 	// Covers: SVY-R32
 	s, inst, _ := perDiscardScene(t, ability.Filter{}, 3)
-	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, Keywords{}))
-	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("Victim One", 1, 9, ability.Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	pdScript(s, 3, true)
 	s.do(enactAction(inst))
 	first := s.g.Players[0].HQ
@@ -171,9 +171,9 @@ func TestFR_MOD_001_PerDiscardTimeoutConcentrates(t *testing.T) {
 
 func TestFR_KWD_002h_PerDiscardSlotNeverOffersOpposingWard(t *testing.T) {
 	s, inst, _ := perDiscardScene(t, ability.Filter{Kinds: ability.KindUnit}, 2)
-	oppWard := s.put(1, ZoneMainTheater, unit("Warded Foe", 1, 9, Keywords{Ward: true}))
-	oppPlain := s.put(1, ZoneMainTheater, unit("Plain Foe", 1, 9, Keywords{}))
-	ownWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, Keywords{Ward: true}))
+	oppWard := s.put(1, ZoneMainTheater, unit("Warded Foe", 1, 9, ability.Keywords{Ward: true}))
+	oppPlain := s.put(1, ZoneMainTheater, unit("Plain Foe", 1, 9, ability.Keywords{}))
+	ownWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, ability.Keywords{Ward: true}))
 	pdScript(s, 2, false, oppPlain, ownWard)
 	s.do(enactAction(inst))
 	asks := s.asked(0)
@@ -217,8 +217,8 @@ func TestFR_MNV_001_PerDiscardSlotNeverBlocksEnact(t *testing.T) {
 func TestFR_TGT_001_PerDiscardSlotOnTriggerChoosesNothing(t *testing.T) {
 	// Covers: FR-TRN-003a (only an enacted card pays additional costs)
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Victim", 1, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim Two", 1, 9, ability.Keywords{}))
 	s.script(0)
 	trig := targetTrigger([]ability.Target{{PerDiscard: true}}, dmgTo(2, 0))
 	s.deployFromHand(0, trigUnit("Source", trig))

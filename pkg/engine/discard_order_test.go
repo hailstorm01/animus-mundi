@@ -70,11 +70,11 @@ func discardTargetScene(t *testing.T) (s *scene, inst *Instance, hand []*Instanc
 		Steps:   []ability.Step{dmgTo(1, 0)},
 	}))
 	hand = []*Instance{
-		s.give(0, unit("A", 1, 1, Keywords{})),
-		s.give(0, unit("B", 1, 1, Keywords{})),
+		s.give(0, unit("A", 1, 1, ability.Keywords{})),
+		s.give(0, unit("B", 1, 1, ability.Keywords{})),
 	}
-	u1 = s.put(1, ZoneMainTheater, unit("Victim One", 1, 5, Keywords{}))
-	u2 = s.put(1, ZoneMainTheater, unit("Victim Two", 1, 5, Keywords{}))
+	u1 = s.put(1, ZoneMainTheater, unit("Victim One", 1, 5, ability.Keywords{}))
+	u2 = s.put(1, ZoneMainTheater, unit("Victim Two", 1, 5, ability.Keywords{}))
 	return
 }
 
@@ -123,8 +123,8 @@ func TestFR_TGT_001_DiscardCostCardsNotTargetableInPile(t *testing.T) {
 		Targets: []ability.Target{pileSlot},
 		Steps:   []ability.Step{ptStep(ability.OpReturnToHand, 0)},
 	}))
-	piled := s.inDiscard(0, unit("C", 1, 1, Keywords{}), unit("D", 1, 1, Keywords{}))
-	hand := []*Instance{s.give(0, unit("A", 1, 1, Keywords{})), s.give(0, unit("B", 1, 1, Keywords{}))}
+	piled := s.inDiscard(0, unit("C", 1, 1, ability.Keywords{}), unit("D", 1, 1, ability.Keywords{}))
+	hand := []*Instance{s.give(0, unit("A", 1, 1, ability.Keywords{})), s.give(0, unit("B", 1, 1, ability.Keywords{}))}
 	dcScript(s, hand, false, piled[0])
 	s.do(enactAction(inst))
 	var tdec *Decision

@@ -57,7 +57,7 @@ func TestCard_ShiftingImpossibility_ReturnsAScratchCompanyKilledAtTheSweep(t *te
 func TestCard_ShiftingImpossibility_ReplacesOnlyAlliedScratchCompanies(t *testing.T) {
 	s := newScene(t)
 	si := s.put(0, ZoneReserves, s.card("Shifting Impossibility"))
-	ally := s.put(0, ZoneReserves, unit("Ally", 1, 1, Keywords{}))
+	ally := s.put(0, ZoneReserves, unit("Ally", 1, 1, ability.Keywords{}))
 	foeSc := s.putScratch(1)
 	// The sweep hits every other unit, Shifting Impossibility too, which takes
 	// exactly that 1 damage and none from a replacement.
@@ -79,7 +79,7 @@ func TestCard_ShiftingImpossibility_ReplacedKillStillCountsAsDone(t *testing.T) 
 	s := newScene(t)
 	si := s.put(0, ZoneReserves, s.card("Shifting Impossibility"))
 	sc := s.putScratch(0)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(sc))
 	deployApostle(s)
 	if s.alive(sc) || !inHand(s.g.Players[0], sc.Inst) || inDiscard(s.g.Players[0], sc.Inst) {

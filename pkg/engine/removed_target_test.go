@@ -43,7 +43,7 @@ func TestFR_ZON_004_ReturnedTargetTakesNoLaterDamage(t *testing.T) {
 func TestFR_ZON_004_KilledTargetGetsNoLaterModifier(t *testing.T) {
 	// Covers: FR-TGT-003, SVY-R14
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, rlEnemyTarget,
@@ -61,8 +61,8 @@ func TestFR_ZON_004_KilledTargetGetsNoLaterModifier(t *testing.T) {
 func TestFR_TGT_003_RemovedTargetLeavesTheRestOfItsSlot(t *testing.T) {
 	// Covers: FR-ZON-004
 	s := newScene(t)
-	x := s.put(1, ZoneMainTheater, unit("X", 1, 6, Keywords{}))
-	y := s.put(1, ZoneMainTheater, unit("Y", 1, 6, Keywords{}))
+	x := s.put(1, ZoneMainTheater, unit("X", 1, 6, ability.Keywords{}))
+	y := s.put(1, ZoneMainTheater, unit("Y", 1, 6, ability.Keywords{}))
 	idx := func(d Decision, a *Asset) int {
 		for i, o := range d.Options {
 			if o.Ref == a.ID {
@@ -95,14 +95,14 @@ func TestFR_TGT_003_RemovedTargetLeavesTheRestOfItsSlot(t *testing.T) {
 func TestFR_ZON_004_ReplacedKillLeavesNoTarget(t *testing.T) {
 	// Covers: FR-REP-001
 	s := newScene(t)
-	g := structure("Rescuer", 1, 3, Keywords{})
+	g := structure("Rescuer", 1, 3, ability.Keywords{})
 	g.Ability = &ability.Def{Replacements: []ability.Replacement{{
 		Event:  ability.WouldBeDestroyed,
 		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Other: true},
 		Steps:  []ability.Step{{Op: ability.OpReturnToHand, Subject: ability.SubjectReplaced}},
 	}}}
 	s.put(1, ZoneMainTheater, g)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 6, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 6, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, rlEnemyTarget,
 		ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget},

@@ -42,7 +42,7 @@ func wantOptions(t *testing.T, d Decision, what string, want ...*Asset) {
 // Control: the unit itself is a 3/3 that enters Reserves.
 func TestCard_Saboteur_EntersReservesAsThreeThree(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := deploySaboteur(s)
 	a := assetOf(s.g, c)
@@ -60,10 +60,10 @@ func TestCard_Saboteur_EntersReservesAsThreeThree(t *testing.T) {
 // Covers: FR-TGT-001
 func TestCard_Saboteur_BothClausesHitTheirOwnChosenTarget(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
-	a2 := s.put(0, ZoneMainTheater, unit("Ally B", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Ally B", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e2, a1)
 	deploySaboteur(s)
 	s.wantDamage(e2, 2)
@@ -78,9 +78,9 @@ func TestCard_Saboteur_BothClausesHitTheirOwnChosenTarget(t *testing.T) {
 // Covers: FR-TGT-001, FR-MOD-001
 func TestCard_Saboteur_AsksOpposingClauseFirstThenAlliedClause(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e1, a1)
 	c := deploySaboteur(s)
 	asked := s.asked(0)
@@ -99,10 +99,10 @@ func TestCard_Saboteur_AsksOpposingClauseFirstThenAlliedClause(t *testing.T) {
 // Covers: FR-TGT-001
 func TestCard_Saboteur_ScratchCompanyIsNotAnOpposingOptionButIsAnAlliedOne(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
 	s.putScratch(1)
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
 	sc0 := s.putScratch(0)
 	s.scriptRefs(0, nil, e1, sc0)
 	c := deploySaboteur(s)
@@ -120,11 +120,11 @@ func TestCard_Saboteur_ScratchCompanyIsNotAnOpposingOptionButIsAnAlliedOne(t *te
 // Covers: FR-TGT-001
 func TestCard_Saboteur_StructuresAndHeadquartersAreNotOptions(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, structure("Ally Wall", 0, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, structure("Ally Wall", 0, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e1, a1)
 	c := deploySaboteur(s)
 	asked := s.asked(0)
@@ -141,8 +141,8 @@ func TestCard_Saboteur_StructuresAndHeadquartersAreNotOptions(t *testing.T) {
 // Covers: FR-TGT-001
 func TestCard_Saboteur_ItselfIsALegalAlliedTarget(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	other := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	other := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	sab := s.card("Saboteur")
 	s.asks = map[PlayerID][]Decision{}
 	s.g.choosers[0] = func(g *Game, d Decision) Answer {
@@ -193,7 +193,7 @@ func TestFR_TGT_003_SaboteurWithNoOpposingNonScratchUnitStillDeploysAndAlliedCla
 // Covers: FR-TGT-003
 func TestCard_Saboteur_NoOpposingUnitStillResolvesAlliedClauseOnChosenUnit(t *testing.T) {
 	s := newScene(t)
-	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, a1)
 	c := deploySaboteur(s)
 	if assetOf(s.g, c) == nil {
@@ -213,10 +213,10 @@ func TestCard_Saboteur_NoOpposingUnitStillResolvesAlliedClauseOnChosenUnit(t *te
 // Covers: FR-KWD-002h, FR-TGT-001
 func TestCard_Saboteur_OpposingWardUnitCannotBeChosen(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e1, a1)
 	deploySaboteur(s)
 	asked := s.asked(0)
@@ -230,7 +230,7 @@ func TestCard_Saboteur_OpposingWardUnitCannotBeChosen(t *testing.T) {
 // Covers: FR-KWD-002h, FR-TGT-003
 func TestCard_Saboteur_OnlyOpposingUnitHasWardSoOpposingClauseDoesNothing(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	c := deploySaboteur(s)
 	if n := len(s.asked(0)); n != 0 {
@@ -247,8 +247,8 @@ func TestCard_Saboteur_OnlyOpposingUnitHasWardSoOpposingClauseDoesNothing(t *tes
 // Covers: FR-KWD-002h
 func TestCard_Saboteur_AlliedWardUnitIsAnAlliedOption(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, ward)
 	c := deploySaboteur(s)
 	asked := s.asked(0)
@@ -263,10 +263,10 @@ func TestCard_Saboteur_AlliedWardUnitIsAnAlliedOption(t *testing.T) {
 // Covers: FR-ZON-002
 func TestCard_Saboteur_LethalDamageDestroysBothChosenUnits(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Fragile Enemy", 1, 2, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Other Enemy", 1, 5, Keywords{}))
-	a := s.put(0, ZoneMainTheater, unit("Fragile Ally", 1, 1, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("Other Ally", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Fragile Enemy", 1, 2, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Other Enemy", 1, 5, ability.Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Fragile Ally", 1, 1, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Other Ally", 1, 5, ability.Keywords{}))
 	eInst, aInst := e.Inst, a.Inst
 	s.scriptRefs(0, nil, e, a)
 	deploySaboteur(s)
@@ -285,8 +285,8 @@ func TestCard_Saboteur_LethalDamageDestroysBothChosenUnits(t *testing.T) {
 func TestCard_Saboteur_SoleOpposingTargetIsNotAsked(t *testing.T) {
 	s := newScene(t)
 	s.putScratch(1)
-	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, a1)
 	c := deploySaboteur(s)
 	asked := s.asked(0)
@@ -301,8 +301,8 @@ func TestCard_Saboteur_SoleOpposingTargetIsNotAsked(t *testing.T) {
 // Covers: FR-MOD-001
 func TestCard_Saboteur_TimeoutOnOpposingChoiceDamagesExactlyOneLegalUnit(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
 	sc := s.putScratch(1)
 	s.script(0, Answer{Timeout: true})
 	c := deploySaboteur(s)
@@ -388,9 +388,9 @@ func TestCard_ChainbreakerSappers_CanDamageEachKindOfLegalTarget(t *testing.T) {
 // Covers: FR-KWD-002h
 func TestCard_ChainbreakerSappers_OpposingWardStructureCannotBeChosenButAlliedCan(t *testing.T) {
 	s := newScene(t)
-	wardE := s.put(1, ZoneMainTheater, structure("Warded Enemy Wall", 0, 5, Keywords{Ward: true}))
-	wall := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 5, Keywords{}))
-	wardA := s.put(0, ZoneMainTheater, structure("Warded Ally Wall", 0, 5, Keywords{Ward: true}))
+	wardE := s.put(1, ZoneMainTheater, structure("Warded Enemy Wall", 0, 5, ability.Keywords{Ward: true}))
+	wall := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 5, ability.Keywords{}))
+	wardA := s.put(0, ZoneMainTheater, structure("Warded Ally Wall", 0, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, wall)
 	deploySappers(s)
 	asked := s.asked(0)
@@ -405,7 +405,7 @@ func TestCard_ChainbreakerSappers_OpposingWardStructureCannotBeChosenButAlliedCa
 // Covers: FR-ZON-002
 func TestCard_ChainbreakerSappers_LethalDamageDestroysAOneHealthStructure(t *testing.T) {
 	s := newScene(t)
-	w := s.put(1, ZoneMainTheater, structure("Brittle Wall", 0, 1, Keywords{}))
+	w := s.put(1, ZoneMainTheater, structure("Brittle Wall", 0, 1, ability.Keywords{}))
 	inst := w.Inst
 	s.scriptRefs(0, nil, w)
 	deploySappers(s)
@@ -500,7 +500,7 @@ func deployGuerrillas(s *scene, z Zone) *Card {
 func TestCard_DevilhornGuerrillas_EntersDeclaredZoneAsThreeFive(t *testing.T) {
 	for _, z := range []Zone{ZoneMainTheater, ZoneReserves} {
 		s := newScene(t)
-		s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, ability.Keywords{}))
 		s.script(0)
 		c := deployGuerrillas(s, z)
 		a := assetOf(s.g, c)
@@ -520,7 +520,7 @@ func TestCard_DevilhornGuerrillas_EntersDeclaredZoneAsThreeFive(t *testing.T) {
 func TestCard_DevilhornGuerrillas_MainTheaterOffersOnlyOpposingUnitsAndDeals2(t *testing.T) {
 	s := newScene(t)
 	b := s.targetBoard()
-	e2 := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, Keywords{}))
+	e2 := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e2)
 	deployGuerrillas(s, ZoneMainTheater)
 	asked := s.asked(0)
@@ -551,8 +551,8 @@ func TestCard_DevilhornGuerrillas_ScratchCompanyIsALegalTargetAndDies(t *testing
 // Covers: FR-TRN-003
 func TestCard_DevilhornGuerrillas_ReservesAsksNothingAndDamagesNothing(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := deployGuerrillas(s, ZoneReserves)
 	if n := len(s.asked(0)); n != 0 {
@@ -570,7 +570,7 @@ func TestCard_DevilhornGuerrillas_ReservesAsksNothingAndDamagesNothing(t *testin
 // Covers: FR-TRN-003
 func TestCard_DevilhornGuerrillas_ReservesWithSoleOpposingUnitDoesNothing(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, ability.Keywords{}))
 	s.script(0)
 	deployGuerrillas(s, ZoneReserves)
 	s.wantDamage(e, 0)
@@ -579,7 +579,7 @@ func TestCard_DevilhornGuerrillas_ReservesWithSoleOpposingUnitDoesNothing(t *tes
 // Covers: FR-TGT-003
 func TestCard_DevilhornGuerrillas_NoOpposingUnitStillDeploys(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, ability.Keywords{}))
 	s.script(0)
 	c := deployGuerrillas(s, ZoneMainTheater)
 	if n := len(s.asked(0)); n != 0 {
@@ -599,9 +599,9 @@ func TestCard_DevilhornGuerrillas_NoOpposingUnitStillDeploys(t *testing.T) {
 // Covers: FR-KWD-002h, FR-TGT-001
 func TestCard_DevilhornGuerrillas_OpposingWardUnitCannotBeChosen(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, e1)
 	deployGuerrillas(s, ZoneMainTheater)
 	asked := s.asked(0)
@@ -616,7 +616,7 @@ func TestCard_DevilhornGuerrillas_OpposingWardUnitCannotBeChosen(t *testing.T) {
 // Covers: FR-KWD-002h, FR-TGT-003
 func TestCard_DevilhornGuerrillas_OnlyOpposingUnitHasWardSoNothingHappens(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	c := deployGuerrillas(s, ZoneMainTheater)
 	if n := len(s.asked(0)); n != 0 {
@@ -631,8 +631,8 @@ func TestCard_DevilhornGuerrillas_OnlyOpposingUnitHasWardSoNothingHappens(t *tes
 // Covers: FR-MOD-001
 func TestCard_DevilhornGuerrillas_SoleOpposingTargetIsNotAsked(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Only Enemy", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, ability.Keywords{}))
 	s.script(0)
 	deployGuerrillas(s, ZoneMainTheater)
 	if n := len(s.asked(0)); n != 0 {
@@ -644,9 +644,9 @@ func TestCard_DevilhornGuerrillas_SoleOpposingTargetIsNotAsked(t *testing.T) {
 // Covers: FR-MOD-001
 func TestCard_DevilhornGuerrillas_TimeoutDamagesExactlyOneLegalUnit(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	st := s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	c := deployGuerrillas(s, ZoneMainTheater)
 	if n := len(s.asked(0)); n != 1 {
@@ -662,8 +662,8 @@ func TestCard_DevilhornGuerrillas_TimeoutDamagesExactlyOneLegalUnit(t *testing.T
 // Covers: FR-ZON-002
 func TestCard_DevilhornGuerrillas_LethalDamageDestroysTheUnit(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Fragile Enemy", 1, 2, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Other Enemy", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Fragile Enemy", 1, 2, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Other Enemy", 1, 5, ability.Keywords{}))
 	inst := e.Inst
 	s.scriptRefs(0, nil, e)
 	deployGuerrillas(s, ZoneMainTheater)
@@ -699,7 +699,7 @@ func TestCard_IroncladColossus_EntersReservesAsSixSeven(t *testing.T) {
 func TestCard_IroncladColossus_DeployOffersAnyUnitButNotStructuresHeadquartersOrOpposingWard(t *testing.T) {
 	s := newScene(t)
 	b := s.targetBoard()
-	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, b.u0)
 	c := deployPath(s, "Ironclad Colossus", 6)
 	asked := s.asked(0)
@@ -715,8 +715,8 @@ func TestCard_IroncladColossus_DeployOffersAnyUnitButNotStructuresHeadquartersOr
 // Covers: FR-KWD-002h
 func TestCard_IroncladColossus_AlliedWardUnitIsAnOption(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, ward)
 	deployPath(s, "Ironclad Colossus", 6)
 	if ward.Armor != 2 {
@@ -726,8 +726,8 @@ func TestCard_IroncladColossus_AlliedWardUnitIsAnOption(t *testing.T) {
 
 func TestCard_IroncladColossus_CanArmorAnOpposingUnit(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e)
 	deployPath(s, "Ironclad Colossus", 6)
 	if e.Armor != 2 {
@@ -751,7 +751,7 @@ func TestCard_IroncladColossus_OnlyItselfOnTheBoardIsGivenArmorWithoutAsking(t *
 // Covers: FR-KWD-002h, FR-TGT-003
 func TestCard_IroncladColossus_OpposingWardIsTheOnlyOtherUnitSoOnlyItselfIsChosen(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	c := deployPath(s, "Ironclad Colossus", 6)
 	if n := len(s.asked(0)); n != 0 {
@@ -768,7 +768,7 @@ func TestCard_IroncladColossus_OpposingWardIsTheOnlyOtherUnitSoOnlyItselfIsChose
 // Covers: FR-KWD-002k, FR-LAY-002
 func TestCard_IroncladColossus_GrantAddsToPrintedArmor(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 5, Keywords{Armor: 1}))
+	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 5, ability.Keywords{Armor: 1}))
 	s.scriptRefs(0, nil, ally)
 	deployPath(s, "Ironclad Colossus", 6)
 	if ally.Armor != 3 {
@@ -779,7 +779,7 @@ func TestCard_IroncladColossus_GrantAddsToPrintedArmor(t *testing.T) {
 // Covers: FR-LAY-002
 func TestCard_IroncladColossus_GrantPersistsPastEndOfTurn(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	deployPath(s, "Ironclad Colossus", 6)
 	s.endTurn()
@@ -792,8 +792,8 @@ func TestCard_IroncladColossus_GrantPersistsPastEndOfTurn(t *testing.T) {
 // Covers: FR-CBT-002
 func TestCard_IroncladColossus_EachAttackGrantsAgainAndGrantsStack(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, Keywords{}))
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, ability.Keywords{}))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally, ally)
 	c := deployPath(s, "Ironclad Colossus", 6)
 	a := assetOf(s.g, c)
@@ -821,7 +821,7 @@ func TestCard_IroncladColossus_AttackGrantResolvesBeforeCombatDamage(t *testing.
 	a := assetOf(s.g, c)
 	colossusCycle(s, a)
 	a.Armor = 0
-	def := s.put(1, ZoneMainTheater, unit("Defender", 3, 30, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 3, 30, ability.Keywords{}))
 	s.scriptRefs(0, nil, a)
 	s.do(s.attack(a, def))
 	s.wantDamage(a, 1)
@@ -839,7 +839,7 @@ func TestCard_IroncladColossus_DefendingDoesNotTrigger(t *testing.T) {
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
 	s.endTurn()
 	a.Armor = 0
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, ability.Keywords{}))
 	s.do(s.attack(hitter, a))
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("only attacking triggers the Colossus: asked %d times while defending", n)
@@ -880,7 +880,7 @@ func huntAttacks(s *scene, want ...*Asset) (hunt, def *Asset) {
 	hunt = deployHunt(s)
 	s.endTurn()
 	s.endTurn()
-	def = s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	def = s.put(1, ZoneMainTheater, unit("Defender", 2, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, picksOf(want)...)
 	s.do(s.attack(hunt, def))
 	if s.alive(hunt) {
@@ -898,7 +898,7 @@ func huntDefends(s *scene, want ...*Asset) (hunt, hit *Asset) {
 	s.t.Helper()
 	hunt = deployHunt(s)
 	s.endTurn()
-	hit = s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
+	hit = s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, picksOf(want)...)
 	s.script(1)
 	s.do(s.attack(hit, hunt))
@@ -926,9 +926,9 @@ func TestCard_NecropolisHunt_EntersMainTheaterAsFiveTwoForThreeRequisitionThreeT
 func TestCard_NecropolisHunt_KilledAttackingOffersEveryUnitAndStructureButNotHeadquartersItselfOrOpposingWard(t *testing.T) {
 	s := newScene(t)
 	b := s.targetBoard()
-	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, Keywords{Ward: true}))
-	s.put(1, ZoneMainTheater, structure("Warded Structure", 0, 5, Keywords{Ward: true}))
-	reserve := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, ability.Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, structure("Warded Structure", 0, 5, ability.Keywords{Ward: true}))
+	reserve := s.put(1, ZoneReserves, unit("Reserve Enemy", 1, 5, ability.Keywords{}))
 	_, def := huntAttacks(s, b.s1)
 	if n := optionalAsks(s.asked(0)); n != 1 {
 		t.Fatalf("the Hunt's controller is asked its \"you may\" once: asked %d times", n)
@@ -974,8 +974,8 @@ func TestCard_NecropolisHunt_DamageEventNamesTheDeadHuntAsSourceAndIsNonCombat(t
 // Covers: FR-ZON-004
 func TestCard_NecropolisHunt_KilledOnOpponentsTurnStillTriggersAndItsControllerChooses(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, ability.Keywords{}))
 	_, hit := huntDefends(s, e)
 	asked := targetAsks(s.asked(0))
 	if len(asked) != 1 || optionalAsks(s.asked(0)) != 1 {
@@ -991,7 +991,7 @@ func TestCard_NecropolisHunt_KilledOnOpponentsTurnStillTriggersAndItsControllerC
 // Covers: FR-REP-004
 func TestCard_NecropolisHunt_StalwartTargetTakesTheFullFive(t *testing.T) {
 	s := newScene(t)
-	wall := s.put(1, ZoneMainTheater, unit("Stalwart Wall", 0, 9, Keywords{Stalwart: true}))
+	wall := s.put(1, ZoneMainTheater, unit("Stalwart Wall", 0, 9, ability.Keywords{Stalwart: true}))
 	huntDefends(s, wall)
 	s.wantDamage(wall, 5)
 }
@@ -999,7 +999,7 @@ func TestCard_NecropolisHunt_StalwartTargetTakesTheFullFive(t *testing.T) {
 // Covers: FR-REP-004
 func TestCard_NecropolisHunt_ResistantTargetReducesTheFive(t *testing.T) {
 	s := newScene(t)
-	worm := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 9, Keywords{Resistant: 2}))
+	worm := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 9, ability.Keywords{Resistant: 2}))
 	huntDefends(s, worm)
 	s.wantDamage(worm, 3)
 }
@@ -1007,7 +1007,7 @@ func TestCard_NecropolisHunt_ResistantTargetReducesTheFive(t *testing.T) {
 // Covers: FR-REP-004
 func TestCard_NecropolisHunt_ArmorAbsorbsPartOfTheFive(t *testing.T) {
 	s := newScene(t)
-	armored := s.put(1, ZoneMainTheater, unit("Armored Unit", 0, 9, Keywords{Armor: 2}))
+	armored := s.put(1, ZoneMainTheater, unit("Armored Unit", 0, 9, ability.Keywords{Armor: 2}))
 	huntDefends(s, armored)
 	s.wantDamage(armored, 3)
 	if armored.Armor != 0 {
@@ -1018,7 +1018,7 @@ func TestCard_NecropolisHunt_ArmorAbsorbsPartOfTheFive(t *testing.T) {
 // Covers: FR-ZON-002
 func TestCard_NecropolisHunt_FiveDamageDestroysAFiveHealthUnit(t *testing.T) {
 	s := newScene(t)
-	frail := s.put(1, ZoneMainTheater, unit("Frail", 0, 5, Keywords{}))
+	frail := s.put(1, ZoneMainTheater, unit("Frail", 0, 5, ability.Keywords{}))
 	inst := frail.Inst
 	huntDefends(s, frail)
 	if s.alive(frail) || !inZone(s.g.Players[1].Discard, inst) {
@@ -1044,8 +1044,8 @@ func TestCard_NecropolisHunt_NoOtherUnitOrStructureAsksNothingAndDoesNothing(t *
 // Covers: FR-MOD-001
 func TestCard_NecropolisHunt_SoleLegalTargetIsNotAsked(t *testing.T) {
 	s := newScene(t)
-	wall := s.put(1, ZoneMainTheater, structure("Only Wall", 0, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, Keywords{Ward: true}))
+	wall := s.put(1, ZoneMainTheater, structure("Only Wall", 0, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Warded Unit", 1, 5, ability.Keywords{Ward: true}))
 	huntAttacks(s)
 	if n := optionalAsks(s.asked(0)); n != 1 {
 		t.Errorf("the \"you may\" is asked once: asked %d times", n)
@@ -1059,12 +1059,12 @@ func TestCard_NecropolisHunt_SoleLegalTargetIsNotAsked(t *testing.T) {
 // Covers: FR-MOD-001
 func TestCard_NecropolisHunt_TimeoutDeclinesAndDealsNothing(t *testing.T) {
 	s := newScene(t)
-	u := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, Keywords{}))
-	w := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 9, Keywords{}))
+	u := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, ability.Keywords{}))
+	w := s.put(1, ZoneMainTheater, structure("Enemy Wall", 0, 9, ability.Keywords{}))
 	hunt := deployHunt(s)
 	s.endTurn()
 	s.endTurn()
-	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.do(s.attack(hunt, def))
 	if n := optionalAsks(s.asked(0)); n != 1 || len(s.asked(0)) != 1 {
@@ -1082,7 +1082,7 @@ func TestCard_NecropolisHunt_DecliningDealsNoDamage(t *testing.T) {
 	hunt := deployHunt(s)
 	s.endTurn()
 	s.endTurn()
-	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{no})
 	s.do(s.attack(hunt, def))
 	if s.alive(hunt) {
@@ -1106,8 +1106,8 @@ func TestCard_NecropolisHunt_FaceDownCopyFiresNothingWhenKilled(t *testing.T) {
 	s := newScene(t)
 	p := s.g.Players[0]
 	top := s.onTop(0, s.card("Necropolis Hunt"))
-	e := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 0, 9, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy A", 0, 9, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 0, 9, ability.Keywords{}))
 	s.script(0)
 	s.do(Action{Kind: ActScratch, Player: 0, Asset: p.HQ.ID})
 	if !scratched(p, top[0]) {
@@ -1125,7 +1125,7 @@ func TestCard_NecropolisHunt_FaceDownCopyFiresNothingWhenKilled(t *testing.T) {
 	s.endTurn()
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: sc.ID})
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(hit, sc))
 	if s.alive(sc) {
 		t.Fatalf("precondition: the face-down Scratch Company is destroyed")
@@ -1154,10 +1154,10 @@ func TestCard_NecropolisHunt_NoEventDetailHasAFormatError(t *testing.T) {
 // Covers: FR-ZON-004
 func TestCard_NecropolisHunt_DealsItsLastKnownEffectivePowerNotAFixedFive(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, ability.Keywords{}))
 	hunt := deployHunt(s)
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 2, 20, ability.Keywords{}))
 	hunt.Modifiers = []Modifier{{Layer: 5, Power: 2}} // stands in for an until-end-of-turn bonus, still active this turn
 	s.scriptPlan(0, nil, []Answer{yes}, pick(e))
 	s.script(1)
@@ -1210,7 +1210,7 @@ func TestCard_HammerhandBrigands_LethalCombatDamageAsDefenderScratchesFromDiscar
 	s := newScene(t)
 	s.script(0)
 	s.script(1)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	def := s.putBrigands(1, ZoneMainTheater, 0)
 	inst := def.Inst
 	s.do(s.attack(att, def))
@@ -1234,7 +1234,7 @@ func TestCard_HammerhandBrigands_LethalCombatDamageAsDefenderScratchesFromDiscar
 func TestCard_HammerhandBrigands_LethalRetaliationAsAttackerScratchesFromDiscard(t *testing.T) {
 	s := newScene(t)
 	att := s.putBrigands(0, ZoneMainTheater, 0)
-	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, ability.Keywords{}))
 	inst := att.Inst
 	s.do(s.attack(att, def))
 	if s.alive(att) || !inZone(s.g.Players[0].Discard, inst) {
@@ -1247,7 +1247,7 @@ func TestCard_HammerhandBrigands_LethalRetaliationAsAttackerScratchesFromDiscard
 // Covers: FR-REP-004
 func TestCard_HammerhandBrigands_ArmorAbsorbingAllDamageStillScratches(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	def := s.putBrigands(1, ZoneMainTheater, 3)
 	s.do(s.attack(att, def))
 	if !s.alive(def) {
@@ -1260,8 +1260,8 @@ func TestCard_HammerhandBrigands_ArmorAbsorbingAllDamageStillScratches(t *testin
 // Covers: FR-TGT-001, FR-REP-004
 func TestCard_HammerhandBrigands_SaboteurDamageToAlliedBrigandsInReservesScratches(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
 	b := s.putBrigands(0, ZoneReserves, 0)
 	inst := b.Inst
 	s.scriptRefs(0, nil, e1, b)
@@ -1277,7 +1277,7 @@ func TestCard_HammerhandBrigands_SaboteurDamageToAlliedBrigandsInReservesScratch
 func TestCard_HammerhandBrigands_OpposingGuerrillasDamageScratchesForTheBrigandsController(t *testing.T) {
 	s := newScene(t)
 	b := s.putBrigands(1, ZoneMainTheater, 0)
-	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, b)
 	deployGuerrillas(s, ZoneMainTheater)
 	if s.alive(b) {
@@ -1303,8 +1303,8 @@ func TestCard_HammerhandBrigands_TwoBrigandsHitByOneAllAssetsEffectScratchTwice(
 // Covers: FR-REP-004
 func TestCard_HammerhandBrigands_OneBrigandsHitByTwoSeparateInstancesScratchesTwice(t *testing.T) {
 	s := newScene(t)
-	a1 := s.put(0, ZoneMainTheater, unit("Hitter One", 1, 9, Keywords{}))
-	a2 := s.put(0, ZoneMainTheater, unit("Hitter Two", 1, 9, Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Hitter One", 1, 9, ability.Keywords{}))
+	a2 := s.put(0, ZoneMainTheater, unit("Hitter Two", 1, 9, ability.Keywords{}))
 	def := s.putBrigands(1, ZoneMainTheater, 5)
 	s.do(s.attack(a1, def))
 	s.wantScratches(1, 1, "the first damage instance fires Unbowed once")
@@ -1319,7 +1319,7 @@ func TestCard_HammerhandBrigands_OneBrigandsHitByTwoSeparateInstancesScratchesTw
 func TestCard_HammerhandBrigands_ScratchGoesToTheControllerNotTheOwner(t *testing.T) {
 	s := newScene(t)
 	s.endTurn() // player 1 is active
-	att := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	att := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	// Owned by player 1, controlled by player 0, with Armor so it survives.
 	def := s.putControlled(1, 0, s.card("Hammerhand Brigands"))
 	def.Armor = 2
@@ -1334,7 +1334,7 @@ func TestCard_HammerhandBrigands_ScratchGoesToTheControllerNotTheOwner(t *testin
 // Covers: FR-REP-004
 func TestCard_HammerhandBrigands_ZeroPowerAttackerDoesNotScratch(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, ability.Keywords{}))
 	def := s.putBrigands(1, ZoneMainTheater, 0)
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 0)
@@ -1344,7 +1344,7 @@ func TestCard_HammerhandBrigands_ZeroPowerAttackerDoesNotScratch(t *testing.T) {
 // Covers: FR-REP-004, FR-KWD-002b
 func TestCard_HammerhandBrigands_DamageReducedToZeroByResistantDoesNotScratch(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	c := s.card("Hammerhand Brigands")
 	c.Keywords.Resistant = 2
 	def := s.put(1, ZoneMainTheater, c)
@@ -1355,8 +1355,8 @@ func TestCard_HammerhandBrigands_DamageReducedToZeroByResistantDoesNotScratch(t 
 
 func TestCard_HammerhandBrigands_DamageToAnotherAssetDoesNotScratch(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, ability.Keywords{}))
 	s.putBrigands(1, ZoneMainTheater, 0)
 	s.do(s.attack(att, def))
 	s.wantScratches(1, 0, "Unbowed fires for damage to the Brigands itself only (FR-KWD-002a)")
@@ -1383,7 +1383,7 @@ func TestCard_HammerhandBrigands_FaceDownCopyFiresNothingWhenDamaged(t *testing.
 	s.endTurn()
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: sc.ID})
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(hit, sc))
 	if s.alive(sc) {
 		t.Fatalf("precondition: the face-down Scratch Company is destroyed")

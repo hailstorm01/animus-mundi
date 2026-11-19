@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"fmt"
 	"math/rand/v2"
 	"path/filepath"
@@ -383,8 +384,8 @@ func TestEvents_Case4_ActivateActionEventNamesItsAsset(t *testing.T) {
 
 func TestEvents_Case4_ActionEventCarriesItsFields(t *testing.T) {
 	s := newScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Att", 2, 5, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Att", 2, 5, ability.Keywords{}))
 	s.do(s.attack(att, enemy))
 	acts := eventsOfKind(s.g.Log, "action")
 	if len(acts) != 1 || acts[0].Detail != "Attack" {
@@ -404,9 +405,9 @@ func TestEvents_Case4_ActionEventCarriesItsFields(t *testing.T) {
 // Case 5: one decision event per choose that returns picks.
 func TestEvents_Case5_DecisionAnswer(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
 	s.scriptRefs(0, nil, e2, a1)
 	deploySaboteur(s)
 	decs := eventsOfKind(s.g.Log, "decision")
@@ -431,7 +432,7 @@ func TestEvents_Case5_DecisionAnswer(t *testing.T) {
 
 func TestEvents_Case5_DecisionAuto(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
 	s.script(0)
 	deploySaboteur(s)
 	decs := eventsOfKind(s.g.Log, "decision")
@@ -450,9 +451,9 @@ func TestEvents_Case5_DecisionAuto(t *testing.T) {
 func TestEvents_Case5_DecisionTimeoutAndInvalid(t *testing.T) {
 	setup := func() *scene {
 		s := newScene(t)
-		s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-		s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
 		return s
 	}
 	s := setup()
@@ -488,9 +489,9 @@ func TestEvents_Case5_NoSatisfiableOptionsEmitsNothing(t *testing.T) {
 // Case 6: existing call sites fill their structured fields.
 func TestEvents_Case6_StructuredFields(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	a1 := s.put(0, ZoneMainTheater, unit("Ally A", 1, 5, ability.Keywords{}))
 	_ = e1
 	s.scriptRefs(0, nil, e2, a1)
 	c := deploySaboteur(s)
@@ -595,8 +596,8 @@ func TestEvents_Case8_ObserverIsReadOnlyAndDeterministic(t *testing.T) {
 // Case 9: existing event kinds keep their Turn and Detail.
 func TestEvents_Case9_ExistingEventsUnchanged(t *testing.T) {
 	s := newScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Att", 2, 5, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Att", 2, 5, ability.Keywords{}))
 	hqAsset := s.g.Players[0].HQ
 	s.do(Action{Kind: ActGenerate, Player: 0, Asset: hqAsset.ID, Resource: Requisition})
 	s.do(s.attack(att, enemy))

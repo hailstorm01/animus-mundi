@@ -23,7 +23,7 @@ func deployTrigger(steps ...ability.Step) ability.Trigger {
 
 // trigUnit is a free Reserves unit printing the given deploy triggers in order.
 func trigUnit(name string, trigs ...ability.Trigger) *Card {
-	c := unit(name, 1, 1, Keywords{})
+	c := unit(name, 1, 1, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
@@ -32,7 +32,7 @@ func trigUnit(name string, trigs ...ability.Trigger) *Card {
 func vanilla(names ...string) []*Card {
 	out := make([]*Card, len(names))
 	for i, n := range names {
-		out[i] = unit(n, 1, 1, Keywords{})
+		out[i] = unit(n, 1, 1, ability.Keywords{})
 	}
 	return out
 }

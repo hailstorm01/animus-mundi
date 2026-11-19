@@ -47,9 +47,9 @@ func paTargetAsk(t *testing.T, s *scene) Decision {
 func TestFR_TGT_001_PowerAtMostOffersPileCardsByPrintedPower(t *testing.T) {
 	// Covers: FR-ZON-004
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("P2", 2, 1, Keywords{}), unit("P3", 3, 1, Keywords{}),
-		unit("P4", 4, 1, Keywords{}), structure("Wall0", 0, 3, Keywords{}))
-	s.inDiscard(1, unit("Theirs1", 1, 1, Keywords{}))
+	mine := s.inDiscard(0, unit("P2", 2, 1, ability.Keywords{}), unit("P3", 3, 1, ability.Keywords{}),
+		unit("P4", 4, 1, ability.Keywords{}), structure("Wall0", 0, 3, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs1", 1, 1, ability.Keywords{}))
 	pile := ability.Target{Filter: paMax3(ppAllyUnitCards)}
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{pile}, ptStep(ability.OpReturnToHand, 0)))
@@ -63,12 +63,12 @@ func TestFR_TGT_001_PowerAtMostOffersPileCardsByPrintedPower(t *testing.T) {
 func TestFR_TGT_001_PowerAtMostReadsEffectivePowerOnTheBattlefield(t *testing.T) {
 	// Covers: FR-TGT-001, FR-LAY-001
 	s := newScene(t)
-	p2 := s.put(1, ZoneMainTheater, unit("P2", 2, 5, Keywords{}))
-	p3 := s.put(1, ZoneMainTheater, unit("P3", 3, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("P4", 4, 5, Keywords{}))
-	up := s.put(1, ZoneMainTheater, unit("P3plus1", 3, 5, Keywords{}))
+	p2 := s.put(1, ZoneMainTheater, unit("P2", 2, 5, ability.Keywords{}))
+	p3 := s.put(1, ZoneMainTheater, unit("P3", 3, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("P4", 4, 5, ability.Keywords{}))
+	up := s.put(1, ZoneMainTheater, unit("P3plus1", 3, 5, ability.Keywords{}))
 	up.Modifiers = []Modifier{{Layer: 5, Power: 1}} // effective 4
-	down := s.put(1, ZoneMainTheater, unit("P4minus2", 4, 5, Keywords{}))
+	down := s.put(1, ZoneMainTheater, unit("P4minus2", 4, 5, ability.Keywords{}))
 	down.Modifiers = []Modifier{{Layer: 5, Power: -2}} // effective 2
 	slot := ability.Target{Filter: paMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})}
 	s.script(0, Answer{Picks: []int{0}})
@@ -83,8 +83,8 @@ func TestFR_TGT_001_PowerAtMostReadsEffectivePowerOnTheBattlefield(t *testing.T)
 func TestFR_TGT_003_PowerAtMostTargetCheckedAgainOnResolution(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	a := s.put(1, ZoneMainTheater, unit("A", 3, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	a := s.put(1, ZoneMainTheater, unit("A", 3, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 	slot := ability.Target{Filter: paMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})}
 	// The chooser picks A, then A gains +1 power (effective 4) before the
 	// effect resolves.
@@ -112,14 +112,14 @@ func TestFR_TGT_003_PowerAtMostTargetCheckedAgainOnResolution(t *testing.T) {
 func TestFR_TGT_001_PowerAtMostAllStepReadsEffectivePower(t *testing.T) {
 	// Covers: FR-TGT-002, FR-LAY-001
 	s := newScene(t)
-	allyLow := s.put(0, ZoneMainTheater, unit("AllyLow", 2, 5, Keywords{}))
-	allyHigh := s.put(0, ZoneMainTheater, unit("AllyHigh", 5, 5, Keywords{}))
-	allyDown := s.put(0, ZoneMainTheater, unit("AllyDown", 4, 5, Keywords{}))
+	allyLow := s.put(0, ZoneMainTheater, unit("AllyLow", 2, 5, ability.Keywords{}))
+	allyHigh := s.put(0, ZoneMainTheater, unit("AllyHigh", 5, 5, ability.Keywords{}))
+	allyDown := s.put(0, ZoneMainTheater, unit("AllyDown", 4, 5, ability.Keywords{}))
 	allyDown.Modifiers = []Modifier{{Layer: 5, Power: -1}} // effective 3
-	foeEdge := s.put(1, ZoneMainTheater, unit("FoeEdge", 3, 5, Keywords{}))
-	foeUp := s.put(1, ZoneMainTheater, unit("FoeUp", 3, 5, Keywords{}))
+	foeEdge := s.put(1, ZoneMainTheater, unit("FoeEdge", 3, 5, ability.Keywords{}))
+	foeUp := s.put(1, ZoneMainTheater, unit("FoeUp", 3, 5, ability.Keywords{}))
 	foeUp.Modifiers = []Modifier{{Layer: 5, Power: 1}} // effective 4
-	foeDown := s.put(1, ZoneMainTheater, unit("FoeDown", 5, 5, Keywords{}))
+	foeDown := s.put(1, ZoneMainTheater, unit("FoeDown", 5, 5, ability.Keywords{}))
 	foeDown.Modifiers = []Modifier{{Layer: 5, Power: -3}} // effective 2
 	f := paMax3(ability.Filter{Kinds: ability.KindUnit, Other: true})
 	s.script(0)
@@ -139,9 +139,9 @@ func TestFR_TGT_001_PowerAtMostAllStepReadsEffectivePower(t *testing.T) {
 func TestFR_TGT_001_PowerAtMostPilePickReadsPrintedPower(t *testing.T) {
 	// Covers: SVY-R3, FR-ZON-004
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("P2", 2, 1, Keywords{}), unit("P3", 3, 1, Keywords{}),
-		unit("P4", 4, 1, Keywords{}), structure("Wall1", 1, 3, Keywords{}))
-	s.inDiscard(1, unit("Theirs1", 1, 1, Keywords{}))
+	mine := s.inDiscard(0, unit("P2", 2, 1, ability.Keywords{}), unit("P3", 3, 1, ability.Keywords{}),
+		unit("P4", 4, 1, ability.Keywords{}), structure("Wall1", 1, 3, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs1", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, paMax3(ppAllyUnitCards), 0)))
 	asks := ppPicks(s)
@@ -157,8 +157,8 @@ func TestFR_TGT_001_PowerAtMostPilePickReadsPrintedPower(t *testing.T) {
 func TestFR_TGT_001_NoStatCriterionIgnoresAtMost(t *testing.T) {
 	// Covers: FR-TGT-001
 	s := newScene(t)
-	card := s.inDiscard(0, unit("Big Card", 5, 1, Keywords{}))[0]
-	big := s.put(1, ZoneMainTheater, unit("Big", 5, 5, Keywords{}))
+	card := s.inDiscard(0, unit("Big Card", 5, 1, ability.Keywords{}))[0]
+	big := s.put(1, ZoneMainTheater, unit("Big", 5, 5, ability.Keywords{}))
 	pile := ability.Target{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneDiscard, AtMost: 0}}
 	field := ability.Target{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, AtMost: 0}}
 	s.script(0)

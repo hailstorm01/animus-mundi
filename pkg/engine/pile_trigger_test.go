@@ -29,7 +29,7 @@ func deploySelf() ability.Step {
 // remnant is a unit costing 1 that prints only Reserves and the optional
 // "deploy it" pile trigger.
 func remnant(name string) *Card {
-	c := unit(name, 1, 1, Keywords{})
+	c := unit(name, 1, 1, ability.Keywords{})
 	c.ReqCost = 1
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{pileTrigger(true, deploySelf())}}
@@ -274,7 +274,7 @@ func TestFR_TRG_003_PileTriggersFollowTheDiscardOrder(t *testing.T) {
 		return yesAndTimeouts(d)
 	})
 	s.script(1)
-	s.enactWith([]*Card{remnant("Remnant A"), remnant("Remnant B"), unit("Filler", 1, 1, Keywords{})}, discardN(2))
+	s.enactWith([]*Card{remnant("Remnant A"), remnant("Remnant B"), unit("Filler", 1, 1, ability.Keywords{})}, discardN(2))
 	if got := askedKind(s, 0, DecideHand); len(got) != 1 {
 		t.Fatalf("the discard of 2 from 3 cards is asked once, got %d (SVY-R16)", len(got))
 	}
@@ -303,7 +303,7 @@ func TestFR_ZON_004_PileTriggerFizzlesIfItsCardLeftThePile(t *testing.T) {
 		return Answer{Timeout: true}
 	})
 	s.script(1)
-	c := unit("Wanderer", 1, 1, Keywords{})
+	c := unit("Wanderer", 1, 1, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{
 		pileTrigger(false, returnSelf()),
@@ -383,7 +383,7 @@ func TestFR_ZON_004_ActiveZoneGatesTheSource(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	s.script(1)
-	bf := unit("Battlefield Hook", 1, 1, Keywords{})
+	bf := unit("Battlefield Hook", 1, 1, ability.Keywords{})
 	bf.DeployZones = []Zone{ZoneReserves}
 	bf.Ability = &ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookDiscardedFromHand, Optional: true,
 		Effect: ability.Effect{Steps: []ability.Step{deploySelf()}}}}}

@@ -17,7 +17,7 @@ func attackTrigger(steps ...ability.Step) ability.Trigger {
 }
 
 // striker is a unit with the given keywords printing the given triggers.
-func striker(name string, power, health int, kw Keywords, trigs ...ability.Trigger) *Card {
+func striker(name string, power, health int, kw ability.Keywords, trigs ...ability.Trigger) *Card {
 	c := unit(name, power, health, kw)
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
@@ -35,7 +35,7 @@ func TestFR_CBT_002_AttackTriggerResolvesBeforeCombatDamage(t *testing.T) {
 	// the Headquarters takes no combat damage.
 	s := newScene(t)
 	s.g.Players[0].Deck = nil
-	att := s.put(0, ZoneMainTheater, striker("Scout", 3, 3, Keywords{}, attackTrigger(drawN(1))))
+	att := s.put(0, ZoneMainTheater, striker("Scout", 3, 3, ability.Keywords{}, attackTrigger(drawN(1))))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if o := s.g.Outcome; !o.Over || o.Draw || o.Winner != 1 {
 		t.Errorf("a required draw from an empty deck in the Step 2 trigger loses the attacker's controller (FR-WIN-001): outcome %+v", o)
@@ -48,8 +48,8 @@ func TestFR_CBT_002_AttackTriggerResolvesBeforeCombatDamage(t *testing.T) {
 func TestFR_CBT_002_AttackTriggerScratchHappensBeforeCombat(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, striker("Despoiler", 1, 5, Keywords{}, attackTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Despoiler", 1, 5, ability.Keywords{}, attackTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	p := s.g.Players[0]
 	if !scratched(p, cards[0]) || faceDownCount(p) != 1 {
@@ -61,8 +61,8 @@ func TestFR_CBT_002_AttackTriggerScratchHappensBeforeCombat(t *testing.T) {
 func TestFR_CBT_002_AttackTriggerFiresOncePerAttack(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B", "C")...)
-	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, Keywords{}, attackTrigger(drawN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, ability.Keywords{}, attackTrigger(drawN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	p := s.g.Players[0]
 	if !inHand(p, cards[0]) || inHand(p, cards[1]) {
@@ -73,8 +73,8 @@ func TestFR_CBT_002_AttackTriggerFiresOncePerAttack(t *testing.T) {
 func TestFR_CBT_002_OnlyTheAttackerFiresItsAttackTrigger(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(1, vanilla("A")...)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, striker("Defender", 0, 10, Keywords{}, attackTrigger(drawN(1))))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, striker("Defender", 0, 10, ability.Keywords{}, attackTrigger(drawN(1))))
 	s.do(s.attack(att, def))
 	if inHand(s.g.Players[1], cards[0]) {
 		t.Errorf("a defender's attack trigger does not fire when it is attacked (FR-CBT-002)")
@@ -87,8 +87,8 @@ func TestFR_CBT_002_AggressiveAndAttackTriggerAreOrderedTogether(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Picks: []int{0, 1}})
 	s.script(1)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	asked := s.asked(0)
 	if len(asked) != 1 {
@@ -105,8 +105,8 @@ func TestFR_CBT_002_AggressiveAndAttackTriggerAreOrderedTogether(t *testing.T) {
 func TestFR_CBT_002_AggressiveAloneIsNotAskedAbout(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
-	att := s.put(0, ZoneMainTheater, unit("Brawler", 1, 9, Keywords{Aggressive: 2}))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Brawler", 1, 9, ability.Keywords{Aggressive: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("a single Step 2 trigger needs no ordering question (FR-TRG-003): asked %d times", n)
@@ -116,8 +116,8 @@ func TestFR_CBT_002_AggressiveAloneIsNotAskedAbout(t *testing.T) {
 func TestFR_CBT_002_AttackTriggerAloneIsNotAskedAbout(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
-	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, Keywords{}, attackTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, ability.Keywords{}, attackTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("a single Step 2 trigger needs no ordering question (FR-TRG-003): asked %d times", n)
@@ -127,8 +127,8 @@ func TestFR_CBT_002_AttackTriggerAloneIsNotAskedAbout(t *testing.T) {
 func TestFR_CBT_002_TwoPrintedAttackTriggersAreOrderedTogether(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Timeout: true})
-	att := s.put(0, ZoneMainTheater, striker("Twin", 1, 9, Keywords{}, attackTrigger(scratchN(1)), attackTrigger(drawN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Twin", 1, 9, ability.Keywords{}, attackTrigger(scratchN(1)), attackTrigger(drawN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	asked := s.asked(0)
 	if len(asked) != 1 || asked[0].Kind != DecideOrder || len(asked[0].Options) != 2 {
@@ -146,8 +146,8 @@ func TestFR_CBT_002_OrderAnswerDecidesWhichPrintedAttackTriggerResolvesFirst(t *
 		s := newScene(t)
 		cards := s.onTop(0, vanilla("A", "B")...)
 		s.script(0, Answer{Picks: tc.picks})
-		att := s.put(0, ZoneMainTheater, striker("Twin", 1, 9, Keywords{}, attackTrigger(scratchN(1)), attackTrigger(drawN(1))))
-		def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+		att := s.put(0, ZoneMainTheater, striker("Twin", 1, 9, ability.Keywords{}, attackTrigger(scratchN(1)), attackTrigger(drawN(1))))
+		def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 		s.do(s.attack(att, def))
 		p := s.g.Players[0]
 		if tc.scratchFirst {
@@ -165,8 +165,8 @@ func TestFR_CBT_002_OrderAnswerDecidesWhichPrintedAttackTriggerResolvesFirst(t *
 func TestFR_KWD_002f_AggressiveStillGivesPowerWithAnAttackTrigger(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Timeout: true})
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 3)
 	s.endTurn()
@@ -177,8 +177,8 @@ func TestFR_KWD_002f_AggressiveStillGivesPowerWithAnAttackTrigger(t *testing.T) 
 
 func TestFR_KWD_002f_AggressiveAloneStillGivesPowerForTheCombat(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Brawler", 2, 9, Keywords{Aggressive: 3}))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Brawler", 2, 9, ability.Keywords{Aggressive: 3}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 5)
 }
@@ -189,7 +189,7 @@ func TestFR_WIN_001_OpponentsDrawFromEmptyDeckLosesAtThatSweep(t *testing.T) {
 	s := newScene(t)
 	s.g.Players[1].Deck = nil
 	att := s.put(0, ZoneMainTheater, mortal("Worm", 1, 1, killedTrigger(opponentsDraw(2))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(att) {
 		t.Fatalf("precondition: the Worm dies in combat")
@@ -204,7 +204,7 @@ func TestFR_WIN_001_ControllersOwnEmptyDeckIsUnaffectedByOpponentsDraw(t *testin
 	s.g.Players[0].Deck = nil
 	s.onTop(1, vanilla("A", "B")...)
 	att := s.put(0, ZoneMainTheater, mortal("Worm", 1, 1, killedTrigger(opponentsDraw(2))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.g.Outcome.Over {
 		t.Errorf("only the opponent draws, so the controller's empty deck is not a loss (FR-WIN-001): outcome %+v", s.g.Outcome)
@@ -216,7 +216,7 @@ func TestShape_OpponentsDrawIsPerformedByTheOpponentNotTheController(t *testing.
 	mine := s.onTop(0, vanilla("X")...)
 	theirs := s.onTop(1, vanilla("A", "B", "C")...)
 	att := s.put(0, ZoneMainTheater, mortal("Worm", 1, 1, killedTrigger(opponentsDraw(2))))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	p0, p1 := s.g.Players[0], s.g.Players[1]
 	if !inHand(p1, theirs[0]) || !inHand(p1, theirs[1]) || inHand(p1, theirs[2]) {
@@ -233,7 +233,7 @@ func TestShape_OpponentsScratchIsPerformedByTheOpponent(t *testing.T) {
 	theirs := s.onTop(1, vanilla("A", "B")...)
 	att := s.put(0, ZoneMainTheater, mortal("Worm", 1, 1, killedTrigger(
 		ability.Step{Op: ability.OpScratch, Subject: ability.SubjectOpponents, Amount: ability.Value{N: 1}})))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if !scratched(s.g.Players[1], theirs[0]) {
 		t.Errorf("the opponent scratches their own top card")
@@ -253,8 +253,8 @@ func gatedKilled(turn ability.TurnOwner) ability.Trigger {
 func TestShape_TurnYoursDeathTriggerFiresOnItsControllersTurn(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, striker("Scrivener", 1, 1, Keywords{}, gatedKilled(ability.TurnYours)))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Scrivener", 1, 1, ability.Keywords{}, gatedKilled(ability.TurnYours)))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(att) {
 		t.Fatalf("precondition: the attacker dies")
@@ -268,8 +268,8 @@ func TestShape_TurnYoursDeathTriggerDoesNotFireOnTheOpponentsTurn(t *testing.T) 
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
 	s.endTurn()
-	mine := s.put(0, ZoneMainTheater, striker("Scrivener", 1, 1, Keywords{}, gatedKilled(ability.TurnYours)))
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 5, Keywords{}))
+	mine := s.put(0, ZoneMainTheater, striker("Scrivener", 1, 1, ability.Keywords{}, gatedKilled(ability.TurnYours)))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 5, ability.Keywords{}))
 	s.do(s.attack(hitter, mine))
 	if s.alive(mine) {
 		t.Fatalf("precondition: the defender dies")
@@ -282,8 +282,8 @@ func TestShape_TurnYoursDeathTriggerDoesNotFireOnTheOpponentsTurn(t *testing.T) 
 func TestShape_UngatedDeathTriggerFiresOnEitherTurn(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, striker("Twin", 1, 1, Keywords{}, gatedKilled(ability.TurnAny)))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Twin", 1, 1, ability.Keywords{}, gatedKilled(ability.TurnAny)))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 5, 5, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if !inHand(s.g.Players[0], cards[0]) {
 		t.Errorf("an ungated death trigger fires on its controller's turn")
@@ -292,8 +292,8 @@ func TestShape_UngatedDeathTriggerFiresOnEitherTurn(t *testing.T) {
 	s2 := newScene(t)
 	cards2 := s2.onTop(0, vanilla("A", "B")...)
 	s2.endTurn()
-	mine := s2.put(0, ZoneMainTheater, striker("Twin", 1, 1, Keywords{}, gatedKilled(ability.TurnAny)))
-	hitter := s2.put(1, ZoneMainTheater, unit("Hitter", 5, 5, Keywords{}))
+	mine := s2.put(0, ZoneMainTheater, striker("Twin", 1, 1, ability.Keywords{}, gatedKilled(ability.TurnAny)))
+	hitter := s2.put(1, ZoneMainTheater, unit("Hitter", 5, 5, ability.Keywords{}))
 	s2.do(s2.attack(hitter, mine))
 	if !inHand(s2.g.Players[0], cards2[0]) {
 		t.Errorf("an ungated death trigger also fires on the opponent's turn")
@@ -306,8 +306,8 @@ func TestShape_TurnYoursAttackTriggerFiresWhenAttackingOnYourTurn(t *testing.T) 
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A")...)
 	trig := ability.Trigger{Hook: ability.HookAttacks, Turn: ability.TurnYours, Effect: ability.Effect{Steps: []ability.Step{drawN(1)}}}
-	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, Keywords{}, trig))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Scout", 1, 9, ability.Keywords{}, trig))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if !inHand(s.g.Players[0], cards[0]) {
 		t.Errorf("an on-your-turn attack trigger fires when its controller attacks on their turn")

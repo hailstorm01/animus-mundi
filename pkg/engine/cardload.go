@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,29 +15,6 @@ import (
 	"animus-mundi/pkg/engine/ability"
 	"animus-mundi/pkg/engine/cards"
 )
-
-// keywordN matches a numeric keyword's N, which always prints.
-var keywordN = regexp.MustCompile(`^-?\d+$`)
-
-// ParseKeywordLine parses one standalone keyword line from rules text
-// (keywordDefs).
-func ParseKeywordLine(line string, kw *Keywords) bool {
-	for _, d := range keywordDefs {
-		if d.flag != nil {
-			if line == d.name {
-				*d.flag(kw) = true
-				return true
-			}
-			continue
-		}
-		if n, ok := strings.CutPrefix(line, d.name+" "); ok && keywordN.MatchString(n) {
-			v, _ := strconv.Atoi(n)
-			*d.num(kw) += v
-			return true
-		}
-	}
-	return false
-}
 
 // LoadCards reads every CSV in dir (data/cards) and returns cards by name.
 func LoadCards(dir string) (map[string]*Card, error) {
@@ -190,7 +166,7 @@ func readCards(r io.Reader) ([]*Card, error) {
 			if line == "" || line == "--" {
 				continue
 			}
-			if !ParseKeywordLine(line, &c.Keywords) {
+			if !ability.ParseKeywordLine(line, &c.Keywords) {
 				c.Unsupported = append(c.Unsupported, line)
 			}
 		}

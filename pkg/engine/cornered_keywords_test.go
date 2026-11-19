@@ -21,7 +21,7 @@ import (
 // corneredCard is a unit that prints the given triggers and, while its
 // controller is Cornered, the keywords c.
 func corneredCard(name string, power, health int, c ability.WhileCornered, trigs ...ability.Trigger) *Card {
-	card := unit(name, power, health, Keywords{})
+	card := unit(name, power, health, ability.Keywords{})
 	card.Ability = &ability.Def{Triggers: trigs, Cornered: c}
 	return card
 }
@@ -38,7 +38,7 @@ func aggressiveItems(items []StackItem) int {
 }
 
 // snapKeywords returns the Snapshot's Keywords for the asset.
-func snapKeywords(t *testing.T, s *scene, a *Asset) Keywords {
+func snapKeywords(t *testing.T, s *scene, a *Asset) ability.Keywords {
 	t.Helper()
 	for _, as := range s.g.Snapshot().Theater {
 		if as.ID == a.ID {
@@ -46,7 +46,7 @@ func snapKeywords(t *testing.T, s *scene, a *Asset) Keywords {
 		}
 	}
 	t.Fatalf("asset %d is not in the Snapshot's Theater", a.ID)
-	return Keywords{}
+	return ability.Keywords{}
 }
 
 // damageEvent returns the damage event whose target is a.
@@ -98,14 +98,14 @@ func TestCard_Allshan_HasAggressiveOnlyWhileCornered(t *testing.T) {
 	// Covers: FR-KWD-002e, FR-LAY-001
 	s := newScene(t)
 	al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	s.put(1, ZoneMainTheater, unit("Enemy", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 5, ability.Keywords{}))
 	if got := s.g.Keywords(al).Aggressive; got != 0 {
 		t.Errorf("1 against 1 is not Cornered, so Allshan has no Aggressive: got %d (SVY-R18)", got)
 	}
 	if got := snapKeywords(t, s, al).Aggressive; got != 0 {
 		t.Errorf("Snapshot keywords agree: not Cornered, Aggressive 0, got %d", got)
 	}
-	extra := s.put(1, ZoneMainTheater, unit("Second Enemy", 0, 5, Keywords{}))
+	extra := s.put(1, ZoneMainTheater, unit("Second Enemy", 0, 5, ability.Keywords{}))
 	if got := s.g.Keywords(al).Aggressive; got != 3 {
 		t.Errorf("Cornered (1 against 2): Allshan has Aggressive 3, got %d (SVY-R18)", got)
 	}
@@ -122,11 +122,11 @@ func TestCard_Allshan_InReservesHasAggressiveWhileItsControllerIsCornered(t *tes
 	// Covers: FR-KWD-002e
 	s := newScene(t)
 	al := s.put(0, ZoneReserves, s.card("Allshan, Chainbreaker Revenant"))
-	s.put(1, ZoneMainTheater, unit("Enemy", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 5, ability.Keywords{}))
 	if got := s.g.Keywords(al).Aggressive; got != 3 {
 		t.Errorf("Cornered belongs to the controller and counts the Main Theater only (0 against 1): Aggressive 3 in Reserves, got %d", got)
 	}
-	s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
 	if got := s.g.Keywords(al).Aggressive; got != 0 {
 		t.Errorf("1 against 1 is not Cornered: Aggressive 0, got %d", got)
 	}
@@ -137,8 +137,8 @@ func TestCard_Allshan_AggressiveComesFromTheKeyword(t *testing.T) {
 	t.Run("cornered", func(t *testing.T) {
 		s := newScene(t)
 		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(al, def))
 		if n := aggressiveItems(*items); n != 1 {
@@ -154,7 +154,7 @@ func TestCard_Allshan_AggressiveComesFromTheKeyword(t *testing.T) {
 	t.Run("not cornered", func(t *testing.T) {
 		s := newScene(t)
 		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(al, def))
 		if n := aggressiveItems(*items); n != 0 {
@@ -170,8 +170,8 @@ func TestFR_KWD_002f_CorneredAggressiveIsLabelledTheKeyword(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Timeout: true})
 	att := s.put(0, ZoneMainTheater, corneredCard("Raider", 1, 9, ability.WhileCornered{Aggressive: 3}, attackTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Second Dummy", 0, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Second Dummy", 0, 20, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	d := s.asked(0)
 	if len(d) != 1 || d[0].Kind != DecideOrder || len(d[0].Options) != 2 {
@@ -202,8 +202,8 @@ func TestFR_LAY_003_CorneredAggressiveIsCheckedWhenTheAttackHappens(t *testing.T
 	t.Run("cornered at declaration then evened by the printed trigger", func(t *testing.T) {
 		s := newScene(t)
 		att := s.put(0, ZoneMainTheater, corneredCard("Raider", 2, 9, ability.WhileCornered{Aggressive: 3}, kill(true)))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 1, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 1, ability.Keywords{}))
 		pickTarget(s, 0, victim)
 		items := recordPlaced(s)
 		s.do(s.attack(att, def))
@@ -218,11 +218,11 @@ func TestFR_LAY_003_CorneredAggressiveIsCheckedWhenTheAttackHappens(t *testing.T
 	t.Run("not cornered at declaration then cornered by Step 3", func(t *testing.T) {
 		s := newScene(t)
 		att := s.put(0, ZoneMainTheater, corneredCard("Raider", 2, 9, ability.WhileCornered{Aggressive: 3}, kill(false)))
-		ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 1, Keywords{}))
-		s.put(0, ZoneMainTheater, unit("Second Ally", 0, 5, Keywords{}))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Third Wall", 0, 20, Keywords{}))
+		ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 1, ability.Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Second Ally", 0, 5, ability.Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Third Wall", 0, 20, ability.Keywords{}))
 		pickTarget(s, 0, ally)
 		items := recordPlaced(s)
 		s.do(s.attack(att, def))
@@ -243,11 +243,11 @@ func TestFR_KWD_002e_CorneredResistantReducesDamageOnlyWhileCornered(t *testing.
 	setup := func(t *testing.T, cornered bool, attacker *Card) (s *scene, u, wall, a *Asset) {
 		s = newScene(t)
 		u = s.put(1, ZoneMainTheater, corneredCard("Tough", 0, 20, ability.WhileCornered{Resistant: 1}))
-		wall = s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		wall = s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
 		a = s.put(0, ZoneMainTheater, attacker)
 		if cornered {
-			s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-			s.put(0, ZoneMainTheater, unit("Second Ally", 0, 5, Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Second Ally", 0, 5, ability.Keywords{}))
 		}
 		return s, u, wall, a
 	}
@@ -258,7 +258,7 @@ func TestFR_KWD_002e_CorneredResistantReducesDamageOnlyWhileCornered(t *testing.
 		wantResis int
 	}{{"cornered", true, 2, 1}, {"not cornered", false, 3, 0}} {
 		t.Run("combat hit "+tc.name, func(t *testing.T) {
-			s, u, _, a := setup(t, tc.cornered, unit("Hitter", 3, 9, Keywords{}))
+			s, u, _, a := setup(t, tc.cornered, unit("Hitter", 3, 9, ability.Keywords{}))
 			s.do(s.attack(a, u))
 			s.wantDamage(u, tc.wantDmg)
 			if e := damageEvent(t, s, u); e.Resistant != tc.wantResis {
@@ -266,7 +266,7 @@ func TestFR_KWD_002e_CorneredResistantReducesDamageOnlyWhileCornered(t *testing.
 			}
 		})
 		t.Run("effect damage "+tc.name, func(t *testing.T) {
-			zap := striker("Zapper", 0, 9, Keywords{}, targetedAttack([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(3, 0)))
+			zap := striker("Zapper", 0, 9, ability.Keywords{}, targetedAttack([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(3, 0)))
 			s, u, wall, a := setup(t, tc.cornered, zap)
 			pickTarget(s, 0, u)
 			s.do(s.attack(a, wall))
@@ -285,8 +285,8 @@ func TestFR_LAY_003_SimultaneousDamageLocksCorneredKeywords(t *testing.T) {
 	t.Run("combat", func(t *testing.T) {
 		s := newScene(t)
 		u := s.put(0, ZoneMainTheater, corneredCard("Tough", 5, 20, ability.WhileCornered{Resistant: 1}))
-		def := s.put(1, ZoneMainTheater, unit("Brittle", 4, 1, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Brittle", 4, 1, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
 		s.do(s.attack(u, def))
 		if s.alive(def) {
 			t.Fatalf("precondition: the defender is destroyed, which evens the counts")
@@ -298,12 +298,12 @@ func TestFR_LAY_003_SimultaneousDamageLocksCorneredKeywords(t *testing.T) {
 	})
 	t.Run("area damage", func(t *testing.T) {
 		s := newScene(t)
-		weak := s.put(1, ZoneMainTheater, unit("Weak", 0, 3, Keywords{}))
+		weak := s.put(1, ZoneMainTheater, unit("Weak", 0, 3, ability.Keywords{}))
 		u := s.put(0, ZoneMainTheater, corneredCard("Tough", 0, 20, ability.WhileCornered{Resistant: 1}))
-		src := s.put(0, ZoneMainTheater, striker("Sweeper", 0, 20, Keywords{},
+		src := s.put(0, ZoneMainTheater, striker("Sweeper", 0, 20, ability.Keywords{},
 			attackTrigger(allDamage(3, ability.Filter{Kinds: ability.KindUnit}))))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
 		s.do(s.attack(src, def))
 		if s.alive(weak) {
 			t.Fatalf("precondition: the lethal area damage destroys the enemy listed before the unit")
@@ -324,8 +324,8 @@ func TestFR_ZON_005_FaceDownAssetHasNoCorneredKeyword(t *testing.T) {
 		c := corneredCard("Hidden", 1, 1, ability.WhileCornered{Aggressive: 3, Resistant: 1}, attackTrigger(scratchN(1)))
 		f := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: c, Owner: 0}, Controller: 0, FaceDown: true}
 		s.g.placeOnBattlefield(f, ZoneMainTheater)
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
 		if got, want := s.g.Keywords(f), f.Printed().Keywords; !reflect.DeepEqual(got, want) {
 			t.Errorf("a face-down asset has the Scratch Company face's keywords %+v, got %+v (FR-ZON-005)", want, got)
 		}
@@ -340,8 +340,8 @@ func TestFR_ZON_005_FaceDownAssetHasNoCorneredKeyword(t *testing.T) {
 		c := corneredCard("Hidden", 1, 1, ability.WhileCornered{Aggressive: 3, Resistant: 1})
 		f := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: c, Owner: 1}, Controller: 1, FaceDown: true}
 		s.g.placeOnBattlefield(f, ZoneMainTheater)
-		a := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
-		s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+		a := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
 		s.do(s.attack(a, f))
 		if e := damageEvent(t, s, f); e.Resistant != 0 || e.Amount != 1 {
 			t.Errorf("a face-down asset has no Resistant, so the hit of 1 is not reduced: Resistant %d, committed %d", e.Resistant, e.Amount)

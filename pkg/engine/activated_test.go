@@ -33,7 +33,7 @@ func actAbility(costs []ability.Cost, ss ...ability.Step) ability.Activated {
 
 // actUnit is a 1/5 unit printing the activated abilities, and the triggers if any.
 func actUnit(name string, trigs []ability.Trigger, acts ...ability.Activated) *Card {
-	c := unit(name, 1, 5, Keywords{})
+	c := unit(name, 1, 5, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: trigs, Activated: acts}
 	return c
 }
@@ -161,7 +161,7 @@ func TestFR_ACT_001_RejectsWhatHasNoSuchAbility(t *testing.T) {
 	one := s.put(0, ZoneMainTheater, actUnit("One", nil, actAbility(nil, drawN(1))))
 	s.reject(activate(one, 1))
 	s.reject(activate(one, -1))
-	bare := s.put(0, ZoneMainTheater, unit("Bare", 1, 1, Keywords{}))
+	bare := s.put(0, ZoneMainTheater, unit("Bare", 1, 1, ability.Keywords{}))
 	s.reject(activate(bare, 0))
 	trigOnly := s.put(0, ZoneMainTheater, mortal("Trigger Only", 1, 1, killedTrigger(drawN(1))))
 	s.reject(activate(trigOnly, 0))
@@ -291,7 +291,7 @@ func TestFR_ACT_001_SacrificedCardIsNotAChoice(t *testing.T) {
 	}
 	t.Run("one other card", func(t *testing.T) {
 		s := newScene(t)
-		other := s.inDiscard(0, unit("Other", 1, 1, Keywords{}))[0]
+		other := s.inDiscard(0, unit("Other", 1, 1, ability.Keywords{}))[0]
 		a := s.put(0, ZoneMainTheater, recall())
 		s.script(0, Answer{Picks: []int{0}})
 		s.do(activate(a, 0))
@@ -309,7 +309,7 @@ func TestFR_ACT_001_SacrificedCardIsNotAChoice(t *testing.T) {
 	})
 	t.Run("two other cards", func(t *testing.T) {
 		s := newScene(t)
-		others := s.inDiscard(0, unit("Other One", 1, 1, Keywords{}), unit("Other Two", 1, 1, Keywords{}))
+		others := s.inDiscard(0, unit("Other One", 1, 1, ability.Keywords{}), unit("Other Two", 1, 1, ability.Keywords{}))
 		a := s.put(0, ZoneMainTheater, recall())
 		s.script(0, Answer{Picks: []int{0}})
 		s.do(activate(a, 0))
@@ -378,7 +378,7 @@ func TestFR_TRN_003a_ActivatedCostTriggersResolveFirst(t *testing.T) {
 func TestFR_TRN_003a_ReplacedKillSelfCostStaysPaid(t *testing.T) {
 	// Covers: SVY-R15, FR-REP-001
 	s := newScene(t)
-	guardian := structure("Guardian", 1, 9, Keywords{})
+	guardian := structure("Guardian", 1, 9, ability.Keywords{})
 	guardian.Ability = &ability.Def{Replacements: []ability.Replacement{{
 		Event:  ability.WouldBeDestroyed,
 		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit},
@@ -412,8 +412,8 @@ func TestFR_TGT_001_ActivatedTargetChosenOnDeclaration(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
 		Costs: []ability.Cost{actRes(0, 1)}, Effect: killChosenOpposing()}))
-	u1 := s.put(1, ZoneMainTheater, unit("Foe One", 1, 1, Keywords{}))
-	u2 := s.put(1, ZoneMainTheater, unit("Foe Two", 1, 1, Keywords{}))
+	u1 := s.put(1, ZoneMainTheater, unit("Foe One", 1, 1, ability.Keywords{}))
+	u2 := s.put(1, ZoneMainTheater, unit("Foe Two", 1, 1, ability.Keywords{}))
 	s.setPool(0, 0, 1)
 	s.scriptRefs(0, nil, u2)
 	s.do(activate(a, 0))
@@ -439,9 +439,9 @@ func TestFR_KWD_002h_WardBlocksActivatedTarget(t *testing.T) {
 	t.Run("another unit is offered", func(t *testing.T) {
 		s := newScene(t)
 		a := s.put(0, ZoneMainTheater, card())
-		p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 1, Keywords{}))
-		p2 := s.put(1, ZoneMainTheater, unit("Plain Two", 1, 1, Keywords{}))
-		w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+		p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 1, ability.Keywords{}))
+		p2 := s.put(1, ZoneMainTheater, unit("Plain Two", 1, 1, ability.Keywords{}))
+		w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 		s.script(0, Answer{Picks: []int{0}})
 		s.do(activate(a, 0))
 		asks := s.asked(0)
@@ -458,8 +458,8 @@ func TestFR_KWD_002h_WardBlocksActivatedTarget(t *testing.T) {
 	t.Run("one plain unit and a Ward unit", func(t *testing.T) {
 		s := newScene(t)
 		a := s.put(0, ZoneMainTheater, card())
-		p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 1, Keywords{}))
-		w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+		p1 := s.put(1, ZoneMainTheater, unit("Plain", 1, 1, ability.Keywords{}))
+		w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 		s.script(0, Answer{Picks: []int{0}})
 		s.do(activate(a, 0))
 		for _, d := range s.asked(0) {
@@ -480,7 +480,7 @@ func TestFR_TGT_003_FizzledAbilityLeavesSourceOnBattlefield(t *testing.T) {
 	a := s.put(0, ZoneMainTheater, actUnit("Tapper",
 		[]ability.Trigger{{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{sweepFoes}}}},
 		ability.Activated{Costs: []ability.Cost{actExhaust}, Effect: killChosenOpposing()}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.do(activate(a, 0))
 	if s.alive(foe) {
@@ -538,7 +538,7 @@ func TestFR_ACT_001_NoLegalTargetCannotActivate(t *testing.T) {
 	})
 	t.Run("only non-matching cards", func(t *testing.T) {
 		s := newScene(t)
-		s.inDiscard(0, unit("Plain", 1, 1, Keywords{}))
+		s.inDiscard(0, unit("Plain", 1, 1, ability.Keywords{}))
 		a := s.put(0, ZoneMainTheater, actRecaller())
 		actNotOffered(t, s, a, 0, "a pile holding only a card that is not a Fungus")
 	})
@@ -556,7 +556,7 @@ func TestFR_ACT_001_NoLegalTargetCannotActivate(t *testing.T) {
 		s := newScene(t)
 		a := s.put(0, ZoneMainTheater, actRecaller())
 		actNotOffered(t, s, a, 0, "an empty discard pile")
-		fungus := s.inDiscard(0, fsSub(unit("Spore", 1, 1, Keywords{}), "Fungus"))[0]
+		fungus := s.inDiscard(0, fsSub(unit("Spore", 1, 1, ability.Keywords{}), "Fungus"))[0]
 		if !offersActivate(s.g, a, 0) {
 			t.Fatalf("with a matching card in the pile the ability is offered (SVY-R36)")
 		}
@@ -603,7 +603,7 @@ func TestFR_ACT_001_WardedOnlyTargetCannotActivate(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
 		Costs: []ability.Cost{actRes(0, 1)}, Effect: killChosenOpposing()}))
-	w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	w := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.setPool(0, 0, 1)
 	actNotOffered(t, s, a, 0, "the only opposing unit is Warded")
 	if !s.alive(w) {
@@ -625,14 +625,14 @@ func TestFR_ACT_001_AnotherSlotNeedsTwoEntities(t *testing.T) {
 	t.Run("one legal entity", func(t *testing.T) {
 		s := newScene(t)
 		a := s.put(0, ZoneMainTheater, card())
-		s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
 		actNotOffered(t, s, a, 0, "one unit cannot fill two slots that must differ")
 	})
 	t.Run("two legal entities", func(t *testing.T) {
 		s := newScene(t)
 		a := s.put(0, ZoneMainTheater, card())
-		x := s.put(1, ZoneMainTheater, unit("X", 4, 30, Keywords{}))
-		y := s.put(1, ZoneMainTheater, unit("Y", 1, 30, Keywords{}))
+		x := s.put(1, ZoneMainTheater, unit("X", 4, 30, ability.Keywords{}))
+		y := s.put(1, ZoneMainTheater, unit("Y", 1, 30, ability.Keywords{}))
 		if !offersActivate(s.g, a, 0) {
 			t.Fatalf("two units can fill the two slots, so the ability is offered (SVY-R34)")
 		}
@@ -673,10 +673,10 @@ func TestFR_ACT_001_ChooseNNeedsEnoughLegalModes(t *testing.T) {
 			}))
 			var foe, ally *Asset
 			if tc.foe {
-				foe = s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+				foe = s.put(1, ZoneMainTheater, unit("Foe", 1, 1, ability.Keywords{}))
 			}
 			if tc.ally {
-				ally = s.put(0, ZoneMainTheater, unit("Friend", 1, 1, Keywords{}))
+				ally = s.put(0, ZoneMainTheater, unit("Friend", 1, 1, ability.Keywords{}))
 			}
 			if !tc.offered {
 				actNotOffered(t, s, a, 0, tc.name)
@@ -722,7 +722,7 @@ func TestFR_ACT_001_LegalTargetDoesNotExcuseACost(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, actUnit("Assassin", nil, ability.Activated{
 		Costs: []ability.Cost{actRes(2, 0)}, Effect: killChosenOpposing()}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 1, ability.Keywords{}))
 	s.setPool(0, 1, 0)
 	actNotOffered(t, s, a, 0, "a legal target exists but R2 cannot be paid")
 	if !s.alive(foe) {
@@ -774,7 +774,7 @@ func TestActivatedCost_ReadsResourcesAndOtherCosts(t *testing.T) {
 			cost := ability.Cost{Kind: kind, Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindStructure}}
 			a := s.put(0, ZoneMainTheater, actUnit("Engine", nil, actAbility([]ability.Cost{cost}, drawN(1))))
 			check(t, s.g, a, 0, 0, 0, false)
-			s.put(0, ZoneMainTheater, structure("Wall", 0, 9, Keywords{}))
+			s.put(0, ZoneMainTheater, structure("Wall", 0, 9, ability.Keywords{}))
 			check(t, s.g, a, 0, 0, 0, true)
 		})
 	}

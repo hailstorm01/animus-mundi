@@ -60,7 +60,7 @@ func TestCard_AnimocepsSporeCloud_PrintedStats(t *testing.T) {
 func TestCard_AnimocepsSporeCloud_EffectDamageToAlliedUnitLandsOnTheCloud(t *testing.T) {
 	s := newScene(t)
 	cloud := s.put(0, ZoneMainTheater, s.card(sporeCloudName))
-	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
 	s.enactWith(nil, allDamage(3, sporeAlliedUnits()))
 	s.wantDamage(u, 0)
 	s.wantDamage(cloud, 3)
@@ -74,8 +74,8 @@ func TestCard_AnimocepsSporeCloud_EffectDamageToAlliedUnitLandsOnTheCloud(t *tes
 func TestCard_AnimocepsSporeCloud_CombatHitOnAlliedDefenderLandsOnTheCloud(t *testing.T) {
 	s := newScene(t)
 	cloud := s.put(1, ZoneMainTheater, s.card(sporeCloudName))
-	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 4, 10, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Ward", 2, 5, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 4, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(cloud, 4)
 	s.wantDamage(def, 0)
@@ -86,7 +86,7 @@ func TestCard_AnimocepsSporeCloud_CombatHitOnAlliedDefenderLandsOnTheCloud(t *te
 func TestCard_AnimocepsSporeCloud_UnitInAnotherZoneIsNotCovered(t *testing.T) {
 	s := newScene(t)
 	cloud := s.put(0, ZoneMainTheater, s.card(sporeCloudName))
-	u := s.put(0, ZoneReserves, unit("Reserve Ward", 1, 5, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Reserve Ward", 1, 5, ability.Keywords{}))
 	s.enactWith(nil, allDamage(2, sporeAlliedUnits()))
 	s.wantDamage(u, 2)
 	s.wantDamage(cloud, 0)
@@ -96,7 +96,7 @@ func TestCard_AnimocepsSporeCloud_UnitInAnotherZoneIsNotCovered(t *testing.T) {
 func TestCard_AnimocepsSporeCloud_EnemyUnitsAreNotCovered(t *testing.T) {
 	s := newScene(t)
 	cloud := s.put(0, ZoneMainTheater, s.card(sporeCloudName))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	s.enactWith(nil, allDamage(2, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))
 	s.wantDamage(foe, 2)
 	s.wantDamage(cloud, 0)
@@ -106,7 +106,7 @@ func TestCard_AnimocepsSporeCloud_EnemyUnitsAreNotCovered(t *testing.T) {
 func TestCard_AnimocepsSporeCloud_AlliedStructuresAreNotCovered(t *testing.T) {
 	s := newScene(t)
 	cloud := s.put(0, ZoneMainTheater, s.card(sporeCloudName))
-	wall := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
+	wall := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
 	s.enactWith(nil, allDamage(2, ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindStructure}))
 	s.wantDamage(wall, 2)
 	s.wantDamage(cloud, 2) // its own damage as a structure, nothing redirected onto it
@@ -118,7 +118,7 @@ func TestCard_AnimocepsSporeCloud_TwoCloudsTheUnitsControllerChooses(t *testing.
 	s := newScene(t)
 	a := s.put(1, ZoneMainTheater, s.card(sporeCloudName))
 	b := s.put(1, ZoneMainTheater, s.card(sporeCloudName))
-	u := s.put(1, ZoneMainTheater, unit("Ward", 1, 5, Keywords{}))
+	u := s.put(1, ZoneMainTheater, unit("Ward", 1, 5, ability.Keywords{}))
 	s.script(1, Answer{Picks: []int{1}})
 	s.enactWith(nil, allDamage(3, ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}))
 	if n := len(replacementAsks(s, 0)); n != 0 {
@@ -140,7 +140,7 @@ func TestCard_AnimocepsSporeCloud_FaceDownCloudRedirectsNothing(t *testing.T) {
 	down := s.putScratch(0)
 	down.Inst.Card = s.card(sporeCloudName)
 	s.moveTo(down, ZoneMainTheater)
-	horror := unit("Horror", 1, 5, Keywords{})
+	horror := unit("Horror", 1, 5, ability.Keywords{})
 	horror.Subtypes = []string{"Horror"}
 	u := s.put(0, ZoneMainTheater, horror)
 	f := sporeAlliedUnits()

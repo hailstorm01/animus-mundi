@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -20,7 +21,7 @@ func snapPiles(g *Game) piles {
 }
 
 func (s *scene) loose(p PlayerID) *Instance {
-	return &Instance{ID: s.g.newID(), Card: unit("Loose", 1, 1, Keywords{}), Owner: p}
+	return &Instance{ID: s.g.newID(), Card: unit("Loose", 1, 1, ability.Keywords{}), Owner: p}
 }
 
 func samePiles(a, b piles) bool {
@@ -114,7 +115,7 @@ func TestTakeCard_FromEachPile(t *testing.T) {
 
 func TestTakeCard_InNoPile(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneReserves, unit("Soldier", 1, 1, Keywords{}))
+	a := s.put(0, ZoneReserves, unit("Soldier", 1, 1, ability.Keywords{}))
 	before := snapPiles(s.g)
 	if s.g.takeCard(a.Inst) {
 		t.Errorf("takeCard on a battlefield asset's instance = true, want false")

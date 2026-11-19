@@ -32,8 +32,8 @@ func placeDepths(log []Event) []int {
 }
 
 func raiderWithPrinted(s *scene) (att, def *Asset) {
-	att = s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
-	def = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+	att = s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{Aggressive: 2}, attackTrigger(scratchN(1))))
+	def = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 	return att, def
 }
 
@@ -107,9 +107,9 @@ func TestFR_KWD_002f_AggressiveConstructor(t *testing.T) {
 func TestFR_KWD_002f_AggressiveIsReadWhenTheAttackHappens(t *testing.T) {
 	// (i) printed Aggressive 2, removed before the attack.
 	s := newScene(t)
-	c := unit("Brawler", 1, 9, Keywords{Aggressive: 2})
+	c := unit("Brawler", 1, 9, ability.Keywords{Aggressive: 2})
 	att := s.put(0, ZoneMainTheater, c)
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 	c.Keywords.Aggressive = 0
 	items := recordPlaced(s)
 	s.do(s.attack(att, def))
@@ -120,9 +120,9 @@ func TestFR_KWD_002f_AggressiveIsReadWhenTheAttackHappens(t *testing.T) {
 
 	// (ii) none printed, granted before the attack.
 	s = newScene(t)
-	c = unit("Brawler", 1, 9, Keywords{})
+	c = unit("Brawler", 1, 9, ability.Keywords{})
 	att = s.put(0, ZoneMainTheater, c)
-	def = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+	def = s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 	c.Keywords.Aggressive = 2
 	items = recordPlaced(s)
 	s.do(s.attack(att, def))
@@ -134,8 +134,8 @@ func TestFR_KWD_002f_AggressiveIsReadWhenTheAttackHappens(t *testing.T) {
 
 func TestFR_KWD_002f_AggressiveResolvesAndExpires(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Brawler", 1, 9, Keywords{Aggressive: 2}))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Brawler", 1, 9, ability.Keywords{Aggressive: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 3)
 	s.endTurn()
@@ -150,8 +150,8 @@ func TestFR_ZON_004_AggressiveFizzlesWhenTheAttackerLeaves(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Picks: []int{0, 1}})
 	suicide := attackTrigger(ability.Step{Op: ability.OpDealDamage, Subject: ability.SubjectSelf, Amount: ability.Value{N: 20}})
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{Aggressive: 2}, suicide))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{Aggressive: 2}, suicide))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(att) {
 		t.Fatalf("precondition: the attacker dies to its own trigger")

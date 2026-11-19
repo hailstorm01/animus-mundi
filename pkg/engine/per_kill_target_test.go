@@ -28,7 +28,7 @@ func pkManeuver(different bool) *Card {
 
 // pkCard is a unit card that prints only Reserves, so deploying it asks no zone.
 func pkCard(name string) *Card {
-	c := unit(name, 1, 1, Keywords{})
+	c := unit(name, 1, 1, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	return c
 }

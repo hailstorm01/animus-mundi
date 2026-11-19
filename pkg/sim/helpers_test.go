@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,12 +19,12 @@ func hq(power, health int) *engine.Card {
 		Power: power, Health: health, ReqYield: 1, TacYield: 2, DeployZones: []engine.Zone{engine.ZoneHeadquarters}}
 }
 
-func unit(name string, power, health int, kw engine.Keywords) *engine.Card {
+func unit(name string, power, health int, kw ability.Keywords) *engine.Card {
 	return &engine.Card{Name: name, Type: engine.TypeUnit, Power: power, Health: health, ReqYield: 1, TacYield: 1,
 		DeployZones: []engine.Zone{engine.ZoneReserves, engine.ZoneMainTheater}, Keywords: kw}
 }
 
-func structure(name string, power, health int, kw engine.Keywords) *engine.Card {
+func structure(name string, power, health int, kw ability.Keywords) *engine.Card {
 	return &engine.Card{Name: name, Type: engine.TypeStructure, Power: power, Health: health, ReqYield: 2, TacYield: 2,
 		DeployZones: []engine.Zone{engine.ZoneMainTheater}, Keywords: kw}
 }
@@ -61,7 +62,7 @@ func newScene(t *testing.T) *scene {
 	t.Helper()
 	filler := make([]*engine.Card, 20)
 	for i := range filler {
-		filler[i] = unit("Filler", 1, 1, engine.Keywords{})
+		filler[i] = unit("Filler", 1, 1, ability.Keywords{})
 	}
 	g, err := engine.NewGame(engine.Config{
 		Seed:      1,

@@ -25,8 +25,8 @@ func exhaustCostManeuver(name string, req, tac int, e ability.Effect) *Card {
 func TestFR_TRN_003a_ExhaustCostPaidOnDeclaration(t *testing.T) {
 	// Covers: FR-TRN-003, FR-MNV-001, FR-CAP-001
 	s := newScene(t)
-	u1 := s.put(0, ZoneMainTheater, unit("First", 1, 5, Keywords{}))
-	u2 := s.put(0, ZoneMainTheater, unit("Second", 1, 5, Keywords{}))
+	u1 := s.put(0, ZoneMainTheater, unit("First", 1, 5, ability.Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("Second", 1, 5, ability.Keywords{}))
 	inst := s.give(0, exhaustCostManeuver("Fungus", 1, 1, steps(drawN(1))))
 	p := s.g.Players[0]
 	p.Req, p.Tac = 1, 1
@@ -53,9 +53,9 @@ func TestFR_TRN_003a_ExhaustCostPaidOnDeclaration(t *testing.T) {
 func TestFR_TRN_003a_ExhaustCostNeedsAReadiedUnit(t *testing.T) {
 	// Covers: SVY-R29, FR-TRN-003
 	s := newScene(t)
-	tired := s.put(0, ZoneMainTheater, unit("Tired Ally", 1, 5, Keywords{}))
+	tired := s.put(0, ZoneMainTheater, unit("Tired Ally", 1, 5, ability.Keywords{}))
 	tired.Exhausted = true
-	s.put(0, ZoneMainTheater, structure("Allied Wall", 0, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, structure("Allied Wall", 0, 5, ability.Keywords{}))
 	inst := s.give(0, exhaustCostManeuver("Fungus", 1, 1, steps(drawN(1))))
 	p := s.g.Players[0]
 	p.Req, p.Tac = 1, 1
@@ -66,7 +66,7 @@ func TestFR_TRN_003a_ExhaustCostNeedsAReadiedUnit(t *testing.T) {
 	if !inHand(p, inst) || p.Req != 1 || p.Tac != 1 {
 		t.Errorf("a rejected Enact changes nothing: in hand %v, Req %d, Tac %d, want true, 1, 1 (SVY-R29)", inHand(p, inst), p.Req, p.Tac)
 	}
-	s.put(0, ZoneReserves, unit("Fresh Ally", 1, 1, Keywords{}))
+	s.put(0, ZoneReserves, unit("Fresh Ally", 1, 1, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with a Readied allied unit to exhaust, the Maneuver is offered (FR-TRN-003a)")
 	}
@@ -79,7 +79,7 @@ func TestFR_TRN_003a_ExhaustCostTriggerResolvesBeforeTheManeuver(t *testing.T) {
 		return ability.Step{Op: ability.OpDealDamage, Amount: ability.Value{N: n}, Subject: ability.SubjectAll,
 			Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindHeadquarters}}
 	}
-	payer := s.put(0, ZoneMainTheater, striker("Payer", 1, 5, Keywords{}, exhaustTrigger(hqDamage(2))))
+	payer := s.put(0, ZoneMainTheater, striker("Payer", 1, 5, ability.Keywords{}, exhaustTrigger(hqDamage(2))))
 	inst := s.give(0, exhaustCostManeuver("Fungus", 0, 0, steps(hqDamage(1))))
 	s.do(enactAction(inst))
 	if !payer.Exhausted {
@@ -126,8 +126,8 @@ func TestFR_TRN_003a_ExhaustCostTriggerResolvesBeforeTheManeuver(t *testing.T) {
 func TestFR_MOD_001_ExhaustCostTimeoutPicksFixedOrder(t *testing.T) {
 	// Covers: SVY-R16, FR-TRN-003a
 	s := newScene(t)
-	mt := s.put(0, ZoneMainTheater, unit("Theater Unit", 1, 5, Keywords{})) // deployed first
-	rs := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, Keywords{}))   // deployed later
+	mt := s.put(0, ZoneMainTheater, unit("Theater Unit", 1, 5, ability.Keywords{})) // deployed first
+	rs := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, ability.Keywords{}))   // deployed later
 	inst := s.give(0, exhaustCostManeuver("Fungus", 0, 0, steps(drawN(1))))
 	s.script(0, Answer{Timeout: true})
 	s.do(enactAction(inst))
@@ -142,8 +142,8 @@ func TestFR_MOD_001_ExhaustCostTimeoutPicksFixedOrder(t *testing.T) {
 func TestFR_MOD_001_ExhaustCostSingleOptionNotAsked(t *testing.T) {
 	// Covers: FR-TRN-003a
 	s := newScene(t)
-	ready := s.put(0, ZoneMainTheater, unit("Ready Ally", 1, 5, Keywords{}))
-	tired := s.put(0, ZoneReserves, unit("Tired Ally", 1, 5, Keywords{}))
+	ready := s.put(0, ZoneMainTheater, unit("Ready Ally", 1, 5, ability.Keywords{}))
+	tired := s.put(0, ZoneReserves, unit("Tired Ally", 1, 5, ability.Keywords{}))
 	tired.Exhausted = true
 	inst := s.give(0, exhaustCostManeuver("Fungus", 0, 0, steps(drawN(1))))
 	s.script(0) // any decision asked is an error

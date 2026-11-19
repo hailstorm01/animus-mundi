@@ -12,7 +12,7 @@ import (
 // differ from its card's. Each TestMonitorKeywords_Case<N> is Acceptance Case N.
 
 // withKeywords is a with effective keywords kw.
-func withKeywords(a engine.AssetSnap, kw engine.Keywords) engine.AssetSnap {
+func withKeywords(a engine.AssetSnap, kw ability.Keywords) engine.AssetSnap {
 	a.Keywords = kw
 	return a
 }
@@ -22,19 +22,19 @@ func TestMonitorKeywords_Case1_Attack(t *testing.T) {
 	att := snapAsset(10, "Vanilla", 0, zMT)
 	foe := snapAsset(11, "Vanilla", 1, zMT)
 
-	ethereal := withKeywords(snapAsset(12, "Vanilla", 1, zMT), engine.Keywords{Ethereal: true})
+	ethereal := withKeywords(snapAsset(12, "Vanilla", 1, zMT), ability.Keywords{Ethereal: true})
 	f, seq := attackFeed(baseSnap(0, 0, att, ethereal), 10, 12)
 	wantViolation(t, "defender is Ethereal, its card is not", f.m, "attack-declaration", attackRules, seq)
 
-	guardian := withKeywords(snapAsset(12, "Vanilla", 1, zMT), engine.Keywords{Guardian: true})
+	guardian := withKeywords(snapAsset(12, "Vanilla", 1, zMT), ability.Keywords{Guardian: true})
 	f, seq = attackFeed(baseSnap(0, 0, att, foe, guardian), 10, 11)
 	wantViolation(t, "defender beside a Guardian whose card is not one", f.m, "attack-declaration", attackRules, seq)
 
-	ghost := withKeywords(snapAsset(15, "Ghost", 1, zMT), engine.Keywords{})
+	ghost := withKeywords(snapAsset(15, "Ghost", 1, zMT), ability.Keywords{})
 	f, _ = attackFeed(baseSnap(0, 0, att, ghost), 10, 15)
 	wantClean(t, "defender's card is Ethereal, it is not", f.m)
 
-	bodyguard := withKeywords(snapAsset(16, "Bodyguard", 1, zMT), engine.Keywords{})
+	bodyguard := withKeywords(snapAsset(16, "Bodyguard", 1, zMT), ability.Keywords{})
 	f, _ = attackFeed(baseSnap(0, 0, att, foe, bodyguard), 10, 11)
 	wantClean(t, "defender beside a Guardian card that is not a Guardian now", f.m)
 }
@@ -49,11 +49,11 @@ func TestMonitorKeywords_Case2_Versatile(t *testing.T) {
 		f.settle(baseSnap(0, 1, a))
 		return f, seq
 	}
-	f, _ := generate(withKeywords(snapAsset(20, "Vanilla", 0, zRes), engine.Keywords{Versatile: true}))
+	f, _ := generate(withKeywords(snapAsset(20, "Vanilla", 0, zRes), ability.Keywords{Versatile: true}))
 	wantClean(t, "Versatile, its card is not", f.m)
 	wantCounts(t, "Versatile, its card is not", f.m, "resources", "FR-KWD-002i")
 
-	f, seq := generate(withKeywords(snapAsset(20, "Sneak", 0, zRes), engine.Keywords{}))
+	f, seq := generate(withKeywords(snapAsset(20, "Sneak", 0, zRes), ability.Keywords{}))
 	wantViolation(t, "its card is Versatile, it is not", f.m, "resources", resourceRules, seq)
 }
 
@@ -63,11 +63,11 @@ func TestMonitorKeywords_Case3_Ward(t *testing.T) {
 		return engine.Event{Kind: "decision", Player: 0,
 			Decision: &engine.DecisionRecord{Kind: "Target", Player: 0, Refs: refs}}
 	}
-	warded := withKeywords(snapAsset(11, "Vanilla", 1, zMT), engine.Keywords{Ward: true})
+	warded := withKeywords(snapAsset(11, "Vanilla", 1, zMT), ability.Keywords{Ward: true})
 	f, seq := damageCase(baseSnap(0, 0, warded), target(11))
 	wantViolation(t, "offered a Ward asset whose card has none", f.m, "targeting", targetingRules, seq)
 
-	unwarded := withKeywords(snapAsset(12, "Warded", 1, zMT), engine.Keywords{})
+	unwarded := withKeywords(snapAsset(12, "Warded", 1, zMT), ability.Keywords{})
 	f, _ = damageCase(baseSnap(0, 0, unwarded), target(12),
 		engine.Event{Kind: "place", Player: 0, Detail: "player 0 places ability on the stack"})
 	wantClean(t, "offered an asset whose card has Ward, while it has none", f.m)
@@ -80,7 +80,7 @@ func TestMonitorKeywords_Case4_Damage(t *testing.T) {
 	// which the snapshot shows with no keywords, then sends the events as built.
 	feedDamage := func(card string, evs ...engine.Event) (*feed, int) {
 		f := damageFeed()
-		f.settle(baseSnap(0, 0, powered(10, "Vanilla", 0, 3, 0), withKeywords(powered(11, card, 1, 2, 0), engine.Keywords{})))
+		f.settle(baseSnap(0, 0, powered(10, "Vanilla", 0, 3, 0), withKeywords(powered(11, card, 1, 2, 0), ability.Keywords{})))
 		seq := 0
 		for _, e := range evs {
 			seq = f.event(e)
@@ -118,11 +118,11 @@ func TestMonitorKeywords_Case5_TargetInNoSnapshot(t *testing.T) {
 // no monitor. Its card prints no Resistant and no other card has it, so each
 // FR-KWD-002b check is a damage event that reports the grant.
 func TestMonitorKeywords_CorneredResistantInRealGames(t *testing.T) {
-	hide := unit("Hide", 2, 4, engine.Keywords{})
+	hide := unit("Hide", 2, 4, ability.Keywords{})
 	hide.Ability = &ability.Def{Cornered: ability.WhileCornered{Resistant: 1}}
 	var main []*engine.Card
 	for range 10 {
-		main = append(main, hide, unit("Vanilla", 3, 2, engine.Keywords{}))
+		main = append(main, hide, unit("Vanilla", 3, 2, ability.Keywords{}))
 	}
 	decks := [2]engine.DeckList{{HQ: hq(3, 20), Main: main}, {HQ: hq(3, 20), Main: main}}
 	for _, p := range []struct {

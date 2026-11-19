@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -34,9 +35,9 @@ func inDiscard(p *Player, inst *Instance) bool {
 // Covers: FR-MOD-001, FR-TGT-001, FR-TRG-005
 func TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v1 := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, Keywords{}))
-	v2 := s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v1 := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, ability.Keywords{}))
+	v2 := s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(v2), pick(ally))
 	deployApostle(s)
 	asks := s.asked(0)
@@ -63,8 +64,8 @@ func TestCard_InfestedApostle_KillHappensOnResolutionAfterTargetLocked(t *testin
 // Covers: FR-MOD-001, FR-TGT-001
 func TestCard_InfestedApostle_MayKillItself(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	// Say yes to "you may", then pick whichever allied unit is not Ally.
 	s.asks = map[PlayerID][]Decision{}
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
@@ -95,7 +96,7 @@ func TestCard_InfestedApostle_MayKillItself(t *testing.T) {
 // Covers: FR-MOD-001, SVY-R14, SVY-R48
 func TestCard_InfestedApostle_NoOpposingUnitIsStillAsked(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{no})
 	deployApostle(s)
 	asks := s.asked(0)
@@ -107,8 +108,8 @@ func TestCard_InfestedApostle_NoOpposingUnitIsStillAsked(t *testing.T) {
 // Covers: FR-MOD-001
 func TestCard_InfestedApostle_TimeoutAtKillPickDealsNoDamage(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, timeoutPick)
 	inst := deployApostle(s)
 	if got := kindsOf(s.asked(0)); !slices.Equal(got, []DecisionKind{DecideOptional, DecidePick}) {
@@ -128,7 +129,7 @@ func TestCard_InfestedApostle_DamageResolvesBeforeKilledUnitsDeathTriggers(t *te
 	s := newScene(t)
 	p := s.g.Players[0]
 	scr := s.put(0, ZoneMainTheater, s.card("Portent Scrivener"))
-	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
 	top := s.onTop(0, vanilla("Drawn", "Next")...)
 	s.scriptPlan(0, nil, []Answer{yes}, pick(scr))
 	start := len(s.g.Log)
@@ -164,9 +165,9 @@ func TestCard_InfestedApostle_DamageResolvesBeforeKilledUnitsDeathTriggers(t *te
 // Covers: FR-MOD-001
 func TestCard_InfestedApostle_DecliningAsksNothingMoreAndDoesNothing(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v1 := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, Keywords{}))
-	v2 := s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v1 := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, ability.Keywords{}))
+	v2 := s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{no})
 	inst := deployApostle(s)
 	if got := kindsOf(s.asked(0)); !slices.Equal(got, []DecisionKind{DecideOptional}) {

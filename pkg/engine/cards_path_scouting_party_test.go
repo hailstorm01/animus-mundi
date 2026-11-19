@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"strings"
 	"testing"
 )
@@ -214,8 +215,8 @@ func TestCard_DevilhornScoutingParty_DeployTriggerFires(t *testing.T) {
 	s, insts, _ := sctScene(t, func(s *scene) []*Card {
 		return []*Card{s.card("Saboteur"), ltOther("M1"), ltOther("M2"), ltOther("X")}
 	}, sctLabel("Saboteur", ZoneReserves, "M1", "M2"), func(s *scene) {
-		enemy = s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-		s.put(0, ZoneReserves, unit("Ally", 1, 5, Keywords{}))
+		enemy = s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+		s.put(0, ZoneReserves, unit("Ally", 1, 5, ability.Keywords{}))
 	})
 	sab := ltAsset(s, insts[0])
 	if sab == nil || sab.Zone != ZoneReserves {

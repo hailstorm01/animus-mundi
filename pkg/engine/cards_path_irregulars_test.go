@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Chainbreaker Irregulars: "Unbowed: Draw a card, then discard a card."
 // Unit, Infantry, Chainbreaker, 3 Requisition, Reserves, 2/5. Unbowed fires
@@ -63,7 +66,7 @@ func TestCard_ChainbreakerIrregulars_EntersReservesAsTwoFiveForThreeRequisitionA
 
 func TestCard_ChainbreakerIrregulars_DamageDrawsThenDiscardsTheCardTheControllerPicks(t *testing.T) {
 	s, def, hand, deck := irregularsScene(t, []string{"A", "B"}, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(0)
 	// The hand is A, B, then the drawn D. Pick B.
 	s.script(1, Answer{Picks: []int{1}})
@@ -93,7 +96,7 @@ func TestCard_ChainbreakerIrregulars_DamageDrawsThenDiscardsTheCardTheController
 
 func TestCard_ChainbreakerIrregulars_MayDiscardTheCardJustDrawn(t *testing.T) {
 	s, def, hand, deck := irregularsScene(t, []string{"A", "B"}, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(0)
 	s.script(1, Answer{Picks: []int{2}})
 	s.do(s.attack(att, def))
@@ -109,7 +112,7 @@ func TestCard_ChainbreakerIrregulars_MayDiscardTheCardJustDrawn(t *testing.T) {
 // Covers: FR-MOD-001
 func TestCard_ChainbreakerIrregulars_TimeoutDiscardsTheCardJustDrawn(t *testing.T) {
 	s, def, hand, deck := irregularsScene(t, []string{"A", "B"}, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(0)
 	s.script(1, Answer{Timeout: true})
 	s.do(s.attack(att, def))
@@ -125,7 +128,7 @@ func TestCard_ChainbreakerIrregulars_TimeoutDiscardsTheCardJustDrawn(t *testing.
 // Covers: FR-MOD-001
 func TestCard_ChainbreakerIrregulars_EmptyHandDiscardsTheDrawnCardWithoutAsking(t *testing.T) {
 	s, def, _, deck := irregularsScene(t, nil, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(0)
 	s.script(1)
 	s.do(s.attack(att, def))
@@ -140,7 +143,7 @@ func TestCard_ChainbreakerIrregulars_EmptyHandDiscardsTheDrawnCardWithoutAsking(
 
 func TestCard_ChainbreakerIrregulars_LethalDamageStillDrawsAndDiscardsAfterTheDeathSweep(t *testing.T) {
 	s, def, hand, deck := irregularsScene(t, []string{"A", "B"}, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	inst := def.Inst
 	s.script(0)
 	s.script(1, Answer{Picks: []int{0}})
@@ -168,8 +171,8 @@ func TestCard_ChainbreakerIrregulars_LethalDamageStillDrawsAndDiscardsAfterTheDe
 
 func TestCard_ChainbreakerIrregulars_EachSeparateDamageInstanceFiresAgain(t *testing.T) {
 	s, def, _, _ := irregularsScene(t, []string{"A"}, []string{"D1", "D2"})
-	att1 := s.put(0, ZoneMainTheater, unit("Hitter1", 1, 9, Keywords{}))
-	att2 := s.put(0, ZoneMainTheater, unit("Hitter2", 1, 9, Keywords{}))
+	att1 := s.put(0, ZoneMainTheater, unit("Hitter1", 1, 9, ability.Keywords{}))
+	att2 := s.put(0, ZoneMainTheater, unit("Hitter2", 1, 9, ability.Keywords{}))
 	s.script(0)
 	s.script(1, Answer{Timeout: true}, Answer{Timeout: true})
 	deckBefore := len(s.g.Players[1].Deck)
@@ -188,7 +191,7 @@ func TestCard_ChainbreakerIrregulars_EachSeparateDamageInstanceFiresAgain(t *tes
 
 func TestCard_ChainbreakerIrregulars_OnlyTheControllersHandAndDeckAreUsed(t *testing.T) {
 	s, def, _, _ := irregularsScene(t, []string{"A", "B"}, []string{"D"})
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(0)
 	s.script(1, Answer{Timeout: true})
 	p0 := s.g.Players[0]

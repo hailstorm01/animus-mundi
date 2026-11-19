@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -28,7 +29,7 @@ func newArkhaScene(t *testing.T) arkhaScene {
 	return arkhaScene{
 		s:     s,
 		arkha: s.put(0, ZoneMainTheater, s.card("Arkha, Sun's Fury")),
-		dummy: s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{})),
+		dummy: s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{})),
 	}
 }
 
@@ -65,7 +66,7 @@ func TestCard_ArkhasSunsFury_PutsAUnitCardOnTheBottomAndDamagesTheOpposingHeadqu
 	// Covers: FR-TRG-005, FR-TGT-001, FR-MOD-001
 	a := newArkhaScene(t)
 	s := a.s
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.arkhaChooser(yes, cards[0])
 	s.do(s.attack(a.arkha, a.dummy))
 	if got := kindsOf(s.asked(0)); !slices.Equal(got, []DecisionKind{DecideOptional, DecidePick}) {
@@ -89,8 +90,8 @@ func TestCard_ArkhasSunsFury_OnlyUnitCardsInYourDiscardPileAreOffered(t *testing
 	// Covers: FR-TGT-001, FR-MOD-001
 	a := newArkhaScene(t)
 	s := a.s
-	mine := s.inDiscard(0, unit("A", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}), unit("B", 1, 1, Keywords{}))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	mine := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
 	s.arkhaChooser(yes, mine[2])
 	s.do(s.attack(a.arkha, a.dummy))
 	var picks []Decision
@@ -116,8 +117,8 @@ func TestCard_ArkhasSunsFury_NoUnitCardMeansNoDamage(t *testing.T) {
 	// Covers: SVY-R14
 	a := newArkhaScene(t)
 	s := a.s
-	s.inDiscard(0, structure("Wall", 0, 3, Keywords{}))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	s.inDiscard(0, structure("Wall", 0, 3, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	s.arkhaChooser(yes, nil)
 	s.do(s.attack(a.arkha, a.dummy))
@@ -139,7 +140,7 @@ func TestCard_ArkhasSunsFury_TimeoutAtThePickDealsNoDamage(t *testing.T) {
 	// Covers: SVY-R14, SVY-R16
 	a := newArkhaScene(t)
 	s := a.s
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	s.arkhaChooser(yes, nil)
 	s.do(s.attack(a.arkha, a.dummy))
@@ -163,7 +164,7 @@ func TestCard_ArkhasSunsFury_DecliningDoesNothing(t *testing.T) {
 	// Covers: SVY-R9
 	a := newArkhaScene(t)
 	s := a.s
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	s.arkhaChooser(no, cards[0])
 	s.do(s.attack(a.arkha, a.dummy))
