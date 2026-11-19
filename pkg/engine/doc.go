@@ -116,9 +116,9 @@
 //     StackLabel, the one wording of what a stack item is.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
 //     an effect, its modes and then its targets, the card it shows as its
-//     source (shownCard, SourceCard), and whether an optional trigger could do
-//     nothing (couldDoNothing), and the one lock of an "in the same zone"
-//     effect on placement (sameZoneLock). costs.go: a card's cost and
+//     source (shownCard, SourceCard) and its name (sourceName), and whether an
+//     optional trigger could do nothing (couldDoNothing), and the one lock of
+//     an "in the same zone" effect on placement (sameZoneLock). costs.go: a card's cost and
 //     a placement's costs. resources.go: Requisition and Tactics, generating and
 //     converting them, and paying with them. targeting.go: target choice and
 //     untargeted picks. filter.go: checking assets and discard-pile cards against

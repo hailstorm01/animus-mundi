@@ -80,6 +80,17 @@ func (g *Game) SourceCard(it *StackItem) *Card {
 	return g.shownCard(it.Source, it.Inst)
 }
 
+// sourceName is the name of the card stack item it shows as its source
+// (SourceCard), "" when it shows none. A stack item's label and the prompts
+// of the decisions it asks as it resolves read it, so neither names a card
+// that is face down (FR-ZON-005).
+func (g *Game) sourceName(it *StackItem) string {
+	if c := g.SourceCard(it); c != nil {
+		return c.Name
+	}
+	return ""
+}
+
 // maneuverPlacement is the placement of the Maneuver inst that pid enacts, for
 // both its legality check and the choosing of its modes and targets.
 func maneuverPlacement(pid PlayerID, inst *Instance) placement {

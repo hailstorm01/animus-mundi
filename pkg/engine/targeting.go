@@ -196,7 +196,7 @@ func (g *Game) pickAssets(r *resolution, st ability.Step) []*Asset {
 // are every battlefield asset matching st.Filter now, oldest first. Both
 // pickAssets and splitAssets ask it, so a pool's options are SubjectPick's.
 func (g *Game) pickAssetDecision(r *resolution, st ability.Step) (Decision, []*Asset) {
-	return g.assetDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
+	return g.assetDecision(r.it.Controller, DecidePick, g.pickPrompt(r.it, st), st.UpTo, func(a *Asset) bool {
 		return g.matchesFilterAt(r.it.Controller, r.it.Source, r.it.Locked, st.Filter, a)
 	})
 }
@@ -212,7 +212,7 @@ func (g *Game) splitAssets(r *resolution, st ability.Step, pool int) ([]*Asset, 
 		return nil, nil
 	}
 	d, opts := g.pickAssetDecision(r, st)
-	d.Prompt = fmt.Sprintf("%s: distribute %d", cardName(r.it.Inst), pool)
+	d.Prompt = fmt.Sprintf("%s: distribute %d", g.sourceName(r.it), pool)
 	var as []*Asset
 	var shares []int
 	for _, a := range pickFrom(g, repeatedPicks(d, pool), opts) {
@@ -226,9 +226,11 @@ func (g *Game) splitAssets(r *resolution, st ability.Step, pool int) ([]*Asset, 
 	return as, shares
 }
 
-// pickPrompt is the prompt of an untargeted pick step.
-func pickPrompt(it *StackItem, st ability.Step) string {
-	name := cardName(it.Inst)
+// pickPrompt is the prompt of an untargeted pick step. It names the card the
+// item shows as its source (sourceName), the Scratch face for a source turned
+// face down after the item was placed (FR-ZON-005).
+func (g *Game) pickPrompt(it *StackItem, st ability.Step) string {
+	name := g.sourceName(it)
 	if st.UpTo > 0 {
 		return fmt.Sprintf("%s: pick up to %d", name, st.UpTo)
 	}
@@ -239,7 +241,7 @@ func pickPrompt(it *StackItem, st ability.Step) string {
 // picks from every card matching st.Filter now, as pickAssets does for assets
 // (SVY-R3, SVY-R14). The options are fixed before any card moves.
 func (g *Game) pickCards(r *resolution, st ability.Step) []*Instance {
-	d, opts := g.pileDecision(r.it.Controller, DecidePick, pickPrompt(r.it, st), st.UpTo, func(inst *Instance) bool {
+	d, opts := g.pileDecision(r.it.Controller, DecidePick, g.pickPrompt(r.it, st), st.UpTo, func(inst *Instance) bool {
 		return g.matchesCard(r.it.Controller, r.it.Inst, st.Filter, inst)
 	})
 	return pickFrom(g, d, opts)
