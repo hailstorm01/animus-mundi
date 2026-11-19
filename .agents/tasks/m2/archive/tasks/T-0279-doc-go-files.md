@@ -4,7 +4,7 @@ title: "`doc.go`'s Files list says what wave H and #159 to #162 built (directive
 kind: harness
 tier: flash
 wave: H.1 (board directive #163)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0279-doc-go-files
 depends_on: [T-0278]
 claims: [file:pkg/engine/doc.go]
@@ -120,3 +120,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
      - `gofmt -l W/pkg`: clean (no output)
      - `go -C W tool task check`: PASS (gofmt, vet, tests, full cardtown linter suite)
      - `go -C W tool task sim`: PASS (200 starter games, all invariants holding)
+- 2026-11-19, lead-architect (wave H.1 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as f56dbea. Flash run `787b9224-a5e7-44dc-a9b4-30a64d941509`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0279-doc-go-files` (b61c69b):
+  - Scope: the one Allowed File and this file. The implementation commit (1a06502) holds only `pkg/engine/doc.go` 8de0e5d, the blob of the lead's dry run. No test changed.
+  - Fences and placement: comments only, no declaration changes. Reuse and ADR 0007: nothing moves or is renamed. Rules fidelity: every name the new sentences give exists where they say (`redirectDamage` in `replace.go`, `sameZoneLock` in `placement.go`, `matchesFromSource` in `filter.go`, `checkShapeReads` in `cardload.go`, `Keywords.Add` in `ability/keywords.go`).
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 44694ffb` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #163 is `applied` ((a)-(e) and (g) in b5779c6, (f) in T-0279) and moves to the directive archive.
