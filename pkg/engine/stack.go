@@ -94,10 +94,7 @@ func (g *Game) StackLabel(it *StackItem) string {
 	case StackManeuver:
 		return "Maneuver " + cardName(it.Inst)
 	case StackAbility:
-		name := ""
-		if c := g.SourceCard(it); c != nil {
-			name = c.Name
-		}
+		name := g.sourceName(it)
 		if it.Keyword != ability.KeywordNone {
 			return it.Keyword.String() + " trigger of " + name
 		}
