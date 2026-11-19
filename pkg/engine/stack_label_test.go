@@ -29,7 +29,7 @@ func TestStackLabel_EachKind(t *testing.T) {
 		{&StackItem{Kind: StackScratch}, "Scratch"},
 		{&StackItem{Kind: StackManeuver, Inst: m}, "Maneuver Played"},
 		{&StackItem{Kind: StackAbility, Source: a.ID, Inst: a.Inst}, "ability of Open Source"},
-		{&StackItem{Kind: StackAbility, Source: a.ID, Inst: a.Inst, Keyword: ability.KeywordAggressive}, "Aggressive trigger of Open Source"},
+		{&StackItem{Kind: StackAbility, Source: a.ID, Inst: a.Inst, FromKeyword: ability.KeywordTriggerAggressive}, "Aggressive trigger of Open Source"},
 		{&StackItem{Kind: StackAbility, Source: 999, Inst: gone, Tracked: true}, "ability of Gone"},
 	} {
 		if got := s.g.StackLabel(tc.it); got != tc.want {
@@ -69,7 +69,7 @@ func TestStackLabel_FaceDownSourceShowsOnlyTheScratchFace(t *testing.T) {
 func TestStackLabel_FaceUpSourcePlaceEventNamesItsInstance(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, unit("Open Source", 1, 1, ability.Keywords{}))
-	s.g.push(&StackItem{Kind: StackAbility, Controller: 0, Source: a.ID, Inst: a.Inst, Keyword: ability.KeywordAggressive})
+	s.g.push(&StackItem{Kind: StackAbility, Controller: 0, Source: a.ID, Inst: a.Inst, FromKeyword: ability.KeywordTriggerAggressive})
 	pl := eventsOfKind(s.g.Log, "place")
 	if len(pl) == 0 {
 		t.Fatalf("push logged no place event")

@@ -34,11 +34,11 @@ type keywordDef struct {
 // keywordDefs lists the standalone keywords in printed order. ParseKeywordLine,
 // Keywords.Lines and Keywords.Add all walk it, so each keyword's name is
 // written only here, or, for a keyword that is a triggered ability, in
-// Keyword.String.
+// KeywordTrigger.String.
 var keywordDefs = []keywordDef{
 	{name: "Resistant", num: func(k *Keywords) *int { return &k.Resistant }},
 	{name: "Stalwart", flag: func(k *Keywords) *bool { return &k.Stalwart }},
-	{name: KeywordAggressive.String(), num: func(k *Keywords) *int { return &k.Aggressive }},
+	{name: KeywordTriggerAggressive.String(), num: func(k *Keywords) *int { return &k.Aggressive }},
 	{name: "Ethereal", flag: func(k *Keywords) *bool { return &k.Ethereal }},
 	{name: "Ward", flag: func(k *Keywords) *bool { return &k.Ward }},
 	{name: "Versatile", flag: func(k *Keywords) *bool { return &k.Versatile }},

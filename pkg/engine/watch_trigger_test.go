@@ -100,7 +100,7 @@ func TestFR_TRG_003_OpposingWatcherResolvesBeforeAttackerTriggers(t *testing.T) 
 	att := s.put(0, ZoneMainTheater, unit("Raider", 3, 9, ability.Keywords{Aggressive: 1}))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
-	if len(*items) != 3 || (*items)[0].Kind != StackAttack || (*items)[1].Keyword != ability.KeywordAggressive || (*items)[2].Source != w.ID {
+	if len(*items) != 3 || (*items)[0].Kind != StackAttack || (*items)[1].FromKeyword != ability.KeywordTriggerAggressive || (*items)[2].Source != w.ID {
 		t.Fatalf("the non-active player's watcher is placed after, so above, the attacker's triggers and resolves first (FR-TRG-003): placed %+v", *items)
 	}
 }

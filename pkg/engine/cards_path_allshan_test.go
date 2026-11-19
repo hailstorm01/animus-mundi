@@ -119,7 +119,7 @@ func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
 	count := func(items []StackItem) int {
 		n := 0
 		for _, it := range items {
-			if it.Kind == StackAbility && it.Keyword == ability.KeywordAggressive {
+			if it.Kind == StackAbility && it.FromKeyword == ability.KeywordTriggerAggressive {
 				n++
 			}
 		}
@@ -136,7 +136,7 @@ func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
 			t.Fatalf("Cornered: Aggressive 3 places one Aggressive StackAbility item on attack: got %d in %+v", n, *items)
 		}
 		for _, it := range *items {
-			if it.Keyword == ability.KeywordAggressive && it.Source != al.ID {
+			if it.FromKeyword == ability.KeywordTriggerAggressive && it.Source != al.ID {
 				t.Errorf("the Aggressive item's source is Allshan: %+v", it)
 			}
 		}

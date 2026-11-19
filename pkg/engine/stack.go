@@ -37,12 +37,12 @@ type StackItem struct {
 	Source int // asset ID: marching unit, attacker, scratching HQ; 0 for a StackManeuver or a trigger from a card in a pile (neither is an asset)
 	Target int // StackAttack: the defender
 
-	Effect  ability.Effect  // StackAbility, StackManeuver: the effect resolving (for StackAbility, Source is its source asset)
-	Chosen  [][]int         // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
-	Tracked bool            // StackAbility: a death trigger or a trigger from its card's discard pile, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
-	Keyword ability.Keyword // StackAbility: the keyword its trigger came from (ability.KeywordAggressive); zero for a printed trigger or an activated ability
-	Watched int             // StackAbility: the asset ID of the asset whose event fired its watching trigger (ability.SubjectWatched); 0 for none
-	Locked  *LockedZone     // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45): a move trigger's destination, or the source's zone for an effect that reads "in the same zone"; nil if it locked none
+	Effect      ability.Effect         // StackAbility, StackManeuver: the effect resolving (for StackAbility, Source is its source asset)
+	Chosen      [][]int                // StackAbility, StackManeuver: per Effect.Targets slot, in pick order, the asset IDs chosen, or for a PileSlot the card instance IDs; empty if none
+	Tracked     bool                   // StackAbility: a death trigger or a trigger from its card's discard pile, so Inst is its card tracked into its owner's discard pile (FR-ZON-004); false for an activated ability
+	FromKeyword ability.KeywordTrigger // StackAbility: the keyword its trigger came from (ability.KeywordTriggerAggressive); zero for a printed trigger or an activated ability
+	Watched     int                    // StackAbility: the asset ID of the asset whose event fired its watching trigger (ability.SubjectWatched); 0 for none
+	Locked      *LockedZone            // StackAbility, StackManeuver: the zone locked for its source-relative filters (SVY-R44, SVY-R45): a move trigger's destination, or the source's zone for an effect that reads "in the same zone"; nil if it locked none
 }
 
 // PileSlot reports whether Effect.Targets[i] chooses cards in discard piles, so
@@ -95,8 +95,8 @@ func (g *Game) StackLabel(it *StackItem) string {
 		return "Maneuver " + cardName(it.Inst)
 	case StackAbility:
 		name := g.sourceName(it)
-		if it.Keyword != ability.KeywordNone {
-			return it.Keyword.String() + " trigger of " + name
+		if it.FromKeyword != ability.KeywordTriggerNone {
+			return it.FromKeyword.String() + " trigger of " + name
 		}
 		return "ability of " + name
 	}
