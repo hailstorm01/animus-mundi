@@ -4,7 +4,7 @@ title: "One \"in the same zone\" lock on placement, `sameZoneLock` (directive #1
 kind: harness
 tier: flash
 wave: H.1 (board directive #160)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0275-same-zone-lock
 depends_on: [T-0274]
 claims: [func:Game.sameZoneLock, func:Game.activatedPlacement, func:Game.placeTrigger]
