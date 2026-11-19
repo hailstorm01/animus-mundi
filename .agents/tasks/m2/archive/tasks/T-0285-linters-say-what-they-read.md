@@ -4,7 +4,7 @@ title: "`cardtown lint` asks the linters what they read: `fences.Reads`, `rules.
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (b))
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0285-linters-say-what-they-read
 depends_on: [T-0284]
 claims: [func:fences.Reads, func:rules.Reads]
@@ -360,3 +360,8 @@ Authorized edits (#172), in the `test(T-0285)` commit:
     - Case 8: `git diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly the 6 expected files with line counts; `git diff autoloop/m2-wave-h.2 --stat` listed only those 6 files and this task file.
     - Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed clean (fmt-check, vet, test, build, lint --all); `go tool task sim` passed clean on starter decks.
   - Set status to review.
+- 2026-11-19, lead-architect (wave H.2 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 62d27ca. Flash run `3ea152a6-0ba9-4933-bf3f-84d7d6020e75`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0285-linters-say-what-they-read` (35d4c4a):
+  - Scope: the three Allowed Files, the three authorized test files and this file. The test commit (270aba1) holds only the three test files, and the implementation commit (52ffb72) only the three non-test files. All six blobs match the lead's dry run (`lint_test.go` 85f479a, `fences_test.go` ee42b4c, `rules_test.go` 96c8495, `lint.go` de4b4df, `fences.go` d67cfe3, `rules.go` bade881). In the dry run the test-only state failed `go vet` on both packages as case 1 says, and `scannedFiles` returned the same 45 files in the same order as the old walk. `TestIsFencesPath` moved as `fences.TestReads` with its fourteen cases unchanged. `TestSelectChanged_*` are unedited and pass.
+  - Fences and reuse: `isFencesPath` and `isRulesPath` are gone (`git grep -n -e isFencesPath -e isRulesPath -- "*.go"` prints nothing), with no alias or wrapper (ADR 0007). `fences.Reads` reads `aliasRoots`, `cardsheet.Dir`, `specdoc.FRDDir`, `specdoc.MatrixFile` and the new `surveyDir`. `rules.Reads` reads `specdoc.FRDDir`, `specdoc.RulesFRD` and `EngineDir`. The fences linter has one walk for Go files (`goFilesUnder`).
+  - Re-run by the reviewer in a review worktree of the task branch: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.2` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation; `TestReads` (fences, rules) and `TestSelectChanged_Case1`-`3` pass.
+  - #172 is `applied` ((a) T-0284, (b) T-0285) and moves to the directive archive. #173 is next in wave H.2's order.
