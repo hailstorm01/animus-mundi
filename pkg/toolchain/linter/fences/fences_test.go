@@ -1007,3 +1007,31 @@ func TestFences_Case40_SimImportsOnlyEngine(t *testing.T) {
 		t.Fatalf("expected %q, got:\n%s", want, out)
 	}
 }
+
+// Reads covers Go files under pkg/, cmd/ and tools/, plus the data inputs (directive #172).
+func TestReads(t *testing.T) {
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"pkg/sim/x.go", true},
+		{"pkg/engine/x.go", true},
+		{"pkg/engine/cards/animus.go", true},
+		{"pkg/foo/bar/x.go", true},
+		{"pkg/sim/x_test.go", true},
+		{"data/cards/units.csv", true},
+		{"docs/frd/keyword_interaction_matrix.md", true},
+		{"docs/design/m2_starter_set_ability_survey.md", true},
+		{"pkg/toolchain/linter/fences/fences.go", true},
+		{"cmd/cardtown/main.go", true},
+		{"tools/importer/main.go", true},
+		{"scripts/x.go", false},
+		{"pkg/sim/readme.md", false},
+		{"data/decks/x.txt", false},
+	}
+	for _, c := range cases {
+		if got := fences.Reads(c.path); got != c.want {
+			t.Errorf("fences.Reads(%q) = %v, want %v", c.path, got, c.want)
+		}
+	}
+}

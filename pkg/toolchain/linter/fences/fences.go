@@ -31,9 +31,12 @@ var (
 // modulePath is the Go module path that import rules are written against.
 const modulePath = "animus-mundi"
 
-// SurveyFile is the ability survey's file name, in docs/design. OPEN(...) markers may cite
+// SurveyFile is the ability survey's file name, in surveyDir. OPEN(...) markers may cite
 // the items of its Ruling Questions table.
 const SurveyFile = "m2_starter_set_ability_survey.md"
+
+// surveyDir is the repo-relative directory that holds SurveyFile, slash-separated.
+const surveyDir = "docs/design"
 
 // allowedImports maps a package directory to the in-module import paths (relative to
 // the module root) its non-test files may use. Packages not listed are not checked.
@@ -202,7 +205,7 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 
 	openSurvey := make(map[string]bool)
 	ruledSurvey := make(map[string]bool)
-	surveyPath := filepath.Join(repoRoot, "docs", "design", SurveyFile)
+	surveyPath := filepath.Join(repoRoot, surveyDir, SurveyFile)
 	sContent, err := os.ReadFile(surveyPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", SurveyFile, err)
@@ -245,30 +248,15 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 // scannedFiles lists the non-test Go files under pkg/ that the card-name and marker
 // scan reads: all but pkg/engine/cards and pkg/toolchain, slash-separated.
 func scannedFiles(repoRoot string) ([]string, error) {
-	pkgDir := filepath.Join(repoRoot, "pkg")
+	all, err := goFilesUnder(repoRoot, "pkg")
+	if err != nil {
+		return nil, err
+	}
 	var files []string
-	err := filepath.WalkDir(pkgDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(repoRoot, path)
-		if err != nil {
-			return err
-		}
-		rel = filepath.ToSlash(rel)
-		if d.IsDir() {
-			if rel == "pkg/engine/cards" || rel == "pkg/toolchain" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go") {
+	for _, rel := range all {
+		if !strings.HasPrefix(rel, "pkg/engine/cards/") && !strings.HasPrefix(rel, "pkg/toolchain/") {
 			files = append(files, rel)
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("reading pkg directory: %w", err)
 	}
 	return files, nil
 }
@@ -390,6 +378,23 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 	fmt.Println("  [PASS] Package code is free of card names, invalid markers, disallowed imports and type aliases.")
 	fmt.Println("==========================================================")
 	return true, nil
+}
+
+// Reads reports whether a change to path (repo-relative, slash-separated and lower-cased)
+// can affect the fences: any Go file under aliasRoots (the alias check reads them all),
+// a card sheet, the keyword matrix or the ability survey.
+func Reads(path string) bool {
+	if strings.HasSuffix(path, ".go") {
+		for _, root := range aliasRoots {
+			if strings.HasPrefix(path, root+"/") {
+				return true
+			}
+		}
+		return false
+	}
+	return (strings.HasPrefix(path, strings.ToLower(cardsheet.Dir)+"/") && strings.HasSuffix(path, ".csv")) ||
+		path == strings.ToLower(specdoc.FRDDir+"/"+specdoc.MatrixFile) ||
+		path == strings.ToLower(surveyDir+"/"+SurveyFile)
 }
 
 // goFilesUnder lists non-test Go files under a repo-relative directory, slash-separated.

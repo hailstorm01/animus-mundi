@@ -119,6 +119,13 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 	return true, nil
 }
 
+// Reads reports whether a change to path (repo-relative, slash-separated and lower-cased)
+// can affect the rules linter: FRD 01, or a Go file under EngineDir.
+func Reads(path string) bool {
+	return path == strings.ToLower(specdoc.FRDDir+"/"+specdoc.RulesFRD) ||
+		(strings.HasPrefix(path, strings.ToLower(filepath.ToSlash(EngineDir))+"/") && strings.HasSuffix(path, ".go"))
+}
+
 func frdRequirements(path string) (defined, subsumed map[string]bool, err error) {
 	lines, err := specdoc.ReadLines(path)
 	if err != nil {

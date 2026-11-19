@@ -4,7 +4,7 @@ title: "`cardtown lint` asks the linters what they read: `fences.Reads`, `rules.
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (b))
-status: ready
+status: review
 branch: m2/autoloop-wave-h.2/T-0285-linters-say-what-they-read
 depends_on: [T-0284]
 claims: [func:fences.Reads, func:rules.Reads]
@@ -331,10 +331,10 @@ Authorized edits (#172), in the `test(T-0285)` commit:
 - `pkg/toolchain/linter/rules/rules_test.go` (Edit 3): `TestReads`, four cases.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 4): split off from #172 as the directive allows ((a) first, in T-0284). Queued behind T-0284; #173 waits for this task, because #172 blocks it ("Wave H.2, after #172").
@@ -344,3 +344,19 @@ Authorized edits (#172), in the `test(T-0285)` commit:
   - Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented directive #172 (b).
+  - Scratch worktree opened on task branch m2/autoloop-wave-h.2/T-0285-linters-say-what-they-read.
+  - Set status to in-progress (commit 56557088).
+  - Applied Edits 1-3: moved TestIsFencesPath to fences_test.go as TestReads, and added TestReads in rules_test.go. Confirmed Acceptance Case 1 failure with `go vet ./pkg/toolchain/linter/fences/` (undefined: fences.Reads) and `go vet ./pkg/toolchain/linter/rules/` (undefined: rules.Reads). Committed as `test(T-0285): TestIsFencesPath moves to fences as TestReads, and rules gains TestReads` (commit 270aba13).
+  - Applied Edits 4-6: defined surveyDir, updated scannedFiles over goFilesUnder, defined fences.Reads in fences.go; defined rules.Reads in rules.go; updated selectChanged to call rules.Reads and fences.Reads, and removed isRulesPath and isFencesPath from lint.go. Committed as `refactor(toolchain): cardtown lint asks the linters what they read, fences.Reads and rules.Reads (T-0285)` (commit 52ffb72a).
+  - Verified Acceptance Cases 1-9:
+    - Case 1: `go vet ./pkg/toolchain/linter/fences/` failed at test(T-0285) with `undefined: fences.Reads`; `go vet ./pkg/toolchain/linter/rules/` failed with `undefined: rules.Reads`.
+    - Case 2: `git grep -n -e isFencesPath -e isRulesPath -- "*.go"` returned nothing.
+    - Case 3: `git grep -n -i -e "data/cards" -e "docs/frd" -e "data., .cards" -e "docs., .frd" -e "01_game_rules_frd" -e "docs/design" -e "docs., .design" -- pkg/toolchain cmd ":!*_test.go"` returned exactly 11 lines matching the list in the task file.
+    - Case 4: `git grep -n "filepath.WalkDir" -- pkg/toolchain/linter/fences ":!*_test.go"` returned exactly one line (`pkg/toolchain/linter/fences/fences.go:407`).
+    - Case 5: `go test ./pkg/toolchain/... ./cmd/...` passed; `git diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` returned exactly the expected 3 lines (`0 28 cmd/cardtown/lint_test.go`, `28 0 pkg/toolchain/linter/fences/fences_test.go`, `18 0 pkg/toolchain/linter/rules/rules_test.go`).
+    - Case 6: `go run ./cmd/cardtown lint --all` exited 0 with all checks passed and fences linter passing.
+    - Case 7: `go tool task sim-compare -- autoloop/m2-wave-h.2` returned `[PASS]` on starter and stress sims byte-identical to autoloop/m2-wave-h.2.
+    - Case 8: `git diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly the 6 expected files with line counts; `git diff autoloop/m2-wave-h.2 --stat` listed only those 6 files and this task file.
+    - Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed clean (fmt-check, vet, test, build, lint --all); `go tool task sim` passed clean on starter decks.
+  - Set status to review.
