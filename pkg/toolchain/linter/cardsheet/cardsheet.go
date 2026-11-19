@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// Dir is the directory that holds the card sheets, relative to the repository
+// root and slash-separated. Every cardtown command that reads the cards joins it.
+const Dir = "data/cards"
+
 // List returns the sorted card sheet files to audit. With paths, each trimmed non-blank
 // path (joined to repoRoot when relative) that exists goes in files; the others go in
 // missing, as trimmed, in input order. Without paths it lists data/cards/*.csv.
@@ -31,7 +35,7 @@ func List(repoRoot string, paths []string) (files, missing []string, err error) 
 			}
 		}
 	} else {
-		cardsDir := filepath.Join(repoRoot, "data", "cards")
+		cardsDir := filepath.Join(repoRoot, Dir)
 		entries, readErr := os.ReadDir(cardsDir)
 		if readErr != nil {
 			return nil, nil, fmt.Errorf("reading cards directory: %w", readErr)

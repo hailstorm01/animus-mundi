@@ -9,14 +9,8 @@ import (
 	"animus-mundi/pkg/toolchain/specdoc"
 )
 
-const (
-	// RulesFRD owns every game rule and the keyword dictionary.
-	RulesFRD = "01_Game_Rules_FRD.md"
-	// KeywordMatrix quotes keyword rules on purpose to pose questions about them.
-	KeywordMatrix = specdoc.MatrixFile
-	// frozenMarker identifies FRDs frozen as design intent.
-	frozenMarker = "**Status: FROZEN"
-)
+// frozenMarker identifies FRDs frozen as design intent.
+const frozenMarker = "**Status: FROZEN"
 
 var (
 	ownerRegex      = regexp.MustCompile(`^(?:#### |- \*\*)(FR-[A-Z]{3}-\d{3}[a-z]?)`)
@@ -57,12 +51,12 @@ func CheckOwnership(contents map[string][]string) (problems []string, frozenRest
 		}
 	}
 
-	restatement := keywordRestatementRegex(contents[RulesFRD])
+	restatement := keywordRestatementRegex(contents[specdoc.RulesFRD])
 	if restatement == nil {
 		return problems, 0
 	}
 	for _, name := range names {
-		if name == RulesFRD || name == KeywordMatrix {
+		if name == specdoc.RulesFRD || name == specdoc.MatrixFile {
 			continue
 		}
 		frozen := false
@@ -81,7 +75,7 @@ func CheckOwnership(contents map[string][]string) (problems []string, frozenRest
 				frozenRestatements++
 				continue
 			}
-			problems = append(problems, fmt.Sprintf("%s:%d restates keyword %q; define keywords only in %s Appendix A and cite their FR-KWD ID", name, i+1, m[1], RulesFRD))
+			problems = append(problems, fmt.Sprintf("%s:%d restates keyword %q; define keywords only in %s Appendix A and cite their FR-KWD ID", name, i+1, m[1], specdoc.RulesFRD))
 		}
 	}
 	return problems, frozenRestatements

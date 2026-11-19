@@ -1,10 +1,19 @@
-// Package specdoc holds what the toolchain shares when it scans a file: requirement IDs, the lines that define them, reading a file as lines, and the keyword matrix's items.
+// Package specdoc holds what the toolchain shares when it scans a file: where the FRDs are, requirement IDs, the lines that define them, reading a file as lines, and the keyword matrix's items.
 package specdoc
 
 import (
 	"bufio"
 	"os"
 	"regexp"
+)
+
+const (
+	// FRDDir is the directory that holds the FRDs and the keyword matrix,
+	// relative to the repository root and slash-separated.
+	FRDDir = "docs/frd"
+	// RulesFRD is FRD 01's file name, in FRDDir: the single source of truth for
+	// game rules, which owns every game rule and the keyword dictionary.
+	RulesFRD = "01_Game_Rules_FRD.md"
 )
 
 var (

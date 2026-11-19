@@ -22,7 +22,7 @@ var forbiddenRules = []SyntaxRule{
 
 // Lint audits card rules text for forbidden terminology and syntax shorthand.
 func Lint(repoRoot string, targetFilePaths []string, treatWarningsAsErrors bool) (bool, error) {
-	cardsDir := filepath.Join(repoRoot, "data", "cards")
+	cardsDir := filepath.Join(repoRoot, cardsheet.Dir)
 
 	fmt.Println("==========================================================")
 	fmt.Println("   CARD TOWN LINTER: CARD RULES SYNTAX & TERMINOLOGY      ")

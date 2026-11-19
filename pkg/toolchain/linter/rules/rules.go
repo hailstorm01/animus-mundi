@@ -15,8 +15,6 @@ var (
 	testNameRegex = regexp.MustCompile(`^func (TestFR_([A-Z]{3})_(\d{3}[a-z]?)\w*)\(`)
 	coversRegex   = regexp.MustCompile(`^// Covers: (.+)$`)
 
-	// RulesFRD is the single source of truth for game rules.
-	RulesFRD = filepath.Join("docs", "frd", "01_Game_Rules_FRD.md")
 	// EngineDir holds the executable rules and their scenario tests.
 	EngineDir = filepath.Join("pkg", "engine")
 )
@@ -30,7 +28,7 @@ type Coverage struct {
 
 // Analyze reads FRD 01 and the engine's TestFR_* scenario tests.
 func Analyze(repoRoot string) (*Coverage, error) {
-	defined, subsumed, err := frdRequirements(filepath.Join(repoRoot, RulesFRD))
+	defined, subsumed, err := frdRequirements(filepath.Join(repoRoot, specdoc.FRDDir, specdoc.RulesFRD))
 	if err != nil {
 		return nil, err
 	}

@@ -55,7 +55,7 @@ var (
 
 // Lint audits CSV card sheet files for schema and enum compliance.
 func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
-	cardsDir := filepath.Join(repoRoot, "data", "cards")
+	cardsDir := filepath.Join(repoRoot, cardsheet.Dir)
 
 	fmt.Println("==========================================================")
 	fmt.Println("   CARD TOWN LINTER: CARD SHEET CSV INTEGRITY & SCHEMA    ")

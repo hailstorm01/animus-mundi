@@ -12,7 +12,7 @@ import (
 
 var (
 	ExpectedFiles = []string{
-		"01_Game_Rules_FRD.md",
+		specdoc.RulesFRD,
 		"02_Card_Data_Pipeline_FRD.md",
 		"03_Card_Compiler_FRD.md",
 		"04_Client_Engine_Protocol_Networking_FRD.md",
@@ -35,7 +35,7 @@ type ReqRef struct {
 
 // Lint runs the FRD requirement cross-reference audit.
 func Lint(repoRoot string, targetFilePaths []string) (bool, error) {
-	frdDir := filepath.Join(repoRoot, "docs", "frd")
+	frdDir := filepath.Join(repoRoot, specdoc.FRDDir)
 
 	fmt.Println("==========================================================")
 	fmt.Println("  CARD TOWN LINTER: FRD REQUIREMENTS & CROSS-REFERENCES   ")

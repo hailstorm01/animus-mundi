@@ -3,6 +3,8 @@ package frd
 import (
 	"strings"
 	"testing"
+
+	"animus-mundi/pkg/toolchain/specdoc"
 )
 
 var rulesFixture = []string{
@@ -13,7 +15,7 @@ var rulesFixture = []string{
 
 func TestCheckOwnershipFlagsDuplicateDefinitions(t *testing.T) {
 	problems, _ := CheckOwnership(map[string][]string{
-		RulesFRD:           rulesFixture,
+		specdoc.RulesFRD:   rulesFixture,
 		"05_Engine_FRD.md": {"#### FR-CBT-002: Combat again", "See `FR-KWD-002o`."},
 	})
 	if len(problems) != 1 || !strings.Contains(problems[0], "FR-CBT-002") {
@@ -23,7 +25,7 @@ func TestCheckOwnershipFlagsDuplicateDefinitions(t *testing.T) {
 
 func TestCheckOwnershipFlagsKeywordRestatementOutsideFRD01(t *testing.T) {
 	problems, _ := CheckOwnership(map[string][]string{
-		RulesFRD:           rulesFixture,
+		specdoc.RulesFRD:   rulesFixture,
 		"06_Server_FRD.md": {"| **Berserk N** | cleaves only on a kill |"},
 	})
 	if len(problems) != 1 || !strings.Contains(problems[0], `"Berserk"`) {
@@ -33,9 +35,9 @@ func TestCheckOwnershipFlagsKeywordRestatementOutsideFRD01(t *testing.T) {
 
 func TestCheckOwnershipSkipsFrozenFRDsAndTheMatrix(t *testing.T) {
 	problems, frozen := CheckOwnership(map[string][]string{
-		RulesFRD:           rulesFixture,
+		specdoc.RulesFRD:   rulesFixture,
 		"02_Data_FRD.md":   {"> **Status: FROZEN as design intent.**", "| **Stalwart** | KEYWORD_GRANT |"},
-		KeywordMatrix:      {"- **Stalwart**: quoted to pose a question"},
+		specdoc.MatrixFile: {"- **Stalwart**: quoted to pose a question"},
 		"07_Client_FRD.md": {"Units with **Stalwart** show a shield icon."},
 	})
 	if len(problems) != 0 || frozen != 1 {

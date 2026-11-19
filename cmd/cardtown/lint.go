@@ -11,6 +11,7 @@ import (
 
 	"animus-mundi/pkg/toolchain/git"
 	"animus-mundi/pkg/toolchain/linter/cards"
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 	"animus-mundi/pkg/toolchain/linter/fences"
 	"animus-mundi/pkg/toolchain/linter/frd"
 	"animus-mundi/pkg/toolchain/linter/rules"
@@ -215,7 +216,7 @@ func runLint(args []string) {
 
 // isRulesPath reports whether a change can affect executable rules traceability.
 func isRulesPath(pLower string) bool {
-	return pLower == "docs/frd/01_game_rules_frd.md" || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
+	return pLower == strings.ToLower(specdoc.FRDDir+"/"+specdoc.RulesFRD) || (strings.HasPrefix(pLower, "pkg/engine/") && strings.HasSuffix(pLower, ".go"))
 }
 
 // lintSelection is which linters a lint run runs, and the changed FRD documents and card
@@ -267,9 +268,9 @@ func selectChanged(paths []string, gitErr error) lintSelection {
 		if isFencesPath(pLower) {
 			s.fences = true
 		}
-		if strings.HasPrefix(pLower, "docs/frd/") && strings.HasSuffix(pLower, ".md") {
+		if strings.HasPrefix(pLower, specdoc.FRDDir+"/") && strings.HasSuffix(pLower, ".md") {
 			s.changedFrds = append(s.changedFrds, path)
-		} else if strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv") {
+		} else if strings.HasPrefix(pLower, cardsheet.Dir+"/") && strings.HasSuffix(pLower, ".csv") {
 			s.changedCsvs = append(s.changedCsvs, path)
 		}
 	}
@@ -283,7 +284,7 @@ func selectChanged(paths []string, gitErr error) lintSelection {
 // pkg/, cmd/ or tools/ (the alias check reads them all), plus the data inputs.
 func isFencesPath(pLower string) bool {
 	return ((strings.HasPrefix(pLower, "pkg/") || strings.HasPrefix(pLower, "cmd/") || strings.HasPrefix(pLower, "tools/")) && strings.HasSuffix(pLower, ".go")) ||
-		(strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv")) ||
-		pLower == "docs/frd/"+specdoc.MatrixFile ||
+		(strings.HasPrefix(pLower, cardsheet.Dir+"/") && strings.HasSuffix(pLower, ".csv")) ||
+		pLower == specdoc.FRDDir+"/"+specdoc.MatrixFile ||
 		pLower == "docs/design/"+fences.SurveyFile
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"animus-mundi/pkg/toolchain/git"
+	"animus-mundi/pkg/toolchain/linter/cardsheet"
 	"animus-mundi/pkg/toolchain/linter/rules"
 	"animus-mundi/pkg/toolchain/specdoc"
 )
@@ -122,7 +123,7 @@ func ShowState(repoRoot string) {
 	}
 	fmt.Printf("Git: branch '%s', %s unpushed commit(s)\n", branch, ahead)
 
-	changed := git.Lines(repoRoot, "status", "--porcelain", "--", "docs", "data/cards", "tools", ".agents", "cmd", "pkg")
+	changed := git.Lines(repoRoot, "status", "--porcelain", "--", "docs", cardsheet.Dir, "tools", ".agents", "cmd", "pkg")
 	if len(changed) == 0 {
 		fmt.Println("Uncommitted changes: none")
 	} else {
@@ -165,12 +166,12 @@ func ShowState(repoRoot string) {
 		sumLog := git.Lines(repoRoot, "log", "-1", "--format=%ct", "--", "docs/PRODUCT_SUMMARY.md")
 		if len(sumLog) > 0 {
 			if sumTime, err := strconv.ParseInt(sumLog[0], 10, 64); err == nil {
-				frdDir := filepath.Join(repoRoot, "docs", "frd")
+				frdDir := filepath.Join(repoRoot, specdoc.FRDDir)
 				var staleFrds []string
 				if frdEntries, err := os.ReadDir(frdDir); err == nil {
 					for _, f := range frdEntries {
 						if !f.IsDir() && strings.HasSuffix(f.Name(), ".md") {
-							relFrd := "docs/frd/" + f.Name()
+							relFrd := specdoc.FRDDir + "/" + f.Name()
 							frdLog := git.Lines(repoRoot, "log", "-1", "--format=%ct", "--", relFrd)
 							if len(frdLog) > 0 {
 								if frdTime, err := strconv.ParseInt(frdLog[0], 10, 64); err == nil && frdTime > sumTime {
