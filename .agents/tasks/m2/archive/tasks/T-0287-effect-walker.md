@@ -4,7 +4,7 @@ title: "One walker over an `Effect` and its `Modes`, and `checkStepReads` asks `
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (c), (d))
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0287-effect-walker
 depends_on: [T-0286]
 claims: [func:ability.Effect.Parts]
@@ -167,3 +167,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     7. `git -C W diff autoloop/m2-wave-h.2 --stat`: only `pkg/engine/ability/ability.go`, `pkg/engine/cardload.go`, and `.agents/tasks/m2/T-0287-effect-walker.md` modified.
     8. `gofmt -l W/pkg W/cmd`: clean; `go -C W tool task check`: all passed; `go -C W tool task sim`: 200/200 games clean.
   - Reviewer notes: blobs match dry run (`ability.go` 0920813, `cardload.go` ca84f00). Ready for review.
+- 2026-11-19, lead-architect (wave H.2 run, session 7, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 3cd2dd8. Flash run `fb4c8dbb-e989-48c5-9ca5-5f0fbc1b8a4c`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. (The engineer's Log entry says "session 8"; it is this session's dispatch.) Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0287-effect-walker` (55bc086):
+  - Scope: the two Allowed Files and this file. The implementation commit (ca42153) holds only the two non-test files, and both blobs match the lead's dry run (`ability/ability.go` 0920813, `cardload.go` ca84f00). No test file changed.
+  - Fences and reuse: `Effect.Parts` is the one walk into an effect's `Modes`; `ReadsZoneRef` and `checkEffectReads` read it, and `range e.Modes` is left only in `Parts` and `legalModes`. `checkStepReads` asks `Filter.InPile`, and `cardload.go` names no `ZoneDiscard`. Nothing old survives, and nothing forwards (ADR 0007).
+  - Re-run by the reviewer in a review worktree of the task branch: cases 1-4 and 6 as listed; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.2` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #173 (c) and (d) are applied, so #173 is `applied` and archived. #174 is next.
