@@ -4,7 +4,7 @@ title: "`Card.Deployable`, and `DiscardCard` finds a card through `pileCard` (di
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (a), (b))
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0286-deployable-and-discard-lookup
 depends_on: [T-0285]
 claims: [func:engine.Card.Deployable]
