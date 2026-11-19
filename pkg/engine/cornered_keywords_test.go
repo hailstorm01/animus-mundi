@@ -30,7 +30,7 @@ func corneredCard(name string, power, health int, c ability.WhileCornered, trigs
 func aggressiveItems(items []StackItem) int {
 	n := 0
 	for _, it := range items {
-		if it.Kind == StackAbility && it.Keyword == ability.KeywordAggressive {
+		if it.Kind == StackAbility && it.FromKeyword == ability.KeywordTriggerAggressive {
 			n++
 		}
 	}
@@ -145,7 +145,7 @@ func TestCard_Allshan_AggressiveComesFromTheKeyword(t *testing.T) {
 			t.Fatalf("Cornered attack places one Aggressive keyword item: got %d in %+v (FR-KWD-002f)", n, *items)
 		}
 		for _, it := range *items {
-			if it.Keyword == ability.KeywordAggressive && it.Source != al.ID {
+			if it.FromKeyword == ability.KeywordTriggerAggressive && it.Source != al.ID {
 				t.Errorf("the Aggressive item's source is Allshan: %+v", it)
 			}
 		}

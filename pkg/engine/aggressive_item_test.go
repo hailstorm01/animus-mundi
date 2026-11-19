@@ -50,7 +50,7 @@ func TestFR_CBT_002_AggressiveIsListedFirstAndPlacedFirstByDefault(t *testing.T)
 	if got := placeDepths(s.g.Log); !reflect.DeepEqual(got, []int{1, 2, 3}) {
 		t.Errorf("place depths = %v, want [1 2 3]", got)
 	}
-	if len(*items) != 3 || (*items)[0].Kind != StackAttack || (*items)[1].Keyword != ability.KeywordAggressive || (*items)[2].Keyword != ability.KeywordNone {
+	if len(*items) != 3 || (*items)[0].Kind != StackAttack || (*items)[1].FromKeyword != ability.KeywordTriggerAggressive || (*items)[2].FromKeyword != ability.KeywordTriggerNone {
 		t.Errorf("placed items = %+v, want Attack, Aggressive, printed", *items)
 	}
 }
@@ -61,7 +61,7 @@ func TestFR_TRG_003_AggressiveCanBePlacedLast(t *testing.T) {
 	att, def := raiderWithPrinted(s)
 	items := recordPlaced(s)
 	s.do(s.attack(att, def))
-	if len(*items) != 3 || (*items)[1].Keyword != ability.KeywordNone || (*items)[2].Keyword != ability.KeywordAggressive {
+	if len(*items) != 3 || (*items)[1].FromKeyword != ability.KeywordTriggerNone || (*items)[2].FromKeyword != ability.KeywordTriggerAggressive {
 		t.Errorf("placed items = %+v, want Attack, printed, Aggressive on top", *items)
 	}
 }
@@ -73,12 +73,12 @@ func TestFR_CBT_002_AggressiveItemIsAnAbilityItemWithTheKeyword(t *testing.T) {
 	items := recordPlaced(s)
 	s.do(s.attack(att, def))
 	ag, printed := (*items)[1], (*items)[2]
-	if ag.Kind != StackAbility || ag.Keyword != ability.KeywordAggressive || ag.Source != att.ID || ag.Controller != 0 ||
+	if ag.Kind != StackAbility || ag.FromKeyword != ability.KeywordTriggerAggressive || ag.Source != att.ID || ag.Controller != 0 ||
 		!reflect.DeepEqual(ag.Effect, ability.Aggressive(2).Effect) {
 		t.Errorf("Aggressive item = %+v", ag)
 	}
-	if printed.Keyword != ability.KeywordNone {
-		t.Errorf("printed item has keyword %v", printed.Keyword)
+	if printed.FromKeyword != ability.KeywordTriggerNone {
+		t.Errorf("printed item has keyword %v", printed.FromKeyword)
 	}
 	pl := eventsOfKind(s.g.Log, "place")
 	if want := "player 0 places Aggressive trigger of Raider on the stack"; pl[1].Detail != want {
@@ -91,7 +91,7 @@ func TestFR_CBT_002_AggressiveItemIsAnAbilityItemWithTheKeyword(t *testing.T) {
 
 func TestFR_KWD_002f_AggressiveConstructor(t *testing.T) {
 	tr := ability.Aggressive(3)
-	want := ability.Trigger{Hook: ability.HookAttacks, Keyword: ability.KeywordAggressive,
+	want := ability.Trigger{Hook: ability.HookAttacks, FromKeyword: ability.KeywordTriggerAggressive,
 		Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpModifyStat, Subject: ability.SubjectSelf, Amount: ability.Value{N: 3}}}}}
 	if !reflect.DeepEqual(tr, want) {
 		t.Errorf("Aggressive(3) = %+v, want %+v", tr, want)
@@ -99,8 +99,8 @@ func TestFR_KWD_002f_AggressiveConstructor(t *testing.T) {
 	if tr.Optional || tr.Cornered || len(tr.Effect.Targets) != 0 {
 		t.Errorf("Aggressive(3) must not be Optional, Cornered or targeted: %+v", tr)
 	}
-	if ability.KeywordAggressive.String() != "Aggressive" || ability.KeywordNone.String() != "" {
-		t.Errorf("Keyword names = %q, %q", ability.KeywordAggressive, ability.KeywordNone)
+	if ability.KeywordTriggerAggressive.String() != "Aggressive" || ability.KeywordTriggerNone.String() != "" {
+		t.Errorf("KeywordTrigger names = %q, %q", ability.KeywordTriggerAggressive, ability.KeywordTriggerNone)
 	}
 }
 
@@ -126,7 +126,7 @@ func TestFR_KWD_002f_AggressiveIsReadWhenTheAttackHappens(t *testing.T) {
 	c.Keywords.Aggressive = 2
 	items = recordPlaced(s)
 	s.do(s.attack(att, def))
-	if len(*items) != 2 || (*items)[1].Keyword != ability.KeywordAggressive {
+	if len(*items) != 2 || (*items)[1].FromKeyword != ability.KeywordTriggerAggressive {
 		t.Errorf("one Aggressive item expected: placed %+v", *items)
 	}
 	s.wantDamage(def, 3)

@@ -704,7 +704,7 @@ func TestView_Case5_LogLines(t *testing.T) {
 func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
 	s := newContentScene(t)
 	s.g.Stack = []*engine.StackItem{
-		{Kind: engine.StackAbility, Controller: 0, Source: s.lancer.ID, Inst: s.lancer.Inst, Keyword: ability.KeywordAggressive},
+		{Kind: engine.StackAbility, Controller: 0, Source: s.lancer.ID, Inst: s.lancer.Inst, FromKeyword: ability.KeywordTriggerAggressive},
 		{Kind: engine.StackAbility, Controller: 0, Source: s.sentry.ID, Inst: s.sentry.Inst},
 	}
 	v := view.PlayerView(s.g, 0)
