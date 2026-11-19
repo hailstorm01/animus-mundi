@@ -34,14 +34,14 @@ func guardianReplacement() ability.Replacement {
 
 // guardianStructure is a structure guardian with the given Maximum Health and triggers.
 func guardianStructure(health int, trigs ...ability.Trigger) *Card {
-	c := structure("Guardian", 1, health, Keywords{})
+	c := structure("Guardian", 1, health, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: trigs, Replacements: []ability.Replacement{guardianReplacement()}}
 	return c
 }
 
 // guardianUnit is a unit guardian with the given Maximum Health.
 func guardianUnit(health int) *Card {
-	c := unit("Guardian Unit", 1, health, Keywords{})
+	c := unit("Guardian Unit", 1, health, ability.Keywords{})
 	c.Ability = &ability.Def{Replacements: []ability.Replacement{guardianReplacement()}}
 	return c
 }
@@ -87,7 +87,7 @@ func wantReplaced(t *testing.T, s *scene, want ...*Asset) {
 func TestFR_REP_001_ReplacedDeathReturnsTheUnitToItsOwnersHand(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, guardianStructure(3))
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.sweep(0, alliedUnits)
 	if s.alive(u) {
 		t.Errorf("the replaced unit should have left the battlefield (FR-REP-001)")
@@ -125,7 +125,7 @@ func TestFR_REP_001_ReplacedDeathFiresNoDeathTrigger(t *testing.T) {
 func TestFR_REP_001_ReplacementDoesNotApplyOutsideItsFilter(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, guardianStructure(3))
-	foe := s.put(1, ZoneReserves, unit("Foe", 1, 1, Keywords{}))
+	foe := s.put(1, ZoneReserves, unit("Foe", 1, 1, ability.Keywords{}))
 	s.sweep(0, ability.Filter{Kinds: ability.KindUnit, Other: true})
 	if s.alive(foe) {
 		t.Fatalf("precondition: the opposing unit is lethal and leaves the battlefield")
@@ -144,7 +144,7 @@ func threeVictims(s *scene, health int) (*Asset, [3]*Asset) {
 	src := s.put(0, ZoneMainTheater, guardianStructure(health))
 	var us [3]*Asset
 	for i := range us {
-		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	}
 	return src, us
 }
@@ -159,7 +159,7 @@ func TestFR_REP_001_SourceLethalInTheSameSweepReplacesEveryDeath(t *testing.T) {
 	src := s.put(0, ZoneMainTheater, guardianUnit(1))
 	var us [3]*Asset
 	for i := range us {
-		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	}
 	s.sweep(0, alliedUnits)
 	wantReplaced(t, s, us[0], us[1], us[2])
@@ -183,7 +183,7 @@ func TestFR_REP_001_ByproductDamageFiresTheSourcesDamageTrigger(t *testing.T) {
 	// the sweep (FR-TRG-004).
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, guardianStructure(3, unbowed(nil, healSelf(1))))
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.sweep(0, alliedUnits)
 	if s.alive(u) || !inHand(s.g.Players[0], u.Inst) {
 		t.Fatalf("precondition: the unit's death is replaced")
@@ -274,7 +274,7 @@ func TestFR_REP_001_ByproductLethalSourceStillReplacesEveryDeathInThePass(t *tes
 	src := s.put(0, ZoneMainTheater, guardianStructure(4))
 	var us [5]*Asset
 	for i := range us {
-		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+		us[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	}
 	s.sweep(0, alliedUnits)
 	wantReplaced(t, s, us[0], us[1], us[2], us[3], us[4])
@@ -300,10 +300,10 @@ func TestFR_REP_001_ActivePlayersReplacedDeathsGoFirst(t *testing.T) {
 	s.put(1, ZoneMainTheater, guardianStructure(3))
 	var p1, p0 [2]*Asset
 	for i := range p1 {
-		p1[i] = s.put(1, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+		p1[i] = s.put(1, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	}
 	for i := range p0 {
-		p0[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+		p0[i] = s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	}
 	s.script(0)
 	s.script(1)
@@ -359,8 +359,8 @@ func TestFR_REP_001_ControllerChoosesBetweenReplacementsForEachDeath(t *testing.
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, guardianStructure(4))
 	b := s.put(0, ZoneMainTheater, guardianStructure(4))
-	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{1}})
 	s.sweep(0, alliedUnits)
 	asks := replacementAsks(s, 0)
@@ -391,8 +391,8 @@ func TestFR_REP_001_ReplacementChoiceTimesOutToFixedOrder(t *testing.T) {
 	s := newScene(t)
 	old := s.put(0, ZoneMainTheater, guardianUnit(5))
 	newer := s.put(0, ZoneReserves, guardianUnit(5))
-	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true}, Answer{Timeout: true})
 	s.sweep(0, alliedUnits)
 	if n := len(replacementAsks(s, 0)); n != 2 {
@@ -410,14 +410,14 @@ func TestFR_REP_001_ReplacementChoiceTimesOutToPrintedOrderWithinASource(t *test
 	// SVY-R23: one source prints two applicable replacements; a timeout
 	// applies the first printed one (return to hand), not the second (deck).
 	s := newScene(t)
-	src := structure("Twin Guardian", 1, 4, Keywords{})
+	src := structure("Twin Guardian", 1, 4, ability.Keywords{})
 	toHand := ability.Replacement{Event: ability.WouldBeDestroyed, Filter: alliedUnits,
 		Steps: []ability.Step{{Op: ability.OpReturnToHand, Subject: ability.SubjectReplaced}}}
 	toDeck := ability.Replacement{Event: ability.WouldBeDestroyed, Filter: alliedUnits,
 		Steps: []ability.Step{{Op: ability.OpPutOnDeck, Subject: ability.SubjectReplaced}}}
 	src.Ability = &ability.Def{Replacements: []ability.Replacement{toHand, toDeck}}
 	g := s.put(0, ZoneMainTheater, src)
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.sweep(0, alliedUnits)
 	asks := replacementAsks(s, 0)
@@ -440,7 +440,7 @@ func TestFR_REP_001_OneApplicableReplacementAsksNothing(t *testing.T) {
 	// SVY-R23: a choice only exists when several replacements apply.
 	s := newScene(t)
 	g := s.put(0, ZoneMainTheater, guardianStructure(3))
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1}})
 	s.sweep(0, alliedUnits)
 	for p := PlayerID(0); p < 2; p++ {
@@ -461,7 +461,7 @@ func TestFR_REP_001_LethalSourceIsStillAChoice(t *testing.T) {
 	// SVY-R20, SVY-R23: a lethal source still applies until the sweep destroys
 	// it, so it is offered. The unit is oldest, so its death is replaced first.
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Victim", 1, 1, ability.Keywords{}))
 	a := s.put(0, ZoneMainTheater, guardianUnit(1))
 	b := s.put(0, ZoneReserves, guardianUnit(4))
 	s.script(0, Answer{Picks: []int{0}})

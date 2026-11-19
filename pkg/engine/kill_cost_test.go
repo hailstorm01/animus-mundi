@@ -62,8 +62,8 @@ func kcScript(s *scene, target any, payer *Asset) {
 func TestFR_TRN_003a_KillCostPaidOnDeclaration(t *testing.T) {
 	// Covers: FR-TRN-003, FR-MNV-001
 	s := newScene(t)
-	u1 := s.put(0, ZoneMainTheater, unit("First", 1, 5, Keywords{}))
-	u2 := s.put(0, ZoneMainTheater, unit("Second", 1, 5, Keywords{}))
+	u1 := s.put(0, ZoneMainTheater, unit("First", 1, 5, ability.Keywords{}))
+	u2 := s.put(0, ZoneMainTheater, unit("Second", 1, 5, ability.Keywords{}))
 	inst := s.give(0, killCostManeuver("Sacrifice", 0, 0, steps(drawN(1))))
 	p := s.g.Players[0]
 	deck := len(p.Deck)
@@ -86,8 +86,8 @@ func TestFR_TRN_003a_KillCostPaidOnDeclaration(t *testing.T) {
 func TestFR_TRN_003a_KillCostMustBePayable(t *testing.T) {
 	// Covers: SVY-R29, FR-TRN-003
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, structure("Allied Wall", 0, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, structure("Allied Wall", 0, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	inst := s.give(0, killCostManeuver("Sacrifice", 1, 1, steps(drawN(1))))
 	p := s.g.Players[0]
 	p.Req, p.Tac = 1, 1
@@ -98,7 +98,7 @@ func TestFR_TRN_003a_KillCostMustBePayable(t *testing.T) {
 	if !inHand(p, inst) || p.Req != 1 || p.Tac != 1 {
 		t.Errorf("a rejected Enact changes nothing: in hand %v, Req %d, Tac %d, want true, 1, 1 (SVY-R29)", inHand(p, inst), p.Req, p.Tac)
 	}
-	s.put(0, ZoneReserves, unit("Ally", 1, 1, Keywords{}))
+	s.put(0, ZoneReserves, unit("Ally", 1, 1, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with an allied unit to kill, the Maneuver is offered (FR-TRN-003a)")
 	}
@@ -188,7 +188,7 @@ func TestFR_TRN_003a_CostPaidAfterTargetsAreChosen(t *testing.T) {
 	}
 	t.Run("the card the cost would put in the pile does not count", func(t *testing.T) {
 		s := newScene(t)
-		s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 		inst := s.give(0, card())
 		if offersEnact(s.g, inst) {
 			t.Errorf("with no unit card in the discard pile yet, the Maneuver is not offered: the card the cost puts there is not a target (SVY-R2)")
@@ -200,9 +200,9 @@ func TestFR_TRN_003a_CostPaidAfterTargetsAreChosen(t *testing.T) {
 	})
 	t.Run("targets are judged before the cost kills", func(t *testing.T) {
 		s := newScene(t)
-		u1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, Keywords{}))
-		u2 := s.put(0, ZoneMainTheater, unit("Ally Two", 1, 5, Keywords{}))
-		piled := s.inDiscard(0, unit("C", 1, 1, Keywords{}), unit("D", 1, 1, Keywords{}))
+		u1 := s.put(0, ZoneMainTheater, unit("Ally One", 1, 5, ability.Keywords{}))
+		u2 := s.put(0, ZoneMainTheater, unit("Ally Two", 1, 5, ability.Keywords{}))
+		piled := s.inDiscard(0, unit("C", 1, 1, ability.Keywords{}), unit("D", 1, 1, ability.Keywords{}))
 		inst := s.give(0, card())
 		if !offersEnact(s.g, inst) {
 			t.Fatalf("with a unit card in the discard pile and an allied unit to kill, the Maneuver is offered")
@@ -230,8 +230,8 @@ func TestFR_TRN_003a_CostPaidAfterTargetsAreChosen(t *testing.T) {
 func TestFR_MOD_001_KillCostTimeoutPicksFixedOrder(t *testing.T) {
 	// Covers: SVY-R16, FR-TRN-003a
 	s := newScene(t)
-	mt := s.put(0, ZoneMainTheater, unit("Theater Unit", 1, 5, Keywords{})) // deployed first
-	rs := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, Keywords{}))   // deployed later
+	mt := s.put(0, ZoneMainTheater, unit("Theater Unit", 1, 5, ability.Keywords{})) // deployed first
+	rs := s.put(0, ZoneReserves, unit("Reserves Unit", 1, 5, ability.Keywords{}))   // deployed later
 	inst := s.give(0, killCostManeuver("Sacrifice", 0, 0, steps(drawN(1))))
 	s.script(0, Answer{Timeout: true})
 	s.do(enactAction(inst))
@@ -246,7 +246,7 @@ func TestFR_MOD_001_KillCostTimeoutPicksFixedOrder(t *testing.T) {
 func TestFR_MOD_001_KillCostSingleOptionNotAsked(t *testing.T) {
 	// Covers: FR-TRN-003a
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Only Ally", 1, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Only Ally", 1, 5, ability.Keywords{}))
 	inst := s.give(0, killCostManeuver("Sacrifice", 0, 0, steps(drawN(1))))
 	s.script(0) // any decision asked is an error
 	s.do(enactAction(inst))

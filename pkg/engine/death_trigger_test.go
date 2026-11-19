@@ -20,7 +20,7 @@ func killedTrigger(steps ...ability.Step) ability.Trigger {
 
 // mortal is a unit printing the given death triggers in order.
 func mortal(name string, power, health int, trigs ...ability.Trigger) *Card {
-	c := unit(name, power, health, Keywords{})
+	c := unit(name, power, health, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
 }
@@ -147,7 +147,7 @@ func TestFR_TRG_003_DeathTriggersOfOneAssetFallBackToPrintedOrder(t *testing.T) 
 	// first and takes the top card.
 	s := newScene(t)
 	cards := s.onTop(1, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, mortal("Defender", 1, 1, killedTrigger(drawN(1)), killedTrigger(scratchN(1))))
 	s.do(s.attack(att, def))
 	p := s.g.Players[1]
@@ -175,7 +175,7 @@ func TestFR_TRG_004_DeathTriggersAreOrderedAfterTheSweepAndResolveWithoutTheirSo
 	s := newScene(t)
 	p := s.g.Players[1]
 	cards := s.onTop(1, vanilla("A", "B")...)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, mortal("Defender", 1, 1, killedTrigger(drawN(1)), killedTrigger(scratchN(1))))
 	handBefore := len(p.Hand)
 	var handAtAsk int
@@ -205,7 +205,7 @@ func TestFR_TRG_004_SingleDeathTriggerResolvesWithoutQuestion(t *testing.T) {
 	cards := s.onTop(1, vanilla("A", "B")...)
 	s.script(0)
 	s.script(1)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, mortal("Defender", 1, 1, killedTrigger(drawN(1))))
 	s.do(s.attack(att, def))
 	p := s.g.Players[1]
@@ -243,7 +243,7 @@ func TestFR_ZON_004_FaceDownScratchCompanyFiresNoDeathTrigger(t *testing.T) {
 		s := newScene(t)
 		cards := s.onTop(1, vanilla("A", "B")...)
 		s.script(1, Answer{Timeout: true})
-		att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+		att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 		def := s.put(1, ZoneMainTheater, mortal("Printed", 1, 1, killedTrigger(drawN(1)), killedTrigger(drawN(1))))
 		def.FaceDown = faceDown
 		s.do(s.attack(att, def))

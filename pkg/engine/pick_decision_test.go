@@ -14,11 +14,11 @@ import (
 func TestFR_TGT_001_UntargetedPickAsksAPickDecision(t *testing.T) {
 	// Covers: SVY-R3, SVY-R14
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 0, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("B", 0, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("C", 0, 5, Keywords{}))
-	v1 := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 0, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 0, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("C", 0, 5, ability.Keywords{}))
+	v1 := s.put(1, ZoneMainTheater, unit("Victim", 0, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, ability.Keywords{}))
 	targets := []ability.Target{{Filter: iydEnemy}, {Filter: iydAlly}}
 	kill1 := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget, Target: 1}
 	s.scriptPlan(0, nil, nil, pick(v1), pick(a), pick(b))

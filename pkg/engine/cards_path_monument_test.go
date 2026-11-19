@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Card tests for Ancestral Monument (T-0263), written from the CSV rules text in
 // data/cards/units-and-structures-path.csv:22: Path Structure (Tower),
@@ -14,15 +17,15 @@ import "testing"
 func TestCard_AncestralMonument_OtherAlliedAssetsInItsZoneWhileCornered(t *testing.T) {
 	s := newScene(t)
 	mon := s.put(0, ZoneMainTheater, s.card("Ancestral Monument"))
-	u := s.put(0, ZoneMainTheater, unit("U", 2, 5, Keywords{}))
-	st := s.put(0, ZoneMainTheater, structure("St", 0, 5, Keywords{}))
-	r := s.put(0, ZoneReserves, unit("R", 2, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("U", 2, 5, ability.Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("St", 0, 5, ability.Keywords{}))
+	r := s.put(0, ZoneReserves, unit("R", 2, 5, ability.Keywords{}))
 	foes := s.foes(3)
 
 	s.wantResistant(u, 0, "3 against 3 is not Cornered, so the grant is not active")
 	s.wantResistant(st, 0, "3 against 3 is not Cornered, so the grant is not active")
 
-	extra := s.put(1, ZoneMainTheater, unit("Extra Foe", 0, 5, Keywords{}))
+	extra := s.put(1, ZoneMainTheater, unit("Extra Foe", 0, 5, ability.Keywords{}))
 	s.wantResistant(u, 1, "3 against 4: Cornered, an other allied unit in the zone has Resistant 1")
 	s.wantResistant(st, 1, "3 against 4: Cornered, an other allied structure in the zone has Resistant 1")
 	s.wantResistant(r, 0, "an allied unit in another zone is not matched")
@@ -44,7 +47,7 @@ func TestCard_AncestralMonument_OtherAlliedAssetsInItsZoneWhileCornered(t *testi
 func TestCard_AncestralMonument_AddsToPrintedResistant(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, s.card("Ancestral Monument"))
-	a := s.put(0, ZoneMainTheater, unit("Armored", 2, 5, Keywords{Resistant: 2}))
+	a := s.put(0, ZoneMainTheater, unit("Armored", 2, 5, ability.Keywords{Resistant: 2}))
 	s.foes(3)
 	s.wantResistant(a, 3, "Cornered (2 against 3): printed Resistant 2 plus the granted 1")
 }
@@ -53,8 +56,8 @@ func TestCard_AncestralMonument_AddsToPrintedResistant(t *testing.T) {
 func TestCard_AncestralMonument_FollowsItsZone(t *testing.T) {
 	s := newScene(t)
 	mon := s.put(0, ZoneMainTheater, s.card("Ancestral Monument"))
-	u := s.put(0, ZoneMainTheater, unit("U", 2, 5, Keywords{}))
-	r := s.put(0, ZoneReserves, unit("R", 2, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("U", 2, 5, ability.Keywords{}))
+	r := s.put(0, ZoneReserves, unit("R", 2, 5, ability.Keywords{}))
 	s.foes(3)
 	s.wantResistant(u, 1, "Cornered (2 against 3), same zone as the Monument")
 	s.wantResistant(r, 0, "Reserves is not the Monument's zone")
@@ -68,10 +71,10 @@ func TestCard_AncestralMonument_CorneredUnitTakesOneLess(t *testing.T) {
 	run := func(t *testing.T, extraAttackers int, want int) {
 		s := newScene(t)
 		s.put(1, ZoneMainTheater, s.card("Ancestral Monument"))
-		d := s.put(1, ZoneMainTheater, unit("D", 0, 5, Keywords{}))
-		att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, Keywords{}))
+		d := s.put(1, ZoneMainTheater, unit("D", 0, 5, ability.Keywords{}))
+		att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, ability.Keywords{}))
 		for i := 0; i < extraAttackers; i++ {
-			s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
 		}
 		s.do(s.attack(att, d))
 		s.wantDamage(d, want)

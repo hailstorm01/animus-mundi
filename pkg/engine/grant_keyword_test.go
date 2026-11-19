@@ -23,8 +23,8 @@ var gkPile = ability.Target{Filter: ability.Filter{
 var gkDeploy = ability.Step{Op: ability.OpDeployFree, Subject: ability.SubjectTarget, To: ability.ZoneMainTheater}
 
 // grantStep is "<subject slot> gains kw until end of turn".
-func grantStep(slot int, kw ability.Keyword) ability.Step {
-	return ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectTarget, Target: slot, Keyword: kw}
+func grantStep(slot int, kw ability.Keywords) ability.Step {
+	return ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectTarget, Target: slot, Keywords: kw}
 }
 
 // grantAlliedManeuver is a free Maneuver whose one target is an allied unit,
@@ -46,15 +46,15 @@ func gkLater(ss ...ability.Step) *Card {
 
 // gkLaterSteps is first, then Stalwart and +2 power on the same pile slot.
 func gkLaterSteps(first ability.Step) []ability.Step {
-	return []ability.Step{first, grantStep(0, ability.KeywordStalwart), modifyTarget(2, 0)}
+	return []ability.Step{first, grantStep(0, ability.Keywords{Stalwart: true}), modifyTarget(2, 0)}
 }
 
 func TestFR_LAY_001_GrantedKeywordIsEffective(t *testing.T) {
 	// Covers: FR-KWD-002c
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Rider", 1, 9, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 20, Keywords{}))
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart)))
+	u := s.put(0, ZoneMainTheater, unit("Rider", 1, 9, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 20, ability.Keywords{}))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true})))
 	if !s.g.Keywords(u).Stalwart {
 		t.Errorf("the granted unit effectively has Stalwart (FR-LAY-001 Layer 3)")
 	}
@@ -67,13 +67,13 @@ func TestFR_LAY_001_GrantedKeywordIsEffective(t *testing.T) {
 
 func TestFR_LAY_001_GrantedKeywordAddsToCornered(t *testing.T) {
 	s := newScene(t)
-	card := unit("Dancer", 2, 6, Keywords{})
+	card := unit("Dancer", 2, 6, ability.Keywords{})
 	card.Ability = &ability.Def{Cornered: ability.WhileCornered{Resistant: 1}}
 	u := s.put(0, ZoneMainTheater, card)
-	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Second Foe", 1, 5, Keywords{}))
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart)))
-	if got, want := s.g.Keywords(u), (Keywords{Resistant: 1, Stalwart: true}); got != want {
+	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Second Foe", 1, 5, ability.Keywords{}))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true})))
+	if got, want := s.g.Keywords(u), (ability.Keywords{Resistant: 1, Stalwart: true}); got != want {
 		t.Errorf("a Cornered unit granted Stalwart has its Cornered keyword and Stalwart: %+v, want %+v (FR-LAY-001 Layer 3)", got, want)
 	}
 }
@@ -81,8 +81,8 @@ func TestFR_LAY_001_GrantedKeywordAddsToCornered(t *testing.T) {
 func TestFR_LAY_003_GrantedKeywordExpiresInSubPhase4c(t *testing.T) {
 	// Covers: FR-TRN-001, SVY-R39
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart), modifyTarget(2, 0)))
+	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, ability.Keywords{}))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true}), modifyTarget(2, 0)))
 	if !s.g.Keywords(u).Stalwart || s.g.Power(u) != 4 {
 		t.Fatalf("until the turn ends the unit has Stalwart and power 4: Stalwart %v, power %d (SVY-R39)", s.g.Keywords(u).Stalwart, s.g.Power(u))
 	}
@@ -100,8 +100,8 @@ func TestFR_LAY_003_GrantedKeywordExpiresInSubPhase4c(t *testing.T) {
 
 func TestFR_LAY_001_GrantedKeywordKeptThroughMove(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneReserves, unit("Rider", 2, 9, Keywords{}))
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart),
+	u := s.put(0, ZoneReserves, unit("Rider", 2, 9, ability.Keywords{}))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true}),
 		moveStep(ability.SubjectTarget, 0, ability.Filter{}, ability.ZoneMainTheater)))
 	if a := s.g.Asset(u.ID); a == nil || a.Zone != ZoneMainTheater {
 		t.Fatalf("the unit moved to the Main Theater: %v", a)
@@ -113,41 +113,60 @@ func TestFR_LAY_001_GrantedKeywordKeptThroughMove(t *testing.T) {
 
 func TestFR_ENT_103_FaceDownUnitKeepsGrantedKeyword(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart),
+	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, ability.Keywords{}))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true}),
 		ability.Step{Op: ability.OpMorphScratch, Subject: ability.SubjectTarget}))
 	if !u.FaceDown {
 		t.Fatalf("the unit is face down")
 	}
-	if got, want := s.g.Keywords(u), (Keywords{DeploysExhausted: true, Stalwart: true}); got != want {
+	if got, want := s.g.Keywords(u), (ability.Keywords{DeploysExhausted: true, Stalwart: true}); got != want {
 		t.Errorf("a face-down unit keeps its temporary turn modifiers, so it has Stalwart besides its Scratch face's Deploys Exhausted: %+v, want %+v (FR-ENT-103)", got, want)
 	}
 }
 
-func TestFR_LAY_001_GrantingAggressiveGrantsNothing(t *testing.T) {
+func TestFR_LAY_001_EmptyGrantGrantsNothing(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, ability.Keywords{}))
 	from := len(s.g.Log)
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordAggressive)))
-	if got := s.g.Keywords(u).Aggressive; got != 0 {
-		t.Errorf("Aggressive comes only from the printed keyword, a grant gives none: Aggressive %d (FR-LAY-001)", got)
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{})))
+	if got, want := s.g.Keywords(u), u.Printed().Keywords; got != want {
+		t.Errorf("an empty grant gives no keyword: %+v, want the printed %+v (FR-LAY-001)", got, want)
 	}
 	if len(u.Modifiers) != 0 {
-		t.Errorf("a grant of Aggressive adds no modifier: %+v", u.Modifiers)
+		t.Errorf("an empty grant adds no modifier: %+v", u.Modifiers)
 	}
 	if ev := effectEvents(s.g, from, EventKeyword); len(ev) != 0 {
 		t.Errorf("%d keyword events for a grant that granted nothing, want 0: %+v", len(ev), ev)
 	}
 }
 
+func TestFR_LAY_001_GrantedKeywordSetIsEffective(t *testing.T) {
+	// Covers: FR-KWD-002, FR-LAY-003
+	s := newScene(t)
+	u := s.put(0, ZoneMainTheater, unit("Rider", 1, 9, ability.Keywords{Resistant: 1}))
+	from := len(s.g.Log)
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Ward: true, Resistant: 2})))
+	if got, want := s.g.Keywords(u), (ability.Keywords{Ward: true, Resistant: 3}); got != want {
+		t.Errorf("the granted set adds to the printed one: %+v, want %+v (FR-LAY-001 Layer 3)", got, want)
+	}
+	ev := effectEvents(s.g, from, EventKeyword)
+	if wantDetail := fmt.Sprintf("%s gains Resistant 2, Ward until end of turn", u); len(ev) != 1 || ev[0].Target != u.ID || ev[0].Detail != wantDetail {
+		t.Errorf("one keyword event naming the set, want detail %q: %+v", wantDetail, ev)
+	}
+	s.endTurn()
+	if got, want := s.g.Keywords(u), (ability.Keywords{Resistant: 1}); got != want {
+		t.Errorf("the granted set expires in Sub-Phase 4c: %+v, want %+v (FR-LAY-003)", got, want)
+	}
+}
+
 func TestEffectEvents_KeywordGrant(t *testing.T) {
 	// ADR-0005: one event per asset acted on, in order.
 	s := newScene(t)
-	rider := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, Keywords{}))
-	sentry := s.put(0, ZoneReserves, unit("Sentry", 2, 3, Keywords{}))
+	rider := s.put(0, ZoneMainTheater, unit("Rider", 2, 9, ability.Keywords{}))
+	sentry := s.put(0, ZoneReserves, unit("Sentry", 2, 3, ability.Keywords{}))
 	want := []*Asset{rider, sentry} // a simultaneous step acts oldest first
 	all := maneuver("Mass Grant", 0, 0, steps(ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectAll,
-		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}, Keyword: ability.KeywordStalwart}))
+		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}, Keywords: ability.Keywords{Stalwart: true}}))
 	from := len(s.g.Log)
 	gkEnact(s, all)
 	ev := effectEvents(s.g, from, EventKeyword)
@@ -166,7 +185,7 @@ func TestEffectEvents_KeywordGrantFaceDownStaysHidden(t *testing.T) {
 	s := newScene(t)
 	fd := s.putScratch(0)
 	from := len(s.g.Log)
-	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.KeywordStalwart)))
+	gkEnact(s, grantAlliedManeuver(grantStep(0, ability.Keywords{Stalwart: true})))
 	ev := effectEvents(s.g, from, EventKeyword)
 	if len(ev) != 1 {
 		t.Fatalf("one keyword event for the face-down unit, got %d", len(ev))
@@ -220,7 +239,7 @@ func TestFR_TGT_003_LaterStepWithoutTheDeployDoesNothing(t *testing.T) {
 	}
 	t.Run("CardLeftThePile", func(t *testing.T) {
 		s := newScene(t)
-		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, ability.Keywords{}))
 		c := dfUnit("Leaves", ZoneReserves)
 		inst := s.inDiscard(0, c)[0]
 		man := s.give(0, gkLater(gkLaterSteps(gkDeploy)...))
@@ -246,7 +265,7 @@ func TestFR_TGT_003_LaterStepWithoutTheDeployDoesNothing(t *testing.T) {
 	})
 	t.Run("DeploySkippedUnsupported", func(t *testing.T) {
 		s := newScene(t)
-		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, ability.Keywords{}))
 		c := dfUnit("Odd", ZoneReserves)
 		c.Unsupported = []string{"Some rule the kernel cannot run."}
 		s.inDiscard(0, c)
@@ -260,7 +279,7 @@ func TestFR_TGT_003_LaterStepWithoutTheDeployDoesNothing(t *testing.T) {
 	})
 	t.Run("NotADeploy", func(t *testing.T) {
 		s := newScene(t)
-		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Bystander", 2, 5, ability.Keywords{}))
 		c := dfUnit("Rider", ZoneReserves)
 		inst := s.inDiscard(0, c)[0]
 		s.script(0)

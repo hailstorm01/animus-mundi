@@ -29,10 +29,10 @@ func newModalBoard(t *testing.T) *modalBoard {
 	s := newScene(t)
 	return &modalBoard{
 		s:  s,
-		e1: s.put(1, ZoneMainTheater, unit("E1", 0, 5, Keywords{})),
-		e2: s.put(1, ZoneMainTheater, unit("E2", 0, 30, Keywords{})),
-		a1: s.put(0, ZoneMainTheater, unit("A1", 0, 30, Keywords{})),
-		a2: s.put(0, ZoneMainTheater, unit("A2", 0, 30, Keywords{})),
+		e1: s.put(1, ZoneMainTheater, unit("E1", 0, 5, ability.Keywords{})),
+		e2: s.put(1, ZoneMainTheater, unit("E2", 0, 30, ability.Keywords{})),
+		a1: s.put(0, ZoneMainTheater, unit("A1", 0, 30, ability.Keywords{})),
+		a2: s.put(0, ZoneMainTheater, unit("A2", 0, 30, ability.Keywords{})),
 	}
 }
 

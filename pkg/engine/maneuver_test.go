@@ -98,7 +98,7 @@ func TestFR_MNV_001_UnsupportedOrNonManeuverCannotBeEnacted(t *testing.T) {
 	p := s.g.Players[0]
 	p.Req, p.Tac = 5, 5
 	noEffect := s.give(0, &Card{Name: "Empty", Type: TypeManeuver, Ability: &ability.Def{}})
-	asUnit := s.give(0, unit("Soldier", 1, 1, Keywords{}))
+	asUnit := s.give(0, unit("Soldier", 1, 1, ability.Keywords{}))
 	inOpp := s.give(1, maneuver("Theirs", 0, 0, steps(drawN(1))))
 	good := s.give(0, maneuver("Study", 0, 0, steps(drawN(1))))
 	for _, c := range []struct {
@@ -136,8 +136,8 @@ func TestFR_MNV_001_OnlyTheActivePlayerEnacts(t *testing.T) {
 func TestFR_TGT_001_ManeuverTargetChosenOnDeclaration(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TGT-003
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("E1", 1, 5, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("E2", 1, 5, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("E1", 1, 5, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("E2", 1, 5, ability.Keywords{}))
 	inst := s.give(0, maneuver("Execute", 0, 0, ability.Effect{
 		Targets: []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
 		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget}},
@@ -178,7 +178,7 @@ func TestFR_TGT_001_ManeuverTargetChosenOnDeclaration(t *testing.T) {
 func TestFR_QUE_001_ManeuverIsPlacedOnTheStack(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TRN-003
 	s := newScene(t)
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	inst := s.give(0, maneuver("Execute", 0, 0, ability.Effect{
 		Targets: []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
 		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget}},
@@ -208,7 +208,7 @@ func TestFR_QUE_001_ManeuverIsPlacedOnTheStack(t *testing.T) {
 func TestFR_MOD_001_ModalManeuverResolvesOnlyItsChosenMode(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TGT-001
 	s := newScene(t)
-	u := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	u := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	uInst := u.Inst
 	drawMode := mode(nil, drawN(1))
 	backMode := mode([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
@@ -231,7 +231,7 @@ func TestFR_MOD_001_ModalManeuverResolvesOnlyItsChosenMode(t *testing.T) {
 func TestFR_MNV_001_FizzledManeuverStillGoesToDiscard(t *testing.T) {
 	// Covers: SVY-R25, FR-TGT-003
 	s := newScene(t)
-	u := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	u := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	uInst := u.Inst
 	inst := s.give(0, maneuver("Bounce", 0, 0, ability.Effect{
 		Targets: []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)},
@@ -300,7 +300,7 @@ func TestFR_MNV_001_CannotEnactWithoutRequiredTarget(t *testing.T) {
 	if !inHand(p, inst) || p.Req != 2 {
 		t.Errorf("a Maneuver that cannot be enacted stays in hand and costs nothing: in hand %v, Req %d, want true, 2 (FR-MNV-001)", inHand(p, inst), p.Req)
 	}
-	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with one unit on the battlefield, the Maneuver is a legal action (FR-MNV-001)")
 	}
@@ -347,7 +347,7 @@ func TestFR_MOD_001_ChooseOneNeedsOneLegalMode(t *testing.T) {
 	if !inHand(s.g.Players[0], inst) {
 		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
 	}
-	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with an opposing unit both modes are legal and the Maneuver is a legal action (FR-MOD-001 §5)")
 	}
@@ -387,7 +387,7 @@ func TestFR_MNV_001_PileTargetNeededToEnact(t *testing.T) {
 		t.Errorf("with an empty discard pile, \"a unit card in your discard pile\" has no legal entity (SVY-R29)")
 	}
 	s.reject(enactAction(inst))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
 	if offersEnact(s.g, inst) {
 		t.Errorf("only the opponent's unit cards in discard: still no legal entity for an allied pile slot (SVY-R29)")
 	}
@@ -395,7 +395,7 @@ func TestFR_MNV_001_PileTargetNeededToEnact(t *testing.T) {
 	if !inHand(s.g.Players[0], inst) {
 		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
 	}
-	s.inDiscard(0, unit("Mine", 1, 1, Keywords{}))
+	s.inDiscard(0, unit("Mine", 1, 1, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with one of the player's own unit cards in their discard pile, the Maneuver is a legal action (SVY-R29)")
 	}
@@ -414,7 +414,7 @@ func TestFR_MNV_001_SecondRequiredSlotAlsoNeeded(t *testing.T) {
 			{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget, Target: 1},
 		},
 	}))
-	s.put(0, ZoneMainTheater, unit("Mine", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Mine", 1, 5, ability.Keywords{}))
 	if offersEnact(s.g, inst) {
 		t.Errorf("with an allied unit but no opposing unit the second exactly-one slot is empty: not a legal action (SVY-R29)")
 	}
@@ -422,7 +422,7 @@ func TestFR_MNV_001_SecondRequiredSlotAlsoNeeded(t *testing.T) {
 	if !inHand(s.g.Players[0], inst) {
 		t.Errorf("the rejected Maneuver stays in hand (SVY-R29)")
 	}
-	s.put(1, ZoneMainTheater, unit("Theirs", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Theirs", 1, 5, ability.Keywords{}))
 	if !offersEnact(s.g, inst) {
 		t.Errorf("with one allied and one opposing unit both slots are fillable: a legal action (SVY-R29)")
 	}

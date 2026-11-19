@@ -65,8 +65,8 @@ func TestFR_TGT_002_UntargetedPoolSplitAsItResolves(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			s := poolScene(t)
-			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 			from := s.runPool(Answer{Picks: c.picks})
 			picks := picksAsked(s)
 			if len(picks) != 1 {
@@ -113,8 +113,8 @@ func TestFR_TGT_002_UntargetedPoolRejectsWrongTotals(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			s := poolScene(t)
-			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 			from := s.runPool(Answer{Picks: c.picks})
 			if n := len(effectEvents(s.g, from, EventInvalidAnswer)); n != 1 {
 				t.Errorf("an answer whose picks do not total exactly the pool is invalid, so one invalid-answer event is logged, got %d (SVY-R51, FR-MOD-001 6)", n)
@@ -128,7 +128,7 @@ func TestFR_TGT_002_UntargetedPoolRejectsWrongTotals(t *testing.T) {
 
 func TestFR_MOD_001_UntargetedPoolOneMatchTakesAll(t *testing.T) {
 	s := poolScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
 	s.runPool()
 	if a.Armor != 2 {
 		t.Errorf("with one match the pool's whole 2 armor goes on it, got %d (FR-MOD-001 1, SVY-R51)", a.Armor)
@@ -140,8 +140,8 @@ func TestFR_MOD_001_UntargetedPoolOneMatchTakesAll(t *testing.T) {
 
 func TestFR_TGT_002_UntargetedPoolNoMatchDoesNothing(t *testing.T) {
 	s := poolScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	reserve := s.put(0, ZoneReserves, unit("Reserve", 1, 5, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	reserve := s.put(0, ZoneReserves, unit("Reserve", 1, 5, ability.Keywords{}))
 	from := s.runPool()
 	if enemy.Armor != 0 || reserve.Armor != 0 {
 		t.Errorf("with no allied unit in the structure's zone the clause does nothing; armor enemy,reserve = %d,%d (SVY-R51)", enemy.Armor, reserve.Armor)
@@ -157,9 +157,9 @@ func TestFR_TGT_002_UntargetedPoolNoMatchDoesNothing(t *testing.T) {
 func TestFR_MOD_001_UntargetedPoolTimeoutPutsAllOnFirstInFixedOrder(t *testing.T) {
 	// Covers: FR-TGT-002
 	s := poolScene(t)
-	late := s.put(0, ZoneReserves, unit("Late", 1, 5, Keywords{})) // lowest ID, listed first in Options
-	x := s.put(0, ZoneMainTheater, unit("X", 1, 5, Keywords{}))
-	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, Keywords{}))
+	late := s.put(0, ZoneReserves, unit("Late", 1, 5, ability.Keywords{})) // lowest ID, listed first in Options
+	x := s.put(0, ZoneMainTheater, unit("X", 1, 5, ability.Keywords{}))
+	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, ability.Keywords{}))
 	s.moveTo(late, ZoneMainTheater) // enters the Main Theater last
 	s.runPool(Answer{Timeout: true})
 	if x.Armor != 2 || y.Armor != 0 || late.Armor != 0 {
@@ -171,10 +171,10 @@ func TestFR_MOD_001_UntargetedPoolTimeoutPutsAllOnFirstInFixedOrder(t *testing.T
 func TestFR_TGT_002_UntargetedPoolOffersOnlyLockedZone(t *testing.T) {
 	// Covers: FR-MOD-001
 	s := poolScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	s.put(0, ZoneReserves, unit("Reserve", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneReserves, unit("Reserve", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 	s.runPool(Answer{Picks: []int{0, 1}})
 	picks := picksAsked(s)
 	if len(picks) != 1 {

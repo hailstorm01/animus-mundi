@@ -120,7 +120,7 @@ func TestFR_ZON_004_EntersDiscardTriggerChoosesItsTarget(t *testing.T) {
 	// Covers: FR-KWD-002d, FR-TGT-001
 	s := newScene(t)
 	s.byKind(0, yesAndTimeouts)
-	hurt := s.put(1, ZoneMainTheater, unit("Hurt", 1, 5, Keywords{}))
+	hurt := s.put(1, ZoneMainTheater, unit("Hurt", 1, 5, ability.Keywords{}))
 	hurt.Damage = 3
 	s.byKind(1, func(d Decision) Answer {
 		if d.Kind == DecideTarget {
@@ -148,7 +148,7 @@ func TestFR_ZON_005_EntersDiscardFiresForADestroyedScratchCompany(t *testing.T) 
 	down := s.putScratch(1)
 	down.Inst.Card = mortal("Hidden Monk", 1, 1, killedTrigger(drawN(1)), entersTrigger(drawN(1)))
 	s.moveTo(down, ZoneMainTheater)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	before := len(s.g.Players[1].Hand)
 	s.do(s.attack(att, down))
 	if s.alive(down) {

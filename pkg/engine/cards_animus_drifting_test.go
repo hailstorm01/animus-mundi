@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for T-0244: Drifting Concept (FR-MOD-001 §1, §3, §6; SVY-R16, SVY-R50;
 // board directive #156; FR-KWD-002g).
@@ -119,7 +122,7 @@ func TestCard_DriftingConcept_EmptyHandAsksNothing(t *testing.T) {
 func TestCard_DriftingConcept_IsEthereal(t *testing.T) {
 	// Covers: FR-KWD-002g
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 2, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 2, ability.Keywords{}))
 	ghost := s.put(1, ZoneMainTheater, s.card("Drifting Concept"))
 	s.reject(s.attack(att, ghost))
 	s.do(s.attack(att, s.g.Players[1].HQ))

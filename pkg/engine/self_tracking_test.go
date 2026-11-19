@@ -32,7 +32,7 @@ func inZone(list []*Instance, inst *Instance) bool {
 // player 1. It returns the dead card's instance.
 func killOnP1(s *scene, c *Card) *Instance {
 	s.t.Helper()
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, c)
 	inst := def.Inst
 	s.do(s.attack(att, def))

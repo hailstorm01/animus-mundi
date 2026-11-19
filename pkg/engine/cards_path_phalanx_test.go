@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Card tests for Chainbreaker Phalanx (T-0204), written from the CSV rules text
 // in data/cards/units-and-structures-path.csv: Path Unit, Infantry,
@@ -58,7 +61,7 @@ func phalanxScene(t *testing.T) (s *scene, p, x *Asset) {
 	t.Helper()
 	s = newScene(t)
 	p = s.put(0, ZoneReserves, s.card("Chainbreaker Phalanx"))
-	x = s.put(0, ZoneReserves, unit("X", 2, 4, Keywords{}))
+	x = s.put(0, ZoneReserves, unit("X", 2, 4, ability.Keywords{}))
 	return s, p, x
 }
 
@@ -149,7 +152,7 @@ func TestCard_ChainbreakerPhalanx_DeclineIsNotPlaced(t *testing.T) {
 func TestCard_ChainbreakerPhalanx_MarchToReservesFiresNothing(t *testing.T) {
 	s := newScene(t)
 	p := s.put(0, ZoneMainTheater, s.card("Chainbreaker Phalanx"))
-	x := s.put(0, ZoneReserves, unit("X", 2, 4, Keywords{}))
+	x := s.put(0, ZoneReserves, unit("X", 2, 4, ability.Keywords{}))
 	s.phalanxChooser(yes, x)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: p.ID})
 	if got := s.g.Asset(p.ID); got == nil || got.Zone != ZoneReserves {
@@ -167,7 +170,7 @@ func TestCard_ChainbreakerPhalanx_MarchToReservesFiresNothing(t *testing.T) {
 // Covers: SVY-R1
 func TestCard_ChainbreakerPhalanx_DeployFiresNothing(t *testing.T) {
 	s := newScene(t)
-	x := s.put(0, ZoneReserves, unit("X", 2, 4, Keywords{}))
+	x := s.put(0, ZoneReserves, unit("X", 2, 4, ability.Keywords{}))
 	s.g.Players[0].Req, s.g.Players[0].Tac = 4, 0
 	s.phalanxChooser(yes, x)
 	s.deployFromHand(0, s.card("Chainbreaker Phalanx"))
@@ -184,8 +187,8 @@ func TestCard_ChainbreakerPhalanx_DeployFiresNothing(t *testing.T) {
 func TestCard_ChainbreakerPhalanx_OnlyAlliedUnitsInReserves(t *testing.T) {
 	s := newScene(t)
 	p := s.put(0, ZoneReserves, s.card("Chainbreaker Phalanx"))
-	enemy := s.put(1, ZoneReserves, unit("Enemy", 2, 4, Keywords{}))
-	front := s.put(0, ZoneMainTheater, unit("Front", 2, 4, Keywords{}))
+	enemy := s.put(1, ZoneReserves, unit("Enemy", 2, 4, ability.Keywords{}))
+	front := s.put(0, ZoneMainTheater, unit("Front", 2, 4, ability.Keywords{}))
 	s.phalanxChooser(yes, enemy, front)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: p.ID})
 	for _, d := range s.asked(0) {
@@ -215,7 +218,7 @@ func TestCard_ChainbreakerPhalanx_ChainsIntoAnotherPhalanx(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneReserves, s.card("Chainbreaker Phalanx"))
 	b := s.put(0, ZoneReserves, s.card("Chainbreaker Phalanx"))
-	c := s.put(0, ZoneReserves, unit("C", 2, 4, Keywords{}))
+	c := s.put(0, ZoneReserves, unit("C", 2, 4, ability.Keywords{}))
 	s.phalanxChooser(yes, b, c)
 	// Record, as each ability is placed, its source, the stack depth and
 	// whether Phalanx B is already in the Main Theater with its armor.

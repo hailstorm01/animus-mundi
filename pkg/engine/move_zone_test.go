@@ -53,7 +53,7 @@ func (s *scene) enactFree(e ability.Effect) {
 func TestFR_TGT_003_MovedTargetStillTakesLaterSteps(t *testing.T) {
 	// Covers: SVY-R26
 	s := newScene(t)
-	x := s.put(1, ZoneMainTheater, unit("X", 3, 5, Keywords{}))
+	x := s.put(1, ZoneMainTheater, unit("X", 3, 5, ability.Keywords{}))
 	s.choosesAssets(0, x.ID)
 	s.enactFree(ability.Effect{
 		Targets: []ability.Target{{Filter: ability.Filter{Kinds: ability.KindUnit, Zone: ability.ZoneMainTheater}}},
@@ -72,7 +72,7 @@ func TestFR_TGT_003_MovedTargetStillTakesLaterSteps(t *testing.T) {
 
 func TestFR_ZON_004_MovedUnitKeepsItsState(t *testing.T) {
 	s := newScene(t)
-	x := s.put(0, ZoneReserves, unit("X", 2, 6, Keywords{}))
+	x := s.put(0, ZoneReserves, unit("X", 2, 6, ability.Keywords{}))
 	x.Damage, x.Armor, x.Modifiers, x.Exhausted = 2, 3, []Modifier{{Layer: 5, Power: 1}}, true
 	power := s.g.Power(x)
 	s.choosesAssets(0, x.ID)
@@ -95,10 +95,10 @@ func TestFR_ZON_004_MovedUnitKeepsItsState(t *testing.T) {
 
 func TestFR_ZON_002_MoveAllAlliedUnits(t *testing.T) {
 	s := newScene(t)
-	r1 := s.put(0, ZoneReserves, unit("R1", 1, 3, Keywords{}))
-	r2 := s.put(0, ZoneReserves, unit("R2", 1, 3, Keywords{}))
-	there := s.put(0, ZoneMainTheater, unit("There", 1, 3, Keywords{}))
-	opp := s.put(1, ZoneReserves, unit("Opp", 1, 3, Keywords{}))
+	r1 := s.put(0, ZoneReserves, unit("R1", 1, 3, ability.Keywords{}))
+	r2 := s.put(0, ZoneReserves, unit("R2", 1, 3, ability.Keywords{}))
+	there := s.put(0, ZoneMainTheater, unit("There", 1, 3, ability.Keywords{}))
+	opp := s.put(1, ZoneReserves, unit("Opp", 1, 3, ability.Keywords{}))
 	s.enactFree(steps(moveStep(ability.SubjectAll, 0, mzAlliedUnits, ability.ZoneMainTheater)))
 	for _, a := range []*Asset{r1, r2} {
 		if a.Zone != ZoneMainTheater {
@@ -126,8 +126,8 @@ func TestFR_ZON_002_MoveAllAlliedUnits(t *testing.T) {
 
 func TestFR_ZON_002_StructuresAndHeadquartersAreNotMoved(t *testing.T) {
 	s := newScene(t)
-	st := s.put(0, ZoneReserves, structure("Wall", 0, 5, Keywords{}))
-	u := s.put(0, ZoneReserves, unit("U", 1, 3, Keywords{}))
+	st := s.put(0, ZoneReserves, structure("Wall", 0, 5, ability.Keywords{}))
+	u := s.put(0, ZoneReserves, unit("U", 1, 3, ability.Keywords{}))
 	hq0, hq1 := s.g.Players[0].HQ, s.g.Players[1].HQ
 	s.enactFree(steps(moveStep(ability.SubjectAll, 0, mzAllAssets, ability.ZoneMainTheater)))
 	if st.Zone != ZoneReserves {
@@ -148,7 +148,7 @@ func TestFR_ZON_002_StructuresAndHeadquartersAreNotMoved(t *testing.T) {
 func TestFR_ZON_002_MovingIsNotDeploying(t *testing.T) {
 	// Covers: SVY-R1
 	s := newScene(t)
-	c := unit("Deployer", 1, 3, Keywords{})
+	c := unit("Deployer", 1, 3, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookDeploy, Effect: steps(drawN(1))}}}
 	u := s.put(0, ZoneReserves, c)
 	deck := len(s.g.Players[0].Deck)
@@ -169,7 +169,7 @@ func TestFR_ZON_002_MovingIsNotDeploying(t *testing.T) {
 
 func TestFR_ZON_002_AUnitAlreadyThereDoesNotMove(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneMainTheater, unit("U", 1, 3, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("U", 1, 3, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	s.choosesAssets(0, u.ID)
 	more := drawN(1)
@@ -189,9 +189,9 @@ func TestFR_ZON_002_AUnitAlreadyThereDoesNotMove(t *testing.T) {
 func TestFR_MOD_001_MovedUnitIsLastInItsNewZone(t *testing.T) {
 	// Covers: SVY-R7, SVY-R16
 	s := newScene(t)
-	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, Keywords{}))
-	x := s.put(0, ZoneReserves, unit("X", 1, 5, Keywords{}))
-	z := s.put(0, ZoneMainTheater, unit("Z", 1, 5, Keywords{}))
+	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, ability.Keywords{}))
+	x := s.put(0, ZoneReserves, unit("X", 1, 5, ability.Keywords{}))
+	z := s.put(0, ZoneMainTheater, unit("Z", 1, 5, ability.Keywords{}))
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer { return Answer{Timeout: true} }
 	pick := func() ability.Step {
 		return ability.Step{Op: ability.OpKill, Subject: ability.SubjectPick,

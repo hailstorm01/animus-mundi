@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -19,11 +20,11 @@ var (
 // damageDecks gives both seats cards with the mitigation keywords.
 func damageDecks() [2]engine.DeckList {
 	pool := []*engine.Card{
-		unit("Vanilla", 3, 5, engine.Keywords{}),
-		unit("Wall", 2, 9, engine.Keywords{Stalwart: true}),
-		unit("Tough", 1, 9, engine.Keywords{Resistant: 1}),
-		unit("Plated", 2, 9, engine.Keywords{Armor: 2}),
-		unit("Warded", 1, 9, engine.Keywords{Ward: true}),
+		unit("Vanilla", 3, 5, ability.Keywords{}),
+		unit("Wall", 2, 9, ability.Keywords{Stalwart: true}),
+		unit("Tough", 1, 9, ability.Keywords{Resistant: 1}),
+		unit("Plated", 2, 9, ability.Keywords{Armor: 2}),
+		unit("Warded", 1, 9, ability.Keywords{Ward: true}),
 	}
 	return [2]engine.DeckList{{HQ: hq(3, 20), Main: pool}, {HQ: hq(3, 20), Main: pool}}
 }

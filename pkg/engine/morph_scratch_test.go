@@ -34,7 +34,7 @@ func morphEnact(s *scene, c *Card) {
 func TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace(t *testing.T) {
 	// Covers: FR-LAY-001
 	s := newScene(t)
-	card := unit("Bulwark", 4, 5, Keywords{Stalwart: true})
+	card := unit("Bulwark", 4, 5, ability.Keywords{Stalwart: true})
 	u := s.put(1, ZoneMainTheater, card)
 	u.Exhausted, u.Armor, u.Modifiers = true, 3, []Modifier{{Layer: 5, Power: 2}}
 	id := u.ID
@@ -55,7 +55,7 @@ func TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace(t *testing.T) {
 	if got := s.g.MaxHealth(a); got != 1 {
 		t.Errorf("effective Maximum Health = %d, want 1 (FR-LAY-001 Layer 1)", got)
 	}
-	if got := s.g.Keywords(a); got != (Keywords{DeploysExhausted: true}) {
+	if got := s.g.Keywords(a); got != (ability.Keywords{DeploysExhausted: true}) {
 		t.Errorf("effective keywords = %+v, want Deploys Exhausted only, no Stalwart (FR-ENT-103)", got)
 	}
 	if st := a.Printed().Subtypes; len(st) != 2 || st[0] != "Infantry" || st[1] != "Scratch Company" {
@@ -66,7 +66,7 @@ func TestFR_ENT_103_MorphTurnsUnitFaceDownInPlace(t *testing.T) {
 func TestFR_ENT_103_MorphKeepsAReadiedUnitReadied(t *testing.T) {
 	// Covers: FR-KWD-002l
 	s := newScene(t)
-	u := s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, Keywords{}))
+	u := s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, ability.Keywords{}))
 	morphEnact(s, morphManeuver())
 	if !u.FaceDown || u.Exhausted {
 		t.Errorf("a Readied unit turns face down and stays Readied (Deploys Exhausted does nothing on the battlefield, FR-ENT-103, FR-KWD-002l): FaceDown %v, Exhausted %v", u.FaceDown, u.Exhausted)
@@ -76,7 +76,7 @@ func TestFR_ENT_103_MorphKeepsAReadiedUnitReadied(t *testing.T) {
 func TestFR_ENT_103_MorphWithDamageIsDestroyed(t *testing.T) {
 	// Covers: FR-LAY-002, FR-ZON-004, FR-ZON-005
 	s := newScene(t)
-	card := unit("Martyr", 3, 4, Keywords{})
+	card := unit("Martyr", 3, 4, ability.Keywords{})
 	card.Ability = &ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookKilled, Effect: steps(drawN(1))}}}
 	u := s.put(1, ZoneMainTheater, card)
 	u.Damage, u.Armor = 1, 2
@@ -100,7 +100,7 @@ func TestFR_ENT_103_MorphWithDamageIsDestroyed(t *testing.T) {
 func TestFR_ENT_103_MorphedUnitFiresNoPrintedTriggers(t *testing.T) {
 	// Covers: FR-ZON-005
 	s := newScene(t)
-	card := unit("Wanderer", 2, 5, Keywords{})
+	card := unit("Wanderer", 2, 5, ability.Keywords{})
 	card.Ability = &ability.Def{Triggers: []ability.Trigger{{Hook: ability.HookMoves, Effect: steps(drawN(1))}}}
 	u := s.put(1, ZoneMainTheater, card)
 	hand := len(s.g.Players[1].Hand)
@@ -116,7 +116,7 @@ func TestFR_ENT_103_MorphedUnitFiresNoPrintedTriggers(t *testing.T) {
 func TestFR_ENT_103_MorphedUnitReturnsToHandAsPrintedCard(t *testing.T) {
 	// Covers: FR-ZON-004
 	s := newScene(t)
-	card := unit("Bulwark", 4, 5, Keywords{Stalwart: true})
+	card := unit("Bulwark", 4, 5, ability.Keywords{Stalwart: true})
 	u := s.put(1, ZoneMainTheater, card)
 	inst := u.Inst
 	morphEnact(s, morphManeuver(ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget}))
@@ -132,7 +132,7 @@ func TestFR_ENT_103_MorphSkipsUnitAlreadyFaceDown(t *testing.T) {
 	then := ability.Step{Op: ability.OpDraw, Subject: ability.SubjectController, Amount: ability.Value{N: 1}, IfDone: true}
 
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	morphEnact(s, morphManeuver(then))
 	if got := deck - len(s.g.Players[0].Deck); got != 1 {
@@ -158,8 +158,8 @@ func TestFR_ENT_103_MorphSkipsUnitAlreadyFaceDown(t *testing.T) {
 func TestEffectEvents_MorphLogsTheFaceDownChange(t *testing.T) {
 	// ADR-0005: one event per asset acted on.
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, Keywords{}))
-	s.put(1, ZoneReserves, unit("Sentry", 2, 3, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Bulwark", 4, 5, ability.Keywords{}))
+	s.put(1, ZoneReserves, unit("Sentry", 2, 3, ability.Keywords{}))
 	var want []*Asset
 	for _, a := range s.g.Assets() {
 		if a.Controller == 1 && a.Printed().Type == TypeUnit {

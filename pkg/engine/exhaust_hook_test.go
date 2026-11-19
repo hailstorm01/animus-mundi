@@ -29,7 +29,7 @@ func exhaustTrigger(steps ...ability.Step) ability.Trigger {
 
 // exhaustWatcher is a unit printing a "whenever this exhausts, Scratch 1" trigger.
 func exhaustWatcher(name string) *Card {
-	return striker(name, 1, 5, Keywords{}, exhaustTrigger(scratchN(1)))
+	return striker(name, 1, 5, ability.Keywords{}, exhaustTrigger(scratchN(1)))
 }
 
 // logIndex is the position of the first event of the given kind in the log, or -1.
@@ -89,7 +89,7 @@ func TestFR_CAP_001_ExhaustTriggerFiresWhenItsAssetMarches(t *testing.T) {
 func TestFR_CAP_001_ExhaustTriggerFiresWhenItsAssetAttacks(t *testing.T) {
 	s := newScene(t)
 	w := s.put(0, ZoneMainTheater, exhaustWatcher("Watcher"))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, ability.Keywords{}))
 	s.do(s.attack(w, def))
 	s.wantScratches(0, 1, "an Attack exhausts the attacker as its cost, which fires its exhaust trigger once (SVY-R17)")
 	s.wantDamage(def, 1)
@@ -134,7 +134,7 @@ func TestFR_CAP_001_MarchExhaustTriggerResolvesBeforeTheMarch(t *testing.T) {
 func TestFR_CAP_001_AttackExhaustTriggerResolvesBeforeCombatDamage(t *testing.T) {
 	s := newScene(t)
 	w := s.put(0, ZoneMainTheater, exhaustWatcher("Watcher"))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, ability.Keywords{}))
 	s.do(s.attack(w, def))
 	sc, dm := logIndex(s.g, "scratch"), logIndex(s.g, "damage")
 	if sc < 0 || dm < 0 {
@@ -195,7 +195,7 @@ func TestFR_CAP_001_ReadyingAtTurnStartDoesNotFireTheExhaustTrigger(t *testing.T
 func TestFR_TRG_002_AnotherAssetExhaustingDoesNotFireTheExhaustTrigger(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneReserves, exhaustWatcher("Watcher"))
-	other := s.put(0, ZoneReserves, unit("Other", 1, 1, Keywords{}))
+	other := s.put(0, ZoneReserves, unit("Other", 1, 1, ability.Keywords{}))
 	s.do(Action{Kind: ActGenerate, Player: 0, Asset: other.ID, Resource: Requisition})
 	s.do(Action{Kind: ActGenerate, Player: 0, Asset: s.g.Players[0].HQ.ID, Resource: Requisition})
 	s.wantScratches(0, 0, "the exhaust hook is a self hook: only the watcher's own exhausting fires its trigger (FR-TRG-002)")
@@ -204,8 +204,8 @@ func TestFR_TRG_002_AnotherAssetExhaustingDoesNotFireTheExhaustTrigger(t *testin
 func TestFR_TRG_002_AnOpposingAssetExhaustingDoesNotFireTheExhaustTrigger(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneReserves, exhaustWatcher("Watcher"))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 1, 5, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 1, 5, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 9, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantScratches(1, 0, "an opposing attacker exhausting does not fire the watcher's trigger (FR-TRG-002)")
 }

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"reflect"
 	"testing"
 )
@@ -29,8 +30,8 @@ func newFleshBoard(t *testing.T) *fleshBoard {
 	s := newScene(t)
 	b := &fleshBoard{
 		s:   s,
-		a1:  s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{})),
-		e1:  s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{})),
+		a1:  s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{})),
+		e1:  s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{})),
 		sc0: s.putScratch(0),
 		sc1: s.putScratch(1),
 		hq0: s.g.Players[0].HQ,
@@ -40,8 +41,8 @@ func newFleshBoard(t *testing.T) *fleshBoard {
 }
 
 func (b *fleshBoard) withWard() {
-	b.wardA = b.s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
-	b.wardE = b.s.put(1, ZoneMainTheater, unit("Warded Enemy", 1, 5, Keywords{Ward: true}))
+	b.wardA = b.s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
+	b.wardE = b.s.put(1, ZoneMainTheater, unit("Warded Enemy", 1, 5, ability.Keywords{Ward: true}))
 }
 
 // targetAsk returns the one DecideTarget question put to seat 0.
@@ -120,7 +121,7 @@ func TestCard_RogueFleshshaper_DamageModeDealsOneToTheChosenAsset(t *testing.T) 
 	}
 
 	d := newFleshBoard(t)
-	weak := d.s.put(1, ZoneMainTheater, unit("Weak Enemy", 1, 1, Keywords{}))
+	weak := d.s.put(1, ZoneMainTheater, unit("Weak Enemy", 1, 1, ability.Keywords{}))
 	d.s.scriptModal(0, nil, nil, []Answer{modeAnswer(1)}, pick(weak))
 	deployPath(d.s, "Rogue Fleshshaper", 2)
 	if d.s.alive(weak) {

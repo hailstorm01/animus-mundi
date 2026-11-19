@@ -52,7 +52,7 @@ func dfZoneAsks(s *scene) []Decision {
 }
 
 func dfUnit(name string, zones ...Zone) *Card {
-	c := unit(name, 2, 2, Keywords{})
+	c := unit(name, 2, 2, ability.Keywords{})
 	c.DeployZones = zones
 	return c
 }
@@ -177,7 +177,7 @@ func TestFR_TRN_003a_DeployFreeFiresDeployTriggersNotMoves(t *testing.T) {
 
 func TestFR_TRN_003a_DeployFreeKeepsDeploysExhausted(t *testing.T) {
 	// Covers: FR-KWD-002l
-	c := unit("Tired", 2, 2, Keywords{DeploysExhausted: true})
+	c := unit("Tired", 2, 2, ability.Keywords{DeploysExhausted: true})
 	c.DeployZones = []Zone{ZoneReserves}
 	s, _, _ := dfScene(t, c, ability.ZoneAny)
 	a := assetOf(s.g, c)

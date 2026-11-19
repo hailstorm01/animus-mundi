@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for T-0226 (FR-ZON-004, FR-TRN-003a, FR-TRG-002, FR-MOD-001,
 // FR-KWD-002l; SVY-R9; board directive #136): the Path unit Eerie Remnant,
@@ -121,9 +124,9 @@ func TestCard_EerieRemnant_SteelRainCostDiscardFiresAboveTheManeuver(t *testing.
 	p.Hand = nil
 	rain := s.give(0, s.card("Steel Rain"))
 	rem := s.give(0, s.card("Eerie Remnant"))
-	s.give(0, unit("Other", 1, 1, Keywords{}))
+	s.give(0, unit("Other", 1, 1, ability.Keywords{}))
 	p.Req, p.Tac = 0, 4
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	remnantChooser(s, 0, rem, yes, foe)
 	s.script(1)
 	s.do(enactAction(rain))
@@ -156,7 +159,7 @@ func TestCard_EerieRemnant_IrregularsUnbowedDiscardDeploysIt(t *testing.T) {
 	rem := s.give(1, s.card("Eerie Remnant"))
 	s.onTop(1, vanilla("D")...)
 	def := s.put(1, ZoneMainTheater, s.card("Chainbreaker Irregulars"))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.script(0)
 	remnantChooser(s, 1, rem, yes, nil)
 	s.do(s.attack(att, def))
@@ -211,7 +214,7 @@ func TestCard_EerieRemnant_KilledOnTheBattlefieldFiresNothing(t *testing.T) {
 	// Covers: FR-ZON-004
 	s := newScene(t)
 	rem := s.put(0, ZoneMainTheater, s.card("Eerie Remnant"))
-	foe := s.put(1, ZoneMainTheater, unit("Brute", 5, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Brute", 5, 9, ability.Keywords{}))
 	inst := rem.Inst
 	s.script(0)
 	s.script(1)

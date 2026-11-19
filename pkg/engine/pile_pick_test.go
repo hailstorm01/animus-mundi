@@ -78,9 +78,9 @@ func ppPicks(s *scene) []Decision {
 func TestFR_TGT_001_PilePickOffersMatchingCardsInYourDiscardPile(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("A", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}), unit("B", 1, 1, Keywords{}))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("On Field", 1, 1, Keywords{}))
+	mine := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("On Field", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, ppAllyUnitCards, 0)))
 	asks := ppPicks(s)
@@ -99,8 +99,8 @@ func TestFR_TGT_001_PilePickOffersMatchingCardsInYourDiscardPile(t *testing.T) {
 func TestFR_TGT_001_PilePickIsMadeOnResolutionFromWhatMatchesThen(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	old := s.inDiscard(0, unit("Old", 1, 1, Keywords{}))
-	ally := s.put(0, ZoneMainTheater, unit("Doomed", 1, 5, Keywords{}))
+	old := s.inDiscard(0, unit("Old", 1, 1, ability.Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Doomed", 1, 5, ability.Keywords{}))
 	kill := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget}
 	targets := []ability.Target{{Filter: iydAlly}}
 	s.ppScript(Answer{Picks: []int{0}})
@@ -121,7 +121,7 @@ func TestFR_TGT_001_PilePickIsMadeOnResolutionFromWhatMatchesThen(t *testing.T) 
 func TestFR_TGT_001_PilePickPutsTheCardOnTheBottomOfItsOwnersDeck(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Picks: []int{1}})
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpPutOnDeck, ppAllyUnitCards, 0)))
 	p := s.g.Players[0]
@@ -138,7 +138,7 @@ func TestFR_TGT_001_PilePickPutsTheCardOnTheBottomOfItsOwnersDeck(t *testing.T) 
 
 func TestFR_TGT_001_PilePickCanReturnTheCardToHand(t *testing.T) {
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, ppAllyUnitCards, 0)))
 	p := s.g.Players[0]
@@ -156,8 +156,8 @@ func TestFR_TGT_001_PilePickCanReturnTheCardToHand(t *testing.T) {
 func TestFR_TGT_001_PilePickWithNoMatchDoesNothing(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	s.inDiscard(0, structure("Wall", 0, 3, Keywords{}))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	s.inDiscard(0, structure("Wall", 0, 3, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
 	s.script(0)
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, ppAllyUnitCards, 0), scratchN(1)))
 	if n := len(s.asked(0)); n != 0 {
@@ -173,7 +173,7 @@ func TestFR_TGT_001_PilePickWithNoMatchDoesNothing(t *testing.T) {
 
 func TestFR_MOD_001_SinglePilePickWithOneMatchIsNotAsked(t *testing.T) {
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("Only", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}))
+	cards := s.inDiscard(0, unit("Only", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}))
 	s.script(0)
 	s.iydDeploy(iydTrigger(false, nil, ppPick(ability.OpReturnToHand, ppAllyUnitCards, 0)))
 	if n := len(s.asked(0)); n != 0 {
@@ -188,7 +188,7 @@ func TestFR_MOD_001_PilePickTimeoutPicksTheTopCard(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
 	// Created A, B, C (A has the lowest ID), then reordered to lie bottom to top as A, C, B.
-	insts := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}), unit("C", 1, 1, Keywords{}))
+	insts := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}), unit("C", 1, 1, ability.Keywords{}))
 	ia, ib, ic := insts[0], insts[1], insts[2]
 	p := s.g.Players[0]
 	s.g.takeCard(ib)
@@ -214,7 +214,7 @@ func TestFR_MOD_001_PilePickTimeoutPicksTheTopCard(t *testing.T) {
 func TestFR_TRG_005_IfYouDoRunsYAfterAPilePick(t *testing.T) {
 	// Covers: SVY-R14
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(true, ppOppHQ, ppPick(ability.OpPutOnDeck, ppAllyUnitCards, 0), iydIfDone(dmgTo(3, 0))))
 	p := s.g.Players[0]
@@ -227,7 +227,7 @@ func TestFR_TRG_005_IfYouDoRunsYAfterAPilePick(t *testing.T) {
 func TestFR_TRG_005_IfYouDoSkipsYWhenThePilePickPicksNothing(t *testing.T) {
 	// Covers: SVY-R14, SVY-R16
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}))
 	s.ppScript(Answer{Timeout: true})
 	s.iydDeploy(iydTrigger(true, ppOppHQ, ppPick(ability.OpPutOnDeck, ppAllyUnitCards, 1), iydIfDone(dmgTo(3, 0))))
 	if n := len(ppPicks(s)); n != 1 {

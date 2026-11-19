@@ -117,7 +117,7 @@ func TestFR_TGT_001_LockedZoneOutlivesSource(t *testing.T) {
 
 func TestFR_TGT_001_NoLockWithoutMove(t *testing.T) {
 	s := newScene(t)
-	c := striker("Deployer", 1, 5, Keywords{}, ability.Trigger{Hook: ability.HookDeploy, Effect: ability.Effect{Steps: []ability.Step{scratchN(1)}}})
+	c := striker("Deployer", 1, 5, ability.Keywords{}, ability.Trigger{Hook: ability.HookDeploy, Effect: ability.Effect{Steps: []ability.Step{scratchN(1)}}})
 	inst := &Instance{ID: s.g.newID(), Card: c, Owner: 0}
 	s.g.deployCard(inst, 0, ZoneMainTheater)
 	items := flushedItems(s)

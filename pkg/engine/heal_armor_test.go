@@ -65,8 +65,8 @@ var (
 
 func TestFR_TRN_003_GatedDeployTriggerFiresWhenDeployedToMainTheater(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, e2)
 	src := s.deployTo(0, zonedUnit("Guerrilla", gatedDeploy(ability.ZoneMainTheater, []ability.Target{opposingU}, dmgTo(2, 0))), ZoneMainTheater)
 	if src.Zone != ZoneMainTheater {
@@ -81,7 +81,7 @@ func TestFR_TRN_003_GatedDeployTriggerFiresWhenDeployedToMainTheater(t *testing.
 
 func TestFR_TRN_003_GatedDeployTriggerFastPathsASingleTargetInMainTheater(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, ability.Keywords{}))
 	s.script(0)
 	s.deployTo(0, zonedUnit("Guerrilla", gatedDeploy(ability.ZoneMainTheater, []ability.Target{opposingU}, dmgTo(2, 0))), ZoneMainTheater)
 	if n := len(s.asked(0)); n != 0 {
@@ -92,8 +92,8 @@ func TestFR_TRN_003_GatedDeployTriggerFastPathsASingleTargetInMainTheater(t *tes
 
 func TestFR_TRN_003_GatedDeployTriggerDoesNothingWhenDeployedToReserves(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, ability.Keywords{}))
 	s.script(0)
 	src := s.deployTo(0, zonedUnit("Guerrilla", gatedDeploy(ability.ZoneMainTheater, []ability.Target{opposingU}, dmgTo(2, 0))), ZoneReserves)
 	if src.Zone != ZoneReserves {
@@ -113,8 +113,8 @@ func TestFR_TRN_003_UngatedDeployTriggerFiresInEitherZone(t *testing.T) {
 	for _, z := range []Zone{ZoneMainTheater, ZoneReserves} {
 		t.Run(z.String(), func(t *testing.T) {
 			s := newScene(t)
-			s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, Keywords{}))
-			e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, ability.Keywords{}))
+			e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, ability.Keywords{}))
 			s.scriptRefs(0, nil, e2)
 			s.deployTo(0, zonedUnit("Twin", gatedDeploy(ability.ZoneAny, []ability.Target{opposingU}, dmgTo(2, 0))), z)
 			s.wantDamage(e2, 2)
@@ -133,8 +133,8 @@ func TestFR_TRN_003_ReservesGateFiresInReservesAndNotInMainTheater(t *testing.T)
 	for _, tc := range cases {
 		t.Run(tc.zone.String(), func(t *testing.T) {
 			s := newScene(t)
-			s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, Keywords{}))
-			e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, ability.Keywords{}))
+			e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, ability.Keywords{}))
 			s.scriptRefs(0, nil, e2)
 			s.deployTo(0, zonedUnit("Mirror", gatedDeploy(ability.ZoneReserves, []ability.Target{opposingU}, dmgTo(2, 0))), tc.zone)
 			wantDmg, wantAsks := 0, 0
@@ -154,7 +154,7 @@ func TestFR_TRN_003_FailedGateTriggerIsNotOrderedWithItsSibling(t *testing.T) {
 	// needs no ordering question (FR-TRG-003).
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, ability.Keywords{}))
 	s.script(0)
 	s.deployTo(0, zonedUnit("Guerrilla",
 		gatedDeploy(ability.ZoneMainTheater, []ability.Target{opposingU}, dmgTo(2, 0)),
@@ -171,8 +171,8 @@ func TestFR_TRN_003_FailedGateTriggerIsNotOrderedWithItsSibling(t *testing.T) {
 func TestFR_TRN_003_PassedGateTriggerIsOrderedWithItsSibling(t *testing.T) {
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A", "B")...)
-	s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, Keywords{}))
-	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy A", 1, 9, ability.Keywords{}))
+	e2 := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, []int{0, 1}, e2)
 	s.deployTo(0, zonedUnit("Guerrilla",
 		gatedDeploy(ability.ZoneMainTheater, []ability.Target{opposingU}, dmgTo(2, 0)),
@@ -190,7 +190,7 @@ func TestFR_TRN_003_PassedGateTriggerIsOrderedWithItsSibling(t *testing.T) {
 
 func TestFR_KWD_002d_HealRemovesUpToNDamage(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	ally.Damage = 5
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{alliedU}, healStep(2, 0))), ZoneReserves)
@@ -199,7 +199,7 @@ func TestFR_KWD_002d_HealRemovesUpToNDamage(t *testing.T) {
 
 func TestFR_KWD_002d_HealNeverGoesBelowZeroDamage(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	ally.Damage = 1
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{alliedU}, healStep(2, 0))), ZoneReserves)
@@ -211,7 +211,7 @@ func TestFR_KWD_002d_HealNeverGoesBelowZeroDamage(t *testing.T) {
 
 func TestFR_KWD_002d_HealingAnUndamagedAssetChangesNothing(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{Armor: 1}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{Armor: 1}))
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{alliedU}, healStep(3, 0))), ZoneReserves)
 	s.wantDamage(ally, 0)
@@ -222,7 +222,7 @@ func TestFR_KWD_002d_HealingAnUndamagedAssetChangesNothing(t *testing.T) {
 
 func TestFR_KWD_002d_HealLeavesArmorAlone(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{Armor: 2}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{Armor: 2}))
 	ally.Damage = 3
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{alliedU}, healStep(2, 0))), ZoneReserves)
@@ -280,7 +280,7 @@ func TestFR_KWD_002d_AnyKindOfAssetCanBeHealed(t *testing.T) {
 
 func TestFR_KWD_002d_OpposingWardUnitCannotBeChosenToHeal(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 9, Keywords{Ward: true}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 9, ability.Keywords{Ward: true}))
 	ward.Damage = 4
 	s.script(0)
 	src := s.deployTo(0, zonedUnit("Healer", targetTrigger([]ability.Target{opposingU}, healStep(3, 0))), ZoneReserves)
@@ -310,7 +310,7 @@ func TestFR_KWD_002d_HealWithNoLegalTargetDoesNothing(t *testing.T) {
 
 func TestFR_LAY_002_ArmorGrantAddsToThePool(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Plater", targetTrigger([]ability.Target{alliedU}, armorStep(2, 0))), ZoneReserves)
 	if ally.Armor != 2 {
@@ -321,7 +321,7 @@ func TestFR_LAY_002_ArmorGrantAddsToThePool(t *testing.T) {
 
 func TestFR_LAY_002_SeparateGrantsStackAdditively(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, []int{0, 1}, ally, ally)
 	armor := func(n int) ability.Trigger { return targetTrigger([]ability.Target{alliedU}, armorStep(n, 0)) }
 	s.deployTo(0, zonedUnit("Plater", armor(2), armor(3)), ZoneReserves)
@@ -332,7 +332,7 @@ func TestFR_LAY_002_SeparateGrantsStackAdditively(t *testing.T) {
 
 func TestFR_KWD_002k_GrantedArmorJoinsPrintedArmorInOnePool(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{Armor: 1}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{Armor: 1}))
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Plater", targetTrigger([]ability.Target{alliedU}, armorStep(2, 0))), ZoneReserves)
 	if ally.Armor != 3 {
@@ -342,7 +342,7 @@ func TestFR_KWD_002k_GrantedArmorJoinsPrintedArmorInOnePool(t *testing.T) {
 
 func TestFR_LAY_002_GrantedArmorDoesNotExpireAtEndOfTurn(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Plater", targetTrigger([]ability.Target{alliedU}, armorStep(2, 0))), ZoneReserves)
 	s.endTurn()
@@ -357,11 +357,11 @@ func TestFR_LAY_002_GrantedArmorDoesNotExpireAtEndOfTurn(t *testing.T) {
 
 func TestFR_LAY_002_GrantedArmorAbsorbsLaterDamageOneForOneBeforeHealth(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	s.deployTo(0, zonedUnit("Plater", targetTrigger([]ability.Target{alliedU}, armorStep(2, 0))), ZoneReserves)
 	s.endTurn()
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	s.do(s.attack(hitter, ally))
 	s.wantDamage(ally, 1)
 	if ally.Armor != 0 {
@@ -371,7 +371,7 @@ func TestFR_LAY_002_GrantedArmorAbsorbsLaterDamageOneForOneBeforeHealth(t *testi
 
 func TestFR_ZON_004_MarchKeepsGrantedArmor(t *testing.T) {
 	s := newScene(t)
-	walker := s.put(0, ZoneReserves, unit("Walker", 2, 9, Keywords{}))
+	walker := s.put(0, ZoneReserves, unit("Walker", 2, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, walker)
 	s.deployTo(0, zonedUnit("Plater", targetTrigger([]ability.Target{alliedU}, armorStep(2, 0))), ZoneReserves)
 	if walker.Armor != 2 {
@@ -400,9 +400,9 @@ func healBoth(health int) *Card {
 
 func TestFR_CBT_002_DeployOrAttackHealsOnceOnDeployAndOnceEachAttack(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 10, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 10, ability.Keywords{}))
 	ally.Damage = 7
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally, ally, ally)
 	src := s.deployTo(0, healBoth(9), ZoneMainTheater)
 	s.wantDamage(ally, 5)
@@ -423,7 +423,7 @@ func TestFR_CBT_002_AttackHealResolvesBeforeCombatDamage(t *testing.T) {
 	s := newScene(t)
 	att := s.put(0, ZoneMainTheater, healBoth(5))
 	att.Damage = 4
-	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 20, ability.Keywords{}))
 	s.scriptRefs(0, nil, att)
 	s.do(s.attack(att, def))
 	if !s.alive(att) {
@@ -437,7 +437,7 @@ func TestFR_CBT_002_AttackHealOfTheAttackerDoesNotSaveItFromLethalRetaliation(t 
 	att := s.put(0, ZoneMainTheater, healBoth(5))
 	att.Damage = 3
 	inst := att.Inst
-	def := s.put(1, ZoneMainTheater, unit("Defender", 4, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 4, 20, ability.Keywords{}))
 	s.scriptRefs(0, nil, att)
 	s.do(s.attack(att, def))
 	if s.alive(att) || !inZone(s.g.Players[0].Discard, inst) {
@@ -448,9 +448,9 @@ func TestFR_CBT_002_AttackHealOfTheAttackerDoesNotSaveItFromLethalRetaliation(t 
 func TestFR_CBT_002_AttackHealOfADamagedAllyIsVisibleAfterCombat(t *testing.T) {
 	s := newScene(t)
 	att := s.put(0, ZoneMainTheater, healBoth(9))
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 10, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 10, ability.Keywords{}))
 	ally.Damage = 4
-	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 20, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	s.do(s.attack(att, def))
 	s.wantDamage(ally, 2)

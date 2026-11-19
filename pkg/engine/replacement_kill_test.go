@@ -61,7 +61,7 @@ func TestFR_REP_001_ReplacedKillStillCountsAsDone(t *testing.T) {
 	// the player carried it out, so "if you do" runs.
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, guardianStructure(3))
-	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	deck := len(s.g.Players[0].Deck)
 	draw := drawN(1)
 	draw.IfDone = true
@@ -80,8 +80,8 @@ func TestFR_REP_001_OneKillStepsDeathsAreAllReplaced(t *testing.T) {
 	// replaces the second kill, and is destroyed at the sweep after the item.
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, guardianStructure(1))
-	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.killer(0, killStep(alliedUnits))
 	wantReplaced(t, s, a, b)
 	for _, u := range []*Asset{a, b} {
@@ -101,7 +101,7 @@ func TestFR_REP_001_OneKillStepsDeathsAreAllReplaced(t *testing.T) {
 func TestFR_REP_001_KillStepDestroysWhatNoReplacementAppliesTo(t *testing.T) {
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, guardianStructure(3))
-	ally := s.put(0, ZoneReserves, unit("Ally", 1, 1, Keywords{}))
+	ally := s.put(0, ZoneReserves, unit("Ally", 1, 1, ability.Keywords{}))
 	foe := s.put(1, ZoneReserves, mortal("Foe", 1, 1, killedTrigger(drawN(1))))
 	foeDeck := len(s.g.Players[1].Deck)
 	s.killer(0, killStep(ability.Filter{Kinds: ability.KindUnit, Other: true}))
@@ -122,8 +122,8 @@ func TestFR_REP_001_SourceKilledByTheSameStepReplacesTheOthersFirst(t *testing.T
 	// units it protects, yet it replaces their deaths, then is destroyed.
 	s := newScene(t)
 	src := s.put(0, ZoneMainTheater, guardianUnit(3))
-	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.killer(0, killStep(ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Other: true}))
 	wantReplaced(t, s, a, b)
 	for _, u := range []*Asset{a, b} {
@@ -145,8 +145,8 @@ func TestFR_REP_001_ReplacedKillsAreNotOrderedByThePlayer(t *testing.T) {
 	// it is never asked for, and both kills are replaced oldest first.
 	s := newScene(t)
 	s.put(0, ZoneMainTheater, guardianStructure(3))
-	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	a := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1, 0}})
 	s.killer(0, killStep(alliedUnits))
 	wantReplaced(t, s, a, b)
@@ -158,8 +158,8 @@ func TestFR_REP_001_KillStepAsksForEachKill(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, guardianStructure(4))
 	b := s.put(0, ZoneMainTheater, guardianStructure(4))
-	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
-	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, Keywords{}))
+	u1 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
+	u2 := s.put(0, ZoneReserves, unit("Victim", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{1}})
 	s.killer(0, killStep(alliedUnits))
 	asks := replacementAsks(s, 0)

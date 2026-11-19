@@ -41,13 +41,13 @@ func targetedAttack(targets []ability.Target, steps ...ability.Step) ability.Tri
 }
 
 // wall is a harmless 0-power, 10-Health defender.
-func wall(name string) *Card { return unit(name, 0, 10, Keywords{}) }
+func wall(name string) *Card { return unit(name, 0, 10, ability.Keywords{}) }
 
 // --- FR-KWD-002e: the gate ---
 
 func TestFR_KWD_002e_CorneredTriggerFiresWhenTheOpponentHasMoreInTheMainTheater(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.put(1, ZoneMainTheater, wall("Second"))
 	s.do(s.attack(att, def))
@@ -57,7 +57,7 @@ func TestFR_KWD_002e_CorneredTriggerFiresWhenTheOpponentHasMoreInTheMainTheater(
 func TestFR_KWD_002e_CorneredTriggerDoesNotFireOnEqualCounts(t *testing.T) {
 	s := newScene(t)
 	s.script(0) // any decision is a failure
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 1)
@@ -73,7 +73,7 @@ func TestFR_KWD_002e_CorneredCountsOnlyMainTheaterAssets(t *testing.T) {
 	// The opponent has one Main Theater asset, and more in Reserves plus a
 	// Headquarters. Only the Main Theater counts, so the counts are 1 and 1.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.put(1, ZoneReserves, wall("Reserve A"))
 	s.put(1, ZoneReserves, wall("Reserve B"))
@@ -86,8 +86,8 @@ func TestFR_KWD_002e_CorneredCountsStructuresAndScratchCompanyUnits(t *testing.T
 	// The opponent's two Main Theater assets are a structure and a face-down
 	// Scratch Company unit. Both must count for 2 against 1.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
-	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 10, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{}, cornered(attackTrigger(modifyPower(3, ability.SubjectSelf)))))
+	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 10, ability.Keywords{}))
 	scratch := s.putScratch(1)
 	s.moveTo(scratch, ZoneMainTheater)
 	s.do(s.attack(att, def))
@@ -104,11 +104,11 @@ func TestFR_LAY_003_PlacedCorneredTriggerResolvesAfterTheCountsChange(t *testing
 	// first and so resolves last), leaving 1 against 1; the Cornered trigger
 	// was already placed and still resolves.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{},
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{},
 		cornered(attackTrigger(modifyPower(3, ability.SubjectSelf))),
 		targetedAttack([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(99, 0))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 1, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 0, 1, ability.Keywords{}))
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
 		switch d.Kind {
 		case DecideOrder:
@@ -137,10 +137,10 @@ func TestFR_KWD_002e_ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn(t *test
 	// An ally then leaves the Main Theater (2 against 1) and the second damage
 	// in the same turn fires it: the stopped firing did not use the allowance.
 	s := newScene(t)
-	h0 := s.put(0, ZoneMainTheater, unit("Hitter A", 1, 9, Keywords{}))
-	h1 := s.put(0, ZoneMainTheater, unit("Hitter B", 1, 9, Keywords{}))
+	h0 := s.put(0, ZoneMainTheater, unit("Hitter A", 1, 9, ability.Keywords{}))
+	h1 := s.put(0, ZoneMainTheater, unit("Hitter B", 1, 9, ability.Keywords{}))
 	trig := cornered(limited(1, unbowed(nil, scratchN(1))))
-	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, Keywords{}, trig))
+	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, ability.Keywords{}, trig))
 	ally := s.put(1, ZoneMainTheater, wall("Ally"))
 	s.do(s.attack(h0, def))
 	s.wantScratches(1, 0, "not Cornered at 2 against 2, so the gate stops the first firing")
@@ -155,7 +155,7 @@ func TestFR_KWD_002e_ACorneredFiringTheGateStoppedDoesNotUseUpMaxPerTurn(t *test
 func TestFR_LAY_001_ModifyStatGivesPowerThatCountsInCombatDamage(t *testing.T) {
 	// Covers: FR-CBT-002
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, Keywords{}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, ability.Keywords{}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 5)
@@ -167,7 +167,7 @@ func TestFR_LAY_001_ModifyStatGivesPowerThatCountsInCombatDamage(t *testing.T) {
 func TestFR_LAY_003_ModifyStatPowerExpiresAtEndOfTurn(t *testing.T) {
 	// Covers: FR-TRN-001
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, Keywords{}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, ability.Keywords{}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.do(s.attack(att, def))
 	s.endTurn()
@@ -180,7 +180,7 @@ func TestFR_LAY_001_ModifyStatStacksWithAggressive(t *testing.T) {
 	// Covers: FR-KWD-002f
 	s := newScene(t)
 	s.script(0, Answer{Timeout: true}) // order Aggressive and the attack trigger
-	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, Keywords{Aggressive: 1}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
+	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, ability.Keywords{Aggressive: 1}, attackTrigger(modifyPower(3, ability.SubjectSelf))))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 6)
@@ -192,9 +192,9 @@ func TestFR_TGT_003_ModifyStatOnSelfFizzlesWhenTheSourceHasLeft(t *testing.T) {
 	// resolves first, so the source is gone when +3 resolves: nothing changes.
 	s := newScene(t)
 	selfKill := ability.Step{Op: ability.OpDealDamage, Amount: ability.Value{N: 99}, Subject: ability.SubjectSelf}
-	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, Keywords{},
+	att := s.put(0, ZoneMainTheater, striker("Raider", 2, 9, ability.Keywords{},
 		attackTrigger(modifyPower(3, ability.SubjectSelf)), attackTrigger(selfKill)))
-	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 2, 9, Keywords{}))
+	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 2, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, wall("Wall"))
 	s.script(0, Answer{Picks: []int{0, 1}}) // +3 placed first, so the kill resolves first
 	s.do(s.attack(att, def))
@@ -209,9 +209,9 @@ func TestFR_TGT_003_ModifyStatOnSelfFizzlesWhenTheSourceHasLeft(t *testing.T) {
 
 func TestFR_LAY_001_NegativeModifyStatClampsPowerAtZero(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, Keywords{},
+	att := s.put(0, ZoneMainTheater, striker("Raider", 1, 9, ability.Keywords{},
 		targetedAttack([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, modifyTarget(-5, 0))))
-	def := s.put(1, ZoneMainTheater, unit("Guard", 2, 10, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Guard", 2, 10, ability.Keywords{}))
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
 		if d.Kind == DecideTarget {
 			return Answer{Picks: []int{0}}

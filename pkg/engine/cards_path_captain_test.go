@@ -21,13 +21,13 @@ type captainBoard struct {
 func (s *scene) captainBoard() captainBoard {
 	return captainBoard{
 		cap:     s.put(1, ZoneMainTheater, s.card("Devilhorn Captain")),
-		u0:      s.put(0, ZoneMainTheater, unit("Enemy Unit", 1, 5, Keywords{})),
-		s0:      s.put(0, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{})),
-		u1:      s.put(1, ZoneMainTheater, unit("Ally Unit", 1, 5, Keywords{})),
-		s1:      s.put(1, ZoneMainTheater, structure("Ally Structure", 0, 5, Keywords{})),
-		ward0:   s.put(0, ZoneMainTheater, unit("Warded Enemy", 1, 5, Keywords{Ward: true})),
-		rs0:     s.put(0, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, Keywords{})),
-		rs1:     s.put(1, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{})),
+		u0:      s.put(0, ZoneMainTheater, unit("Enemy Unit", 1, 5, ability.Keywords{})),
+		s0:      s.put(0, ZoneMainTheater, structure("Enemy Structure", 0, 5, ability.Keywords{})),
+		u1:      s.put(1, ZoneMainTheater, unit("Ally Unit", 1, 5, ability.Keywords{})),
+		s1:      s.put(1, ZoneMainTheater, structure("Ally Structure", 0, 5, ability.Keywords{})),
+		ward0:   s.put(0, ZoneMainTheater, unit("Warded Enemy", 1, 5, ability.Keywords{Ward: true})),
+		rs0:     s.put(0, ZoneReserves, unit("Enemy Reserves Unit", 1, 5, ability.Keywords{})),
+		rs1:     s.put(1, ZoneReserves, unit("Ally Reserves Unit", 1, 5, ability.Keywords{})),
 		scratch: s.putScratch(0),
 	}
 }
@@ -35,8 +35,8 @@ func (s *scene) captainBoard() captainBoard {
 // Control: a 2/3 that enters Reserves for 2 Requisition and does nothing on deploy.
 func TestCard_DevilhornCaptain_EntersReservesAsTwoThreeForTwoRequisitionAndDoesNothing(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.script(1)
 	c := deployPath(s, "Devilhorn Captain", 2)
@@ -62,7 +62,7 @@ func TestCard_DevilhornCaptain_EntersReservesAsTwoThreeForTwoRequisitionAndDoesN
 func TestCard_DevilhornCaptain_DamagedOffersEveryMainTheaterAssetOfEitherSideButNotOpposingWard(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{yes}, pick(b.u0))
 	s.do(s.attack(hitter, b.cap))
 	asked := s.asked(1)
@@ -84,7 +84,7 @@ func TestCard_DevilhornCaptain_DamagedOffersEveryMainTheaterAssetOfEitherSideBut
 func TestCard_DevilhornCaptain_CanDamageAnAlliedStructureInTheMainTheater(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{yes}, pick(b.s1))
 	s.do(s.attack(hitter, b.cap))
 	s.wantDamage(b.s1, 1)
@@ -95,8 +95,8 @@ func TestCard_DevilhornCaptain_CanDamageAnAlliedStructureInTheMainTheater(t *tes
 func TestCard_DevilhornCaptain_AlliedWardUnitInTheMainTheaterIsAnOption(t *testing.T) {
 	s := newScene(t)
 	captain := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
-	allyWard := s.put(1, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	allyWard := s.put(1, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{yes}, pick(allyWard))
 	s.do(s.attack(hitter, captain))
 	asked := s.asked(1)
@@ -110,9 +110,9 @@ func TestCard_DevilhornCaptain_AlliedWardUnitInTheMainTheaterIsAnOption(t *testi
 // Covers: FR-KWD-002a
 func TestCard_DevilhornCaptain_FiresInReservesAndStillOffersOnlyMainTheaterAssets(t *testing.T) {
 	s := newScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, Keywords{}))
-	ally := s.put(0, ZoneMainTheater, unit("Ally Unit", 1, 5, Keywords{}))
-	s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, ability.Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally Unit", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneReserves, unit("Ally Reserves Unit", 1, 5, ability.Keywords{}))
 	captain := s.put(0, ZoneReserves, s.card("Devilhorn Captain"))
 	// Saboteur: the opposing clause has a sole target (enemy, not asked); the
 	// allied clause is asked and picks the Captain in Reserves. The Captain's
@@ -133,7 +133,7 @@ func TestCard_DevilhornCaptain_FiresInReservesAndStillOffersOnlyMainTheaterAsset
 func TestCard_DevilhornCaptain_CanChooseItselfAndItsOwnDamageFiresUnbowedAgain(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{yes, yes}, pick(b.cap), pick(b.u1))
 	s.do(s.attack(hitter, b.cap))
 	asked := s.asked(1)
@@ -151,7 +151,7 @@ func TestCard_DevilhornCaptain_CanChooseItselfAndItsOwnDamageFiresUnbowedAgain(t
 func TestCard_DevilhornCaptain_LethalDamageResolvesFromDiscardAndTheDeadCaptainIsNotAnOption(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	inst := b.cap.Inst
 	s.scriptPlan(1, nil, []Answer{yes}, pick(b.u1))
 	s.do(s.attack(hitter, b.cap))
@@ -171,8 +171,8 @@ func TestCard_DevilhornCaptain_LethalDamageResolvesFromDiscardAndTheDeadCaptainI
 func TestCard_DevilhornCaptain_LethalDamageIsChosenByTheLastKnownController(t *testing.T) {
 	s := newScene(t)
 	s.endTurn() // player 1 is active
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
-	ally := s.put(0, ZoneMainTheater, unit("Ally of Controller", 1, 5, Keywords{}))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally of Controller", 1, 5, ability.Keywords{}))
 	// Owned by player 1 and controlled by player 0 when it dies.
 	captured := s.putControlled(1, 0, s.card("Devilhorn Captain"))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(hitter))
@@ -194,9 +194,9 @@ func TestCard_DevilhornCaptain_LethalDamageIsChosenByTheLastKnownController(t *t
 // Covers: FR-MOD-001
 func TestCard_DevilhornCaptain_SoleLegalTargetIsNotAsked(t *testing.T) {
 	s := newScene(t)
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	captain := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
-	s.put(1, ZoneReserves, unit("Ally Reserves Unit", 1, 5, Keywords{}))
+	s.put(1, ZoneReserves, unit("Ally Reserves Unit", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.script(1, yes)
 	s.do(s.attack(hitter, captain))
@@ -216,7 +216,7 @@ func TestCard_DevilhornCaptain_SoleLegalTargetIsNotAsked(t *testing.T) {
 func TestCard_DevilhornCaptain_TimeoutDeclinesAndDealsNothing(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	s.script(1, Answer{Timeout: true})
 	s.do(s.attack(hitter, b.cap))
 	if s.alive(b.cap) {
@@ -247,7 +247,7 @@ func (s *scene) pingCaptain() {
 func TestCard_DevilhornCaptain_DecliningDealsNoDamage(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{no})
 	s.do(s.attack(hitter, b.cap))
 	if a := s.asked(1); len(a) != 1 || a[0].Kind != DecideOptional {
@@ -297,7 +297,7 @@ func TestCard_DevilhornCaptain_ChoosingAnAlliedUnbowedUnitFiresItsUnbowed(t *tes
 	s := newScene(t)
 	first := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
 	second := s.put(1, ZoneMainTheater, s.card("Devilhorn Captain"))
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.scriptPlan(1, nil, []Answer{yes, no}, pick(second))
 	s.script(0)
 	s.do(s.attack(hitter, first))
@@ -313,7 +313,7 @@ func TestCard_DevilhornCaptain_DamageReducedToZeroByResistantDoesNotFire(t *test
 	s := newScene(t)
 	b := s.captainBoard()
 	b.cap.Inst.Card.Keywords.Resistant = 2
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.script(1)
 	s.do(s.attack(hitter, b.cap))
 	s.wantDamage(b.cap, 0)
@@ -329,7 +329,7 @@ func TestCard_DevilhornCaptain_DamageReducedToZeroByResistantDoesNotFire(t *test
 func TestCard_DevilhornCaptain_ZeroPowerAttackerDoesNotFireIt(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Pacifist", 0, 9, ability.Keywords{}))
 	s.script(1)
 	s.do(s.attack(hitter, b.cap))
 	s.wantDamage(b.cap, 0)
@@ -358,10 +358,10 @@ func TestCard_DevilhornCaptain_FaceDownCopyFiresNothingWhenDamaged(t *testing.T)
 	s.endTurn()
 	s.endTurn()
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: sc.ID})
-	bystander0 := s.put(0, ZoneMainTheater, unit("Ally Bystander", 1, 5, Keywords{}))
-	bystander1 := s.put(1, ZoneMainTheater, unit("Enemy Bystander", 1, 5, Keywords{}))
+	bystander0 := s.put(0, ZoneMainTheater, unit("Ally Bystander", 1, 5, ability.Keywords{}))
+	bystander1 := s.put(1, ZoneMainTheater, unit("Enemy Bystander", 1, 5, ability.Keywords{}))
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(hit, sc))
 	if s.alive(sc) {
 		t.Fatalf("precondition: the face-down Scratch Company is destroyed")

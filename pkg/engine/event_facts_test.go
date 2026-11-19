@@ -19,8 +19,8 @@ func damageEvents(log []Event) []Event { return eventsOfKind(log, "damage") }
 func TestEventFacts_Case1_DamageFields(t *testing.T) {
 	// Power 3 into a Stalwart defender with Armor 2.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Att", 3, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{Stalwart: true, Armor: 2}))
+	att := s.put(0, ZoneMainTheater, unit("Att", 3, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, ability.Keywords{Stalwart: true, Armor: 2}))
 	s.do(s.attack(att, def))
 	dmg := damageEvents(s.g.Log)
 	if len(dmg) != 2 {
@@ -47,8 +47,8 @@ func TestEventFacts_Case1_DamageFields(t *testing.T) {
 
 	// Resistant -1 amplifies 0 raw damage to 1.
 	s = newScene(t)
-	zero := s.put(0, ZoneMainTheater, unit("Zero", 0, 9, Keywords{}))
-	soft := s.put(1, ZoneMainTheater, unit("Soft", 0, 9, Keywords{Resistant: -1}))
+	zero := s.put(0, ZoneMainTheater, unit("Zero", 0, 9, ability.Keywords{}))
+	soft := s.put(1, ZoneMainTheater, unit("Soft", 0, 9, ability.Keywords{Resistant: -1}))
 	s.do(s.attack(zero, soft))
 	if d := damageEvents(s.g.Log)[0]; d.Target != soft.ID || d.Raw != 0 || !d.Combat || d.Amount != 1 {
 		t.Errorf("amplified damage = %+v, want raw 0, combat, amount 1", d)
@@ -56,7 +56,7 @@ func TestEventFacts_Case1_DamageFields(t *testing.T) {
 
 	// Non-combat damage on a Stalwart target is not combat and not capped.
 	s = newScene(t)
-	wall := s.put(1, ZoneMainTheater, unit("Wall", 1, 9, Keywords{Stalwart: true}))
+	wall := s.put(1, ZoneMainTheater, unit("Wall", 1, 9, ability.Keywords{Stalwart: true}))
 	src := s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(3, 0))
 	dmg = damageEvents(s.g.Log)
 	if len(dmg) != 1 {
@@ -88,7 +88,7 @@ func checkPlaceDetail(t *testing.T, e Event) {
 func TestEventFacts_Case2_PlaceEvents(t *testing.T) {
 	// A Deploy: action, place, deploy.
 	s := newScene(t)
-	c := unit("Newcomer", 1, 1, Keywords{})
+	c := unit("Newcomer", 1, 1, ability.Keywords{})
 	inst := s.give(0, c)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
 	i := indexOfKind(s.g.Log, "action")
@@ -106,8 +106,8 @@ func TestEventFacts_Case2_PlaceEvents(t *testing.T) {
 
 	// A two-slot targeted deploy trigger: two Target decisions, then one place.
 	s = newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy 1", 1, 9, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy 2", 1, 9, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy 1", 1, 9, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy 2", 1, 9, ability.Keywords{}))
 	slot := tgt(ability.AllegianceOpposing, ability.KindUnit, false)
 	s.script(0, Answer{Picks: []int{0}}, Answer{Picks: []int{0}})
 	src := s.deployTargeter(0, []ability.Target{slot, slot}, dmgTo(1, 0), dmgTo(1, 1))
@@ -128,8 +128,8 @@ func TestEventFacts_Case2_PlaceEvents(t *testing.T) {
 
 	// An attack with an Aggressive attacker: Attack place, then Aggressive place at depth 2.
 	s = newScene(t)
-	raider := s.put(0, ZoneMainTheater, unit("Raider", 1, 9, Keywords{Aggressive: 2}))
-	def := s.put(1, ZoneMainTheater, unit("Target", 1, 9, Keywords{}))
+	raider := s.put(0, ZoneMainTheater, unit("Raider", 1, 9, ability.Keywords{Aggressive: 2}))
+	def := s.put(1, ZoneMainTheater, unit("Target", 1, 9, ability.Keywords{}))
 	s.do(s.attack(raider, def))
 	places := eventsOfKind(s.g.Log, "place")
 	if len(places) != 2 {

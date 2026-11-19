@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -41,8 +42,8 @@ func (s *scene) wmAttack(def *Asset, answers ...Answer) (askedAtPlace, places in
 // Covers: FR-CBT-002, FR-TRG-004, FR-TGT-001
 func TestCard_EternalWatchman_KillingAUnitReturnsTheChosenUnitCardToHand(t *testing.T) {
 	s := wmScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	atPlace, places := s.wmAttack(def, Answer{Picks: []int{1}})
 	if s.alive(def) {
 		t.Fatalf("setup: the Watchman's 3 power should kill the Victim")
@@ -70,8 +71,8 @@ func TestCard_EternalWatchman_KillingAUnitReturnsTheChosenUnitCardToHand(t *test
 // Covers: FR-CBT-002, FR-TRG-004, FR-TGT-001
 func TestCard_EternalWatchman_KillingAStructureReturnsAUnitCard(t *testing.T) {
 	s := wmScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, structure("Wall", 0, 3, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, structure("Wall", 0, 3, ability.Keywords{}))
 	atPlace, _ := s.wmAttack(def, Answer{Picks: []int{0}})
 	if s.alive(def) {
 		t.Fatalf("setup: the Watchman's 3 power should destroy the Wall")
@@ -92,9 +93,9 @@ func TestCard_EternalWatchman_KillingAStructureReturnsAUnitCard(t *testing.T) {
 // Covers: FR-TGT-001, FR-TRG-004
 func TestCard_EternalWatchman_OnlyYourUnitCardsAreOffered(t *testing.T) {
 	s := wmScene(t)
-	mine := s.inDiscard(0, unit("A", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}), unit("B", 1, 1, Keywords{}))
-	theirs := s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	mine := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	theirs := s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	victim := def.Inst
 	s.wmAttack(def, Answer{Picks: []int{0}})
 	asks := s.asked(0)
@@ -115,8 +116,8 @@ func TestCard_EternalWatchman_OnlyYourUnitCardsAreOffered(t *testing.T) {
 // Covers: FR-CBT-002
 func TestCard_EternalWatchman_ADefenderThatSurvivesReturnsNothing(t *testing.T) {
 	s := wmScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Tough", 1, 9, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Tough", 1, 9, ability.Keywords{}))
 	handBefore := len(s.g.Players[0].Hand)
 	_, places := s.wmAttack(def)
 	if !s.alive(def) {
@@ -137,8 +138,8 @@ func TestCard_EternalWatchman_ADefenderThatSurvivesReturnsNothing(t *testing.T) 
 // Covers: FR-CBT-002
 func TestCard_EternalWatchman_ARetaliationKillReturnsNothing(t *testing.T) {
 	s := hqScene(t, rager, watchman)
-	cards := s.inDiscard(1, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
-	att := s.put(0, ZoneMainTheater, unit("Raider", 1, 3, Keywords{}))
+	cards := s.inDiscard(1, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Raider", 1, 3, ability.Keywords{}))
 	s.script(1)
 	handBefore := len(s.g.Players[1].Hand)
 	s.do(s.attack(att, s.g.Players[1].HQ))
@@ -158,9 +159,9 @@ func TestCard_EternalWatchman_ARetaliationKillReturnsNothing(t *testing.T) {
 // Covers: FR-TGT-003, SVY-R16
 func TestCard_EternalWatchman_NoUnitCardInYourPileReturnsNothing(t *testing.T) {
 	s := wmScene(t)
-	wall := s.inDiscard(0, structure("Wall", 0, 3, Keywords{}))
-	theirs := s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	wall := s.inDiscard(0, structure("Wall", 0, 3, ability.Keywords{}))
+	theirs := s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	handBefore := len(s.g.Players[0].Hand)
 	_, places := s.wmAttack(def)
 	if s.alive(def) {
@@ -182,8 +183,8 @@ func TestCard_EternalWatchman_NoUnitCardInYourPileReturnsNothing(t *testing.T) {
 // Covers: FR-MOD-001, SVY-R16
 func TestCard_EternalWatchman_TimeoutReturnsTheTopUnitCard(t *testing.T) {
 	s := wmScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}), unit("C", 1, 1, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}), unit("C", 1, 1, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	s.wmAttack(def, Answer{Timeout: true})
 	if n := len(s.asked(0)); n != 1 {
 		t.Fatalf("three matches are asked once: %d", n)

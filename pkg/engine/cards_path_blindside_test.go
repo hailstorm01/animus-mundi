@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for T-0250: the Path Maneuver Blindside, loaded from data/cards.
 // Player 0 enacts in their Main Phase; player 1 is the opponent.
@@ -18,7 +21,7 @@ func blindside(s *scene) *Instance {
 func TestCard_Blindside_LastsThroughOpponentsTurn(t *testing.T) {
 	// Covers: FR-LAY-003, FR-TRN-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
 	s.do(enactAction(blindside(s)))
 	wantPower(t, s, foe, 1, "right after Blindside resolves (printed 4 -3)")
 	s.endTurn()
@@ -35,8 +38,8 @@ func TestCard_Blindside_LastsThroughOpponentsTurn(t *testing.T) {
 func TestCard_Blindside_ReducedPowerInOpponentsAttack(t *testing.T) {
 	// Covers: FR-LAY-003, FR-LAY-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.do(enactAction(blindside(s)))
 	s.endTurn()
 	s.do(s.attack(foe, ally))
@@ -46,7 +49,7 @@ func TestCard_Blindside_ReducedPowerInOpponentsAttack(t *testing.T) {
 func TestCard_Blindside_ClampsAtZero(t *testing.T) {
 	// Covers: FR-LAY-001, FR-LAY-003
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 9, ability.Keywords{}))
 	s.do(enactAction(blindside(s)))
 	wantPower(t, s, foe, 0, "printed 2 -3 is clamped at 0 (FR-LAY-001 Layer 6), not negative")
 	s.endTurn()
@@ -58,8 +61,8 @@ func TestCard_Blindside_ClampsAtZero(t *testing.T) {
 func TestCard_Blindside_AlliedUnitIsNotATarget(t *testing.T) {
 	// Covers: FR-TGT-001, FR-MNV-001
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 3, 9, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 3, 9, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
 	chooseAsset(s, foe)
 	s.do(enactAction(blindside(s)))
 	for _, d := range s.asked(0) {
@@ -87,11 +90,11 @@ func TestCard_Blindside_NotEnactableWithoutOpposingUnit(t *testing.T) {
 	}{
 		{"no unit at all", func(s *scene) {}, false},
 		{"only an opposing structure and allied units", func(s *scene) {
-			s.put(1, ZoneMainTheater, structure("FoeWall", 0, 3, Keywords{}))
-			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+			s.put(1, ZoneMainTheater, structure("FoeWall", 0, 3, ability.Keywords{}))
+			s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 		}, false},
 		{"one opposing unit in Reserves", func(s *scene) {
-			s.put(1, ZoneReserves, unit("Foe", 1, 3, Keywords{}))
+			s.put(1, ZoneReserves, unit("Foe", 1, 3, ability.Keywords{}))
 		}, true},
 	}
 	for _, c := range cases {

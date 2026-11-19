@@ -73,11 +73,11 @@ func fsSorted(xs ...int) []int {
 // Plant card, a "Plant, Fungus" card, a card of another subtype and a card with none.
 func fsFivePile(s *scene) []*Instance {
 	return s.inDiscard(0,
-		fsSub(unit("Fungus", 1, 1, Keywords{}), "Fungus"),
-		fsSub(unit("Plant", 1, 1, Keywords{}), "Plant"),
-		fsSub(unit("Both", 1, 1, Keywords{}), "Plant", "Fungus"),
-		fsSub(unit("Other", 1, 1, Keywords{}), "Insect"),
-		unit("Bare", 1, 1, Keywords{}))
+		fsSub(unit("Fungus", 1, 1, ability.Keywords{}), "Fungus"),
+		fsSub(unit("Plant", 1, 1, ability.Keywords{}), "Plant"),
+		fsSub(unit("Both", 1, 1, ability.Keywords{}), "Plant", "Fungus"),
+		fsSub(unit("Other", 1, 1, ability.Keywords{}), "Insect"),
+		unit("Bare", 1, 1, ability.Keywords{}))
 }
 
 func TestFR_TGT_001_SubtypesMatchAnyOfTheList(t *testing.T) {
@@ -106,17 +106,17 @@ func TestFR_TGT_001_EmptySubtypesIsNoCriterion(t *testing.T) {
 func TestFR_TGT_001_SubtypesAndKindsAreAConjunction(t *testing.T) {
 	s := newScene(t)
 	p := s.inDiscard(0,
-		fsSub(unit("Fungus Unit", 1, 1, Keywords{}), "Fungus"),
-		fsSub(structure("Fungus Wall", 0, 3, Keywords{}), "Fungus"),
-		fsSub(unit("Fungus Unit 2", 1, 1, Keywords{}), "Fungus"))
+		fsSub(unit("Fungus Unit", 1, 1, ability.Keywords{}), "Fungus"),
+		fsSub(structure("Fungus Wall", 0, 3, ability.Keywords{}), "Fungus"),
+		fsSub(unit("Fungus Unit 2", 1, 1, ability.Keywords{}), "Fungus"))
 	got := s.fsAsk(fsPileSlot(ability.KindUnit, "Fungus"), 0)
 	fsWantRefs(t, got, ppInstIDs(p[0], p[2]), "a Fungus structure fails the unit criterion, a Fungus unit passes both (FR-TGT-001)")
 }
 
 func TestFR_TGT_001_SubtypesAndAllegianceAreAConjunction(t *testing.T) {
 	s := newScene(t)
-	mine := s.inDiscard(0, fsSub(unit("Mine 1", 1, 1, Keywords{}), "Fungus"), fsSub(unit("Mine 2", 1, 1, Keywords{}), "Fungus"))
-	s.inDiscard(1, fsSub(unit("Theirs", 1, 1, Keywords{}), "Fungus"))
+	mine := s.inDiscard(0, fsSub(unit("Mine 1", 1, 1, ability.Keywords{}), "Fungus"), fsSub(unit("Mine 2", 1, 1, ability.Keywords{}), "Fungus"))
+	s.inDiscard(1, fsSub(unit("Theirs", 1, 1, ability.Keywords{}), "Fungus"))
 	got := s.fsAsk(fsPileSlot(0, "Fungus"), 0)
 	fsWantRefs(t, got, ppInstIDs(mine...), "a Fungus card in the opponent's pile fails the allied criterion (FR-TGT-001)")
 }
@@ -131,11 +131,11 @@ func TestFR_TGT_001_SubtypesAndScratchAreAConjunction(t *testing.T) {
 		refused []*Card
 	}{
 		{"infantry and not Scratch", ability.ScratchExcluded, "Infantry",
-			[]*Card{fsSub(unit("Inf A", 1, 1, Keywords{}), "Infantry"), fsSub(unit("Inf B", 1, 1, Keywords{}), "Infantry")},
-			[]*Card{fsSub(unit("Scratch Inf", 1, 1, Keywords{}), "Infantry", sc), fsSub(unit("Not Inf", 1, 1, Keywords{}), "Fungus")}},
+			[]*Card{fsSub(unit("Inf A", 1, 1, ability.Keywords{}), "Infantry"), fsSub(unit("Inf B", 1, 1, ability.Keywords{}), "Infantry")},
+			[]*Card{fsSub(unit("Scratch Inf", 1, 1, ability.Keywords{}), "Infantry", sc), fsSub(unit("Not Inf", 1, 1, ability.Keywords{}), "Fungus")}},
 		{"fungus and Scratch", ability.ScratchOnly, "Fungus",
-			[]*Card{fsSub(unit("Scratch Fungus A", 1, 1, Keywords{}), sc, "Fungus"), fsSub(unit("Scratch Fungus B", 1, 1, Keywords{}), sc, "Fungus")},
-			[]*Card{fsSub(unit("Scratch Bare", 1, 1, Keywords{}), sc), fsSub(unit("Fungus", 1, 1, Keywords{}), "Fungus")}},
+			[]*Card{fsSub(unit("Scratch Fungus A", 1, 1, ability.Keywords{}), sc, "Fungus"), fsSub(unit("Scratch Fungus B", 1, 1, ability.Keywords{}), sc, "Fungus")},
+			[]*Card{fsSub(unit("Scratch Bare", 1, 1, ability.Keywords{}), sc), fsSub(unit("Fungus", 1, 1, ability.Keywords{}), "Fungus")}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -155,9 +155,9 @@ func TestFR_TGT_001_SubtypesAndScratchAreAConjunction(t *testing.T) {
 
 func TestFR_TGT_001_SubtypesReadABattlefieldAsset(t *testing.T) {
 	s := newScene(t)
-	a := s.put(1, ZoneMainTheater, fsSub(unit("Fungus A", 1, 1, Keywords{}), "Fungus"))
-	b := s.put(1, ZoneReserves, fsSub(unit("Fungus B", 1, 1, Keywords{}), "Fungus"))
-	s.put(1, ZoneMainTheater, fsSub(unit("Other", 1, 1, Keywords{}), "Insect"))
+	a := s.put(1, ZoneMainTheater, fsSub(unit("Fungus A", 1, 1, ability.Keywords{}), "Fungus"))
+	b := s.put(1, ZoneReserves, fsSub(unit("Fungus B", 1, 1, ability.Keywords{}), "Fungus"))
+	s.put(1, ZoneMainTheater, fsSub(unit("Other", 1, 1, ability.Keywords{}), "Insect"))
 	got := s.fsKillAsk(fsFieldSlot(ability.KindUnit, ability.ScratchAny, "Fungus"))
 	fsWantRefs(t, fsSorted(got...), fsSorted(a.ID, b.ID), "a battlefield slot lists the units carrying the subtype and no other (FR-TGT-001)")
 }
@@ -165,9 +165,9 @@ func TestFR_TGT_001_SubtypesReadABattlefieldAsset(t *testing.T) {
 func TestFR_TGT_001_SubtypesReadAFaceDownAssetsFace(t *testing.T) {
 	// Covers: FR-ZON-005
 	s := newScene(t)
-	a := s.put(1, ZoneMainTheater, fsSub(unit("Fungus A", 1, 1, Keywords{}), "Fungus"))
-	b := s.put(1, ZoneMainTheater, fsSub(unit("Fungus B", 1, 1, Keywords{}), "Fungus"))
-	down := s.put(1, ZoneReserves, fsSub(unit("Hidden Fungus", 1, 1, Keywords{}), "Fungus"))
+	a := s.put(1, ZoneMainTheater, fsSub(unit("Fungus A", 1, 1, ability.Keywords{}), "Fungus"))
+	b := s.put(1, ZoneMainTheater, fsSub(unit("Fungus B", 1, 1, ability.Keywords{}), "Fungus"))
+	down := s.put(1, ZoneReserves, fsSub(unit("Hidden Fungus", 1, 1, ability.Keywords{}), "Fungus"))
 	down.FaceDown = true
 	down.Exhausted = true
 	got := s.fsKillAsk(fsFieldSlot(ability.KindUnit, ability.ScratchAny, "Fungus"))
@@ -198,10 +198,10 @@ func TestFR_TGT_001_PilePickReadsSubtypes(t *testing.T) {
 // fsManeuverPile is a pile, bottom first: a unit, a Maneuver, a structure, a unit.
 func fsManeuverPile(s *scene) []*Instance {
 	return s.inDiscard(0,
-		unit("Unit", 1, 1, Keywords{}),
+		unit("Unit", 1, 1, ability.Keywords{}),
 		maneuver("Move", 0, 0, steps()),
-		structure("Wall", 0, 3, Keywords{}),
-		unit("Unit 2", 1, 1, Keywords{}))
+		structure("Wall", 0, 3, ability.Keywords{}),
+		unit("Unit 2", 1, 1, ability.Keywords{}))
 }
 
 func TestFR_TGT_001_ManeuverKindListsOnlyManeuverCards(t *testing.T) {
@@ -251,9 +251,9 @@ func TestFR_TGT_001_OtherKindsStillRefuseManeuvers(t *testing.T) {
 func TestFR_TGT_001_ManeuverKindMatchesNoAsset(t *testing.T) {
 	// Covers: FR-TGT-003
 	s := newScene(t)
-	mine := s.put(0, ZoneMainTheater, unit("Mine", 1, 1, Keywords{}))
-	theirs := s.put(1, ZoneMainTheater, unit("Theirs", 1, 1, Keywords{}))
-	wall := s.put(1, ZoneMainTheater, structure("Wall", 0, 3, Keywords{}))
+	mine := s.put(0, ZoneMainTheater, unit("Mine", 1, 1, ability.Keywords{}))
+	theirs := s.put(1, ZoneMainTheater, unit("Theirs", 1, 1, ability.Keywords{}))
+	wall := s.put(1, ZoneMainTheater, structure("Wall", 0, 3, ability.Keywords{}))
 	s.script(0)
 	slot := ability.Target{Filter: ability.Filter{Kinds: ability.KindManeuver}}
 	kill := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget, Target: 0}

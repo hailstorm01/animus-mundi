@@ -20,7 +20,7 @@ func newDefileScene(t *testing.T) (*scene, *Asset, *Asset) {
 	t.Helper()
 	s := newScene(t)
 	d := s.put(1, ZoneMainTheater, s.card("Blind Defile"))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	return s, d, att
 }
 
@@ -121,7 +121,7 @@ func TestCard_BlindDefile_DefileGoneBeforeResolutionKillsNothing(t *testing.T) {
 func TestCard_BlindDefile_ReplacedSelfKillStillKillsTheAttacker(t *testing.T) {
 	// Covers: SVY-R15
 	s, d, att := newDefileScene(t)
-	guardian := structure("Guardian", 0, 9, Keywords{})
+	guardian := structure("Guardian", 0, 9, ability.Keywords{})
 	guardian.Ability = &ability.Def{Replacements: []ability.Replacement{{
 		Event:  ability.WouldBeDestroyed,
 		Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindStructure},

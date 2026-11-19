@@ -20,7 +20,7 @@ import (
 func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheDeathIsReplaced(t *testing.T) {
 	s := wmScene(t)
 	p0 := s.g.Players[0]
-	s.inDiscard(0, unit("Fallen", 1, 1, Keywords{}))
+	s.inDiscard(0, unit("Fallen", 1, 1, ability.Keywords{}))
 	pile, hand := len(p0.Discard), len(p0.Hand)
 	si := s.put(1, ZoneReserves, s.card("Shifting Impossibility"))
 	sc := s.putScratch(1)
@@ -45,9 +45,9 @@ func TestFR_CBT_002_CombatKillTriggerDoesNotFireWhenTheDeathIsReplaced(t *testin
 func TestFR_CBT_002_CombatKillTriggerFiresWhenAnotherDeathInTheSweepIsReplaced(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, guardianStructure(5))
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, Keywords{}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 3, Keywords{}))
-	other := s.put(1, ZoneReserves, unit("Bystander", 1, 1, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 9, ability.Keywords{}, combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, structure("Bunker", 0, 3, ability.Keywords{}))
+	other := s.put(1, ZoneReserves, unit("Bystander", 1, 1, ability.Keywords{}))
 	other.Damage = 1 // lethal at the same sweep as the defender
 	s.do(s.attack(att, def))
 	if s.alive(def) {
@@ -61,8 +61,8 @@ func TestFR_CBT_002_CombatKillTriggerFiresWhenAnotherDeathInTheSweepIsReplaced(t
 func TestFR_CBT_002_ReplacedDefenderGivesNoTriggerWhenTheAttackerAlsoDies(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, guardianStructure(5))
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 1, Keywords{}, combatKillTrigger(scratchN(1))))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 1, ability.Keywords{}, combatKillTrigger(scratchN(1))))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	if s.alive(att) {
 		t.Fatalf("precondition: the attacker is destroyed by retaliation in the same sweep")
@@ -81,8 +81,8 @@ func TestFR_CBT_002_DroppedCombatKillTriggerIsNotOfferedForOrdering(t *testing.T
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, guardianStructure(5))
 	damaged := ability.Trigger{Hook: ability.HookDamaged, Effect: ability.Effect{Steps: []ability.Step{scratchN(1)}}}
-	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 5, Keywords{}, combatKillTrigger(scratchN(3)), damaged))
-	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, Keywords{}))
+	att := s.put(0, ZoneMainTheater, striker("Slayer", 3, 5, ability.Keywords{}, combatKillTrigger(scratchN(3)), damaged))
+	def := s.put(1, ZoneMainTheater, unit("Victim", 1, 3, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1, 0}})
 	s.do(s.attack(att, def))
 	if !s.alive(att) || s.alive(def) || !inHand(s.g.Players[1], def.Inst) {

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"encoding/csv"
 	"os"
 	"path/filepath"
@@ -313,7 +314,7 @@ func TestFR_ZON_003_BattlefieldZonesHoldAssetsOthersHoldCards(t *testing.T) {
 // deployToReserves deploys a free unit from p's hand and returns its asset.
 func deployToReserves(s *scene, p PlayerID) *Asset {
 	s.t.Helper()
-	inst := s.give(p, unit("Recruit", 1, 1, Keywords{}))
+	inst := s.give(p, unit("Recruit", 1, 1, ability.Keywords{}))
 	s.do(Action{Kind: ActDeploy, Player: p, Card: inst.ID, Zone: ZoneReserves})
 	for _, x := range s.g.Players[p].Reserves {
 		if x.Inst.ID == inst.ID {
@@ -350,7 +351,7 @@ func TestFR_ZON_003_OwnerUnchangedByMovingBetweenZones(t *testing.T) {
 
 func TestFR_ZON_003_ReadiedAssetCanPayExhaustCostOnce(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneReserves, unit("Worker", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Worker", 1, 1, ability.Keywords{}))
 	if u.Exhausted {
 		t.Fatal("a newly placed asset should be Readied")
 	}
@@ -367,7 +368,7 @@ func TestFR_ZON_003_ReadiedAssetCanPayExhaustCostOnce(t *testing.T) {
 
 func TestFR_ZON_003_ExhaustedAssetCannotPayExhaustCost(t *testing.T) {
 	s := newScene(t)
-	u := s.put(0, ZoneReserves, unit("Tired Worker", 1, 1, Keywords{}))
+	u := s.put(0, ZoneReserves, unit("Tired Worker", 1, 1, ability.Keywords{}))
 	u.Exhausted = true
 	before := s.g.Players[0].Req
 	s.reject(Action{Kind: ActGenerate, Player: 0, Asset: u.ID, Resource: Requisition})
@@ -386,7 +387,7 @@ func TestFR_ZON_003_ExhaustedAssetCannotPayExhaustCost(t *testing.T) {
 func TestFR_ZON_001_HandOverSixSurvivesEndOfTurnWithoutDiscard(t *testing.T) {
 	s := newScene(t)
 	for i := 0; i < 15; i++ {
-		s.give(0, unit("Extra", 1, 1, Keywords{}))
+		s.give(0, unit("Extra", 1, 1, ability.Keywords{}))
 	}
 	hand := len(s.g.Players[0].Hand)
 	if hand <= 6 {
@@ -409,9 +410,9 @@ func TestFR_ZON_001_ReservesAndMainTheaterAcceptManyAssets(t *testing.T) {
 	s := newScene(t)
 	const n = 12
 	for i := 0; i < n; i++ {
-		r := s.give(0, unit("Reservist", 1, 1, Keywords{}))
+		r := s.give(0, unit("Reservist", 1, 1, ability.Keywords{}))
 		s.do(Action{Kind: ActDeploy, Player: 0, Card: r.ID, Zone: ZoneReserves})
-		m := s.give(0, unit("Trooper", 1, 1, Keywords{}))
+		m := s.give(0, unit("Trooper", 1, 1, ability.Keywords{}))
 		s.do(Action{Kind: ActDeploy, Player: 0, Card: m.ID, Zone: ZoneMainTheater})
 	}
 	if got := len(s.g.Players[0].Reserves); got != n {
@@ -424,8 +425,8 @@ func TestFR_ZON_001_ReservesAndMainTheaterAcceptManyAssets(t *testing.T) {
 
 func TestFR_ZON_001_ReservesGenerateRequisitionTheaterGeneratesTactics(t *testing.T) {
 	s := newScene(t)
-	r := s.put(0, ZoneReserves, unit("Reservist", 1, 1, Keywords{}))
-	m := s.put(0, ZoneMainTheater, unit("Trooper", 1, 1, Keywords{}))
+	r := s.put(0, ZoneReserves, unit("Reservist", 1, 1, ability.Keywords{}))
+	m := s.put(0, ZoneMainTheater, unit("Trooper", 1, 1, ability.Keywords{}))
 	s.reject(Action{Kind: ActGenerate, Player: 0, Asset: r.ID, Resource: Tactics})
 	s.reject(Action{Kind: ActGenerate, Player: 0, Asset: m.ID, Resource: Requisition})
 	s.do(Action{Kind: ActGenerate, Player: 0, Asset: r.ID, Resource: Requisition})
@@ -438,8 +439,8 @@ func TestFR_ZON_001_ReservesGenerateRequisitionTheaterGeneratesTactics(t *testin
 
 func TestFR_ZON_001_ReservesAssetsAreProtectedFromAttacks(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Raider", 2, 2, Keywords{}))
-	safe := s.put(1, ZoneReserves, unit("Backliner", 1, 1, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Raider", 2, 2, ability.Keywords{}))
+	safe := s.put(1, ZoneReserves, unit("Backliner", 1, 1, ability.Keywords{}))
 	if s.g.CanAttack(att, safe) {
 		t.Errorf("an asset in Reserves must be protected from combat attacks")
 	}

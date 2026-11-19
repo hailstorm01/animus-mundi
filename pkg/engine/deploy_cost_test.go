@@ -16,7 +16,7 @@ import (
 // killCostUnit is a Unit costing req Requisition and tac Tactics whose printed
 // additional cost is "kill an allied unit".
 func killCostUnit(name string, req, tac int) *Card {
-	c := unit(name, 1, 1, Keywords{})
+	c := unit(name, 1, 1, ability.Keywords{})
 	c.ReqCost, c.TacCost = req, tac
 	c.Ability = &ability.Def{ExtraCosts: []ability.Cost{{Kind: ability.CostKill, Filter: alliedUnitFilter}}}
 	return c
@@ -50,7 +50,7 @@ func TestFR_TRN_003a_DeployPaysItsKillCostAfterThePush(t *testing.T) {
 	// Covers: FR-TRN-003
 	s := newScene(t)
 	martyr := s.put(0, ZoneMainTheater, mortal("Martyr", 1, 1, killedTrigger(drawN(1))))
-	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 1, 5, Keywords{}))
+	bystander := s.put(0, ZoneMainTheater, unit("Bystander", 1, 5, ability.Keywords{}))
 	inst := s.give(0, killCostUnit("Sacrificer", 2, 1))
 	p := s.g.Players[0]
 	p.Req, p.Tac = 2, 1
@@ -120,7 +120,7 @@ func TestFR_TRN_003a_DeployKillCostNeedsAnAlliedUnit(t *testing.T) {
 	if !inHand(p, inst) || p.Req != 1 || p.Tac != 1 {
 		t.Errorf("a rejected Deploy changes nothing: in hand %v, Req %d, Tac %d, want true, 1, 1 (SVY-R29)", inHand(p, inst), p.Req, p.Tac)
 	}
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	if !dcOffersDeploy(s.g, inst) {
 		t.Fatalf("with an allied unit to kill, the Deploy is offered (FR-TRN-003a)")
 	}
@@ -155,7 +155,7 @@ func TestFR_TRN_003a_DeployReplacedKillCostStaysPaid(t *testing.T) {
 func TestFR_TRN_003_DeployWithoutAdditionalCostsAsksNothing(t *testing.T) {
 	// Covers: FR-TRN-003a
 	s := newScene(t)
-	inst := s.give(0, unit("Plain", 1, 1, Keywords{}))
+	inst := s.give(0, unit("Plain", 1, 1, ability.Keywords{}))
 	s.script(0) // any decision asked is an error
 	placed := recordPlaced(s)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneMainTheater})

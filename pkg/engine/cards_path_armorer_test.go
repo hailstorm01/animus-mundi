@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Card tests for Broken Horn Armorer (T-0207), written from the CSV rules text
 // in data/cards/units-and-structures-path.csv: Path Unit, Devilhorn,
@@ -18,8 +21,8 @@ import "testing"
 func TestCard_BrokenHornArmorer_MarchToMainTheaterArmorsChosenAsset(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneReserves, s.card("Broken Horn Armorer"))
-	r := s.put(0, ZoneReserves, unit("R", 2, 4, Keywords{}))
-	x := s.put(1, ZoneMainTheater, unit("X", 2, 4, Keywords{}))
+	r := s.put(0, ZoneReserves, unit("R", 2, 4, ability.Keywords{}))
+	x := s.put(1, ZoneMainTheater, unit("X", 2, 4, ability.Keywords{}))
 	tzScript(s, x.ID)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
 	if got := s.g.Asset(a.ID); got == nil || got.Zone != ZoneMainTheater {
@@ -36,9 +39,9 @@ func TestCard_BrokenHornArmorer_MarchToMainTheaterArmorsChosenAsset(t *testing.T
 func TestCard_BrokenHornArmorer_MarchToReservesOffersOwnReserves(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneMainTheater, s.card("Broken Horn Armorer"))
-	r := s.put(0, ZoneReserves, unit("R", 2, 4, Keywords{}))
-	e := s.put(1, ZoneReserves, unit("E", 2, 4, Keywords{}))
-	x := s.put(1, ZoneMainTheater, unit("X", 2, 4, Keywords{}))
+	r := s.put(0, ZoneReserves, unit("R", 2, 4, ability.Keywords{}))
+	e := s.put(1, ZoneReserves, unit("E", 2, 4, ability.Keywords{}))
+	x := s.put(1, ZoneMainTheater, unit("X", 2, 4, ability.Keywords{}))
 	tzScript(s, a.ID)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
 	if got := s.g.Asset(a.ID); got == nil || got.Zone != ZoneReserves {
@@ -55,7 +58,7 @@ func TestCard_BrokenHornArmorer_MarchToReservesOffersOwnReserves(t *testing.T) {
 // Covers: SVY-R1
 func TestCard_BrokenHornArmorer_DeployFiresNothing(t *testing.T) {
 	s := newScene(t)
-	x := s.put(0, ZoneMainTheater, unit("X", 2, 4, Keywords{}))
+	x := s.put(0, ZoneMainTheater, unit("X", 2, 4, ability.Keywords{}))
 	s.g.Players[0].Req, s.g.Players[0].Tac = 2, 0
 	tzScript(s, x.ID)
 	s.deployFromHand(0, s.card("Broken Horn Armorer"))
@@ -88,7 +91,7 @@ func TestCard_BrokenHornArmorer_TargetOutlivesSource(t *testing.T) {
 	setup := func(t *testing.T) (*scene, *Asset, *Asset) {
 		s := newScene(t)
 		a := s.put(0, ZoneReserves, s.card("Broken Horn Armorer"))
-		x := s.put(1, ZoneMainTheater, unit("X", 2, 4, Keywords{}))
+		x := s.put(1, ZoneMainTheater, unit("X", 2, 4, ability.Keywords{}))
 		tzScript(s, x.ID)
 		s.g.moveOnBattlefield(a, ZoneMainTheater)
 		s.g.flushTriggers()
@@ -112,8 +115,8 @@ func TestCard_BrokenHornArmorer_TargetOutlivesSource(t *testing.T) {
 func TestCard_BrokenHornArmorer_TargetLeftZoneIsIllegal(t *testing.T) {
 	s := newScene(t)
 	a := s.put(0, ZoneReserves, s.card("Broken Horn Armorer"))
-	x := s.put(0, ZoneMainTheater, unit("X", 2, 4, Keywords{}))
-	o := s.put(1, ZoneMainTheater, unit("O", 2, 4, Keywords{}))
+	x := s.put(0, ZoneMainTheater, unit("X", 2, 4, ability.Keywords{}))
+	o := s.put(1, ZoneMainTheater, unit("O", 2, 4, ability.Keywords{}))
 	tzScript(s, x.ID)
 	s.g.moveOnBattlefield(a, ZoneMainTheater)
 	s.g.flushTriggers()

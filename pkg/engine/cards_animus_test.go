@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"reflect"
 	"testing"
 )
@@ -130,7 +131,7 @@ func larvaAttack(s *scene, faceDown bool, top ...*Card) (dummy *Asset, cards []*
 	cards = s.onTop(0, top...)
 	larva := s.put(0, ZoneMainTheater, s.card("Despoiler Larva"))
 	larva.FaceDown = faceDown
-	dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, Keywords{}))
+	dummy = s.put(1, ZoneMainTheater, unit("Dummy", 0, 10, ability.Keywords{}))
 	s.do(s.attack(larva, dummy))
 	return dummy, cards
 }
@@ -201,7 +202,7 @@ func TestCard_DespoilerLarva_DefendingDoesNotScratch(t *testing.T) {
 	p := s.g.Players[1]
 	cards := s.onTop(1, vanilla("A")...)
 	larva := s.put(1, ZoneMainTheater, s.card("Despoiler Larva"))
-	hit := s.put(0, ZoneMainTheater, unit("Hitter", 0, 9, Keywords{}))
+	hit := s.put(0, ZoneMainTheater, unit("Hitter", 0, 9, ability.Keywords{}))
 	s.do(s.attack(hit, larva))
 	if scratched(p, cards[0]) {
 		t.Errorf("the Larva's trigger fires only when it attacks, not when it is attacked (FR-CBT-002)")
@@ -266,7 +267,7 @@ func killOnOpponentsTurn(s *scene, c *Card, faceDown bool) {
 	victim := s.put(0, ZoneMainTheater, c)
 	victim.FaceDown = faceDown
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(hit, victim))
 	if s.alive(victim) {
 		s.t.Fatalf("precondition: the victim is destroyed")
@@ -279,7 +280,7 @@ func TestCard_FungalEvangelist_DeathScratchesTwoOnItsControllersTurn(t *testing.
 	p := s.g.Players[0]
 	top := s.onTop(0, vanilla("A", "B", "C")...)
 	ev := s.put(0, ZoneMainTheater, s.card("Fungal Evangelist"))
-	def := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(ev, def))
 	if s.alive(ev) {
 		t.Fatalf("precondition: the Evangelist is destroyed")
@@ -389,7 +390,7 @@ func scrivenerKilledOnOwnTurn(s *scene, faceDown bool) {
 	s.t.Helper()
 	scr := s.put(0, ZoneMainTheater, s.card("Portent Scrivener"))
 	scr.FaceDown = faceDown
-	def := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Hitter", 9, 9, ability.Keywords{}))
 	s.do(s.attack(scr, def))
 	if s.alive(scr) {
 		s.t.Fatalf("precondition: the Scrivener is destroyed")
@@ -460,7 +461,7 @@ func wormKilled(s *scene, ownTurn, faceDown bool, oppDeck ...*Card) []*Instance 
 	}
 	s.g.Players[1].Deck = nil
 	insts := s.onTop(1, oppDeck...)
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, ability.Keywords{}))
 	if ownTurn {
 		s.do(s.attack(worm, hit))
 	} else {
@@ -526,7 +527,7 @@ func TestCard_DespoilerWorm_OpponentWithEmptyDeckLosesAtThatSweep(t *testing.T) 
 
 func TestCard_DespoilerWorm_ResistantTwoReducesDamage(t *testing.T) {
 	s := newScene(t)
-	hit := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, Keywords{}))
+	hit := s.put(0, ZoneMainTheater, unit("Hitter", 5, 9, ability.Keywords{}))
 	worm := s.put(1, ZoneMainTheater, s.card("Despoiler Worm"))
 	s.do(s.attack(hit, worm))
 	s.wantDamage(worm, 3) // 5 -> 3 (Resistant 2)
@@ -569,7 +570,7 @@ func selfRelocKilled(s *scene, name string, ownTurn, faceDown bool) *Instance {
 	if !ownTurn {
 		s.endTurn()
 	}
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 20, 9, ability.Keywords{}))
 	if ownTurn {
 		s.do(s.attack(victim, hit))
 	} else {
@@ -588,7 +589,7 @@ func stolenKilled(s *scene, name string) *Instance {
 	c := s.card(name)
 	a := &Asset{ID: s.g.newID(), Inst: &Instance{ID: s.g.newID(), Card: c, Owner: 0}, Controller: 1, Armor: c.Keywords.Armor}
 	s.g.placeOnBattlefield(a, ZoneMainTheater)
-	hit := s.put(0, ZoneMainTheater, unit("Hitter", 20, 9, Keywords{}))
+	hit := s.put(0, ZoneMainTheater, unit("Hitter", 20, 9, ability.Keywords{}))
 	s.do(s.attack(hit, a))
 	if s.alive(a) {
 		s.t.Fatalf("precondition: %s is destroyed", name)
@@ -717,7 +718,7 @@ func TestCard_SpoilForestColossus_EntersReservesAsSixSeven(t *testing.T) {
 func TestCard_SpoilForestColossus_DeployOffersEveryAssetOfBothSidesButOpposingWard(t *testing.T) {
 	s := newScene(t)
 	b := s.targetBoard()
-	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, b.u0)
 	c := deployPath(s, "Spoil Forest Colossus", 6)
 	asked := s.asked(0)
@@ -731,7 +732,7 @@ func TestCard_SpoilForestColossus_DeployOffersEveryAssetOfBothSidesButOpposingWa
 // Covers: FR-KWD-002d
 func TestCard_SpoilForestColossus_DeployHealsChosenAssetOf2(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	ally.Damage = 5
 	s.scriptRefs(0, nil, ally)
 	deployPath(s, "Spoil Forest Colossus", 6)
@@ -741,7 +742,7 @@ func TestCard_SpoilForestColossus_DeployHealsChosenAssetOf2(t *testing.T) {
 // Covers: FR-KWD-002d
 func TestCard_SpoilForestColossus_CanHealAnOpposingAsset(t *testing.T) {
 	s := newScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 9, ability.Keywords{}))
 	enemy.Damage = 4
 	s.scriptRefs(0, nil, enemy)
 	deployPath(s, "Spoil Forest Colossus", 6)
@@ -761,7 +762,7 @@ func TestCard_SpoilForestColossus_CanHealAHeadquarters(t *testing.T) {
 // Covers: FR-KWD-002d
 func TestCard_SpoilForestColossus_HealNeverGoesBelowZero(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	ally.Damage = 1
 	s.scriptRefs(0, nil, ally)
 	deployPath(s, "Spoil Forest Colossus", 6)
@@ -771,7 +772,7 @@ func TestCard_SpoilForestColossus_HealNeverGoesBelowZero(t *testing.T) {
 // Covers: FR-KWD-002d
 func TestCard_SpoilForestColossus_HealingAnUndamagedAssetChangesNothing(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally)
 	c := deployPath(s, "Spoil Forest Colossus", 6)
 	if got := totalDamage(s.g); got != 0 {
@@ -785,7 +786,7 @@ func TestCard_SpoilForestColossus_HealingAnUndamagedAssetChangesNothing(t *testi
 // Covers: FR-KWD-002d
 func TestCard_SpoilForestColossus_HealLeavesArmorAlone(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 9, Keywords{Armor: 2}))
+	ally := s.put(0, ZoneMainTheater, unit("Armored Ally", 1, 9, ability.Keywords{Armor: 2}))
 	ally.Damage = 3
 	s.scriptRefs(0, nil, ally)
 	deployPath(s, "Spoil Forest Colossus", 6)
@@ -798,9 +799,9 @@ func TestCard_SpoilForestColossus_HealLeavesArmorAlone(t *testing.T) {
 // Covers: FR-KWD-002h
 func TestCard_SpoilForestColossus_OpposingWardUnitCannotBeChosenButAlliedCan(t *testing.T) {
 	s := newScene(t)
-	enemyWard := s.put(1, ZoneMainTheater, unit("Warded Enemy", 1, 9, Keywords{Ward: true}))
+	enemyWard := s.put(1, ZoneMainTheater, unit("Warded Enemy", 1, 9, ability.Keywords{Ward: true}))
 	enemyWard.Damage = 4
-	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, Keywords{Ward: true}))
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 9, ability.Keywords{Ward: true}))
 	allyWard.Damage = 4
 	s.scriptRefs(0, nil, allyWard)
 	deployPath(s, "Spoil Forest Colossus", 6)
@@ -820,9 +821,9 @@ func TestCard_SpoilForestColossus_OpposingWardUnitCannotBeChosenButAlliedCan(t *
 // Covers: FR-CBT-002, FR-KWD-002d
 func TestCard_SpoilForestColossus_HealsAgainEachTimeItAttacks(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 20, ability.Keywords{}))
 	ally.Damage = 9
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, ability.Keywords{}))
 	s.scriptRefs(0, nil, ally, ally, ally)
 	c := deployPath(s, "Spoil Forest Colossus", 6)
 	a := assetOf(s.g, c)
@@ -850,7 +851,7 @@ func TestCard_SpoilForestColossus_AttackHealResolvesBeforeCombatDamage(t *testin
 	a := assetOf(s.g, c)
 	colossusCycle(s, a)
 	a.Damage = 6
-	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 30, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 2, 30, ability.Keywords{}))
 	s.scriptRefs(0, nil, a)
 	s.do(s.attack(a, def))
 	if !s.alive(a) {
@@ -868,7 +869,7 @@ func TestCard_SpoilForestColossus_DefendingDoesNotHeal(t *testing.T) {
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: a.ID})
 	s.endTurn()
 	a.Damage = 3
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, ability.Keywords{}))
 	s.script(0)
 	s.do(s.attack(hitter, a))
 	if n := len(s.asked(0)); n != 0 {
@@ -898,11 +899,11 @@ func ancientScene(t *testing.T) (*scene, *Asset, ancientBoard) {
 	t.Helper()
 	s := newScene(t)
 	b := ancientBoard{
-		ally:   s.put(0, ZoneMainTheater, unit("Ally", 0, 20, Keywords{})),
-		enemy:  s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{})),
-		enemy2: s.put(1, ZoneMainTheater, unit("Enemy Two", 0, 20, Keywords{})),
-		ward:   s.put(1, ZoneMainTheater, unit("Warded", 0, 20, Keywords{Ward: true})),
-		dummy:  s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{})),
+		ally:   s.put(0, ZoneMainTheater, unit("Ally", 0, 20, ability.Keywords{})),
+		enemy:  s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, ability.Keywords{})),
+		enemy2: s.put(1, ZoneMainTheater, unit("Enemy Two", 0, 20, ability.Keywords{})),
+		ward:   s.put(1, ZoneMainTheater, unit("Warded", 0, 20, ability.Keywords{Ward: true})),
+		dummy:  s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, ability.Keywords{})),
 	}
 	s.scriptPlan(0, nil, nil)
 	c := deployPath(s, "Craterfall Ancient", 10)
@@ -921,7 +922,7 @@ func ancientScene(t *testing.T) (*scene, *Asset, ancientBoard) {
 func ancientKilled(s *scene, anc *Asset) *Asset {
 	s.t.Helper()
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 13, 30, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 13, 30, ability.Keywords{}))
 	s.do(s.attack(hit, anc))
 	if s.alive(anc) {
 		s.t.Fatalf("precondition: the Ancient is destroyed")
@@ -931,7 +932,7 @@ func ancientKilled(s *scene, anc *Asset) *Asset {
 
 func TestCard_CraterfallAncient_EntersReservesAsSixThirteenForTenRequisition(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, ability.Keywords{}))
 	s.scriptPlan(0, nil, nil)
 	c := deployPath(s, "Craterfall Ancient", 10)
 	a := assetOf(s.g, c)
@@ -1054,7 +1055,7 @@ func TestCard_CraterfallAncient_DamageEqualsEffectivePowerAtResolution(t *testin
 // Covers: FR-CBT-002
 func TestCard_CraterfallAncient_AttackDamageResolvesBeforeCombatSoAKilledDefenderFizzlesTheAttack(t *testing.T) {
 	s, anc, _ := ancientScene(t)
-	frail := s.put(1, ZoneMainTheater, unit("Frail Defender", 5, 6, Keywords{}))
+	frail := s.put(1, ZoneMainTheater, unit("Frail Defender", 5, 6, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(frail))
 	s.do(s.attack(anc, frail))
 	if s.alive(frail) {
@@ -1081,7 +1082,7 @@ func TestCard_CraterfallAncient_AsksAgainOnEachAttack(t *testing.T) {
 func TestCard_CraterfallAncient_DefendingDoesNotTrigger(t *testing.T) {
 	s, anc, _ := ancientScene(t)
 	s.endTurn()
-	hit := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, Keywords{}))
+	hit := s.put(1, ZoneMainTheater, unit("Hitter", 1, 30, ability.Keywords{}))
 	s.do(s.attack(hit, anc))
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("only attacking triggers the Ancient: asked %d times while defending", n)
@@ -1094,7 +1095,7 @@ func TestCard_CraterfallAncient_FaceDownCopyAttackingAsksNothing(t *testing.T) {
 	s := newScene(t)
 	fd := s.put(0, ZoneMainTheater, s.card("Craterfall Ancient"))
 	fd.FaceDown = true
-	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, Keywords{}))
+	dummy := s.put(1, ZoneMainTheater, unit("Dummy", 0, 30, ability.Keywords{}))
 	s.scriptPlan(0, nil, nil)
 	s.do(s.attack(fd, dummy))
 	if n := len(s.asked(0)); n != 0 {
@@ -1126,9 +1127,9 @@ func TestCard_CraterfallAncient_DeathDealsFourToEveryAssetOfBothSidesWithoutAQue
 
 func TestCard_CraterfallAncient_DeathKillsAssetsWithFourOrLessHealthAndSparesTheRest(t *testing.T) {
 	s, anc, _ := ancientScene(t)
-	frailAlly := s.put(0, ZoneMainTheater, unit("Frail Ally", 0, 4, Keywords{}))
-	frailEnemy := s.put(1, ZoneMainTheater, unit("Frail Enemy", 0, 4, Keywords{}))
-	sturdy := s.put(1, ZoneMainTheater, unit("Sturdy Enemy", 0, 5, Keywords{}))
+	frailAlly := s.put(0, ZoneMainTheater, unit("Frail Ally", 0, 4, ability.Keywords{}))
+	frailEnemy := s.put(1, ZoneMainTheater, unit("Frail Enemy", 0, 4, ability.Keywords{}))
+	sturdy := s.put(1, ZoneMainTheater, unit("Sturdy Enemy", 0, 5, ability.Keywords{}))
 	ancientKilled(s, anc)
 	if s.alive(frailAlly) || s.alive(frailEnemy) {
 		t.Errorf("4 damage destroys 4-health assets of both sides in the same sweep")
@@ -1141,8 +1142,8 @@ func TestCard_CraterfallAncient_DeathKillsAssetsWithFourOrLessHealthAndSparesThe
 
 func TestCard_CraterfallAncient_DeathAppliesResistantAndArmorPerInstance(t *testing.T) {
 	s, anc, _ := ancientScene(t)
-	resist := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 20, Keywords{Resistant: 2}))
-	armored := s.put(0, ZoneMainTheater, unit("Armored Unit", 0, 20, Keywords{Armor: 3}))
+	resist := s.put(1, ZoneMainTheater, unit("Resistant Unit", 0, 20, ability.Keywords{Resistant: 2}))
+	armored := s.put(0, ZoneMainTheater, unit("Armored Unit", 0, 20, ability.Keywords{Armor: 3}))
 	ancientKilled(s, anc)
 	s.wantDamage(resist, 2) // 4 - Resistant 2 (FR-REP-004)
 	s.wantDamage(armored, 1)
@@ -1177,8 +1178,8 @@ func TestCard_CraterfallAncient_DeathWithOneHeadquartersAtFourOrLessLosesThatPla
 // Covers: FR-ZON-004
 func TestCard_CraterfallAncient_FaceDownCopyFiresNothingWhenKilled(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 20, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 20, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 0, 20, ability.Keywords{}))
 	s.scriptPlan(0, nil, nil)
 	killOnOpponentsTurn(s, s.card("Craterfall Ancient"), true)
 	wantNoNonCombatDamage(t, s.g, "a face-down Scratch Company has no printed death trigger (FR-ZON-004)")
@@ -1189,7 +1190,7 @@ func TestCard_CraterfallAncient_FaceDownCopyFiresNothingWhenKilled(t *testing.T)
 // Covers: FR-CBT-002
 func TestCard_CraterfallAncient_AttackThenLethalRetaliationFiresBothTriggers(t *testing.T) {
 	s, anc, b := ancientScene(t)
-	brute := s.put(1, ZoneMainTheater, unit("Brute", 13, 30, Keywords{}))
+	brute := s.put(1, ZoneMainTheater, unit("Brute", 13, 30, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(b.enemy, b.ally))
 	s.do(s.attack(anc, brute))
 	if s.alive(anc) {
@@ -1230,7 +1231,7 @@ func putShambler(s *scene, p PlayerID, z Zone, damage int) *Asset {
 // putDamaged puts a Readied vanilla unit for p into zone z with the given
 // damage. It sets state and asserts nothing.
 func putDamaged(s *scene, p PlayerID, z Zone, name string, health, damage int) *Asset {
-	a := s.put(p, z, unit(name, 0, health, Keywords{}))
+	a := s.put(p, z, unit(name, 0, health, ability.Keywords{}))
 	a.Damage = damage
 	return a
 }
@@ -1343,7 +1344,7 @@ func TestCard_AnimocepsShambler_AttackingFromTheMainTheaterMayChooseItself(t *te
 	s := newScene(t)
 	sh := putShambler(s, 0, ZoneMainTheater, 1)
 	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
-	def := s.put(1, ZoneMainTheater, unit("Defender", 0, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 0, 9, ability.Keywords{}))
 	s.scriptRefs(0, nil, sh)
 	s.do(s.attack(sh, def))
 	asked := s.asked(0)
@@ -1361,10 +1362,10 @@ func TestCard_AnimocepsShambler_OffersOnlyAlliedAssetsInTheMainTheater(t *testin
 	s := newScene(t)
 	b := s.targetBoard()
 	sh := putShambler(s, 0, ZoneMainTheater, 0)
-	s.put(0, ZoneReserves, unit("Ally In Reserves", 1, 5, Keywords{}))
+	s.put(0, ZoneReserves, unit("Ally In Reserves", 1, 5, ability.Keywords{}))
 	scratchMT := s.putScratch(0)
 	s.moveTo(scratchMT, ZoneMainTheater)
-	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
+	allyWard := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptRefs(0, nil, b.u0)
 	s.do(Action{Kind: ActGenerate, Player: 0, Asset: sh.ID, Resource: Tactics})
 	asked := s.asked(0)
@@ -1431,7 +1432,7 @@ func TestCard_AnimocepsShambler_AttackHealResolvesBeforeCombatDamage(t *testing.
 	// and survives with 1 damage. Healed after combat, it would have died.
 	s := newScene(t)
 	sh := putShambler(s, 0, ZoneMainTheater, 1)
-	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Defender", 1, 9, ability.Keywords{}))
 	s.do(s.attack(sh, def))
 	if !s.alive(sh) {
 		t.Fatalf("the Step 2 heal resolves before combat damage, so the Shambler survives 1 retaliation (SVY-R17, FR-CBT-002)")
@@ -1482,7 +1483,7 @@ func TestCard_AnimocepsShambler_DefendingDoesNotHeal(t *testing.T) {
 	sh := putShambler(s, 0, ZoneMainTheater, 0)
 	ally := putDamaged(s, 0, ZoneMainTheater, "Ally", 5, 1)
 	s.endTurn()
-	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(1, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.script(0)
 	s.do(s.attack(hitter, sh))
 	if n := len(s.asked(0)); n != 0 {

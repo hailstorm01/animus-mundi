@@ -16,8 +16,8 @@ import (
 
 func TestView_StackItemLabel(t *testing.T) {
 	s := newScene(t)
-	up := s.put(0, engine.ZoneMainTheater, testUnit("Open Source", 1, 1, engine.Keywords{}))
-	down := s.put(1, engine.ZoneMainTheater, testUnit("Secret Source", 1, 1, engine.Keywords{}))
+	up := s.put(0, engine.ZoneMainTheater, testUnit("Open Source", 1, 1, ability.Keywords{}))
+	down := s.put(1, engine.ZoneMainTheater, testUnit("Secret Source", 1, 1, ability.Keywords{}))
 	down.FaceDown = true
 	s.g.Stack = []*engine.StackItem{
 		{Kind: engine.StackAbility, Controller: 0, Source: up.ID, Inst: up.Inst, Keyword: ability.KeywordAggressive},

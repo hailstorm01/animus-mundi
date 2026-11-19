@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for T-0215 (FR-TRN-003, FR-TRN-003a, directive #128): DiscardDeployCost,
 // the reader a client plans a discard deploy with. It uses T-0214's ddUnit,
@@ -12,7 +15,7 @@ func TestDiscardDeployCost_PermissionAndPayableCosts(t *testing.T) {
 	if req, tac, ok := s.g.DiscardDeployCost(inst); req != 2 || tac != 1 || ok {
 		t.Errorf("with no allied unit to kill: got R%d T%d %v, want R2 T1 false (FR-TRN-003a)", req, tac, ok)
 	}
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	if req, tac, ok := s.g.DiscardDeployCost(inst); req != 2 || tac != 1 || !ok {
 		t.Errorf("with an allied unit to kill: got R%d T%d %v, want R2 T1 true (FR-TRN-003)", req, tac, ok)
 	}
@@ -24,12 +27,12 @@ func TestDiscardDeployCost_PermissionAndPayableCosts(t *testing.T) {
 
 func TestDiscardDeployCost_OnlyAPermittedCardInItsOwnersPile(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	inHand := s.give(0, ddUnit("Phoenix", 2, 0))
 	if _, _, ok := s.g.DiscardDeployCost(inHand); ok {
 		t.Errorf("a permitted card in hand: ok true, want false")
 	}
-	plain := unit("Plain", 1, 1, Keywords{})
+	plain := unit("Plain", 1, 1, ability.Keywords{})
 	plain.ReqCost = 1
 	if _, _, ok := s.g.DiscardDeployCost(s.inDiscard(0, plain)[0]); ok {
 		t.Errorf("a discard card with no permission: ok true, want false (FR-TRN-003)")

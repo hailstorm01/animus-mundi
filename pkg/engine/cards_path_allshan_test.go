@@ -16,7 +16,7 @@ import (
 // Control: a 5/6 that enters Reserves for 5 Requisition and does nothing on deploy.
 func TestCard_AllshanChainbreakerRevenant_EntersReservesAsFiveSixForFiveRequisitionAndDoesNothing(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.script(1)
 	c := deployPath(s, "Allshan, Chainbreaker Revenant", 5)
@@ -45,7 +45,7 @@ func TestCard_AllshanChainbreakerRevenant_EntersReservesAsFiveSixForFiveRequisit
 func TestCard_AllshanChainbreakerRevenant_UnbowedGainsTwoArmorWhenItSurvivesDamage(t *testing.T) {
 	s := newScene(t)
 	al := s.put(1, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.do(s.attack(hitter, al))
 	s.wantDamage(al, 2)
 	if al.Armor != 2 {
@@ -57,8 +57,8 @@ func TestCard_AllshanChainbreakerRevenant_UnbowedGainsTwoArmorWhenItSurvivesDama
 func TestCard_AllshanChainbreakerRevenant_UnbowedArmorAbsorbsLaterDamage(t *testing.T) {
 	s := newScene(t)
 	al := s.put(1, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	h1 := s.put(0, ZoneMainTheater, unit("First Hitter", 2, 9, Keywords{}))
-	h2 := s.put(0, ZoneMainTheater, unit("Second Hitter", 3, 9, Keywords{}))
+	h1 := s.put(0, ZoneMainTheater, unit("First Hitter", 2, 9, ability.Keywords{}))
+	h2 := s.put(0, ZoneMainTheater, unit("Second Hitter", 3, 9, ability.Keywords{}))
 	s.do(s.attack(h1, al))
 	s.do(s.attack(h2, al))
 	// 3 damage: 2 absorbed by the Armor from the first hit, 1 marked on Health;
@@ -73,7 +73,7 @@ func TestCard_AllshanChainbreakerRevenant_UnbowedArmorAbsorbsLaterDamage(t *test
 func TestCard_AllshanChainbreakerRevenant_UnbowedDoesNotFireWhenNoDamageIsDealt(t *testing.T) {
 	s := newScene(t)
 	al := s.put(1, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	hitter := s.put(0, ZoneMainTheater, unit("Harmless", 0, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Harmless", 0, 9, ability.Keywords{}))
 	s.do(s.attack(hitter, al))
 	if al.Armor != 0 {
 		t.Errorf("Unbowed needs at least 1 damage taken: Armor %d, want 0", al.Armor)
@@ -84,8 +84,8 @@ func TestCard_AllshanChainbreakerRevenant_UnbowedDoesNotFireWhenNoDamageIsDealt(
 func TestCard_AllshanChainbreakerRevenant_CorneredAttackDealsEightAndPowerResetsAtEndOfTurn(t *testing.T) {
 	s := newScene(t)
 	al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
 	s.do(s.attack(al, def))
 	s.wantDamage(def, 8)
 	if al.TempPower() != 3 {
@@ -104,7 +104,7 @@ func TestCard_AllshanChainbreakerRevenant_CorneredAttackDealsEightAndPowerResets
 func TestCard_AllshanChainbreakerRevenant_NotCorneredAttackGainsNothing(t *testing.T) {
 	s := newScene(t)
 	al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
 	s.do(s.attack(al, def))
 	s.wantDamage(def, 5)
 	if al.TempPower() != 0 {
@@ -128,8 +128,8 @@ func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
 	t.Run("cornered", func(t *testing.T) {
 		s := newScene(t)
 		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Second Wall", 0, 20, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(al, def))
 		if n := count(*items); n != 1 {
@@ -147,7 +147,7 @@ func TestCard_Allshan_CorneredAggressiveIsTheKeywordTrigger(t *testing.T) {
 	t.Run("not cornered", func(t *testing.T) {
 		s := newScene(t)
 		al := s.put(0, ZoneMainTheater, s.card("Allshan, Chainbreaker Revenant"))
-		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Wall", 0, 20, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(al, def))
 		if n := count(*items); n != 0 {

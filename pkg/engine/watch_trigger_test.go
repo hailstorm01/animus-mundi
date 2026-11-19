@@ -30,7 +30,7 @@ func killWatched() ability.Step {
 
 // watcherStructure is a structure printing the given triggers.
 func watcherStructure(name string, trigs ...ability.Trigger) *Card {
-	c := structure(name, 0, 5, Keywords{})
+	c := structure(name, 0, 5, ability.Keywords{})
 	c.Ability = &ability.Def{Triggers: trigs}
 	return c
 }
@@ -40,7 +40,7 @@ func watcherStructure(name string, trigs ...ability.Trigger) *Card {
 func TestFR_CBT_002_WatcherFiresOnOpposingUnitAttack(t *testing.T) {
 	s := newScene(t)
 	w := s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched())))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if len(*items) != 2 || (*items)[0].Kind != StackAttack {
@@ -57,7 +57,7 @@ func TestFR_CBT_002_WatcherIgnoresUnmatchedAttacks(t *testing.T) {
 		s := newScene(t)
 		s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched())))
 		s.endTurn()
-		att := s.put(1, ZoneMainTheater, unit("Ally", 3, 9, Keywords{}))
+		att := s.put(1, ZoneMainTheater, unit("Ally", 3, 9, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(att, s.g.Players[0].HQ))
 		if len(*items) != 1 {
@@ -70,7 +70,7 @@ func TestFR_CBT_002_WatcherIgnoresUnmatchedAttacks(t *testing.T) {
 	t.Run("OpposingHeadquarters", func(t *testing.T) {
 		s := newScene(t)
 		s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched())))
-		def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, Keywords{}))
+		def := s.put(1, ZoneMainTheater, unit("Dummy", 0, 20, ability.Keywords{}))
 		items := recordPlaced(s)
 		s.do(s.attack(s.g.Players[0].HQ, def))
 		if len(*items) != 1 {
@@ -84,7 +84,7 @@ func TestFR_CBT_002_WatcherIsNotASelfHook(t *testing.T) {
 	// watching trigger does not fire as its own source's attack trigger.
 	s := newScene(t)
 	cards := s.onTop(0, vanilla("A")...)
-	att := s.put(0, ZoneMainTheater, striker("Hitter", 3, 9, Keywords{}, watchTrigger(false, drawN(1))))
+	att := s.put(0, ZoneMainTheater, striker("Hitter", 3, 9, ability.Keywords{}, watchTrigger(false, drawN(1))))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if len(*items) != 1 || inHand(s.g.Players[0], cards[0]) {
@@ -97,7 +97,7 @@ func TestFR_CBT_002_WatcherIsNotASelfHook(t *testing.T) {
 func TestFR_TRG_003_OpposingWatcherResolvesBeforeAttackerTriggers(t *testing.T) {
 	s := newScene(t)
 	w := s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, drawN(1))))
-	att := s.put(0, ZoneMainTheater, unit("Raider", 3, 9, Keywords{Aggressive: 1}))
+	att := s.put(0, ZoneMainTheater, unit("Raider", 3, 9, ability.Keywords{Aggressive: 1}))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if len(*items) != 3 || (*items)[0].Kind != StackAttack || (*items)[1].Keyword != ability.KeywordAggressive || (*items)[2].Source != w.ID {
@@ -111,7 +111,7 @@ func TestFR_TRG_003_TwoWatchersOneAttack(t *testing.T) {
 	s.script(1, Answer{Timeout: true})
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher A", watchTrigger(false, drawN(1))))
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher B", watchTrigger(false, drawN(1))))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if len(*items) != 3 {
@@ -131,7 +131,7 @@ func TestFR_TRG_003_TwoWatchersOneAttack(t *testing.T) {
 func TestFR_TGT_001_WatchedSubjectKillsTheAttacker(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched())))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if s.alive(att) || !inDiscard(s.g.Players[0], att.Inst) {
 		t.Errorf("killing the watched asset puts the attacker into its owner's discard pile")
@@ -145,7 +145,7 @@ func TestFR_TGT_001_WatchedSubjectIsNotATarget(t *testing.T) {
 	s.script(0)
 	s.script(1)
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched())))
-	att := s.put(0, ZoneMainTheater, unit("Warded", 3, 9, Keywords{Ward: true}))
+	att := s.put(0, ZoneMainTheater, unit("Warded", 3, 9, ability.Keywords{Ward: true}))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if s.alive(att) {
 		t.Errorf("a clause without \"chosen\" does not target, so Ward does not stop it (FR-TGT-001 Untargeted Selections)")
@@ -162,7 +162,7 @@ func TestFR_TGT_001_WatchedSubjectGoneDoesNothing(t *testing.T) {
 	ifDoneDraw := drawN(1)
 	ifDoneDraw.IfDone = true
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(false, killWatched(), ifDoneDraw)))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	s.declareThen(s.attack(att, s.g.Players[1].HQ), func() {
 		s.g.flushTriggers()
 		if n := len(s.g.Stack); n != 2 {
@@ -183,7 +183,7 @@ func TestFR_MOD_001_OptionalWatcherIsAsked(t *testing.T) {
 	s.script(0)
 	s.script(1, no)
 	s.put(1, ZoneMainTheater, watcherStructure("Watcher", watchTrigger(true, killWatched())))
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	items := recordPlaced(s)
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	if got := kindsOf(s.asked(1)); len(got) != 1 || got[0] != DecideOptional {

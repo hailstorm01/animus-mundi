@@ -29,7 +29,7 @@ func rlLeaveTo(s *scene, id int, zone string) (Event, bool) {
 
 func TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, ability.Keywords{}))
 	e.Damage = 3
 	e.Modifiers = []Modifier{{Layer: 5, Power: 2}}
 	inst := e.Inst
@@ -68,8 +68,8 @@ func TestFR_ZON_004_ReturnedTargetLeavesWithItsLastKnownState(t *testing.T) {
 
 func rlPutOnDeck(t *testing.T, bottom bool, subject ability.Subject) (*scene, *Asset, []*Instance) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 4, Keywords{}))
-	top := s.onTop(0, unit("Top", 1, 1, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 4, ability.Keywords{}))
+	top := s.onTop(0, unit("Top", 1, 1, ability.Keywords{}))
 	step := rlStep(ability.OpPutOnDeck, subject, bottom)
 	var trig ability.Trigger
 	if subject == ability.SubjectPick {
@@ -115,7 +115,7 @@ func TestFR_ZON_004_PutOnDeckGoesOnTopWithoutBottom(t *testing.T) {
 
 func TestFR_TGT_003_TargetKilledByAnEarlierStepIsNotMoved(t *testing.T) {
 	s := newScene(t)
-	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, Keywords{}))
+	e := s.put(1, ZoneMainTheater, unit("Enemy", 2, 6, ability.Keywords{}))
 	inst := e.Inst
 	kill := ability.Step{Op: ability.OpKill, Subject: ability.SubjectTarget}
 	// The kill step destroys the chosen unit first; the return step then acts on
@@ -184,9 +184,9 @@ func TestFR_ZON_004_SourceStillOnTheBattlefieldReturnsItself(t *testing.T) {
 
 func TestFR_ZON_004_ReturnAllMatchingUnits(t *testing.T) {
 	s := newScene(t)
-	e1 := s.put(1, ZoneMainTheater, unit("E1", 1, 3, Keywords{}))
-	e2 := s.put(1, ZoneReserves, unit("E2", 1, 3, Keywords{}))
-	al := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, Keywords{}))
+	e1 := s.put(1, ZoneMainTheater, unit("E1", 1, 3, ability.Keywords{}))
+	e2 := s.put(1, ZoneReserves, unit("E2", 1, 3, ability.Keywords{}))
+	al := s.put(0, ZoneMainTheater, unit("Ally", 1, 3, ability.Keywords{}))
 	ret := ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: iydEnemy}
 	s.iydDeploy(iydTrigger(false, nil, ret, iydIfDone(scratchN(1))))
 	for _, e := range []*Asset{e1, e2} {

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for the real card Hammerhand Bivouac (T-0248, board directive #157): at the
 // start of its controller's turn it distributes 2 armor among allied units in its own
@@ -28,8 +31,8 @@ func TestCard_HammerhandBivouac_SplitsAmongAlliedMainTheaterUnits(t *testing.T) 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			s := bivouacScene(t)
-			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+			a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+			b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 			from := s.runPool(Answer{Picks: c.picks})
 			picks := picksAsked(s)
 			if len(picks) != 1 {
@@ -56,7 +59,7 @@ func TestCard_HammerhandBivouac_SplitsAmongAlliedMainTheaterUnits(t *testing.T) 
 
 func TestCard_HammerhandBivouac_OneUnitTakesBothUnasked(t *testing.T) {
 	s := bivouacScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
 	s.runPool()
 	if a.Armor != 2 {
 		t.Errorf("with one allied unit the whole 2 armor goes on it, got %d (FR-MOD-001 1, SVY-R51)", a.Armor)
@@ -68,7 +71,7 @@ func TestCard_HammerhandBivouac_OneUnitTakesBothUnasked(t *testing.T) {
 
 func TestCard_HammerhandBivouac_NoAlliedUnitDoesNothing(t *testing.T) {
 	s := bivouacScene(t)
-	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
+	enemy := s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
 	from := s.runPool()
 	if enemy.Armor != 0 {
 		t.Errorf("the enemy unit gains no armor, got %d (SVY-R51)", enemy.Armor)
@@ -83,9 +86,9 @@ func TestCard_HammerhandBivouac_NoAlliedUnitDoesNothing(t *testing.T) {
 
 func TestCard_HammerhandBivouac_TimeoutPutsBothOnEarliestEntered(t *testing.T) {
 	s := bivouacScene(t)
-	late := s.put(0, ZoneReserves, unit("Late", 1, 5, Keywords{}))
-	x := s.put(0, ZoneMainTheater, unit("X", 1, 5, Keywords{}))
-	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, Keywords{}))
+	late := s.put(0, ZoneReserves, unit("Late", 1, 5, ability.Keywords{}))
+	x := s.put(0, ZoneMainTheater, unit("X", 1, 5, ability.Keywords{}))
+	y := s.put(0, ZoneMainTheater, unit("Y", 1, 5, ability.Keywords{}))
 	s.moveTo(late, ZoneMainTheater) // enters the Main Theater last
 	s.runPool(Answer{Timeout: true})
 	if x.Armor != 2 || y.Armor != 0 || late.Armor != 0 {
@@ -96,11 +99,11 @@ func TestCard_HammerhandBivouac_TimeoutPutsBothOnEarliestEntered(t *testing.T) {
 
 func TestCard_HammerhandBivouac_OffersOnlyMainTheaterUnits(t *testing.T) {
 	s := bivouacScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
-	s.put(0, ZoneReserves, unit("Reserve", 1, 5, Keywords{}))
-	s.put(0, ZoneHeadquarters, unit("HQUnit", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, Keywords{}))
-	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneReserves, unit("Reserve", 1, 5, ability.Keywords{}))
+	s.put(0, ZoneHeadquarters, unit("HQUnit", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Enemy", 1, 5, ability.Keywords{}))
+	b := s.put(0, ZoneMainTheater, unit("B", 1, 5, ability.Keywords{}))
 	s.runPool(Answer{Picks: []int{0, 1}})
 	picks := picksAsked(s)
 	if len(picks) != 1 {
@@ -114,7 +117,7 @@ func TestCard_HammerhandBivouac_OffersOnlyMainTheaterUnits(t *testing.T) {
 
 func TestCard_HammerhandBivouac_ArmorPersistsAndAccumulates(t *testing.T) {
 	s := bivouacScene(t)
-	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.script(1)
 	s.endTurn() // player 0's turn ends

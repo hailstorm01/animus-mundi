@@ -27,7 +27,7 @@ func limited(n int, trig ability.Trigger) ability.Trigger {
 func (s *scene) hitters(n int) []*Asset {
 	out := make([]*Asset, n)
 	for i := range out {
-		out[i] = s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+		out[i] = s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	}
 	return out
 }
@@ -38,7 +38,7 @@ func (s *scene) hitters(n int) []*Asset {
 func TestFR_TRN_001_LimitedTriggerFiresOnceForTwoDamageInstancesInOneTurn(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(2)
-	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
+	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, ability.Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
 	s.do(s.attack(h[0], def))
 	s.wantScratches(1, 1, "the first damage instance fires the once-each-turn trigger (FR-REP-004 Stage 5)")
 	s.do(s.attack(h[1], def))
@@ -49,7 +49,7 @@ func TestFR_TRN_001_LimitedTriggerFiresOnceForTwoDamageInstancesInOneTurn(t *tes
 func TestFR_TRN_001_UnlimitedTriggerStillFiresEveryTime(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(2)
-	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 9, Keywords{}, limited(0, unbowed(nil, scratchN(1)))))
+	def := s.put(1, ZoneMainTheater, bowed("Bowed", 0, 9, ability.Keywords{}, limited(0, unbowed(nil, scratchN(1)))))
 	s.do(s.attack(h[0], def))
 	s.do(s.attack(h[1], def))
 	s.wantScratches(1, 2, "MaxPerTurn 0 means no limit: each damage instance fires the trigger")
@@ -58,7 +58,7 @@ func TestFR_TRN_001_UnlimitedTriggerStillFiresEveryTime(t *testing.T) {
 func TestFR_TRN_001_LimitOfTwoAllowsTwoFiringsAndNotAThird(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(3)
-	def := s.put(1, ZoneMainTheater, bowed("Twice", 0, 9, Keywords{}, limited(2, unbowed(nil, scratchN(1)))))
+	def := s.put(1, ZoneMainTheater, bowed("Twice", 0, 9, ability.Keywords{}, limited(2, unbowed(nil, scratchN(1)))))
 	s.do(s.attack(h[0], def))
 	s.do(s.attack(h[1], def))
 	s.wantScratches(1, 2, "MaxPerTurn 2 allows two firings in a turn")
@@ -71,8 +71,8 @@ func TestFR_TRN_001_EachAssetHasItsOwnAllowance(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(4)
 	trig := limited(1, unbowed(nil, scratchN(1)))
-	a := s.put(1, ZoneMainTheater, bowed("Rager A", 0, 9, Keywords{}, trig))
-	b := s.put(1, ZoneMainTheater, bowed("Rager B", 0, 9, Keywords{}, trig))
+	a := s.put(1, ZoneMainTheater, bowed("Rager A", 0, 9, ability.Keywords{}, trig))
+	b := s.put(1, ZoneMainTheater, bowed("Rager B", 0, 9, ability.Keywords{}, trig))
 	s.do(s.attack(h[0], a))
 	s.do(s.attack(h[1], a))
 	s.wantScratches(1, 1, "asset A fired once and is spent for the turn")
@@ -87,7 +87,7 @@ func TestFR_TRN_001_EachAssetHasItsOwnAllowance(t *testing.T) {
 func TestFR_TRN_001_LimitResetsOnTheControllersNextTurn(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(2)
-	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
+	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, ability.Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
 	s.do(s.attack(h[0], def))
 	s.wantScratches(1, 1, "fires on turn 1")
 	s.endTurn() // player 1's turn
@@ -100,8 +100,8 @@ func TestFR_TRN_001_LimitResetsOnTheOpponentsNextTurn(t *testing.T) {
 	// Player 0's Rager takes retaliation on player 0's turn, then takes
 	// combat damage from player 1's attack on player 1's turn.
 	s := newScene(t)
-	rager := s.put(0, ZoneMainTheater, bowed("Rager", 1, 9, Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
-	wall := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, Keywords{}))
+	rager := s.put(0, ZoneMainTheater, bowed("Rager", 1, 9, ability.Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
+	wall := s.put(1, ZoneMainTheater, unit("Wall", 2, 9, ability.Keywords{}))
 	s.do(s.attack(rager, wall)) // retaliation damages the Rager
 	s.wantScratches(0, 1, "fires on player 0's own turn from retaliation")
 	s.endTurn()
@@ -112,8 +112,8 @@ func TestFR_TRN_001_LimitResetsOnTheOpponentsNextTurn(t *testing.T) {
 func TestFR_TRN_001_OneFiringOnTheOpponentsTurnAndOneOnTheControllersNext(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(1)
-	def := s.put(1, ZoneMainTheater, bowed("Rager", 2, 9, Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
-	foe := s.put(0, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	def := s.put(1, ZoneMainTheater, bowed("Rager", 2, 9, ability.Keywords{}, limited(1, unbowed(nil, scratchN(1)))))
+	foe := s.put(0, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	s.do(s.attack(h[0], def)) // opponent's turn (player 0's)
 	s.wantScratches(1, 1, "one firing on the opponent's turn")
 	s.endTurn()
@@ -131,10 +131,10 @@ func TestFR_TRN_001_AFizzledFiringStillUsesTheTurnsAllowance(t *testing.T) {
 	// not fire it again: the unit left to choose, Spare, takes no damage.
 	s := newScene(t)
 	h := s.hitters(2)
-	fragile := s.put(0, ZoneMainTheater, unit("Fragile", 1, 1, Keywords{}))
-	spare := s.put(0, ZoneMainTheater, unit("Spare", 1, 9, Keywords{}))
+	fragile := s.put(0, ZoneMainTheater, unit("Fragile", 1, 1, ability.Keywords{}))
+	spare := s.put(0, ZoneMainTheater, unit("Spare", 1, 9, ability.Keywords{}))
 	trig := limited(1, unbowed([]ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(1, 0)))
-	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, Keywords{}, trig))
+	def := s.put(1, ZoneMainTheater, bowed("Rager", 0, 9, ability.Keywords{}, trig))
 	first := true
 	s.g.choosers[1] = func(_ *Game, d Decision) Answer {
 		if d.Kind == DecideOrder {
@@ -184,7 +184,7 @@ func TestFR_TRN_001_HeadquartersLimitedTriggerFiresOnceWhenAttackedTwice(t *test
 func TestFR_TRN_001_HeadquartersFiresAgainFromItsOwnAttacksRetaliationNextTurn(t *testing.T) {
 	s := newScene(t)
 	h := s.hitters(1)
-	foe := s.put(0, ZoneMainTheater, unit("Foe", 3, 9, Keywords{}))
+	foe := s.put(0, ZoneMainTheater, unit("Foe", 3, 9, ability.Keywords{}))
 	hq1 := s.g.Players[1].HQ
 	hq1.Inst.Card.Ability = &ability.Def{Triggers: []ability.Trigger{limited(1, unbowed(nil, scratchN(1)))}}
 	s.do(s.attack(h[0], hq1))

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Card tests for Macabre Dancers (T-0199), written from the CSV rules text in
 // data/cards/units-and-structures-path.csv: Path Unit, 2 Requisition, Reserves,
@@ -16,9 +19,9 @@ func dancersScene(t *testing.T, cornered bool, hitPower int) (s *scene, dancers,
 	t.Helper()
 	s = newScene(t)
 	dancers = s.put(1, ZoneMainTheater, s.card("Macabre Dancers"))
-	hitter = s.put(0, ZoneMainTheater, unit("Hitter", hitPower, 20, Keywords{}))
+	hitter = s.put(0, ZoneMainTheater, unit("Hitter", hitPower, 20, ability.Keywords{}))
 	if cornered {
-		s.put(0, ZoneMainTheater, unit("Second Enemy", 0, 5, Keywords{}))
+		s.put(0, ZoneMainTheater, unit("Second Enemy", 0, 5, ability.Keywords{}))
 	}
 	return s, dancers, hitter
 }

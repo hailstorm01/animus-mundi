@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"slices"
 	"testing"
 )
@@ -13,7 +14,7 @@ import (
 
 // rrUnit is a Reserves-only unit card of the given power.
 func rrUnit(name string, power int) *Card {
-	c := unit(name, power, 3, Keywords{})
+	c := unit(name, power, 3, ability.Keywords{})
 	c.DeployZones = []Zone{ZoneReserves}
 	return c
 }
@@ -71,7 +72,7 @@ func TestCard_ReaversRush_OffersOnlyUnitCardsPowerThreeOrLess(t *testing.T) {
 	// Covers: FR-TGT-001, FR-ZON-004
 	s, rush := rrScene(t)
 	mine := s.inDiscard(0, rrUnit("P3", 3), rrUnit("P2", 2), rrUnit("P4", 4),
-		structure("Wall1", 1, 3, Keywords{}), maneuver("Spell", 0, 0, steps()))
+		structure("Wall1", 1, 3, ability.Keywords{}), maneuver("Spell", 0, 0, steps()))
 	s.inDiscard(1, rrUnit("Theirs1", 1))
 	// Pick the power-2 card by its position among the offers, whatever the order.
 	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
@@ -147,7 +148,7 @@ func rrGuerrillas(t *testing.T, ans Answer) (*scene, *Card, *Asset) {
 	s, rush := rrScene(t)
 	g := s.card("Devilhorn Guerrillas")
 	s.inDiscard(0, g)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	s.script(0, ans)
 	s.do(enactAction(rush))
 	if n := len(s.asked(0)); n != 1 || len(rrZoneAsks(s)) != 1 {

@@ -45,7 +45,7 @@ func inAssets(list []*Asset, a *Asset) bool {
 func TestFR_ZON_002_GainControlTakesOpposingUnit(t *testing.T) {
 	// Covers: FR-ZON-003
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	foe.Damage, foe.Armor = 1, 2
 	foe.Modifiers = []Modifier{{Layer: 5, Power: 1}}
 	gainOpposing(s)
@@ -76,7 +76,7 @@ func TestFR_ZON_002_GainControlTakesOpposingUnit(t *testing.T) {
 func TestFR_ZON_002_GainControlKeepsReadiness(t *testing.T) {
 	for _, exhausted := range []bool{false, true} {
 		s := newScene(t)
-		foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+		foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 		foe.Exhausted = exhausted
 		gainOpposing(s)
 		if foe.Controller != 0 {
@@ -90,7 +90,7 @@ func TestFR_ZON_002_GainControlKeepsReadiness(t *testing.T) {
 
 func TestFR_SET_004_GainedUnitActsAtOnce(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	gainOpposing(s)
 	if !hasAction(s.g, Action{Kind: ActMarch, Player: 0, Asset: foe.ID}) {
 		t.Errorf("player 0 may not March the gained unit; there is no summoning sickness (FR-SET-004)")
@@ -102,7 +102,7 @@ func TestFR_SET_004_GainedUnitActsAtOnce(t *testing.T) {
 
 func TestFR_ZON_002_GainedUnitMarchesToNewControllersReserves(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	gainOpposing(s)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: foe.ID})
 	if !inAssets(s.g.Players[0].Reserves, foe) {
@@ -118,7 +118,7 @@ func TestFR_ZON_002_GainedUnitMarchesToNewControllersReserves(t *testing.T) {
 
 func TestFR_ZON_002_GainedUnitDiesToOwnersDiscard(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	gainOpposing(s)
 	inst := s.give(0, maneuver("Cull", 0, 0, ability.Effect{
 		Targets: []ability.Target{tgt(ability.AllegianceAllied, ability.KindUnit, false)},
@@ -143,7 +143,7 @@ func TestFR_ZON_002_GainedUnitDiesToOwnersDiscard(t *testing.T) {
 
 func TestFR_TRN_001_GainedUnitReadiesInNewControllersReadyPhase(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	foe.Exhausted = true
 	gainOpposing(s)
 	s.endTurn()
@@ -161,9 +161,9 @@ func TestFR_TRN_001_GainedUnitReadiesInNewControllersReadyPhase(t *testing.T) {
 
 func TestFR_KWD_002e_GainedUnitCountsForNewController(t *testing.T) {
 	s := newScene(t)
-	s.put(0, ZoneMainTheater, unit("Mine", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Foe A", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Foe B", 1, 5, Keywords{}))
+	s.put(0, ZoneMainTheater, unit("Mine", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe A", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe B", 1, 5, ability.Keywords{}))
 	if !s.g.cornered(0) || s.g.cornered(1) {
 		t.Fatalf("precondition: player 0 Cornered (1 vs 2), player 1 not")
 	}
@@ -180,9 +180,9 @@ func TestFR_KWD_002e_GainedUnitCountsForNewController(t *testing.T) {
 func TestFR_ZON_002_GainControlOnlyMainTheaterUnits(t *testing.T) {
 	s := newScene(t)
 	src := s.effectSource(ability.Step{Op: ability.OpGainControl, Subject: ability.SubjectAll})
-	mt := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
-	res := s.put(1, ZoneReserves, unit("Reserve Foe", 3, 5, Keywords{}))
-	st := s.put(1, ZoneMainTheater, structure("Foe Wall", 0, 5, Keywords{}))
+	mt := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
+	res := s.put(1, ZoneReserves, unit("Reserve Foe", 3, 5, ability.Keywords{}))
+	st := s.put(1, ZoneMainTheater, structure("Foe Wall", 0, 5, ability.Keywords{}))
 	hq1 := s.g.Players[1].HQ
 	from := len(s.g.Log)
 	s.do(activate(src, 0))
@@ -205,7 +205,7 @@ func TestFR_ZON_002_GainControlOnlyMainTheaterUnits(t *testing.T) {
 
 func TestEffectEvents_ControlLogsTheChange(t *testing.T) {
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 	from := len(s.g.Log)
 	gainOpposing(s)
 	evs := effectEvents(s.g, from, EventControl)
@@ -255,7 +255,7 @@ func TestFR_ZON_002_GainControlStepCountsForIfDone(t *testing.T) {
 				ability.Step{Op: ability.OpGainControl, Subject: ability.SubjectAll,
 					Filter: ability.Filter{Allegiance: c.allegiance, Kinds: ability.KindUnit}},
 				ability.Step{Op: ability.OpDraw, Amount: ability.Value{N: 1}, IfDone: true})))
-			s.put(1, ZoneMainTheater, unit("Foe", 3, 5, Keywords{}))
+			s.put(1, ZoneMainTheater, unit("Foe", 3, 5, ability.Keywords{}))
 			before := len(s.g.Players[0].Hand)
 			s.do(activate(src, 0))
 			if got := len(s.g.Players[0].Hand) - before; got != c.drawn {

@@ -28,7 +28,7 @@ func testHQ(name string) *engine.Card {
 		DeployZones: []engine.Zone{engine.ZoneHeadquarters}}
 }
 
-func testUnit(name string, power, health int, kw engine.Keywords) *engine.Card {
+func testUnit(name string, power, health int, kw ability.Keywords) *engine.Card {
 	return &engine.Card{Name: name, Type: engine.TypeUnit, Power: power, Health: health, ReqCost: 2, TacCost: 1,
 		ReqYield: 1, TacYield: 1, RulesText: name + " rules text", Keywords: kw,
 		DeployZones: []engine.Zone{engine.ZoneReserves, engine.ZoneMainTheater}}
@@ -48,7 +48,7 @@ func newScene(t *testing.T) *scene {
 	filler := func(name string) []*engine.Card {
 		out := make([]*engine.Card, 10)
 		for i := range out {
-			out[i] = testUnit(name, 1, 1, engine.Keywords{})
+			out[i] = testUnit(name, 1, 1, ability.Keywords{})
 		}
 		return out
 	}
@@ -122,29 +122,29 @@ func newContentScene(t *testing.T) *contentScene {
 	g := s.g
 	p0, p1 := g.Players[0], g.Players[1]
 
-	s.p0Hand = s.inst(0, testUnit("Alpha Courier", 2, 3, engine.Keywords{Ward: true}))
+	s.p0Hand = s.inst(0, testUnit("Alpha Courier", 2, 3, ability.Keywords{Ward: true}))
 	p0.Hand = []*engine.Instance{s.p0Hand}
 	s.p1Hand = [2]*engine.Instance{
-		s.inst(1, testUnit("Beta Secret Plan", 4, 4, engine.Keywords{})),
-		s.inst(1, testUnit("Beta Hidden Edge", 1, 5, engine.Keywords{Stalwart: true})),
+		s.inst(1, testUnit("Beta Secret Plan", 4, 4, ability.Keywords{})),
+		s.inst(1, testUnit("Beta Hidden Edge", 1, 5, ability.Keywords{Stalwart: true})),
 	}
 	p1.Hand = s.p1Hand[:]
 	for range 4 {
-		p0.Deck = append(p0.Deck, s.inst(0, testUnit("Alpha Reserve Stock", 1, 1, engine.Keywords{})))
+		p0.Deck = append(p0.Deck, s.inst(0, testUnit("Alpha Reserve Stock", 1, 1, ability.Keywords{})))
 	}
 	for range 3 {
-		p1.Deck = append(p1.Deck, s.inst(1, testUnit("Beta Deck Card", 1, 1, engine.Keywords{})))
+		p1.Deck = append(p1.Deck, s.inst(1, testUnit("Beta Deck Card", 1, 1, ability.Keywords{})))
 	}
-	p0.Discard = []*engine.Instance{s.inst(0, testUnit("Alpha Fallen", 1, 1, engine.Keywords{}))}
-	p1.Discard = []*engine.Instance{s.inst(1, testUnit("Beta Fallen", 1, 1, engine.Keywords{}))}
+	p0.Discard = []*engine.Instance{s.inst(0, testUnit("Alpha Fallen", 1, 1, ability.Keywords{}))}
+	p1.Discard = []*engine.Instance{s.inst(1, testUnit("Beta Fallen", 1, 1, ability.Keywords{}))}
 
 	p0.HQ.Damage = 4
-	s.sentry = s.put(0, engine.ZoneReserves, testUnit("Alpha Sentry", 2, 4, engine.Keywords{}))
+	s.sentry = s.put(0, engine.ZoneReserves, testUnit("Alpha Sentry", 2, 4, ability.Keywords{}))
 	s.sentry.Damage, s.sentry.Armor, s.sentry.Exhausted, s.sentry.Modifiers = 1, 2, true, []engine.Modifier{{Layer: 5, Power: 3}}
-	s.lancer = s.put(0, engine.ZoneMainTheater, testUnit("Alpha Lancer", 3, 2, engine.Keywords{Aggressive: 2}))
-	s.raider = s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, engine.Keywords{Guardian: true}))
+	s.lancer = s.put(0, engine.ZoneMainTheater, testUnit("Alpha Lancer", 3, 2, ability.Keywords{Aggressive: 2}))
+	s.raider = s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, ability.Keywords{Guardian: true}))
 
-	s.incoming = s.inst(1, testUnit("Beta Incoming", 2, 2, engine.Keywords{}))
+	s.incoming = s.inst(1, testUnit("Beta Incoming", 2, 2, ability.Keywords{}))
 	g.Stack = []*engine.StackItem{
 		{Kind: engine.StackDeploy, Controller: 1, Inst: s.incoming, Zone: engine.ZoneReserves},
 		{Kind: engine.StackAttack, Controller: 0, Source: s.lancer.ID, Target: s.raider.ID},
@@ -316,11 +316,11 @@ func TestView_Case1_Contents(t *testing.T) {
 func TestView_Case2_FaceDown(t *testing.T) {
 	s := newScene(t)
 	g := s.g
-	hidden := testUnit("Alpha Hidden Gem", 5, 7, engine.Keywords{Ward: true, Armor: 2})
+	hidden := testUnit("Alpha Hidden Gem", 5, 7, ability.Keywords{Ward: true, Armor: 2})
 	fd := &engine.Asset{ID: s.id(), Inst: &engine.Instance{ID: 424242, Card: hidden, Owner: 0}, Controller: 0,
 		Zone: engine.ZoneMainTheater, FaceDown: true}
 	g.Theater = append(g.Theater, fd)
-	raider := s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, engine.Keywords{}))
+	raider := s.put(1, engine.ZoneMainTheater, testUnit("Beta Raider", 3, 3, ability.Keywords{}))
 
 	for seat := range engine.PlayerID(2) {
 		v := view.PlayerView(g, seat)
@@ -722,10 +722,10 @@ func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
 // T-0081: a chosen card in a discard pile is shown by name, never by instance ID.
 func TestView_PileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 	s := newScene(t)
-	src := s.put(0, engine.ZoneMainTheater, testUnit("Pile Source", 1, 1, engine.Keywords{}))
-	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, engine.Keywords{}))
-	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, engine.Keywords{}))
-	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, engine.Keywords{}))
+	src := s.put(0, engine.ZoneMainTheater, testUnit("Pile Source", 1, 1, ability.Keywords{}))
+	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, ability.Keywords{}))
+	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, ability.Keywords{}))
+	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, ability.Keywords{}))
 	s.g.Players[0].Discard = []*engine.Instance{inPile}
 	s.g.Stack = []*engine.StackItem{{
 		Kind: engine.StackAbility, Controller: 0, Source: src.ID, Inst: src.Inst,
@@ -773,7 +773,7 @@ func TestView_PileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 // T-0122 Case 1: A Maneuver stack item shows its kind, card and asset targets.
 func TestView_ManeuverItemShowsItsCardAndTargets(t *testing.T) {
 	s := newScene(t)
-	opp := s.put(1, engine.ZoneMainTheater, testUnit("Opposing Unit", 1, 1, engine.Keywords{}))
+	opp := s.put(1, engine.ZoneMainTheater, testUnit("Opposing Unit", 1, 1, ability.Keywords{}))
 	volley := s.inst(0, &engine.Card{Name: "Alpha Volley", Type: engine.TypeManeuver})
 	s.g.Stack = []*engine.StackItem{{
 		Kind:       engine.StackManeuver,
@@ -828,9 +828,9 @@ func TestView_ManeuverItemShowsItsCardAndTargets(t *testing.T) {
 func TestView_ManeuverPileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 	s := newScene(t)
 	volley := s.inst(0, &engine.Card{Name: "Maneuver In Question", Type: engine.TypeManeuver})
-	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, engine.Keywords{}))
-	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, engine.Keywords{}))
-	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, engine.Keywords{}))
+	victim := s.put(1, engine.ZoneMainTheater, testUnit("Asset Target", 1, 1, ability.Keywords{}))
+	inPile := s.inst(0, testUnit("Card In Pile", 1, 1, ability.Keywords{}))
+	gone := s.inst(0, testUnit("Card Gone From Piles", 1, 1, ability.Keywords{}))
 	s.g.Players[0].Discard = []*engine.Instance{inPile}
 	s.g.Stack = []*engine.StackItem{{
 		Kind:       engine.StackManeuver,
@@ -885,7 +885,7 @@ func TestView_ManeuverPileTargetShowsCardNamesNotInstanceIDs(t *testing.T) {
 func TestView_EnactedManeuverEndsInItsOwnersDiscard(t *testing.T) {
 	s := newScene(t)
 	s.g.Players[0].Req, s.g.Players[0].Tac = 2, 2
-	deckCard := s.inst(0, testUnit("Drawn Card", 1, 1, engine.Keywords{}))
+	deckCard := s.inst(0, testUnit("Drawn Card", 1, 1, ability.Keywords{}))
 	s.g.Players[0].Deck = []*engine.Instance{deckCard}
 	maneuverCard := &engine.Card{
 		Name: "Tactical Volley", Type: engine.TypeManeuver, ReqCost: 1, TacCost: 0,
@@ -959,7 +959,7 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 		Targets: []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}}},
 		Steps:   []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectTarget, Target: 0}},
 	}
-	src := testUnit("Tapper", 1, 5, engine.Keywords{})
+	src := testUnit("Tapper", 1, 5, ability.Keywords{})
 	src.RulesText = "exhaust: kill chosen opposing unit"
 	src.Ability = &ability.Def{
 		Triggers:  []ability.Trigger{{Hook: ability.HookExhausted, Effect: killOpposing}},
@@ -982,7 +982,7 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 	}
 	filler := make([]*engine.Card, 10)
 	for i := range filler {
-		filler[i] = testUnit("Filler", 1, 1, engine.Keywords{})
+		filler[i] = testUnit("Filler", 1, 1, ability.Keywords{})
 	}
 	g, err := engine.NewGame(engine.Config{
 		Seed:      1,
@@ -995,8 +995,8 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 	}
 	s := &scene{g: g, nextID: 100000}
 	a := s.put(0, engine.ZoneMainTheater, src)
-	s.put(1, engine.ZoneMainTheater, testUnit("Foe One", 1, 5, engine.Keywords{}))
-	s.put(1, engine.ZoneMainTheater, testUnit("Foe Two", 1, 5, engine.Keywords{}))
+	s.put(1, engine.ZoneMainTheater, testUnit("Foe One", 1, 5, ability.Keywords{}))
+	s.put(1, engine.ZoneMainTheater, testUnit("Foe Two", 1, 5, ability.Keywords{}))
 	asked = 0
 	if err := g.Apply(engine.Action{Kind: engine.ActActivate, Player: 0, Asset: a.ID, Ability: 0}); err != nil {
 		t.Fatal(err)
@@ -1024,11 +1024,11 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 func TestView_AssetTextIsPrinted(t *testing.T) {
 	s := newScene(t)
 	g := s.g
-	c0 := testUnit("Unit Zero", 2, 2, engine.Keywords{})
+	c0 := testUnit("Unit Zero", 2, 2, ability.Keywords{})
 	c0.RulesText = "exhaust: test text"
 	a0 := s.put(0, engine.ZoneReserves, c0)
 
-	c1 := testUnit("Unit One", 3, 3, engine.Keywords{})
+	c1 := testUnit("Unit One", 3, 3, ability.Keywords{})
 	c1.RulesText = "T1: other text"
 	a1 := s.put(1, engine.ZoneMainTheater, c1)
 
@@ -1079,7 +1079,7 @@ func TestView_AssetTextIsPrinted(t *testing.T) {
 func TestView_FaceDownAssetHidesItsText(t *testing.T) {
 	s := newScene(t)
 	g := s.g
-	hidden := testUnit("Alpha Secret Agent", 2, 2, engine.Keywords{})
+	hidden := testUnit("Alpha Secret Agent", 2, 2, ability.Keywords{})
 	hidden.RulesText = "Alpha secret text"
 	fd := &engine.Asset{
 		ID:         s.id(),
@@ -1118,10 +1118,10 @@ func TestView_FaceDownAssetHidesItsText(t *testing.T) {
 func TestView_KeywordBehindCorneredShowsOnlyWhileCornered(t *testing.T) {
 	s := newScene(t)
 	g := s.g
-	c := testUnit("Alpha Brawler", 2, 2, engine.Keywords{})
+	c := testUnit("Alpha Brawler", 2, 2, ability.Keywords{})
 	c.Ability = &ability.Def{Cornered: ability.WhileCornered{Aggressive: 3}}
 	brawler := s.put(0, engine.ZoneMainTheater, c)
-	s.put(1, engine.ZoneMainTheater, testUnit("Beta One", 1, 1, engine.Keywords{}))
+	s.put(1, engine.ZoneMainTheater, testUnit("Beta One", 1, 1, ability.Keywords{}))
 
 	keywords := func(seat engine.PlayerID) []string {
 		t.Helper()
@@ -1144,7 +1144,7 @@ func TestView_KeywordBehindCorneredShowsOnlyWhileCornered(t *testing.T) {
 	}
 
 	want("1 against 1, not Cornered", nil)
-	second := s.put(1, engine.ZoneMainTheater, testUnit("Beta Two", 1, 1, engine.Keywords{}))
+	second := s.put(1, engine.ZoneMainTheater, testUnit("Beta Two", 1, 1, ability.Keywords{}))
 	want("1 against 2, Cornered", []string{"Aggressive 3"})
 	g.Theater = slices.DeleteFunc(g.Theater, func(a *engine.Asset) bool { return a == second })
 	want("back to 1 against 1, not Cornered", nil)
@@ -1434,7 +1434,7 @@ func TestView_SearchInAGameStaysPrivate(t *testing.T) {
 	}
 	filler := make([]*engine.Card, 10)
 	for i := range filler {
-		filler[i] = testUnit("Filler", 1, 1, engine.Keywords{})
+		filler[i] = testUnit("Filler", 1, 1, ability.Keywords{})
 	}
 	g, err := engine.NewGame(engine.Config{
 		Seed:      1,
@@ -1447,11 +1447,11 @@ func TestView_SearchInAGameStaysPrivate(t *testing.T) {
 	}
 	s := &scene{g: g, nextID: 100000}
 	g.Players[0].Deck = []*engine.Instance{
-		s.inst(0, testUnit("Alpha Search One", 1, 1, engine.Keywords{})),
-		s.inst(0, testUnit("Alpha Search Two", 1, 1, engine.Keywords{})),
-		s.inst(0, testUnit("Alpha Search Three", 1, 1, engine.Keywords{})),
+		s.inst(0, testUnit("Alpha Search One", 1, 1, ability.Keywords{})),
+		s.inst(0, testUnit("Alpha Search Two", 1, 1, ability.Keywords{})),
+		s.inst(0, testUnit("Alpha Search Three", 1, 1, ability.Keywords{})),
 	}
-	src := testUnit("Search Unit", 1, 5, engine.Keywords{})
+	src := testUnit("Search Unit", 1, 5, ability.Keywords{})
 	src.Ability = &ability.Def{
 		Activated: []ability.Activated{
 			{
@@ -1531,14 +1531,14 @@ func TestView_SearchInAGameStaysPrivate(t *testing.T) {
 // and it names no face-down card.
 func TestView_HealLineShowsToBothSeats(t *testing.T) {
 	s := newScene(t)
-	src := testUnit("Healer", 1, 5, engine.Keywords{})
+	src := testUnit("Healer", 1, 5, ability.Keywords{})
 	src.Ability = &ability.Def{Activated: []ability.Activated{{
 		Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpHeal, Amount: ability.Value{N: 2}, Subject: ability.SubjectAll,
 			Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit}}}},
 	}}}
 	healer := s.put(0, engine.ZoneMainTheater, src)
 	healer.Damage = 3
-	hidden := s.put(0, engine.ZoneReserves, testUnit("Hidden Recruit", 1, 5, engine.Keywords{}))
+	hidden := s.put(0, engine.ZoneReserves, testUnit("Hidden Recruit", 1, 5, ability.Keywords{}))
 	hidden.FaceDown, hidden.Damage = true, 1
 	if err := s.g.Apply(engine.Action{Kind: engine.ActActivate, Player: 0, Asset: healer.ID, Ability: 0}); err != nil {
 		t.Fatal(err)

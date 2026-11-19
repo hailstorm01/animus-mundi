@@ -107,11 +107,11 @@ type tboard struct{ u0, s0, c0, u1, s1, c1 *Asset }
 
 func (s *scene) targetBoard() tboard {
 	return tboard{
-		u0: s.put(0, ZoneMainTheater, unit("Ally Unit", 1, 5, Keywords{})),
-		s0: s.put(0, ZoneMainTheater, structure("Ally Structure", 0, 5, Keywords{})),
+		u0: s.put(0, ZoneMainTheater, unit("Ally Unit", 1, 5, ability.Keywords{})),
+		s0: s.put(0, ZoneMainTheater, structure("Ally Structure", 0, 5, ability.Keywords{})),
 		c0: s.putScratch(0),
-		u1: s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, Keywords{})),
-		s1: s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, Keywords{})),
+		u1: s.put(1, ZoneMainTheater, unit("Enemy Unit", 1, 5, ability.Keywords{})),
+		s1: s.put(1, ZoneMainTheater, structure("Enemy Structure", 0, 5, ability.Keywords{})),
 		c1: s.putScratch(1),
 	}
 }
@@ -214,9 +214,9 @@ func TestFR_TGT_001_OptionsAreExactlyTheEntitiesMeetingEveryCriterion(t *testing
 func TestFR_TGT_001_AllegianceIsRelativeToTheTriggersController(t *testing.T) {
 	s := newScene(t)
 	s.endTurn() // player 1 is active
-	u0 := s.put(0, ZoneMainTheater, unit("P0 Unit A", 1, 5, Keywords{}))
-	u0b := s.put(0, ZoneMainTheater, unit("P0 Unit B", 1, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("P1 Unit", 1, 5, Keywords{}))
+	u0 := s.put(0, ZoneMainTheater, unit("P0 Unit A", 1, 5, ability.Keywords{}))
+	u0b := s.put(0, ZoneMainTheater, unit("P0 Unit B", 1, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("P1 Unit", 1, 5, ability.Keywords{}))
 	s.script(1, Answer{Picks: []int{0}})
 	s.script(0)
 	s.deployTargeter(1, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, true)}, dmgTo(1, 0))
@@ -236,9 +236,9 @@ func TestFR_TGT_001_AllegianceIsRelativeToTheTriggersController(t *testing.T) {
 
 func TestFR_KWD_002h_OpposingWardUnitIsNotAnOption(t *testing.T) {
 	s := newScene(t)
-	plain := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, Keywords{}))
-	plain2 := s.put(1, ZoneMainTheater, unit("Plain 2", 1, 5, Keywords{}))
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	plain := s.put(1, ZoneMainTheater, unit("Plain", 1, 5, ability.Keywords{}))
+	plain2 := s.put(1, ZoneMainTheater, unit("Plain 2", 1, 5, ability.Keywords{}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(1, 0))
 	asked := s.asked(0)
@@ -253,8 +253,8 @@ func TestFR_KWD_002h_OpposingWardUnitIsNotAnOption(t *testing.T) {
 
 func TestFR_KWD_002h_AlliedWardUnitIsAnOption(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, Keywords{Ward: true}))
-	plain := s.put(0, ZoneMainTheater, unit("Plain Ally", 1, 5, Keywords{}))
+	ward := s.put(0, ZoneMainTheater, unit("Warded Ally", 1, 5, ability.Keywords{Ward: true}))
+	plain := s.put(0, ZoneMainTheater, unit("Plain Ally", 1, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	src := s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceAllied, ability.KindUnit, true)}, dmgTo(1, 0))
 	asked := s.asked(0)
@@ -268,7 +268,7 @@ func TestFR_KWD_002h_AlliedWardUnitIsAnOption(t *testing.T) {
 
 func TestFR_KWD_002h_OnlyWardedTargetMeansNoLegalTarget(t *testing.T) {
 	s := newScene(t)
-	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, Keywords{Ward: true}))
+	ward := s.put(1, ZoneMainTheater, unit("Warded", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	src := s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(2, 0))
 	if n := len(s.asked(0)); n != 0 {
@@ -284,7 +284,7 @@ func TestFR_KWD_002h_OnlyWardedTargetMeansNoLegalTarget(t *testing.T) {
 
 func TestFR_TGT_001_SingleLegalTargetIsNotAskedAndTakesTheDamage(t *testing.T) {
 	s := newScene(t)
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 5, ability.Keywords{}))
 	s.script(0)
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(2, 0))
 	if n := len(s.asked(0)); n != 0 {
@@ -295,8 +295,8 @@ func TestFR_TGT_001_SingleLegalTargetIsNotAskedAndTakesTheDamage(t *testing.T) {
 
 func TestFR_TGT_001_TimeoutOnTwoOptionsDamagesExactlyOneOfThem(t *testing.T) {
 	s := newScene(t)
-	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 5, Keywords{}))
-	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 5, Keywords{}))
+	a := s.put(1, ZoneMainTheater, unit("Victim A", 1, 5, ability.Keywords{}))
+	b := s.put(1, ZoneMainTheater, unit("Victim B", 1, 5, ability.Keywords{}))
 	s.script(0, Answer{Timeout: true})
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(2, 0))
 	if n := len(s.asked(0)); n != 1 {
@@ -311,7 +311,7 @@ func TestFR_TGT_001_TimeoutOnTwoOptionsDamagesExactlyOneOfThem(t *testing.T) {
 
 func TestFR_KWD_002b_ResistantReducesTargetedDamage(t *testing.T) {
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Resistant", 1, 5, Keywords{Resistant: 1}))
+	v := s.put(1, ZoneMainTheater, unit("Resistant", 1, 5, ability.Keywords{Resistant: 1}))
 	s.script(0)
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(3, 0))
 	s.wantDamage(v, 2)
@@ -319,7 +319,7 @@ func TestFR_KWD_002b_ResistantReducesTargetedDamage(t *testing.T) {
 
 func TestFR_KWD_002k_ArmorAbsorbsTargetedDamageOneForOne(t *testing.T) {
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, Keywords{Armor: 2}))
+	v := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 2}))
 	s.script(0)
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(3, 0))
 	s.wantDamage(v, 1)
@@ -330,7 +330,7 @@ func TestFR_KWD_002k_ArmorAbsorbsTargetedDamageOneForOne(t *testing.T) {
 
 func TestFR_KWD_002c_StalwartDoesNotReduceNonCombatDamage(t *testing.T) {
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Stalwart", 1, 5, Keywords{Stalwart: true}))
+	v := s.put(1, ZoneMainTheater, unit("Stalwart", 1, 5, ability.Keywords{Stalwart: true}))
 	s.script(0)
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(3, 0))
 	s.wantDamage(v, 3)
@@ -338,7 +338,7 @@ func TestFR_KWD_002c_StalwartDoesNotReduceNonCombatDamage(t *testing.T) {
 
 func TestFR_TGT_001_LethalDamageKillsAtThatItemsSweep(t *testing.T) {
 	s := newScene(t)
-	v := s.put(1, ZoneMainTheater, unit("Doomed", 1, 1, Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Doomed", 1, 1, ability.Keywords{}))
 	inst := v.Inst
 	s.script(0)
 	s.deployTargeter(0, []ability.Target{tgt(ability.AllegianceOpposing, ability.KindUnit, false)}, dmgTo(1, 0))
@@ -370,10 +370,10 @@ func TestFR_TGT_001_DamageToHeadquartersToZeroLosesTheMatchAtThatSweep(t *testin
 
 func TestFR_TGT_001_TwoSlotsAskInSlotOrderAndEachStepHitsItsOwnSlot(t *testing.T) {
 	s := newScene(t)
-	u1a := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, Keywords{}))
-	u1b := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, Keywords{}))
-	s0a := s.put(0, ZoneMainTheater, structure("Ally Struct A", 0, 5, Keywords{}))
-	s0b := s.put(0, ZoneMainTheater, structure("Ally Struct B", 0, 5, Keywords{}))
+	u1a := s.put(1, ZoneMainTheater, unit("Enemy A", 1, 5, ability.Keywords{}))
+	u1b := s.put(1, ZoneMainTheater, unit("Enemy B", 1, 5, ability.Keywords{}))
+	s0a := s.put(0, ZoneMainTheater, structure("Ally Struct A", 0, 5, ability.Keywords{}))
+	s0b := s.put(0, ZoneMainTheater, structure("Ally Struct B", 0, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1}}, Answer{Picks: []int{0}})
 	// The steps are printed in the reverse of slot order.
 	s.deployTargeter(0, []ability.Target{
@@ -429,7 +429,7 @@ func TestFR_TGT_003_NoLegalTargetAsksNothingDamagesNothingAndDeploys(t *testing.
 func TestFR_TGT_003_TargetGoneAtResolutionTakesNoDamageButOtherStepsRun(t *testing.T) {
 	s := newScene(t)
 	p0 := s.g.Players[0]
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, ability.Keywords{}))
 	inst := victim.Inst
 	hand := len(p0.Hand)
 	s.onTop(0, vanilla("A", "B")...)
@@ -456,8 +456,8 @@ func TestFR_TGT_003_TargetGoneAtResolutionTakesNoDamageButOtherStepsRun(t *testi
 func TestFR_TGT_003_PartialInvalidationResolvesForTheRemainingLegalTarget(t *testing.T) {
 	s := newScene(t)
 	p0 := s.g.Players[0]
-	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, Keywords{}))
-	wall := s.put(1, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
+	victim := s.put(1, ZoneMainTheater, unit("Victim", 1, 1, ability.Keywords{}))
+	wall := s.put(1, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
 	hand := len(p0.Hand)
 	s.onTop(0, vanilla("A")...)
 	s.script(0, Answer{Picks: []int{0, 1}})

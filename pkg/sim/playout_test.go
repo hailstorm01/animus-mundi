@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"animus-mundi/pkg/engine/ability"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -11,18 +12,18 @@ import (
 // keywordDeck exercises every M1 keyword.
 func keywordDeck() []*engine.Card {
 	pool := []*engine.Card{
-		unit("Vanilla", 2, 2, engine.Keywords{}),
-		unit("Resister", 1, 3, engine.Keywords{Resistant: 1}),
-		unit("Brittle", 3, 2, engine.Keywords{Resistant: -1}),
-		unit("Stalwart", 1, 2, engine.Keywords{Stalwart: true}),
-		unit("Brawler", 1, 3, engine.Keywords{Aggressive: 2}),
-		unit("Ghost", 2, 1, engine.Keywords{Ethereal: true}),
-		unit("Warded", 2, 2, engine.Keywords{Ward: true}),
-		unit("Sneak", 1, 2, engine.Keywords{Versatile: true}),
-		unit("Bodyguard", 0, 4, engine.Keywords{Guardian: true}),
-		unit("Plated", 2, 1, engine.Keywords{Armor: 2}),
-		unit("Slowpoke", 3, 3, engine.Keywords{DeploysExhausted: true}),
-		structure("Bastion", 0, 6, engine.Keywords{Guardian: true}),
+		unit("Vanilla", 2, 2, ability.Keywords{}),
+		unit("Resister", 1, 3, ability.Keywords{Resistant: 1}),
+		unit("Brittle", 3, 2, ability.Keywords{Resistant: -1}),
+		unit("Stalwart", 1, 2, ability.Keywords{Stalwart: true}),
+		unit("Brawler", 1, 3, ability.Keywords{Aggressive: 2}),
+		unit("Ghost", 2, 1, ability.Keywords{Ethereal: true}),
+		unit("Warded", 2, 2, ability.Keywords{Ward: true}),
+		unit("Sneak", 1, 2, ability.Keywords{Versatile: true}),
+		unit("Bodyguard", 0, 4, ability.Keywords{Guardian: true}),
+		unit("Plated", 2, 1, ability.Keywords{Armor: 2}),
+		unit("Slowpoke", 3, 3, ability.Keywords{DeploysExhausted: true}),
+		structure("Bastion", 0, 6, ability.Keywords{Guardian: true}),
 	}
 	for i, c := range pool {
 		c.ReqCost = i % 3

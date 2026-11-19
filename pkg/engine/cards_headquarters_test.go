@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Card tests for Headquarters abilities (T-0055), from the card text in
 // data/cards/units-and-structures-HQ.csv.
@@ -60,7 +63,7 @@ const (
 // Covers: FR-REP-004
 func TestCard_AnimocepsRager_CombatDamageScratchesOneForItsController(t *testing.T) {
 	s := hqScene(t, watchman, rager)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	r := s.g.Players[1].HQ
 	s.do(s.attack(att, r))
 	s.wantDamage(r, 2)
@@ -84,7 +87,7 @@ func TestCard_AnimocepsRager_EffectDamageScratchesOne(t *testing.T) {
 // Covers: FR-REP-004, FR-CAP-001
 func TestCard_AnimocepsRager_RetaliationDamageScratchesOneOnItsOwnTurn(t *testing.T) {
 	s := hqScene(t, rager, watchman)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 9, ability.Keywords{}))
 	r := s.g.Players[0].HQ
 	s.do(s.attack(r, foe))
 	s.wantDamage(r, 2)
@@ -128,7 +131,7 @@ func TestCard_AnimocepsRager_AttackThenSappersInOneTurnScratchOnlyOnce(t *testin
 func TestCard_AnimocepsRager_LimitResetsAtTheStartOfEveryTurn(t *testing.T) {
 	s := hqScene(t, watchman, rager)
 	h := s.hitters(2)
-	foe := s.put(0, ZoneMainTheater, unit("Foe", 1, 9, Keywords{}))
+	foe := s.put(0, ZoneMainTheater, unit("Foe", 1, 9, ability.Keywords{}))
 	r := s.g.Players[1].HQ
 	s.do(s.attack(h[0], r)) // turn 1, the opponent's turn
 	s.wantScratches(1, 1, "damaged on turn 1 Scratches")
@@ -146,8 +149,8 @@ func TestCard_AnimocepsRager_LimitResetsAtTheStartOfEveryTurn(t *testing.T) {
 // Covers: FR-REP-004
 func TestCard_AnimocepsRager_DamageToAnotherAssetDoesNotScratch(t *testing.T) {
 	s := hqScene(t, rager, rager)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
-	def := s.put(1, ZoneMainTheater, unit("Bystander", 1, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
+	def := s.put(1, ZoneMainTheater, unit("Bystander", 1, 9, ability.Keywords{}))
 	s.do(s.attack(att, def))
 	s.wantDamage(def, 2)
 	s.wantScratches(0, 0, "damage to another unit does not fire the Rager (card text: this Headquarters)")
@@ -157,7 +160,7 @@ func TestCard_AnimocepsRager_DamageToAnotherAssetDoesNotScratch(t *testing.T) {
 // Covers: FR-REP-004
 func TestCard_AnimocepsRager_DamageToTheOtherHeadquartersDoesNotScratchForIt(t *testing.T) {
 	s := hqScene(t, rager, watchman)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	s.wantDamage(s.g.Players[1].HQ, 2)
 	s.wantScratches(0, 0, "damage to the opposing Headquarters does not fire the Rager (card text: this Headquarters)")
@@ -167,7 +170,7 @@ func TestCard_AnimocepsRager_DamageToTheOtherHeadquartersDoesNotScratchForIt(t *
 // Covers: FR-REP-004
 func TestCard_AnimocepsRager_DamageToOpposingRagerDoesNotScratchForTheAttacker(t *testing.T) {
 	s := hqScene(t, rager, rager)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	s.wantScratches(1, 1, "the damaged Rager's controller Scratches 1")
 	s.wantScratches(0, 0, "the undamaged Rager does not fire")
@@ -176,7 +179,7 @@ func TestCard_AnimocepsRager_DamageToOpposingRagerDoesNotScratchForTheAttacker(t
 // Covers: FR-REP-004
 func TestCard_EternalWatchman_DamageDoesNotScratchForAnyone(t *testing.T) {
 	s := hqScene(t, rager, watchman)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 2, 9, ability.Keywords{}))
 	s.do(s.attack(att, s.g.Players[1].HQ))
 	s.wantDamage(s.g.Players[1].HQ, 2)
 	s.wantScratches(1, 0, "the Eternal Watchman has no damage trigger")

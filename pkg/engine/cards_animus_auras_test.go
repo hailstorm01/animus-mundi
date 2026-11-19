@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for T-0259 (Hulking Incongruity) and T-0257, the same-zone power auras Animoceps Stalk, Animoceps Node
 // and Melodic Pummeler (FR-LAY-001, FR-TGT-001 SVY-R44, FR-ZON-001). Player 0
@@ -8,7 +11,7 @@ import "testing"
 
 // auraSub is a unit with the given subtypes.
 func auraSub(name string, power int, subs ...string) *Card {
-	c := unit(name, power, 5, Keywords{})
+	c := unit(name, power, 5, ability.Keywords{})
 	c.Subtypes = subs
 	return c
 }
@@ -17,10 +20,10 @@ func TestCard_AnimocepsStalk_OtherAlliedAssetsInItsZone(t *testing.T) {
 	// Covers: FR-LAY-001
 	s := newScene(t)
 	stalk := s.put(0, ZoneMainTheater, s.card("Animoceps Stalk"))
-	u := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
-	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, Keywords{}))
-	res := s.put(0, ZoneReserves, unit("Reserve Ally", 2, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("Wall", 0, 5, ability.Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Reserve Ally", 2, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	s.wantPower(u, 3, "an allied unit in the Stalk's zone has +1 power")
 	s.wantPower(st, 1, "an allied structure in the Stalk's zone has +1 power (any asset)")
 	s.wantPower(stalk, 1, "the Stalk says other, so it does not buff itself")
@@ -41,10 +44,10 @@ func TestCard_AnimocepsStalk_FollowsItsZone(t *testing.T) {
 	// Covers: FR-TGT-001, FR-ZON-001 (SVY-R44, last sentence)
 	s := newScene(t)
 	stalk := s.put(0, ZoneMainTheater, s.card("Animoceps Stalk"))
-	a := s.put(0, ZoneMainTheater, unit("A", 2, 5, Keywords{}))
-	b := s.put(0, ZoneReserves, unit("B", 2, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("A", 2, 5, ability.Keywords{}))
+	b := s.put(0, ZoneReserves, unit("B", 2, 5, ability.Keywords{}))
 	s.moveTo(stalk, ZoneReserves)
-	foe := s.put(1, ZoneReserves, unit("Foe", 2, 5, Keywords{}))
+	foe := s.put(1, ZoneReserves, unit("Foe", 2, 5, ability.Keywords{}))
 	s.wantPower(a, 2, "the Stalk left the Main Theater")
 	s.wantPower(b, 3, "the Stalk is now in player 0's Reserves")
 	s.wantPower(foe, 2, "player 1's Reserves are not player 0's Reserves")
@@ -54,12 +57,12 @@ func TestCard_AnimocepsNode_AlliedUnitsInItsZone(t *testing.T) {
 	// Covers: FR-LAY-001
 	s := newScene(t)
 	node := s.put(0, ZoneMainTheater, s.card("Animoceps Node"))
-	u := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, Keywords{}))
+	u := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
 	scratch := s.putScratch(0)
 	s.moveTo(scratch, ZoneMainTheater)
-	st := s.put(0, ZoneMainTheater, structure("Wall", 1, 5, Keywords{}))
-	res := s.put(0, ZoneReserves, unit("Reserve Ally", 2, 5, Keywords{}))
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, Keywords{}))
+	st := s.put(0, ZoneMainTheater, structure("Wall", 1, 5, ability.Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Reserve Ally", 2, 5, ability.Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
 	s.wantPower(u, 3, "an allied unit in the Node's zone has +1 power")
 	s.wantPower(scratch, 2, "a face-down Scratch Company (power 1) is a unit")
 	s.wantPower(node, 3, "the Node is a structure, so it does not buff itself")
@@ -72,8 +75,8 @@ func TestCard_AnimocepsNode_FollowsItsZone(t *testing.T) {
 	// Covers: FR-TGT-001 (SVY-R44)
 	s := newScene(t)
 	node := s.put(0, ZoneMainTheater, s.card("Animoceps Node"))
-	main := s.put(0, ZoneMainTheater, unit("Main", 2, 5, Keywords{}))
-	res := s.put(0, ZoneReserves, unit("Res", 2, 5, Keywords{}))
+	main := s.put(0, ZoneMainTheater, unit("Main", 2, 5, ability.Keywords{}))
+	res := s.put(0, ZoneReserves, unit("Res", 2, 5, ability.Keywords{}))
 	s.moveTo(node, ZoneReserves)
 	s.wantPower(res, 3, "the Node is now in Reserves")
 	s.wantPower(main, 2, "the Node left the Main Theater")
@@ -86,7 +89,7 @@ func TestCard_MelodicPummeler_AlliedHorrorUnitsInItsZone(t *testing.T) {
 	h := s.put(0, ZoneReserves, auraSub("Horror", 3, "Horror"))
 	multi := s.put(0, ZoneReserves, auraSub("Treefolk Horror", 3, "Treefolk", "Horror"))
 	plain := s.put(0, ZoneReserves, auraSub("Plain", 3, "Treefolk"))
-	hs := structure("Horror Wall", 3, 5, Keywords{})
+	hs := structure("Horror Wall", 3, 5, ability.Keywords{})
 	hs.Subtypes = []string{"Horror"}
 	hstruct := s.put(0, ZoneReserves, hs)
 	mainH := s.put(0, ZoneMainTheater, auraSub("Main Horror", 3, "Horror"))
@@ -119,7 +122,7 @@ func TestCard_HulkingIncongruity_AlliedHorrorUnitsInItsZone(t *testing.T) {
 	h := s.put(0, ZoneReserves, auraSub("Horror", 3, "Horror"))
 	multi := s.put(0, ZoneReserves, auraSub("Treefolk Horror", 3, "Treefolk", "Horror"))
 	plain := s.put(0, ZoneReserves, auraSub("Plain", 3, "Treefolk"))
-	hs := structure("Horror Wall", 3, 5, Keywords{})
+	hs := structure("Horror Wall", 3, 5, ability.Keywords{})
 	hs.Subtypes = []string{"Horror"}
 	hstruct := s.put(0, ZoneReserves, hs)
 	mainH := s.put(0, ZoneMainTheater, auraSub("Main Horror", 3, "Horror"))
@@ -160,7 +163,7 @@ func TestCard_HulkingIncongruity_CoveredUnitTakesOneLess(t *testing.T) {
 	s := newScene(t)
 	s.put(1, ZoneMainTheater, s.card("Hulking Incongruity"))
 	d := s.put(1, ZoneMainTheater, horrorUnit("D", 0, 5, 0))
-	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Attacker", 3, 5, ability.Keywords{}))
 	s.do(s.attack(att, d))
 	s.wantDamage(d, 2)
 }

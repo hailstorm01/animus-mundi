@@ -15,13 +15,13 @@ import (
 
 // bowedMortal is a unit printing an Unbowed trigger and then a death trigger.
 func bowedMortal(name string, power, health int, u, k ability.Trigger) *Card {
-	return bowed(name, power, health, Keywords{}, u, k)
+	return bowed(name, power, health, ability.Keywords{}, u, k)
 }
 
 // Covers: FR-TRG-003, FR-TRG-004
 func TestFR_KWD_002a_LethalUnbowedAndDeathTriggerShareOneOrderingWindow(t *testing.T) {
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, bowedMortal("Martyr", 1, 1, unbowed(nil, scratchN(1)), killedTrigger(drawN(1))))
 	hand := len(s.g.Players[1].Hand)
 	s.script(0)
@@ -57,7 +57,7 @@ func TestFR_TRG_003_LethalUnbowedOfTheNonActivePlayerResolvesBeforeTheActivePlay
 	s.g.Players[0].Deck = nil
 	s.g.Players[1].Deck = nil
 	att := s.put(0, ZoneMainTheater, mortal("Attacker", 1, 1, killedTrigger(drawN(1))))
-	def := s.put(1, ZoneMainTheater, bowed("Defender", 1, 1, Keywords{}, unbowed(nil, drawN(1))))
+	def := s.put(1, ZoneMainTheater, bowed("Defender", 1, 1, ability.Keywords{}, unbowed(nil, drawN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(att) || s.alive(def) {
 		t.Fatalf("precondition: both units are destroyed (attacker alive=%v, defender alive=%v)", s.alive(att), s.alive(def))
@@ -72,7 +72,7 @@ func TestFR_TRG_003_ActivePlayersLethalUnbowedResolvesAfterTheNonActivePlayersDe
 	s := newScene(t)
 	s.g.Players[0].Deck = nil
 	s.g.Players[1].Deck = nil
-	att := s.put(0, ZoneMainTheater, bowed("Attacker", 1, 1, Keywords{}, unbowed(nil, drawN(1))))
+	att := s.put(0, ZoneMainTheater, bowed("Attacker", 1, 1, ability.Keywords{}, unbowed(nil, drawN(1))))
 	def := s.put(1, ZoneMainTheater, mortal("Defender", 1, 1, killedTrigger(drawN(1))))
 	s.do(s.attack(att, def))
 	if s.alive(att) || s.alive(def) {
@@ -89,7 +89,7 @@ func TestFR_KWD_002a_LethalUnbowedSelfHealFizzlesAndTheAssetIsDestroyedAnyway(t 
 	// asset alive; resolved after the sweep it fizzles, the asset stays in the
 	// discard pile and its death trigger still resolves.
 	s := newScene(t)
-	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, Keywords{}))
+	att := s.put(0, ZoneMainTheater, unit("Hitter", 3, 9, ability.Keywords{}))
 	def := s.put(1, ZoneMainTheater, bowedMortal("Dancer", 1, 2, unbowed(nil, healSelf(3)), killedTrigger(scratchN(1))))
 	inst := def.Inst
 	s.script(1, Answer{Picks: []int{0, 1}})

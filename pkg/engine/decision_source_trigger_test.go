@@ -44,7 +44,7 @@ func answerFirst(d Decision) Answer {
 func TestDecisionSource_TriggerTarget_DevilhornCaptain(t *testing.T) {
 	s := newScene(t)
 	b := s.captainBoard()
-	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, Keywords{}))
+	hitter := s.put(0, ZoneMainTheater, unit("Hitter", 1, 9, ability.Keywords{}))
 	s.byKind(1, func(d Decision) Answer {
 		for i, o := range d.Options {
 			if d.Kind == DecideTarget && o.Ref == b.u0.ID {
@@ -66,9 +66,9 @@ func TestDecisionSource_TriggerTarget_DevilhornCaptain(t *testing.T) {
 
 func TestDecisionSource_OptionalTargetAndPick_InfestedApostle(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, Keywords{}))
-	v := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 0, 5, ability.Keywords{}))
+	v := s.put(1, ZoneMainTheater, unit("Victim One", 0, 5, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Victim Two", 0, 5, ability.Keywords{}))
 	s.scriptPlan(0, nil, []Answer{yes}, pick(v), pick(ally))
 	inst := deployApostle(s)
 	asks := s.asked(0)
@@ -141,7 +141,7 @@ func TestDecisionSource_TriggerOrderNamesNone(t *testing.T) {
 func TestDecisionSource_FlushInsideAScopeOrdersWithNone(t *testing.T) {
 	s := newScene(t)
 	src := s.put(0, ZoneReserves, trigUnit("Source", deployTrigger(drawN(1)), deployTrigger(scratchN(1))))
-	outer := unit("Outer", 1, 1, Keywords{})
+	outer := unit("Outer", 1, 1, ability.Keywords{})
 	s.g.fireHook(assetSource(src), ability.HookDeploy)
 	s.script(0, Answer{Picks: []int{0, 1}})
 	closeOuter := s.g.askFor(outer)
@@ -158,7 +158,7 @@ func TestDecisionSource_FlushInsideAScopeOrdersWithNone(t *testing.T) {
 
 func TestDecisionSource_Record(t *testing.T) {
 	s := newScene(t)
-	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Foe", 0, 5, ability.Keywords{}))
 	s.onTop(0, vanilla("A", "B")...)
 	s.script(0, Answer{Picks: []int{0, 1}})
 	hit := ability.Trigger{Hook: ability.HookDeploy, Effect: hitMode()}

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"animus-mundi/pkg/engine/ability"
+	"testing"
+)
 
 // Tests for Maximum Health modifiers in Layer 5 (FR-LAY-001, FR-LAY-002) and
 // the state-based death sweep after Sub-Phase 4c (FR-TRN-001, board directive
@@ -15,7 +18,7 @@ func addMaxHealth(a *Asset, n int) {
 // a free unit from player 0's hand.
 func sweepNow(s *scene) {
 	s.t.Helper()
-	c := unit("Sweep Trigger", 1, 1, Keywords{})
+	c := unit("Sweep Trigger", 1, 1, ability.Keywords{})
 	c.ReqYield, c.TacYield = 0, 0
 	c.DeployZones = []Zone{ZoneReserves}
 	inst := s.give(0, c)
@@ -45,7 +48,7 @@ func destroyIndexFor(log []Event, from int, a *Asset) int {
 
 func TestFR_LAY_002_MaxHealthModifierChangesEffectiveMaxHealth(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Subject", 4, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Subject", 4, 5, ability.Keywords{}))
 	addMaxHealth(a, -3)
 	if got := s.g.MaxHealth(a); got != 2 {
 		t.Errorf("a -3 Maximum Health modifier on printed Health 5 gives Maximum Health 2 (FR-LAY-002), got %d", got)
@@ -82,7 +85,7 @@ func TestFR_LAY_002_MaxHealthModifierChangesEffectiveMaxHealth(t *testing.T) {
 
 func TestFR_LAY_001_MaxHealthDoesNotClamp(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Subject", 1, 2, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Subject", 1, 2, ability.Keywords{}))
 	addMaxHealth(a, -3)
 	if got := s.g.MaxHealth(a); got != -1 {
 		t.Errorf("Maximum Health does not clamp (FR-LAY-001): want -1, got %d", got)
@@ -94,9 +97,9 @@ func TestFR_LAY_001_MaxHealthDoesNotClamp(t *testing.T) {
 
 func TestFR_LAY_002_MaxHealthAtZeroIsLethalWithoutDamage(t *testing.T) {
 	s := newScene(t)
-	dead := s.put(0, ZoneMainTheater, unit("Doomed", 1, 3, Keywords{}))
+	dead := s.put(0, ZoneMainTheater, unit("Doomed", 1, 3, ability.Keywords{}))
 	addMaxHealth(dead, -3)
-	spared := s.put(1, ZoneMainTheater, unit("Spared", 1, 3, Keywords{}))
+	spared := s.put(1, ZoneMainTheater, unit("Spared", 1, 3, ability.Keywords{}))
 	addMaxHealth(spared, -2)
 	if !s.g.IsLethal(dead) {
 		t.Errorf("Maximum Health 0 is lethal with no damage (FR-LAY-002)")
@@ -115,7 +118,7 @@ func TestFR_LAY_002_MaxHealthAtZeroIsLethalWithoutDamage(t *testing.T) {
 
 func TestFR_LAY_002_MaxHealthReductionExpiresAndRestores(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Subject", 1, 5, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Subject", 1, 5, ability.Keywords{}))
 	a.Damage = 2
 	addMaxHealth(a, -2)
 	if got := s.g.CurrentHealth(a); got != 1 {
@@ -140,7 +143,7 @@ func TestFR_LAY_002_MaxHealthReductionExpiresAndRestores(t *testing.T) {
 
 func testExpiryAtFourC(t *testing.T, p PlayerID) {
 	s := newScene(t)
-	a := s.put(p, ZoneMainTheater, unit("Bonus Holder", 1, 2, Keywords{}))
+	a := s.put(p, ZoneMainTheater, unit("Bonus Holder", 1, 2, ability.Keywords{}))
 	addMaxHealth(a, 2)
 	a.Damage = 3
 	if !s.alive(a) || s.g.CurrentHealth(a) != 1 {
@@ -233,7 +236,7 @@ func TestFR_TRN_001_FourCSweepLossEndsTheMatch(t *testing.T) {
 
 func TestFR_TRN_001_NoFourCDeathWithoutExpiry(t *testing.T) {
 	s := newScene(t)
-	a := s.put(0, ZoneMainTheater, unit("Scarred", 1, 4, Keywords{}))
+	a := s.put(0, ZoneMainTheater, unit("Scarred", 1, 4, ability.Keywords{}))
 	a.Damage = 3
 	s.endTurn()
 	if !s.alive(a) {

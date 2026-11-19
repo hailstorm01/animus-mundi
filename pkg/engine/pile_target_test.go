@@ -47,9 +47,9 @@ func ptLast(is []*Instance) *Instance {
 func TestFR_TGT_001_PileTargetOffersMatchingCardsInYourDiscardPile(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	mine := s.inDiscard(0, unit("A", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}), unit("B", 1, 1, Keywords{}))
-	s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
-	s.put(0, ZoneMainTheater, unit("On Field", 1, 1, Keywords{}))
+	mine := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
+	s.put(0, ZoneMainTheater, unit("On Field", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{ptSlot(0)}, ptStep(ability.OpReturnToHand, 0)))
 	asks := s.asked(0)
@@ -75,7 +75,7 @@ func TestFR_TGT_001_PileTargetOffersMatchingCardsInYourDiscardPile(t *testing.T)
 func TestFR_TGT_001_PileTargetIsChosenOnPlacement(t *testing.T) {
 	// Covers: SVY-R3
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1}})
 	var placed []StackItem
 	asksAtPlace := -1
@@ -97,7 +97,7 @@ func TestFR_TGT_001_PileTargetIsChosenOnPlacement(t *testing.T) {
 
 func TestFR_TGT_001_PileTargetReturnsTheChosenCardToHand(t *testing.T) {
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{ptSlot(0)}, ptStep(ability.OpReturnToHand, 0)))
 	p := s.g.Players[0]
@@ -114,7 +114,7 @@ func TestFR_TGT_001_PileTargetReturnsTheChosenCardToHand(t *testing.T) {
 
 func TestFR_TGT_001_PileTargetCanGoOnTheBottomOfTheDeck(t *testing.T) {
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{1}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{ptSlot(0)}, ptStep(ability.OpPutOnDeck, 0)))
 	p := s.g.Players[0]
@@ -132,7 +132,7 @@ func TestFR_TGT_001_PileTargetCanGoOnTheBottomOfTheDeck(t *testing.T) {
 func TestFR_TGT_003_PileTargetThatLeftThePileIsIllegal(t *testing.T) {
 	// Covers: FR-TGT-001, SVY-R3
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
 	a := cards[0]
 	s.script(0, Answer{Picks: []int{0}})
 	s.ptPlaceHook(func(int, StackItem) {
@@ -157,7 +157,7 @@ func TestFR_TGT_003_PileTargetThatLeftThePileIsIllegal(t *testing.T) {
 func TestFR_TGT_003_PileTargetUpToNKeepsTheCardsStillInThePile(t *testing.T) {
 	// Covers: FR-TGT-001, SVY-R11
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}), unit("C", 1, 1, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}), unit("C", 1, 1, ability.Keywords{}))
 	a, b, c := cards[0], cards[1], cards[2]
 	s.script(0, Answer{Picks: []int{0, 1}})
 	s.ptPlaceHook(func(int, StackItem) {
@@ -182,8 +182,8 @@ func TestFR_TGT_003_PileTargetUpToNKeepsTheCardsStillInThePile(t *testing.T) {
 func TestFR_TGT_003_PileTargetWithNoMatchAsksNothing(t *testing.T) {
 	// Covers: FR-TGT-001, SVY-R16
 	s := newScene(t)
-	s.inDiscard(0, structure("Wall", 0, 3, Keywords{}))
-	theirs := s.inDiscard(1, unit("Theirs", 1, 1, Keywords{}))
+	s.inDiscard(0, structure("Wall", 0, 3, ability.Keywords{}))
+	theirs := s.inDiscard(1, unit("Theirs", 1, 1, ability.Keywords{}))
 	s.script(0)
 	places := 0
 	s.ptPlaceHook(func(int, StackItem) { places++ })
@@ -209,7 +209,7 @@ func TestFR_TGT_003_PileTargetWithNoMatchAsksNothing(t *testing.T) {
 func TestFR_MOD_001_SinglePileTargetIsNotAsked(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("Only", 1, 1, Keywords{}), structure("Wall", 0, 3, Keywords{}))
+	cards := s.inDiscard(0, unit("Only", 1, 1, ability.Keywords{}), structure("Wall", 0, 3, ability.Keywords{}))
 	s.script(0)
 	s.iydDeploy(iydTrigger(false, []ability.Target{ptSlot(0)}, ptStep(ability.OpReturnToHand, 0)))
 	if n := len(s.asked(0)); n != 0 {
@@ -224,7 +224,7 @@ func TestFR_MOD_001_PileTargetTimeoutChoosesTheTopCard(t *testing.T) {
 	// Covers: SVY-R16
 	s := newScene(t)
 	// Created A, B, C (A has the lowest ID), then reordered to lie bottom to top as A, C, B.
-	insts := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}), unit("C", 1, 1, Keywords{}))
+	insts := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}), unit("C", 1, 1, ability.Keywords{}))
 	ia, ib, ic := insts[0], insts[1], insts[2]
 	p := s.g.Players[0]
 	s.g.takeCard(ib)
@@ -249,8 +249,8 @@ func TestFR_MOD_001_PileTargetTimeoutChoosesTheTopCard(t *testing.T) {
 
 func TestFR_TGT_001_AssetStepOnAPileSlotDoesNothing(t *testing.T) {
 	s := newScene(t)
-	cards := s.inDiscard(0, unit("A", 1, 1, Keywords{}), unit("B", 1, 1, Keywords{}))
-	s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, Keywords{}))
+	cards := s.inDiscard(0, unit("A", 1, 1, ability.Keywords{}), unit("B", 1, 1, ability.Keywords{}))
+	s.put(1, ZoneMainTheater, unit("Bystander", 0, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
 	s.iydDeploy(iydTrigger(false, []ability.Target{ptSlot(0)}, dmgTo(3, 0), ptStep(ability.OpReturnToHand, 0)))
 	if dmg := nonCombatDamage(s.g.Log); len(dmg) != 0 {

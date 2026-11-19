@@ -34,7 +34,7 @@ func szDeploy(s *scene, p PlayerID, z Zone, c *Card) *Asset {
 // szTargetDeployer is a unit whose deploy trigger is "chosen unit in the same
 // zone gains 1 armor".
 func szTargetDeployer() *Card {
-	return striker("Deployer", 1, 5, Keywords{}, ability.Trigger{
+	return striker("Deployer", 1, 5, ability.Keywords{}, ability.Trigger{
 		Hook: ability.HookDeploy,
 		Effect: ability.Effect{
 			Targets: []ability.Target{{Filter: sameUnits}},
@@ -45,9 +45,9 @@ func szTargetDeployer() *Card {
 
 func TestFR_TGT_001_SameZoneAllStepReadsSourceZone(t *testing.T) {
 	// Covers: SVY-R44, FR-ZON-001, SVY-R3
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s)
-	card := structure("Beacon", 1, 5, Keywords{})
+	card := structure("Beacon", 1, 5, ability.Keywords{})
 	card.Ability = &ability.Def{Triggers: []ability.Trigger{deployTrigger(allStep(ability.OpAddArmor, 1, sameUnits))}}
 	szDeploy(f.s, 0, ZoneMainTheater, card)
 	f.s.g.flushTriggers()
@@ -61,9 +61,9 @@ func TestFR_TGT_001_SameZoneAllStepReadsSourceZone(t *testing.T) {
 
 func TestFR_TGT_001_SameZoneLocksOwnReserves(t *testing.T) {
 	// Covers: SVY-R44, FR-ZON-001
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s)
-	card := striker("Deployer", 1, 5, Keywords{}, deployTrigger(allStep(ability.OpAddArmor, 1, sameUnits)))
+	card := striker("Deployer", 1, 5, ability.Keywords{}, deployTrigger(allStep(ability.OpAddArmor, 1, sameUnits)))
 	card.DeployZones = []Zone{ZoneReserves, ZoneMainTheater}
 	szDeploy(f.s, 0, ZoneReserves, card)
 	items := flushedItems(f.s)
@@ -81,9 +81,9 @@ func TestFR_TGT_001_SameZoneLocksOwnReserves(t *testing.T) {
 
 func TestFR_TGT_001_SameZoneLockedOnPlacement(t *testing.T) {
 	// Covers: SVY-R44
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s)
-	card := striker("Mover", 1, 5, Keywords{}, deployTrigger(
+	card := striker("Mover", 1, 5, ability.Keywords{}, deployTrigger(
 		ability.Step{Op: ability.OpMoveZone, Subject: ability.SubjectSelf, To: ability.ZoneReserves},
 		allStep(ability.OpAddArmor, 1, sameUnits)))
 	src := szDeploy(f.s, 0, ZoneMainTheater, card)
@@ -101,9 +101,9 @@ func TestFR_TGT_001_SameZoneLockedOnPlacement(t *testing.T) {
 
 func TestFR_ZON_004_SameZoneLastKnownZone(t *testing.T) {
 	// Covers: SVY-R44, FR-TGT-001
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
-	victim := f.s.put(0, ZoneReserves, striker("Martyr", 1, 5, Keywords{}, killedTrigger(allStep(ability.OpAddArmor, 1, sameAllies))))
-	killer := striker("Killer", 1, 5, Keywords{}, ability.Trigger{
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
+	victim := f.s.put(0, ZoneReserves, striker("Martyr", 1, 5, ability.Keywords{}, killedTrigger(allStep(ability.OpAddArmor, 1, sameAllies))))
+	killer := striker("Killer", 1, 5, ability.Keywords{}, ability.Trigger{
 		Hook: ability.HookDeploy,
 		Effect: ability.Effect{
 			Targets: []ability.Target{{Filter: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, Zone: ability.ZoneReserves, Other: true}}},
@@ -128,7 +128,7 @@ func TestFR_ZON_004_SameZoneLastKnownZone(t *testing.T) {
 
 func TestFR_TGT_001_SameZoneTargetOffersSourceZoneOnly(t *testing.T) {
 	// Covers: SVY-R44, FR-ZON-001
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s, f.main0.ID)
 	src := szDeploy(f.s, 0, ZoneMainTheater, szTargetDeployer())
 	f.s.g.flushTriggers()
@@ -138,7 +138,7 @@ func TestFR_TGT_001_SameZoneTargetOffersSourceZoneOnly(t *testing.T) {
 
 func TestFR_TGT_003_SameZoneTargetOutlivesSource(t *testing.T) {
 	// Covers: SVY-R44, FR-ZON-004
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s, f.main1.ID)
 	src := szDeploy(f.s, 0, ZoneMainTheater, szTargetDeployer())
 	f.s.g.flushTriggers()
@@ -149,7 +149,7 @@ func TestFR_TGT_003_SameZoneTargetOutlivesSource(t *testing.T) {
 
 func TestFR_TGT_003_SameZoneTargetLeftZoneIsIllegal(t *testing.T) {
 	// Covers: SVY-R44
-	f := tzScene(t, unit("Idle", 1, 5, Keywords{}), ZoneReserves)
+	f := tzScene(t, unit("Idle", 1, 5, ability.Keywords{}), ZoneReserves)
 	tzScript(f.s, f.main1.ID)
 	szDeploy(f.s, 0, ZoneMainTheater, szTargetDeployer())
 	f.s.g.flushTriggers()
@@ -161,7 +161,7 @@ func TestFR_TGT_003_SameZoneTargetLeftZoneIsIllegal(t *testing.T) {
 func TestFR_ACT_001_SameZoneActivatedAbility(t *testing.T) {
 	// Covers: SVY-R44, SVY-R36, FR-TGT-001
 	armorAlly := func(f ability.Filter) *Card {
-		c := unit("Tender", 1, 5, Keywords{})
+		c := unit("Tender", 1, 5, ability.Keywords{})
 		c.Ability = &ability.Def{Activated: []ability.Activated{{
 			Costs: []ability.Cost{actExhaust},
 			Effect: ability.Effect{
@@ -184,8 +184,8 @@ func TestFR_ACT_001_SameZoneActivatedAbility(t *testing.T) {
 	t.Run("the source itself qualifies", func(t *testing.T) {
 		s := newScene(t)
 		src := s.put(0, ZoneMainTheater, armorAlly(sameAllies))
-		res := s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
+		res := s.put(0, ZoneReserves, unit("Res0", 1, 5, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Main1", 1, 5, ability.Keywords{}))
 		tzScript(s, src.ID)
 		if !offersActivate(s.g, src, 0) {
 			t.Fatalf("without \"other\" the source is its own legal target in its zone, so the ability is offered (SVY-R36)")
@@ -198,8 +198,8 @@ func TestFR_ACT_001_SameZoneActivatedAbility(t *testing.T) {
 	t.Run("other with no ally in the zone", func(t *testing.T) {
 		s := newScene(t)
 		src := s.put(0, ZoneMainTheater, armorAlly(sameAlliesO))
-		s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
-		s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
+		s.put(0, ZoneReserves, unit("Res0", 1, 5, ability.Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Main1", 1, 5, ability.Keywords{}))
 		if offersActivate(s.g, src, 0) {
 			t.Errorf("no other allied unit shares the source's zone, so a required target has no legal entity and the ability can't be activated (SVY-R36, SVY-R44)")
 		}
@@ -209,10 +209,10 @@ func TestFR_ACT_001_SameZoneActivatedAbility(t *testing.T) {
 func TestFR_TGT_001_SameZoneWithoutSourceMatchesNothing(t *testing.T) {
 	// Covers: SVY-R44
 	s := newScene(t)
-	main0 := s.put(0, ZoneMainTheater, unit("Main0", 1, 5, Keywords{}))
-	res0 := s.put(0, ZoneReserves, unit("Res0", 1, 5, Keywords{}))
-	main1 := s.put(1, ZoneMainTheater, unit("Main1", 1, 5, Keywords{}))
-	pile := unit("Remnant", 1, 1, Keywords{})
+	main0 := s.put(0, ZoneMainTheater, unit("Main0", 1, 5, ability.Keywords{}))
+	res0 := s.put(0, ZoneReserves, unit("Res0", 1, 5, ability.Keywords{}))
+	main1 := s.put(1, ZoneMainTheater, unit("Main1", 1, 5, ability.Keywords{}))
+	pile := unit("Remnant", 1, 1, ability.Keywords{})
 	pile.Ability = &ability.Def{Triggers: []ability.Trigger{pileTrigger(false, drawN(1), allStep(ability.OpAddArmor, 1, sameUnits))}}
 	s.enactWith([]*Card{pile}, discardN(1))
 	s.g.resolveStack()

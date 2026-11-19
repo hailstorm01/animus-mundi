@@ -39,7 +39,7 @@ func wantPower(t *testing.T, s *scene, a *Asset, want int, when string) {
 func TestFR_LAY_003_OpponentTurnPowerLastsThroughOpponentsTurn(t *testing.T) {
 	// Covers: FR-TRN-001, FR-LAY-001
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceOpposing, powerFor(-3, ability.UntilEndOfOpponentTurn))
 	wantPower(t, s, foe, 1, "right after the Maneuver")
 	s.endTurn()
@@ -55,7 +55,7 @@ func TestFR_LAY_003_OpponentTurnPowerLastsThroughOpponentsTurn(t *testing.T) {
 
 func TestFR_LAY_003_OpponentTurnPowerOnAnAlliedUnit(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceAllied, powerFor(2, ability.UntilEndOfOpponentTurn))
 	wantPower(t, s, ally, 3, "right after the Maneuver")
 	s.endTurn()
@@ -68,7 +68,7 @@ func TestFR_LAY_003_OpponentTurnIsTheAbilityControllersOpponent(t *testing.T) {
 	// "Your opponent" is the ability controller's opponent, not the asset
 	// controller's: the asset here is player 1's, the ability player 0's.
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 3, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceOpposing, powerFor(2, ability.UntilEndOfOpponentTurn))
 	s.endTurn() // player 0's turn ends: not the end of the ability controller's opponent's turn
 	wantPower(t, s, foe, 5, "after the ability controller's own turn ended")
@@ -83,7 +83,7 @@ func TestFR_TRN_001_OpponentTurnModifierMadeOffTurnExpiresThatTurn(t *testing.T)
 	// 4c: "until the end of your opponent's turn" when the current turn is that
 	// opponent's turn. A modifier made in the opponent's own turn ends with it.
 	s := newScene(t)
-	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
+	foe := s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
 	weaken := ability.Step{Op: ability.OpModifyStat, Amount: ability.Value{N: -1}, Subject: ability.SubjectAll,
 		Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit},
 		Until:  ability.UntilEndOfOpponentTurn}
@@ -103,9 +103,9 @@ func TestFR_TRN_001_OpponentTurnModifierMadeOffTurnExpiresThatTurn(t *testing.T)
 func TestFR_LAY_003_OpponentTurnKeywordGrant(t *testing.T) {
 	// Covers: SVY-R39
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceAllied, ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectTarget, Target: 0,
-		Keyword: ability.KeywordStalwart, Until: ability.UntilEndOfOpponentTurn})
+		Keywords: ability.Keywords{Stalwart: true}, Until: ability.UntilEndOfOpponentTurn})
 	if !s.g.Keywords(ally).Stalwart {
 		t.Errorf("the unit has Stalwart right after the grant")
 	}
@@ -124,9 +124,9 @@ func TestFR_LAY_003_UntilEndOfTurnUnchanged(t *testing.T) {
 		t.Errorf("the zero Duration is UntilEndOfTurn (FR-LAY-003)")
 	}
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceAllied, ability.Step{Op: ability.OpModifyStat, Amount: ability.Value{N: 2}, Subject: ability.SubjectTarget, Target: 0})
-	enactOn(s, ability.AllegianceAllied, ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectTarget, Target: 0, Keyword: ability.KeywordStalwart})
+	enactOn(s, ability.AllegianceAllied, ability.Step{Op: ability.OpGrantKeyword, Subject: ability.SubjectTarget, Target: 0, Keywords: ability.Keywords{Stalwart: true}})
 	wantPower(t, s, ally, 3, "during the turn it was made")
 	if !s.g.Keywords(ally).Stalwart {
 		t.Errorf("Stalwart is granted during the turn it was made")
@@ -140,7 +140,7 @@ func TestFR_LAY_003_UntilEndOfTurnUnchanged(t *testing.T) {
 
 func TestFR_LAY_003_MixedDurationsExpireSeparately(t *testing.T) {
 	s := newScene(t)
-	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, Keywords{}))
+	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	enactOn(s, ability.AllegianceAllied, powerFor(1, ability.UntilEndOfTurn))
 	enactOn(s, ability.AllegianceAllied, powerFor(2, ability.UntilEndOfOpponentTurn))
 	wantPower(t, s, ally, 4, "right after both Maneuvers")
@@ -153,7 +153,7 @@ func TestFR_LAY_003_MixedDurationsExpireSeparately(t *testing.T) {
 func TestFR_LAY_003_OpponentTurnModifierLeavesWithTheAsset(t *testing.T) {
 	// Covers: FR-ZON-004
 	s := newScene(t)
-	card := unit("Foe", 4, 9, Keywords{})
+	card := unit("Foe", 4, 9, ability.Keywords{})
 	foe := s.put(1, ZoneMainTheater, card)
 	enactOn(s, ability.AllegianceOpposing, powerFor(-3, ability.UntilEndOfOpponentTurn))
 	enactOn(s, ability.AllegianceOpposing, ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectTarget, Target: 0})
@@ -184,7 +184,7 @@ func TestFR_LAY_003_OpponentTurnModifierLeavesWithTheAsset(t *testing.T) {
 func TestFR_LAY_003_OpponentTurnLogText(t *testing.T) {
 	logLine := func(until ability.Duration) string {
 		s := newScene(t)
-		s.put(1, ZoneMainTheater, unit("Foe", 4, 9, Keywords{}))
+		s.put(1, ZoneMainTheater, unit("Foe", 4, 9, ability.Keywords{}))
 		from := len(s.g.Log)
 		enactOn(s, ability.AllegianceOpposing, powerFor(-1, until))
 		evs := effectEvents(s.g, from, EventPower)
