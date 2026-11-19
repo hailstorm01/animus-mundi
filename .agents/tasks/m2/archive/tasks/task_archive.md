@@ -279,3 +279,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0273 | Cornered and aura grants are `ability.Keywords` sets, and `Game.Keywords` folds once (#159 part 2; wave H.1 harness, sonnet, no behavior change) | done |
 | T-0274 | `cardtown lint fences` rejects type aliases (directive #165, ADR 0007; wave H.1 harness, flash) | done |
 | T-0275 | One "in the same zone" lock on placement, `sameZoneLock` (directive #160; wave H.1 harness, flash, pure move) | done |
+| T-0276 | One read of a continuous ability's filter, `matchesFromSource`, and `matchesFilter` goes (directives #161, #168; wave H.1 harness, flash, pure move) | done |

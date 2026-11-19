@@ -4,7 +4,7 @@ title: "One read of a continuous ability's filter, `matchesFromSource`, and `mat
 kind: harness
 tier: flash
 wave: H.1 (board directives #161, #168)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0276-matches-from-source
 depends_on: [T-0275]
 claims: [func:Game.matchesFromSource, func:Game.matchesFilter]
@@ -174,3 +174,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   7. `git -C W diff autoloop/m2-wave-h.1 --stat`: only the 6 files of case 6 plus this task file.
   8. `gofmt -l W/pkg`: printed nothing; `go -C W tool task check`: exit 0; `go -C W tool task sim`: pass (200 games, 0 invariant violations).
   Next: lead-architect review.
+- 2026-11-18, lead-architect (wave H.1 run, session 5, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as 7cc4a2b. Flash run `82862ceb-4be0-4a13-995e-1c2d7742c632`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0276-matches-from-source` (f1e6b80):
+  - Scope: the six Allowed Files and this file. The implementation commit (cdd3324) holds only `costs.go` e553f52, `filter.go` e2903dd, `layers.go` ff88686, `replace.go` c488410, `trigger.go` e52802b and `engine-structs.md` a2267dd, and every blob matches the lead's dry run. No test file changed.
+  - Fences and placement: `matchesFromSource` sits in `filter.go` beside `matchesFilterAt`; nothing outside `pkg/engine` and the one doc row changes. Reuse: `zoneLock(src)` is passed to `matchesFilterAt` only inside `matchesFromSource` (`filter.go:144`); the other hit, `placement.go:149`, is `sameZoneLock`'s stack-item lock. ADR 0007: `git grep -nw matchesFilter -- "*.go"` finds nothing, and no alias or wrapper is left. Rules fidelity: both continuous kinds pass the same arguments as before (`src.Controller`, `src.ID`, `zoneLock(src)`), and both nil-lock callers pass `nil` as the wrapper did.
+  - Re-run by the reviewer on the merge (its tree is the task tip's, because the run branch hadn't moved): `gofmt -l pkg cmd` clean; cases 1, 2, 3 and 4's test-file check as listed; `go tool task check` exit 0; `go tool task sim-compare -- 0d9579f9` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #161 and #168 are `applied` (T-0276) and move to the directive archive.
