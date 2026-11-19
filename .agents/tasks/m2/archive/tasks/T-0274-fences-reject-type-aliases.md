@@ -4,7 +4,7 @@ title: "`cardtown lint fences` rejects type aliases (directive #165, ADR 0007; w
 kind: harness
 tier: flash
 wave: H.1 (board directive #165)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0274-fences-reject-type-aliases
 depends_on: [T-0273]
 claims: [func:fences.checkAliases, var:fences.aliasRoots, func:isFencesPath]
@@ -348,3 +348,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 9: `git -C W diff autoloop/m2-wave-h.1 --stat` confirmed only the 6 files and the task file changed.
     - Case 10: `gofmt -l W/cmd W/pkg` clean; `go -C W tool task sim` passed (200/200 games, all invariants hold); `go -C W tool task check` passed cleanly (fmt-check, vet, all tests, cardtown lint --all).
   - Status moved to `review`. Ready for `lead-architect`.
+- 2026-11-18, lead-architect (wave H.1 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as df482ac. Flash run `c8be70d1-fd77-4007-ac3b-159e4b012d19`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript; `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0274-fences-reject-type-aliases` (c2da904):
+  - Scope: the three Allowed non-test files, the new test file, Test edits 1-3 and this file. The `test(T-0274)` commit (b7ddece) holds only `aliases_test.go` 3593f07, `fences_test.go` 715d195 and `lint_test.go` fd6b126; the implementation commit (cf32497) holds only `aliases.go` ac7c9f6, `fences.go` a2b14c4 and `lint.go` 6e2a894: every blob is the lead's dry run's. The tests failed first: re-run at b7ddece by the reviewer, `Case36`, `Case41` to `Case47`, `TestIsFencesPath` and `TestSelectChanged_Case1_Paths` fail.
+  - Fences and placement: the check lives in `pkg/toolchain/linter/fences` beside the other fences, in a file of its own; nothing in a game package changes. Reuse: `goFilesUnder` is reused; no second file walker. ADR 0007: `git grep` finds no type alias in non-test Go code, and `cardtown lint fences` now enforces it.
+  - Re-run by the reviewer in a scratch worktree of the task branch: `gofmt -l cmd pkg` clean; `cardtown lint fences` exit 0 with the new PASS line; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.1` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable.
+  - The merge's tree matches the task tip's (`git diff` between them is empty), so the gates hold on the run branch. #165 is `applied` (T-0274) and moves to the directive archive. The design note's Fences bullet now names the alias check (this commit).

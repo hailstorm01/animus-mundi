@@ -277,3 +277,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0271 | *Animoceps Spore Cloud*: one `WouldBeDealtDamage` replacement over allied units in the same zone (`FR-REP-004`, `SVY-R23`, `SVY-R44`; wave H card, flash) | done |
 | T-0272 | The keyword set moves to `ability.Keywords`, and a step grants a `Keywords` set (#159 part 1; wave H.1 harness, sonnet, no behavior change) | done |
 | T-0273 | Cornered and aura grants are `ability.Keywords` sets, and `Game.Keywords` folds once (#159 part 2; wave H.1 harness, sonnet, no behavior change) | done |
+| T-0274 | `cardtown lint fences` rejects type aliases (directive #165, ADR 0007; wave H.1 harness, flash) | done |
