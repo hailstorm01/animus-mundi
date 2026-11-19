@@ -48,10 +48,76 @@ func loadCards(dir string, defs map[string]*ability.Def) (map[string]*Card, erro
 			}
 			rest = append(rest[:i], rest[i+1:]...)
 		}
+		if err := checkShapeReads(defs[name]); err != nil {
+			return nil, fmt.Errorf("card %q: %w", name, err)
+		}
 		c.Ability = defs[name]
 		c.Unsupported = rest
 	}
 	return loaded, nil
+}
+
+// checkShapeReads rejects a def that sets a field in a context no engine code
+// reads it in, where it would otherwise load and silently do nothing or the
+// wrong thing. The rules mirror the readers: Trigger.Watches only for
+// HookAttacks (fireHook), Step.Split only for an OpAddArmor SubjectPick over
+// assets with UpTo 0 (stepAddArmor), Step.ControllerChooses only for OpDiscard
+// (stepDiscard), and an aura's Filter.Stat stays StatNone (Game.Power would
+// recurse through auras). A shape task that adds a new reader of one of these
+// fields widens the matching rule in the same task.
+func checkShapeReads(d *ability.Def) error {
+	if err := checkEffectReads(d.Effect); err != nil {
+		return err
+	}
+	for _, t := range d.Triggers {
+		if t.Watches && t.Hook != ability.HookAttacks {
+			return fmt.Errorf("Trigger.Watches is read only for HookAttacks")
+		}
+		if err := checkEffectReads(t.Effect); err != nil {
+			return err
+		}
+	}
+	for _, a := range d.Activated {
+		if err := checkEffectReads(a.Effect); err != nil {
+			return err
+		}
+	}
+	for _, r := range d.Replacements {
+		if err := checkStepReads(r.Steps); err != nil {
+			return err
+		}
+	}
+	for _, s := range d.Statics {
+		if s.Kind == ability.StaticAura && s.Filter.Stat != ability.StatNone {
+			return fmt.Errorf("Static.Filter.Stat must stay StatNone on an aura (Game.Power would recurse)")
+		}
+	}
+	return nil
+}
+
+// checkEffectReads checks e's steps and, recursively, each of its Modes.
+func checkEffectReads(e ability.Effect) error {
+	if err := checkStepReads(e.Steps); err != nil {
+		return err
+	}
+	for _, m := range e.Modes {
+		if err := checkEffectReads(m); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkStepReads(steps []ability.Step) error {
+	for _, s := range steps {
+		if s.Split && (s.Op != ability.OpAddArmor || s.Subject != ability.SubjectPick || s.UpTo != 0 || s.Filter.Zone == ability.ZoneDiscard) {
+			return fmt.Errorf("Step.Split is read only for OpAddArmor over SubjectPick assets with UpTo 0")
+		}
+		if s.ControllerChooses && s.Op != ability.OpDiscard {
+			return fmt.Errorf("Step.ControllerChooses is read only for OpDiscard")
+		}
+	}
+	return nil
 }
 
 func indexOf(lines []string, s string) int {

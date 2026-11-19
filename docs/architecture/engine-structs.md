@@ -274,7 +274,7 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | :--- | :--- | :--- | :--- |
 | **Core State** | [`state.go`](../../pkg/engine/state.go) | `Game`, `Player`, `Asset`, `Instance`, `Outcome`, `lastKnownRecord`, `firingKey` (+ `PlayerID`, `Zone`, `Phase`) | State lookups (`Assets`, `assetsByID`, `fixedOrderPositions`), `LastKnown`, `exhaust` |
 | **Cards & Decks** | [`card.go`](../../pkg/engine/card.go) | `Card` (+ `CardType`) | Printed characteristics, Scratch Company face, `Supported()` |
-| | [`cardload.go`](../../pkg/engine/cardload.go) | *(none)* | `LoadCards`, CSV parsing, attaching `cards.Defs` |
+| | [`cardload.go`](../../pkg/engine/cardload.go) | *(none)* | `LoadCards`, CSV parsing, attaching `cards.Defs`, `checkShapeReads` |
 | | [`deck.go`](../../pkg/engine/deck.go) | `DeckList` | `LoadDeck`, `ValidateDeck` |
 | | [`setup.go`](../../pkg/engine/setup.go) | `Config` | `NewGame` (HQ placement, first-player choice, draw 6, mulligan) |
 | **Turn & Zones** | [`turn.go`](../../pkg/engine/turn.go) | *(none)* | `beginTurn`, `endTurn` (Ready, Draw, Main, End 4a–4d) |
