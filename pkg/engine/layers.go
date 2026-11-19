@@ -68,7 +68,7 @@ func (g *Game) Power(a *Asset) int {
 // is the one reader of which auras apply: a face-up battlefield source's printed
 // StaticAura applies when its Filter, relative to the
 // source's current controller, matches a. A ZoneRefSame criterion reads the
-// source's current zone through zoneLock (SVY-R44). A face-down source has no
+// source's current zone (matchesFromSource, SVY-R44). A face-down source has no
 // Ability, so it gives none. Each caller reads the field it needs (Power, Keywords, Cornered).
 func (g *Game) auras(a *Asset) []ability.Static {
 	var out []ability.Static
@@ -78,7 +78,7 @@ func (g *Game) auras(a *Asset) []ability.Static {
 			continue
 		}
 		for _, st := range d.Statics {
-			if st.Kind == ability.StaticAura && g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), st.Filter, a) {
+			if st.Kind == ability.StaticAura && g.matchesFromSource(src, st.Filter, a) {
 				out = append(out, st)
 			}
 		}

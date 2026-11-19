@@ -33,7 +33,7 @@ type usedReplacements map[usedKey]bool
 // by a face-up asset on the battlefield whose filter a matches, except those
 // already used on a in this window (FR-REP-003, SVY-R24). A source that is
 // itself lethal still applies until the sweep destroys it (SVY-R20). A ZoneRef
-// criterion reads the source's current zone (SVY-R44).
+// criterion reads the source's current zone (matchesFromSource, SVY-R44).
 func (g *Game) replacementsFor(a *Asset, ev ability.Would, used usedReplacements) []replacementOption {
 	var out []replacementOption
 	for _, src := range g.assetsByID() {
@@ -43,7 +43,7 @@ func (g *Game) replacementsFor(a *Asset, ev ability.Would, used usedReplacements
 		reps := src.Printed().Ability.Replacements
 		for i := range reps {
 			r := &reps[i]
-			if r.Event == ev && g.matchesFilterAt(src.Controller, src.ID, zoneLock(src), r.Filter, a) && !used[usedKey{a.ID, src.ID, r}] {
+			if r.Event == ev && g.matchesFromSource(src, r.Filter, a) && !used[usedKey{a.ID, src.ID, r}] {
 				out = append(out, replacementOption{src: src, rep: r})
 			}
 		}
