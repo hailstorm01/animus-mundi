@@ -95,13 +95,10 @@ func checkShapeReads(d *ability.Def) error {
 	return nil
 }
 
-// checkEffectReads checks e's steps and, recursively, each of its Modes.
+// checkEffectReads checks the steps of e and of each of its Modes (Parts).
 func checkEffectReads(e ability.Effect) error {
-	if err := checkStepReads(e.Steps); err != nil {
-		return err
-	}
-	for _, m := range e.Modes {
-		if err := checkEffectReads(m); err != nil {
+	for _, p := range e.Parts() {
+		if err := checkStepReads(p.Steps); err != nil {
 			return err
 		}
 	}
@@ -110,7 +107,7 @@ func checkEffectReads(e ability.Effect) error {
 
 func checkStepReads(steps []ability.Step) error {
 	for _, s := range steps {
-		if s.Split && (s.Op != ability.OpAddArmor || s.Subject != ability.SubjectPick || s.UpTo != 0 || s.Filter.Zone == ability.ZoneDiscard) {
+		if s.Split && (s.Op != ability.OpAddArmor || s.Subject != ability.SubjectPick || s.UpTo != 0 || s.Filter.InPile()) {
 			return fmt.Errorf("Step.Split is read only for OpAddArmor over SubjectPick assets with UpTo 0")
 		}
 		if s.ControllerChooses && s.Op != ability.OpDiscard {
