@@ -223,7 +223,18 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #163: the docs say what wave H and #159 to #162 built.
    - #164: `view.StackView.Keyword`, which nothing reads, goes.
 
-   #160 and #161 are pure moves, #159 changes no behavior, and #163 is docs only. Done when #159 to #168 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
+   #160 and #161 are pure moves, #159 changes no behavior, and #163 is docs only. Done when #159 to #168 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 6o follows.
+6o. **Wave H.2, cleanup, added 2026-11-19 from structural review 14 (board directives #169–#176).** It goes after wave H.1 and before the write-up (Deliverable 7) (user, 2026-11-19). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave H.2`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #169: one lookup of "the source asset, or its last-known record", `sourceAsset`; `itemSource` goes, and `sameZoneLock` reads it.
+   - #170: pick prompts name the stack item's card through `SourceCard`, the face-aware rule (`FR-ZON-005`).
+   - #171: `ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `StackItem.Keyword` become `FromKeyword`, so the write-up's `go doc` doesn't set it beside `ability.Keywords` ([ADR 0007](decisions/0007-moves-update-every-reference.md)).
+   - #172: each linter input path is written once (`specdoc.FRDDir`, `specdoc.RulesFRD`, `cardsheet.Dir`), and `cardtown lint` asks `fences.Reads` and `rules.Reads` what a change affects.
+   - #173: small repeats written once: `Card.Deployable`, `DiscardCard` through `pileCard`, one `Effect` step walker in `ability`, and `InPile` in `checkStepReads`.
+   - #174: the play screen's stack listing prints `StackLabel` for every item.
+   - #175: the stack listing shows each item's chosen targets (`StackView.Chosen`, `ChosenCards`), for the eventual visual client.
+   - #176: the docs say what wave H.2 built, starting with the `ability` package doc that the write-up indexes.
+
+   #169, #171 and #173 are pure moves, #172 (a) is a move, #170 changes only a face-down source's prompt, #174 and #175 change only the play screen, and #176 is docs only. Done when #169 to #176 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
