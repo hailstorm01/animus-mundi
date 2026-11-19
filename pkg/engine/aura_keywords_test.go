@@ -20,7 +20,7 @@ func horrorUnit(name string, power, health, r int) *Card {
 // zone have Resistant n" (the filter includes the source).
 func resistAuraHorror(name string, power, health, n int) *Card {
 	c := horrorUnit(name, power, health, 0)
-	c.Ability = &ability.Def{Statics: []ability.Static{{Kind: ability.StaticAura, Filter: alliedHorrorSame, Resistant: n}}}
+	c.Ability = &ability.Def{Statics: []ability.Static{{Kind: ability.StaticAura, Filter: alliedHorrorSame, Keywords: ability.Keywords{Resistant: n}}}}
 	return c
 }
 
@@ -115,5 +115,25 @@ func TestFR_ZON_004_SweepRecordsAuraResistantBeforeAnyLeaves(t *testing.T) {
 	lk := s.g.LastKnownEffective(a.ID)
 	if lk == nil || lk.Keywords.Resistant != 1 {
 		t.Errorf("last-known Resistant of A = %v, want 1: the sweep records every dying asset before any leaves (FR-ZON-004)", lk)
+	}
+}
+
+// Covers: FR-LAY-001
+func TestFR_LAY_001_AuraGrantsAnyKeywordSet(t *testing.T) {
+	s := newScene(t)
+	srcCard := unit("Source", 0, 5, ability.Keywords{})
+	srcCard.Ability = &ability.Def{Statics: []ability.Static{{
+		Kind:     ability.StaticAura,
+		Filter:   ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindUnit, ZoneRef: ability.ZoneRefSame},
+		Keywords: ability.Keywords{Ward: true, Resistant: 1},
+	}}}
+	s.put(0, ZoneReserves, srcCard)
+	printed := s.put(0, ZoneReserves, unit("Printed", 2, 5, ability.Keywords{Resistant: 1}))
+	away := s.put(0, ZoneMainTheater, unit("Away", 2, 5, ability.Keywords{}))
+	if kw := s.g.Keywords(printed); !kw.Ward || kw.Resistant != 2 {
+		t.Errorf("same-zone unit: Ward %v Resistant %d, want Ward and Resistant 2", kw.Ward, kw.Resistant)
+	}
+	if kw := s.g.Keywords(away); kw.Ward || kw.Resistant != 0 {
+		t.Errorf("other-zone unit: Ward %v Resistant %d, want neither", kw.Ward, kw.Resistant)
 	}
 }
