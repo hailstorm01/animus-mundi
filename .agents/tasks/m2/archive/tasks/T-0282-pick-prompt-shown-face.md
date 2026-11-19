@@ -4,7 +4,7 @@ title: "Pick prompts name the card the stack item shows, through `sourceName` (d
 kind: harness
 tier: flash
 wave: H.2 (board directive #170)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0282-pick-prompt-shown-face
 depends_on: [T-0281]
 claims: [func:Game.sourceName, func:Game.pickPrompt]
@@ -256,3 +256,9 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `git -C W diff autoloop/m2-wave-h.2 --stat` showed only the 5 files plus task file.
     - Case 9: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` passed all vet, tests, and all linters; `go -C W tool task sim` passed 200 games with all invariants holding.
   - Status moved to `review`. Ready for review.
+- 2026-11-19, lead-architect (wave H.2 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 900ad55. Flash run `253fe956-c931-4b00-8470-d7edbc92aa7d`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0282-pick-prompt-shown-face` (35cb45f):
+  - Scope: the four Allowed Files, the new test file and this file. The test commit (599ef24) holds only `pick_prompt_test.go` 15bf7d7; the fix commit (b6072d7) holds only `doc.go` e134c7f, `placement.go` 102cd8c, `stack.go` 35bb3ac and `targeting.go` 2f0f034. Every blob matches the lead's dry run, in which the test failed in all three subtests before the fix. No existing test changed.
+  - Fences and placement: `sourceName` sits beside `SourceCard` in `placement.go`, the file `doc.go` gives the card a placement shows. Reuse and ADR 0007: `git grep -n "cardName(" -- pkg/engine/targeting.go` and `git grep -n "func pickPrompt" -- pkg/engine` find nothing; `StackLabel`'s inline nil check is gone, so the shown name is written once; no alias or wrapper is added.
+  - Rules fidelity: every untargeted pick (assets and piles) and every pool reads the shown face (`FR-ZON-005`), not only the tested cases.
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- d9cd352e` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #170 is `applied` (T-0282) and moves to the directive archive.
