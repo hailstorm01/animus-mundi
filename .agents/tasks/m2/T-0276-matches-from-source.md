@@ -4,7 +4,7 @@ title: "One read of a continuous ability's filter, `matchesFromSource`, and `mat
 kind: harness
 tier: flash
 wave: H.1 (board directives #161, #168)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.1/T-0276-matches-from-source
 depends_on: [T-0275]
 claims: [func:Game.matchesFromSource, func:Game.matchesFilter]
@@ -157,10 +157,20 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `docs/architecture/engine-structs.md` (Edit 6)
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-18, lead-architect (wave H.1 run, session 5): written in full against a7dad05 for #161 and #168. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #161, #166, #167, #168, #162, #163 and #164 are `open: before the next Deliverables task`. #161 and #168 share this task, as #168 allows, since both edit `filter.go` and together they stay within the D2 size rule (three non-test files that aren't reference-only). This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. A pure move adds no test and edits none. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with parentheses are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142: none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-18, kernel-engineer (wave H.1, T-0276): implemented pure move (directives #161, #168). Added `matchesFromSource(src *Asset, f ability.Filter, a *Asset) bool` in `pkg/engine/filter.go` judging against `src.Controller`, `src.ID`, `zoneLock(src)`. Routed continuous ability filter readers through it in `pkg/engine/layers.go` (`auras`) and `pkg/engine/replace.go` (`replacementsFor`). Removed forwarding wrapper `matchesFilter` from `pkg/engine/filter.go` and updated its callers in `pkg/engine/costs.go` (`costDecision`) and `pkg/engine/trigger.go` (`fireHookFor`) to call `matchesFilterAt(..., nil, ...)`. Updated `docs/architecture/engine-structs.md` table to list `matchesFromSource`. Reused `zoneLock` from `placement.go`/`filter.go`. Verified all acceptance cases:
+  1. `git -C W grep -n "zoneLock(src)" -- "*.go"`: printed exactly 2 lines (`pkg/engine/filter.go:144`, `pkg/engine/placement.go:149`).
+  2. `git -C W grep -nw matchesFilter -- "*.go"`: printed nothing.
+  3. `git -C W grep -n "matchesFromSource(" -- pkg`: printed declaration in `filter.go:143` and calls in `layers.go:81` and `replace.go:46`.
+  4. `go -C W test ./pkg/...`: passed; `git -C W diff autoloop/m2-wave-h.1 --stat -- "*_test.go"`: printed nothing.
+  5. `go -C W tool task sim-compare -- autoloop/m2-wave-h.1`: `[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`.
+  6. `git -C W diff autoloop/m2-wave-h.1 --numstat -- pkg docs`: exactly 6 lines (`1 1 docs/architecture/engine-structs.md`, `1 1 pkg/engine/costs.go`, `8 5 pkg/engine/filter.go`, `2 2 pkg/engine/layers.go`, `2 2 pkg/engine/replace.go`, `1 1 pkg/engine/trigger.go`).
+  7. `git -C W diff autoloop/m2-wave-h.1 --stat`: only the 6 files of case 6 plus this task file.
+  8. `gofmt -l W/pkg`: printed nothing; `go -C W tool task check`: exit 0; `go -C W tool task sim`: pass (200 games, 0 invariant violations).
+  Next: lead-architect review.
