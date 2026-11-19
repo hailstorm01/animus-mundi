@@ -283,7 +283,7 @@ func TestPlay_ActionLabelNamesTheEnactedCard(t *testing.T) {
 func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
 	v := view.View{
 		Stack: []view.StackView{
-			{Kind: "Maneuver", Controller: 0, Card: "Alpha Volley"},
+			{Kind: "Maneuver", Controller: 0, Card: "Alpha Volley", Label: "Maneuver Alpha Volley"},
 			{Kind: "Attack", Controller: 1, Source: 7, Target: 3},
 		},
 	}
@@ -291,7 +291,7 @@ func TestPlay_PrintScreenManeuverStackLine(t *testing.T) {
 	printScreen(&buf, v, nil)
 	out := buf.String()
 
-	expectedSection := "Resolution Stack:\n  Maneuver: Alpha Volley (Player 0)\n  Attack (Player 1, Source 7)\n"
+	expectedSection := "Resolution Stack:\n  Maneuver Alpha Volley (Player 0)\n  Attack (Player 1, Source 7)\n"
 	if !strings.Contains(out, expectedSection) {
 		t.Errorf("printScreen output did not contain expected stack section:\n%s\nGot output:\n%s", expectedSection, out)
 	}
