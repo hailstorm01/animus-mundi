@@ -273,18 +273,7 @@ func (g *Game) flushTriggers() {
 // decision it asks names p's source card (Decision.Source, shownCard).
 func (g *Game) placeTrigger(p pendingTrigger) {
 	defer g.askFor(g.shownCard(p.source, p.inst))()
-	if p.trig.Effect.ReadsZoneRef(ability.ZoneRefSame) {
-		// "In the same zone": the source's zone now, or its last-known zone
-		// if it has left; none for a source in a pile (SVY-R44, FR-ZON-004).
-		src := g.Asset(p.source)
-		if src == nil {
-			src = g.LastKnown(p.source)
-		}
-		p.locked = nil
-		if src != nil {
-			p.locked = zoneLock(src)
-		}
-	}
+	p.locked = g.sameZoneLock(p.trig.Effect, p.source, p.locked)
 	if p.trig.Optional && (g.couldDoNothing(p.placement, p.trig.Effect) || !g.accepts(p)) {
 		return
 	}

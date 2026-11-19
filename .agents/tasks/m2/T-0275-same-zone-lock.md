@@ -4,7 +4,7 @@ title: "One \"in the same zone\" lock on placement, `sameZoneLock` (directive #1
 kind: harness
 tier: flash
 wave: H.1 (board directive #160)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.1/T-0275-same-zone-lock
 depends_on: [T-0274]
 claims: [func:Game.sameZoneLock, func:Game.activatedPlacement, func:Game.placeTrigger]
@@ -148,10 +148,21 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - `pkg/engine/costs.go` (reference update only, Edit 4)
 
 ## Done When
-- [ ] Cases 1-7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-18, lead-architect (wave H.1 run, session 4): written in full against 55cbc98 for #160. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #160, #161, #166, #167, #168, #162, #163 and #164 are `open: before the next Deliverables task`. #160 goes alone, not with #161. Together they would touch five non-test files that aren't reference-only (`placement.go`, `trigger.go`, `filter.go`, `layers.go`, `replace.go`), over the D2 size rule. #161 and #168, which both edit `filter.go`, come next. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. A pure move adds no test and edits none. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with parentheses are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142: none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-18, kernel-engineer (Flash): implemented T-0275 pure move for #160.
+  - Changes: Added `(g *Game) sameZoneLock(e ability.Effect, source int, held *LockedZone) *LockedZone` to `pkg/engine/placement.go`. Converted `activatedPlacement` into `(g *Game) activatedPlacement` calling `sameZoneLock`. Updated `placeTrigger` in `pkg/engine/trigger.go` to lock through `sameZoneLock`. Updated callers in `pkg/engine/actions.go` (lines 84, 172) and `pkg/engine/costs.go` (line 174) to call `g.activatedPlacement`.
+  - Reused: Reused existing `zoneLock(a)` helper and `g.LastKnown(source)`. No new shapes or card names added.
+  - Acceptance Cases & verification:
+    1. `git grep -n "ReadsZoneRef(ability.ZoneRefSame)" -- "*.go"`: exactly 1 line at `pkg/engine/placement.go:139` inside `sameZoneLock`.
+    2. `git grep -n "activatedPlacement(" -- pkg`: 1 declaration `func (g *Game) activatedPlacement(` and 3 calls `g.activatedPlacement(`, nothing else.
+    3. `go test ./pkg/...`: PASS; `git diff autoloop/m2-wave-h.1 --stat -- "*_test.go"`: no output (0 diff).
+    4. `go tool task sim-compare -- autoloop/m2-wave-h.1`: `[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`.
+    5. `git diff autoloop/m2-wave-h.1 --numstat -- pkg`: `2 2 pkg/engine/actions.go`, `1 1 pkg/engine/costs.go`, `21 4 pkg/engine/placement.go`, `1 12 pkg/engine/trigger.go`.
+    6. `git diff autoloop/m2-wave-h.1 --stat`: only the four files of case 5 plus task file.
+    7. `gofmt -l pkg`: no output; `go tool task check`: all linters, tests, and vet PASSED; `go tool task sim`: 200/200 games completed, all invariants holding.
