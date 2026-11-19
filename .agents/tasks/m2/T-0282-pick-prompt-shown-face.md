@@ -4,7 +4,7 @@ title: "Pick prompts name the card the stack item shows, through `sourceName` (d
 kind: harness
 tier: flash
 wave: H.2 (board directive #170)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0282-pick-prompt-shown-face
 depends_on: [T-0281]
 claims: [func:Game.sourceName, func:Game.pickPrompt]
@@ -227,10 +227,32 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - New: `TestFR_ZON_005_PickPromptNamesTheShownFace` in `pkg/engine/pick_prompt_test.go` (Edit 5), in the `test(T-0282)` commit. No existing test is edited.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 2): written in full against e026c00 for #170, the board's first `open: before` directive in wave H.2's order. `main` (1859fe4) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #170, #172, #173 and #174 are `open: before the next Deliverables task`. This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards): none has fired. No directive added. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (wave H.2 run, session 2): implemented directive #170.
+  - Commits:
+    - 599ef24d test(T-0282): pick prompts name the shown face
+    - b6072d79 fix(engine): pick prompts name the card the stack item shows, sourceName (T-0282)
+  - Changes:
+    - Added `(g *Game) sourceName(it *StackItem) string` to `pkg/engine/placement.go`.
+    - Updated `StackLabel` in `pkg/engine/stack.go` to use `g.sourceName(it)`.
+    - Made `pickPrompt` a method `(g *Game) pickPrompt(it *StackItem, st ability.Step) string` in `pkg/engine/targeting.go` calling `g.sourceName(it)`, and updated `splitAssets` to read `g.sourceName(r.it)`.
+    - Updated `pkg/engine/doc.go` Files section to note `sourceName`.
+    - Added `pkg/engine/pick_prompt_test.go` with `TestFR_ZON_005_PickPromptNamesTheShownFace`.
+  - Reuse: `sourceName` wraps `SourceCard`. Verified `git grep -n "cardName(" -- pkg/engine` finds no other stack-item source lookups.
+  - Verification:
+    - Case 1: `go -C W test ./pkg/engine -run TestFR_ZON_005_PickPromptNamesTheShownFace` failed on all 3 subtests naming `Hidden Source` with only Edit 5; passed after Edits 1-4.
+    - Case 2: `git -C W grep -n "cardName(" -- pkg/engine/targeting.go` printed nothing (exit 1).
+    - Case 3: `git -C W grep -n "g.sourceName(" -- pkg/engine` printed exactly 3 lines: `stack.go:97`, `targeting.go:215`, `targeting.go:233`.
+    - Case 4: `git -C W grep -n "func pickPrompt" -- pkg/engine` printed nothing; `git -C W grep -n "g.pickPrompt(" -- pkg/engine` printed exactly 2 lines: `targeting.go:199`, `targeting.go:244`.
+    - Case 5: `go -C W test ./pkg/... ./cmd/...` passed, and `git -C W diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` printed `62	0	pkg/engine/pick_prompt_test.go`.
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+    - Case 7: `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly the 5 specified lines.
+    - Case 8: `git -C W diff autoloop/m2-wave-h.2 --stat` showed only the 5 files plus task file.
+    - Case 9: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task check` passed all vet, tests, and all linters; `go -C W tool task sim` passed 200 games with all invariants holding.
+  - Status moved to `review`. Ready for review.
