@@ -4,7 +4,7 @@ title: "One walker over an `Effect` and its `Modes`, and `checkStepReads` asks `
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (c), (d))
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0287-effect-walker
 depends_on: [T-0286]
 claims: [func:ability.Effect.Parts]
@@ -138,10 +138,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None added or edited: a pure move. Every existing test passes unedited.
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 6): split off from #173 by T-0286 under the D2 size rule, as #173 allows. Queued behind T-0286; #174 waits for both, because #173 blocks it ("Wave H.2, after #173").
@@ -152,3 +152,18 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (wave H.2 run, session 8): implemented T-0287.
+  - Diff shows:
+    - `pkg/engine/ability/ability.go`: added `Effect.Parts() []Effect` traversing `e` and each of its `Modes` recursively depth first in printed order; updated `Effect.ReadsZoneRef` to range over `e.Parts()` and inspect `Targets` and `Steps` filters.
+    - `pkg/engine/cardload.go`: updated `checkEffectReads` to loop over `e.Parts()` and call `checkStepReads(p.Steps)`; updated `checkStepReads` to call `s.Filter.InPile()` instead of direct zone comparison (`s.Filter.Zone == ability.ZoneDiscard`).
+  - Reuse: `git grep -n "Parts()" -- pkg cmd` confirmed no previous walker existed.
+  - Acceptance cases 1-8:
+    1. `git -C W grep -n "range e.Modes" -- pkg cmd ":!*_test.go"`: printed exactly 2 lines (`pkg/engine/ability/ability.go:376`, `pkg/engine/placement.go:285`).
+    2. `git -C W grep -n "e.Parts()" -- pkg cmd`: printed exactly 2 lines (`pkg/engine/ability/ability.go:385`, `pkg/engine/cardload.go:100`).
+    3. `git -C W grep -n ZoneDiscard -- pkg/engine/cardload.go`: printed nothing; `git -C W grep -n "InPile()" -- pkg/engine/cardload.go`: printed exactly 1 line (`pkg/engine/cardload.go:110`).
+    4. `go -C W test ./pkg/... ./cmd/...`: ok; `git -C W diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"`: printed nothing.
+    5. `go -C W tool task sim-compare -- autoloop/m2-wave-h.2`: printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+    6. `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs`: printed exactly `23 14 pkg/engine/ability/ability.go` and `4 7 pkg/engine/cardload.go`.
+    7. `git -C W diff autoloop/m2-wave-h.2 --stat`: only `pkg/engine/ability/ability.go`, `pkg/engine/cardload.go`, and `.agents/tasks/m2/T-0287-effect-walker.md` modified.
+    8. `gofmt -l W/pkg W/cmd`: clean; `go -C W tool task check`: all passed; `go -C W tool task sim`: 200/200 games clean.
+  - Reviewer notes: blobs match dry run (`ability.go` 0920813, `cardload.go` ca84f00). Ready for review.
