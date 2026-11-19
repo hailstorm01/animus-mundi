@@ -53,7 +53,7 @@ func (g *Game) stepDeployFree(r *resolution, st ability.Step) int {
 // Reserves, then the Main Theater, whichever c.DeployZones contains
 // (FR-TRN-003a 1).
 func freeDeployZones(c *Card, to ability.Zone) []Zone {
-	if (c.Type != TypeUnit && c.Type != TypeStructure) || !c.Supported() {
+	if !c.Deployable() || !c.Supported() {
 		return nil
 	}
 	if zone, ok := battlefieldZone(to); ok {

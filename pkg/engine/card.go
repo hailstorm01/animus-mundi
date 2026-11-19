@@ -63,6 +63,12 @@ func (c *Card) IsScratchCompany() bool {
 	return c.HasSubtype("Scratch Company")
 }
 
+// Deployable reports whether the card is deployed rather than played: only
+// Unit and Structure cards are (FR-TRN-003; a Maneuver is played, FR-MNV-001).
+func (c *Card) Deployable() bool {
+	return c.Type == TypeUnit || c.Type == TypeStructure
+}
+
 // Supported reports whether the kernel can fully execute this card.
 func (c *Card) Supported() bool {
 	if len(c.Unsupported) != 0 {
