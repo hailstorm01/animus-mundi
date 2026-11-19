@@ -4,7 +4,7 @@ title: "`cardtown lint` asks the linters what they read: `fences.Reads`, `rules.
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (b))
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0285-linters-say-what-they-read
 depends_on: [T-0284]
 claims: [func:fences.Reads, func:rules.Reads]
