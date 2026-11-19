@@ -10,7 +10,7 @@ import (
 	"reflect"
 )
 
-// 37. isFencesPath covers pkg/ Go files except pkg/toolchain/, plus the data inputs.
+// 37. isFencesPath covers Go files under pkg/, cmd/ and tools/, plus the data inputs.
 func TestIsFencesPath(t *testing.T) {
 	cases := []struct {
 		path string
@@ -24,8 +24,10 @@ func TestIsFencesPath(t *testing.T) {
 		{"data/cards/units.csv", true},
 		{"docs/frd/keyword_interaction_matrix.md", true},
 		{"docs/design/m2_starter_set_ability_survey.md", true},
-		{"pkg/toolchain/linter/fences/fences.go", false},
-		{"cmd/cardtown/main.go", false},
+		{"pkg/toolchain/linter/fences/fences.go", true},
+		{"cmd/cardtown/main.go", true},
+		{"tools/importer/main.go", true},
+		{"scripts/x.go", false},
 		{"pkg/sim/readme.md", false},
 		{"data/decks/x.txt", false},
 	}
@@ -75,7 +77,7 @@ func TestSelectChanged_Case1_Paths(t *testing.T) {
 		{
 			name:  "toolchain and readme",
 			paths: []string{"pkg/toolchain/x.go", "README.md"},
-			want:  lintSelection{},
+			want:  lintSelection{fences: true},
 		},
 	}
 	for _, c := range cases {

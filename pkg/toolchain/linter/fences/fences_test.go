@@ -953,7 +953,7 @@ func TestFences_Case35_UnreadableImports(t *testing.T) {
 func TestFences_Case36_PassLine(t *testing.T) {
 	repo := setupFixtureRepo(t)
 	out := expectPass(t, repo)
-	want := "  [PASS] Package code is free of card names, invalid markers and disallowed imports."
+	want := "  [PASS] Package code is free of card names, invalid markers, disallowed imports and type aliases."
 	if !strings.Contains(out, want+"\n") {
 		t.Fatalf("expected %q, got:\n%s", want, out)
 	}
