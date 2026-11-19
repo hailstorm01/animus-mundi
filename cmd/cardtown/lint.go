@@ -279,9 +279,10 @@ func selectChanged(paths []string, gitErr error) lintSelection {
 	return s
 }
 
-// isFencesPath reports whether a change can affect the package fences.
+// isFencesPath reports whether a change can affect the package fences: any Go file under
+// pkg/, cmd/ or tools/ (the alias check reads them all), plus the data inputs.
 func isFencesPath(pLower string) bool {
-	return (strings.HasPrefix(pLower, "pkg/") && !strings.HasPrefix(pLower, "pkg/toolchain/") && strings.HasSuffix(pLower, ".go")) ||
+	return ((strings.HasPrefix(pLower, "pkg/") || strings.HasPrefix(pLower, "cmd/") || strings.HasPrefix(pLower, "tools/")) && strings.HasSuffix(pLower, ".go")) ||
 		(strings.HasPrefix(pLower, "data/cards/") && strings.HasSuffix(pLower, ".csv")) ||
 		pLower == "docs/frd/"+specdoc.MatrixFile ||
 		pLower == "docs/design/"+fences.SurveyFile

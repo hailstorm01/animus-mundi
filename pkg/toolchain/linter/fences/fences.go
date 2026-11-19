@@ -70,8 +70,9 @@ type markerIDs struct {
 }
 
 // Analyze scans non-test Go files under pkg/ (except pkg/engine/cards and pkg/toolchain)
-// for card names and invalid markers, and checks the imports of the packages in
-// allowedImports (pkg/engine/cards included).
+// for card names and invalid markers, checks the imports of the packages in
+// allowedImports (pkg/engine/cards included), and reports every type alias in the
+// non-test Go files under pkg/, cmd/ and tools/ (checkAliases).
 func Analyze(repoRoot string) (*Report, error) {
 	cards, err := loadCardNames(repoRoot)
 	if err != nil {
@@ -94,6 +95,11 @@ func Analyze(repoRoot string) (*Report, error) {
 		return nil, err
 	}
 	items = append(items, importItems...)
+	aliasItems, err := checkAliases(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	items = append(items, aliasItems...)
 
 	sort.Slice(items, func(i, j int) bool {
 		if items[i].file != items[j].file {
@@ -381,7 +387,7 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 		return false, nil
 	}
 
-	fmt.Println("  [PASS] Package code is free of card names, invalid markers and disallowed imports.")
+	fmt.Println("  [PASS] Package code is free of card names, invalid markers, disallowed imports and type aliases.")
 	fmt.Println("==========================================================")
 	return true, nil
 }
