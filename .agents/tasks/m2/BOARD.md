@@ -34,4 +34,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0287](T-0287-effect-walker.md) | One walker over an `Effect` and its `Modes`, and `checkStepReads` asks `InPile` (#173 (c), (d)) | queued |
+| [T-0287](T-0287-effect-walker.md) | One walker over an `Effect` and its `Modes`, and `checkStepReads` asks `InPile` (#173 (c), (d)) | ready |
