@@ -4,7 +4,7 @@ title: "`fireHook` takes `watched` and `fireHookFor` goes; `chooseDiscards` goes
 kind: harness
 tier: flash
 wave: H.1 (board directives #166, #167)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0277-one-fire-hook
 depends_on: [T-0276]
 claims: [func:Game.fireHook, func:Game.fireHookFor, func:Game.chooseDiscards, func:Game.chooseHandCards]
@@ -260,3 +260,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     7. Case 7: `git diff autoloop/m2-wave-h.1 --numstat -- pkg docs` printed exactly 4 lines (`costs.go`, `decision_source_trigger_test.go`, `trigger.go`, `zones.go`).
     8. Case 8: `git diff autoloop/m2-wave-h.1 --stat` printed only the 4 files of Case 7 and this task file.
     9. Case 9: `gofmt -l pkg` printed nothing; `go tool task check` passed (fmt-check, vet, test, build, lint --all); `go tool task sim` passed (200 games, 0 invariant violations).
+- 2026-11-18, lead-architect (wave H.1 run, session 6, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as 80e5b21. Flash run `b83162d4-8b18-47ed-8b7a-c0ff8522ed39`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0277-one-fire-hook` (817f0fd):
+  - Scope: the three Allowed Files, the one authorized test edit and this file. The `test(T-0277)` commit (1f46b14) holds only `decision_source_trigger_test.go` 2470eb8; the implementation commit (7f9e868) holds only `costs.go` 7a7e964, `trigger.go` e07b322 and `zones.go` f5f9a11. Every blob matches the lead's dry run. No other test changed after the test commit.
+  - Fences and placement: nothing outside `pkg/engine` changes, and no declaration moves package. Reuse and ADR 0007: `git grep -n fireHookFor -- "*.go"` and `git grep -n chooseDiscards -- "*.go"` find nothing; `trigger.go` has one `fireHook`, with three parameters (`trigger.go:148`); no alias or wrapper is left. Rules fidelity: every self-hook caller passes `nil`, as the wrapper did, and the watcher loop passes `a`, as before; the discard cost passes the controller as chooser and owner, as `chooseDiscards` did.
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; cases 2, 3 and 4 as listed; `go tool task check` exit 0; `go tool task sim-compare -- d3c72240` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #166 and #167 are `applied` (T-0277) and move to the directive archive.
