@@ -4,7 +4,7 @@ title: "`ability.Keyword` becomes `KeywordTrigger`, and `Trigger.Keyword` and `S
 kind: harness
 tier: flash
 wave: H.2 (board directive #171)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0283-keyword-trigger
 depends_on: [T-0282]
 claims: [type:ability.KeywordTrigger, field:ability.Trigger.FromKeyword, field:engine.StackItem.FromKeyword]
