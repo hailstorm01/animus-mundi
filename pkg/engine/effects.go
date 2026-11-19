@@ -203,7 +203,7 @@ func stepPlayers(it *StackItem, st ability.Step) []PlayerID {
 // With a chosen dealer (Step.Dealer) that asset deals the damage, at its current
 // power; with none left the step deals nothing and logs no event (SVY-R27).
 func (g *Game) stepDealDamage(r *resolution, st ability.Step) int {
-	src, dealer := g.itemSource(r.it), (*Asset)(nil)
+	src, dealer := g.sourceAsset(r.it.Source), (*Asset)(nil)
 	if slot, ok := st.DealerSlot(); ok {
 		ds := g.slotAssets(r, slot)
 		if len(ds) == 0 {
@@ -427,17 +427,6 @@ func (g *Game) value(source int, v ability.Value, dealer *Asset) int {
 		return k.Power
 	}
 	return 0
-}
-
-// itemSource returns the item's source asset, or its last-known record once it has
-// left the battlefield (FR-ZON-004), so a damage event still names and attributes
-// it (FR-REP-004 Stage 5) and an attack still knows its attacker's controller
-// (FR-CBT-002 Step 3). It is nil only for a source that was never an asset.
-func (g *Game) itemSource(it *StackItem) *Asset {
-	if a := g.Asset(it.Source); a != nil {
-		return a
-	}
-	return g.LastKnown(it.Source)
 }
 
 // stepAssets returns the assets an asset step acts on: the entities chosen for

@@ -139,10 +139,7 @@ func (g *Game) sameZoneLock(e ability.Effect, source int, held *LockedZone) *Loc
 	if !e.ReadsZoneRef(ability.ZoneRefSame) {
 		return held
 	}
-	src := g.Asset(source)
-	if src == nil {
-		src = g.LastKnown(source)
-	}
+	src := g.sourceAsset(source)
 	if src == nil {
 		return nil
 	}
