@@ -4,7 +4,7 @@ title: "`LoadCards` rejects a card definition that sets a field where nothing re
 kind: harness
 tier: sonnet
 wave: H.1 (board directive #162)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0278-load-checks-shape-reads
 depends_on: [T-0277]
 claims: [func:checkShapeReads]
