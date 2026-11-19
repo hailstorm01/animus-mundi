@@ -210,7 +210,16 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - **From wave F:** a kill cost with a choice of counts, 2 or 4 allied Scratch Company units chosen on declaration, and one different chosen unit card in the discard pile for every 2 killed, each deployed for free (*Mutation Swell*, `SVY-R53`, `SVY-R54`, `SVY-R15`, `SVY-R21`), and enter-discard from any zone (*Solarheart Monk*, survey gap G1).
    - **From wave G:** damage redirection (*Animoceps Spore Cloud*), next to wave G's destruction replacement (`FR-REP-001` to `FR-REP-004`).
 
-   Re-check each card against its survey row and FRD 01 before writing its task. A rules question stops the run with a ruling stub (Runbook D6), and the D2 size rule may split a card's shape and card into two tasks. These cards aren't in the starter decks, so the starter sim's baseline shouldn't move; a task that changes it says why. Done when `cards.NotYetExecutable` is empty (M2's card done-when), no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
+   Re-check each card against its survey row and FRD 01 before writing its task. A rules question stops the run with a ruling stub (Runbook D6), and the D2 size rule may split a card's shape and card into two tasks. These cards aren't in the starter decks, so the starter sim's baseline shouldn't move; a task that changes it says why. Done when `cards.NotYetExecutable` is empty (M2's card done-when), no `open: before` directive is left, and `go tool task check` and `go tool task sim` pass. Deliverable 6n follows.
+6n. **Wave H.1, cleanup, added 2026-11-18 from structural review 13 (board directives #159–#164).** It goes after wave H and before the write-up (Deliverable 7) (user, 2026-11-18). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave H.1`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #159: one keyword set, `ability.Keywords`, for printed keywords, Cornered keywords, aura grants and granted keywords, with `engine.Keywords` an alias (ADR 0007, written when the task is planned).
+   - #160: one "in the same zone" lock on placement, `sameZoneLock`, for triggers and activated abilities.
+   - #161: one read of a continuous ability's filter, `matchesFromSource`, for auras and replacements (#160 and #161 may share a task).
+   - #162: `LoadCards` rejects a definition that sets a field where nothing reads it (`Watches`, `Split`, `ControllerChooses`, an aura filter's `Stat`).
+   - #163: the docs say what wave H and #159 to #162 built.
+   - #164: `view.StackView.Keyword`, which nothing reads, goes.
+
+   #160 and #161 are pure moves, #159 changes no behavior, and #163 is docs only. Done when #159 to #164 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
