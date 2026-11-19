@@ -4,7 +4,7 @@ title: "Each linter input path is written once: `specdoc.FRDDir`, `specdoc.Rules
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (a))
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0284-input-path-constants
 depends_on: [T-0283]
 claims: [const:specdoc.FRDDir, const:specdoc.RulesFRD, const:cardsheet.Dir]
@@ -438,10 +438,26 @@ Authorized reference-only edit (#172), in the `test(T-0284)` commit; no test is 
 - `pkg/toolchain/linter/frd/ownership_test.go` (Edit 1): `TestCheckOwnershipFlagsDuplicateDefinitions`, `TestCheckOwnershipFlagsKeywordRestatementOutsideFRD01`, `TestCheckOwnershipSkipsFrozenFRDsAndTheMatrix` (map keys only), and the file's imports
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 4): written in full against 7d092ac for #172 (a), next in wave H.2's order after #171 (T-0283, `done`). `main` (1859fe4) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #172, #173 and #174 are `open: before the next Deliverables task`. #172 splits into two tasks as the directive allows: this one, and T-0285 (`queued`, board row and task file in the same commit, D2.4) for (b). This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented directive #172 (a).
+  - Scratch worktree opened on task branch m2/autoloop-wave-h.2/T-0284-input-path-constants.
+  - Set status to in-progress (commit 06a7c54b).
+  - Applied Edit 1 to pkg/toolchain/linter/frd/ownership_test.go. Confirmed Acceptance Case 1 failure with `go vet ./pkg/toolchain/linter/frd/`: reported `undefined: specdoc.RulesFRD` on lines 18, 28, 38. Committed as `test(T-0284): ownership tests read specdoc.RulesFRD and specdoc.MatrixFile` (commit 54e55963).
+  - Applied Edits 2-15 declaring specdoc.FRDDir, specdoc.RulesFRD, and cardsheet.Dir, removing frd.RulesFRD, frd.KeywordMatrix, and rules.RulesFRD, and updating all references in cmd/cardtown (lint.go, play.go, replay.go, sim.go), pkg/toolchain/docs (whatsup.go), pkg/toolchain/linter (sheets.go, cardsheet.go, fences.go, frd.go, ownership.go, rules.go, syntax.go), and pkg/toolchain/specdoc (matrix.go, specdoc.go). Committed as `refactor(toolchain): each linter input path is written once, specdoc.FRDDir, specdoc.RulesFRD, cardsheet.Dir (T-0284)` (commit a2516148).
+  - Verified Acceptance Cases 1-9:
+    - Case 1: `go vet ./pkg/toolchain/linter/frd/` failed at test(T-0284) with undefined: specdoc.RulesFRD.
+    - Case 2: `git grep -n -i -e "data/cards" -e "docs/frd" -e "data., .cards" -e "docs., .frd" -e "01_game_rules_frd" -- pkg/toolchain cmd ":!*_test.go"` returned exactly the expected 10 lines.
+    - Case 3: `git grep -n -w KeywordMatrix -- "*.go"` returned nothing; `git grep -n -w RulesFRD -- "*.go"` returned exactly the expected 11 lines.
+    - Case 4: `go test ./pkg/... ./cmd/...` passed; `git diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` showed exactly `6 4 pkg/toolchain/linter/frd/ownership_test.go`.
+    - Case 5: `go run ./cmd/cardtown lint --all` exited 0 with all checks passed, FRD Directory ending in docs\frd and Cards Directory ending in data\cards.
+    - Case 6: `go tool task sim-compare -- autoloop/m2-wave-h.2` passed with byte-for-byte match on starter and stress sims.
+    - Case 7: `git diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` showed exactly the expected 15 files and counts.
+    - Case 8: `git diff autoloop/m2-wave-h.2 --stat` showed only the 15 files and the task file.
+    - Case 9: `gofmt -l pkg cmd` clean; `go tool task check` passed (gofmt, vet, test, waverun, lint --all); `go tool task sim` passed.
+  - Set status to review.
