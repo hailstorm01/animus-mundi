@@ -4,7 +4,7 @@ title: "Each linter input path is written once: `specdoc.FRDDir`, `specdoc.Rules
 kind: harness
 tier: flash
 wave: H.2 (board directive #172 (a))
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0284-input-path-constants
 depends_on: [T-0283]
 claims: [const:specdoc.FRDDir, const:specdoc.RulesFRD, const:cardsheet.Dir]
@@ -461,3 +461,8 @@ Authorized reference-only edit (#172), in the `test(T-0284)` commit; no test is 
     - Case 8: `git diff autoloop/m2-wave-h.2 --stat` showed only the 15 files and the task file.
     - Case 9: `gofmt -l pkg cmd` clean; `go tool task check` passed (gofmt, vet, test, waverun, lint --all); `go tool task sim` passed.
   - Set status to review.
+- 2026-11-19, lead-architect (wave H.2 run, session 4, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 7cca4ea. Flash run `16f0932d-4ff7-452c-b4a4-6816e062441c`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0284-input-path-constants` (1c597d1):
+  - Scope: the fourteen Allowed Files, the authorized test file and this file. The test commit (54e5596) holds only `ownership_test.go`, and the implementation commit (a251614) only the fourteen non-test files. All fifteen blobs match the lead's dry run, whose linter output was byte-identical to the run branch's with the root path masked, and whose test-only state failed `go vet ./pkg/toolchain/linter/frd/` as case 1 says. No test is added, renamed or removed.
+  - Fences and reuse: the three constants replace `frd.RulesFRD`, `rules.RulesFRD`, `frd.KeywordMatrix` and the literals. ADR 0007: `git grep -n -w KeywordMatrix -- "*.go"` finds nothing, every `RulesFRD` in Go is `specdoc.RulesFRD` or its declaration, and no alias, re-export or forwarding wrapper keeps an old name. Case 2's search prints its ten lines (comments and printed messages, plus the declarations).
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 02270f78` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #172 (a) is applied (T-0284). #172 stays on the board for (b), T-0285, now unblocked (`depends_on` T-0284 is `done`).
