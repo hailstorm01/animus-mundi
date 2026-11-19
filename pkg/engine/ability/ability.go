@@ -9,8 +9,8 @@
 //   - An enum with no default starts at iota + 1, so an unset field (the zero
 //     value) is invalid and never passes for the first member (Hook, Op).
 //   - An enum whose zero value is a meaningful default starts at iota, and the
-//     first member's comment says "the zero value" (TurnOwner, Keyword, Zone,
-//     Allegiance, ScratchCompany, Subject, ValueSource).
+//     first member's comment says "the zero value" (TurnOwner, KeywordTrigger,
+//     Zone, Allegiance, ScratchCompany, Subject, ValueSource).
 package ability
 
 // Def is the executable definition of one card's printed abilities.
@@ -208,19 +208,20 @@ const (
 	TurnYours                  // only during the trigger controller's own turn
 )
 
-// Keyword names a keyword that is a triggered ability, the one a trigger comes
-// from (Aggressive, FR-KWD-002f). The zero value is a printed ability.
-type Keyword int
+// KeywordTrigger names a keyword that is a triggered ability, the one a
+// trigger comes from (Aggressive, FR-KWD-002f). The zero value is a printed
+// ability.
+type KeywordTrigger int
 
 const (
-	KeywordNone       Keyword = iota // the zero value: a printed ability
-	KeywordAggressive                // "Aggressive N" (FR-KWD-002f)
+	KeywordTriggerNone       KeywordTrigger = iota // the zero value: a printed ability
+	KeywordTriggerAggressive                       // "Aggressive N" (FR-KWD-002f)
 )
 
-// String returns the keyword's printed name, or "" for KeywordNone.
-func (k Keyword) String() string {
+// String returns the keyword's printed name, or "" for KeywordTriggerNone.
+func (k KeywordTrigger) String() string {
 	switch k {
-	case KeywordAggressive:
+	case KeywordTriggerAggressive:
 		return "Aggressive"
 	}
 	return ""
@@ -245,7 +246,7 @@ func (d Duration) String() string {
 // Aggressive is the trigger the keyword "Aggressive N" means: whenever this
 // unit attacks, it gets +N power until end of turn (FR-KWD-002f).
 func Aggressive(n int) Trigger {
-	return Trigger{Hook: HookAttacks, Keyword: KeywordAggressive,
+	return Trigger{Hook: HookAttacks, FromKeyword: KeywordTriggerAggressive,
 		Effect: Effect{Steps: []Step{{Op: OpModifyStat, Subject: SubjectSelf, Amount: Value{N: n}}}}}
 }
 
@@ -256,10 +257,10 @@ type Trigger struct {
 	ToZone Zone // HookDeploy and HookMoves only: fires only if the asset was deployed or moved into this zone
 	// ActiveZone is where the trigger works from (survey G1): ZoneAny, the zero value, is the
 	// battlefield; ZoneDiscard is its card's owner's discard pile. No other value is used.
-	ActiveZone Zone
-	Cornered   bool    // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
-	Optional   bool    // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
-	Keyword    Keyword // the keyword this trigger comes from; zero for a printed ability
+	ActiveZone  Zone
+	Cornered    bool           // "Cornered: ...": fires only if its controller is Cornered when the event happens (FR-KWD-002e, FR-LAY-003)
+	Optional    bool           // "you may": asked when the trigger is placed, before its targets; declined, it is not placed (SVY-R9)
+	FromKeyword KeywordTrigger // the keyword this trigger comes from; zero for a printed ability
 	// Watches makes the trigger fire on the event of each battlefield asset matching Watch
 	// (judged against the trigger's controller and source when the event happens), never
 	// on its own source's event unless the source matches Watch. False, the zero value, is

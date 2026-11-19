@@ -204,7 +204,7 @@ func (g *Game) bufferTrigger(src triggerSource, label string, t ability.Trigger)
 func (g *Game) fireAttacks(a *Asset) {
 	src := assetSource(a)
 	if n := g.Keywords(a).Aggressive; n > 0 {
-		g.bufferTrigger(src, fmt.Sprintf("%s: %s %d", src.card.Name, ability.KeywordAggressive.String(), n), ability.Aggressive(n))
+		g.bufferTrigger(src, fmt.Sprintf("%s: %s %d", src.card.Name, ability.KeywordTriggerAggressive.String(), n), ability.Aggressive(n))
 	}
 	g.fireHook(src, ability.HookAttacks, nil)
 	for _, w := range g.assetsByID() {
@@ -276,7 +276,7 @@ func (g *Game) placeTrigger(p pendingTrigger) {
 	item := p.stackItem(StackAbility)
 	item.Effect, item.Chosen = g.chooseOnPlacement(p.placement, p.trig.Effect)
 	item.Watched = p.watched
-	item.Tracked, item.Keyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.Keyword
+	item.Tracked, item.FromKeyword = p.trig.Hook == ability.HookKilled || p.trig.ActiveZone == ability.ZoneDiscard, p.trig.FromKeyword
 	g.push(item)
 }
 
