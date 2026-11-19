@@ -4,7 +4,7 @@ title: "The play screen's stack listing prints `StackLabel` for every item (dire
 kind: harness
 tier: flash
 wave: H.2 (board directive #174)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0288-stack-line-reads-label
 depends_on: [T-0287]
 claims: [func:main.stackLine]
@@ -171,3 +171,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Ran Acceptance Case 7: `git diff autoloop/m2-wave-h.2 --stat` lists only play_screen.go, play_source_test.go, play_test.go, and the task file.
   - Ran Acceptance Case 8: `go tool task sim-compare -- autoloop/m2-wave-h.2` passed with `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
   - Ran Acceptance Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed (all packages ok, linter checks PASSED); `go tool task sim` passed.
+- 2026-11-19, lead-architect (wave H.2 run, session 8, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as ef7ef19. Flash run `f2b75451-9c3f-44aa-a61b-726cfbdbfebe`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0288-stack-line-reads-label` (90c77db):
+  - Scope: the three Allowed Files and this file. The `test(T-0288)` commit (238cb2b) holds only the two authorized test edits, and the implementation commit (f68037c) only `play_screen.go`. All three blobs match the lead's dry run (`play_screen.go` 7f78b0b, `play_test.go` f65b76d, `play_source_test.go` 8feb636).
+  - Fences and reuse: `stackLine` prints `StackView.Label` for every item, so "Deploy of" and "Maneuver X" are written only in `StackLabel`; the play screen compares only kind names. No engine or view change, and nothing old survives (ADR 0007).
+  - Re-run by the reviewer in a review worktree of the task branch: case 1 at 238cb2b (exactly the two named tests fail), cases 2-4 as listed; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.2` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #174 is `applied` and archived. #175 (the stack listing shows chosen targets, the same function) is next.

@@ -291,3 +291,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0285 | `cardtown lint` asks the linters what they read: `fences.Reads`, `rules.Reads` (directive #172 (b); wave H.2 harness, flash) | done |
 | T-0286 | `Card.Deployable`, and `DiscardCard` finds a card through `pileCard` (directive #173 (a), (b); wave H.2 harness, flash, pure move) | done |
 | T-0287 | One walker over an `Effect` and its `Modes`, `Effect.Parts`, and `checkStepReads` asks `InPile` (directive #173 (c), (d); wave H.2 harness, flash, pure move) | done |
+| T-0288 | The play screen's stack listing prints `StackLabel` for every item (directive #174; wave H.2 harness, flash) | done |
