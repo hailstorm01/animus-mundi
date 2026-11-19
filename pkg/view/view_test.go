@@ -700,7 +700,7 @@ func TestView_Case5_LogLines(t *testing.T) {
 	}
 }
 
-// T-0074: an Aggressive trigger is an Ability item with a Keyword.
+// T-0074: an Aggressive trigger is an Ability item whose Label names its keyword.
 func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
 	s := newContentScene(t)
 	s.g.Stack = []*engine.StackItem{
@@ -711,10 +711,10 @@ func TestView_AbilityItemShowsItsKeyword(t *testing.T) {
 	if len(v.Stack) != 2 {
 		t.Fatalf("stack = %+v", v.Stack)
 	}
-	if it := v.Stack[0]; it.Kind != "Ability" || it.Keyword != "Aggressive" || it.Card != "Alpha Lancer" {
+	if it := v.Stack[0]; it.Kind != "Ability" || it.Label != "Aggressive trigger of Alpha Lancer" || it.Card != "Alpha Lancer" {
 		t.Errorf("Aggressive item = %+v", it)
 	}
-	if it := v.Stack[1]; it.Kind != "Ability" || it.Keyword != "" {
+	if it := v.Stack[1]; it.Kind != "Ability" || it.Label != "ability of Alpha Sentry" {
 		t.Errorf("printed item = %+v", it)
 	}
 }
@@ -811,9 +811,6 @@ func TestView_ManeuverItemShowsItsCardAndTargets(t *testing.T) {
 		}
 		if !reflect.DeepEqual(it.ChosenCards, [][]string{{}}) {
 			t.Errorf("seat %d: ChosenCards = %v, want [[]]", seat, it.ChosenCards)
-		}
-		if it.Keyword != "" {
-			t.Errorf("seat %d: Keyword = %q, want empty", seat, it.Keyword)
 		}
 		if it.Zone != "" {
 			t.Errorf("seat %d: Zone = %q, want empty", seat, it.Zone)
@@ -1014,8 +1011,8 @@ func TestView_ActivatedAbilityItemShowsItsTargets(t *testing.T) {
 		if item == nil {
 			t.Fatalf("seat %d: no activated item on the stack view: %+v", seat, v.Stack)
 		}
-		if item.Card != "Tapper" || item.Keyword != "" || !reflect.DeepEqual(item.Chosen, [][]int{{picked}}) {
-			t.Errorf("seat %d: item %+v, want Card Tapper, empty Keyword, Chosen [[%d]]", seat, *item, picked)
+		if item.Card != "Tapper" || !reflect.DeepEqual(item.Chosen, [][]int{{picked}}) {
+			t.Errorf("seat %d: item %+v, want Card Tapper, Chosen [[%d]]", seat, *item, picked)
 		}
 	}
 }

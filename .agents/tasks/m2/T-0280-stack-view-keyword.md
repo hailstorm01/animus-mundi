@@ -4,7 +4,7 @@ title: "`view.StackView.Keyword` goes (directive #164; wave H.1 harness, flash, 
 kind: harness
 tier: flash
 wave: H.1 (board directive #164)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.1/T-0280-stack-view-keyword
 depends_on: [T-0279]
 claims: [field:view.StackView.Keyword]
@@ -142,10 +142,29 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - No other test file changes.
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.1 run, session 9): written in full against 717f70c for #164, the last wave H.1 directive. `main` (7a8e4f5) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #164 is `open: before the next Deliverables task`. #164 authorizes one test edit, but three more tests read or set the field, so this task names all four (ADR 0007, D2.4; see Inputs). This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.1 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented T-0280 (directive #164).
+  - Status moved to in-progress.
+  - Applied Edits 1 & 2 to pkg/view/view_test.go (TestView_AbilityItemShowsItsKeyword, TestView_ManeuverItemShowsItsCardAndTargets, TestView_ActivatedAbilityItemShowsItsTargets) and cmd/cardtown/play_source_test.go (TestPlay_PrintScreenNamesEachStackItemsCard). Committed as `test(T-0280): stack view tests stop reading StackView.Keyword` (e10c41ac).
+  - Applied Edit 3 removing `StackView.Keyword` and its assignment in `stackView()` in pkg/view/view.go. Committed as `refactor(view): StackView.Keyword goes (T-0280)` (813b456f).
+  - Verification & Acceptance Cases:
+    1. Pre-removal test check: `go -C W test ./pkg/view/ ./cmd/cardtown/` passed.
+    2. Field removal grep: `git -C W grep -n "s.Keyword" -- pkg/view` and `git -C W grep -n "Keyword    string" -- pkg/view` returned empty (exit 1).
+    3. Test readers grep: `git -C W grep -n "it.Keyword" -- pkg/view cmd` and `git -C W grep -n "item.Keyword" -- pkg/view cmd` returned empty (exit 1).
+    4. Test diff check: `go -C W test ./pkg/... ./cmd/...` passed; `git -C W diff autoloop/m2-wave-h.1 --numstat -- "*_test.go"` output exactly 2 lines:
+       1	1	cmd/cardtown/play_source_test.go
+       5	8	pkg/view/view_test.go
+    5. Sim compare: `go -C W tool task sim-compare -- autoloop/m2-wave-h.1` returned `[PASS] starter and stress sims match autoloop/m2-wave-h.1 byte for byte, exit codes included`.
+    6. Code diff: `git -C W diff autoloop/m2-wave-h.1 --numstat -- pkg cmd docs` output exactly 3 lines:
+       1	1	cmd/cardtown/play_source_test.go
+       0	2	pkg/view/view.go
+       5	8	pkg/view/view_test.go
+    7. Overall stat: `git -C W diff autoloop/m2-wave-h.1 --stat` listed only the 3 files above plus this task file.
+    8. Code formatting and gates: `gofmt -l W/pkg W/cmd` produced no output; `go -C W tool task check` passed all linters and tests; `go -C W tool task sim` passed on starter decks (200 games, seeds 1..200).
+  - Moved status to review.
