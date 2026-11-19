@@ -281,3 +281,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0275 | One "in the same zone" lock on placement, `sameZoneLock` (directive #160; wave H.1 harness, flash, pure move) | done |
 | T-0276 | One read of a continuous ability's filter, `matchesFromSource`, and `matchesFilter` goes (directives #161, #168; wave H.1 harness, flash, pure move) | done |
 | T-0277 | `fireHook` takes `watched` and `fireHookFor` goes; `chooseDiscards` goes (directives #166, #167; wave H.1 harness, flash, pure move) | done |
+| T-0278 | `LoadCards` rejects a card definition that sets a field where nothing reads it (directive #162; wave H.1 harness, sonnet) | done |
