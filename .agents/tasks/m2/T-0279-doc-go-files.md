@@ -4,7 +4,7 @@ title: "`doc.go`'s Files list says what wave H and #159 to #162 built (directive
 kind: harness
 tier: flash
 wave: H.1 (board directive #163)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.1/T-0279-doc-go-files
 depends_on: [T-0278]
 claims: [file:pkg/engine/doc.go]
