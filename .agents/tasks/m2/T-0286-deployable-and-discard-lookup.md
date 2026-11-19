@@ -4,7 +4,7 @@ title: "`Card.Deployable`, and `DiscardCard` finds a card through `pileCard` (di
 kind: harness
 tier: flash
 wave: H.2 (board directive #173 (a), (b))
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0286-deployable-and-discard-lookup
 depends_on: [T-0285]
 claims: [func:engine.Card.Deployable]
@@ -119,10 +119,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None added or edited: a pure move. Every existing test passes unedited.
 
 ## Done When
-- [ ] Cases 1-8 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-8 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 6): written against d5fa2c2 for #173 (a) and (b), next in wave H.2's order (#172 is `applied`).
@@ -132,3 +132,15 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented directive #173 (a) and (b) as pure moves.
+  - Reused `pileCard` in `DiscardCard` ([zones.go:170](../../../pkg/engine/zones.go)), removing the duplicated Discard ID loop.
+  - Added `Card.Deployable()` in `card.go` ([card.go:68](../../../pkg/engine/card.go)) and replaced inline `c.Type != TypeUnit && c.Type != TypeStructure` checks in `actions.go:142` and `freedeploy.go:56`.
+  - Commands and results:
+    - Case 1: `git -C W grep -n TypeStructure -- pkg/engine/actions.go pkg/engine/freedeploy.go` returned exit code 1 with no output.
+    - Case 2: `git -C W grep -n 'Deployable()' -- pkg/engine` returned exactly 3 lines: `actions.go:142`, `card.go:68`, `freedeploy.go:56`.
+    - Case 3: `git -C W grep -n 'inst.ID == id' -- pkg/engine ':!*_test.go'` printed `pkg/engine/zones.go:189`; `git -C W grep -n 'pileCard(pl, id, ZoneDiscard)' -- pkg/engine` printed `pkg/engine/zones.go:170`.
+    - Case 4: `go -C W test ./pkg/... ./cmd/...` passed; `git -C W diff autoloop/m2-wave-h.2 --numstat -- '*_test.go'` returned no output.
+    - Case 5: `go -C W tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+    - Case 6: `git -C W diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly 4 lines (actions.go 1/1, card.go 6/0, freedeploy.go 1/1, zones.go 2/4).
+    - Case 7: `git -C W diff autoloop/m2-wave-h.2 --stat` listed only the 4 engine files and the task file.
+    - Case 8: `gofmt -l W/pkg W/cmd` printed nothing; `go -C W tool task sim` passed (200 playouts, invariants held); `go -C W tool task check` passed all stages (fmt-check, vet, test, waverun, cardtown lint --all).
