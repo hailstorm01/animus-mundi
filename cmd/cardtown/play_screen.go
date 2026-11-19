@@ -90,20 +90,23 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	fmt.Fprintf(out, "Discards: You %d | Opponent %d\n\n", len(v.You.Discard), len(v.Opponent.Discard))
 }
 
-// stackLine is the stack listing's line for item. An ability prints its Label,
-// the engine's own wording (Game.StackLabel), with a capital first letter, a
-// Deploy its card and zone, and a Maneuver its card (#149); a March, an Attack,
-// a Scratch, and an ability with no card name their source asset.
+// stackLine is the stack listing's line for item: its Label, the engine's one
+// wording of what it is (Game.StackLabel), with a capital first letter, then
+// the declared zone of a Deploy, then its controller, and the source asset of
+// anything but a Deploy or a Maneuver. An item with no Label, and an ability
+// with no card, print their Kind.
 func stackLine(item view.StackView) string {
-	switch {
-	case item.Kind == "Maneuver":
-		return fmt.Sprintf("Maneuver: %s (Player %d)", item.Card, item.Controller)
-	case item.Kind == "Deploy" && item.Card != "":
-		return fmt.Sprintf("Deploy of %s to %s (Player %d)", item.Card, item.Zone, item.Controller)
-	case item.Kind == "Ability" && item.Card != "" && item.Label != "":
-		return fmt.Sprintf("%s%s (Player %d, Source %d)", strings.ToUpper(item.Label[:1]), item.Label[1:], item.Controller, item.Source)
+	if item.Label == "" || item.Kind == "Ability" && item.Card == "" {
+		return fmt.Sprintf("%s (Player %d, Source %d)", item.Kind, item.Controller, item.Source)
 	}
-	return fmt.Sprintf("%s (Player %d, Source %d)", item.Kind, item.Controller, item.Source)
+	label := strings.ToUpper(item.Label[:1]) + item.Label[1:]
+	switch item.Kind {
+	case "Deploy":
+		return fmt.Sprintf("%s to %s (Player %d)", label, item.Zone, item.Controller)
+	case "Maneuver":
+		return fmt.Sprintf("%s (Player %d)", label, item.Controller)
+	}
+	return fmt.Sprintf("%s (Player %d, Source %d)", label, item.Controller, item.Source)
 }
 
 func formatAsset(a view.AssetView) string {
