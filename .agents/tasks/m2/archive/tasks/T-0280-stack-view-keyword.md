@@ -4,7 +4,7 @@ title: "`view.StackView.Keyword` goes (directive #164; wave H.1 harness, flash, 
 kind: harness
 tier: flash
 wave: H.1 (board directive #164)
-status: review
+status: done
 branch: m2/autoloop-wave-h.1/T-0280-stack-view-keyword
 depends_on: [T-0279]
 claims: [field:view.StackView.Keyword]
@@ -168,3 +168,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     7. Overall stat: `git -C W diff autoloop/m2-wave-h.1 --stat` listed only the 3 files above plus this task file.
     8. Code formatting and gates: `gofmt -l W/pkg W/cmd` produced no output; `go -C W tool task check` passed all linters and tests; `go -C W tool task sim` passed on starter decks (200 games, seeds 1..200).
   - Moved status to review.
+- 2026-11-19, lead-architect (wave H.1 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.1` as 26f9748. Flash run `aff3ed13-96ba-4fd0-993e-529f3d7b50ee`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.1...m2/autoloop-wave-h.1/T-0280-stack-view-keyword` (77e8724):
+  - Scope: the one Allowed File, the four authorized test edits and this file. The `test(T-0280)` commit (e10c41a) holds only `cmd/cardtown/play_source_test.go` 44c59e7 and `pkg/view/view_test.go` 372d40a; the implementation commit (813b456) holds only `pkg/view/view.go` af64dc3. Every blob matches the lead's dry run. No test changed after the test commit.
+  - Fences and placement: nothing outside `pkg/view` and its tests in `cmd/cardtown` changes; no declaration moves. Reuse and ADR 0007: `git grep -n it.Keyword -- pkg/view cmd`, `git grep -n item.Keyword -- pkg/view cmd` and `git grep -n "Keyword    string" -- pkg/view` find nothing; no alias or wrapper is added. `engine.StackItem.Keyword` stays, read by `Game.StackLabel`.
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 4d51ad17` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #164 is `applied` (T-0280) and moves to the directive archive.
