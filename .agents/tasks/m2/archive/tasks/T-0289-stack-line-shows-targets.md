@@ -4,7 +4,7 @@ title: "The play screen's stack listing shows each item's chosen targets (direct
 kind: harness
 tier: flash
 wave: H.2 (board directive #175)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0289-stack-line-shows-targets
 depends_on: [T-0288]
 claims: [func:main.stackLine, func:main.stackItemLine, func:main.chosenTargetsText, func:main.assetRef, method:view.View.Asset]
@@ -369,3 +369,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Ran Acceptance Case 7: `git diff autoloop/m2-wave-h.2 --stat` lists only `cmd/cardtown/play_screen.go`, `cmd/cardtown/play_targets_test.go`, `pkg/view/view.go`, and the task file.
   - Ran Acceptance Case 8: `go tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
   - Ran Acceptance Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed clean (gofmt, `go vet`, all package tests, cardtown linter); `go tool task sim` passed clean (200 games, all invariants held).
+- 2026-11-19, lead-architect (wave H.2 run, session 9, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as de3a6a9. Flash run `7489e90f-2f94-466d-81da-a2d4d7121051`: exit 0, `status: SUCCESS`, no `denied_actions` key. Its transcript's one step with `"status":"ERROR"` is an edit whose target text didn't match ("target content not found"), which it redid; no permission check failed. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0289-stack-line-shows-targets` (d91db6e):
+  - Scope: the three Allowed Files and this file. The `test(T-0289)` commit (93cf873) holds only `play_targets_test.go`, and the implementation commit (8cef6e2) only `play_screen.go` and `view.go`. All three blobs match the lead's dry run (`play_screen.go` ce8d6eb, `view.go` 6b823f3, `play_targets_test.go` 27bb89e).
+  - Fences and reuse: the stack listing reads `StackView.Chosen` and `ChosenCards`; the asset lookup by ID is written once, `view.View.Asset`, and `lookupAsset` is gone with no forwarding closure (ADR 0007); the screen's "Name#ID" is written once, `assetRef`. No engine change. `Asset.String` in `state.go` is the event log's wording (a face-down asset is "face-down Scratch Company#N" there), not a copy.
+  - Re-run by the reviewer in a review worktree of the task branch: case 1 at 93cf873 (exactly the six named tests fail, `TestPlay_StackLineWithoutTargetsIsUnchanged` passes), case 2, case 3 (`lookupAsset` nowhere; one non-test `Reserves[i].ID == id`, `pkg/view/view.go:48`); `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.2` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #175 is `applied` and archived. #176 (the docs say what wave H.2 built) is next and last.
