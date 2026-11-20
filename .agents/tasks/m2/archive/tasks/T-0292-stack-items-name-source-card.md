@@ -4,7 +4,7 @@ title: "Every stack item names its card through `SourceCard`, and `cardName` goe
 kind: harness
 tier: flash
 wave: H.3 (board directive #178)
-status: review
+status: done
 branch: m2/autoloop-wave-h.3/T-0292-stack-items-name-source-card
 depends_on: [T-0291]
 claims: [func:engine.Game.push, func:engine.Game.StackLabel, func:engine.cardName, func:view.stackView]
@@ -192,3 +192,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `git -C W diff autoloop/m2-wave-h.3 --stat` -> only the 3 code files and the task file.
     - Case 9: `gofmt -l W/pkg W/cmd` -> clean (no output); `go -C W tool task check` -> passed; `go -C W tool task sim` -> passed (P0 58.5% / P1 39.5% / draws 2.0%).
   - Handed off for review.
+- 2026-11-20, lead-architect (wave H.3 run, session 2, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.3` as 063343f. Flash run `d75b47c4-11ba-495d-bf2a-68a8663ff026`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.3...m2/autoloop-wave-h.3/T-0292-stack-items-name-source-card` (1ea4a9b):
+  - Scope: the three Allowed Files and this file, all in the one implementation commit (c9b7466); no test file touched. All three blobs match the lead's dry run (`stack.go` dd57781, `events.go` c127df0, `view.go` f07b157).
+  - Fences and reuse: a Deploy's, a Maneuver's and an ability's card are named only through `SourceCard` and `sourceName`, in `push`, `StackLabel` and `stackView`; `cardName` is gone, and no alias or wrapper keeps it (ADR 0007). `SourceCard` and `sourceName` are unchanged.
+  - Re-run by the reviewer in a review worktree of the task branch: cases 1-5 and 7 as listed; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.3` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #178 is `applied` and archived. #179 (the view's `chosenTargets`) is next.

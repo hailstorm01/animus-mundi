@@ -295,3 +295,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0289 | The play screen's stack listing shows each item's chosen targets (directive #175; wave H.2 harness, flash) | done |
 | T-0290 | The `ability` package doc and `doc.go`'s Files list say what wave H.2 built (directive #176 (a), (b); wave H.2 harness, flash, comments only) | done |
 | T-0291 | FR-DEK-002 and FR-REP-002 get their own scenario tests (directive #177; wave H.3, sonnet, tests only) | done |
+| T-0292 | Every stack item names its card through `SourceCard`, and `cardName` goes (directive #178; wave H.3 harness, flash, pure move) | done |
