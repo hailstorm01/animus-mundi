@@ -4,7 +4,7 @@ title: "The view's `StackView.Chosen` holds only the chosen assets still on the 
 kind: harness
 tier: flash
 wave: H.3 (board directive #179)
-status: review
+status: done
 branch: m2/autoloop-wave-h.3/T-0293-view-chosen-still-there
 depends_on: [T-0292]
 claims: [func:view.chosenTargets, field:view.StackView.Chosen]
@@ -187,3 +187,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
     - Case 8: `git -C W diff autoloop/m2-wave-h.3 --stat` -> only the 3 code files and this task file.
     - Case 9: `gofmt -l W/pkg W/cmd` -> clean (no output); `go -C W tool task check` -> passed; `go -C W tool task sim` -> passed (P0 58.5% / P1 39.5% / draws 2.0%).
   - Handed off for review.
+- 2026-11-20, lead-architect (wave H.3 run, session 3, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.3` as 96b25b9. Flash run `5441530e-89f8-4a26-9cfe-22704dda1eee`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.3...m2/autoloop-wave-h.3/T-0293-view-chosen-still-there` (f169fc2):
+  - Scope: the three Allowed Files and this file. The test file is alone in the `test(T-0293)` commit (122c2c0), and Edits 1-2 are in the implementation commit (baf6764); no existing test touched. All three blobs match the lead's dry run (`view.go` c657779, `play_screen.go` 5eac7bb, `chosen_test.go` c26c74a).
+  - Fences and reuse: the rule "a chosen target is shown only while it is still where it was chosen" now lives in `chosenTargets` for both slot kinds; the play screen only names what the view gives it. No new declaration; `g.Asset` reused.
+  - Re-run by the reviewer in a review worktree: case 1 on 122c2c0 (fails, `Chosen = [[100005 100003] [100005]], want [[100003] []]` for both seats), cases 2-5 and 7 on the task branch as listed; `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- autoloop/m2-wave-h.3` `[PASS]`; `go tool task sim` exit 0, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #179 is `applied` and archived. Wave H.3's directives #177 to #179 are all `applied`.
