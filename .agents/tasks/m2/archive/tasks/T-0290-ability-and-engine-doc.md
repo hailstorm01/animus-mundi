@@ -4,7 +4,7 @@ title: "The `ability` package doc and `doc.go`'s Files list say what wave H.2 bu
 kind: harness
 tier: flash
 wave: H.2 (board directive #176)
-status: review
+status: done
 branch: m2/autoloop-wave-h.2/T-0290-ability-and-engine-doc
 depends_on: [T-0289]
 claims: [file:pkg/engine/ability/ability.go, file:pkg/engine/doc.go]
@@ -126,3 +126,8 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   5. Nothing else changed: diff autoloop/m2-wave-h.2 --stat lists only ability.go, doc.go and task file.
   6. Sims byte-identical: go tool task sim-compare -- autoloop/m2-wave-h.2 -> [PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included.
   7. Clean gates: gofmt -l pkg -> clean; go tool task check -> all vet, tests, linters passed; go tool task sim -> 200 games clean, all invariants held. Ready for review.
+- 2026-11-19, lead-architect (wave H.2 run, session 10, D5): **Approved, `done`.** Merged into `autoloop/m2-wave-h.2` as 3052cfe. Flash run `26a1be7a-34b9-435d-b32b-07e06a40eb54`: exit 0, `status: SUCCESS`, no `denied_actions` key, and no step with `"status":"ERROR"` in its transcript. `.err` holds only agy's "root agent idle" notice. Review of `git diff autoloop/m2-wave-h.2...m2/autoloop-wave-h.2/T-0290-ability-and-engine-doc` (b5d3662):
+  - Scope: the two Allowed Files and this file. The implementation commit (d887e14) holds only `pkg/engine/ability/ability.go` 0ed49ec and `pkg/engine/doc.go` f3c95d1, the blobs of the lead's dry run. No test changed.
+  - Fences and placement: comments only, no declaration changes. Reuse and ADR 0007: nothing moves or is renamed, and case 3's search for the old names finds nothing. Rules fidelity: every name the new sentences give exists where they say (checked at b3bb4d3: `Keywords`, `ParseKeywordLine`, `Keywords.Add` in `keywords.go`; `Effect.Parts`, `Effect.ReadsZoneRef`, `Filter.InPile`, `Cost.Counted`, `Target.AnotherSlot`, `Step.DealerSlot`, `WhileCornered.Add`, `Aggressive`, `KeywordTrigger` in `ability.go`; `sourceAsset` in `state.go`, `Card.Deployable` in `card.go`, `pileCard` in `zones.go`).
+  - Re-run by the reviewer on the merge: `gofmt -l pkg cmd` clean; `go tool task check` exit 0; `go tool task sim-compare -- 40989a2d` `[PASS]`; `go tool task sim` exit 0, 200 games, P0 58.5% / P1 39.5% / draws 2.0%, P0 50/50 and P1 50/50 main cards executable, no monitor violation.
+  - #176 is `applied` ((b)'s design note and `engine-structs.md` parts in b3bb4d3, (a) and (b)'s `doc.go` part in T-0290) and moves to the directive archive.
