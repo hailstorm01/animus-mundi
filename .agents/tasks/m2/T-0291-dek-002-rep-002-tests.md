@@ -4,7 +4,7 @@ title: "FR-DEK-002 and FR-REP-002 get their own scenario tests (directive #177; 
 kind: shape
 tier: sonnet
 wave: H.3 (board directive #177)
-status: tests
+status: tests-review
 branch: m2/autoloop-wave-h.3/T-0291-dek-002-rep-002-tests
 depends_on: [T-0290]
 claims: [test:TestFR_DEK_002_*, test:TestFR_REP_002_*]
@@ -41,10 +41,16 @@ Add others for what `FR-DEK-002` and `FR-REP-002` say that no test pins under th
 2. If every new test passes on the `test(T-0291)` commit, `kernel-engineer` has nothing to do: the lead reviews the tests alone, as for #46 (T-0052), and merges. A new test that fails is a kernel bug. The lead then names the files and the rule under `Allowed Files` at tests review, and `kernel-engineer` fixes it in this task.
 
 ## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
-- (rules-test-author fills this in)
+All in `pkg/engine/dek_rep_inline_test.go`:
+- `TestFR_DEK_002_ShuffleKeepsEveryCardInTheDeck`
+- `TestFR_DEK_002_ShuffleUsesNoStackItem`
+- `TestFR_DEK_002_ShuffleTouchesOnlyTheSearchedDeck`
+- `TestFR_REP_002_RedirectionUsesNoStackItem`
+- `TestFR_REP_002_ResistantUsesNoStackItem`
+- `TestFR_REP_002_ReplacedDeathFiresNoEntersDiscardTrigger`
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- (none expected)
+- (none)
 
 ## Allowed Files
 - None expected (tests only). The lead names engine files here at tests review only if a new test fails.
@@ -58,3 +64,4 @@ Add others for what `FR-DEK-002` and `FR-REP-002` say that no test pins under th
 
 ## Log
 - 2026-11-20 (lead-architect, wave H.3 session 1): task written from directive #177. Baseline on the run branch at 54c8db4: `cardtown lint rules` reports 56 of 62, not yet executable `FR-DEK-002`, `FR-ENT-102`, `FR-KWD-002n`, `FR-KWD-002p`, `FR-REP-002`, `FR-TRG-006`. #178 (`open: before the next Deliverables task`) and #179 (`open`) are this wave's next directives, after this task. Set `status: tests`; dispatching `rules-test-author` on the task branch, created from the run branch.
+- 2026-11-20 (rules-test-author): wrote 6 tests in `pkg/engine/dek_rep_inline_test.go` (commit `test(T-0291)`). All 6 PASS on `go test ./pkg/engine -run 'TestFR_DEK_002_|TestFR_REP_002_'`, as expected for built rules; none fail. `cardtown lint rules`: "58 of 62 active FRD 01 requirements have a TestFR_* scenario test. Not yet executable: FR-ENT-102, FR-KWD-002n, FR-KWD-002p, FR-TRG-006"; trace check PASS. Stack-item tests compare "place" event counts against an identical scene without the replacement (a Maneuver or activation is itself placed), and never assert shuffle order. Helpers requested: none. Left out: Stalwart and Deploys Exhausted stack tests (Resistant covers the modification case; one behavior each). The replaced-death test uses the guardian synthetic scene, not the card.
