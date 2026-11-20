@@ -4,7 +4,7 @@ title: "Every stack item names its card through `SourceCard`, and `cardName` goe
 kind: harness
 tier: flash
 wave: H.3 (board directive #178)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.3/T-0292-stack-items-name-source-card
 depends_on: [T-0291]
 claims: [func:engine.Game.push, func:engine.Game.StackLabel, func:engine.cardName, func:view.stackView]
