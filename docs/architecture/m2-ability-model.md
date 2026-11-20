@@ -234,7 +234,11 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #175: the stack listing shows each item's chosen targets (`StackView.Chosen`, `ChosenCards`), for the eventual visual client.
    - #176: the docs say what wave H.2 built, starting with the `ability` package doc that the write-up indexes.
 
-   #169, #171 and #173 are pure moves, #172 (a) is a move, #170 changes only a face-down source's prompt, #174 and #175 change only the play screen, and #176 is docs only. Done when #169 to #176 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
+   #169, #171 and #173 are pure moves, #172 (a) is a move, #170 changes only a face-down source's prompt, #174 and #175 change only the play screen, and #176 is docs only. Done when #169 to #176 are `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 6p follows.
+6p. **Wave H.3, M2 done-when, added 2026-11-20 (user; board directive #177).** It goes after wave H.2 and before the write-up (Deliverable 7). It has no survey row and no cards, so a wave run of it (`go tool task wave-run -- -Wave H.3`) writes `none` on its run file's `Cards`, `Deferred` and `Kept` lines. Its tasks are the directives, in board order:
+   - #177: `FR-DEK-002` (deck shuffling) and `FR-REP-002` (inline substitution and trigger suppression) get `TestFR_*` scenario tests, so `cardtown lint rules` reports the M2 target of 58 of 62.
+
+   #177 is tests only. Done when every wave H.3 directive is `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
 ## Open Questions
