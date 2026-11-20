@@ -4,7 +4,7 @@ title: "FR-DEK-002 and FR-REP-002 get their own scenario tests (directive #177; 
 kind: shape
 tier: sonnet
 wave: H.3 (board directive #177)
-status: tests-review
+status: done
 branch: m2/autoloop-wave-h.3/T-0291-dek-002-rep-002-tests
 depends_on: [T-0290]
 claims: [test:TestFR_DEK_002_*, test:TestFR_REP_002_*]
@@ -56,12 +56,13 @@ All in `pkg/engine/dek_rep_inline_test.go`:
 - None expected (tests only). The lead names engine files here at tests review only if a new test fails.
 
 ## Done When
-- [ ] The new tests pass: `go test ./pkg/engine -run 'TestFR_DEK_002_|TestFR_REP_002_'`
-- [ ] `go run ./cmd/cardtown lint rules` reports 58 of 62, its not-yet list is exactly `FR-ENT-102`, `FR-KWD-002n`, `FR-KWD-002p` and `FR-TRG-006`, and its trace check passes
-- [ ] Existing tests pass unedited
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch: tests only)
+- [x] The new tests pass: `go test ./pkg/engine -run 'TestFR_DEK_002_|TestFR_REP_002_'`
+- [x] `go run ./cmd/cardtown lint rules` reports 58 of 62, its not-yet list is exactly `FR-ENT-102`, `FR-KWD-002n`, `FR-KWD-002p` and `FR-TRG-006`, and its trace check passes
+- [x] Existing tests pass unedited
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch: tests only)
 
 ## Log
 - 2026-11-20 (lead-architect, wave H.3 session 1): task written from directive #177. Baseline on the run branch at 54c8db4: `cardtown lint rules` reports 56 of 62, not yet executable `FR-DEK-002`, `FR-ENT-102`, `FR-KWD-002n`, `FR-KWD-002p`, `FR-REP-002`, `FR-TRG-006`. #178 (`open: before the next Deliverables task`) and #179 (`open`) are this wave's next directives, after this task. Set `status: tests`; dispatching `rules-test-author` on the task branch, created from the run branch.
 - 2026-11-20 (rules-test-author): wrote 6 tests in `pkg/engine/dek_rep_inline_test.go` (commit `test(T-0291)`). All 6 PASS on `go test ./pkg/engine -run 'TestFR_DEK_002_|TestFR_REP_002_'`, as expected for built rules; none fail. `cardtown lint rules`: "58 of 62 active FRD 01 requirements have a TestFR_* scenario test. Not yet executable: FR-ENT-102, FR-KWD-002n, FR-KWD-002p, FR-TRG-006"; trace check PASS. Stack-item tests compare "place" event counts against an identical scene without the replacement (a Maneuver or activation is itself placed), and never assert shuffle order. Helpers requested: none. Left out: Stalwart and Deploys Exhausted stack tests (Resistant covers the modification case; one behavior each). The replaced-death test uses the guardian synthetic scene, not the card.
+- 2026-11-20 (lead-architect, tests review, D4/D5): approved, no `kernel-engineer` run needed (every new test passes on the `test(T-0291)` commit, as for #46/T-0052). Checked against FRD 01: the three `FR-DEK-002` tests pin the same cards minus the chosen one, a shuffle placing no stack item (one place event, the search ability's, and at most that item on the stack at the shuffle event), and only the searched deck changing; the three `FR-REP-002` tests pin redirection and Resistant placing no item (place counts equal to the same scene without the replacement) and a completely replaced death firing neither its `HookKilled` nor its `HookEntersDiscard` trigger (`entersTrigger`, active in the discard pile; the deck count is a real check, `newScene` gives each player 20 filler cards). No implementation details asserted, no random order asserted, no existing test edited (the diff adds one test file and the task file). Gates re-run in the review worktree: the six tests pass; `go tool task check` PASS; `cardtown lint rules` "58 of 62", not yet `FR-ENT-102`, `FR-KWD-002n`, `FR-KWD-002p`, `FR-TRG-006`, trace check PASS; `go tool task sim-compare -- autoloop/m2-wave-h.3` byte-identical (starter and stress); `go tool task sim` P0 58.5%, P1 39.5%, draws 2.0% (unchanged). Merging into the run branch; #177 applied.
