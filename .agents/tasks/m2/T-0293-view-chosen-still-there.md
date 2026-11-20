@@ -4,7 +4,7 @@ title: "The view's `StackView.Chosen` holds only the chosen assets still on the 
 kind: harness
 tier: flash
 wave: H.3 (board directive #179)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.3/T-0293-view-chosen-still-there
 depends_on: [T-0292]
 claims: [func:view.chosenTargets, field:view.StackView.Chosen]
