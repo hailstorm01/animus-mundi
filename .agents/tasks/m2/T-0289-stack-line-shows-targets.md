@@ -4,7 +4,7 @@ title: "The play screen's stack listing shows each item's chosen targets (direct
 kind: harness
 tier: flash
 wave: H.2 (board directive #175)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0289-stack-line-shows-targets
 depends_on: [T-0288]
 claims: [func:main.stackLine, func:main.stackItemLine, func:main.chosenTargetsText, func:main.assetRef, method:view.View.Asset]
