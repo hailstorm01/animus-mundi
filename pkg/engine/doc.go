@@ -110,10 +110,14 @@
 //
 // Files:
 //   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
-//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets, deploying a card, and the zone a shape names (zoneMatches).
+//   - turn.go: beginTurn and endTurn. zones.go: moving cards and assets,
+//     deploying a card, the one lookup of a card by ID in a hand or discard
+//     pile (pileCard), and the zone a shape names (zoneMatches).
 //   - actions.go: Action, Apply, checks and LegalActions. combat.go: attack
-//     legality and combat resolution. stack.go: the Resolution Stack, and
-//     StackLabel, the one wording of what a stack item is.
+//     legality and combat resolution. stack.go: the Resolution Stack, its
+//     StackItem (whose FromKeyword names the keyword its trigger came from, an
+//     ability.KeywordTrigger), and StackLabel, the one wording of what a stack
+//     item is.
 //   - trigger.go: the pending-trigger buffer and firing. placement.go: placing
 //     an effect, its modes and then its targets, the card it shows as its
 //     source (shownCard, SourceCard) and its name (sourceName), and whether an
@@ -125,10 +129,14 @@
 //     an ability's filter, and a continuous ability's filter read from its
 //     source (matchesFromSource). effects.go: running a resolved ability's steps.
 //     freedeploy.go: free deploys and the look at the top cards.
-//   - state.go: core state types and lookups, and exhausting an asset. card.go: card types.
+//   - state.go: core state types and lookups, the one lookup of a source that
+//     may have left the battlefield (sourceAsset: the asset, or its last-known
+//     record), and exhausting an asset. card.go: card types, and which of them
+//     are deployed rather than played (Card.Deployable).
 //     cardload.go: the CSV loader, and checkShapeReads, which rejects a definition
-//     that sets a field where nothing reads it. The keyword set, its names, line
-//     parser and fold are in pkg/engine/ability (keywords.go).
+//     that sets a field where nothing reads it, walking an effect's modes through
+//     ability's Effect.Parts. The keyword set, its names, line parser and fold
+//     are in pkg/engine/ability (keywords.go).
 //   - events.go: Event, the Observer, match records and emitting. choice.go: decisions,
 //     and the askFor scope that names their source card.
 //     snapshot.go: Snapshot and its deep copies. buildinfo.go: BuildInfo.
