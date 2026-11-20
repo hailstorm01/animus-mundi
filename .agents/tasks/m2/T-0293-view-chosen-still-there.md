@@ -4,7 +4,7 @@ title: "The view's `StackView.Chosen` holds only the chosen assets still on the 
 kind: harness
 tier: flash
 wave: H.3 (board directive #179)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.3/T-0293-view-chosen-still-there
 depends_on: [T-0292]
 claims: [func:view.chosenTargets, field:view.StackView.Chosen]
@@ -158,10 +158,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - No existing test edited.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-20, lead-architect (wave H.3 run, session 3): written against bc0fea2 for #179; T-0292 is `done`, so #178 is `applied`.
@@ -170,3 +170,20 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with special characters are quoted.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook in `ability.Hook`), #71, #91 (2), #106, #120, #142 (wave H.3 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-20, kernel-engineer (T-0293): implemented test and Edits 1-2 in 122c2c0d and baf6764b; verified Cases 1-9.
+  - Diff shows:
+    - `pkg/view/chosen_test.go`: added `TestStackView_ChosenOmitsAssetsThatLeft` verifying that `StackView.Chosen` retains only chosen asset IDs still on the battlefield (and keeps empty slice for empty slots).
+    - `pkg/view/view.go`: `chosenTargets` verifies `g.Asset(id) != nil` before adding `id` to `chosen[i]`; doc comments on `chosenTargets` and `StackView.Chosen` updated.
+    - `cmd/cardtown/play_screen.go`: doc comment on `chosenTargetsText` updated to note the view filters out assets no longer on the battlefield.
+  - Reused: `g.Asset(id)` from `pkg/engine/state.go`.
+  - Acceptance Cases & verification results:
+    - Case 1: `go -C W test ./pkg/view/ -run TestStackView_ChosenOmitsAssetsThatLeft` on commit 122c2c0d failed before Edits 1-2: `seat 0: Chosen = [[100005 100003] [100005]], want [[100003] []]` and `seat 1: Chosen = [[100005 100003] [100005]], want [[100003] []]`.
+    - Case 2: `go -C W test ./pkg/view/ -run TestStackView_ChosenOmitsAssetsThatLeft` after Edits 1-2 passed (`ok animus-mundi/pkg/view 0.637s`).
+    - Case 3: `git -C W grep -n "g.Asset(id)" -- pkg/view/view.go` -> `pkg/view/view.go:211:				if g.Asset(id) != nil {` (exactly 1 line).
+    - Case 4: `git -C W grep -n "v.Asset(id)" -- cmd/cardtown/play_screen.go` -> `cmd/cardtown/play_screen.go:135` and `:176` (exactly 2 lines).
+    - Case 5: `go -C W test ./pkg/... ./cmd/...` -> ok (exit 0); `git -C W diff autoloop/m2-wave-h.3 --numstat -- "*_test.go"` -> `35 0 pkg/view/chosen_test.go` (exactly 1 line).
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-h.3` -> `[PASS] starter and stress sims match autoloop/m2-wave-h.3 byte for byte, exit codes included`.
+    - Case 7: `git -C W diff autoloop/m2-wave-h.3 --numstat -- pkg cmd docs` -> `6 5 cmd/cardtown/play_screen.go`, `35 0 pkg/view/chosen_test.go`, `10 2 pkg/view/view.go` (exactly 3 lines).
+    - Case 8: `git -C W diff autoloop/m2-wave-h.3 --stat` -> only the 3 code files and this task file.
+    - Case 9: `gofmt -l W/pkg W/cmd` -> clean (no output); `go -C W tool task check` -> passed; `go -C W tool task sim` -> passed (P0 58.5% / P1 39.5% / draws 2.0%).
+  - Handed off for review.
