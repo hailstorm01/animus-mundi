@@ -80,7 +80,7 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	if len(v.Stack) > 0 {
 		fmt.Fprintln(out, "Resolution Stack:")
 		for _, item := range v.Stack {
-			fmt.Fprintf(out, "  %s\n", stackLine(item))
+			fmt.Fprintf(out, "  %s\n", stackLine(v, item))
 		}
 	} else {
 		fmt.Fprintln(out, "Resolution Stack: (empty)")
@@ -90,12 +90,22 @@ func printScreen(out io.Writer, v view.View, newLogs []string) {
 	fmt.Fprintf(out, "Discards: You %d | Opponent %d\n\n", len(v.You.Discard), len(v.Opponent.Discard))
 }
 
-// stackLine is the stack listing's line for item: its Label, the engine's one
-// wording of what it is (Game.StackLabel), with a capital first letter, then
-// the declared zone of a Deploy, then its controller, and the source asset of
-// anything but a Deploy or a Maneuver. An item with no Label, and an ability
-// with no card, print their Kind.
-func stackLine(item view.StackView) string {
+// stackLine is the stack listing's line for item: what it is (stackItemLine),
+// then, after " -> ", the targets it chose that are still there
+// (chosenTargetsText). Chosen targets are public (FR-TGT-001).
+func stackLine(v view.View, item view.StackView) string {
+	if targets := chosenTargetsText(v, item); targets != "" {
+		return stackItemLine(item) + " -> " + targets
+	}
+	return stackItemLine(item)
+}
+
+// stackItemLine is what item is: its Label, the engine's one wording of it
+// (Game.StackLabel), with a capital first letter, then the declared zone of a
+// Deploy, then its controller, and the source asset of anything but a Deploy
+// or a Maneuver. An item with no Label, and an ability with no card, print
+// their Kind.
+func stackItemLine(item view.StackView) string {
 	if item.Label == "" || item.Kind == "Ability" && item.Card == "" {
 		return fmt.Sprintf("%s (Player %d, Source %d)", item.Kind, item.Controller, item.Source)
 	}
@@ -107,6 +117,38 @@ func stackLine(item view.StackView) string {
 		return fmt.Sprintf("%s (Player %d)", label, item.Controller)
 	}
 	return fmt.Sprintf("%s (Player %d, Source %d)", label, item.Controller, item.Source)
+}
+
+// chosenTargetsText names item's chosen targets that are still where they were
+// chosen: the slots in order, separated by "; ", and each slot's picks in pick
+// order, separated by ", ". An asset is named as the view shows it (assetRef;
+// a face-down asset by the Scratch face), and a pile slot's cards are followed
+// by " (discard pile)". A chosen asset no longer on the battlefield is left
+// out, and so is a slot with nothing left. It is "" when nothing is left.
+func chosenTargetsText(v view.View, item view.StackView) string {
+	var slots []string
+	for i := 0; i < max(len(item.Chosen), len(item.ChosenCards)); i++ {
+		var picks []string
+		if i < len(item.Chosen) {
+			for _, id := range item.Chosen[i] {
+				if a := v.Asset(id); a != nil {
+					picks = append(picks, assetRef(*a))
+				}
+			}
+		}
+		if len(picks) > 0 {
+			slots = append(slots, strings.Join(picks, ", "))
+		} else if i < len(item.ChosenCards) && len(item.ChosenCards[i]) > 0 {
+			slots = append(slots, strings.Join(item.ChosenCards[i], ", ")+" (discard pile)")
+		}
+	}
+	return strings.Join(slots, "; ")
+}
+
+// assetRef is how the screen names a battlefield asset: its card as the view
+// shows it, and its ID.
+func assetRef(a view.AssetView) string {
+	return fmt.Sprintf("%s#%d", a.Card, a.ID)
 }
 
 func formatAsset(a view.AssetView) string {
@@ -125,38 +167,13 @@ func formatAsset(a view.AssetView) string {
 	if len(extra) > 0 {
 		statStr = ", " + strings.Join(extra, ", ")
 	}
-	return fmt.Sprintf("%s#%d (%d/%d, %s, Yield R%d T%d%s)", a.Card, a.ID, a.Power, a.MaxHealth, status, a.ReqYield, a.TacYield, statStr)
+	return fmt.Sprintf("%s (%d/%d, %s, Yield R%d T%d%s)", assetRef(a), a.Power, a.MaxHealth, status, a.ReqYield, a.TacYield, statStr)
 }
 
 func actionLabel(v view.View, a engine.Action) string {
-	lookupAsset := func(id int) *view.AssetView {
-		if v.You.HQ != nil && v.You.HQ.ID == id {
-			return v.You.HQ
-		}
-		for i := range v.You.Reserves {
-			if v.You.Reserves[i].ID == id {
-				return &v.You.Reserves[i]
-			}
-		}
-		if v.Opponent.HQ != nil && v.Opponent.HQ.ID == id {
-			return v.Opponent.HQ
-		}
-		for i := range v.Opponent.Reserves {
-			if v.Opponent.Reserves[i].ID == id {
-				return &v.Opponent.Reserves[i]
-			}
-		}
-		for i := range v.Theater {
-			if v.Theater[i].ID == id {
-				return &v.Theater[i]
-			}
-		}
-		return nil
-	}
-
 	findAsset := func(id int) string {
-		if as := lookupAsset(id); as != nil {
-			return fmt.Sprintf("%s#%d", as.Card, id)
+		if as := v.Asset(id); as != nil {
+			return assetRef(*as)
 		}
 		return fmt.Sprintf("Asset#%d", id)
 	}
@@ -183,7 +200,7 @@ func actionLabel(v view.View, a engine.Action) string {
 	case engine.ActEnact:
 		return fmt.Sprintf("Enact: %s", findCard(v.You.Hand, a.Card))
 	case engine.ActActivate:
-		if as := lookupAsset(a.Asset); as != nil {
+		if as := v.Asset(a.Asset); as != nil {
 			return fmt.Sprintf("Activate: %s: %s", findAsset(a.Asset), as.Text)
 		}
 		return fmt.Sprintf("Activate: %s", findAsset(a.Asset))

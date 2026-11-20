@@ -36,6 +36,28 @@ type View struct {
 	Stack               []StackView // bottom first
 }
 
+// Asset is the battlefield asset with ID id as v shows it, in either seat's
+// Headquarters Zone or Reserves or in the Main Theater, or nil when no asset
+// there has that ID.
+func (v View) Asset(id int) *AssetView {
+	for _, s := range []Side{v.You, v.Opponent} {
+		if s.HQ != nil && s.HQ.ID == id {
+			return s.HQ
+		}
+		for i := range s.Reserves {
+			if s.Reserves[i].ID == id {
+				return &s.Reserves[i]
+			}
+		}
+	}
+	for i := range v.Theater {
+		if v.Theater[i].ID == id {
+			return &v.Theater[i]
+		}
+	}
+	return nil
+}
+
 // Side is one seat's zones as the viewing seat sees them.
 type Side struct {
 	HQ        *AssetView // nil once destroyed

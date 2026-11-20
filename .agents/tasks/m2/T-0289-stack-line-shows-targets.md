@@ -4,7 +4,7 @@ title: "The play screen's stack listing shows each item's chosen targets (direct
 kind: harness
 tier: flash
 wave: H.2 (board directive #175)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.2/T-0289-stack-line-shows-targets
 depends_on: [T-0288]
 claims: [func:main.stackLine, func:main.stackItemLine, func:main.chosenTargetsText, func:main.assetRef, method:view.View.Asset]
@@ -343,10 +343,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - No existing test is edited. Every other test passes unedited.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 9): written against b33c338 for #175; T-0288 is `done`, so #174 is `applied`.
@@ -357,3 +357,15 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - #176 (the docs say what wave H.2 built) is next and last; it does not go into this task.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer: implemented T-0289 per instructions.
+  - Applied Edit 3 (`cmd/cardtown/play_targets_test.go`).
+  - Ran Acceptance Case 1: `go test ./cmd/cardtown -run TestPlay_StackLine -v` failed in exactly 6 tests (`TestPlay_StackLineShowsChosenAsset`, `TestPlay_StackLineSeparatesSlotsAndPicks`, `TestPlay_StackLineShowsChosenPileCards`, `TestPlay_StackLineLeavesOutGoneTargets`, `TestPlay_StackLineShowsFaceDownTargetAsViewed`, `TestPlay_StackLineShowsManeuverTargets`), with `TestPlay_StackLineWithoutTargetsIsUnchanged` passing. Committed as `test(T-0289): the stack listing shows chosen targets` (93cf873a).
+  - Applied Edit 1 (`pkg/view/view.go`, `View.Asset(id) *AssetView`) and Edit 2 (`cmd/cardtown/play_screen.go`, `stackLine`, `stackItemLine`, `chosenTargetsText`, `assetRef`, `formatAsset`, and `actionLabel` calling `v.Asset`). Committed as `feat(cardtown): the play screen's stack listing shows each item's chosen targets (T-0289)` (8cef6e24).
+  - Ran Acceptance Case 2: `go test ./cmd/cardtown -run TestPlay_StackLine -v` passed all 7 tests; `go test ./cmd/cardtown -run TestPlay_ -v` passed all tests.
+  - Ran Acceptance Case 3: `git grep -n "lookupAsset" -- pkg cmd` printed nothing; `git grep -n "Reserves.i..ID == id" -- pkg cmd ":!*_test.go"` printed exactly one line: `pkg/view/view.go:48`.
+  - Ran Acceptance Case 4: `git grep -n "#%d" -- cmd/cardtown/play_screen.go` printed exactly 3 lines: lines 151, 178, and 187.
+  - Ran Acceptance Case 5: `git diff autoloop/m2-wave-h.2 --numstat -- "*_test.go"` printed `112 0 cmd/cardtown/play_targets_test.go`, which is the only file in the test commit.
+  - Ran Acceptance Case 6: `git diff autoloop/m2-wave-h.2 --numstat -- pkg cmd docs` printed exactly 3 lines: `53 36 cmd/cardtown/play_screen.go`, `112 0 cmd/cardtown/play_targets_test.go`, and `22 0 pkg/view/view.go`.
+  - Ran Acceptance Case 7: `git diff autoloop/m2-wave-h.2 --stat` lists only `cmd/cardtown/play_screen.go`, `cmd/cardtown/play_targets_test.go`, `pkg/view/view.go`, and the task file.
+  - Ran Acceptance Case 8: `go tool task sim-compare -- autoloop/m2-wave-h.2` printed `[PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included`.
+  - Ran Acceptance Case 9: `gofmt -l pkg cmd` printed nothing; `go tool task check` passed clean (gofmt, `go vet`, all package tests, cardtown linter); `go tool task sim` passed clean (200 games, all invariants held).
