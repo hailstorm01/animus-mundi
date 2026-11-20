@@ -115,7 +115,7 @@ type StackView struct {
 	Zone       string  // Deploy: the declared zone; March: the origin zone
 	Target     int     // Attack: the primary defender (asset ID)
 	Label      string  // what the item is, as the engine's place event words it (Game.StackLabel): "ability of X", "Aggressive trigger of X", "Deploy of X", "March", ...
-	Chosen     [][]int // Ability, Maneuver: per target slot, the chosen asset IDs; empty for a pile slot (see ChosenCards)
+	Chosen     [][]int // Ability, Maneuver: per target slot, for an asset slot, the IDs of its chosen assets that are still on the battlefield, in pick order; empty for a pile slot (see ChosenCards)
 	// ChosenCards: Ability, Maneuver: per target slot, for a pile slot, the names of its chosen cards that are still in a discard pile, in pick order; empty for an asset slot
 	ChosenCards [][]string
 }
@@ -197,13 +197,21 @@ func assetViews(g *engine.Game, as []*engine.Asset) []AssetView {
 	return out
 }
 
+// chosenTargets is what it chose that is still where it was chosen, per
+// target slot and in pick order: an asset slot's assets still on the
+// battlefield (Chosen) and a pile slot's cards still in a discard pile
+// (ChosenCards). A slot with nothing left stays, empty.
 func chosenTargets(g *engine.Game, it *engine.StackItem) ([][]int, [][]string) {
 	chosen := make([][]int, len(it.Chosen))
 	chosenCards := make([][]string, len(it.Chosen))
 	for i, ids := range it.Chosen {
 		chosen[i], chosenCards[i] = []int{}, []string{}
 		if !it.PileSlot(i) {
-			chosen[i] = append(chosen[i], ids...)
+			for _, id := range ids {
+				if g.Asset(id) != nil {
+					chosen[i] = append(chosen[i], id)
+				}
+			}
 			continue
 		}
 		for _, id := range ids {

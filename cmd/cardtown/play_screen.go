@@ -119,11 +119,12 @@ func stackItemLine(item view.StackView) string {
 	return fmt.Sprintf("%s (Player %d, Source %d)", label, item.Controller, item.Source)
 }
 
-// chosenTargetsText names item's chosen targets that are still where they were
-// chosen: the slots in order, separated by "; ", and each slot's picks in pick
-// order, separated by ", ". An asset is named as the view shows it (assetRef;
-// a face-down asset by the Scratch face), and a pile slot's cards are followed
-// by " (discard pile)". A chosen asset no longer on the battlefield is left
+// chosenTargetsText names item's chosen targets, which the view gives only
+// while they are still where they were chosen (view.StackView.Chosen and
+// ChosenCards): the slots in order, separated by "; ", and each slot's picks
+// in pick order, separated by ", ". An asset is named as the view shows it
+// (assetRef; a face-down asset by the Scratch face), and a pile slot's cards
+// are followed by " (discard pile)". An asset ID the view doesn't show is left
 // out, and so is a slot with nothing left. It is "" when nothing is left.
 func chosenTargetsText(v view.View, item view.StackView) string {
 	var slots []string
