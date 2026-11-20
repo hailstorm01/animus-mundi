@@ -1,6 +1,16 @@
 // Package ability is the shape vocabulary for printed card abilities: plain
-// data, no game logic and no card names (the fences linter enforces the
-// latter). New types here arrive only through a `shape` task.
+// data types and enums, no game logic and no card names (the fences linter
+// enforces the latter). New types here arrive only through a `shape` task.
+//
+// It also holds the keyword set that every printed keyword and keyword grant
+// names, Keywords, with its printed names, its line parser (ParseKeywordLine)
+// and its one fold (Keywords.Add), in keywords.go. Its types carry a few small
+// readers, so every caller asks the same question the same way: Effect.Parts,
+// the one walk into an effect's modes, and Effect.ReadsZoneRef, Filter.InPile,
+// Cost.Counted, Target.AnotherSlot, Step.DealerSlot and WhileCornered.Add. A
+// keyword that is a triggered ability is a Trigger built by one constructor,
+// Aggressive, which names its keyword in Trigger.FromKeyword, a
+// KeywordTrigger.
 //
 // A new enum here follows one of three rules, chosen by what its zero value
 // means:
