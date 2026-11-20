@@ -4,7 +4,7 @@ title: "The `ability` package doc and `doc.go`'s Files list say what wave H.2 bu
 kind: harness
 tier: flash
 wave: H.2 (board directive #176)
-status: in-progress
+status: review
 branch: m2/autoloop-wave-h.2/T-0290-ability-and-engine-doc
 depends_on: [T-0289]
 claims: [file:pkg/engine/ability/ability.go, file:pkg/engine/doc.go]
@@ -111,10 +111,18 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None: comments only. No test file changes.
 
 ## Done When
-- [ ] Cases 1-7 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-7 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.2` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-19, lead-architect (wave H.2 run, session 10): written in full against b3bb4d3 for #176 (a) and the `doc.go` part of (b); the design note and `engine-structs.md` parts of (b) are b3bb4d3. `main` (1859fe4) has nothing the run branch lacks, so no sync. Not `WAVE-COMPLETE` before the task: #176 is `open` and is this wave's (the run file's done-when names #169 to #176). This is a harness task, so it skips `tests` and goes straight to `ready`. Tier is `flash`, because the edits are exact and were dry-run. Every command here is on the headless allow-list: one per line, no pipes, no `$`, and patterns with parentheses are quoted. Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook), #71, #91 (2), #106, #120, #142 (wave H.2 has no cards): none has fired. Next: `kernel-engineer` on Flash.
+- 2026-11-19, kernel-engineer (T-0290): applied lead's exact comments-only edits to pkg/engine/ability/ability.go and pkg/engine/doc.go. No code changes, no new declarations, no reuse search needed. Committed feat/doc as docs(engine): the ability package doc and doc.go Files list say what wave H.2 built (T-0290) (d887e14a). Verified Acceptance Cases 1-7:
+  1. git grep on ability.go: 'It also holds the keyword set' -> line 5; 'its one fold (Keywords.Add), in keywords.go' -> line 7; 'Cost.Counted, Target.AnotherSlot, Step.DealerSlot and WhileCornered.Add' -> line 10; 'data, no game logic and no card names' -> 0 matches.
+  2. git grep on doc.go: '(sourceAsset: the asset' -> line 133; '(Card.Deployable)' -> line 135; 'pile (pileCard)' -> line 115; 'StackItem (whose FromKeyword' -> line 118; 'ability.KeywordTrigger), and StackLabel' -> line 119; 'ability\'s Effect.Parts' -> line 138.
+  3. No old names: grep for itemSource, isFencesPath, isRulesPath, KeywordNone, KeywordAggressive, ability.Keyword, Trigger.Keyword, StackItem.Keyword, StackView.Keyword across pkg cmd tools docs/architecture/m2-ability-model.md docs/architecture/engine-structs.md -> 0 matches.
+  4. Exactly the edits: diff autoloop/m2-wave-h.2 --numstat -> 12 2 pkg/engine/ability/ability.go, 14 6 pkg/engine/doc.go. Blob hashes: ability.go 0ed49ecb1f202cd04aca28e9e8880835db1814bd, doc.go f3c95d1b5c714bc9354a69013ab9b3aac153f99d.
+  5. Nothing else changed: diff autoloop/m2-wave-h.2 --stat lists only ability.go, doc.go and task file.
+  6. Sims byte-identical: go tool task sim-compare -- autoloop/m2-wave-h.2 -> [PASS] starter and stress sims match autoloop/m2-wave-h.2 byte for byte, exit codes included.
+  7. Clean gates: gofmt -l pkg -> clean; go tool task check -> all vet, tests, linters passed; go tool task sim -> 200 games clean, all invariants held. Ready for review.
