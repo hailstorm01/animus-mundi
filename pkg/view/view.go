@@ -218,22 +218,19 @@ func chosenTargets(g *engine.Game, it *engine.StackItem) ([][]int, [][]string) {
 func stackView(g *engine.Game, it *engine.StackItem) StackView {
 	s := StackView{Kind: stackKinds[it.Kind], Controller: int(it.Controller), Source: it.Source, Label: g.StackLabel(it)}
 	switch it.Kind {
-	case engine.StackDeploy:
-		s.Card, s.Zone = it.Inst.Card.Name, it.Zone.String()
-	case engine.StackMarch:
-		s.Zone = it.Zone.String()
-	case engine.StackAttack:
-		s.Target = it.Target
-	case engine.StackAbility:
-		// A face-down source names only the Scratch face (Game.SourceCard).
+	case engine.StackDeploy, engine.StackAbility, engine.StackManeuver:
+		// The card both seats see: a face-down source names only the Scratch
+		// face (Game.SourceCard).
 		if c := g.SourceCard(it); c != nil {
 			s.Card = c.Name
 		}
-		s.Chosen, s.ChosenCards = chosenTargets(g, it)
-	case engine.StackManeuver:
-		if it.Inst != nil {
-			s.Card = it.Inst.Card.Name
-		}
+	}
+	switch it.Kind {
+	case engine.StackDeploy, engine.StackMarch:
+		s.Zone = it.Zone.String()
+	case engine.StackAttack:
+		s.Target = it.Target
+	case engine.StackAbility, engine.StackManeuver:
 		s.Chosen, s.ChosenCards = chosenTargets(g, it)
 	}
 	return s

@@ -82,14 +82,6 @@ func (g *Game) settled() {
 	}
 }
 
-// cardName is the name of inst's card, "" for nil.
-func cardName(inst *Instance) string {
-	if inst == nil {
-		return ""
-	}
-	return inst.Card.Name
-}
-
 func assetID(a *Asset) int {
 	if a == nil {
 		return 0

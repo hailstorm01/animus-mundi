@@ -4,7 +4,7 @@ title: "Every stack item names its card through `SourceCard`, and `cardName` goe
 kind: harness
 tier: flash
 wave: H.3 (board directive #178)
-status: ready
+status: review
 branch: m2/autoloop-wave-h.3/T-0292-stack-items-name-source-card
 depends_on: [T-0291]
 claims: [func:engine.Game.push, func:engine.Game.StackLabel, func:engine.cardName, func:view.stackView]
@@ -159,10 +159,10 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
 - None added or edited: a pure move. Every existing test passes unedited.
 
 ## Done When
-- [ ] Cases 1-9 hold, with their commands and results in the Log
-- [ ] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
+- [x] Cases 1-9 hold, with their commands and results in the Log
+- [x] `go tool task sim-compare -- autoloop/m2-wave-h.3` passes (starter and stress sims byte-identical to the run branch)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
 
 ## Log
 - 2026-11-20, lead-architect (wave H.3 run, session 2): written against 674f8ef for #178; T-0291 is `done`, so #177 is `applied`.
@@ -173,3 +173,22 @@ W is your worktree. Run each command on its own, pointed at W. Record each comma
   - #179 (the view's `chosenTargets`) edits `view.go` next, and does not go into this task.
   - Waiting directives checked: #6, #7 (mode `serial`), #15 (2) (no draw or end-of-turn hook in `ability.Hook`), #71, #91 (2), #106, #120, #142 (wave H.3 has no cards). None has fired.
   - Next: `kernel-engineer` on Flash.
+- 2026-11-20, kernel-engineer (T-0292): implemented Edits 1-3 in c9b74666 and verified Cases 1-9.
+  - Diff shows:
+    - `pkg/engine/stack.go`: `push` handles `StackDeploy`, `StackManeuver`, `StackAbility` in one case reading `g.SourceCard(item)`; `StackLabel` reads `g.sourceName(it)` for `StackDeploy` and `StackManeuver`.
+    - `pkg/engine/events.go`: deleted `cardName` (no remaining callers).
+    - `pkg/view/view.go`: `stackView` sets `Card` via `g.SourceCard(it)` in an initial switch for `StackDeploy`, `StackAbility`, `StackManeuver`; sets `Zone`, `Target`, and `Chosen`/`ChosenCards` in a second switch.
+  - Reused: `g.SourceCard(it)` and `g.sourceName(it)` from `pkg/engine/placement.go`.
+  - Acceptance Cases & verification results:
+    - Case 1: `git -C W grep -n "cardName(" -- pkg/engine` -> no output (exit 1).
+    - Case 2: `git -C W grep -n "Inst.Card.Name" -- pkg/engine/stack.go pkg/view/view.go` -> no output (exit 1).
+    - Case 3: `git -C W grep -n "func (g \*Game) SourceCard" -- pkg/engine` -> `pkg/engine/placement.go:79:func (g *Game) SourceCard(it *StackItem) *Card {`
+      `git -C W grep -n "func (g \*Game) sourceName" -- pkg/engine` -> `pkg/engine/placement.go:87:func (g *Game) sourceName(it *StackItem) string {`
+    - Case 4: `git -C W grep -n "g.sourceName(it)" -- pkg/engine/stack.go` -> lines :86, :94, :96.
+      `git -C W grep -n "g.SourceCard(" -- pkg/engine/stack.go pkg/view/view.go` -> `pkg/engine/stack.go:67`, `pkg/view/view.go:224`.
+    - Case 5: `go -C W test ./pkg/... ./cmd/...` -> ok (exit 0); `git -C W diff autoloop/m2-wave-h.3 --numstat -- "*_test.go"` -> no output.
+    - Case 6: `go -C W tool task sim-compare -- autoloop/m2-wave-h.3` -> `[PASS] starter and stress sims match autoloop/m2-wave-h.3 byte for byte, exit codes included`.
+    - Case 7: `git -C W diff autoloop/m2-wave-h.3 --numstat -- pkg cmd docs` -> `0 8 pkg/engine/events.go`, `7 8 pkg/engine/stack.go`, `10 13 pkg/view/view.go`.
+    - Case 8: `git -C W diff autoloop/m2-wave-h.3 --stat` -> only the 3 code files and the task file.
+    - Case 9: `gofmt -l W/pkg W/cmd` -> clean (no output); `go -C W tool task check` -> passed; `go -C W tool task sim` -> passed (P0 58.5% / P1 39.5% / draws 2.0%).
+  - Handed off for review.

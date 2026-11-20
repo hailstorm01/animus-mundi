@@ -58,11 +58,9 @@ func (g *Game) push(item *StackItem) {
 	g.Stack = append(g.Stack, item)
 	e := Event{Kind: EventPlace, Player: int(item.Controller), Source: item.Source, Amount: len(g.Stack)}
 	switch item.Kind {
-	case StackDeploy, StackManeuver:
-		e.Card, e.Inst = item.Inst.Card.Name, item.Inst.ID
 	case StackAttack:
 		e.Target = item.Target
-	case StackAbility:
+	case StackDeploy, StackManeuver, StackAbility:
 		// The card both seats see (SourceCard), and its instance ID only when
 		// that is the instance's own card: a face-down source's ID could
 		// identify the real card (FR-ZON-005).
@@ -78,13 +76,14 @@ func (g *Game) push(item *StackItem) {
 
 // StackLabel names stack item it, in the one wording of what it is: "Deploy of
 // X", "March", "Attack", "Scratch", "Maneuver X", "ability of X" or "<keyword>
-// trigger of X". An ability names its card as both seats see it (SourceCard,
-// FR-ZON-005), or no card if it has none. The place event and the play
-// screen's stack listing (view.StackView.Label) both read it.
+// trigger of X". A Deploy, a Maneuver and an ability name their card as both
+// seats see it (sourceName, FR-ZON-005), or no card if there is none. The
+// place event and the play screen's stack listing (view.StackView.Label) both
+// read it.
 func (g *Game) StackLabel(it *StackItem) string {
 	switch it.Kind {
 	case StackDeploy:
-		return "Deploy of " + cardName(it.Inst)
+		return "Deploy of " + g.sourceName(it)
 	case StackMarch:
 		return "March"
 	case StackAttack:
@@ -92,7 +91,7 @@ func (g *Game) StackLabel(it *StackItem) string {
 	case StackScratch:
 		return "Scratch"
 	case StackManeuver:
-		return "Maneuver " + cardName(it.Inst)
+		return "Maneuver " + g.sourceName(it)
 	case StackAbility:
 		name := g.sourceName(it)
 		if it.FromKeyword != ability.KeywordTriggerNone {
