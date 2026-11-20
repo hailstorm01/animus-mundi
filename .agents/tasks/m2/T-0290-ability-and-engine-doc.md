@@ -4,7 +4,7 @@ title: "The `ability` package doc and `doc.go`'s Files list say what wave H.2 bu
 kind: harness
 tier: flash
 wave: H.2 (board directive #176)
-status: ready
+status: in-progress
 branch: m2/autoloop-wave-h.2/T-0290-ability-and-engine-doc
 depends_on: [T-0289]
 claims: [file:pkg/engine/ability/ability.go, file:pkg/engine/doc.go]
