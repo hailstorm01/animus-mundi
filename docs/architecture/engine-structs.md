@@ -272,13 +272,13 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 
 | Category | File | Structs / Interfaces Defined | Primary Responsibility (Methods on `*Game`) |
 | :--- | :--- | :--- | :--- |
-| **Core State** | [`state.go`](../../pkg/engine/state.go) | `Game`, `Player`, `Asset`, `Instance`, `Outcome`, `lastKnownRecord`, `firingKey` (+ `PlayerID`, `Zone`, `Phase`) | State lookups (`Assets`, `assetsByID`, `fixedOrderPositions`), `LastKnown`, `exhaust` |
-| **Cards & Decks** | [`card.go`](../../pkg/engine/card.go) | `Card` (+ `CardType`) | Printed characteristics, Scratch Company face, `Supported()` |
+| **Core State** | [`state.go`](../../pkg/engine/state.go) | `Game`, `Player`, `Asset`, `Instance`, `Outcome`, `lastKnownRecord`, `firingKey` (+ `PlayerID`, `Zone`, `Phase`) | State lookups (`Assets`, `assetsByID`, `fixedOrderPositions`, `Asset`), `LastKnown`, `sourceAsset` (the battlefield asset or its last-known record), `exhaust` |
+| **Cards & Decks** | [`card.go`](../../pkg/engine/card.go) | `Card` (+ `CardType`) | Printed characteristics, Scratch Company face, `Deployable()`, `Supported()` |
 | | [`cardload.go`](../../pkg/engine/cardload.go) | *(none)* | `LoadCards`, CSV parsing, attaching `cards.Defs`, `checkShapeReads` |
 | | [`deck.go`](../../pkg/engine/deck.go) | `DeckList` | `LoadDeck`, `ValidateDeck` |
 | | [`setup.go`](../../pkg/engine/setup.go) | `Config` | `NewGame` (HQ placement, first-player choice, draw 6, mulligan) |
 | **Turn & Zones** | [`turn.go`](../../pkg/engine/turn.go) | *(none)* | `beginTurn`, `endTurn` (Ready, Draw, Main, End 4a–4d) |
-| | [`zones.go`](../../pkg/engine/zones.go) | *(none)* | `deployCard`, `scratch`, `draw`, `discardFromHand`, `takeCard`, `putCard`, `leaveBattlefield`, `moveOnBattlefield` |
+| | [`zones.go`](../../pkg/engine/zones.go) | *(none)* | `deployCard`, `scratch`, `draw`, `discardFromHand`, `takeCard`, `putCard`, `pileCard` (a card by ID in a hand or discard pile), `leaveBattlefield`, `moveOnBattlefield` |
 | | [`resources.go`](../../pkg/engine/resources.go) | *(enum `Resource` only)* | `generate`, `convert`, `canYield`, `canPay`, `pay` |
 | **Actions & Stack** | [`actions.go`](../../pkg/engine/actions.go) | `Action` (+ `ActionKind`) | `Apply`, `check`, `LegalActions`, `canPlay`, `payAndTake` |
 | | [`stack.go`](../../pkg/engine/stack.go) | `StackItem`, `LockedZone` (+ `StackKind`) | `push`, `resolveStack`, `resolve`, `StackLabel` |
@@ -288,7 +288,7 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | | [`replace.go`](../../pkg/engine/replace.go) | `replacementOption`, `usedKey`, `usedReplacements` | `replaceDeaths`, `replaceDeath`, `replacementsFor`, `chooseReplacement` |
 | | [`layers.go`](../../pkg/engine/layers.go) | `Modifier`, `EffectiveState` (+ `Duration`) | `Power`, `MaxHealth`, `CurrentHealth`, `Keywords`, `cornered`, `IsLethal` |
 | **Abilities & Effects** | [`trigger.go`](../../pkg/engine/trigger.go) | `pendingTrigger`, `triggerSource`, `sourcePos` | `fireHook`, `fire*` helpers, `flushTriggers`, `placeTrigger` |
-| | [`placement.go`](../../pkg/engine/placement.go) | `placement` | `declare`, `chooseOnPlacement`, `placeable`, `couldDoNothing`, `chooseModes`, `SourceCard` |
+| | [`placement.go`](../../pkg/engine/placement.go) | `placement` | `declare`, `chooseOnPlacement`, `placeable`, `couldDoNothing`, `chooseModes`, `sameZoneLock`, `SourceCard`, `sourceName` (the name a stack item shows) |
 | | [`costs.go`](../../pkg/engine/costs.go) | *(none)* | `EffectiveCost`, `PlayCost`, `ActivatedCost`, `DiscardDeployCost`, `costsPayable`, `payCosts` |
 | | [`targeting.go`](../../pkg/engine/targeting.go) | *(none)* | `chooseTargets`, `targetDecision`, `pickAssets`, `pickCards` |
 | | [`filter.go`](../../pkg/engine/filter.go) | *(none)* | `legalTarget`, `matchesFromSource`, `matchesFilterAt`, `matchesCard`, `cardMeets` |
@@ -299,7 +299,7 @@ Several files in `pkg/engine` define no structs (or only an enum) because they h
 | | [`snapshot.go`](../../pkg/engine/snapshot.go) | `Snapshot`, `PlayerSnap`, `AssetSnap`, `CardSnap` | `Snapshot()`, `snapshot()`, `clone()` |
 | **Verification & Build** | [`invariants.go`](../../pkg/engine/invariants.go) | *(none)* | `CheckInvariants` |
 | | [`buildinfo.go`](../../pkg/engine/buildinfo.go) | *(none)* | `BuildInfo` |
-| **Ability Shapes & Cards** | [`ability/ability.go`](../../pkg/engine/ability/ability.go) | `Def`, `Trigger`, `Activated`, `Replacement`, `Static`, `CostReduction`, `WhileCornered`, `Cost`, `Effect`, `Target`, `Step`, `Filter`, `Value` (+ enums) | Pure data shapes for printed abilities (`Aggressive(n)` constructor) |
+| **Ability Shapes & Cards** | [`ability/ability.go`](../../pkg/engine/ability/ability.go) | `Def`, `Trigger`, `Activated`, `Replacement`, `Static`, `CostReduction`, `WhileCornered`, `Cost`, `Effect`, `Target`, `Step`, `Filter`, `Value` (+ enums) | Pure data shapes for printed abilities (+ `KeywordTrigger`, which `Trigger.FromKeyword` holds), the small readers they carry (`Effect.Parts`, the one walk into modes, `Effect.ReadsZoneRef`, `Filter.InPile`, `Cost.Counted`, `Target.AnotherSlot`, `Step.DealerSlot`, `WhileCornered.Add`), and the `Aggressive(n)` constructor |
 | | [`ability/keywords.go`](../../pkg/engine/ability/keywords.go) | `Keywords`, `keywordDef` | The standalone keyword set, its printed names, `Lines`, `Add`, `ParseKeywordLine` |
 | | [`cards/cards.go`](../../pkg/engine/cards/cards.go) (+ `animus.go`, `path.go`, `headquarters.go`) | *(none; `Defs` map & `NotYetExecutable` slice)* | Card-name-keyed `ability.Def` values |
 
