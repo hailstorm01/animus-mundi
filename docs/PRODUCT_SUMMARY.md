@@ -153,7 +153,7 @@ Berserk N was retired on 2026-10-28 and replaced by Overkill (`SVY-R12`, [Design
 ## 3. Latest Milestone: M2 — Animus vs Path Starter Set (✅ Done 2026-11-21)
 
 > [!IMPORTANT]
-> **M2 is done.** Its Done-when checks passed on `main` after wave H.3, and the user finished a `cardtown play` match with every Animus and Path card executable and signed off on 2026-11-21. One deliverable carries over: the ability shapes write-up (Deliverable 5), which the M3 rewrite of FRD 02/03 starts from. **M3 has not started.** It starts when the stakeholder starts it.
+> **M2 is done.** Its Done-when checks passed on `main` after wave H.3, and the user finished a `cardtown play` match with every Animus and Path card executable and signed off on 2026-11-21. One deliverable carries over: the ability shapes write-up (Deliverable 5), which the M3 rewrite of FRD 02/03 starts from. **M3 was scoped on 2026-11-21** (§4, M3). Its active deliverables move into this section once the M3 design note exists.
 
 The physical prototype has shown the core loop is fun, so the open risk is not whether the game is good. It is whether the digital rules are complete and consistent enough to referee every card. The roadmap is therefore ordered around making [FRD 01](frd/01_Game_Rules_FRD.md) executable first, and building everything else on top of a kernel that already plays the game (see [ADR-0001](architecture/decisions/0001-executable-rules-and-frozen-frds.md)).
 
@@ -250,7 +250,7 @@ Tasks outside the deliverables list:
 **Not yet verified:** catalog-wide executable count (all 169 cards). That is M3's Done-when.
 
 > [!NOTE]
-> **Why the card compiler moved from "Phase 2" to M3.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole: roughly 140 of 169 cards need a hand-modeled `ast_overrides.json` entry. Writing those against an ability format that no engine has executed yet risks redoing all of them. M2 settles the format by running real abilities; M3 then builds the pipeline around it, planned with a design note. [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
+> **Where the card compiler went.** Retiring regex rules-text synthesis (FRD 03 v1.2, Decision 1) made hand-authored ability data the long pole, so the compiler moved from "Phase 2" to M3: M2 would settle the format by running real abilities first. It did, as Go data values ([ADR-0004](architecture/decisions/0004-abilities-as-data-in-go.md)), and that format already is the declarative ability data. So on 2026-11-21 the stakeholder scoped M3 to finish the catalog in that format and export it, and moved the authoring pipeline (a hand-written format, its loader and its parity checks) to M6, where the card studio first needs it. [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
 
 ---
 
@@ -262,20 +262,41 @@ Each milestone ends with something that runs. The FRD for a milestone is written
 flowchart LR
     M1["<b>M1</b><br/>Executable Rules Kernel<br/><i>(DONE — pkg/engine)</i>"]
     M2["<b>M2</b><br/>Animus vs Path Starter Set<br/><i>(DONE 2026-11-21 — FRD 01)</i>"]
-    M3["<b>M3</b><br/>Card Data Pipeline & Full Catalog<br/><i>(PLANNED, NEXT — FRD 02/03 rewrite)</i>"]
+    M3["<b>M3</b><br/>Full Catalog & Catalog Export<br/><i>(IN PROGRESS — FRD 02/03 short rewrite)</i>"]
     M4["<b>M4</b><br/>Local Playable Client<br/><i>(PLANNED — FRD 07)</i>"]
     M5["<b>M5</b><br/>Networked Play<br/><i>(PLANNED — FRD 04 rewrite, FRD 06)</i>"]
-    M6["<b>M6</b><br/>Metagame, Deckbuilder & Card Studio<br/><i>(PLANNED — FRD 08)</i>"]
+    M6["<b>M6</b><br/>Metagame, Deckbuilder, Card Studio & Authoring Pipeline<br/><i>(PLANNED — FRD 08)</i>"]
 
     M1 --> M2 --> M3 --> M4 --> M5 --> M6
 ```
 
-### M3: Card Data Pipeline & Full Catalog
-- **Status:** Planned, and next. It starts when the stakeholder starts it. The first step is M2's carried-over ability shapes write-up (§3.2, Deliverable 5).
-- **Specs at start:** rewrite FRD 02 (card data and ability format) and FRD 03 (compiler) from the M2 ability write-up. `lead-architect` then plans the build with a design note (`architecture/m3-<topic>.md`) and decision records, as in M2. M3 has no TDD: the path was retired on 2026-11-03, and [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
-- **Build:** CSV ingestion, ability data for every card, a compiled catalog, and a pipeline that checks rules text against ability data. Each card gets at least one kernel scenario test. Soulless and Concordia cards, plus the Rift and Encampment Headquarters deferred from M2, pull in the FRD 01 rules that the M2 starter set did not reach (`FR-ENT-102`, `FR-KWD-002n`, `FR-TRG-006`, `FR-KWD-002p`) and the waiting board directives listed in §3.3 under *Carried to M3*.
+### M3: Full Catalog & Catalog Export
+- **Status:** 🟡 In progress. Scoped with the stakeholder on 2026-11-21. The first step is M2's carried-over ability shapes write-up (§3.2, Deliverable 5).
+- **Scope decision (2026-11-21): catalog first, then a thin export.** Card abilities are already declarative data: plain Go values in `pkg/engine/cards`, interpreted by the kernel ([ADR-0004](architecture/decisions/0004-abilities-as-data-in-go.md)). So M3 finishes the catalog with the M2 build loop and writes it out as a generated catalog file. It does not build a compiler over a second, hand-written ability format. The authoring pipeline moves to M6 (below), the first milestone where cards get written outside Go.
+- **Starting point (measured 2026-11-21):** 87 cards remain outside the Animus and Path set: 42 Concordia, 42 Soulless, *Rift*, *Encampment* and one Neutral card. 20 already execute, because their rules text is only standalone keywords, so 67 are left to model: 33 Concordia, 32 Soulless and the two Headquarters. The stakeholder reports that Concordia and Soulless have had about as much physical playtesting as Animus and Path. So the ruling rate should match M2's, and the cards should mostly reuse M2's vocabulary.
+- **Specs at start:** after the write-up, `pm-frd-drafter` rewrites FRD 02 and FRD 03 short:
+  - **FRD 02 (card data):** the CSV schema and the ability vocabulary as `pkg/engine/ability` defines it.
+  - **FRD 03 (catalog export):** what the generated catalog holds, deterministic output, and its checksum. The two may merge into one FRD.
+  - **Not rewritten:** the compiler, `ast_overrides.json`, rules-text parity, designer sign-off and the strict prototype gate. They stay frozen as design intent for FRD 08 (M6).
+  - `lead-architect` then plans the build with a design note (`architecture/m3-<topic>.md`) and decision records, as in M2. M3 has no TDD: the path was retired on 2026-11-03, and [TDD 03](tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
+- **Build order (stakeholder, 2026-11-21): starter decks first, as in M2.**
+  1. The ability shapes write-up (`lead-architect`).
+  2. The FRD 02/03 rewrite (`pm-frd-drafter`), then the M3 design note.
+  3. Concordia and Soulless starter decks in `data/decks/`, construction-legal under `FR-SET-001`, drafted by the stakeholder with `game-designer`.
+  4. An M3 ability survey, like M2's: every remaining card mapped onto existing shapes, its gaps and ruling questions, and build waves.
+  5. The deck cards, then a playtest checkpoint: the stakeholder plays Concordia vs Soulless in `cardtown play`.
+  6. The non-deck cards and the *Rift* and *Encampment* Headquarters.
+  7. The catalog export, generated from `data/cards/` and `pkg/engine/cards`.
+
+  Each card gets at least one kernel scenario test. The cards pull in the FRD 01 rules that the M2 starter set did not reach (`FR-ENT-102`, `FR-KWD-002n`, `FR-TRG-006`, `FR-KWD-002p`) and the waiting board directives listed in §3.3 under *Carried to M3*.
 - **Overkill and granted triggered abilities:** *Tempest Surge* and *Redline Infusion* need Overkill (`FR-KWD-002p`). It is its own hook, not a trigger on the combat-kill hook: it fires from combat Step 3 when the attacker's combat damage leaves the defender's Current Health below 0, so it still fires when the defender's death is replaced, and it fixes the excess when it fires. *Redline Infusion* is the first card to grant a quoted triggered ability until end of turn (*gains "Overkill: Ready this unit."*), a new M3 ability shape. The settling tests are named in the [M2 design note](architecture/m2-ability-model.md), Open Question 12.
-- **Done when:** `cardtown lint rules` reports every active FRD 01 requirement pinned, every card without a `needsRework` flag compiles and executes in the kernel, and `cardtown sim` runs clean on full faction decks.
+- **Done when:**
+  - `cardtown lint rules` reports all 62 active FRD 01 requirements pinned.
+  - Every card in `data/cards/` without a `needsRework` flag executes in the kernel. Today none is flagged, so that is all 169.
+  - No reachable matrix item or survey ruling is open.
+  - The Concordia and Soulless starter decks are construction-legal, and `cardtown sim` runs clean on every pairing of the four starter decks.
+  - The catalog export includes every card and is byte-identical across runs.
+  - A human finishes a Concordia vs Soulless `cardtown play` match.
 
 ### M4: Local Playable Client
 - **Specs at start:** draft FRD 07 (Godot client) around what the player sees and does: board and zones, stack visualization, choice prompts, animation pacing.
@@ -288,8 +309,8 @@ flowchart LR
 - **Done when:** two remote players complete a match without either client ever receiving the other's hidden information.
 
 ### M6: Metagame, Deckbuilder, Card Studio & Telemetry
-- **Specs at start:** draft FRD 08.
-- **Build:** in-game deckbuilder enforcing `FR-SET-001`, deck codes, the card authoring studio, and win-rate and play-frequency telemetry for balance patches.
+- **Specs at start:** draft FRD 08, drawing on frozen FRD 02/03 for the authoring pipeline.
+- **Build:** in-game deckbuilder enforcing `FR-SET-001`, deck codes, win-rate and play-frequency telemetry for balance patches, and the card authoring studio. The studio comes with the authoring pipeline moved here from M3 on 2026-11-21: ability data written outside Go and loaded back into the kernel's ability definitions, plus the authoring checks frozen FRD 02/03 describe (rules text against ability data, designer sign-off, the strict prototype gate).
 
 ---
 
@@ -301,14 +322,16 @@ flowchart LR
 | [`keyword_interaction_matrix.md`](frd/keyword_interaction_matrix.md) | **Active** | M2–M3 | Reachable items closed; reopen when M3 cards or keywords make an item reachable (`KIM-C01` first) |
 | [`m2_starter_set_ability_survey.md`](design/m2_starter_set_ability_survey.md) | Complete (M2) | M2, then M3 as reference | Every ruling, `SVY-R1` to `SVY-R54`, is answered and recorded in FRD 01. Input to the ability shapes write-up |
 | [`m2-ability-model.md`](architecture/m2-ability-model.md) (design note) | **Active** | M2 | Deliverables 1–6 done (waves A1 to H.3); Deliverable 7, the write-up, not started |
-| `design/m2_ability_shapes.md` (ability shapes write-up) | Not started | M2 → M3 | `lead-architect` writes it first when M3 opens; FRD 02/03 are rewritten from it |
+| `design/m2_ability_shapes.md` (ability shapes write-up) | Not started: **next** | M2 → M3 | `lead-architect` writes it first; FRD 02/03 are rewritten from it |
 | [`design/outcomes/`](design/outcomes/) (Design Outcome Reports) | **Active** | M2 onward | One file per `game-designer` decision; `pm-frd-drafter` sets each one's `Status:` when applied |
-| [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3 | Rewrite at M3 start |
-| [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3 | Rewrite at M3 start |
+| [`02_Card_Data_Pipeline_FRD.md`](frd/02_Card_Data_Pipeline_FRD.md) | Frozen as design intent (v1.3) | M3, M6 | Rewrite short after the write-up: the CSV schema and the `ability` vocabulary. The authoring parts stay frozen for FRD 08 |
+| [`03_Card_Compiler_FRD.md`](frd/03_Card_Compiler_FRD.md) | Frozen as design intent (v1.2) | M3, M6 | Rewrite short after the write-up, as the catalog export (may merge into FRD 02). The compiler and parity gates stay frozen for FRD 08 |
 | M3 design note (`architecture/m3-<topic>.md`) | Not started | M3 | `lead-architect` writes it after the FRD 02/03 rewrites |
+| Concordia and Soulless starter decks (`data/decks/`) | Not started | M3 | The stakeholder drafts them with `game-designer`; can run alongside the write-up |
+| M3 ability survey (`design/m3_<topic>.md`) | Not started | M3 | Map the 67 remaining cards onto the `ability` vocabulary, list gaps and ruling questions, and order the waves, deck cards first |
 | [`03_Card_Compiler_TDD.md`](tdd/03_Card_Compiler_TDD.md) | Frozen as design intent (2026-11-03) | M3 | None: reference only, not revised. The M3 design note does its job |
 | [`04_Client_Engine_Protocol_Networking_FRD.md`](frd/04_Client_Engine_Protocol_Networking_FRD.md) | Frozen as design intent (v1.5) | M5 | Rewrite at M5 start |
 | [`05_Headless_Game_Engine_FRD.md`](frd/05_Headless_Game_Engine_FRD.md) | Frozen as design reference (v1.4) | M2–M3 | Consult while extending `pkg/engine` |
 | `06_Server_Daemon_Matchmaking_FRD.md` | Not started | M5 | Draft at M5 start |
 | `07_Godot_Client_Architecture_FRD.md` | Not started | M4 | Draft at M4 start |
-| `08_Deckbuilder_and_Card_Studio_FRD.md` | Not started | M6 | Draft at M6 start |
+| `08_Deckbuilder_and_Card_Studio_FRD.md` | Not started | M6 | Draft at M6 start, including the authoring pipeline moved from M3 (2026-11-21) |
