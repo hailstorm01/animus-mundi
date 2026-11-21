@@ -243,6 +243,8 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    #177 is tests only, #178 is a pure move, and #179 changes only what the view returns, not the play screen's output. Done when every wave H.3 directive is `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
 7. **Write-up:** a short `docs/design/m2_ability_shapes.md` that indexes `go doc ./pkg/engine/ability` and records what changed from FRD 02 (survey gaps G1–G3 plus anything later). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold.
 
+   **M2 done-when checks, after wave H.3 (re-run by lead-architect on `main` at `d3e44ef5`, 2026-11-21):** `cardtown lint rules` reports 58 of 62 active FRD 01 requirements pinned (the M2 target), `cards.NotYetExecutable` is empty, every Design Outcome is applied and the matrix's one open item (`KIM-C01`) is unreachable, and `go tool task check` and `go tool task sim` pass with no invariant or monitor violation. **Manual play signed off (user, 2026-11-21):** the user finished a `cardtown play` match with every Animus and Path card executable, and the playtest raised no feedback for the board. So the write-up is the only M2 work left.
+
 ## Open Questions
 
 1. **Starter decklists: answered 2026-10-19.** See [Starter Decks](#starter-decks). The other 38 Animus and Path cards stay in M2 under the current done-when.
