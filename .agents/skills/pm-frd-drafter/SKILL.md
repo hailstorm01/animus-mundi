@@ -67,7 +67,7 @@ When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs 
 ### Step 2: Scope & Domain Prefix Reservation
 1. Define the functional domain boundaries for the document.
 2. Select a unique 3-letter requirement domain code (`FR-[DOM]-YYY`) that does not collide with existing prefixes:
-   - *Existing Prefixes:* `FR-ENT-`, `FR-LAY-`, `FR-QUE-`, `FR-CBT-`, `FR-KWD-`, `FR-ZON-`, `FR-SES-`, `FR-PAC-`, `FR-SEC-`, `FR-SPC-`, `FR-MSG-`, `FR-SET-`, `FR-DAT-`, `FR-ABL-`, `FR-TXT-`, `FR-VAL-`, `FR-CMP-`.
+   - *Existing Prefixes:* search for them, don't keep a list. Grep `FR-[A-Z]{3}-` across `docs/frd/`, including `reference/`, and take the unique matches. Search every mention, not just `#### FR-` headings: some requirements are list items (`FR-KWD-002a`), and a prefix that is only cited, retired or frozen for a later FRD is still taken. `FR-XXX-` and `FR-DOM-` are template placeholders.
    - *Target Domain Examples:* `FR-ENG-` (Headless Engine), `FR-SRV-` (Server Daemon & Matchmaker), `FR-CLN-` (Godot Client Architecture), `FR-DCK-` (Deckbuilder & Collection).
 
 ### Step 3: Flag Product Decisions & Collect Technical Questions
