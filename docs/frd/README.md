@@ -6,10 +6,12 @@
 | :-- | :-- | :-- |
 | [01 Game Rules](01_Game_Rules_FRD.md) | **Active, single source of truth for rules** | `pkg/engine` scenario tests, `cardtown lint rules` |
 | [Keyword Interaction Matrix](keyword_interaction_matrix.md) | **Active, bounded edge-case register for FRD 01** | Closes when every cell has a ruling |
-| [02 Card Data Pipeline](02_Card_Data_Pipeline_FRD.md) | Frozen as design intent | Rewritten at the start of M3 |
-| [03 Card Compiler](03_Card_Compiler_FRD.md) | Frozen as design intent | Rewritten at the start of M3 |
+| [02 Card Data & Ability Vocabulary](02_Card_Data_Pipeline_FRD.md) | **Active** (v2.0, M3 start): the card sheet schema and the `pkg/engine/ability` vocabulary | `cardtown lint sheets`, `syntax`, `frd`; `go doc -all ./pkg/engine/ability` wins any disagreement |
+| [03 Catalog Export](03_Card_Compiler_FRD.md) | **Active** (v2.0, M3 start): what the generated catalog holds, its determinism and checksum. The file keeps its old name | `cardtown lint frd`; the export itself is built last in M3 |
 | [04 Client-Engine Protocol & Networking](04_Client_Engine_Protocol_Networking_FRD.md) | Frozen as design intent | Rewritten at the start of M5 |
 | [05 Headless Game Engine](05_Headless_Game_Engine_FRD.md) | Frozen as design reference | `pkg/engine` is the engine's source of truth |
+
+The v1.3 and v1.2 texts of FRD 02 and 03 are kept unedited in [`reference/`](reference/) for FRD 08 (M6), with the benchmark blueprints. `cardtown lint frd` reads only the top level of this folder, so a copy there defines no requirement and is not checked.
 
 Milestones (M1–M6) are defined in [`PRODUCT_SUMMARY.md`](../PRODUCT_SUMMARY.md). The reasoning behind this split is in [ADR-0001](../architecture/decisions/0001-executable-rules-and-frozen-frds.md).
 

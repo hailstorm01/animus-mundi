@@ -1,347 +1,226 @@
-# Card Compiler & Blueprint Bundler - Functional Requirements Document (FRD v1.2)
-**Go CLI Contract, CSV-to-AST Catalog Linker, Schema Validation Gate & RFC 8785 Cryptographic Fingerprinting Specification**
+# Catalog Export - Functional Requirements Document (FRD v2.0)
+**What the Generated Card Catalog Holds, Deterministic Output and Its Checksum**
 
-> [!IMPORTANT]
-> **Status: FROZEN as design intent (2026-10-19).** This document records direction and prior thinking. It is not an active specification and is not kept in sync with [FRD 01](01_Game_Rules_FRD.md). Where it restates a game rule, **FRD 01 and its `pkg/engine` scenario tests win**. Technical choices here are proposals; they get decided when the code that needs them is built and recorded in [`docs/architecture/decisions/`](../architecture/decisions/README.md). **Revisit:** rewrite at the start of M3 together with FRD 02. [TDD 03](../tdd/03_Card_Compiler_TDD.md) was built on this version and is parked with it. See [`docs/frd/README.md`](README.md).
+> [!NOTE]
+> **Status: Active, rewritten at the start of M3 (2026-11-23).** This replaces the v1.2 design-intent text, which is kept unedited as [`reference/03_Card_Compiler_FRD_v1.2_frozen.md`](reference/03_Card_Compiler_FRD_v1.2_frozen.md) for FRD 08 (M6). The file name is unchanged because `cardtown lint frd` expects it, although this document no longer specifies a compiler. FRD 01 still wins every rules question. [TDD 03](../tdd/03_Card_Compiler_TDD.md) stays frozen as design intent.
 
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This Functional Requirements Document (FRD) establishes the authoritative technical and operational specification for the **Card Compiler & Blueprint Bundler (`cmd/compile-blueprints`)**, implemented in pure Go (Golang 1.22+). Whereas **[Card Data Pipeline & Ability Authoring FRD](02_Card_Data_Pipeline_FRD.md)** (`FR-DAT-001` – `FR-DAT-008`, `FR-ABL-001` – `FR-ABL-012`, `FR-TXT-001` – `FR-TXT-006`) defines all card CSV schemas, target enums, slug derivation rules, and declarative Ability AST models, this document specifies the build-time compiler toolchain that links those authored artifacts into the immutable production catalog (`data/schemas/blueprints.json`) consumed by **[Client-Engine Protocol & Networking FRD](04_Client_Engine_Protocol_Networking_FRD.md)** and **[Headless Game Engine FRD](05_Headless_Game_Engine_FRD.md)**.
+The catalog is a generated file that holds every card: its printed characteristics, its standalone keywords and its ability definition, written out from the same data the kernel runs. It is the last M3 deliverable (build order step 7, `PRODUCT_SUMMARY.md` §4) and its Done-when is "includes every card and is byte-identical across runs". It is not a compiler. Card abilities are already declarative data as Go values (ADR-0004), so there is nothing to compile: the catalog serializes them mechanically, using the vocabulary [FRD 02](02_Card_Data_Pipeline_FRD.md) names.
 
 ```text
-┌──────────────────────────────────┐   ┌──────────────────────────────────┐
-│  Authoring Balance CSV Sheets    │   │  Declarative Ability AST Registry│
-│       (data/cards/*.csv)         │   │  (data/schemas/ast_overrides.json│
-│  - 10 RFC-4180 Sheets            │   │   + FR-ABL-012 Keyword Lookup)   │
-│  - Defined in FR-DAT-001 - 008   │   │  - Modeled per FR-ABL-001 - 012  │
-└─────────────────┬────────────────┘   └─────────────────┬────────────────┘
-                  │                                      │
-                  └──────────────────┬───────────────────┘
-                                     │
-                        cmd/compile-blueprints (FR-CMP-001)
-                        (Pure Go Standalone CLI Tool)
-                                     │
-                                     ├─── [1] CLI Init & Atomic Temp Staging (FR-CMP-001 - 003)
-                                     ├─── [2] CSV Reader & Collision Gate (FR-CMP-004 - 007)
-                                     ├─── [3] Catalog Linking & Keyword Lookup (FR-CMP-013, 017)
-                                     ├─── [4] Parity, Strict & Schema Gates (FR-CMP-019 - 022)
-                                     └─── [5] RFC 8785 Hash & Envelope Emission (FR-CMP-023 - 027)
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│             Compiled Production Master Catalog                          │
-│                  (data/schemas/blueprints.json)                         │
-│  - Canonical Envelope (catalogChecksum, cardDataVersion, blueprints)    │
-│  - 256-Bit SHA-256 over RFC 8785 Canonical Bytes (FR-CMP-024 - 025)     │
-└─────────────────────────────────────────────────────────────────────────┘
+data/cards/*.csv ────────────┐  load: FR-DAT-006..008
+pkg/engine/cards.Defs ───────┴──> every card + keyword set + Def (FR-ABL-001)
+                                         │ generate: FR-CMP-001, FR-CMP-002
+                                         ▼
+                              catalog (FR-CMP-023): one entry per card, sorted
+                                         ├── deterministic bytes (FR-CMP-024)
+                                         ├── checksum over the entries (FR-CMP-025)
+                                         └── dataset version (FR-CMP-026)
 ```
 
-### Revision Summary (v1.1 -> v1.2):
-1. **Pure Go Toolchain Architecture Pivot**: Replaced the legacy PowerShell script implementation with a standalone, cross-platform **Go (Golang 1.22+) CLI compiler (`cmd/compile-blueprints`)**, eliminating script-wrapper indirection across the toolchain.
-2. **POSIX/GNU CLI Parameter Contract (`FR-CMP-001`)**: Standardized command-line parameters to native flags (`--source-dir`, `--output-dir`, `--schema-dir`, `--overrides-file`, `--validate-only`, `--emit-schemas`, `--strict`, `--minify`, `--version`, `--verbose`).
-3. **Execution Performance SLA Order-of-Magnitude Boost (`FR-CMP-002`)**: Tightened warm execution latency from `< 5,000 ms` to **`< 500 ms`** across all 10 CSV sheets (~169–200 cards).
-4. **Native RFC 8785 Canonical JSON & Checksumming (`FR-CMP-024`)**: Removed PowerShell/.NET `csc.exe` session-caching workarounds in favor of native Go standard library cryptography (`crypto/sha256`) and deterministic RFC 8785 JCS canonicalization.
-5. **Shared Go Domain Models**: Unified `CardBlueprint` and `AbilityDef` AST structs between the compiler toolchain and the Phase 3 Headless Game Engine (`05_Headless_Game_Engine_FRD.md`), eliminating type drift across the stack.
+### Revision Summary (v1.2 -> v2.0):
+- **Rewritten short at the M3 start.** The compiler, the sidecar `ast_overrides.json`, the rules-text parity checks, designer sign-off and the strict prototype gate moved to M6 (`PRODUCT_SUMMARY.md` §4, 2026-11-21). They are not specified here and stay in the frozen copy for FRD 08. Regex rules-text synthesis stays retired (v1.2 Decision 1).
+- **What stays is the output**: its contents, its determinism, its checksum and its version, under their v1.2 IDs.
+- **Retired IDs became Subsumed stubs** pointing to their new owner. No ID was deleted.
+- Dropped from v1.2: the CLI flag list, the 500 ms performance budget, the exit-code numbers, the `ERR_*` code catalog, the `generatedAt` timestamp and the `--emit-schemas` mode. They are technical choices (open questions below) or, for the timestamp, incompatible with byte-identical output.
 
-### Specification Scope (v1.1):
-1. **CLI Contract, Execution Lifecycle & Atomic Staging (`FR-CMP-001` – `FR-CMP-003`)**: Command-line parameters, deterministic pipeline stages, process exit codes (`0`–`5`), and atomic temp-file staging (`blueprints.json.tmp.$PID`) with rollback guarantee.
-2. **CSV Reader Mechanics & Ingestion Edge Cases (`FR-CMP-004` – `FR-CMP-007`)**: Low-level file reader edge cases (BOM/line-ending tolerance, blank row skipping, duplicate slug collision detection, and diagnostic error mapping) delegating all column schemas and type rules to `02_Card_Data_Pipeline_FRD.md` (`FR-DAT-001` – `FR-DAT-008`).
-3. **Catalog Linking, Keyword Lookup & AST Registry Binding (`FR-CMP-013`, `FR-CMP-017`)**: Joining ingested CSV rows with standalone keyword definitions (`FR-ABL-012`) and modeled ability ASTs (`data/schemas/ast_overrides.json`), enforcing `rulesText` synchronization (`ERR_OVERRIDE_TEXT_MISMATCH`) and orphan detection (`ERR_ORPHAN_OVERRIDE`).
-4. **Build-Time Parity, Review & JSON Schema Validation Gates (`FR-CMP-019` – `FR-CMP-022`)**: Designer parity sign-off verification (`parityVerified`), `--strict` production gating (`FR-VAL-003`), and JSON Schema Draft 2020-12 validation.
-5. **RFC 8785 Canonical Hashing, Envelope Emission & CLI Diagnostics (`FR-CMP-023` – `FR-CMP-027`)**: Production `blueprints.json` envelope assembly, RFC 8785 JCS normalization, 256-bit SHA-256 `catalogChecksum` computation, semantic dataset versioning, and structured `ERR_*` CLI reporting.
+### Specification Scope (v2.0):
+1. **Generating the catalog (`FR-CMP-001`, `FR-CMP-002`, `FR-CMP-029`)**: one command, fail-closed, regenerated and never edited.
+2. **What it holds, how it is written, how it is identified (`FR-CMP-023` - `FR-CMP-026`)**: contents, deterministic output, checksum, dataset version.
+3. **Failure behavior (`FR-CMP-027`, `FR-CMP-030`)**.
 
 ---
 
-## ARCHITECTURAL DECISIONS
+## PRODUCT DECISIONS FLAGGED FOR REVIEW
 
 > [!IMPORTANT]
-> **DECISION 1: Pure Go Catalog Linker Architecture — Delegating CSV & AST Modeling to FRD 02 (`FR-CMP-017`)**
-> - **Context**: All card data schemas (`FR-DAT-001` – `FR-DAT-008`), rules text grammar (`FR-TXT-001` – `FR-TXT-006`), and declarative Ability AST structures (`FR-ABL-001` – `FR-ABL-012`, `FR-TRG-001`, `FR-PRM-001`) are canonically specified in [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md).
-> - **Decision**: The compiler is implemented in pure Go (Golang 1.22+) as `cmd/compile-blueprints` and operates strictly as a deterministic **Catalog Linker, Validator, and Checksum Bundler** rather than a natural-language regex parser:
->   1. **Single Source of Schema Truth**: CSV column layouts (15-column asset sheets and 9-column maneuver sheets), enum sets, boolean literals (`"true"` / `"false"`), and slug derivation rules are referenced directly from `FR-DAT-001` – `FR-DAT-008` and shared via Go domain model structs with the Headless Engine (`05_Headless_Game_Engine_FRD.md`).
->   2. **Keyword Lookup + Declarative AST Registry**: Vanilla cards (`rulesText` equal to `"--"` or `""`) emit `abilities: []` (`FR-DAT-007`), and standalone keyword lines map via the 15-keyword lookup table in `FR-ABL-012` (`FR-CMP-013`). All non-keyword card abilities and additional deployment/enactment costs (`additionalDeploymentCosts`, `FR-DAT-005`) are modeled declaratively per `02_Card_Data_Pipeline_FRD.md` and linked from `data/schemas/ast_overrides.json` (`FR-CMP-017`). Sentence-level regex NLP synthesis (`FR-CMP-008` – `FR-CMP-012`, `FR-CMP-014` – `FR-CMP-016`) is retired and subsumed.
+> **DECISION 1: The catalog carries no timestamp (`FR-CMP-023`, `FR-CMP-024`)**
+> - **Inference**: The v1.2 envelope had `generatedAt`. A timestamp makes two runs on the same data differ, and the M3 Done-when requires byte-identical output.
+> - **Decision**: No timestamp, host name, path or run identifier appears in the catalog. When a catalog was made is in the version-control history of whatever stores it.
+> - **Alternative Considered**: Keep the timestamp and exclude it from the checksum only. Rejected: the checksum would match while the bytes differ, which is the property the Done-when forbids.
 
 > [!IMPORTANT]
-> **DECISION 2: 256-Bit Cryptographic Checksum via RFC 8785 & Full SHA-256 (`FR-CMP-024`, `FR-CMP-025`)**
-> - **Decision**: `blueprints.json` is formatted with 2-space indentation in Git for readable diffs (`FR-CMP-023`), while `catalogChecksum` is computed via SHA-256 (`0x`-prefixed 64-char lowercase hex) over the RFC 8785 Canonical JSON bytes (sorted keys, no whitespace, UTF-8 without BOM), guaranteeing cross-platform parity independent of file formatting.
+> **DECISION 2: `needsRework` is carried but does not change the checksum (`FR-CMP-023`, `FR-CMP-025`)**
+> - **Inference**: v1.2 excluded the development flag from the hash so that toggling it during design never breaks checksum parity. The strict gate that rejects flagged cards is frozen for FRD 08. No card is flagged today.
+> - **Decision**: Keep the v1.2 behavior: every card is exported with its flag, and the checksum ignores the flag. The export never refuses a flagged card.
+> - **Alternative Considered**: Hash the flag too. Rejected for now: a design edit that changes no printed value would force every future client to re-sync. Drop the flag from the catalog. Rejected: FRD 08's studio needs it, and the sheet already holds it.
+
+> [!IMPORTANT]
+> **DECISION 3: The export does not gate on executability (`FR-CMP-023`, `FR-CMP-030`)**
+> - **Inference**: "Every card without `needsRework` executes" is an M3 Done-when, checked by the kernel's tests (`cards.NotYetExecutable`). The catalog export is built after the cards.
+> - **Decision**: Generation succeeds for any data that loads. It does not also check that each card can run. A card with an unsupported printed line is exported with that line visible in its text, and the Done-when check, not the export, keeps such a card from shipping.
+> - **Alternative Considered**: Fail generation while any unflagged card is unsupported. Rejected: this is the strict prototype gate in another form, which stays frozen.
+
+> [!IMPORTANT]
+> **DECISION 4: A dataset version is kept (`FR-CMP-026`)**
+> - **Inference**: FRD 04 cites `cardDataVersion`, and a person reading a catalog wants a readable label next to the checksum.
+> - **Decision**: Keep the v1.2 three-part version and its bump policy. It labels the catalog and decides nothing: equality of cards is the checksum.
+> - **Alternative Considered**: Drop it and rely on the checksum alone. Rejected: FRD 04's ID has to keep a meaning, and the cost is one field.
+
+## OPEN TECHNICAL QUESTIONS
+
+Questions this FRD raises but deliberately does not answer. `lead-architect` resolves them as decision records in `docs/architecture/decisions/` when the code needs them.
+
+- The serialization: field names, enum spellings (the Go names of FRD 02, or a mapping to them), zero-value omission, and how a `Def` and a `Keywords` set are written. Only `Keywords` has JSON tags today.
+- Canonical form and digest: v1.2 proposed RFC 8785 canonical JSON hashed with SHA-256 as `0x` plus 64 lowercase hex characters. Is that kept? What text encoding and line ending are fixed for the file?
+- The catalog's identifier for a card: the printed name, or a derived slug (`FR-DAT-002`)?
+- The file's name and location, and whether it is committed or built. If committed, is there a check that fails when it differs from a fresh generation (`FR-CMP-029`)?
+- The command: a `cardtown` subcommand or a separate executable, its flags and its exit codes.
+- Does a machine-readable schema of the catalog get published, and is its output validated against it?
+- Where the generator lives, given that `pkg/engine/ability` is fenced to hold no card names.
+- Renaming this file and the `ExpectedFiles` list in `cardtown lint frd` that requires `03_Card_Compiler_FRD.md`.
 
 ---
 
-## DOMAIN 1: CLI CONTRACT, EXECUTION LIFECYCLE & ATOMIC STAGING
+## DOMAIN 1: GENERATING THE CATALOG
 
-### Section 1.1: CLI Invocation & Staging Invariants
+### Section 1.1: Command and Lifecycle
 
-#### FR-CMP-001: Compiler CLI Command Interface & Parameter Contract
-The Card Compiler CLI resides at `cmd/compile-blueprints` (compiling to `cardtown-compiler` / `compile-blueprints`) as a standalone, statically linked Go executable with zero external runtime dependencies, providing cross-platform execution across Linux (x86_64/ARM64), macOS, and Windows:
+#### FR-CMP-001: Generate Command
+- **Contract**: One command, run by an operator or by CI, reads the card sheets and the ability definitions from the repository and writes the catalog. It reports success or failure by its exit status. It needs no network and no match.
+- **Invariants**: Running it again on unchanged data leaves the catalog byte-identical (`FR-CMP-024`).
+- **Edge Cases**: A failure prints what failed and exits non-zero (`FR-CMP-027`). A successful run prints how many cards it wrote.
 
-```text
-Usage: compile-blueprints [flags]
+#### FR-CMP-002: Generation Lifecycle and Atomic Emission
+- **Contract**: Generation runs these stages in order: read every sheet (`FR-DAT-006`, `FR-DAT-007`), attach each card's keyword set and definition (`FR-ABL-001`, `FR-ABL-012`, `FR-ABL-014`), check, then write. The catalog is written only after every stage has passed, and the write replaces the old catalog in one step.
+- **Invariants**: A failed or interrupted run leaves the previous catalog exactly as it was. No partial or half-written catalog is ever visible.
+- **Edge Cases**: If the destination cannot be written, the run fails with `FR-CMP-027` and changes nothing.
 
-Flags:
-  --source-dir string      Directory containing the 10 authoritative CSV sheets (default "data/cards")
-  --output-dir string      Target directory for blueprints.json (default "data/schemas")
-  --schema-dir string      Directory containing JSON schemas (default "data/schemas")
-  --overrides-file string  Path to the declarative AST registry (default "data/schemas/ast_overrides.json")
-  --validate-only          Dry-run mode executing full ingestion, linking, and schema validation without writing output files
-  --emit-schemas           Export standalone Draft 2020-12 JSON schemas directly from Go AST struct definitions
-  --strict                 Reject rework cards (needsRework) or unverified overrides
-  --minify                 Emit unformatted blueprints.min.json alongside 2-space indented blueprints.json
-  --version string         Set cardDataVersion SemVer 2.0 string (default "1.0.0")
-  --verbose                Emit per-card linking, validation, and checksum telemetry to stdout
-```
+#### FR-CMP-029: The Catalog Is Generated, Never Authored
+- **Contract**: The catalog is a function of the sheets and the definitions and nothing else. To change a card, change its sheet row or its definition and regenerate (`FR-DAT-001`).
+- **Invariants**: A catalog that differs from a fresh generation is stale, however it came to differ.
 
-1. **`--source-dir`**: Directory containing the 10 authoritative CSV sheets defined in [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md).
-2. **`--output-dir`**: Target directory for `blueprints.json` (and `blueprints.min.json` when `--minify` is set).
-3. **`--schema-dir`**: Directory containing `CardBlueprint.schema.json`, `AbilityDef.schema.json`, and `ast_overrides.schema.json`.
-4. **`--overrides-file`**: Path to the declarative AST registry (`data/schemas/ast_overrides.json`; `FR-CMP-017`).
-5. **`--validate-only`**: Dry-run mode executing full ingestion, linking, parity verification, and schema validation without writing output files.
-6. **`--emit-schemas`**: Regenerates the standalone JSON Schema files in `--schema-dir` (`FR-CMP-022`) from canonical Go struct definitions.
-7. **`--strict`**: Treats the rework flag (`needsRework`; [`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md)) and unresolved review items (`FR-CMP-021`) as fatal errors.
-8. **`--minify`**: Emits `blueprints.min.json` alongside the 2-space indented `blueprints.json`.
-9. **`--version`**: Sets `cardDataVersion` (SemVer 2.0, e.g., `"1.0.0"`; `FR-CMP-026`).
-10. **`--verbose`**: Emits per-card linking and validation telemetry to stdout.
+### Section 1.2: Retired Pipeline Requirements
 
-##### Process Exit Code Contract (Subsumes FR-CMP-028)
-| Exit Code | Classification | Trigger Scenarios & Error Taxonomy (`FR-CMP-027`) |
-| :---: | :--- | :--- |
-| **`0`** | **Success** | Compilation, validation, and emission succeeded. |
-| **`1`** | **Environment / I/O** | Missing, unreadable, or locked CSV, override, or schema file (`ERR_*_IO`). |
-| **`2`** | **CSV Syntax / Parsing** | Malformed RFC-4180 CSV row, header mismatch, or empty card name (`ERR_CSV_*`, `ERR_NAME_EMPTY`). |
-| **`3`** | **Type / Enum / Slug** | Type coercion failure, illegal enum value, or duplicate slug ID (`ERR_ENUM_*`, `ERR_NUM_*`, `ERR_SLUG_COLLISION`). |
-| **`4`** | **AST Registry / Schema** | Override schema failure, orphan override, text mismatch, or blueprint schema failure (`ERR_OVERRIDE_*`, `ERR_ORPHAN_OVERRIDE`, `ERR_BLUEPRINT_SCHEMA_INVALID`). |
-| **`5`** | **Parity / Strict Gate** | Unmapped rules text, unverified override, or rework card rejected under `--strict` (`ERR_PARITY_*`, `ERR_STRICT_*`). |
-
-#### FR-CMP-002: Multi-Stage Compilation Pipeline & Lifecycle Invariants
-The compiler executes deterministically across five sequential stages, halting immediately on any fatal error:
-1. **Stage 1 (Environment & Schema Initialization)**: Resolves paths and loads JSON schemas plus `ast_overrides.json`.
-2. **Stage 2 (Atomic CSV Ingestion & Slug Derivation)**: Parses all 10 CSV sheets (`FR-CMP-004` – `FR-CMP-007`) in accordance with [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md) – [`FR-DAT-008`](02_Card_Data_Pipeline_FRD.md) and checks for duplicate derived IDs.
-3. **Stage 3 (Catalog Linking & Keyword Lookup)**: Binds standalone keyword ASTs (`FR-CMP-013`) and declarative AST overrides (`FR-CMP-017`).
-4. **Stage 4 (Build-Time Parity, Strict & Schema Validation)**: Verifies text-to-AST synchronization (`FR-CMP-019` – `FR-CMP-020`), `--strict` gates (`FR-CMP-021`), and JSON Schema conformance (`FR-CMP-022`).
-5. **Stage 5 (RFC 8785 Fingerprinting & Atomic Emission)**: Computes `catalogChecksum` (`FR-CMP-024` – `FR-CMP-025`) and atomically writes `blueprints.json` (`FR-CMP-003`, `FR-CMP-023`). Warm execution for ~200 cards must complete within **`< 500 ms`** across all supported platforms.
+> [!NOTE] Architectural Evolution
+> The regex rules-text parser (`FR-CMP-008` to `FR-CMP-012`, `FR-CMP-014` to `FR-CMP-016`) was retired in v1.2. The sidecar override registry, the parity gates and the strict gate move to FRD 08 (M6). The IDs below are kept for traceability, each pointing to its new owner.
 
 #### FR-CMP-003: Atomic Emission, File Staging & Rollback Guarantee
-In fulfillment of [`FR-DAT-003`](02_Card_Data_Pipeline_FRD.md):
-1. The compiler never writes directly to `<OutputDir>/blueprints.json`.
-2. Output is written first to a process-unique staging file `<OutputDir>/blueprints.json.tmp.<pid>`.
-3. Only after all validation and hashing stages succeed is the staging file atomically renamed/replaced over `blueprints.json`.
-4. On any error, `<OutputDir>/blueprints.json.tmp.<pid>` is deleted immediately, leaving any pre-existing `blueprints.json` untouched.
-
----
-
-## DOMAIN 2: CSV READER MECHANICS & INGESTION EDGE CASES
-
-### Section 2.1: Low-Level CSV Reader & Coercion Diagnostics
+*(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md))*
 
 #### FR-CMP-004: Low-Level RFC-4180 Reader & Encoding Edge Cases
-The compiler ingests the 10 CSV sheets and column layouts defined in [`FR-DAT-001`](02_Card_Data_Pipeline_FRD.md) and [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md) (15-column `units-and-structures-*.csv` and 9-column `maneuvers-*.csv`) with the following reader mechanics:
-1. Accepts UTF-8 files with or without a Byte Order Mark (BOM).
-2. Normalizes Windows (`CRLF`) and Unix (`LF`) line endings interchangeably.
-3. Preserves embedded newlines and escaped double-quotes (`""`) inside quoted `rulesText` cells without splitting rows.
-4. Aborts atomically with exit code `1` (`ERR_CSV_IO`) if any of the 10 files is missing or unreadable, or exit code `2` (`ERR_CSV_MALFORMED`) if a row violates RFC-4180 framing or column headers in [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md).
+*(Subsumed by [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md), which holds the reader tolerances)*
 
 #### FR-CMP-005: Blank Row Skipping & Prototype Strict Gate
-1. **Blank Row Sanitation**: Trailing or intermediate CSV rows where all cells are empty or whitespace-only are silently skipped.
-2. **Mandatory Card Name**: Any non-blank row with an empty or whitespace-only `name` cell halts compilation with `ERR_NAME_EMPTY`.
-3. **Rework Flag Enforcement ([`FR-VAL-003`](02_Card_Data_Pipeline_FRD.md))**: Boolean column `needsRework` (`"true"` / `"false"` per [`FR-DAT-006`](02_Card_Data_Pipeline_FRD.md)) serializes directly to `"needsRework"` on the `CardBlueprint` (`FR-DAT-005`). When `--strict` is active, any row with `needsRework == "true"` halts compilation with `ERR_STRICT_PROTOTYPE_REJECTED`.
+*(Blank rows: subsumed by [`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md). The strict prototype gate stays frozen for FRD 08 (M6).)*
 
 #### FR-CMP-006: Slug Collision Detection Invariant
-The compiler derives each card's `id` using the deterministic `<faction>_<slug>` algorithm defined in [`FR-DAT-002`](02_Card_Data_Pipeline_FRD.md) and maintains a global ID lookup table across all 10 sheets. If two rows produce an identical `id`, compilation halts with `ERR_SLUG_COLLISION`, reporting both card names and source files.
+*(Subsumed by [`FR-DAT-002`](02_Card_Data_Pipeline_FRD.md) and [`FR-CMP-027`](03_Card_Compiler_FRD.md))*
 
 #### FR-CMP-007: Coercion Failure Diagnostic Mapping
-All CSV field coercions, maneuver default values, subtype/sentinel normalizations (`"--"`), and deployment zone constraints follow [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md) through [`FR-DAT-008`](02_Card_Data_Pipeline_FRD.md). Any violation maps deterministically to the error codes in `FR-CMP-027` (`ERR_ENUM_INVALID_CARD_TYPE`, `ERR_ENUM_INVALID_FACTION`, `ERR_ENUM_INVALID_RARITY`, `ERR_ENUM_INVALID_ZONE`, `ERR_NUM_PARSE`, `ERR_NUM_NEGATIVE_COST`, `ERR_NUM_INVALID_POWER`, `ERR_NUM_INVALID_HEALTH`, `ERR_NUM_NEGATIVE_YIELD`, `ERR_SUBTYPES_INVALID`).
+*(Subsumed by [`FR-CMP-027`](03_Card_Compiler_FRD.md))*
 
----
-
-## DOMAIN 3: CATALOG LINKING, KEYWORD LOOKUP & AST REGISTRY BINDING
-
-### Section 3.1: Retired Regex NLP Requirements (Subsumed by FRD 02 & FR-CMP-017)
-
-> [!NOTE] Architectural Evolution: Declarative AST Migration
-> The legacy sentence-level regex natural language parsing engine (`FR-CMP-008` through `FR-CMP-012`) has been retired and fully subsumed. Card abilities are modeled directly as declarative AST nodes per [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md) and linked via the sidecar registry `ast_overrides.json` (`FR-CMP-017`). The requirement identifiers below are preserved for historical audit traceability:
-
-- **FR-CMP-008**: Rules Text Lexer & Clause Segmentation *(Subsumed by [`FR-TXT-001`](02_Card_Data_Pipeline_FRD.md), `FR-CMP-013` & `FR-CMP-017`)*
-- **FR-CMP-009**: Trigger Preamble Parser & Temporal Hook Mapping *(Subsumed by [`FR-TXT-002`](02_Card_Data_Pipeline_FRD.md), [`FR-TRG-001`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-- **FR-CMP-010**: Ability Cost Expression Parser *(Subsumed by [`FR-TXT-003`](02_Card_Data_Pipeline_FRD.md), [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-009`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-- **FR-CMP-011**: Declarative Target Filter & Selector Synthesizer *(Subsumed by [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md) & [`FR-TGT-001`](01_Game_Rules_FRD.md))*
-- **FR-CMP-012**: Numerical & Value Token Synthesizer *(Subsumed by [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-
-### Section 3.2: Keyword Lookup & Declarative AST Linking
+- **FR-CMP-008**: Rules Text Lexer & Clause Segmentation *(Retired; text conventions are [`FR-TXT-001`](02_Card_Data_Pipeline_FRD.md), abilities are Go values per [`FR-ABL-001`](02_Card_Data_Pipeline_FRD.md))*
+- **FR-CMP-009**: Trigger Preamble Parser & Temporal Hook Mapping *(Retired; subsumed by [`FR-TXT-002`](02_Card_Data_Pipeline_FRD.md), [`FR-TRG-001`](02_Card_Data_Pipeline_FRD.md) & [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md))*
+- **FR-CMP-010**: Ability Cost Expression Parser *(Retired; subsumed by [`FR-TXT-003`](02_Card_Data_Pipeline_FRD.md) & [`FR-ABL-009`](02_Card_Data_Pipeline_FRD.md))*
+- **FR-CMP-011**: Declarative Target Filter & Selector Synthesizer *(Retired; subsumed by [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md) & [`FR-TGT-001`](01_Game_Rules_FRD.md))*
+- **FR-CMP-012**: Numerical & Value Token Synthesizer *(Retired; subsumed by [`FR-ABL-007`](02_Card_Data_Pipeline_FRD.md))*
 
 #### FR-CMP-013: Vanilla Sentinel & Standalone Keyword Lookup
-For cards not present in `ast_overrides.json` (`FR-CMP-017`), the compiler resolves `rulesText` strictly for vanilla sentinels and standalone canonical keywords:
-1. **Vanilla Cards ([`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md), [`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md))**: If `rulesText` is empty (`""`) or equals the vanilla sentinel `"--"`, the compiler emits `abilities: []` and normalizes the emitted `CardBlueprint.rulesText` string to `""` in `blueprints.json`. `CardBlueprint.schema.json` enforces `minLength: 0` for `rulesText`, permitting an empty string specifically when `abilities` is an empty array (`[]`).
-2. **Standalone Keyword Lines ([`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md))**: The canonical taxonomy of keywords and their AST parameterization is governed authoritatively by `FR-ABL-012`. If every line in `rulesText` matches a standalone keyword classified as a `KEYWORD_GRANT` in `FR-ABL-012` (`Stalwart`, `Resistant N`, `Ward`, `Aggressive N`, `Guardian`, `Armor N`, `Versatile`, `Ethereal`, `Deploys Exhausted`), the compiler emits the corresponding `AbilityDef` entries directly from the `FR-ABL-012` lookup table without requiring an override entry.
-3. **Non-Standalone & Bespoke Override Mandate**: The remaining 5 canonical keywords from `FR-ABL-012` (`Unbowed`, `Cornered`, `Heal N`, `Scratch N`, `Regroup N`) cannot be resolved standalone: `Unbowed` and `Cornered` are conditional preambles wrapping bespoke effects, while `Heal N`, `Scratch N`, and `Regroup N` are atomic effect primitives inside ability/maneuver payloads. Any card containing these keywords, bespoke rules text, or Maneuver spell payloads (`FR-ABL-006`) MUST have a corresponding entry in `data/schemas/ast_overrides.json` (`FR-CMP-017`) or compilation fails with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-019`).
+*(Subsumed by [`FR-DAT-007`](02_Card_Data_Pipeline_FRD.md) for the vanilla sentinel and [`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md) for keyword lines)*
 
-#### FR-CMP-014: Triggered & Activated Ability AST Synthesizer
-*(Subsumed by [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-003`](02_Card_Data_Pipeline_FRD.md), [`FR-TGT-101`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-
-#### FR-CMP-015: Continuous Aura & Replacement Watcher Synthesizer
-*(Subsumed by [`FR-ABL-004`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-005`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
-
-#### FR-CMP-016: Maneuver Spell Payload & Modal Choice Synthesizer
-*(Subsumed by [`FR-ABL-006`](02_Card_Data_Pipeline_FRD.md), [`FR-ABL-010`](02_Card_Data_Pipeline_FRD.md) & `FR-CMP-017`)*
+- **FR-CMP-014**: Triggered & Activated Ability AST Synthesizer *(Retired; subsumed by [`FR-ABL-002`](02_Card_Data_Pipeline_FRD.md) & [`FR-ABL-003`](02_Card_Data_Pipeline_FRD.md))*
+- **FR-CMP-015**: Continuous Aura & Replacement Watcher Synthesizer *(Retired; subsumed by [`FR-ABL-004`](02_Card_Data_Pipeline_FRD.md) & [`FR-ABL-005`](02_Card_Data_Pipeline_FRD.md))*
+- **FR-CMP-016**: Maneuver Spell Payload & Modal Choice Synthesizer *(Retired; subsumed by [`FR-ABL-006`](02_Card_Data_Pipeline_FRD.md) & [`FR-ABL-010`](02_Card_Data_Pipeline_FRD.md))*
 
 #### FR-CMP-017: Sidecar AST Overrides Registry & Catalog Linking Contract
-The compiler joins ingested CSV card rows with their declarative AST definitions modeled per [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md) (`FR-ABL-001` – `FR-ABL-012`) from `data/schemas/ast_overrides.json`:
-1. **Overrides Registry Envelope**:
-   ```json
-   {
-     "$schema": "./ast_overrides.schema.json",
-     "overrides": {
-       "<blueprint_id>": {
-         "rulesText": "Exact rulesText string from source CSV",
-         "parityVerified": true,
-         "verifiedBy": "designer-alias",
-         "verifiedAt": "2026-10-13T00:00:00Z",
-         "rationale": "Optional authoring note",
-         "additionalDeploymentCosts": [ ... optional CostDef array per FR-DAT-005 ... ],
-         "abilities": [ ... AbilityDef array per FR-ABL-001 ... ]
-       }
-     }
-   }
-   ```
-2. **Linking by Derived `id`**: When a card's derived `id` (`FR-CMP-006`) exists in `overrides`, the compiler binds `abilities` (and optional `additionalDeploymentCosts`) from the registry entry onto the compiled `CardBlueprint`. For hybrid cards containing both a standalone keyword line and non-keyword rules text (e.g., *NO-AH-5*, *Piston Fist Prototype*, *Drifting Concept*), `overrides[id].abilities` must contain the complete AST array, including `KEYWORD_GRANT` nodes for any printed standalone keywords.
-3. **Orphan Override Detection**: Every `<blueprint_id>` key in `ast_overrides.json` must match an ingested CSV row; any unmatched key halts compilation with `ERR_ORPHAN_OVERRIDE`.
-4. **CSV-to-AST `rulesText` Synchronization Check**: The compiler performs a whitespace-normalized string comparison between `overrides[id].rulesText` and the CSV row's `rulesText`. Any divergence halts compilation immediately with `ERR_OVERRIDE_TEXT_MISMATCH`.
+*(Frozen for FRD 08 (M6). Until then a card's definition is a Go value, [`FR-ABL-001`](02_Card_Data_Pipeline_FRD.md).)*
 
 #### FR-CMP-018: Bespoke Mechanics Integration & Validation
-*(Subsumed by `FR-CMP-017` and Section 4.2 of [`02_Card_Data_Pipeline_FRD.md`](02_Card_Data_Pipeline_FRD.md))*
-
----
-
-## DOMAIN 4: BUILD-TIME PARITY, REVIEW & JSON SCHEMA VALIDATION GATES
-
-### Section 4.1: Parity, Strict & Schema Gates
+*(Subsumed by [`FR-ABL-013`](02_Card_Data_Pipeline_FRD.md))*
 
 #### FR-CMP-019: Forward Parity Verification (Text-to-AST)
-In fulfillment of [`FR-VAL-002`](02_Card_Data_Pipeline_FRD.md), the compiler verifies that every card's printed `rulesText` is accounted for in its compiled blueprint:
-1. **Unmapped Non-Keyword Text**: Any card with non-vanilla, non-standalone-keyword `rulesText` that lacks an entry in `ast_overrides.json` fails compilation with `ERR_PARITY_UNMAPPED_TEXT`.
-2. **Standalone Keyword Coverage**: If a card's `rulesText` includes a standalone keyword line (per `FR-ABL-012`), its compiled `abilities` array must include the corresponding keyword AST node. For cards in `ast_overrides.json`, omitting a printed standalone keyword line's `KEYWORD_GRANT` node from `overrides[id].abilities` halts compilation with `ERR_PARITY_UNMAPPED_TEXT` (`FR-CMP-027`).
-3. **Canonical Targeting Verb Check**: Under `--strict`, `rulesText` using non-canonical targeting terminology (e.g., `"target"` instead of `"chosen"` per [`FR-TXT-004`](02_Card_Data_Pipeline_FRD.md)) fails with `ERR_PARITY_VERB`.
+*(Frozen for FRD 08 (M6). Text identity is [`FR-ABL-014`](02_Card_Data_Pipeline_FRD.md).)*
 
 #### FR-CMP-020: Reverse Parity & Override Sign-Off Verification
-To prevent unprinted abilities or unreviewed AST edits ([`FR-VAL-002`](02_Card_Data_Pipeline_FRD.md)):
-1. **Keyword-Only / Vanilla Cards**: May only contain `AbilityDef` nodes directly mapped from their standalone keyword lines (`FR-CMP-013`); any extraneous AST node fails with `ERR_PARITY_ORPHAN_AST`.
-2. **Registry-Linked Cards (`ast_overrides.json`)**: Every entry in `ast_overrides.json` must declare `"parityVerified": true`, a non-empty `verifiedBy`, and an ISO-8601 `verifiedAt` timestamp, in addition to passing the `ERR_OVERRIDE_TEXT_MISMATCH` check (`FR-CMP-017`) and `AbilityDef.schema.json` validation (`FR-CMP-022`). Missing or `false` `"parityVerified"` metadata halts compilation with `ERR_OVERRIDE_UNVERIFIED`.
+*(Frozen for FRD 08 (M6). Text identity is [`FR-ABL-014`](02_Card_Data_Pipeline_FRD.md).)*
 
 #### FR-CMP-021: Strict Mode Review Gate
-*(Subsumed by `FR-CMP-005` and `FR-CMP-020`)*
-- Under `--strict`, unresolved card review flags and unverified AST definitions are enforced via `needsRework` in CSV (`FR-CMP-005`, halting with `ERR_STRICT_PROTOTYPE_REJECTED`) and `parityVerified` in `ast_overrides.json` (`FR-CMP-020`, halting with `ERR_OVERRIDE_UNVERIFIED`).
+*(Frozen for FRD 08 (M6), with `FR-CMP-005`'s strict gate and `FR-CMP-020`.)*
 
 #### FR-CMP-022: Formal JSON Schema Validation & `--emit-schemas`
-In fulfillment of [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md) and [`FR-VAL-001`](02_Card_Data_Pipeline_FRD.md), the compiler validates all inputs and outputs against JSON Schema Draft 2020-12 definitions in `data/schemas/`:
-1. **`CardBlueprint.schema.json`**: Validates the root `blueprints.json` envelope (`catalogChecksum`, `cardDataVersion`, `generatedAt`, `totalCardCount`, `blueprints`) and each `CardBlueprint` object per [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md).
-2. **`AbilityDef.schema.json`**: Validates all polymorphic `AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`, `ConditionDef`, and `EffectDef` nodes per [`FR-ABL-001`](02_Card_Data_Pipeline_FRD.md) – [`FR-ABL-012`](02_Card_Data_Pipeline_FRD.md).
-3. **`ast_overrides.schema.json`**: Validates `data/schemas/ast_overrides.json` (`FR-CMP-017`); failures halt compilation with `ERR_OVERRIDE_SCHEMA_INVALID`.
-4. **`--emit-schemas` Generation Contract**: When `--emit-schemas` is passed on the CLI, the compiler exports the Draft 2020-12 JSON schemas (`CardBlueprint.schema.json`, `AbilityDef.schema.json`, and `ast_overrides.schema.json`) into `data/schemas/` (or `--schema-dir`). `--emit-schemas` can operate as an independent standalone utility mode: when invoked alone, it generates schemas directly from embedded Go AST models and exits with code 0 without requiring existing CSV sheets or running the ingestion/linking pipeline. When invoked alongside compilation flags, schemas are emitted prior to pipeline completion. It serializes with 2-space indentation and `LF` newlines, ensuring schemas remain 100% in sync with code definitions and version control diffs.
+*(Subsumed by [`FR-CMP-023`](03_Card_Compiler_FRD.md) and [`FR-CMP-002`](03_Card_Compiler_FRD.md): the catalog is checked before it is written. Whether a machine-readable schema is published is an open technical question.)*
 
 ---
 
-## DOMAIN 5: RFC 8785 CANONICAL HASHING, ENVELOPE EMISSION & CLI DIAGNOSTICS
+## DOMAIN 2: THE CATALOG
 
-### Section 5.1: Production Envelope, Fingerprinting & Error Taxonomy
+### Section 2.1: Contents, Determinism, Checksum, Version
 
-#### FR-CMP-023: Production Catalog Envelope Emission
-The compiled catalog is emitted to `data/schemas/blueprints.json` matching the root envelope schema in [`FR-DAT-005`](02_Card_Data_Pipeline_FRD.md):
-```json
-{
-  "$schema": "./CardBlueprint.schema.json",
-  "catalogChecksum": "0x4f8a1c9e2b3d7a016f4e8b2c1d9a3e5f7a0b2c4d6e8f1a3b5c7d9e1f3a5b7c9d",
-  "cardDataVersion": "1.0.0",
-  "generatedAt": "2026-10-13T13:30:00Z",
-  "totalCardCount": 167,
-  "blueprints": [
-    { ... CardBlueprint ... }
-  ]
-}
-```
-1. **Repository Formatting**: Emitted with 2-space indentation and `LF` newlines for readable Git diffs, with `blueprints` sorted lexicographically by `id`.
-2. **Minified Artifact**: When `--minify` is specified, an unformatted `blueprints.min.json` is also emitted.
+#### FR-CMP-023: Catalog Contents
+- **Contract**: The catalog holds one entry for every non-blank row in every sheet (169 today), flagged for rework or not. An entry holds the card's record (`FR-DAT-005`): every printed value and the `needsRework` flag. It also holds the card's standalone keyword set (`FR-ABL-012`) and, if the card has one, its ability definition (`FR-ABL-001`) with every part written in the vocabulary of FRD 02: hooks, ops, subjects, cost kinds, filter criteria, targets, modes, static kinds, `Would` events, durations and keywords. Each card has an identifier (`FR-DAT-002`), and entries are sorted by it. The catalog also states how many cards it holds, its dataset version (`FR-CMP-026`) and its checksum (`FR-CMP-025`).
+- **Invariants**: The catalog loses nothing from a definition: every field a `Def` sets is present, so a reader could rebuild the same definition. A vocabulary value has one stable name, and renaming one is a deliberate change (ADR-0007), never a side effect. Lists a card prints in order (triggers, costs, steps, modes) keep that order. It holds printed data only, never match state, and no hidden information.
+- **Edge Cases**: A card with no ability definition has an entry with an empty ability part. A card whose printed line no definition claims is exported with that line in its text (Decision 3).
 
-#### FR-CMP-024: Canonical JSON Normalization (RFC 8785 JCS)
-Before computing `catalogChecksum`, the compiler canonicalizes the `blueprints` array in accordance with **RFC 8785 (JSON Canonicalization Scheme)**:
-1. **Target Input Scope**: `catalogChecksum` is computed strictly over the RFC 8785 canonical bytes of the `blueprints` **array** (`[ ... ]`), whose items are sorted lexicographically by `id`. The outer envelope metadata fields (`cardDataVersion`, `generatedAt`, `totalCardCount`) are excluded from this hash.
-2. **Metadata Stripping**: Prior to canonical byte generation, the development metadata property `needsRework` is stripped from each `CardBlueprint` object (`FR-DAT-005`), guaranteeing that toggling the rework flag during development never breaks catalog checksum parity.
-3. Object keys within each blueprint object are sorted lexicographically by UTF-16 code units.
-4. All insignificant whitespace is omitted, and strings are encoded as UTF-8 without BOM.
-5. **High-Performance Canonical Serialization**: Implemented in pure Go using standard library `crypto/sha256` and deterministic RFC 8785 byte canonicalization, eliminating external compilation overhead and completing in `< 50 ms` (`FR-CMP-002`).
+#### FR-CMP-024: Deterministic Output
+- **Contract**: The same sheets and the same definitions produce the same bytes, on any machine, on any operating system and on any run. Nothing in the output depends on the time, the host, the path of the checkout, a random value, the order the files are listed in or the iteration order of a map. Text encoding and line endings are fixed.
+- **Invariants**: Two generations in a row produce byte-identical files. Re-ordering rows within a sheet, or splitting a sheet, does not change the output, because entries are sorted by identifier.
+- **Edge Cases**: A change to any cell changes the output, even one a reader would not notice, because the output follows the cells.
 
-#### FR-CMP-025: 256-Bit Cryptographic Checksum Computation (`catalogChecksum`)
-In fulfillment of [`FR-DAT-004`](02_Card_Data_Pipeline_FRD.md), [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md), and [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md):
-1. Computes the SHA-256 digest over the RFC 8785 canonical bytes of the stripped `blueprints` array (`FR-CMP-024`).
-2. Formats `catalogChecksum` as a `0x`-prefixed 64-character lowercase hexadecimal string stored on the root envelope.
+#### FR-CMP-025: Catalog Checksum
+- **Contract**: The checksum is one collision-resistant digest, written as text, over the card entries and over nothing else. It is the same for the same cards regardless of how the file is formatted, and it differs when any printed value, keyword set or ability definition differs, or a card is added or removed. It ignores the version, the card count and the `needsRework` flag (Decision 2).
+- **Invariants**: Anyone can recompute it from the entries alone. A later session handshake compares checksums ([`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md)), so two parties with the same checksum hold the same cards.
+- **Edge Cases**: The digest and its text form are open technical questions. A checksum that does not match its entries marks the catalog as damaged.
 
-#### FR-CMP-026: Semantic Dataset Versioning Contract (`cardDataVersion`)
-`cardDataVersion` follows Semantic Versioning 2.0 (`MAJOR.MINOR.PATCH`): **MAJOR** for breaking schema changes, **MINOR** for card balance/text/catalog changes, and **PATCH** for non-mechanical tooling or typo fixes. Session handshakes (`FR-SES-001`) verify exact `catalogChecksum` equality.
+#### FR-CMP-026: Dataset Version
+- **Contract**: The catalog states a dataset version of three whole numbers, `MAJOR.MINOR.PATCH`. MAJOR changes when the catalog's structure changes so that a reader must adapt. MINOR changes when cards change: a stat, a text, an ability, an addition or a removal. PATCH changes for a correction that changes no card.
+- **Invariants**: The version labels the catalog. Whether two catalogs hold the same cards is decided by the checksum (`FR-CMP-025`).
+- **Edge Cases**: Where the number is kept and who bumps it is an open technical question.
 
-#### FR-CMP-027: Structured Diagnostic Reporting & Error Taxonomy
-On failure, the compiler prints a structured error block to stderr identifying the error code, source file, row/card identifier, offending field/value, and violated requirement:
+---
 
-| Category | Error Code | Description |
+## DOMAIN 3: FAILURE BEHAVIOR & INVARIANTS
+
+### Section 3.1: When Things Go Wrong
+
+| Situation | What the Operator Experiences | Rule or Invariant Preserved |
 | :--- | :--- | :--- |
-| **I/O & Environment** | `ERR_CSV_IO` | Missing, unreadable, or locked CSV sheet. |
-| | `ERR_SCHEMA_IO` | Unable to read or write JSON schema or overrides file. |
-| | `ERR_OUTPUT_IO` | Unable to write staging or production JSON artifacts. |
-| **CSV & Coercion** | `ERR_CSV_MALFORMED` | Malformed RFC-4180 CSV row or header mismatch (`FR-DAT-006`). |
-| | `ERR_NAME_EMPTY` | Non-blank row declares an empty card `name`. |
-| | `ERR_NUM_PARSE` | Non-integer value in an integer column (`FR-DAT-005`). |
-| | `ERR_NUM_NEGATIVE_COST` | Negative `requisitionCost` or `tacticsCost`. |
-| | `ERR_NUM_INVALID_POWER` | Invalid `power` value (`< 0` for assets or non-null for maneuvers). |
-| | `ERR_NUM_INVALID_HEALTH` | Invalid `health` value (`< 1` for assets or non-null for maneuvers). |
-| | `ERR_NUM_NEGATIVE_YIELD`| Negative yield or non-zero yield on a maneuver. |
-| | `ERR_ENUM_INVALID_CARD_TYPE` | `cardType` violates `FR-DAT-006`. |
-| | `ERR_ENUM_INVALID_FACTION` | `faction` violates `FR-DAT-006`. |
-| | `ERR_ENUM_INVALID_RARITY` | `rarity` violates `FR-DAT-006`. |
-| | `ERR_ENUM_INVALID_ZONE` | `deploymentZones` violates `FR-DAT-006` / `FR-DAT-008`. |
-| | `ERR_SUBTYPES_INVALID` | Malformed `subtypes` value (`FR-DAT-007`). |
-| | `ERR_SLUG_COLLISION` | Two rows derive identical `id` slugs (`FR-CMP-006`). |
-| **Linking & Schemas** | `ERR_OVERRIDE_SCHEMA_INVALID` | Entry in `ast_overrides.json` fails `AbilityDef.schema.json`. |
-| | `ERR_BLUEPRINT_SCHEMA_INVALID` | Generated `CardBlueprint` or `blueprints.json` root envelope fails `CardBlueprint.schema.json` validation (`FR-CMP-022`). |
-| | `ERR_OVERRIDE_TEXT_MISMATCH` | `ast_overrides.json` `rulesText` differs from CSV `rulesText` (`FR-CMP-017`). |
-| | `ERR_OVERRIDE_UNVERIFIED` | Override entry missing `"parityVerified": true` metadata (`FR-CMP-020`). |
-| | `ERR_ORPHAN_OVERRIDE` | Override key does not match any CSV card `id` (`FR-CMP-017`). |
-| **Parity & Strict Gate**| `ERR_PARITY_UNMAPPED_TEXT` | Non-keyword `rulesText` has no `ast_overrides.json` entry (`FR-CMP-019`). |
-| | `ERR_PARITY_ORPHAN_AST` | Keyword-only/vanilla card contains extraneous AST nodes (`FR-CMP-020`). |
-| | `ERR_PARITY_VERB` | Non-canonical targeting verb under `--strict` (`FR-CMP-019`). |
-| | `ERR_STRICT_PROTOTYPE_REJECTED`| Card has `needsRework` set to `"true"` under `--strict` (`FR-CMP-005`). |
-| | `ERR_STRICT_UNRESOLVED_REVIEW` | *(Subsumed by `ERR_STRICT_PROTOTYPE_REJECTED` and `ERR_OVERRIDE_UNVERIFIED`; `FR-CMP-021`)*. |
+| A sheet is missing, unreadable or has the wrong header | The run fails and names the file | The previous catalog is untouched (`FR-CMP-002`) |
+| A numeric column holds a non-number, or a Unit has no zone | The run fails and names the file, row, card and column | A card is never exported with a guessed value (`FR-CMP-027`) |
+| A cell holds an illegal enum value | The run fails and names the row and the legal values | Zero aliasing (`FR-DAT-006`) |
+| Two rows share a name | The run fails and names both rows | One identity per card (`FR-DAT-002`) |
+| A definition lists a line its card does not print, or sets a field nothing reads | The run fails and names the card | Definitions match their text (`FR-ABL-014`) |
+| The catalog cannot be written | The run fails and the old catalog stays | No partial catalog (`FR-CMP-002`) |
+| The checksum of a catalog does not match its entries | A check reports the catalog as damaged | The checksum is recomputable (`FR-CMP-025`) |
+
+### Section 3.2: Invariants and Diagnostics
+
+#### FR-CMP-027: Failure Diagnostics
+- **Contract**: A failure names its kind, the file, the row or card, the offending column or field and value, and the requirement it violates. The kinds are: a missing or unreadable sheet, a malformed row or header, a non-numeric value in a numeric column, a number outside its legal range (a negative cost or yield, a health below 1 on an asset), an illegal enum, a missing zone, a duplicate card name, a definition that fails `FR-ABL-014`, and an unwritable destination.
+- **Invariants**: One run reports every problem it can find rather than only the first. Any failure produces a non-zero exit status (`FR-CMP-001`).
 
 #### FR-CMP-028: Non-Zero Exit Code Contract & CI/CD Integration
-*(Subsumed by `FR-CMP-001` & `FR-CMP-027`)*
+*(Subsumed by [`FR-CMP-001`](03_Card_Compiler_FRD.md) & [`FR-CMP-027`](03_Card_Compiler_FRD.md))*
+
+#### FR-CMP-030: Export Invariants
+- The number of entries equals the number of non-blank rows, and the card count the catalog states equals both.
+- A failed run changes nothing (`FR-CMP-002`).
+- The catalog, its checksum and its bytes are the same on every run on the same data (`FR-CMP-024`).
+- Nothing in the catalog is hand-written (`FR-CMP-029`).
 
 ---
 
-## DOMAIN 6: CROSS-SPEC TRACEABILITY MATRIX
+## MASTER CROSS-REFERENCE REGISTER
 
-### Section 6.1: Traceability & Requirements Index
-
-| Requirement ID | Canonical Requirement Title | Companion FRD Traceability |
+| Requirement ID | Scope Summary | Interoperability Target |
 | :--- | :--- | :--- |
-| **FR-CMP-001** | Compiler CLI Command Interface & Exit Codes | `FR-DAT-001`, `FR-DAT-003`, `FR-VAL-001` |
-| **FR-CMP-002** | Multi-Stage Compilation Pipeline & Invariants | `FR-DAT-001`, `FR-DAT-003`, `FR-VAL-001` |
-| **FR-CMP-003** | Atomic Emission, File Staging & Rollback | `FR-DAT-003`, `FR-ENG-001` |
-| **FR-CMP-004** | Low-Level RFC-4180 Reader & Encoding Edge Cases | `FR-DAT-001`, `FR-DAT-006` |
-| **FR-CMP-005** | Blank Row Skipping & Prototype Strict Gate | `FR-VAL-003`, `FR-DAT-006` |
-| **FR-CMP-006** | Slug Collision Detection Invariant | `FR-DAT-002`, `FR-SET-001` |
-| **FR-CMP-007** | Coercion Failure Diagnostic Mapping | `FR-DAT-005` – `FR-DAT-008` |
-| **FR-CMP-008** – **FR-CMP-012** | *(Subsumed by FRD 02 & `FR-CMP-017`)* | `FR-TXT-001` – `FR-TXT-006`, `FR-ABL-001` – `FR-ABL-012` |
-| **FR-CMP-013** | Vanilla Sentinel & Standalone Keyword Lookup | `FR-DAT-007`, `FR-ABL-012` |
-| **FR-CMP-014** – **FR-CMP-016** | *(Subsumed by FRD 02 & `FR-CMP-017`)* | `FR-ABL-002` – `FR-ABL-010`, `FR-TGT-101` |
-| **FR-CMP-017** | Sidecar AST Overrides Registry & Catalog Linking | `FR-DAT-003`, `FR-DAT-005`, `FR-ABL-001` |
-| **FR-CMP-018** | *(Subsumed by `FR-CMP-017` & FRD 02 Section 4.2)* | `FR-ABL-001` – `FR-ABL-012` |
-| **FR-CMP-019** | Forward Parity Verification (Text-to-AST) | `FR-VAL-002`, `FR-TXT-004` |
-| **FR-CMP-020** | Reverse Parity & Override Sign-Off Verification | `FR-VAL-002`, `FR-CMP-017` |
-| **FR-CMP-021** | *(Subsumed by `FR-CMP-005` and `FR-CMP-020`)* | `FR-VAL-003`, `FR-CMP-005`, `FR-CMP-020` |
-| **FR-CMP-022** | Formal JSON Schema Validation & `--emit-schemas` | `FR-DAT-005`, `FR-ABL-001`, `FR-VAL-001` |
-| **FR-CMP-023** | Production Catalog Envelope Emission | `FR-DAT-003`, `FR-DAT-005`, `FR-ENG-001` |
-| **FR-CMP-024** | Canonical JSON Normalization (RFC 8785 JCS) | `FR-DAT-004`, `FR-PAC-004` |
-| **FR-CMP-025** | 256-Bit Cryptographic Checksum (`catalogChecksum`) | `FR-DAT-004`, `FR-SES-001`, `FR-SPC-002` |
-| **FR-CMP-026** | Semantic Dataset Versioning (`cardDataVersion`) | `FR-DAT-004`, `FR-SES-001` |
-| **FR-CMP-027** | Structured Diagnostic Reporting & Error Taxonomy | `FR-VAL-001`, `FR-ERR-001` |
-| **FR-CMP-028** | *(Subsumed by `FR-CMP-001` & `FR-CMP-027`)* | `FR-VAL-001` |
+| `FR-CMP-001` | Generate command | `FR-CMP-002`, `FR-CMP-027` |
+| `FR-CMP-002` | Lifecycle and atomic emission | `FR-DAT-006`, `FR-ABL-014` |
+| `FR-CMP-003`–`FR-CMP-007` | Subsumed stubs | `FR-CMP-002`, `FR-DAT-002`, `FR-DAT-006`, `FR-DAT-007`, `FR-CMP-027` |
+| `FR-CMP-008`–`FR-CMP-016` | Retired synthesizers (stubs) | `FR-TXT-001`–`FR-TXT-004`, `FR-ABL-002`–`FR-ABL-010` |
+| `FR-CMP-017`–`FR-CMP-021` | Frozen for FRD 08 (stubs) | `FR-ABL-001`, `FR-ABL-013`, `FR-ABL-014` |
+| `FR-CMP-022` | Subsumed stub | `FR-CMP-023` |
+| `FR-CMP-023` | Catalog contents | `FR-DAT-005`, `FR-ABL-001`, `FR-ABL-012` |
+| `FR-CMP-024` | Deterministic output | `FR-CMP-029` |
+| `FR-CMP-025` | Catalog checksum | `FR-SES-001`, `FR-SPC-002` |
+| `FR-CMP-026` | Dataset version | `FR-SES-001` |
+| `FR-CMP-027` | Failure diagnostics | `FR-DAT-006`, `FR-ABL-014` |
+| `FR-CMP-028` | Subsumed stub | `FR-CMP-001`, `FR-CMP-027` |
+| `FR-CMP-029` | Generated, never authored | `FR-DAT-001` |
+| `FR-CMP-030` | Export invariants | `FR-CMP-002`, `FR-CMP-024` |
 
 ---
-*End of Functional Requirements Document (Card Compiler & Blueprint Bundler FRD v1.1)*
+*End of Functional Requirements Document (Catalog Export FRD v2.0)*

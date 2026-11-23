@@ -1,501 +1,433 @@
-# Card Data Pipeline & Ability Authoring - Functional Requirements Document (FRD v1.3)
-**Master Card Ingestion Pipeline, Declarative Ability AST, MTG-Aligned Text Standard & Schema Specification**
+# Card Data & Ability Vocabulary - Functional Requirements Document (FRD v2.0)
+**The Card Sheet Schema and the Ability Vocabulary of `pkg/engine/ability`**
 
-> [!IMPORTANT]
-> **Status: FROZEN as design intent (2026-10-19).** This document records direction and prior thinking. It is not an active specification and is not kept in sync with [FRD 01](01_Game_Rules_FRD.md). Where it restates a game rule, **FRD 01 and its `pkg/engine` scenario tests win**. Technical choices here are proposals; they get decided when the code that needs them is built and recorded in [`docs/architecture/decisions/`](../architecture/decisions/README.md). **Revisit:** rewrite at the start of milestone M3 (card data pipeline), using the ability shapes the M2 kernel actually needed. See [`docs/frd/README.md`](README.md).
+> [!NOTE]
+> **Status: Active, rewritten at the start of M3 (2026-11-23).** This replaces the v1.3 design-intent text, which is kept unedited as [`reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md`](reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md) for FRD 08 (M6). The file name is unchanged because `cardtown lint frd` expects it. FRD 01 and its `pkg/engine` scenario tests still win every rules question. For the exact fields of every shape, the authority is `go doc -all ./pkg/engine/ability`: where this document and that package disagree, the package wins and this document is corrected.
 
 ---
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document establishes the authoritative technical specification for the card data pipeline, declarative ability abstract syntax tree (AST), trigger/replacement event hook taxonomy, atomic effect primitives catalog, rules text templating standards, and dataset validation for Card Town. It serves as the authoritative **modeling bridge** between the pure tabletop game rules ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)), the card compiler ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), the network protocol ([`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md)), and the headless execution engine ([`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md)).
+This document says what a card is as data: the CSV sheets in `data/cards/` that hold every card's printed characteristics and rules text, and the vocabulary in which a card's non-keyword abilities are written, which `pkg/engine/ability` defines and `pkg/engine` interprets. It exists so that three readers agree on one vocabulary: the kernel that executes a card, the designer who maps a new card onto it (the M3 ability survey), and the catalog export ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)) that serializes it mechanically. It states no game rule. Each shape cites the `FR-*` and `SVY-R*` IDs of [FRD 01](01_Game_Rules_FRD.md) that give its behavior, and FRD 01 owns them.
 
-### Revision Summary (v1.2 -> v1.3):
-- **Go Toolchain & Binary Pipeline Pivot**: Updated all compiler and pipeline ingestion tooling references from legacy PowerShell (`.ps1`) scripts to pure Go (Golang 1.22+) CLI executables (`cmd/compile-blueprints`, Go-native sheets synchronizer, and workspace linters), eliminating script wrappers across the toolchain.
-
-### Revision Summary (v1.1 -> v1.2):
-- **Compilation & Versioning Subsumption (`FR-DAT-003`, `FR-DAT-004`, DA-DAT-004)**: Formally marked `FR-DAT-003` (atomic multi-sheet compilation & bundling) and `FR-DAT-004` (canonical RFC 8785 checksum & SemVer versioning) as subsumed by `03_Card_Compiler_FRD.md` (`FR-CMP-002`, `FR-CMP-003`, `FR-CMP-024`–`FR-CMP-026`), `04_Client_Engine_Protocol_Networking_FRD.md` (`FR-SES-001`, `FR-SPC-002`), and `05_Headless_Game_Engine_FRD.md` (`FR-ENT-001`), eliminating duplicate copycat requirements.
-- **Targeting Phrasing Scope Alignment (`FR-TXT-004`, DA-DAT-005)**: Retitled `FR-TXT-004` to *Conjunction Targeting Phrasing (`chosen`)* and aligned dynamic two-stage verification as an explicit cross-reference to its canonical owner in `01_Game_Rules_FRD.md` (`FR-TGT-003`).
-
-### Specification Scope (v1.0 -> v1.1):
-1. **Zero-Aliasing Data Contract (`FR-DAT-006`)**: Codified strict enum target conformance across all authoring CSV balance sheets. Prohibited runtime shorthand aliasing; all raw card sheets must directly serialize canonical target enum identifiers (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`; `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`; `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`; `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`).
-2. **Deterministic Blueprint ID Derivation (`FR-DAT-002`)**: Formalized a deterministic, immutable blueprint slug derivation algorithm (`<faction>_<snake_case_title>`), decoupling human display titles from engine identity keys while guaranteeing 100% stable serialization.
-3. **Production Blueprint JSON Schema & Ability AST (`FR-DAT-005`, `FR-ABL-001` - `FR-ABL-007`)**: Formalized the production `CardBlueprintCollection` JSON schema and polymorphic declarative schemas (`AbilityDef`, `FilterDef`, `ValueToken`, `CostDef`, `TargetRef`) across all six ability archetypes (`TRIGGERED`, `ACTIVATED`, `CONTINUOUS_AURA`, `REPLACEMENT_WATCHER`, `MANEUVER_EFFECT`, `KEYWORD_GRANT`).
-4. **Event Hook Taxonomy, Atomic Primitives & Bound Payloads (`FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: Consolidated the canonical engine event/watcher hook catalog, the 26 atomic effect primitives and parameter schemas, bound action payload bindings, and canonical benchmark card AST implementations into the data pipeline bridge (`SOC-002`).
-5. **Mechanics Extensions & Resolution Semantics (`FR-ABL-008` - `FR-ABL-012`)**: Formalized engine support for per-turn execution gates (`maxPerTurn`), exhaust-as-cost activation mechanics (`costType: EXHAUST_SELF`), modal branch definitions (`CHOOSE_N`), and distributed pool damage allocations (`DISTRIBUTED_POOL`).
-6. **MTG-Aligned Rules Text Templating Grammar (`FR-TXT-001` - `FR-TXT-006`)**: Established formal English templating standards modeled on Magic: The Gathering (MTG) syntax, standardizing trigger preambles (`When`, `Whenever`, `At`), cost sequencing (`[Cost]: [Effect].`), passive auras (`have`), temporary modifiers (`gets +N power until end of turn`), and canonical keyword capitalization.
-7. **Automated Verification & Linter Architecture (`FR-VAL-001` - `FR-VAL-003`) & Card Review Register (Domain 7)**: Expanded the automated verification suite (`tools/linter/lint_cardtown`) and audited all 167 cards across the 10 balance sheets.
-
----
-
-## DOMAIN 1: CARD DATA ARCHITECTURE, INGESTION LIFECYCLE & AUTHORITY MODEL
+It is written from what M2 built, not from what v1.3 proposed. M2 made 75 Animus and Path cards executable with 73 ability definitions as Go values (ADR-0004), with no compiler, and the [ability shapes write-up](../design/m2_ability_shapes.md) records how the kernel's vocabulary differs from v1.3's. The sheets hold 169 cards in 10 files.
 
 ```text
-┌────────────────────────────────────────────────────────┐
-│     Google Spreadsheets (Cloud Viewer & Mobile Mirror) │
-│  - maneuvers (animus, concordia, path, soulless)       │
-│  - units-and-structures (animus, concordia, etc.)      │
-└───────────────────────────▲────────────────────────────┘
-                            │
-               tools/sheets/publish_card_sheets
-               (Downstream export from repository)
-                            │
-┌───────────────────────────┴────────────────────────────┐
-│     Authoring Balance CSV Sheets (data/cards/*.csv)    │
-│  - 10 RFC-4180 UTF-8 CSV Files (Repository Truth)      │
-│  - Strict Target Enum Values (FR-DAT-006)              │
-│  - MTG-Aligned Standardized Rules Text (FR-TXT-001)    │
-└───────────────────────────┬────────────────────────────┘
-                            │
-                 cmd/compile-blueprints
-                            │
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│     Compiled Master JSON Blueprints (data/schemas/)    │
-│  - blueprints.json (Immutable Singleton Catalog)       │
-│  - Full Declarative Ability AST (FR-ABL-001)           │
-│  - Strict Schema Validation (FR-VAL-001)               │
-└───────────────────────────┬────────────────────────────┘
-                            │
-          ┌─────────────────┴─────────────────┐
-          ▼                                   ▼
-┌──────────────────────┐            ┌──────────────────────┐
-│ Authoritative Engine │            │ Godot Client (src/)  │
-│ - Rules State Machine│            │ - UI Rendering       │
-│ - Match Validation   │            │ - Card Text & Frame  │
-│ - Fog of War Logic   │            │ - Visual FX Triggers │
-└──────────────────────┘            └──────────────────────┘
+data/cards/*.csv ── FR-DAT-006..008 ──> printed characteristics + rules-text lines
+                                              │
+                         standalone keyword line ── FR-ABL-012 ──> keyword set
+                         other line ── named in Def.Text (FR-ABL-014) ──> ability.Def
+                                              │                     (one per card name, FR-ABL-001)
+pkg/engine/cards.Defs ────────────────────────┘
+                                              │
+                          ┌───────────────────┴───────────────────┐
+                          ▼                                       ▼
+                 pkg/engine interprets (FRD 01)         catalog export (FRD 03, FR-CMP-023)
 ```
 
-### Section 1.1: Single Source of Truth & Pipeline Flow
+### Revision Summary (v1.3 -> v2.0):
+- **Rewritten short at the M3 start.** The CSV schema (Domain 1) and the ability vocabulary (Domain 2) are kept and brought in line with what is built. The rules-text conventions (Domain 3) are kept. The authoring pipeline moved to M6 (`PRODUCT_SUMMARY.md` §4, 2026-11-21): the compiler, `ast_overrides.json`, the rules-text parity checker, designer sign-off and the strict prototype gate are not specified here. They stay in the frozen copy for FRD 08.
+- **Names are the package's.** The polymorphic `AbilityDef` AST, `FilterDef`, `ValueToken`, `TargetRef`, `ConditionDef` and the 26 primitives are replaced by `Def`, `Trigger`, `Filter`, `Value`, `Target`, `Step`, `Op` and the other Go names. Where a v1.3 construct has a counterpart, the tables below say which.
+- **Only what is built is specified.** A shape the kernel does not have waits for its first card (`FR-ABL-013`).
+- **Retired IDs became Subsumed stubs** pointing to their new owner (the register at the end). No ID was deleted.
 
-#### FR-DAT-001: Data Ingestion Lifecycle & Absolute CSV Source of Truth
-- **Tier 1 (Authoritative Repository Source of Truth)**: The 10 per-faction RFC-4180 CSV files residing in `data/cards/` constitute the absolute, definitive source of truth for all card definitions, rules text, and balance statistics. Version control (Git) governs all official card changes.
-- **Tier 2 (Cloud Inspection & Mobile Review Mirror)**: The Google Sheets workbooks located in the team drive (`maneuvers` and `units-and-structures`) serve purely as an outward-facing mirror and convenience viewer for designers to inspect card catalogs on mobile devices and explore balance experiments. The Google Sheets are downstream representations; any edits in Google Drive do not affect game builds and must be brought into Git CSVs via the ingestion workflow to become authoritative.
-- **Tier 3 (Compiled Production Catalog)**: The compiled `blueprints.json` artifact (generated into `data/schemas/` or embedded in the game engine runtime) represents the authoritative machine-readable catalog consumed by the server engine process and Godot client builds.
-- **Automated Pipeline Flow**:
-  1. Local `data/cards/*.csv` files are directly edited, reviewed, and committed into Git.
-  2. `tools/sheets/publish_card_sheets` publishes local repository CSV content to Google Sheets. To prevent accidental loss of remote designer work, `publish_card_sheets` executes a pre-publish freshness check comparing remote Google Drive revision timestamps against local Git commit timestamps. If un-synced remote edits exist, publication halts immediately with a collision warning unless the `--Force` switch is explicitly supplied.
-  3. **Bidirectional Ingestion Tooling**: The pipeline provides a companion ingestion tool (`tools/sheets/import_card_sheets`) to safely pull remote Google Sheets modifications into local `data/cards/*.csv` files, rendering an interactive terminal visual diff for designer confirmation before staging.
-  4. `tools/linter/lint_cardtown` audits schema integrity, requirement links, and text terminology.
-  5. The Go compilation pipeline (`cmd/compile-blueprints`) parses CSVs, validates values against target enums, binds declarative ability ASTs, and emits the immutable production JSON bundle.
+### Specification Scope (v2.0):
+1. **The Card Sheets (`FR-DAT-001` - `FR-DAT-009`)**: source of truth, identity, the card record, headers and enums, subtypes and sentinels, deployment zones, invariants.
+2. **The Ability Vocabulary (`FR-ABL-001` - `FR-ABL-014`, `FR-TRG-001`, `FR-TRG-007`, `FR-PRM-001`, `FR-TGT-101`)**: the definition, hooks, triggered, activated and static abilities, replacements, Maneuver effects, modes, steps, targets, filters, costs, keywords, resolution context, text identity, and how new vocabulary arrives.
+3. **Rules-Text Conventions (`FR-TXT-001` - `FR-TXT-006`)** and **Sheet Checks (`FR-VAL-001`)**.
 
-> [!NOTE] Design Rationale (DA-DAT-001)
-> Mandating pre-publish freshness checks and introducing `import_card_sheets` prevents unconditional overwrites of remote designer balance work in Google Drive, establishing a safe bidirectional workflow.
+---
 
-> [!NOTE] Product Vision: Standalone Interactive Card & Set Designer Tool
-> Long-term tooling roadmap includes a dedicated, standalone **Interactive Card & Set Designer Tool**. This application will use a structured database model (outside of the client/server runtime engines) to manage card balance schemas, keyword catalogs, set dependencies, and migration tracking, replacing manual spreadsheet authoring while serializing directly into canonical version-controlled formats.
+## PRODUCT DECISIONS FLAGGED FOR REVIEW
 
-#### FR-DAT-002: Deterministic Blueprint ID & Slug Derivation
-Every `CardBlueprint` requires a globally unique, immutable string identifier (`id`) complying with `FR-ENT-001`. The blueprint ID is derived deterministically from the card's printed name and faction via the following algorithmic rules:
-1. Strip all non-alphanumeric characters except spaces (apostrophes, commas, dashes, and periods are removed).
-2. Convert all uppercase characters to lowercase.
-3. Replace consecutive space characters with a single underscore (`_`).
-4. Prefix the resulting string with the card's lowercase faction slug followed by an underscore: `<faction>_<slug>`.
-5. **Neutral / HQ Exception**:
-   - Neutral cards are prefixed with `neutral_` (e.g., `Scratch Company` &rarr; `neutral_scratch_company`). The match-generated token entity is universally identified by the blueprint ID `neutral_scratch_company`.
-   - Headquarters cards retain their faction prefix (e.g., `Animus Rift` &rarr; `animus_rift`).
-6. **Invariance Rule**: Blueprint IDs are permanently immutable. Renaming a card's display title in design balance sheets does not alter its canonical `id` unless an explicit database migration is executed.
+> [!IMPORTANT]
+> **DECISION 1: Keep two FRDs, not one (`FR-DAT-001`, `FR-CMP-023`)**
+> - **Inference**: The product summary lets FRD 02 and FRD 03 merge. The export is built last in M3 (build order step 7), on a different trigger from the vocabulary, which the M3 ability survey and every card task read first. FRD 04 and FRD 05 cite the `FR-CMP-*` IDs, and `cardtown lint frd` requires both file names to exist.
+> - **Decision**: Two files. FRD 02 owns card data and the vocabulary. [FRD 03](03_Card_Compiler_FRD.md) owns the catalog export.
+> - **Alternative Considered**: One merged FRD. Rejected: the `FR-CMP-*` IDs would lose their home, and the lint check would need a toolchain change for no gain in clarity. FRD 03's file name still says "Compiler" although it no longer specifies one. Renaming it is a toolchain change (an open technical question there).
+
+> [!IMPORTANT]
+> **DECISION 2: The frozen v1.3 text is preserved as an unscanned copy (`reference/`)**
+> - **Inference**: FRD 08 (M6) is drafted "drawing on frozen FRD 02/03", so the authoring text must stay readable. `cardtown lint frd` reads only the top level of `docs/frd/`, so it never scans `docs/frd/reference/`. A copy there defines no requirement twice, and its references are not checked. An archive left in the live file, or a second copy beside it, would define the same IDs twice and fail the ownership check.
+> - **Decision**: The v1.3 and v1.2 text moved unedited (relative links fixed, a banner added) to `docs/frd/reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md` and `docs/frd/reference/03_Card_Compiler_FRD_v1.2_frozen.md`, beside the existing benchmark blueprints reference. Git history also keeps them.
+> - **Alternative Considered**: Rely on git history alone. Rejected: a drafter has to know which commit to read. A hand-curated extract. Rejected: it would be a third text to keep right, and the point is that the original stays intact.
+
+> [!IMPORTANT]
+> **DECISION 3: A card is identified by its printed name until the export needs more (`FR-DAT-002`)**
+> - **Inference**: v1.3 derived a blueprint ID slug from faction and name. The kernel has no blueprint ID: decks, ability definitions and the loader all key by card name, and the loader keeps the later of two same-named rows without complaint.
+> - **Decision**: The name is the card's identity and must be unique. The catalog gives each card an identifier derived from the row. Whether that is the name or a slug is an open technical question.
+> - **Alternative Considered**: Adopt the frozen slug rule now. Rejected: nothing reads it, and a rename policy (the frozen "permanently immutable" rule) is a product decision best made when something stores IDs.
+
+> [!IMPORTANT]
+> **DECISION 4: Rules-text conventions stay in FRD 02, condensed (`FR-TXT-001` - `FR-TXT-006`)**
+> - **Inference**: The templating standard is cited as live guidance (the drafter and designer personas, `cardtown lint syntax`), and the ability text a `Def` names must match it. Domain 3 of v1.3 is not part of the authoring pipeline.
+> - **Decision**: Keep the six IDs with their substance, trimmed to what the printed cards use. Only `cardtown lint syntax` enforces any of it (three forbidden terms), and the rest is reviewed by the designer.
+> - **Alternative Considered**: Freeze them with the pipeline for FRD 08. Rejected: the cards in M3 are written to this standard now.
+
+## OPEN TECHNICAL QUESTIONS
+
+Questions this FRD raises but deliberately does not answer. `lead-architect` resolves them as decision records in `docs/architecture/decisions/` when the code needs them.
+
+- How does a `Def` serialize: field names, enum spellings (the Go names, or a mapping to them), and whether a zero value is omitted? Only `Keywords` has JSON tags today (camelCase, omitted when zero).
+- What form does a card's catalog identifier take (`FR-DAT-002`): the name, or a derived slug such as the frozen proposal?
+- Where is the duplicate-name and numeric-column check enforced: the loader, `cardtown lint sheets`, or the export's pre-flight (`FR-CMP-027`)?
+- Does `needsRework` ever reach the kernel? It is read by no engine code today.
+- Is a card's rules text kept per line in the catalog, or as the cell it came from?
+
+---
+
+## DOMAIN 1: THE CARD SHEETS
+
+```text
+data/cards/
+  maneuvers-<faction>.csv              8 columns   (animus, concordia, path, soulless)
+  units-and-structures-<group>.csv    14 columns   (animus, concordia, path, soulless, HQ, common)
+```
+
+### Section 1.1: Source of Truth, Identity and Record
+
+#### FR-DAT-001: The Card Sheets Are the Source of Truth
+- **Contract**: The CSV files in `data/cards/` hold every card's printed characteristics and rules text. Anything derived from them (the cards the kernel loads, the catalog of `FR-CMP-023`) is regenerated and never edited. A sheet whose file name starts with `maneuvers-` uses the Maneuver columns of `FR-DAT-006`, and every other sheet uses the asset columns. A new CSV placed in the folder is read like the rest. The Google Sheets that the publisher writes are a downstream view: an edit there changes no game.
+- **Invariants**: One printed card is one non-blank row, in exactly one sheet.
+- **Edge Cases**: A sheet that is empty or has the wrong header fails `cardtown lint sheets` and names the file.
+
+#### FR-DAT-002: Card Identity
+- **Contract**: A card is identified by its printed name, unique across every sheet. Deck lists ([`FR-SET-001`](01_Game_Rules_FRD.md)) and ability definitions (`FR-ABL-001`) name cards by it. The catalog gives each card an identifier derived deterministically from its row (`FR-CMP-023`).
+- **Invariants**: Two rows never share a name. Renaming a card renames it everywhere that names it (the sheet row, the definition's key, deck lists) in one change.
+- **Edge Cases**: A duplicate name is a data error (`FR-CMP-027`). Today the loader silently keeps the later row, so the check is new work.
 
 #### FR-DAT-003: Blueprint Compilation & Asset Bundling
-*(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md), [`FR-CMP-003`](03_Card_Compiler_FRD.md), [`FR-CMP-027`](03_Card_Compiler_FRD.md) & [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
-- Multi-sheet atomic CSV ingestion, validation abort gates, staging rollback, and non-zero exit codes are canonically owned and enforced by the compiler pipeline in [`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md) (`FR-CMP-002`, `FR-CMP-003`, `FR-CMP-027`, `FR-CMP-028`). Runtime singleton memory bundling is specified in [`05_Headless_Game_Engine_FRD.md`](05_Headless_Game_Engine_FRD.md) (`FR-ENT-001`).
+*(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md) & [`FR-CMP-023`](03_Card_Compiler_FRD.md); runtime bundling is [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
 
 #### FR-DAT-004: Engine Version Binding & Replay Compatibility
-*(Subsumed by [`FR-CMP-024`](03_Card_Compiler_FRD.md)–[`FR-CMP-026`](03_Card_Compiler_FRD.md), [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md) & [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md))*
-- Canonical RFC 8785 JSON hashing (`catalogChecksum`) and Semantic Dataset Versioning (`cardDataVersion`) are canonically owned and calculated by the compiler in [`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md) (`FR-CMP-024`–`FR-CMP-026`). Connection handshake verification is governed by [`04_Client_Engine_Protocol_Networking_FRD.md`](04_Client_Engine_Protocol_Networking_FRD.md) (`FR-SES-001`), and replay header telemetry is governed by `FR-SPC-002` and [`FR-ENG-038`](05_Headless_Game_Engine_FRD.md).
+*(Subsumed by [`FR-CMP-024`](03_Card_Compiler_FRD.md)–[`FR-CMP-026`](03_Card_Compiler_FRD.md); the handshake and replay header stay with [`FR-SES-001`](04_Client_Engine_Protocol_Networking_FRD.md) & [`FR-SPC-002`](04_Client_Engine_Protocol_Networking_FRD.md))*
+
+#### FR-DAT-005: The Card Record
+- **Contract**: A card's record holds its printed characteristics (`FR-CRD-101`): name, card type, faction, subtypes, Requisition cost and Tactics cost, rarity and rules text, and for Units, Structures and Headquarters also deployment zones, power, health, Requisition yield and Tactics yield. It also holds the `needsRework` development flag, and, from the loaders, the card's standalone keyword set (`FR-ABL-012`) and its ability definition (`FR-ABL-001`) if it has one.
+- **Invariants**: The record holds printed values only. A card's effective values come from the layers of `FR-LAY-001` at play time.
+- **Edge Cases**: A Maneuver has no zones, subtypes, power, health or yields: they read as empty or zero.
+
+### Section 1.2: Columns, Enums and Text
+
+#### FR-DAT-006: Sheet Headers and Zero-Aliasing Enums
+- **Contract**: Column headers are fixed, camelCase and in this order.
+  - Asset sheets (14): `name`, `cardType`, `faction`, `subtypes`, `requisitionCost`, `tacticsCost`, `deploymentZones`, `rulesText`, `power`, `health`, `requisitionYield`, `tacticsYield`, `rarity`, `needsRework`.
+  - Maneuver sheets (8): `name`, `cardType`, `faction`, `requisitionCost`, `tacticsCost`, `rulesText`, `rarity`, `needsRework`.
+- Enum cells use the canonical spelling with no aliases. `cardType`: `UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`. `faction`: `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`. `rarity`: `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. `deploymentZones`: `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS` or the one two-zone spelling `MAIN_THEATER, RESERVES`. `needsRework`: lowercase `true` or `false`.
+- Cells are RFC 4180 quoted text, and a rules-text cell holds one printed line per line break. The kernel's loader treats LF and CRLF line endings the same and accepts a byte-order mark before the first header. `cardtown lint sheets` is stricter and wants the headers exactly.
+- **Invariants**: A header or enum that differs fails `cardtown lint sheets`, with the expected and found headers shown. The kernel's loader rejects an unknown `cardType`.
+- **Edge Cases**: Two things the sheet linter does not check, whole numbers in the numeric columns and a zone on every Unit and Structure, are checked at export (`FR-CMP-027`). Today the loader reads a non-number as 0.
+
+#### FR-DAT-007: Subtypes, Sentinels and Blank Rows
+- **Contract**: `subtypes` is a comma-separated list. Spaces around an entry are dropped, and an empty cell or `--` means none. Subtype comparisons are case-insensitive (the subtype criterion of `FR-TGT-001`). In `rulesText`, each non-empty line is one printed line, and a cell that is `--` or empty prints nothing (a vanilla card). A row with an empty `name` is a placeholder and is skipped everywhere.
+- **Invariants**: Each printed line is exactly one of: a standalone keyword line (`FR-ABL-012`), a line a definition claims (`FR-ABL-014`), or an unsupported line.
+- **Edge Cases**: A card with an unsupported line cannot be deployed or enacted until a definition claims it. This is how a card with unbuilt text is held back without breaking the sheet.
+
+#### FR-DAT-008: Deployment Zones
+- **Contract**: A Unit or Structure lists Reserves, Main Theater or both, with Main Theater first (`MAIN_THEATER, RESERVES`). A Headquarters lists `HEADQUARTERS`. A Maneuver has no zone column. What the zones mean is `FR-ZON-001` and `FR-TRN-003`.
+- **Edge Cases**: A card that lists both lets its controller choose where it deploys (`FR-TRN-003a`).
+
+#### FR-DAT-009: Card Data Invariants
+- Loading is a pure function of the sheets and the definitions: the same inputs give the same cards, with no clock, no randomness and no dependence on the order files are listed in.
+- Nothing in the vocabulary or the interpreter names a card. A card's behavior is data (`FR-ABL-001`).
+- A printed line and its definition cannot drift apart silently (`FR-ABL-014`).
 
 ---
 
-## DOMAIN 2: BLUEPRINT DATA SCHEMA & CSV NORMALIZATION CONTRACT
+## DOMAIN 2: THE ABILITY VOCABULARY
 
-### Section 2.1: Target Enum Enforcement
+```text
+Def (one per card name)
+ ├─ Triggers[]      Hook + gates + Effect                    FR-TRG-001, FR-ABL-002
+ ├─ Activated[]     Costs[] + Effect                          FR-ABL-003, FR-ABL-009
+ ├─ Statics[]       aura | deploy permission                  FR-ABL-004
+ ├─ Cornered        a grant while Cornered                    FR-ABL-004
+ ├─ CostReduction   hand-active Requisition reduction         FR-ABL-004
+ ├─ Replacements[]  Would + Filter + Steps                    FR-ABL-005
+ ├─ Effect          a Maneuver's                              FR-ABL-006
+ ├─ ExtraCosts[]    declaration costs                         FR-ABL-006, FR-ABL-009
+ └─ Text[]          the printed lines it implements           FR-ABL-014
 
-#### FR-DAT-005: Canonical Blueprint JSON Schema Specification
-In compliance with `FR-CRD-101` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)) and `FR-CMP-023` ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)), `data/schemas/blueprints.json` uses the root `CardBlueprintCollection` envelope (`required: ["catalogChecksum", "cardDataVersion", "generatedAt", "totalCardCount", "blueprints"]`), where `catalogChecksum` matches `^0x[0-9a-f]{64}$` (`FR-CMP-025`) and every item in `blueprints` conforms to the following `CardBlueprint` schema (`required: ["id", "name", "cardType", "faction", "subtypes", "requisitionCost", "tacticsCost", "rarity", "rulesText", "abilities", "needsRework"]`):
+Effect = Targets[] + Steps[]   or   Modes[] + ChooseN         FR-ABL-010
+Step   = Op + Subject (+ Target, Filter, Amount, ...)          FR-PRM-001, FR-TGT-101
+```
 
-| Field | Type | Constraint | Description |
+### Section 2.1: The Definition and Its Parts
+
+#### FR-ABL-001: One Definition Per Card
+- **Contract**: A card's non-keyword abilities are one `ability.Def`, keyed by the card's name in `pkg/engine/cards`. A `Def` has the parts drawn above, each a list in printed order or a single value, and a part a card does not print is empty. A card may print several kinds at once (a trigger and a Cornered grant). Standalone keywords are not a part of a `Def` (`FR-ABL-012`), so a card with only keyword lines, or a vanilla card, has none.
+- **Invariants**: The kernel interprets definitions and holds no card-specific logic (ADR-0004). A definition is data, so the export reads the same value the kernel runs.
+- **Edge Cases**: The v1.3 polymorphic `AbilityDef` with an `abilityType` is gone: the part a value sits in says what it is.
+
+#### FR-TRG-001: Hook and Replacement Event Names
+- **Contract**: A triggered ability names one `Hook`, and a replacement names one `Would`. These are the whole set:
+
+| Hook | Names | Rules IDs |
+| :--- | :--- | :--- |
+| `HookDeploy` | this asset was deployed | `FR-TRN-003` |
+| `HookKilled` | this asset was destroyed from the battlefield | `FR-ZON-004` |
+| `HookAttacks` | this asset attacked (with `Watches`, an asset matching `Watch` attacked) | `FR-CBT-002` |
+| `HookDamaged` | this asset took damage | `FR-REP-004`, `FR-KWD-002a` |
+| `HookExhausted` | this asset changed from Readied to Exhausted | `SVY-R17`, `FR-CAP-001` |
+| `HookCombatKill` | this asset attacked and its combat damage destroyed the defender | `FR-CBT-002`, `SVY-R19` |
+| `HookMoves` | this unit moved to a new battlefield zone | `FR-ZON-002`, `SVY-R1` |
+| `HookDiscardedFromHand` | this card went from its owner's hand to the discard pile | `FR-ZON-004` |
+| `HookTurnStart` | a turn began | `FR-TRN-001` |
+| `HookEntersDiscard` | this card entered its owner's discard pile from any zone | `FR-ZON-004`, `FR-ZON-005` |
+
+| Would | Names | Rules IDs |
+| :--- | :--- | :--- |
+| `WouldBeDestroyed` | an asset matching the replacement's filter would be destroyed | `FR-REP-001`, `SVY-R15` |
+| `WouldBeDealtDamage` | an asset matching the filter would be dealt damage; it goes to the source | `FR-REP-004` |
+
+- **Invariants**: Each `Hook` fires on its own, gates on its own and counts on its own. A compound preamble ("deploys or attacks") is two triggers sharing one effect. The frozen taxonomy's other hooks (v1.3 `FR-TRG-001` had about 30) are not part of the vocabulary until a card needs one (`FR-ABL-013`).
+
+### Section 2.2: The Parts
+
+#### FR-ABL-002: Triggered Abilities
+- **Contract**: A `Trigger` has one `Hook`, an `Effect`, and these gates and options, all optional.
+
+| Field | Names | Rules IDs |
+| :--- | :--- | :--- |
+| `Turn` | any turn (`TurnAny`) or only the controller's own (`TurnYours`) | `FR-TRN-001` |
+| `ToZone` | for a deploy or a move, only into this zone | `FR-ZON-002` |
+| `ActiveZone` | the battlefield (`ZoneAny`) or the owner's discard pile (`ZoneDiscard`) | `FR-ZON-004` |
+| `Cornered` | fires only while its controller is Cornered | `FR-KWD-002e`, `FR-LAY-003` |
+| `Optional` | "you may": asked as the trigger is placed | `SVY-R9`, `SVY-R47`, `SVY-R48` |
+| `FromKeyword` | the keyword this trigger comes from (only `KeywordTriggerAggressive`) | `FR-KWD-002f` |
+| `Watches`, `Watch` | fire on the event of any asset matching a filter (only for `HookAttacks`) | `FR-CBT-002` |
+| `MaxPerTurn` | at most this many firings each turn, per asset (`FR-ABL-008`) | `FR-TRN-001` |
+
+- **Invariants**: A trigger is placed and ordered under `FR-TRG-003` and `FR-TRG-004`, and carries no resource cost (`FR-TRG-005`). A trigger never works from a hand.
+- **Edge Cases**: An effect with "you may X. If you do, Y" is a step list with `IfDone` (`FR-TGT-001`, `SVY-R14`), not a cost.
+
+#### FR-ABL-003: Activated Abilities
+- **Contract**: An `Activated` is a list of `Costs`, paid in printed order, and an `Effect` (`FR-ACT-001`, `FR-ACT-002`).
+- **Invariants**: Its targets are chosen when it is activated, as for a Maneuver (`SVY-R36`).
+- **Edge Cases**: No limit on use and no "repeatable" flag exist beyond what the costs impose (`FR-ABL-013`).
+
+#### FR-ABL-004: Static Abilities, Cornered Grants and Cost Reduction
+- **Contract**: A `Static` has a `Kind`.
+  - `StaticAura`: every battlefield asset matching its `Filter`, relative to the source's controller, has a power (Layer 4) and a keyword set (Layer 3) (`FR-LAY-001`), and a Cornered grant (`WhileCornered`: keywords and power) while its own controller is Cornered (`FR-KWD-002e`, `SVY-R18`). "In the same zone" reads the source's current zone (`SVY-R44`).
+  - `StaticDeployPermission`: the card may be deployed from `ActiveZone` (its discard pile) by paying `Costs` in addition (`FR-TRN-003`, `FR-CST-001`).
+- A card's own Cornered grant is `Def.Cornered`. Its hand-active Requisition reduction is `Def.CostReduction`: `Req` off for each discard-pile card matching a pile `Filter` (`FR-CST-001`).
+- **Invariants**: An aura's filter reads no stat and no keyword (a Layer 3 or 4 value cannot be read by its own filter).
+
+#### FR-ABL-005: Replacement Effects
+- **Contract**: A `Replacement` has a `Would` event, a `Filter` and `Steps`. The steps run inline, never on the stack, with `SubjectSelf` the replacement's source and `SubjectReplaced` the asset whose event is replaced (`FR-REP-001`, `FR-REP-004`). `WouldBeDealtDamage` has no steps, because the damage goes to the source.
+- **Edge Cases**: The order and choice among several replacements is `SVY-R20` to `SVY-R24`.
+
+#### FR-ABL-006: Maneuver Effects and Declaration Costs
+- **Contract**: A Maneuver's resolving effect is `Def.Effect` (`FR-MNV-001`). Costs paid when any card is declared, beyond its Requisition and Tactics, are `Def.ExtraCosts` in printed order (`FR-TRN-003a`).
+- **Invariants**: `Def.Effect` is empty for every card that is not a Maneuver.
+
+#### FR-ABL-008: Per-Turn Trigger Limit
+- **Contract**: `Trigger.MaxPerTurn` limits how often a battlefield trigger fires each turn, per asset. Zero means no limit (`FR-TRN-001`).
+- **Edge Cases**: No other part has a per-turn limit (`FR-ABL-013`).
+
+#### FR-ABL-009: Costs
+- **Contract**: A `Cost` has a `CostKind`. The vocabulary is:
+
+| CostKind | Names | Rules IDs |
+| :--- | :--- | :--- |
+| `CostResources` | pay `Req` Requisition and `Tac` Tactics | `FR-ACT-001` |
+| `CostExhaustSelf` | exhaust the ability's source, which must be Readied | `FR-ACT-002`, `SVY-R17` |
+| `CostKillSelf` | kill the ability's source through the kill path | `FR-ACT-001`, `SVY-R15` |
+| `CostKill` | kill one allied asset matching `Filter`, or with `Counts` a chosen number of different ones | `FR-TRN-003a`, `SVY-R53` |
+| `CostExhaust` | exhaust one Readied allied asset matching `Filter` | `FR-TRN-003a`, `SVY-R17` |
+| `CostDiscard` | discard up to `UpTo` cards from hand, possibly none | `FR-TRN-003a` |
+
+- **Invariants**: Choosing what pays a cost is not targeting, so Ward does not restrict it (`FR-TGT-003`).
+
+#### FR-ABL-010: Modes
+- **Contract**: An `Effect` with `Modes` lists each mode as an `Effect` in printed order, and `ChooseN` says how many different modes are chosen ("choose one" is 1). The modes are chosen as the item is placed, before any target (`FR-MOD-001` §5, `SVY-R6`, `SVY-R28`–`SVY-R31`).
+- **Invariants**: An effect with modes has no `Targets` or `Steps` of its own. A mode has no cost of its own (`FR-ABL-013`, `SVY-R33`).
+
+#### FR-ABL-011: Pools
+- **Contract**: A pool the controller splits among assets as a step resolves is `Step.Split`, on a step that adds Armor to an untargeted pick (`SVY-R51`, `SVY-R52`). It is not a target (`FR-TGT-002`).
+- **Edge Cases**: A pool split among chosen targets is not part of the vocabulary yet (`FR-ABL-013`).
+
+### Section 2.3: Steps, Targets and Shared Vocabulary
+
+#### FR-PRM-001: Steps and Their Ops
+- **Contract**: An `Effect`'s `Steps` run in order. A `Step` has an `Op`, a `Subject` (`FR-TGT-101`) and the parameters its `Op` reads. This is the whole set. The frozen name is v1.3's primitive.
+
+| Op | Frozen name | Acts on | Rules IDs |
 | :--- | :--- | :--- | :--- |
-| `id` | `String` | Pattern: `^[a-z]+_[a-z0-9_]+$` | Deterministic alphanumeric slug (`FR-DAT-002`). |
-| `name` | `String` | Non-empty | Title Case card title matching design sheet. |
-| `cardType` | `CardTypeEnum` | Valid Enum | `HEADQUARTERS`, `UNIT`, `STRUCTURE`, `MANEUVER`. |
-| `faction` | `FactionEnum` | Valid Enum | `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`. |
-| `subtypes` | `Array<String>` | Array of Title Case tags | Normalized subtypes (`FR-DAT-007`). |
-| `requisitionCost` | `Integer` | `>= 0` | Base Requisition deployment/casting cost. |
-| `tacticsCost` | `Integer` | `>= 0` | Base Tactics deployment/casting cost. |
-| `additionalDeploymentCosts` | `Array<CostDef>` | Optional CostDef Array | Non-resource deployment/enactment costs (sacrifices, discards; `FR-TRN-003a`). |
-| `power` | `Integer` or `null` | `>= 0` (null for Maneuvers) | Base Combat Power (`FR-LAY-001`). |
-| `health` | `Integer` or `null` | `>= 1` (null for Maneuvers) | Base Maximum Health (`FR-LAY-002`). |
-| `requisitionYield` | `Integer` | `>= 0` (0 for Maneuvers) | Resources generated upon exhausting for Requisition. |
-| `tacticsYield` | `Integer` | `>= 0` (0 for Maneuvers) | Resources generated upon exhausting for Tactics. |
-| `deploymentZones` | `Array<DeploymentZoneEnum>` | Valid Enum Array | `["RESERVES"]`, `["MAIN_THEATER"]`, `["HEADQUARTERS"]`, or both. |
-| `rarity` | `RarityEnum` | Valid Enum | `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. |
-| `rulesText` | `String` | MTG-Aligned Formatting | Standardized printed rules text (`FR-TXT-001`). |
-| `needsRework` | `Boolean` | `true` / `false` | Required development metadata flag indicating pending design rework (`FR-VAL-003`). Formally excluded from the RFC 8785 canonical hash used for `catalogChecksum` (`FR-CMP-025`). |
-| `abilities` | `Array<AbilityDef>` | Valid AST Array | Declarative definitions of abilities (`FR-ABL-001`). |
+| `OpScratch` | `SCRATCH` | a player | `FR-ZON-005` |
+| `OpDraw` | `DRAW_CARD` | a player | `FR-WIN-001` |
+| `OpDiscard` | `DISCARD_CARD` (and `REVEAL_HAND`, folded in with `ControllerChooses`) | a player | `FR-MOD-001` §1, §3, §6; `SVY-R50` |
+| `OpSearchDeck` | `SEARCH_DECK` | a player | `FR-DEK-001`, `SVY-R37`, `SVY-R38` |
+| `OpLookTop` | `LOOK_TOP_CARDS` | a player | `FR-MOD-001` §4; `SVY-R41`–`SVY-R43` |
+| `OpDealDamage` | `DEAL_DAMAGE` | an asset | `FR-REP-004`, `SVY-R27` |
+| `OpHeal` | `HEAL` | an asset | `FR-KWD-002d` |
+| `OpAddArmor` | `ADD_ARMOR` | an asset | `FR-LAY-002` |
+| `OpModifyStat` | `MODIFY_STAT` | an asset | `FR-LAY-001`–`FR-LAY-003` |
+| `OpGrantKeyword` | `GRANT_KEYWORD` | an asset | `FR-LAY-001`, `FR-LAY-003` |
+| `OpKill` | `KILL` | an asset | `FR-LAY-002`, `FR-ZON-002`, `SVY-R46` |
+| `OpMoveZone` | `MOVE_ZONE` | a unit | `FR-ZON-002`, `FR-ZON-004` |
+| `OpGainControl` | `GAIN_CONTROL` | a unit | `FR-ZON-002`, `FR-ZON-003` |
+| `OpMorphScratch` | `MORPH_SCRATCH` | a unit | `FR-ENT-103` |
+| `OpReturnToHand` | `RETURN_TO_HAND` | an asset or card | `FR-ZON-004` |
+| `OpPutOnDeck` | `PUT_CARD_ON_DECK` | an asset or card | `FR-DEK-001` |
+| `OpDeployFree` | `DEPLOY_FREE` | a card in a discard pile | `FR-TRN-003a`, `FR-CST-001`, `SVY-R43` |
 
-#### FR-DAT-006: Direct Schema Header Parity & Zero-Aliasing Enums in CSVs
-To eliminate translation layers and ensure absolute 1-to-1 schema fidelity with zero header aliasing, all authoring CSV files in `data/cards/` use camelCase column headers that directly mirror canonical `CardBlueprint` JSON property names (`FR-DAT-005`):
-- **Unit, Structure & Headquarters Sheets (`units-and-structures-*.csv` — 15 columns)**:
-  `"name","cardType","faction","subtypes","requisitionCost","tacticsCost","deploymentZones","rulesText","power","health","requisitionYield","tacticsYield","rarity","needsRework"`
-- **Maneuver Sheets (`maneuvers-*.csv` — 9 columns)**:
-  `"name","cardType","faction","requisitionCost","tacticsCost","rulesText","rarity","needsRework"`
-  *(Maneuver sheets omit the 6 battlefield-asset columns, which deterministically compile into `subtypes: []`, `deploymentZones: []`, `power: null`, `health: null`, `requisitionYield: 0`, and `tacticsYield: 0`.)*
+- The parameters a step may carry are `Amount` (a `Value`), `Target` (an index into the effect's targets), `Filter`, `UpTo`, `Dealer`, `To` (a zone), `Keywords`, `Stat`, `Until` (a `Duration`), `Bottom`, `IfDone`, `IfHandEmpty`, `ControllerChooses` and `Split`. Each is read only by the ops its Go comment names, and loading rejects a definition that sets one where nothing reads it (`FR-ABL-014`). The Go comment on each `Op` is the authority for what it skips (for example, which cards `OpKill` or `OpMoveZone` leave alone).
+- **Invariants**: `IfDone` and `IfHandEmpty` are the only conditions between steps. There is no else branch.
+- **Edge Cases**: The v1.3 `REDIRECT_DAMAGE_TARGET` is folded into `WouldBeDealtDamage` (`FR-ABL-005`). The other seven frozen primitives have no `Op` (`FR-ABL-013`).
 
-Furthermore, enum and boolean cells must strictly serialize canonical target strings with zero aliases:
-1. **`cardType`**: Must equal strictly `UNIT`, `STRUCTURE`, `MANEUVER`, or `HEADQUARTERS`. Values such as `"Unit"`, `"Structure"`, `"Maneuver"`, and `"HQ"` are illegal.
-2. **`faction`**: Must equal strictly `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, or `NEUTRAL`. Title-cased values (e.g. `"Animus"`, `"Concordia"`) are illegal.
-3. **`rarity`**: Must equal strictly `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, or `HQ`. Single-letter abbreviations (`"C"`, `"U"`, `"R"`, `"M"`) are illegal.
-4. **`deploymentZones`**: Must equal strictly `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, or comma-separated combinations thereof (e.g., `"MAIN_THEATER, RESERVES"`). Informal labels such as `"Main"`, `"Reserves"`, or `"Headquarters"` are illegal.
-5. **`needsRework`**: Must equal strictly lowercase `"true"` or `"false"`. Informal boolean strings such as `"Yes"`, `"No"`, `"TRUE"`, or `"FALSE"` are illegal.
+#### FR-TGT-101: Targets and Subjects
+- **Contract**: A `Target` is one "chosen" clause of an `Effect`: exactly one entity, or with `UpTo` "up to N" different ones (`SVY-R11`). It is locked when the item is placed (`SVY-R3`, `FR-TGT-001`, `FR-TGT-003`). Its repetition and distinctness options are `PerDiscard` (`SVY-R4`), `PerKilled` with `Different` (`SVY-R53`, `SVY-R54`) and `Another` ("another chosen", `SVY-R34`). A `Subject` says what a step acts on:
 
-#### FR-DAT-007: Subtype & Vanilla Ability Sentinel Normalization
-- **Subtype Taxonomy**: Card subtypes in the `subtypes` CSV column must be serialized as a comma-separated list of Title Case strings (e.g., `"Infantry, Scratch Company"`, `"Specialist, Chainbreaker"`, `"Forge, Construct"`).
-- **Null Subtypes Sentinel**: Where a card possesses no subtypes (e.g. Headquarters), the field typically contains the literal sentinel string `"--"`. The ingestion pipeline treats empty strings (`""`), whitespace-only cells, `"N/A"`, and `"--"` identically, normalizing them into an empty array `[]`.
-- **Vanilla Ability Sentinel**: In the `rulesText` column, the sentinel string `"--"` is explicitly recognized as representing a vanilla card with no printed abilities (e.g., *Forest Heavies*, *Old Growth Elders*, *Spoil Forest Irregulars*), compiling into an empty `abilities: []` array.
-- **Normalization Engine & Casing Semantics**: The compilation pipeline splits comma-separated strings, strips extraneous whitespace, and normalizes values to an array of unique Title Case strings for serialization and card frame rendering. During engine execution, all subtype filter comparisons (`FilterDef.subtypes`, `FR-TGT-001`) evaluate criteria using case-insensitive string matching to prevent casing mismatches from causing targeting failures.
+| Subject | Names |
+| :--- | :--- |
+| `SubjectController` (the zero value) | the ability's controller |
+| `SubjectOpponents` | each opponent of the controller |
+| `SubjectSelf` | the ability's own source card, tracked across zones |
+| `SubjectTarget` | each entity chosen for the target slot the step names |
+| `SubjectAll` | every battlefield asset matching the step's filter: not a target (`FR-TGT-002`) |
+| `SubjectPick` | entities the controller picks as the step resolves, among assets or discard-pile cards: not a target (`SVY-R3`, `SVY-R14`) |
+| `SubjectReplaced` | the asset a replacement replaces (replacements only) |
+| `SubjectWatched` | the asset whose event fired a watching trigger: not a target |
 
-> [!NOTE] Design Rationale (DA-DAT-006)
-> Authoring CSVs enforce Title Case for human readability and UI presentation, while the runtime engine performs case-insensitive subtype comparison to guarantee robust filter matching across platforms.
+- **Invariants**: Ward and `FR-TGT-003` apply to "chosen" only, so `SubjectAll`, `SubjectPick` and `SubjectWatched` never fall under them.
+- **Edge Cases**: The wire form of a target choice is M5 work (FRD 04). It was `FR-TGT-101`'s payload in v1.3.
 
-#### FR-DAT-008: Deployment Zone Array Schema & Invariants
-- **Units & Structures**: Every Unit and Structure blueprint must declare at least one legal deployment zone (`["RESERVES"]`, `["MAIN_THEATER"]`, or `["RESERVES", "MAIN_THEATER"]`). Headquarters cards declare strictly `["HEADQUARTERS"]`.
-- **Maneuver Exemption**: Maneuvers resolve on the stack (`FR-QUE-001`, `FR-MNV-001`) and never occupy battlefield zones. Maneuver blueprints serialize `deploymentZones: []` (or `null`).
-- **Zone Order Normalization**: In CSV authoring sheets where multi-zone deployment is permitted, zones are normalized alphabetically: `"MAIN_THEATER, RESERVES"`.
+#### FR-ABL-007: Filters, Values, Durations and Zones
+- **Contract**: A `Filter` is a conjunction of criteria (`FR-TGT-001`), and every criterion that is set must hold. A criterion left at its zero value is not applied.
 
----
+| Criterion | Values |
+| :--- | :--- |
+| `Allegiance` | `AllegianceAny`, `AllegianceAllied`, `AllegianceOpposing`, relative to the ability's controller |
+| `Kinds` | a set of `KindUnit`, `KindStructure`, `KindHeadquarters` and, for discard-pile filters only, `KindManeuver` |
+| `Subtypes` | at least one of a list of printed subtypes |
+| `Scratch` | `ScratchAny`, `ScratchOnly`, `ScratchExcluded` (Scratch Company units) |
+| `Other` | not the ability's own source |
+| `Zone` | `ZoneAny` (any battlefield zone), `ZoneReserves`, `ZoneMainTheater`, `ZoneDiscard` (cards in a discard pile) |
+| `ZoneRef` | `ZoneRefSame`, the zone the source was in when the item was placed (`SVY-R44`), or `ZoneRefThat`, the zone locked as a move's destination (`SVY-R45`) |
+| `Stat`, `AtMost` | the entity's `StatPower`, `StatRequisition` or `StatMaxHealth` is `AtMost` or less. A pile card reads printed, an asset effective |
 
-## DOMAIN 3: DECLARATIVE ABILITY ENGINE SCHEMA & AST SPECIFICATION
+- A `Value` is a number a step reads as it resolves: fixed (`ValueSourceFixed`), or the effective power of the step's dealer (`ValueSourcePower`, `SVY-R10`, `SVY-R27`). A `Duration` is `UntilEndOfTurn` or `UntilEndOfOpponentTurn` (`FR-LAY-003`). `OpAddArmor` has no duration (`SVY-R39`).
+- **Invariants**: The frozen filter and value options with no counterpart here (negated subtypes, readiness, other stat operators, aggregates and counts) are not part of the vocabulary (`FR-ABL-013`).
 
-### Section 3.1: Polymorphic Ability AST Schemas
+#### FR-TRG-007: What a Resolution Can Refer To
+- **Contract**: An effect may refer back to what happened earlier in the same placement or resolution, and only in these ways: a step that runs only if the step before it did something (`IfDone`, `SVY-R14`, `SVY-R15`), a target slot repeated once per discarded or killed card (`PerDiscard`, `PerKilled`), a chosen asset as the damage dealer (`Dealer`), an earlier slot another must differ from (`Another`), the asset whose event fired a watching trigger (`SubjectWatched`) and a source's last-known power once it has left (`SVY-R10`).
+- **Invariants**: The frozen causality lineage (event parents, root actions) is not part of the vocabulary. The choice a player makes goes through the kernel's decision interface (ADR-0003), and its wire form is M5 work.
 
-#### FR-ABL-001: Universal AbilityDef Polymorphic Schema
-Every entry in a blueprint's `abilities` array is a polymorphic `AbilityDef` JSON object discriminated by a required `abilityType` enum property:
-- `abilityType`: `"TRIGGERED"` (`FR-ABL-002`), `"ACTIVATED"` (`FR-ABL-003`), `"CONTINUOUS_AURA"` (`FR-ABL-004`), `"REPLACEMENT_WATCHER"` (`FR-ABL-005`), `"MANEUVER_EFFECT"` (`FR-ABL-006`), or `"KEYWORD_GRANT"` (`FR-ABL-012`).
+### Section 2.4: Keywords, Text Identity and Growth
 
-> [!NOTE] Design Rationale (DA-XP-001)
-> The declarative, polymorphic Ability AST architecture is intentional and non-negotiable. Digital card games that rely on ad-hoc imperative scripts or stopgap code hooks (such as early MTGO architecture) suffer from compounding technical debt, desync vulnerabilities, and fragile client-server state replication. A fully declarative JSON AST ensures deterministic replay verification, clean client-side visual effect binding, robust schema validation, and long-term extensibility without engine recompilation.
+#### FR-ABL-012: Standalone Keywords
+- **Contract**: A rules-text line that is exactly one keyword, with its number where it has one (`Resistant 1`, `Armor 2`, `Ward`), is a standalone keyword line. Loading folds these into the card's `ability.Keywords` set, never into a `Def`. The set has nine members, each defined by its keyword entry in FRD 01 Appendix A: `Resistant` (`FR-KWD-002b`), `Stalwart` (`002c`), `Aggressive` (`002f`), `Ethereal` (`002g`), `Ward` (`002h`), `Versatile` (`002i`), `Guardian` (`002j`), `Armor` (`002k`) and `DeploysExhausted` (`002l`). The same set describes keywords granted by an aura, by Cornered, or by `OpGrantKeyword`, and the one fold of two sets adds numbers and sets flags.
+- The other keywords are written in the vocabulary, not in the set:
 
-#### FR-ABL-002: TriggeredAbilityDef Schema & Hook Bindings
-In compliance with **FR-TRG-001** through **FR-TRG-007**:
-- Evaluates automatically whenever the engine emits a matching event hook and enqueues an execution frame onto the Resolution Stack (`FR-QUE-001`) during Sub-Phase 4a or immediately in context.
-- **Schema Properties**:
-  - `triggerHook`: String enum or `Array<String>` matching `FR-TRG-001` (allowing compound preambles such as *"Whenever this unit deploys or attacks"* or *"When this unit deploys or is killed"* to map without redundant nodes).
-  - `condition`: Declarative condition object (`ConditionDef`, `FR-ABL-007`) evaluating source, turn context, zone transition, value comparison, or Cornered gate (`FR-KWD-002e`).
-  - `optional`: Optional boolean (`default: false`) indicating `"you may"` trigger resolution (*Craterfall Ancient*, *Blind Defile*, *Eerie Remnant*).
-  - `optionalCosts`: Optional `Array<CostDef>` for triggers requiring an optional non-resource cost (`"you may [Cost]. If you do, [Effect]"`, e.g., *Infested Apostle*, *Arkha, Sun's Fury*, *Redlined Brawler*, *Blind Defile*).
-  - `targeting`: Optional targeting declaration (`TargetRef`) if the trigger requires player target selection.
-  - `effect`: Execution payload (`EffectDef`, `FR-ABL-007`) specifying an atomic primitive (`FR-PRM-001`) or composite control-flow container (`COMPOSITE_SEQUENCE`, `CONDITIONAL_CLAUSE`).
-  - `maxPerTurn`: Optional integer (`>= 1`) restricting maximum trigger frequency per turn (`FR-ABL-008`).
-- **Upfront Target Binding**: Governed canonically by `FR-TGT-101` and `FR-TGT-001` ([`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md)). Targets for conditional triggers are locked upfront upon enqueueing; if the condition is not met at resolution, the conditional clause simply does not execute.
+| Keyword (FRD 01) | Written as |
+| :--- | :--- |
+| `FR-KWD-002a` | a `Trigger` on `HookDamaged` |
+| `FR-KWD-002e` | `Trigger.Cornered`, `Def.Cornered` or `Static.Cornered` |
+| `FR-KWD-002f` | `ability.Aggressive(n)`: a `Trigger` with `FromKeyword` set, plus the set member |
+| `FR-KWD-002d` | `OpHeal` |
+| `FR-KWD-002m` | `OpScratch` |
 
-#### FR-ABL-003: ActivatedAbilityDef Schema & Cost Models
-In compliance with **FR-ACT-001**, **FR-ACT-002**, and **FR-QUE-001**:
-- Declared manually by the active player during the Main Phase while `Stack.isEmpty() == true`.
-- **Schema Properties**: `costs` (`Array<CostDef>` paid simultaneously upon declaration; `FR-ABL-007`, `FR-ABL-009`), `targeting` (`TargetRef`; `FR-TGT-001`, `FR-TGT-002`), `effect` (`EffectDef`), and `repeatable` (boolean, default `true` unless constrained by costs or `maxPerTurn`).
+- **Invariants**: This document names keywords and cites their IDs. Their behavior is in FRD 01 Appendix A only.
+- **Edge Cases**: `FR-KWD-002n` and `FR-KWD-002p` have no shape yet (`FR-ABL-013`). `FR-KWD-002o` is retired (`SVY-R12`). An unknown line such as "Overkill" is not a keyword line: it stays an unsupported line until a definition claims it.
 
-#### FR-ABL-004: ContinuousAuraDef Schema & 6-Layer Interfacing
-In compliance with **Section 6.2 of [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) (`FR-LAY-001` - `FR-LAY-003`)**, **FR-CST-001**, and **FR-TRN-003a**:
-- Evaluates continuously across board assets (or in `HAND` / `DISCARD` when `activeZone` is explicitly declared), registering static modifiers into Layer 4 (Auras) of the 6-layer attribute pipeline or granting static zone deployment permissions.
-- **Schema Properties**:
-  - `activeZone`: Optional string enum (`"BATTLEFIELD"` default, `"HAND"`, or `"DISCARD"`). Specifies the zone in which the host card's continuous effect is active (e.g., `"HAND"` for self cost-reduction modifiers on *Swirling Dustdevil* and *Boneyard Amalgam*; `"DISCARD"` for alternate-zone deployment permission on *Veil Render*).
-  - `scope`: `SELF`, `ALLIED_IN_ZONE`, `OPPOSING_IN_ZONE`, or `ALL_IN_ZONE`.
-  - `filter`: Optional `FilterDef` narrowing which entities within `scope` receive the modifier (e.g., `{ "excludeSelf": true }` on *Animoceps Stalk*, or `{ "subtypes": ["Horror"] }` on *Hulking Incongruity*).
-  - `modifiers`: Array of `AttributeModifierDef` specifying target attribute (`COMBAT_POWER`, `MAX_HEALTH`, `REQUISITION_COST`, `TACTICS_COST`, `KEYWORD_GRANT`, `SUBTYPE_GRANT`), mathematical operation (`ADD`, `SUBTRACT`, `SET`), and value expression (`ValueToken`). Dynamic cost reductions (`REQUISITION_COST`, `TACTICS_COST`) obey a minimum floor of `0` (`FR-CST-001`).
-  - `abilityGrants`: Optional `Array<AbilityDef>` allowing continuous auras to project compound abilities (e.g. `Cornered: Resistant 1` on *Ancestral Monument*) onto scoped assets.
-  - `staticPermission`: Optional `{ "permissionType": "ALLOW_DEPLOY_FROM_ZONE", "sourceZone": "DISCARD", "additionalCosts": Array<CostDef> }` granting permission to deploy the host card from a non-hand zone by paying additional costs (`FR-TRN-003a`, *Veil Render*).
+#### FR-ABL-013: New Vocabulary Arrives With Its First Card
+- **Contract**: A shape the kernel does not have is added only when a card needs it, in a `shape` task that changes the package, its interpreter and its tests together (ADR-0004). A `card` task only combines shapes that exist. This document is updated in the same milestone to name the new value.
+- **Invariants**: Nothing is specified ahead of its card. The shapes still waiting are tracked in the [ability shapes write-up](../design/m2_ability_shapes.md) §4.1 and in the board directives. The frozen v1.3 text lists what a past design wanted, and is a source to read, not a requirement.
+- **Edge Cases**: A card that needs a shape the vocabulary lacks stays held back (`FR-DAT-007`) until the shape task lands.
 
-> [!NOTE] Design Rationale (DA-DAT-004)
-> Armor is an ephemeral consumable damage buffer (absorbed 1-for-1 before health deduction in Stage 4 of `FR-REP-004`) modified strictly via one-shot discrete events. A continuous aura granting "+1 Armor" is semantically equivalent to `Resistant 1` (`FR-KWD-002b`) and would otherwise create undefined state regeneration loops; defensive continuous auras must grant stat modifiers or damage reduction keywords (`Resistant N`, `Stalwart`).
-
-#### FR-ABL-005: ReplacementWatcherDef Schema & Event Interception
-In compliance with **FR-REP-001** through **FR-REP-004**:
-- Intercepts prospective state events inline (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) without utilizing the Resolution Stack.
-- **Schema Properties**: `interceptHook` (event hook to intercept), `condition` (`ConditionDef`), and `replacementAction` (`EffectDef` substituting the prospective event payload, e.g., `REDIRECT_DAMAGE_TARGET`, `EXHAUST`, `RETURN_TO_HAND`).
-
-#### FR-ABL-006: ManeuverEffectDef Schema & Stack Resolution
-In compliance with **FR-MNV-001** and **FR-TRN-003**:
-- Represents the core spell payload executed when a Maneuver card resolves from the top of the Resolution Stack.
-- **Schema Properties**: `targeting` (`TargetRef` or `Array<TargetRef>`), `effect` (`EffectDef`), and modal payloads (`modalCount`, `options`; `FR-ABL-010`).
-
-### Section 3.2: Declarative AST Sub-Schemas
-
-#### FR-ABL-007: Common Declarative AST Types
-All `AbilityDef` nodes compose the following canonical sub-schemas (validated by `AbilityDef.schema.json` per `FR-CMP-022`):
-
-| Sub-Schema | Required | Properties & Enum Constraints |
-| :--- | :--- | :--- |
-| **`FilterDef`** | *none* | `allegiance` (`ALLIED`, `OPPOSING`, `ANY`), `entityType` (`UNIT`, `STRUCTURE`, `HEADQUARTERS`, `ASSET`, `CARD`), `cardType` (`UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`), `subtypes` (`Array<String>`), `negateSubtypes` (`Boolean`), `excludeSelf` / `excludeScratch` / `excludeHQ` / `excludeUnits` (`Boolean`), `readiness` (`READIED`, `EXHAUSTED`, `ANY`), `zone` (`SAME_ZONE`, `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS`, `BATTLEFIELD`, `ATTACHED`, `HAND`, `DECK`, `DISCARD`), `statComparison` (`{ property: [COMBAT_POWER, CURRENT_HEALTH, MAX_HEALTH, REQUISITION_COST, TACTICS_COST], operator: [EQ, NEQ, LT, LTE, GT, GTE], value: ValueToken }`). |
-| **`ValueToken`** | `type` | `type` (`STATIC`, `DYNAMIC`, `QUERY`, `VARIABLE_X`), `value` (`Integer`), `source` (`SELF`, `TARGET`, `GAME_STATE`, `CAUSALITY_CONTEXT`), `property` (`COMBAT_POWER`, `CURRENT_HEALTH`, `MAX_HEALTH`, `BASE_REQUISITION_COST`, `BASE_TACTICS_COST`, `KILLED_COUNT`, `RETURNED_COUNT`, `DISCARDED_COUNT`), `query` (`{ filter: FilterDef, aggregate: [COUNT, SUM_ATTRIBUTE], targetAttribute: [REQUISITION_YIELD, TACTICS_YIELD, COMBAT_POWER, CURRENT_HEALTH, MAX_HEALTH, ARMOR] }`), `filter` (`FilterDef`), `multiplier` (`Integer`), `divisor` (`Integer >= 1`). Zone scoping is delegated canonically to `filter.zone` (`FilterDef`), preserving access to `SAME_ZONE`. |
-| **`CostDef`** | `costType` | `costType` (`RESOURCE`, `EXHAUST_SELF`, `EXHAUST_ASSET`, `KILL_ASSET`, `DISCARD_CARD`, `MOVE_CARD_ZONE`), `resource` (`REQUISITION`, `TACTICS`), `amount` (`Integer >= 1`), `target` (`TargetRef` for `EXHAUST_ASSET`, `KILL_ASSET`, `MOVE_CARD_ZONE`; `EXHAUST_SELF` applies strictly to host asset without client prompt, while `EXHAUST_ASSET`, `KILL_ASSET`, and `MOVE_CARD_ZONE` validate `filter` and bind chosen target via `TARGET_ROLE_EXHAUST_COST`, `TARGET_ROLE_SACRIFICE_COST`, or `TARGET_ROLE_MOVE_COST` (`FR-MSG-003`)), `count` (`Integer >= 1` for `DISCARD_CARD`), `destinationPosition` (`TOP`, `BOTTOM`, `SHUFFLED_IN`). |
-| **`TargetRef`** | `selector` | `selector` (`SELF`, `CHOSEN`, `ALL`, `DISTRIBUTED_POOL`, `RANDOM`, `BOUND_TARGET`, `TRIGGER_EVENT_ENTITY`), `filter` (`FilterDef`), `count` (`Integer >= 1`), `minCount` (`Integer >= 0`), `maxCount` (`Integer >= 1`), `allowedCounts` (`Array<Integer >= 1>`), `poolValue` (`Integer >= 1`), `targetIndex` (`Integer >= 0`), `bindingPolicy` (`UPFRONT_LOCK`, `ON_RESOLUTION`). |
-| **`ConditionDef`** | *none* | `turnOwner` (`SELF`, `OPPONENT`, `ANY`), `cornered` (`Boolean`), `fromZone` / `toZone` (`HAND`, `DECK`, `BATTLEFIELD`, `DISCARD`, `RESERVES`, `MAIN_THEATER`), `deployedZone` (`RESERVES`, `MAIN_THEATER`; deprecated alias for `toZone` on `EVENT_DEPLOY`), `targetRef` (`String`), `handEmpty` (`Boolean`), `valueComparison` (`{ property: [KILLED_COUNT, RETURNED_COUNT, DISCARDED_COUNT], operator: [EQ, NEQ, GT, GTE, LT, LTE], value: Integer }`), plus any `FilterDef` predicate (`allegiance`, `entityType`, `cardType`, `zone`, `filter`, `excludeSelf`; redundant `source` deprecated in favor of canonical `FilterDef.allegiance`). |
-| **`EffectDef`** | `primitive` | `primitive` (`String` matching `FR-PRM-001` or `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE`), `target` (`TargetRef`), `repeatCount` (`ValueToken` optional, for looping targeted steps scaled by causality counts), `steps` (`Array<EffectDef>`), `condition` (`ConditionDef`), `optionalCost` (`CostDef`), `effect` / `ifTrue` / `ifFalse` (`EffectDef`), plus primitive-specific parameters (`FR-PRM-001`). |
-| **`PartitionDestDef`** | `action` | `action` (`MOVE_TO_ZONE` default, `DEPLOY_FREE`), `zone` (`HAND`, `DISCARD`, `TOP_OF_DECK`, `BOTTOM_OF_DECK`; required if `MOVE_TO_ZONE`), `destinationZone` (`RESERVES`, `MAIN_THEATER`; optional if `DEPLOY_FREE`), `count` (`Integer` or `"REMAINDER"`), `upTo` (`Boolean`), `filter` (`FilterDef`), `order` (`ANY_ORDER`, `MAINTAIN_ORDER`), `trackAs` (`String`). |
-
-> [!NOTE] Design Rationale (DA-DAT-002)
-> Replaces ad-hoc, card-specific property enums (`COUNT_TUCKED_CARDS`, `COUNT_DISCARD_CARDS`, `COUNT_STRUCTURES_REQUISITION_YIELD`) with a generic, composable `query` object within `ValueToken`. This fulfills the declarative AST mandate (`DA-XP-001`), allowing designers to express entity counts and attribute aggregates without engine recompilation or schema enum expansions.
-
-> [!NOTE] Design Rationale (DA-DAT-012)
-> To eliminate field collisions and ambiguity, `ValueToken.query` delegates zone scoping exclusively to `FilterDef.zone`. This avoids conflicting zone declarations and guarantees full support for dynamic relative zone queries (`SAME_ZONE`).
-
-> [!NOTE] Design Rationale (DA-DAT-015)
-> `ConditionDef` embeds `FilterDef` predicates canonically. Redundant root-level fields (`source`, `deployedZone`) are deprecated in favor of `FilterDef.allegiance` and `toZone` to provide unambiguous evaluation precedence.
+#### FR-ABL-014: A Definition Matches the Printed Text
+- **Contract**: `Def.Text` lists the exact non-keyword lines the definition implements, and each must equal a line printed on the card, once. Loading removes each from the card's unsupported lines. A card with a line left over cannot be deployed or enacted.
+- **Invariants**: Loading rejects, and names the card, (a) a `Text` line missing from the sheet, so a reworded card stops running instead of running stale logic, and (b) a definition that sets a field in a context nothing reads it in (a watching trigger on any hook but `HookAttacks`, a pool split anywhere but an untargeted Armor pick, `ControllerChooses` off `OpDiscard`, a stat criterion on an aura's filter).
+- **Edge Cases**: This checks identity of text only. Full rules-text parity, comparing what a line says with what its definition does, stays frozen for FRD 08 (v1.3 `FR-VAL-002`).
 
 ---
 
-### Section 3.3: Event Hook Taxonomy, Atomic Effect Primitives & Bound Payloads
+## DOMAIN 3: RULES-TEXT CONVENTIONS & SHEET CHECKS
 
-#### FR-TRG-001: Trigger & Replacement Event Hook Taxonomy
-`TriggeredAbilityDef` (`FR-ABL-002`) and `ReplacementWatcherDef` (`FR-ABL-005`) bind strictly to the following canonical event and prospective replacement hook identifiers:
-- **Asset Lifecycle & Zones**: `EVENT_DEPLOY`, `EVENT_DESTROY`, `EVENT_ZONE_CHANGE`, `EVENT_MARCH`, `EVENT_EXHAUST`, `EVENT_READY`
-- **Combat & Damage**: `EVENT_ATTACK_DECLARE`, `EVENT_DEAL_DAMAGE`, `EVENT_TAKE_DAMAGE`, `EVENT_ATTACK_RESOLVED`, `EVENT_COMBAT_KILL`
-  - **Combat Kill Semantics (`EVENT_COMBAT_KILL`)**: Emitted when lethal combat damage destroys an asset (`FR-CBT-002`). Carries `killer_asset_id` (the asset that dealt the lethal combat damage), `victim_asset_id` (the asset destroyed), and `is_attacker` (true if killer was the declared attacker, false if defender retaliation), allowing triggers like *Dread Manifestation* to evaluate killer identity and restrict execution strictly to attacker-originated kills.
-- **Economy & Resources**: `EVENT_GENERATE_REQUISITION`, `EVENT_SPEND_REQUISITION`, `EVENT_CONVERT_REQUISITION`, `EVENT_GENERATE_TACTICS`, `EVENT_SPEND_TACTICS`
-- **Hand & Deck Operations**: `EVENT_DRAW_CARD`, `EVENT_DISCARD_CARD`, `EVENT_MULLIGAN`
-- **Actions, Maneuvers & Abilities**: `EVENT_ENACT_MANEUVER`, `EVENT_ACTIVATE_ABILITY`, `EVENT_SCRATCH_COMPANY`
-- **Phase & Turn Lifecycle**: `EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`, `EVENT_TURN_START`, `EVENT_TURN_END`
-  - **Canonical Turn-Boundary Trigger Binding**: Card abilities templated with *"At the start of your turn, ..."* (*Hammerhand Bivouac*) bind strictly to `EVENT_TURN_START` (emitted once in Sub-Phase 1b of the Ready Phase after asset readying), and abilities templated with *"At the end of your turn, ..."* (*Redline Infusion*) bind strictly to `EVENT_TURN_END` (emitted once in Sub-Phase 4a of the End Phase). The phase-entry hooks (`EVENT_READY_PHASE`, `EVENT_DRAW_PHASE`, `EVENT_MAIN_PHASE`, `EVENT_END_PHASE`) are reserved for internal engine sub-phase transitions and are never bound simultaneously with `EVENT_TURN_START` / `EVENT_TURN_END` on card triggers.
-- **Prospective Replacement Interception Hooks (`FR-REP-001`)**: `WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`
+#### FR-TXT-001: Sentence Grammar and Capitalization
+Every printed clause is a complete sentence that starts with a capital letter and ends with a period, unless it is a standalone keyword line (`FR-ABL-012`). System names are capitalized: `Headquarters`, `Reserves`, `Main Theater`, `Scratch Company`, `Requisition`, `Tactics`, `Health`. Reminder text is not part of `rulesText`.
 
-#### FR-TRG-007: Event Causality Context Lineage
-- Every emitted event and prospective replacement hook carries causal lineage metadata (`parentEventId`, `rootActionId`, and `sourceEntitySnapshot` per `FR-SNP-101`) to enable deterministic replacement evaluation, `CAUSALITY_CONTEXT` `ValueToken` resolution (e.g., *"for each card discarded this way"*, *"for every 2 units killed this way"*), and trigger scope validation.
+#### FR-TXT-002: Trigger Preambles
+`When` opens an event that happens once in an object's life ("When this unit deploys"). `Whenever` opens one that can repeat ("Whenever this unit attacks"). `At` opens a turn boundary ("At the start of your turn").
 
-#### FR-PRM-001: Standard Atomic Effect Primitives Catalog
-Every `AbilityDef` effect node (`FR-ABL-001`, `EffectDef` in `FR-ABL-007`) dispatches to one of the 26 canonical atomic effect primitives (or composite control-flow containers `COMPOSITE_SEQUENCE` / `CONDITIONAL_CLAUSE` wrapping these primitives):
+#### FR-TXT-003: Cost Notation
+An activated ability prints `[Cost], [Cost]: [Effect].`, with resource costs first (`FR-ABL-003`). An additional cost to enact or deploy prints as its own leading line ("As an additional cost to enact this maneuver, kill an allied unit.", `FR-ABL-006`).
 
-| Primitive | Parameter Schema | Rules & Engine Traceability |
-| :--- | :--- | :--- |
-| `DEAL_DAMAGE` | `amount: ValueToken, damageSource: TargetRef (optional, defaults to SELF), target: TargetRef (optional)` | Deals damage from `damageSource` routed through the 5-stage mitigation sequence (`FR-REP-004`). |
-| `HEAL` | `amount: ValueToken` | Removes accumulated damage counters up to `amount` (`FR-KWD-002d`). |
-| `ADD_ARMOR` | `amount: ValueToken` | Increments dynamic Armor pool (`FR-KWD-002k`). |
-| `MODIFY_STAT` | `attribute: Enum [COMBAT_POWER, MAX_HEALTH], amount: ValueToken, duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN, PERSISTENT]` | Modifies stat through 6-layer pipeline (`FR-LAY-001`, `FR-LAY-003`). |
-| `MOVE_ZONE` | `destinationZone: Enum [RESERVES, MAIN_THEATER, CHOSEN_ZONE]` | Transitions unit between `RESERVES` and `MAIN_THEATER` (`FR-ZON-002`; `CHOSEN_ZONE` bound via `TARGET_ROLE_DESTINATION_ZONE`). |
-| `RETURN_TO_HAND` | `none` | Returns asset to owner's hand and resets dynamic state (`FR-ZON-004`). |
-| `KILL` | `none` | Destroys target asset immediately and routes to owner's `DISCARD` (`FR-ZON-002`). |
-| `DRAW_CARD` | `count: ValueToken, targetPlayer: Enum [SELF, OPPONENT, ALL_OPPONENTS] (optional, default: SELF)` | Draws cards from target player's deck (triggers `FR-WIN-001` on empty deck). |
-| `DISCARD_CARD` | `count: ValueToken, targetPlayer: Enum, upTo: Boolean (optional, default: false)` | Causes target player to discard cards from hand. |
-| `REVEAL_HAND` | `targetPlayer: Enum, selector: Enum` | Reveals player's hand for inspection and targeted discard (`FR-MOD-001`). |
-| `SCRATCH` | `count: ValueToken` | Sequentially executes `Deploy Scratch Company` (`FR-INH-004`, `FR-KWD-002m`). |
-| `REGROUP` | `count: ValueToken` | Transitions up to `count` chosen exhausted allied assets to `READIED` (`FR-KWD-002n`). |
-| `DEPLOY_FREE` | `sourceZone: Enum, filter: FilterDef, destinationZone: Enum (optional), count: ValueToken (optional)` | Deploys matching card suppressing resource and additional costs (`FR-CST-001`), optionally forcing deployment into `destinationZone` (`FR-TRN-003a`). |
-| `SEARCH_DECK` | `filter: FilterDef, destination: Enum` | Searches deck and executes mandatory shuffle (`FR-DEK-001`, `FR-DEK-002`). |
-| `LOOK_TOP_CARDS` | `count: Integer, partition: { destinations: Array<PartitionDestDef> }` | Inspects top `count` cards and partitions across destinations (`FR-MOD-001`, `FR-ABL-007`). |
-| `TUCK_UNDER` | `hostTarget: TargetRef, faceDown: Boolean` | Transitions target card/asset into `ATTACHED` sub-zone under host asset (`FR-ENT-102`). |
-| `GAIN_CONTROL` | `targetPlayer: Enum` | Transfers controller for an opposing `MAIN_THEATER` unit (`FR-ZON-002`). |
-| `MORPH_SCRATCH` | `none` | Transforms unit face-down into a `1/1/1/1` Scratch Company (`FR-ENT-103`). |
-| `GENERATE_RESOURCE` | `resourceType: Enum, amount: ValueToken` | Adds resources to active player's temporary pool (`FR-RES-001`). |
-| `RECYCLE_DISCARD_TO_DECK` | `targetPlayer: Enum` | Transfers `DISCARD` pile into `DECK` with mandatory shuffle (`FR-DEK-002`). |
-| `REDIRECT_DAMAGE_TARGET` | `newTarget: TargetRef` | Intercepts incoming damage in Stage 1 and re-routes to `newTarget` (`FR-REP-004`). |
-| `PUT_CARD_ON_DECK` | `destinationPosition: Enum [TOP, BOTTOM, SHUFFLED_IN], target: TargetRef (optional)` | Places target card at specified deck position (`FR-DEK-001`). |
-| `EXHAUST` | `target: TargetRef (optional)` | Transitions target asset readiness to `EXHAUSTED` (emitting `EVENT_EXHAUST`). |
-| `GRANT_SUBTYPE` | `subtype: String, duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN, PERSISTENT]` | Grants subtype to target asset temporarily or persistently (`FR-LAY-001`). |
-| `GRANT_KEYWORD` | `keyword: Enum, parameter: ValueToken (optional), duration: Enum [END_OF_TURN, END_OF_OPPONENT_TURN, PERSISTENT]` | Grants keyword to target asset temporarily or persistently (`FR-LAY-001`). |
-| `REGISTER_DELAYED_TRIGGER` | `triggerHook: Enum, duration: Enum [END_OF_TURN, NEXT_OCCURRENCE], condition: ConditionDef, effect: EffectDef` | Registers a turn-scoped delayed triggered ability on a bound target or turn boundary (*Rage's Wake*, *Redline Infusion*). |
+#### FR-TXT-004: Targeting Phrasing
+Text says `chosen`, never `target` ("chosen allied unit"), and states the eligibility filter (`FR-TGT-001`). Verification and fizzling are `FR-TGT-003`.
 
-#### FR-TGT-101: Bound Action Payload & Upfront Target Locking Model
-- Action declarations and trigger target selections bind against the AST via structured payloads specifying `actionSourceId`, `blueprintAbilityIndex`, `selectedModalIndices` (`FR-ABL-010`), and `targetBindings` (with `TargetRole`: `SOURCE`, `TARGET`, `SACRIFICE_COST`, `DISCARD_COST`, `EXHAUST_COST`, `DESTINATION_ZONE`, and optional `allocatedValue` per `FR-ABL-011`). Any card partition or deck inspection choices (*Hourglass Diviner*, *Samsara, Living Tempest*) do not bind on declaration and are executed strictly during resolution via interactive client choice prompts (`PlayerChoicePrompt`; `FR-MOD-001`, `FR-MSG-005`).
-- **Upfront Target Locking (`bindingPolicy: "UPFRONT_LOCK"`)**: For composite abilities where a secondary effect depends on an outcome determined during resolution (*Samsara, Living Tempest*), external targets are bound upfront when the action or trigger is placed onto the Resolution Stack (`FR-TGT-001`), completing execution atomically without a mid-resolution target prompt.
+#### FR-TXT-005: Stat and Defense Phrasing
+A temporary modifier says "gets" (singular) or "get" (plural). A continuous aura says "has" or "have". A keyword or Armor grant says "gains" or "gain". A modifier states its power with a sign ("+1 power").
 
----
+#### FR-TXT-006: Zone Names and Numbers
+Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarters Zone`) except `discard pile` and `deck`. A card outside the battlefield is a card, and on it a unit, structure or asset. Cards drawn or discarded are counted in words ("Draw 2 cards"), and damage, Armor and keyword numbers in numerals ("Deal 2 damage", "Scratch 1").
 
-## DOMAIN 4: EXTENDED GAME MECHANICS & EXECUTION SEMANTICS
-
-### Section 4.1: Extended Mechanics Formalization
-
-#### FR-ABL-008: Per-Turn Trigger & Execution Frequency Limits
-- `TriggeredAbilityDef` (`FR-ABL-002`) and `ActivatedAbilityDef` (`FR-ABL-003`) support `maxPerTurn: Integer` (e.g., *Animoceps Rager*: *"This ability triggers only once each turn"*). The engine increments `turnActivationCount` per `AssetInstance`, suppresses execution once `maxPerTurn` is reached, and resets counters during the Ready Phase (`FR-TRN-001`).
-
-#### FR-ABL-009: Exhaust-Self as Ability Cost Model
-- `CostDef` with `costType: "EXHAUST_SELF"` (`FR-ABL-007`) requires host `readiness == READIED`, transitions readiness to `EXHAUSTED` upon declaration (`EVENT_EXHAUST`), and may combine with resource payments (e.g., *Dolus Macrocannon*). Costs targeting another allied asset require `costType: "EXHAUST_ASSET"` or `"KILL_ASSET"` (`FR-DAT-005`, *Funeral Fungus*).
-
-#### FR-ABL-010: Modal Selection AST Primitives
-- Modal cards (*Rogue Fleshshaper*, *Ambush Tactics*) specify `modalCount: Integer` and `options: Array<EffectDef>` on `MANEUVER_EFFECT` or `TRIGGERED` nodes, validated against `selected_modal_indices` (`FR-MSG-003`).
-
-#### FR-ABL-011: Distributed Pool Value Allocations
-- In compliance with **FR-TGT-002** and **FR-MSG-003**, cards distributing a pool across targets (*Macrocannon Barrage*, *Hammerhand Bivouac*) specify `selector: "DISTRIBUTED_POOL"` with `poolValue: Integer`, requiring client `TargetBinding` entries whose `allocated_value` sum equals `poolValue`.
-
-#### FR-ABL-012: Canonical Keyword AST Parameterization
-All 15 engine keywords defined in [`01_Game_Rules_FRD.md`](01_Game_Rules_FRD.md) Appendix A map deterministically between their `CardBlueprint` JSON serialization (`FR-ABL-001`) and their runtime engine execution semantics:
-
-| Keyword | Blueprint Serialization Form (`FR-ABL-001`) | Runtime Engine Hook / Execution Semantics |
-| :--- | :--- | :--- |
-| **Unbowed** | `TRIGGERED` (`triggerHook: EVENT_TAKE_DAMAGE`) | Evaluates on `EVENT_TAKE_DAMAGE` when `damageTaken > 0` (`FR-KWD-002a`). |
-| **Resistant N** | `KEYWORD_GRANT` (`keyword: "RESISTANT", parameter: N`) | Registers inline `WOULD_TAKE_DAMAGE` Stage 2 flat reduction `N` (`FR-KWD-002b`). |
-| **Stalwart** | `KEYWORD_GRANT` (`keyword: "STALWART"`) | Registers inline `WOULD_TAKE_DAMAGE` Stage 3 combat damage cap `min(dmg, 1)` (`FR-KWD-002c`). |
-| **Heal N** | `EffectDef` (`primitive: "HEAL", amount: N`) | Atomic effect primitive inside `TRIGGERED`, `ACTIVATED`, or `MANEUVER_EFFECT` (`FR-KWD-002d`). |
-| **Cornered** | `ConditionDef` (`cornered: true`) | Conditional gate (`count(opposingAssets in MAIN_THEATER) > count(alliedAssets in MAIN_THEATER)`) on `TRIGGERED` or `CONTINUOUS_AURA` (`FR-KWD-002e`, `FR-LAY-003`). |
-| **Aggressive N** | `KEYWORD_GRANT` (`keyword: "AGGRESSIVE", parameter: N`) | Registers `EVENT_ATTACK_DECLARE` trigger applying `MODIFY_STAT(+N Power)` until end of turn (`FR-KWD-002f`). |
-| **Ethereal** | `KEYWORD_GRANT` (`keyword: "ETHEREAL"`) | Static targeting restriction: ineligible defender for attack declarations (`FR-KWD-002g`, `FR-CBT-001`). |
-| **Ward** | `KEYWORD_GRANT` (`keyword: "WARD"`) | Static targeting restriction: ineligible target for non-combat enemy selections (`FR-KWD-002h`). |
-| **Versatile** | `KEYWORD_GRANT` (`keyword: "VERSATILE"`) | Capability flag: unit inherent generator yields either Requisition or Tactics (`FR-KWD-002i`, `FR-CAP-001`). |
-| **Guardian** | `KEYWORD_GRANT` (`keyword: "GUARDIAN"`) | Static combat restriction: mandatory attack target priority when able (`FR-KWD-002j`, `FR-CBT-001`). |
-| **Armor N** | `KEYWORD_GRANT` (`keyword: "ARMOR", parameter: N`) | Initializes dynamic Armor pool to `N` upon deployment (`FR-KWD-002k`, `FR-REP-004`). |
-| **Deploys Exhausted**| `KEYWORD_GRANT` (`keyword: "DEPLOYS_EXHAUSTED"`) | Registers `WOULD_DEPLOY` replacement setting initial readiness to `EXHAUSTED` (`FR-KWD-002l`). |
-| **Scratch N** | `EffectDef` (`primitive: "SCRATCH", count: N`) | Atomic effect primitive executing `Deploy Scratch Company` `N` times sequentially (`FR-KWD-002m`, `FR-INH-004`). |
-| **Regroup N** | `EffectDef` (`primitive: "REGROUP", count: N`) | Atomic effect primitive transitioning up to `N` exhausted allied assets to `READIED` (`FR-KWD-002n`). |
-
-- **Dynamic & Continuous Grants**: Keywords and subtypes may also be granted dynamically via atomic primitives `GRANT_KEYWORD` and `GRANT_SUBTYPE` (`FR-PRM-001`) or continuously via `ContinuousAuraDef` modifiers (`KEYWORD_GRANT`, `SUBTYPE_GRANT`) and compound `abilityGrants` (Layer 6; `FR-ABL-004`).
-
----
-
-### Section 4.2: Canonical Benchmark Blueprint Implementations
-
-Complete JSON `CardBlueprint` reference implementations for the 14 benchmark cards are maintained in **[`reference/02_Benchmark_Card_Blueprints.md`](reference/02_Benchmark_Card_Blueprints.md)**:
-
-| # | Benchmark Card (`id`) | Demonstrated AST Archetypes & Schema Features |
-| :---: | :--- | :--- |
-| **1** | `NO-AH-5` (`soulless_no_ah_5`) | `KEYWORD_GRANT` (`WARD`), `ACTIVATED` (`KILL_ASSET` + `TUCK_UNDER`), `CONTINUOUS_AURA` (`QUERY` over `ATTACHED` sub-zone; `FR-ENT-102`). |
-| **2** | `Piston Fist Prototype` (`soulless_piston_fist_prototype`) | `KEYWORD_GRANT` (`AGGRESSIVE 9`) + post-attack `EVENT_ATTACK_RESOLVED` recoil (`MOVE_ZONE: RESERVES`; `FR-KWD-002f`). |
-| **3** | `Animoceps Spore Cloud` (`animus_animoceps_spore_cloud`) | `REPLACEMENT_WATCHER` intercepting `WOULD_TAKE_DAMAGE` via `REDIRECT_DAMAGE_TARGET` (`FR-ABL-005`, `FR-REP-004`). |
-| **4** | `Samsara, Living Tempest` (`concordia_samsara_living_tempest`) | `UPFRONT_LOCK` target binding (`FR-TGT-101`) with `LOOK_TOP_CARDS` partition tracking (`trackAs`) and `CONDITIONAL_CLAUSE`. |
-| **5** | `Swirling Dustdevil` (`concordia_swirling_dustdevil`) | Hand-active `CONTINUOUS_AURA` (`activeZone: "HAND"`) reducing `REQUISITION_COST` via `DISCARD` `QUERY` (`FR-ABL-004`, `FR-CST-001`). |
-| **6** | `Veil Render` (`animus_veil_render`) | Discard-active `CONTINUOUS_AURA` (`activeZone: "DISCARD"`) granting `ALLOW_DEPLOY_FROM_ZONE` with `KILL_ASSET` cost (`FR-ABL-004`, `FR-TRN-003a`). |
-| **7** | `Rage's Wake` (`concordia_rages_wake`) | `COMPOSITE_SEQUENCE` combining `MODIFY_STAT` and `REGISTER_DELAYED_TRIGGER` (`EVENT_DESTROY` &rarr; `DEPLOY_FREE` to `RESERVES`). |
-| **8** | `Funeral Fungus` (`animus_funeral_fungus`) | Root `additionalDeploymentCosts` (`EXHAUST_ASSET` on readied allied unit; `FR-DAT-005`) + discard `RETURN_TO_HAND`. |
-| **9** | `Infested Apostle` (`animus_infested_apostle`) | `TRIGGERED` ability with `optional: true`, `optionalCosts` (`KILL_ASSET`), and `UPFRONT_LOCK` target binding (`FR-ABL-002`). |
-| **10** | `Soul Whip` (`concordia_soul_whip`) | Multi-target `TargetRef` array with delegated `damageSource` (`targetIndex: 0`) and dynamic `COMBAT_POWER` scaling (`FR-PRM-001`). |
-| **11** | `Allshan's Battle Trance` (`path_allshans_battle_trance`) | `DEPLOY_FREE` with forced `destinationZone: "MAIN_THEATER"`, `GRANT_KEYWORD` (`STALWART`), and `MODIFY_STAT`. |
-| **12** | `Consuming Earth` (`concordia_consuming_earth`) | Dynamic `statComparison` filter (`COMBAT_POWER <= SUM_ATTRIBUTE(REQUISITION_YIELD)` of allied structures; `FR-ABL-007`). |
-| **13** | `Tempest Runner` (`concordia_tempest_runner`) | `EXHAUST_SELF` activation cost (`FR-ABL-009`) with `excludeSelf: true` targeting filter (`FR-ABL-007`) and `REGROUP`. |
-| **14** | `Mutation Swell` (`animus_mutation_swell`) | Discrete quantifier `allowedCounts: [2, 4]` and `CAUSALITY_CONTEXT` `KILLED_COUNT` scaling with `divisor: 2` (`FR-ABL-007`, `FR-TRG-007`). |
-
----
-
-## DOMAIN 5: MTG-ALIGNED RULES TEXT TEMPLATING STANDARD & GRAMMAR
-
-### Section 5.1: Card Text Syntax Guidelines
-
-#### FR-TXT-001: MTG-Aligned Sentence Grammar & Capitalization
-1. Every rules text clause must form a grammatically complete sentence beginning with an uppercase letter and terminating with a period (`.`), unless formatted as a keyword on a standalone line.
-2. Proper nouns and system entities are capitalized: `Headquarters`, `Reserves`, `Main Theater`, `Scratch Company`, `Requisition`, `Tactics`, `Health`, `Combat Power`.
-3. Informational reminder text (e.g. `"(cannot be chosen by opponents except to attack)"`) must be stripped from authoritative rules text. Reminders are rendered via client tooltip hover systems.
-
-#### FR-TXT-002: Trigger Preambles (`When`, `Whenever`, `At`)
-To ensure total clarity regarding trigger frequency:
-1. **`When`**: Used exclusively for events that occur once per object lifecycle:
-   - *"When this unit deploys, ..."*
-   - *"When this unit is killed, ..."*
-2. **`Whenever`**: Used for recurring game events that can occur multiple times:
-   - *"Whenever this unit attacks, ..."*
-   - *"Whenever this unit exhausts, ..."*
-   - *"Whenever an opposing unit attacks, ..."*
-   - *"Whenever this Headquarters is dealt damage, ..."*
-3. **`At`**: Used for phase and turn step boundaries:
-   - *"At the start of your turn, ..."*
-   - *"At the end of your turn, ..."*
-
-#### FR-TXT-003: Cost Notation Syntax
-1. **Activated Abilities**: Formatted strictly as `[Cost], [Cost]: [Effect].`
-   - Resource costs precede exhaust and sacrifice costs: `R1, exhaust: Deal 2 damage to chosen non-Scratch asset.`
-   - Non-resource sacrifices: `T1, kill this unit: Return chosen Fungus or Plant card from your discard pile to your hand.`
-2. **Additional Enactment Costs**: Formatted as a leading preamble sentence on its own line:
-   - *"As an additional cost to enact this maneuver, kill an allied unit."*
-
-#### FR-TXT-004: Conjunction Targeting Phrasing (`chosen`)
-Card Town's targeting engine ([`FR-TGT-001`](01_Game_Rules_FRD.md)) utilizes declarative conjunctions. Rules text must use the canonical targeting verb **"chosen"** rather than MTG's "target":
-- *"chosen allied unit"*
-- *"chosen opposing non-Scratch unit"*
-- *"chosen asset in the Main Theater"*
-- Multi-target distributions: *"each of up to 2 chosen opposing assets"*, *"distribute 5 damage among up to 5 chosen units"*.
-- Conforming to [`FR-TGT-001`](01_Game_Rules_FRD.md) and [`FR-TGT-003`](01_Game_Rules_FRD.md), card text defines target eligibility filters; dynamic two-stage verification and fizzle handling are governed canonically by `FR-TGT-003`.
-
-#### FR-TXT-005: Stat & Defense Modification Phrasing
-1. **Temporary Modifiers (Layer 5)**: Use the verb **"gets"** for singular subjects and **"get"** for plural subjects:
-   - Singular: *"Chosen allied unit gets +1 power until end of turn."*
-   - Plural: *"Up to 2 chosen units get -1 power until end of turn."*
-   - Debuffs: *"Chosen opposing unit gets -3 power until the end of your opponent's turn."*
-2. **Continuous Auras (Layer 4)**: Use the verb **"has"** for singular subjects and **"have"** for plural subjects:
-   - Singular (Self / Individual): *"This unit has +2 power."*, *"Chosen asset has Stalwart."*
-   - Plural (Collective / Scoped): *"Other allied assets in the same zone have +1 power."*, *"Allied Horror units in the same zone have Resistant 1."*
-3. **Keyword Grants**: Use the verb **"gains"** for singular subjects and **"gain"** for plural subjects:
-   - *"Chosen unit gains Stalwart until end of turn."*
-   - *"This unit gains 1 armor."*
-   - *"Allied units in the same zone gain 1 armor."*
-
-#### FR-TXT-006: Zone Naming, Card Reference & Cardinality Conventions
-1. **Zone Names**: Always capitalized and complete: `Main Theater`, `Reserves`, `Headquarters Zone`, `discard pile`, `deck`.
-2. **Cards vs Assets**: Entities residing in non-battlefield zones are referred to as **cards**:
-   - *"return chosen unit card from your discard pile to your hand."*
-   - Entities on the battlefield are referred to as **units**, **structures**, or **assets**.
-3. **Numerical Expressions**:
-   - Cards drawn or discarded use words: *"Draw a card"*, *"Draw 2 cards"*, *"discard a card"*.
-   - Damage, armor, and keyword ranks use Arabic numerals: *"Deal 2 damage"*, *"gains 3 armor"*, *"Scratch 1"*, *"Resistant 1"*.
-
----
-
-## DOMAIN 6: AUTOMATED VALIDATION, INGESTION LINTER & CI/CD PIPELINE
-
-### Section 6.1: Verification Suite Extensions
-
-#### FR-VAL-001: Ingestion Pipeline Linter Specification
-*(Subsumed by [`FR-CMP-001`](03_Card_Compiler_FRD.md) & [`FR-CMP-022`](03_Card_Compiler_FRD.md))* — `tools/linter/lint_cardtown` and compiler pre-flight stages enforce `FR-XXX-YYY` cross-reference integrity, RFC-4180 CSV syntax, and JSON Schema conformance.
+#### FR-VAL-001: Sheet Checks
+- **Contract**: `cardtown lint sheets` checks headers, enums and the `needsRework` boolean (`FR-DAT-006`). `cardtown lint syntax` rejects three forms in rules text: "friendly" (write "allied"), raw `~`, and "+N attack" (write "+N power"). Loading checks the identity and shape rules of `FR-ABL-014`.
+- **Invariants**: A sheet change that breaks a check blocks the commit (the pre-commit hook runs both).
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
-*(Subsumed by [`FR-CMP-019`](03_Card_Compiler_FRD.md) & [`FR-CMP-020`](03_Card_Compiler_FRD.md))* — In compliance with [`FR-CMP-019`](03_Card_Compiler_FRD.md) and [`FR-CMP-020`](03_Card_Compiler_FRD.md), the compilation pipeline verifies 1-to-1 parity between printed `rulesText` and compiled `AbilityDef` AST entries (matching standalone keywords per `FR-ABL-012` and `ast_overrides.json` entries per `FR-CMP-017`).
+*(Subsumed by `FR-ABL-014` for text identity. Full parity, and the compiler checks that carried it, stay frozen for FRD 08 (M6): [`FR-CMP-019`](03_Card_Compiler_FRD.md), [`FR-CMP-020`](03_Card_Compiler_FRD.md))*
 
-#### FR-VAL-003: Uniform Dataset Validation Policy ("Must Fit All") & Review Card Compilability
-- **Development vs. Production Gating ([`FR-CMP-005`](03_Card_Compiler_FRD.md), [`FR-CMP-021`](03_Card_Compiler_FRD.md))**: Cards flagged with `needsRework == "true"` in `data/cards/*.csv` compile with the flag intact during local development, while `-Strict` production builds reject any card carrying `needsRework == "true"` or an unverified AST override (`ERR_STRICT_PROTOTYPE_REJECTED`, `ERR_OVERRIDE_UNVERIFIED`).
-
-> [!NOTE] Design Rationale (DA-DAT-005)
-> Harmonizes `FR-VAL-003` with `FR-CMP-005`: permitting prototype cards to compile with explicit metadata flags locally while blocking them under `-Strict` lets designers iterate on experimental mechanics without risking prototype leakage into release builds.
+#### FR-VAL-003: Uniform Dataset Validation Policy & Review Card Compilability
+*(Subsumed by `FR-DAT-006`, which holds the `needsRework` column. Its strict production gate stays frozen for FRD 08 (M6): [`FR-CMP-005`](03_Card_Compiler_FRD.md), [`FR-CMP-021`](03_Card_Compiler_FRD.md))*
 
 ---
 
-## DOMAIN 7: CARD AUDIT REGISTER & DESIGNER REVIEW LOG
+## DOMAIN 4: FAILURE BEHAVIOR & INVARIANTS
 
-### Section 7.1: Audit Summary & Canonical Design Rulings
+### Section 4.1: When Things Go Wrong
 
-All 167 cards across the 10 CSV balance sheets were audited and standardized to conform to target enums (`FR-DAT-006`) and MTG-aligned grammar (`FR-TXT-001` – `FR-TXT-006`). The complete 52-card historical text diff and standardization register is archived in **[`docs/Card_Standardization_Audit_Report.md`](../Card_Standardization_Audit_Report.md)**. Ongoing per-card review and parity status are tracked live via the CSV `needsRework` column (`FR-VAL-003`) and `data/schemas/ast_overrides.json` (`parityVerified`, `FR-CMP-020`).
-
-> [!NOTE] Design Rationale (DA-DAT-003)
-> Core Set mechanical triage rulings established during the 167-card standardization audit:
-> - **Animoceps Rager**: Per-turn trigger frequency cap (`"This ability triggers only once each turn"`) maps to `maxPerTurn: 1` (`FR-ABL-008`).
-> - **Funeral Fungus**: Unit exhaustion is templated as an `additionalDeploymentCosts` enactment cost (`EXHAUST_ASSET`; `FR-DAT-005`) rather than a resolution effect to prevent fizzle ambiguity.
-> - **Rift**: Headquarters self-damage emits `EVENT_TAKE_DAMAGE` and routes through the 5-stage damage mitigation pipeline (`FR-REP-004`), triggering damage-reactive abilities (e.g., `Unbowed`) normally.
-> - **Mutation Swell**: Target counts are restricted to discrete pairs (`allowedCounts: [2, 4]`, `divisor: 2`; `FR-ABL-007`) to eliminate odd-number floor ambiguity.
-> - **Steel Rain & Macrocannon Barrage**: *Steel Rain* resolves as independent 2-damage targeted iterations per card discarded; *Macrocannon Barrage* uses `DISTRIBUTED_POOL` (`FR-ABL-011`).
-> - **Title & Subtype Normalization**: Renamed *Daggerspine Rangers* to **Spoil Forest Irregulars** (resolving Warcraft IP collision), normalized plural subtype `"Specialists"` to `"Specialist"` (`FR-DAT-007`), and corrected **Reverberating Terror**, **Devilhorn Guerrillas**, and **All-Out War**.
-
----
-
-## APPENDIX: COMPLETE CROSS-SPEC TRACEABILITY MATRIX
-
-| Requirement ID | Canonical Requirement Scope | Companion FRD Cross-Reference & Traceability |
+| Situation | What the Operator or Designer Experiences | Rule or Invariant Preserved |
 | :--- | :--- | :--- |
-| **FR-DAT-001** | Data Ingestion Lifecycle & Authority Model | `FR-SET-001`, `FR-CRD-101`, `FR-NET-001` |
-| **FR-DAT-002** | Deterministic Blueprint ID & Slug Derivation | `FR-ENT-001`, `FR-SET-001`, `FR-CRD-101` |
-| **FR-DAT-003** | *(Subsumed by FRD 03 & FRD 05)* | `FR-CMP-002`, `FR-CMP-003`, `FR-CMP-027`, `FR-ENT-001` |
-| **FR-DAT-004** | *(Subsumed by FRD 03 & FRD 04)* | `FR-CMP-024`–`FR-CMP-026`, `FR-SES-001`, `FR-SPC-002` |
-| **FR-DAT-005** | Production Blueprint Schema Specification | `FR-CRD-101`, `FR-ENT-001`, Section 8.1 |
-| **FR-DAT-006** | Zero-Aliasing Target Enum Enforcement in CSVs| `FR-SET-001`, `FR-CRD-101`, `FR-SES-002` |
-| **FR-DAT-007** | Subtype Taxonomy & Normalization | `FR-CRD-101`, `FR-ZON-003`, `FR-LAY-001` |
-| **FR-DAT-008** | Deployment Zone Array Schema & Invariants | `FR-ZON-001`, `FR-CRD-101`, `FR-TRN-003` |
-| **FR-ABL-001** | Universal AbilityDef Polymorphic Schema | `FR-CRD-101`, `FR-PRM-001`, Section 8.1 |
-| **FR-ABL-002** | TriggeredAbilityDef Schema & Hook Bindings | `FR-TRG-001`, `FR-TRG-002`, `FR-TRG-007` |
-| **FR-ABL-003** | ActivatedAbilityDef Schema & Multi-Modal Costs| `FR-ACT-001`, `FR-ACT-002`, `FR-QUE-001` |
-| **FR-ABL-004** | ContinuousAuraDef Schema & 6-Layer Mapping | `FR-LAY-001`, `FR-LAY-002`, `FR-LAY-003` |
-| **FR-ABL-005** | ReplacementWatcherDef Schema & Event Interception | `FR-REP-001`, `FR-REP-002`, `FR-REP-004` |
-| **FR-ABL-006** | ManeuverEffectDef Schema & Stack Resolution | `FR-MNV-001`, `FR-QUE-001`, `FR-TRN-003` |
-| **FR-ABL-007** | Declarative AST Sub-Schemas (Filter, Value, Cost)| `FR-TGT-001`, `FR-PRM-001`, `FR-TGT-101` |
-| **FR-ABL-008** | Per-Turn Execution Frequency Limits (`maxPerTurn`)| `FR-ACT-002`, `FR-TRG-001`, `FR-TRN-001` |
-| **FR-ABL-009** | Exhaust-Self as Ability Cost Model | `FR-INH-001`, `FR-ACT-001`, `FR-CAP-001` |
-| **FR-ABL-010** | Modal Selection AST Primitives | `FR-MOD-001`, `FR-MSG-003`, `FR-MSG-005` |
-| **FR-ABL-011** | Distributed Pool Value Allocations | `FR-TGT-002`, `FR-MSG-003`, `FR-MSG-005` |
-| **FR-ABL-012** | Canonical Keyword AST Parameterization | `FR-KWD-002a` through `FR-KWD-002o` |
-| **FR-TRG-001** | Trigger & Replacement Event Hook Taxonomy | `FR-ABL-002`, `FR-ABL-005`, `FR-TRG-003`, `FR-REP-001` |
-| **FR-TRG-007** | Event Causality Context Lineage | `FR-TRG-001`, `FR-SNP-101`, `FR-ABL-007` |
-| **FR-PRM-001** | Standard Atomic Effect Primitives Catalog (26 Opcodes) | `FR-ABL-001`, `FR-ENG-021` |
-| **FR-TGT-101** | Bound Action Payload & Upfront Target Locking Model | `FR-TGT-001`, `FR-ABL-007`, `FR-MSG-003` |
-| **FR-TXT-001** | MTG-Aligned Sentence Grammar & Punctuation | `FR-CRD-101`, Appendix A |
-| **FR-TXT-002** | Trigger Preambles (`When`, `Whenever`, `At`) | `FR-TRG-001`, `FR-TRN-001`, `FR-CBT-002` |
-| **FR-TXT-003** | Cost Notation Syntax (`[Cost]: [Effect].`) | `FR-ACT-001`, `FR-TRN-003a`, `FR-ABL-009` |
-| **FR-TXT-004** | Conjunction Targeting Phrasing (`chosen`) | `FR-TGT-001`, `FR-TGT-003`, `FR-MSG-003` |
-| **FR-TXT-005** | Stat & Defense Modification Phrasing | `FR-LAY-001`, `FR-LAY-003`, `FR-REP-004` |
-| **FR-TXT-006** | Zone Naming & Cardinality Conventions | `FR-ZON-001`, `FR-ZON-003`, `FR-DEK-001` |
-| **FR-VAL-001** | Ingestion Pipeline Linter Specification | `FR-SET-001`, `FR-CRD-101`, `FR-DAT-006` |
-| **FR-VAL-002** | *(Subsumed by FR-CMP-019 & FR-CMP-020)* | `FR-CRD-101`, `FR-CMP-019`, `FR-CMP-020` |
-| **FR-VAL-003** | Placeholder Row Handling & Incomplete Blueprint Policy | `FR-SET-001`, `FR-DAT-005`, `FR-DAT-006` |
+| A `Def` lists a text line the sheet does not print | Loading fails and names the card and the line | A definition never runs against text it was not written for (`FR-ABL-014`) |
+| A printed line no definition claims | The card loads but cannot be deployed or enacted, and the sim header counts it as not executable | A card never runs with text the kernel cannot execute (`FR-DAT-007`) |
+| A definition sets a field nothing reads | Loading fails and names the card | A definition never silently does nothing or the wrong thing (`FR-ABL-014`) |
+| A sheet has a wrong header or an illegal enum | `cardtown lint sheets` fails with the file, row and value | Zero aliasing (`FR-DAT-006`) |
+| A card needs a shape the vocabulary lacks | The card stays unsupported and is listed for a shape task | Nothing is specified ahead of its card (`FR-ABL-013`) |
+| Two rows share a name | Reported as a data error at export (`FR-CMP-027`) | One card, one identity (`FR-DAT-002`) |
+
+### Section 4.2: Invariants
+
+`FR-DAT-009` holds for this whole document.
 
 ---
-*End of Functional Requirements Document (Card Data Pipeline FRD v1.1)*
+
+## MASTER CROSS-REFERENCE REGISTER
+
+| Requirement ID | Scope Summary | Interoperability Target |
+| :--- | :--- | :--- |
+| `FR-DAT-001` | The sheets are the source of truth | `FR-CMP-029` |
+| `FR-DAT-002` | Card identity | `FR-SET-001`, `FR-CMP-023`, `FR-CMP-027` |
+| `FR-DAT-003` | Subsumed stub | `FR-CMP-002`, `FR-CMP-023` |
+| `FR-DAT-004` | Subsumed stub | `FR-CMP-024`–`FR-CMP-026` |
+| `FR-DAT-005` | The card record | `FR-CRD-101`, `FR-CMP-023` |
+| `FR-DAT-006` | Headers and zero-aliasing enums | `FR-VAL-001` |
+| `FR-DAT-007` | Subtypes, sentinels, blank rows | `FR-TGT-001`, `FR-ABL-012` |
+| `FR-DAT-008` | Deployment zones | `FR-ZON-001`, `FR-TRN-003` |
+| `FR-DAT-009` | Card data invariants | `FR-ABL-014` |
+| `FR-ABL-001` | One definition per card | `FR-PRM-001`, `FR-CMP-023` |
+| `FR-ABL-002` | Triggered abilities | `FR-TRG-001`, `FR-TRG-003`–`FR-TRG-005` |
+| `FR-ABL-003` | Activated abilities | `FR-ACT-001`, `FR-ACT-002` |
+| `FR-ABL-004` | Statics, Cornered grants, cost reduction | `FR-LAY-001`, `FR-KWD-002e`, `FR-CST-001` |
+| `FR-ABL-005` | Replacement effects | `FR-REP-001`, `FR-REP-004` |
+| `FR-ABL-006` | Maneuver effects and declaration costs | `FR-MNV-001`, `FR-TRN-003a` |
+| `FR-ABL-007` | Filters, values, durations, zones | `FR-TGT-001`, `FR-LAY-003` |
+| `FR-ABL-008` | Per-turn trigger limit | `FR-TRN-001` |
+| `FR-ABL-009` | Costs | `FR-ACT-001`, `FR-TRN-003a` |
+| `FR-ABL-010` | Modes | `FR-MOD-001` |
+| `FR-ABL-011` | Pools | `FR-TGT-002` |
+| `FR-ABL-012` | Standalone keywords | `FR-KWD-002b`–`FR-KWD-002l` |
+| `FR-ABL-013` | New vocabulary with its first card | ADR-0004 |
+| `FR-ABL-014` | A definition matches the printed text | `FR-DAT-007` |
+| `FR-TRG-001` | Hook and replacement event names | `FR-ABL-002`, `FR-ABL-005`, `FR-REP-001` |
+| `FR-TRG-007` | What a resolution can refer to | `FR-TGT-001`, `FR-ABL-002` |
+| `FR-PRM-001` | Steps and their ops | `FR-ABL-001`, `FR-TGT-101` |
+| `FR-TGT-101` | Targets and subjects | `FR-TGT-001`, `FR-TGT-003` |
+| `FR-TXT-001`–`FR-TXT-006` | Rules-text conventions | `FR-ABL-014`, `FR-VAL-001` |
+| `FR-VAL-001` | Sheet checks | `FR-DAT-006` |
+| `FR-VAL-002`, `FR-VAL-003` | Subsumed stubs (frozen for FRD 08) | `FR-ABL-014`, `FR-DAT-006` |
+
+---
+*End of Functional Requirements Document (Card Data & Ability Vocabulary FRD v2.0)*

@@ -5,8 +5,8 @@ This directory houses the specifications, decision records and card balance data
 ## Documentation Map
 - **Game Rules (active, source of truth):** `frd/01_Game_Rules_FRD.md` (pure game rules, card & asset taxonomy, zone topology, turn phases, 6-layer rules, 5-stage damage mitigation, combat, keyword dictionary). Its executable form is `../pkg/engine`, with scenario tests named `TestFR_<DOM>_<NNN>_*`.
 - **Keyword Interaction Matrix (active):** `frd/keyword_interaction_matrix.md`, the bounded register of keyword-pair and keyword-vs-core-rule edge cases, with open items awaiting rulings.
+- **Card data and catalog export (active since the M3 start, 2026-11-23):** `frd/02_Card_Data_Pipeline_FRD.md` (the card sheet schema and the `pkg/engine/ability` vocabulary) and `frd/03_Card_Compiler_FRD.md` (the catalog export). The v1.3 and v1.2 texts they replaced are kept unedited in `frd/reference/` for FRD 08, where `cardtown lint frd` does not scan them.
 - **Frozen design intent (not synced; FRD 01 wins any conflict):**
-  - `frd/02_Card_Data_Pipeline_FRD.md` and `frd/03_Card_Compiler_FRD.md`: rewritten at the start of M3.
   - `frd/04_Client_Engine_Protocol_Networking_FRD.md`: rewritten at the start of M5.
   - `frd/05_Headless_Game_Engine_FRD.md`: design reference while extending `pkg/engine`.
 - **M2 Starter Set Ability Survey:** `design/m2_starter_set_ability_survey.md`, which maps every Animus and Path card onto FRD 02's ability model and lists the M2 build waves, FRD 02 gaps and open ruling questions.
