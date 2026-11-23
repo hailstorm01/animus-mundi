@@ -19,14 +19,14 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 ## 1. Stance & Core Philosophy
 
 - **What, Not How:** An FRD states what players and operators need and how the game behaves, in testable terms. Technology choices (wire formats, serialization, PRNG layout, hosting, libraries, performance budgets, code structures) are **not** FRD content. List them under "Open Technical Questions" for `lead-architect`, who records decisions in `docs/architecture/decisions/` when the code needs them.
-- **Right Time:** FRD 01 (rules) is edited whenever a ruling is made. Every other FRD is drafted or rewritten **when its milestone starts** (see `docs/PRODUCT_SUMMARY.md` Section 4), using what earlier milestones' code taught us. Frozen FRDs (with a `Status: FROZEN` banner) are not edited. Rewriting one at its milestone start replaces the banner.
+- **Right Time:** FRD 01 (rules) is edited whenever a ruling is made. Every other FRD is drafted or rewritten **when its milestone starts** (see `docs/PRODUCT_SUMMARY.md` Section 4), using what earlier milestones' code taught us. Frozen FRDs (with a `Status: FROZEN` banner) are not edited. Rewriting one at its milestone start replaces the banner. The frozen copies a rewrite leaves behind in `docs/frd/reference/` (FRD 02 v1.3 and FRD 03 v1.2, kept for FRD 08 in M6) are never edited either, and `cardtown lint frd` doesn't scan them.
 - **One Home Per Rule:** Game rules live only in FRD 01. Other FRDs cite `FR-*` IDs and never paraphrase rule behavior; `cardtown lint frd` rejects keyword definitions restated outside FRD 01.
 - **Rules Are Tested:** When adding or changing an FRD 01 rule, name the scenario test that pins it (`TestFR_<DOM>_<NNN>_<Behavior>`) in the completion report, and check `cardtown lint rules` so the test traces to an active requirement.
 - **Rooted in Product Vision:** Anchors every feature, mechanic, and system in the core pillars established in `docs/PRODUCT_SUMMARY.md`:
   1. *Spatial Board Topology* (Reserves, Main Theater, Headquarters Zone).
   2. *Dual Resource Economy* (Requisition & Tactics exhaustion).
   3. *Authoritative Determinism* (100% server-authoritative state, masked fog-of-war, clean-stack execution).
-  4. *Declarative Architecture* (Declarative Ability ASTs, zero ad-hoc script hacks, zero runtime aliasing).
+  4. *Declarative Architecture* (card mechanics are data, not ad-hoc script code: each card's abilities are one Go data value from the closed `pkg/engine/ability` vocabulary, which names no card, interpreted by the kernel and written out as the card catalog; ADR-0004, FRD 02/03 v2.0).
   5. *Executable Rules* (FRD 01 is the single rules source; `pkg/engine` scenario tests pin each rule).
 - **Decision Transparency:** Never buries high-impact product inferences. Documents them in a `PRODUCT DECISIONS FLAGGED FOR REVIEW` section using GitHub alert callouts (`> [!IMPORTANT]`), detailing the inference, decision, and alternatives considered for designer review.
 - **Systemic Harmony:** Ensures new subsystems integrate with the established rules: the 6-layer attribute pipeline (`FR-LAY-001` - `FR-LAY-003`), the deterministic combat sequence (`FR-CBT-002`), the clean-stack model (`FR-QUE-001`), and the behavior already executable in `pkg/engine`.
@@ -62,7 +62,7 @@ When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs 
 
 ### Step 1: Vision & Roadmap Intake
 1. Read `docs/PRODUCT_SUMMARY.md` to identify the vision, game pillars, the target milestone (M1–M6), and its "Done when" check. **If the target milestone has not started, stop** and tell the user the FRD is premature (FRD 01 rule changes are exempt).
-2. Read what the code already does (`pkg/engine` package doc and tests for rules work) and the relevant FRD 01 sections by line range. Frozen FRDs (`02`–`05`) are background reading and a starting point for a rewrite, not constraints.
+2. Read what the code already does (`pkg/engine` package doc and tests for rules work) and the relevant FRD 01 sections by line range. Frozen FRDs (`04`, `05`) are background reading and a starting point for a rewrite, not constraints. FRD 02 and FRD 03 are active again (v2.0, rewritten at the M3 start). Their frozen v1.3 and v1.2 texts in `docs/frd/reference/` (the AST, the primitives, `ast_overrides.json`, the parity checks and the strict gate) are input for FRD 08 only, not guidance for M3 work.
 
 ### Step 2: Scope & Domain Prefix Reservation
 1. Define the functional domain boundaries for the document.
