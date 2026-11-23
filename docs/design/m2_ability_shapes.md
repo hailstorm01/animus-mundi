@@ -1,7 +1,7 @@
 # M2 Ability Shapes: the `ability` Vocabulary and What Changed From FRD 02
 
 - **Milestone:** M2 → M3 (M2 Deliverable 7, carried over) | **Date:** 2026-11-22 | **Author:** `lead-architect`
-- **Source:** `go doc -all ./pkg/engine/ability` and `pkg/engine/cards` at `09c7b523`; frozen [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) v1.3 Domains 3–4; the [M2 survey](m2_starter_set_ability_survey.md) §3; the [M2 design note](../architecture/m2-ability-model.md).
+- **Source:** `go doc -all ./pkg/engine/ability` and `pkg/engine/cards` at `09c7b523`; frozen [FRD 02](../frd/reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md) v1.3 Domains 3–4; the [M2 survey](m2_starter_set_ability_survey.md) §3; the [M2 design note](../architecture/m2-ability-model.md).
 - **Purpose:** the input `pm-frd-drafter` rewrites FRD 02/03 from at M3 start (`PRODUCT_SUMMARY.md` §4, M3), and the vocabulary the M3 ability survey maps the remaining cards onto.
 
 The package is the authority. This file indexes it and doesn't copy its field comments: for a field's exact meaning, read `go doc -all ./pkg/engine/ability` (or `ability.go` and `keywords.go`, 623 lines together). Rules behavior is cited by `FR-*` and `SVY-R*` IDs from [FRD 01](../frd/01_Game_Rules_FRD.md), never restated.
