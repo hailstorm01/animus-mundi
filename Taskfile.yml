@@ -60,6 +60,13 @@ tasks:
     cmds:
       - '{{.BIN}} sim -deck starter -p0 ANIMUS -p1 PATH {{.CLI_ARGS}}'
 
+  sim-matrix:
+    desc: 'Play every pairing of the starter decks, then of the stress decks: both seat orders, both policies, one coverage table each (cardtown sim -matrix)'
+    deps: [build]
+    cmds:
+      - '{{.BIN}} sim -deck starter -matrix {{.CLI_ARGS}}'
+      - '{{.BIN}} sim -matrix {{.CLI_ARGS}}'
+
   sim-log:
     desc: Play one starter game (the -seed one) and print its events (cardtown sim -log)
     deps: [build]

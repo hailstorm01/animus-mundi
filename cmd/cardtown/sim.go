@@ -28,8 +28,10 @@ func runSim(args []string) {
 	policy := fs.String("policy", "progress", "Seat policy: progress (deploys, generates toward cards in hand) or random")
 	eventsFile := fs.String("events", "", "Write every game's events to this file as JSON Lines (game, then the event)")
 	monitors := fs.Bool("monitors", true, "Check FRD 01 rules in every game and print a coverage table")
+	matrix := fs.Bool("matrix", false, "Play every pairing of two factions, both seat orders, both policies: with -deck, the factions that have that decklist; without, the stress decks")
 	fs.Usage = func() {
 		fmt.Println("Usage: cardtown sim [-deck <name>] [-games N] [-seed S] [-p0 FACTION] [-p1 FACTION] [-max-turns N] [-policy random|progress] [-log] [-events FILE] [-monitors=false]")
+		fmt.Println("       cardtown sim -matrix [-deck <name>] [-games N] [-seed S] [-max-turns N]")
 		fmt.Println("Playouts on the rules kernel (termination, invariants, win rates)")
 		fmt.Println("\nFlags:")
 		fs.PrintDefaults()
@@ -57,6 +59,10 @@ func runSim(args []string) {
 	if err != nil {
 		fmt.Printf("[ERROR] loading cards: %v\n", err)
 		os.Exit(1)
+	}
+	if *matrix {
+		runSimMatrix(fs, repoRoot, cards, *deck, *games, *seed, *maxTurns)
+		return
 	}
 	decks, deckNames, err := sim.MatchDecks(repoRoot, cards, *deck, [2]string{*p0, *p1})
 	if err != nil {
@@ -176,6 +182,18 @@ func runSim(args []string) {
 // number of checks or "not reached". It is information and never fails a run.
 func printCoverage(cov sim.Coverage) {
 	fmt.Println("  RULE MONITOR COVERAGE (checks per rule; the monitors found no violation)")
+	eachRule(cov, func(mon, id string, n int) {
+		if n == 0 {
+			fmt.Printf("    %-20s %-12s not reached\n", mon, id)
+		} else {
+			fmt.Printf("    %-20s %-12s %d\n", mon, id, n)
+		}
+	})
+}
+
+// eachRule calls f for every monitor and rule ID in cov, sorted by monitor,
+// then by rule ID, with its count.
+func eachRule(cov sim.Coverage, f func(mon, id string, n int)) {
 	monitors := make([]string, 0, len(cov))
 	for mon := range cov {
 		monitors = append(monitors, mon)
@@ -188,11 +206,7 @@ func printCoverage(cov sim.Coverage) {
 		}
 		sort.Strings(ids)
 		for _, id := range ids {
-			if n := cov[mon][id]; n == 0 {
-				fmt.Printf("    %-20s %-12s not reached\n", mon, id)
-			} else {
-				fmt.Printf("    %-20s %-12s %d\n", mon, id, n)
-			}
+			f(mon, id, cov[mon][id])
 		}
 	}
 }
