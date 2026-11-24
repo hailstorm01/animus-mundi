@@ -4,7 +4,7 @@ title: "The missing-deck sim test stops depending on which decks data/decks hold
 kind: harness
 tier: flash
 wave: none (board directive #180, blocking)
-status: ready
+status: in-progress
 branch: m3/T-0294-sim-deck-test-missing-file
 depends_on: []
 claims: [test:TestSimDecks_Case14_MissingFileNamesPath]
