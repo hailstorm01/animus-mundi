@@ -4,7 +4,7 @@ title: "cardtown sim -matrix plays every pairing of the starter decks or the str
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 3)
-status: ready
+status: review
 branch: m3/T-0297-sim-matrix
 depends_on: [T-0296]
 claims: [type:sim.MatrixRun, func:sim.MatrixRuns, func:sim.DeckFactions, func:sim.StressFactions, func:sim.SimulateRun, type:sim.MatrixCoverage, flag:cardtown-sim-matrix, func:main.eachRule, task:sim-matrix]
@@ -669,15 +669,16 @@ No double quotes in either message: the allow-list refuses an escaped one.
 - `Taskfile.yml`
 
 ## Done When
-- [ ] `go test ./pkg/sim -run TestMatrix -count=1` passes
-- [ ] `go test ./pkg/sim -run TestDeckFactions -count=1` passes
-- [ ] `go test ./pkg/sim -run TestStressFactions -count=1` passes
-- [ ] `go test ./pkg/sim -run TestSimulateRun -count=1` passes
-- [ ] `gofmt -l pkg cmd` prints nothing
-- [ ] `go run ./cmd/cardtown sim -deck starter -matrix -games 2` exits 0 (acceptance case 7)
-- [ ] `go run ./cmd/cardtown sim -matrix -games 2` exits 0 (acceptance case 8)
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
+- [x] `go test ./pkg/sim -run TestMatrix -count=1` passes
+- [x] `go test ./pkg/sim -run TestDeckFactions -count=1` passes
+- [x] `go test ./pkg/sim -run TestStressFactions -count=1` passes
+- [x] `go test ./pkg/sim -run TestSimulateRun -count=1` passes
+- [x] `gofmt -l pkg cmd` prints nothing
+- [x] `go run ./cmd/cardtown sim -deck starter -matrix -games 2` exits 0 (acceptance case 7)
+- [x] `go run ./cmd/cardtown sim -matrix -games 2` exits 0 (acceptance case 8)
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
 
 ## Log
 - 2026-11-24 lead-architect: written from M3 design note Deliverable 3. Status `ready` (a harness task skips `tests`), tier `flash`.
+- 2026-11-24 kernel-engineer: implemented the sim matrix in pkg/sim/matrix.go, cmd/cardtown/sim_matrix.go, cmd/cardtown/sim.go, and Taskfile.yml. Reused PolicyByName, MatchDecks, SimulateWith, ReplayCommand, and eachRule across both single-pairing and matrix coverage tables. Confirmed acceptance tests, gofmt, task check, and task sim-compare (byte-identical against main) pass. Status review.
