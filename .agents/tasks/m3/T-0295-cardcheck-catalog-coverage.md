@@ -4,7 +4,7 @@ title: "Coverage checkers move to pkg/cardcheck and cover the whole catalog; Not
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part a)
-status: in-progress
+status: review
 branch: m3/T-0295-cardcheck-catalog-coverage
 depends_on: [T-0294]
 claims: [package:pkg/cardcheck, func:cardcheck.checkExecutable, func:cardcheck.checkDefs, var:cards.NotYetExecutable, test:TestCards_Executable, test:TestDecks_StarterDecksValidate]
@@ -409,10 +409,15 @@ No double quotes in either message: the allow-list refuses an escaped one.
 - `pkg/engine/doc.go` (one comment, a reference update)
 
 ## Done When
-- [ ] `go test ./pkg/cardcheck -count=1` passes
-- [ ] `gofmt -l pkg cmd` prints nothing
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
+- [x] `go test ./pkg/cardcheck -count=1` passes
+- [x] `gofmt -l pkg cmd` prints nothing
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
 
 ## Log
 - 2026-11-23 lead-architect: written from M3 design note Deliverable 1 (a). The same commit queues T-0296 (the sheet checks, Deliverable 1 (b)) and adds directive #184 (the `needsRework` exemption). Status `ready` (a harness task skips `tests`), tier `flash`.
+- 2026-11-23 kernel-engineer: implemented T-0295.
+  - Test commit: deleted `pkg/engine/defs_test.go` and added `pkg/cardcheck/coverage_test.go` and `pkg/cardcheck/decks_test.go`. Verified `go test ./pkg/cardcheck` failed with undefined functions (`test(T-0295): catalog-wide coverage and starter-deck tests in pkg/cardcheck`, 2f3095c8).
+  - Implementation commit: added `pkg/cardcheck/coverage.go` (`checkExecutable` and `checkDefs`), updated `pkg/engine/cards/cards.go` with 67 sorted unexecutable card entries, updated `pkg/toolchain/linter/fences/fences.go` with `pkg/cardcheck` allowed imports, and updated `pkg/engine/doc.go` (`feat(cardcheck): coverage checkers cover the whole catalog, NotYetExecutable lists the 67 cards that can't run (T-0295)`, 6d7adb12).
+  - Verification: `go test ./pkg/cardcheck -count=1` passed; `gofmt -l pkg cmd` clean; `go tool task check` passed; `go tool task sim-compare` passed with identical byte output against main.
+  - Status moved to `review`.
