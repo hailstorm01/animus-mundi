@@ -95,7 +95,7 @@ data/cards/
 #### FR-DAT-002: Card Identity
 - **Contract**: A card is identified by its printed name, unique across every sheet. Deck lists ([`FR-SET-001`](01_Game_Rules_FRD.md)) and ability definitions (`FR-ABL-001`) name cards by it. The printed name is the identity through M4 ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)): the catalog export built in M5 (`FR-CMP-023`) identifies a card by it, and no slug is derived.
 - **Invariants**: Two rows never share a name. Renaming a card renames it everywhere that names it (the sheet row, the definition's key, deck lists) in one change.
-- **Edge Cases**: A duplicate name is a data error, found when the sheets are loaded, and it names both rows. Today the loader silently keeps the later row, so the check is new work.
+- **Edge Cases**: A duplicate name is a data error, found when the sheets are loaded. The report names the file, the later row and the card, and names the first row that holds the name.
 
 #### FR-DAT-003: Blueprint Compilation & Asset Bundling
 *(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md) & [`FR-CMP-023`](03_Card_Compiler_FRD.md); runtime bundling is [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
@@ -116,8 +116,8 @@ data/cards/
   - Maneuver sheets (8): `name`, `cardType`, `faction`, `requisitionCost`, `tacticsCost`, `rulesText`, `rarity`, `needsRework`.
 - Enum cells use the canonical spelling with no aliases. `cardType`: `UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`. `faction`: `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`. `rarity`: `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. `deploymentZones`: `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS` or the one two-zone spelling `MAIN_THEATER, RESERVES`. `needsRework`: lowercase `true` or `false`.
 - Cells are RFC 4180 quoted text, and a rules-text cell holds one printed line per line break. The kernel's loader treats LF and CRLF line endings the same and accepts a byte-order mark before the first header. `cardtown lint sheets` is stricter and wants the headers exactly.
-- **Invariants**: A header or enum that differs fails `cardtown lint sheets`, with the expected and found headers shown. The kernel's loader rejects an unknown `cardType`.
-- **Edge Cases**: Two things the sheet linter does not check today are data errors that loading the sheets must report, naming the file, row, card and column: a non-numeric value in a numeric column, and a Unit or Structure with no zone. A card is never loaded with a guessed value. Today the loader reads a non-number as 0.
+- **Invariants**: A header or enum that differs fails `cardtown lint sheets`, with the expected and found headers shown. The kernel's loader reports an unknown `cardType` with the other data errors below, and never ends the load at the first one.
+- **Edge Cases**: Two things the sheet linter does not check are data errors that loading the sheets reports, naming the file, row (the header is row 1), card and column: a numeric cell that is not a whole number (an empty cell or `--` included), and a Unit or Structure with no deployment zone. Requisition cost and Tactics cost are numeric on every card. Power, health and both yields are numeric on every card except a Maneuver. Loading reports every problem at once, in file then row order, and returns no cards when there is any. A card is never loaded with a guessed value.
 
 #### FR-DAT-007: Subtypes, Sentinels and Blank Rows
 - **Contract**: `subtypes` is a comma-separated list. Spaces around an entry are dropped, and an empty cell or `--` means none. Subtype comparisons are case-insensitive (the subtype criterion of `FR-TGT-001`). In `rulesText`, each non-empty line is one printed line, and a cell that is `--` or empty prints nothing (a vanilla card). A row with an empty `name` is a placeholder and is skipped everywhere.
