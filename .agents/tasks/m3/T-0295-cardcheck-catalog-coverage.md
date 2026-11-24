@@ -4,7 +4,7 @@ title: "Coverage checkers move to pkg/cardcheck and cover the whole catalog; Not
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part a)
-status: ready
+status: in-progress
 branch: m3/T-0295-cardcheck-catalog-coverage
 depends_on: [T-0294]
 claims: [package:pkg/cardcheck, func:cardcheck.checkExecutable, func:cardcheck.checkDefs, var:cards.NotYetExecutable, test:TestCards_Executable, test:TestDecks_StarterDecksValidate]
