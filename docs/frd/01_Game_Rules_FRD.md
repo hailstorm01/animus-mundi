@@ -1,4 +1,4 @@
-# Game Rules - Functional Requirements Document (Master FRD v3.29)
+# Game Rules - Functional Requirements Document (Master FRD v3.30)
 **Authoritative Game Rules, Card Taxonomy, Zone Topology, Turn Structure & Keyword Dictionary**
 
 ---
@@ -13,6 +13,9 @@ To maintain strict separation of concerns across the specification suite:
 3. **Card Compiler (`03_Card_Compiler_FRD.md`)**: Translates authoring CSVs and rules text into compiled `blueprints.json` AST payloads.
 4. **Client-Engine Protocol & Networking (`04_Client_Engine_Protocol_Networking_FRD.md`)**: Defines the WebSocket/Protobuf wire protocol, session handshakes, fog-of-war serialization, and `.rec` replay format.
 5. **Headless Game Engine (`05_Headless_Game_Engine_FRD.md`)**: Specifies *how* the deterministic Go match kernel models entities in memory (`FR-ENT-001`–`FR-ENT-003`, `FR-SNP-101`) and executes the rules of `01` using the AST components of `02`.
+
+### Revision Summary (v3.29 -> v3.30): Kill Never Affects a Headquarters (2026-11-23)
+1. **Kill Never Affects a Headquarters (`SVY-R55`; `FR-CBT-003`)**: kill effects and kill costs skip a Headquarters, which is defeated only through Health. A "destroy a player" win condition would be a player-loss effect, not a kill. Provisional. Card text: none.
 
 ### Revision Summary (v3.28 -> v3.29): Mutation Swell's Kill Cost (2026-11-17)
 1. **A Choice of Counts Is Part of a Cost (`SVY-R53`; `FR-TRN-003a`, `FR-MNV-001`, `FR-TGT-001`)**: *Mutation Swell* kills 2 or 4 allied Scratch Company units as an additional cost, chosen on declaration, and targets one different unit card already in its controller's discard pile for every 2 killed. Card text: *Mutation Swell*.
@@ -607,7 +610,7 @@ Every declared combat attack resolves on the LIFO Resolution Stack (`FR-QUE-001`
 
 #### FR-CBT-003: Persistent Damage, Headquarters Defeat & Match Draws
 - **Persistent Damage**: Damage marked on an Asset does **not** heal or clear at the end of the turn; it remains on the Asset until healed (`FR-KWD-002d`) or until the Asset leaves the battlefield (`FR-ZON-004`).
-- **Headquarters Destruction Defeat**: Headquarters defeat is checked in the state-based death sweep (`FR-LAY-002`), the next time no item is resolving on the Resolution Stack. If a player's **Headquarters** has $\le 0$ Current Health (or $\le 0$ Effective Maximum Health) at that sweep, that player loses the match. Damage taken mid-resolution does not end the match by itself: a later clause of the same resolving item that heals the Headquarters back above `0` prevents the loss. No card can kill a Headquarters outright, as opposed to reducing its health to 0 or below. What a Headquarters killed outright does is left for the first card that can kill one (`SVY-R46`).
+- **Headquarters Destruction Defeat**: Headquarters defeat is checked in the state-based death sweep (`FR-LAY-002`), the next time no item is resolving on the Resolution Stack. If a player's **Headquarters** has $\le 0$ Current Health (or $\le 0$ Effective Maximum Health) at that sweep, that player loses the match. Damage taken mid-resolution does not end the match by itself: a later clause of the same resolving item that heals the Headquarters back above `0` prevents the loss. A kill effect or kill cost never affects a Headquarters (`SVY-R55`). A Headquarters is defeated only through its Current Health or Effective Maximum Health at that sweep. A kill that reaches nothing but a Headquarters kills nothing, so a step that applies only if it was done does not apply (`SVY-R14`). Card text does not need to say "non-Headquarters" on a kill. A card meant to defeat a player outright says that player loses the match. It is not a kill, and it is ruled with the first such card.
 - **Simultaneous Defeat (Match Draw)**: If both players would lose at the same state-based death sweep, by any combination of Headquarters at $\le 0$ Current Health and required draws from an empty deck (`FR-WIN-001`), the match ends in a **Match Draw**.
 
 ---
