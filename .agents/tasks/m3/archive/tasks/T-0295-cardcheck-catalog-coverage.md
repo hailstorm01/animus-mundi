@@ -4,7 +4,7 @@ title: "Coverage checkers move to pkg/cardcheck and cover the whole catalog; Not
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part a)
-status: review
+status: done
 branch: m3/T-0295-cardcheck-catalog-coverage
 depends_on: [T-0294]
 claims: [package:pkg/cardcheck, func:cardcheck.checkExecutable, func:cardcheck.checkDefs, var:cards.NotYetExecutable, test:TestCards_Executable, test:TestDecks_StarterDecksValidate]
@@ -421,3 +421,4 @@ No double quotes in either message: the allow-list refuses an escaped one.
   - Implementation commit: added `pkg/cardcheck/coverage.go` (`checkExecutable` and `checkDefs`), updated `pkg/engine/cards/cards.go` with 67 sorted unexecutable card entries, updated `pkg/toolchain/linter/fences/fences.go` with `pkg/cardcheck` allowed imports, and updated `pkg/engine/doc.go` (`feat(cardcheck): coverage checkers cover the whole catalog, NotYetExecutable lists the 67 cards that can't run (T-0295)`, 6d7adb12).
   - Verification: `go test ./pkg/cardcheck -count=1` passed; `gofmt -l pkg cmd` clean; `go tool task check` passed; `go tool task sim-compare` passed with identical byte output against main.
   - Status moved to `review`.
+- 2026-11-23 lead-architect: approved. Each file matches the dry-run blob, and each commit holds only its own files. Re-ran in a review worktree: `go test ./pkg/cardcheck -count=1` ok, `gofmt -l pkg cmd` clean, `go tool task check` exit 0, `go tool task sim-compare` `[PASS]`, `go tool task sim` exit 0 (P0 58.5% / P1 39.5% / draws 2.0%, unchanged). The test commit 2f3095c8 fails alone (`[build failed]`). `git grep` finds the old names only in frozen history, the M3 note's description of the change, and the two references updated at merge (M2 design note line 74, directive #7). Merged into `main` (f6dde66c). Next: T-0296, the sheet checks.

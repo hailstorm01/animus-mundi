@@ -5,3 +5,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | id | title | status |
 | :--- | :--- | :--- |
 | T-0294 | Directive #180: the missing-deck sim test stops depending on which decks `data/decks/` holds | done |
+| T-0295 | Coverage checkers move to `pkg/cardcheck` and cover the whole catalog; `NotYetExecutable` holds the 67 cards; every starter deck validates (Deliverable 1 (a)) | done |
