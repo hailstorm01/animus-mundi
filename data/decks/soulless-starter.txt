@@ -1,0 +1,2 @@
+# Soulless starter deck (docs/architecture/m2-ability-model.md)
+HQ: Colossus Platform
