@@ -4,7 +4,7 @@ title: "The missing-deck sim test stops depending on which decks data/decks hold
 kind: harness
 tier: flash
 wave: none (board directive #180, blocking)
-status: review
+status: done
 branch: m3/T-0294-sim-deck-test-missing-file
 depends_on: []
 claims: [test:TestSimDecks_Case14_MissingFileNamesPath]
@@ -56,3 +56,4 @@ There is no implementation commit, because no non-test file changes. No double q
 ## Log
 - 2026-11-23 lead-architect: written from directive #180, which blocks the next Deliverables task. Applied #181-#183's design-note parts first (6ffe3bc0). Status `ready` (a harness task skips `tests`), tier `flash`. Next: Deliverable 1, the M3 scaffold.
 - 2026-11-23 kernel-engineer: edited pkg/sim/decks_test.go line 41 to set decksDir := t.TempDir() per directive #180. Verified go test ./pkg/sim -run TestSimDecks_ -count=1 passed, gofmt -l pkg/sim was clean, and go tool task check passed all gates (fmt, vet, unit tests, sim tests, and all cardtown linters). Status `review`.
+- 2026-11-23 lead-architect: approved. Diff is the one authorized test line (blob f447312, as dry-run), no other code. Re-ran in a review worktree: `go test ./pkg/sim -run TestSimDecks_ -count=1` ok, `gofmt -l pkg/sim` clean, `go tool task check` exit 0, `go tool task sim` exit 0 (P0 58.5% / P1 39.5% / draws 2.0%, unchanged from T-0293). Merged into `main` (eedd58eb). Directive #180 applied. Next: Deliverable 1, the M3 scaffold.
