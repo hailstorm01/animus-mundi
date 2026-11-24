@@ -26,7 +26,7 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
   1. *Spatial Board Topology* (Reserves, Main Theater, Headquarters Zone).
   2. *Dual Resource Economy* (Requisition & Tactics exhaustion).
   3. *Authoritative Determinism* (100% server-authoritative state, masked fog-of-war, clean-stack execution).
-  4. *Declarative Architecture* (card mechanics are data, not ad-hoc script code: each card's abilities are one Go data value from the closed `pkg/engine/ability` vocabulary, which names no card, interpreted by the kernel and written out as the card catalog; ADR-0004, FRD 02/03 v2.0).
+  4. *Declarative Architecture* (card mechanics are data, not ad-hoc script code: each card's abilities are one Go data value from the closed `pkg/engine/ability` vocabulary, which names no card, interpreted by the kernel deterministically; from M5 the same values are also written out as a generated card catalog for the session checksum and replays; ADR-0004, FRD 02 v2.0, FRD 03 from M5).
   5. *Executable Rules* (FRD 01 is the single rules source; `pkg/engine` scenario tests pin each rule).
 - **Decision Transparency:** Never buries high-impact product inferences. Documents them in a `PRODUCT DECISIONS FLAGGED FOR REVIEW` section using GitHub alert callouts (`> [!IMPORTANT]`), detailing the inference, decision, and alternatives considered for designer review.
 - **Systemic Harmony:** Ensures new subsystems integrate with the established rules: the 6-layer attribute pipeline (`FR-LAY-001` - `FR-LAY-003`), the deterministic combat sequence (`FR-CBT-002`), the clean-stack model (`FR-QUE-001`), and the behavior already executable in `pkg/engine`.
@@ -62,7 +62,7 @@ When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs 
 
 ### Step 1: Vision & Roadmap Intake
 1. Read `docs/PRODUCT_SUMMARY.md` to identify the vision, game pillars, the target milestone (M1–M6), and its "Done when" check. **If the target milestone has not started, stop** and tell the user the FRD is premature (FRD 01 rule changes are exempt).
-2. Read what the code already does (`pkg/engine` package doc and tests for rules work) and the relevant FRD 01 sections by line range. Frozen FRDs (`04`, `05`) are background reading and a starting point for a rewrite, not constraints. FRD 02 and FRD 03 are active again (v2.0, rewritten at the M3 start). Their frozen v1.3 and v1.2 texts in `docs/frd/reference/` (the AST, the primitives, `ast_overrides.json`, the parity checks and the strict gate) are input for FRD 08 only, not guidance for M3 work.
+2. Read what the code already does (`pkg/engine` package doc and tests for rules work) and the relevant FRD 01 sections by line range. Frozen FRDs (`03`, `04`, `05`) are background reading and a starting point for a rewrite, not constraints. FRD 02 is active again (v2.0, rewritten at the M3 start). FRD 03 v2.0, written the same day, is frozen as design intent until its rewrite at the M5 start, next to FRD 04. The frozen FRD 02 v1.3 and FRD 03 v1.2 texts in `docs/frd/reference/` (the AST, the primitives, `ast_overrides.json`, the parity checks and the strict gate) are input for FRD 08 only, not guidance for M3 work.
 
 ### Step 2: Scope & Domain Prefix Reservation
 1. Define the functional domain boundaries for the document.
