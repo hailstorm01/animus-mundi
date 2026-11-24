@@ -71,7 +71,7 @@ Questions this FRD raises but deliberately does not answer. `lead-architect` res
 
 - How does a `Def` serialize: field names, enum spellings (the Go names, or a mapping to them), and whether a zero value is omitted? Only `Keywords` has JSON tags today (camelCase, omitted when zero).
 - ~~What form does a card's catalog identifier take (`FR-DAT-002`)?~~ Answered: the printed name, exactly as the sheet spells it ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)). A rename policy and a stable identifier column are decided at the start of M5.
-- Where are the duplicate-name check (`FR-DAT-002`) and the numeric-column and zone checks (`FR-DAT-006`) enforced: the loader or `cardtown lint sheets`? The M3 design note's Deliverable 1 already has `LoadCards` reject a duplicate name.
+- ~~Where are the duplicate-name check (`FR-DAT-002`) and the numeric-column and zone checks (`FR-DAT-006`) enforced: the loader or `cardtown lint sheets`?~~ Answered by `docs/architecture/m3-full-catalog.md` (Decisions): the sheet loader (`LoadCards`) reports them, not `cardtown lint sheets`.
 - Does `needsRework` ever reach the kernel? It is read by no engine code today.
 - Is a card's rules text kept per line in the catalog, or as the cell it came from?
 
@@ -95,7 +95,7 @@ data/cards/
 #### FR-DAT-002: Card Identity
 - **Contract**: A card is identified by its printed name, unique across every sheet. Deck lists ([`FR-SET-001`](01_Game_Rules_FRD.md)) and ability definitions (`FR-ABL-001`) name cards by it. The printed name is the identity through M4 ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)): the catalog export built in M5 (`FR-CMP-023`) identifies a card by it, and no slug is derived.
 - **Invariants**: Two rows never share a name. Renaming a card renames it everywhere that names it (the sheet row, the definition's key, deck lists) in one change.
-- **Edge Cases**: A duplicate name is a data error, found when the sheets are loaded or linted, and it names both rows. Today the loader silently keeps the later row, so the check is new work. Whether the loader or `cardtown lint sheets` reports it is an open technical question.
+- **Edge Cases**: A duplicate name is a data error, found when the sheets are loaded, and it names both rows. Today the loader silently keeps the later row, so the check is new work.
 
 #### FR-DAT-003: Blueprint Compilation & Asset Bundling
 *(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md) & [`FR-CMP-023`](03_Card_Compiler_FRD.md); runtime bundling is [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
@@ -117,7 +117,7 @@ data/cards/
 - Enum cells use the canonical spelling with no aliases. `cardType`: `UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`. `faction`: `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`. `rarity`: `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. `deploymentZones`: `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS` or the one two-zone spelling `MAIN_THEATER, RESERVES`. `needsRework`: lowercase `true` or `false`.
 - Cells are RFC 4180 quoted text, and a rules-text cell holds one printed line per line break. The kernel's loader treats LF and CRLF line endings the same and accepts a byte-order mark before the first header. `cardtown lint sheets` is stricter and wants the headers exactly.
 - **Invariants**: A header or enum that differs fails `cardtown lint sheets`, with the expected and found headers shown. The kernel's loader rejects an unknown `cardType`.
-- **Edge Cases**: Two things the sheet linter does not check today are data errors that loading or linting the sheets must report, naming the file, row, card and column: a non-numeric value in a numeric column, and a Unit or Structure with no zone. A card is never loaded with a guessed value. Today the loader reads a non-number as 0. Whether the loader or `cardtown lint sheets` reports them is an open technical question.
+- **Edge Cases**: Two things the sheet linter does not check today are data errors that loading the sheets must report, naming the file, row, card and column: a non-numeric value in a numeric column, and a Unit or Structure with no zone. A card is never loaded with a guessed value. Today the loader reads a non-number as 0.
 
 #### FR-DAT-007: Subtypes, Sentinels and Blank Rows
 - **Contract**: `subtypes` is a comma-separated list. Spaces around an entry are dropped, and an empty cell or `--` means none. Subtype comparisons are case-insensitive (the subtype criterion of `FR-TGT-001`). In `rulesText`, each non-empty line is one printed line, and a cell that is `--` or empty prints nothing (a vanilla card). A row with an empty `name` is a placeholder and is skipped everywhere.
@@ -365,7 +365,7 @@ A temporary modifier says "gets" (singular) or "get" (plural). A continuous aura
 Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarters Zone`) except `discard pile` and `deck`. A card outside the battlefield is a card, and on it a unit, structure or asset. Cards drawn or discarded are counted in words ("Draw 2 cards"), and damage, Armor and keyword numbers in numerals ("Deal 2 damage", "Scratch 1").
 
 #### FR-VAL-001: Sheet Checks
-- **Contract**: `cardtown lint sheets` checks headers, enums and the `needsRework` boolean (`FR-DAT-006`). `cardtown lint syntax` rejects three forms in rules text: "friendly" (write "allied"), raw `~`, and "+N attack" (write "+N power"). Loading checks the identity and shape rules of `FR-ABL-014`. A duplicate card name (`FR-DAT-002`), a non-numeric value in a numeric column and a Unit or Structure with no zone (`FR-DAT-006`) are also reported when the sheets are loaded or linted.
+- **Contract**: `cardtown lint sheets` checks headers, enums and the `needsRework` boolean (`FR-DAT-006`). `cardtown lint syntax` rejects three forms in rules text: "friendly" (write "allied"), raw `~`, and "+N attack" (write "+N power"). Loading checks the identity and shape rules of `FR-ABL-014`. A duplicate card name (`FR-DAT-002`), a non-numeric value in a numeric column and a Unit or Structure with no zone (`FR-DAT-006`) are also reported when the sheets are loaded.
 - **Invariants**: A sheet change that breaks a check blocks the commit (the pre-commit hook runs both).
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
@@ -387,8 +387,8 @@ Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarte
 | A definition sets a field nothing reads | Loading fails and names the card | A definition never silently does nothing or the wrong thing (`FR-ABL-014`) |
 | A sheet has a wrong header or an illegal enum | `cardtown lint sheets` fails with the file, row and value | Zero aliasing (`FR-DAT-006`) |
 | A card needs a shape the vocabulary lacks | The card stays unsupported and is listed for a shape task | Nothing is specified ahead of its card (`FR-ABL-013`) |
-| Two rows share a name | Loading or `cardtown lint sheets` reports a data error naming both rows | One card, one identity (`FR-DAT-002`) |
-| A numeric column holds a non-number, or a Unit or Structure has no zone | Loading or `cardtown lint sheets` reports the file, row, card and column | A card is never loaded with a guessed value (`FR-DAT-006`) |
+| Two rows share a name | Loading reports a data error naming both rows | One card, one identity (`FR-DAT-002`) |
+| A numeric column holds a non-number, or a Unit or Structure has no zone | Loading reports the file, row, card and column | A card is never loaded with a guessed value (`FR-DAT-006`) |
 
 ### Section 4.2: Invariants
 
