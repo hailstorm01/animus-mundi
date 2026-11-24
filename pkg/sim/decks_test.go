@@ -38,7 +38,7 @@ func TestSimDecks_Case14_MissingFileNamesPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to load cards: %v", err)
 	}
-	decksDir := filepath.Join("..", "..", "data", "decks")
+	decksDir := t.TempDir() // no decklists, so the first seat's file is missing whatever data/decks holds
 	_, err = SimDecks(cards, decksDir, "starter", [2]string{"SOULLESS", "PATH"})
 	if err == nil {
 		t.Fatal("expected error for missing soulless-starter.txt, got nil")
