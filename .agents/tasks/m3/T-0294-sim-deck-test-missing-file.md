@@ -4,7 +4,7 @@ title: "The missing-deck sim test stops depending on which decks data/decks hold
 kind: harness
 tier: flash
 wave: none (board directive #180, blocking)
-status: in-progress
+status: review
 branch: m3/T-0294-sim-deck-test-missing-file
 depends_on: []
 claims: [test:TestSimDecks_Case14_MissingFileNamesPath]
@@ -49,9 +49,10 @@ There is no implementation commit, because no non-test file changes. No double q
 - none (the one test edit above is the whole task)
 
 ## Done When
-- [ ] The edited test and its neighbours pass: `go test ./pkg/sim -run TestSimDecks_ -count=1`
-- [ ] `gofmt -l pkg/sim` prints nothing
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] The edited test and its neighbours pass: `go test ./pkg/sim -run TestSimDecks_ -count=1`
+- [x] `gofmt -l pkg/sim` prints nothing
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
 
 ## Log
 - 2026-11-23 lead-architect: written from directive #180, which blocks the next Deliverables task. Applied #181-#183's design-note parts first (6ffe3bc0). Status `ready` (a harness task skips `tests`), tier `flash`. Next: Deliverable 1, the M3 scaffold.
+- 2026-11-23 kernel-engineer: edited pkg/sim/decks_test.go line 41 to set decksDir := t.TempDir() per directive #180. Verified go test ./pkg/sim -run TestSimDecks_ -count=1 passed, gofmt -l pkg/sim was clean, and go tool task check passed all gates (fmt, vet, unit tests, sim tests, and all cardtown linters). Status `review`.
