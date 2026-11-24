@@ -34,4 +34,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0297 | `cardtown sim -matrix` plays every pairing of the starter decks or the stress decks, both seat orders, both policies, with one coverage table (Deliverable 3) | ready |

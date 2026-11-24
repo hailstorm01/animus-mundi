@@ -4,7 +4,7 @@ title: "cardtown sim -matrix plays every pairing of the starter decks or the str
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 3)
-status: review
+status: done
 branch: m3/T-0297-sim-matrix
 depends_on: [T-0296]
 claims: [type:sim.MatrixRun, func:sim.MatrixRuns, func:sim.DeckFactions, func:sim.StressFactions, func:sim.SimulateRun, type:sim.MatrixCoverage, flag:cardtown-sim-matrix, func:main.eachRule, task:sim-matrix]
@@ -682,3 +682,4 @@ No double quotes in either message: the allow-list refuses an escaped one.
 ## Log
 - 2026-11-24 lead-architect: written from M3 design note Deliverable 3. Status `ready` (a harness task skips `tests`), tier `flash`.
 - 2026-11-24 kernel-engineer: implemented the sim matrix in pkg/sim/matrix.go, cmd/cardtown/sim_matrix.go, cmd/cardtown/sim.go, and Taskfile.yml. Reused PolicyByName, MatchDecks, SimulateWith, ReplayCommand, and eachRule across both single-pairing and matrix coverage tables. Confirmed acceptance tests, gofmt, task check, and task sim-compare (byte-identical against main) pass. Status review.
+- 2026-11-24 lead-architect: approved. All five files match the dry-run blobs, and each commit holds only its own files. Re-ran in a review worktree: the four `go test ./pkg/sim` lines ok, `gofmt -l pkg cmd` clean, `go tool task check` exit 0, `go tool task sim-compare` `[PASS]`, `go tool task sim` exit 0 (P0 58.5% / P1 39.5% / draws 2.0%, unchanged), `go tool task sim-matrix` exit 0 (both deck sets, 24 runs each, `[PASS]`), acceptance case 9 exit 1. The test commit ee3061f7 fails alone. Merged into `main` (18026818). The design note's monitor-coverage note records the matrix's measurement. Next: Deliverable 3a, the survey folder.
