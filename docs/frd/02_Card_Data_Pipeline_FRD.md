@@ -8,7 +8,7 @@
 
 ## EXECUTIVE SUMMARY & REVISION HISTORY
 
-This document says what a card is as data: the CSV sheets in `data/cards/` that hold every card's printed characteristics and rules text, and the vocabulary in which a card's non-keyword abilities are written, which `pkg/engine/ability` defines and `pkg/engine` interprets. It exists so that three readers agree on one vocabulary: the kernel that executes a card, the designer who maps a new card onto it (the M3 ability survey), and the catalog export ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)) that serializes it mechanically. It states no game rule. Each shape cites the `FR-*` and `SVY-R*` IDs of [FRD 01](01_Game_Rules_FRD.md) that give its behavior, and FRD 01 owns them.
+This document says what a card is as data: the CSV sheets in `data/cards/` that hold every card's printed characteristics and rules text, and the vocabulary in which a card's non-keyword abilities are written, which `pkg/engine/ability` defines and `pkg/engine` interprets. It exists so that three readers agree on one vocabulary: the kernel that executes a card, the designer who maps a new card onto it (the M3 ability survey), and the catalog export that serializes it mechanically. The export is built in M5, and its FRD ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)) is frozen as design intent until then. It states no game rule. Each shape cites the `FR-*` and `SVY-R*` IDs of [FRD 01](01_Game_Rules_FRD.md) that give its behavior, and FRD 01 owns them.
 
 It is written from what M2 built, not from what v1.3 proposed. M2 made 75 Animus and Path cards executable with 73 ability definitions as Go values (ADR-0004), with no compiler, and the [ability shapes write-up](../design/m2_ability_shapes.md) records how the kernel's vocabulary differs from v1.3's. The sheets hold 169 cards in 10 files.
 
@@ -22,7 +22,7 @@ pkg/engine/cards.Defs ───────────────────�
                                               │
                           ┌───────────────────┴───────────────────┐
                           ▼                                       ▼
-                 pkg/engine interprets (FRD 01)         catalog export (FRD 03, FR-CMP-023)
+                 pkg/engine interprets (FRD 01)         catalog export (M5; FRD 03, FR-CMP-023)
 ```
 
 ### Revision Summary (v1.3 -> v2.0):
@@ -30,6 +30,7 @@ pkg/engine/cards.Defs ───────────────────�
 - **Names are the package's.** The polymorphic `AbilityDef` AST, `FilterDef`, `ValueToken`, `TargetRef`, `ConditionDef` and the 26 primitives are replaced by `Def`, `Trigger`, `Filter`, `Value`, `Target`, `Step`, `Op` and the other Go names. Where a v1.3 construct has a counterpart, the tables below say which.
 - **Only what is built is specified.** A shape the kernel does not have waits for its first card (`FR-ABL-013`).
 - **Retired IDs became Subsumed stubs** pointing to their new owner (the register at the end). No ID was deleted.
+- **Amended 2026-11-23: the catalog export moved from M3 to M5** (`PRODUCT_SUMMARY.md` §4). Two sheet checks that FRD 03 had in the export's pre-flight (`FR-CMP-027`) stay in M3 and are owned here: a duplicate card name (`FR-DAT-002`), and a non-numeric value in a numeric column or a Unit or Structure with no zone (`FR-DAT-006`). Citations of FRD 03 below point at frozen design intent for M5 and imply no M3 work.
 
 ### Specification Scope (v2.0):
 1. **The Card Sheets (`FR-DAT-001` - `FR-DAT-009`)**: source of truth, identity, the card record, headers and enums, subtypes and sentinels, deployment zones, invariants.
@@ -42,8 +43,8 @@ pkg/engine/cards.Defs ───────────────────�
 
 > [!IMPORTANT]
 > **DECISION 1: Keep two FRDs, not one (`FR-DAT-001`, `FR-CMP-023`)**
-> - **Inference**: The product summary lets FRD 02 and FRD 03 merge. The export is built last in M3 (build order step 7), on a different trigger from the vocabulary, which the M3 ability survey and every card task read first. FRD 04 and FRD 05 cite the `FR-CMP-*` IDs, and `cardtown lint frd` requires both file names to exist.
-> - **Decision**: Two files. FRD 02 owns card data and the vocabulary. [FRD 03](03_Card_Compiler_FRD.md) owns the catalog export.
+> - **Inference**: The product summary lets FRD 02 and FRD 03 merge. The export moved to M5 (2026-11-23) and is rewritten then, on a different trigger from the vocabulary, which the M3 ability survey and every card task read first. FRD 04 and FRD 05 cite the `FR-CMP-*` IDs, and `cardtown lint frd` requires both file names to exist.
+> - **Decision**: Two files. FRD 02 owns card data, the vocabulary and the sheet checks. [FRD 03](03_Card_Compiler_FRD.md) owns the catalog export, frozen as design intent until its rewrite at the start of M5.
 > - **Alternative Considered**: One merged FRD. Rejected: the `FR-CMP-*` IDs would lose their home, and the lint check would need a toolchain change for no gain in clarity. FRD 03's file name still says "Compiler" although it no longer specifies one. Renaming it is a toolchain change (an open technical question there).
 
 > [!IMPORTANT]
@@ -53,9 +54,9 @@ pkg/engine/cards.Defs ───────────────────�
 > - **Alternative Considered**: Rely on git history alone. Rejected: a drafter has to know which commit to read. A hand-curated extract. Rejected: it would be a third text to keep right, and the point is that the original stays intact.
 
 > [!IMPORTANT]
-> **DECISION 3: A card is identified by its printed name until the export needs more (`FR-DAT-002`)**
+> **DECISION 3: A card is identified by its printed name until something stores identifiers (`FR-DAT-002`)**
 > - **Inference**: v1.3 derived a blueprint ID slug from faction and name. The kernel has no blueprint ID: decks, ability definitions and the loader all key by card name, and the loader keeps the later of two same-named rows without complaint.
-> - **Decision**: The name is the card's identity and must be unique. The catalog gives each card an identifier derived from the row. Whether that is the name or a slug is an open technical question.
+> - **Decision**: The name is the card's identity and must be unique. The catalog export, when it is built in M5, identifies a card by that name too, and no slug is derived ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)).
 > - **Alternative Considered**: Adopt the frozen slug rule now. Rejected: nothing reads it, and a rename policy (the frozen "permanently immutable" rule) is a product decision best made when something stores IDs.
 
 > [!IMPORTANT]
@@ -69,8 +70,8 @@ pkg/engine/cards.Defs ───────────────────�
 Questions this FRD raises but deliberately does not answer. `lead-architect` resolves them as decision records in `docs/architecture/decisions/` when the code needs them.
 
 - How does a `Def` serialize: field names, enum spellings (the Go names, or a mapping to them), and whether a zero value is omitted? Only `Keywords` has JSON tags today (camelCase, omitted when zero).
-- What form does a card's catalog identifier take (`FR-DAT-002`): the name, or a derived slug such as the frozen proposal?
-- Where is the duplicate-name and numeric-column check enforced: the loader, `cardtown lint sheets`, or the export's pre-flight (`FR-CMP-027`)?
+- ~~What form does a card's catalog identifier take (`FR-DAT-002`)?~~ Answered: the printed name, exactly as the sheet spells it ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)). A rename policy and a stable identifier column are decided at the start of M5.
+- Where are the duplicate-name check (`FR-DAT-002`) and the numeric-column and zone checks (`FR-DAT-006`) enforced: the loader or `cardtown lint sheets`? The M3 design note's Deliverable 1 already has `LoadCards` reject a duplicate name.
 - Does `needsRework` ever reach the kernel? It is read by no engine code today.
 - Is a card's rules text kept per line in the catalog, or as the cell it came from?
 
@@ -87,14 +88,14 @@ data/cards/
 ### Section 1.1: Source of Truth, Identity and Record
 
 #### FR-DAT-001: The Card Sheets Are the Source of Truth
-- **Contract**: The CSV files in `data/cards/` hold every card's printed characteristics and rules text. Anything derived from them (the cards the kernel loads, the catalog of `FR-CMP-023`) is regenerated and never edited. A sheet whose file name starts with `maneuvers-` uses the Maneuver columns of `FR-DAT-006`, and every other sheet uses the asset columns. A new CSV placed in the folder is read like the rest. The Google Sheets that the publisher writes are a downstream view: an edit there changes no game.
+- **Contract**: The CSV files in `data/cards/` hold every card's printed characteristics and rules text. Anything derived from them (the cards the kernel loads and, from M5, the catalog of `FR-CMP-023`) is regenerated and never edited. A sheet whose file name starts with `maneuvers-` uses the Maneuver columns of `FR-DAT-006`, and every other sheet uses the asset columns. A new CSV placed in the folder is read like the rest. The Google Sheets that the publisher writes are a downstream view: an edit there changes no game.
 - **Invariants**: One printed card is one non-blank row, in exactly one sheet.
 - **Edge Cases**: A sheet that is empty or has the wrong header fails `cardtown lint sheets` and names the file.
 
 #### FR-DAT-002: Card Identity
-- **Contract**: A card is identified by its printed name, unique across every sheet. Deck lists ([`FR-SET-001`](01_Game_Rules_FRD.md)) and ability definitions (`FR-ABL-001`) name cards by it. The catalog gives each card an identifier derived deterministically from its row (`FR-CMP-023`).
+- **Contract**: A card is identified by its printed name, unique across every sheet. Deck lists ([`FR-SET-001`](01_Game_Rules_FRD.md)) and ability definitions (`FR-ABL-001`) name cards by it. The printed name is the identity through M4 ([ADR 0009](../architecture/decisions/0009-cards-identified-by-printed-name.md)): the catalog export built in M5 (`FR-CMP-023`) identifies a card by it, and no slug is derived.
 - **Invariants**: Two rows never share a name. Renaming a card renames it everywhere that names it (the sheet row, the definition's key, deck lists) in one change.
-- **Edge Cases**: A duplicate name is a data error (`FR-CMP-027`). Today the loader silently keeps the later row, so the check is new work.
+- **Edge Cases**: A duplicate name is a data error, found when the sheets are loaded or linted, and it names both rows. Today the loader silently keeps the later row, so the check is new work. Whether the loader or `cardtown lint sheets` reports it is an open technical question.
 
 #### FR-DAT-003: Blueprint Compilation & Asset Bundling
 *(Subsumed by [`FR-CMP-002`](03_Card_Compiler_FRD.md) & [`FR-CMP-023`](03_Card_Compiler_FRD.md); runtime bundling is [`FR-ENT-001`](05_Headless_Game_Engine_FRD.md))*
@@ -116,7 +117,7 @@ data/cards/
 - Enum cells use the canonical spelling with no aliases. `cardType`: `UNIT`, `STRUCTURE`, `MANEUVER`, `HEADQUARTERS`. `faction`: `CONCORDIA`, `SOULLESS`, `PATH`, `ANIMUS`, `NEUTRAL`. `rarity`: `COMMON`, `UNCOMMON`, `RARE`, `MYTHIC`, `HQ`. `deploymentZones`: `RESERVES`, `MAIN_THEATER`, `HEADQUARTERS` or the one two-zone spelling `MAIN_THEATER, RESERVES`. `needsRework`: lowercase `true` or `false`.
 - Cells are RFC 4180 quoted text, and a rules-text cell holds one printed line per line break. The kernel's loader treats LF and CRLF line endings the same and accepts a byte-order mark before the first header. `cardtown lint sheets` is stricter and wants the headers exactly.
 - **Invariants**: A header or enum that differs fails `cardtown lint sheets`, with the expected and found headers shown. The kernel's loader rejects an unknown `cardType`.
-- **Edge Cases**: Two things the sheet linter does not check, whole numbers in the numeric columns and a zone on every Unit and Structure, are checked at export (`FR-CMP-027`). Today the loader reads a non-number as 0.
+- **Edge Cases**: Two things the sheet linter does not check today are data errors that loading or linting the sheets must report, naming the file, row, card and column: a non-numeric value in a numeric column, and a Unit or Structure with no zone. A card is never loaded with a guessed value. Today the loader reads a non-number as 0. Whether the loader or `cardtown lint sheets` reports them is an open technical question.
 
 #### FR-DAT-007: Subtypes, Sentinels and Blank Rows
 - **Contract**: `subtypes` is a comma-separated list. Spaces around an entry are dropped, and an empty cell or `--` means none. Subtype comparisons are case-insensitive (the subtype criterion of `FR-TGT-001`). In `rulesText`, each non-empty line is one printed line, and a cell that is `--` or empty prints nothing (a vanilla card). A row with an empty `name` is a placeholder and is skipped everywhere.
@@ -156,7 +157,7 @@ Step   = Op + Subject (+ Target, Filter, Amount, ...)          FR-PRM-001, FR-TG
 
 #### FR-ABL-001: One Definition Per Card
 - **Contract**: A card's non-keyword abilities are one `ability.Def`, keyed by the card's name in `pkg/engine/cards`. A `Def` has the parts drawn above, each a list in printed order or a single value, and a part a card does not print is empty. A card may print several kinds at once (a trigger and a Cornered grant). Standalone keywords are not a part of a `Def` (`FR-ABL-012`), so a card with only keyword lines, or a vanilla card, has none.
-- **Invariants**: The kernel interprets definitions and holds no card-specific logic (ADR-0004). A definition is data, so the export reads the same value the kernel runs.
+- **Invariants**: The kernel interprets definitions and holds no card-specific logic (ADR-0004). A definition is data, so the catalog export (M5) reads the same value the kernel runs.
 - **Edge Cases**: The v1.3 polymorphic `AbilityDef` with an `abilityType` is gone: the part a value sits in says what it is.
 
 #### FR-TRG-001: Hook and Replacement Event Names
@@ -364,7 +365,7 @@ A temporary modifier says "gets" (singular) or "get" (plural). A continuous aura
 Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarters Zone`) except `discard pile` and `deck`. A card outside the battlefield is a card, and on it a unit, structure or asset. Cards drawn or discarded are counted in words ("Draw 2 cards"), and damage, Armor and keyword numbers in numerals ("Deal 2 damage", "Scratch 1").
 
 #### FR-VAL-001: Sheet Checks
-- **Contract**: `cardtown lint sheets` checks headers, enums and the `needsRework` boolean (`FR-DAT-006`). `cardtown lint syntax` rejects three forms in rules text: "friendly" (write "allied"), raw `~`, and "+N attack" (write "+N power"). Loading checks the identity and shape rules of `FR-ABL-014`.
+- **Contract**: `cardtown lint sheets` checks headers, enums and the `needsRework` boolean (`FR-DAT-006`). `cardtown lint syntax` rejects three forms in rules text: "friendly" (write "allied"), raw `~`, and "+N attack" (write "+N power"). Loading checks the identity and shape rules of `FR-ABL-014`. A duplicate card name (`FR-DAT-002`), a non-numeric value in a numeric column and a Unit or Structure with no zone (`FR-DAT-006`) are also reported when the sheets are loaded or linted.
 - **Invariants**: A sheet change that breaks a check blocks the commit (the pre-commit hook runs both).
 
 #### FR-VAL-002: Rules Text vs Declarative Ability Parity Checker
@@ -386,7 +387,8 @@ Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarte
 | A definition sets a field nothing reads | Loading fails and names the card | A definition never silently does nothing or the wrong thing (`FR-ABL-014`) |
 | A sheet has a wrong header or an illegal enum | `cardtown lint sheets` fails with the file, row and value | Zero aliasing (`FR-DAT-006`) |
 | A card needs a shape the vocabulary lacks | The card stays unsupported and is listed for a shape task | Nothing is specified ahead of its card (`FR-ABL-013`) |
-| Two rows share a name | Reported as a data error at export (`FR-CMP-027`) | One card, one identity (`FR-DAT-002`) |
+| Two rows share a name | Loading or `cardtown lint sheets` reports a data error naming both rows | One card, one identity (`FR-DAT-002`) |
+| A numeric column holds a non-number, or a Unit or Structure has no zone | Loading or `cardtown lint sheets` reports the file, row, card and column | A card is never loaded with a guessed value (`FR-DAT-006`) |
 
 ### Section 4.2: Invariants
 
@@ -399,11 +401,11 @@ Zone names are capitalized and complete (`Main Theater`, `Reserves`, `Headquarte
 | Requirement ID | Scope Summary | Interoperability Target |
 | :--- | :--- | :--- |
 | `FR-DAT-001` | The sheets are the source of truth | `FR-CMP-029` |
-| `FR-DAT-002` | Card identity | `FR-SET-001`, `FR-CMP-023`, `FR-CMP-027` |
+| `FR-DAT-002` | Card identity | `FR-SET-001`, `FR-CMP-023` (M5) |
 | `FR-DAT-003` | Subsumed stub | `FR-CMP-002`, `FR-CMP-023` |
 | `FR-DAT-004` | Subsumed stub | `FR-CMP-024`–`FR-CMP-026` |
 | `FR-DAT-005` | The card record | `FR-CRD-101`, `FR-CMP-023` |
-| `FR-DAT-006` | Headers and zero-aliasing enums | `FR-VAL-001` |
+| `FR-DAT-006` | Headers, zero-aliasing enums, numeric and zone checks | `FR-VAL-001` |
 | `FR-DAT-007` | Subtypes, sentinels, blank rows | `FR-TGT-001`, `FR-ABL-012` |
 | `FR-DAT-008` | Deployment zones | `FR-ZON-001`, `FR-TRN-003` |
 | `FR-DAT-009` | Card data invariants | `FR-ABL-014` |

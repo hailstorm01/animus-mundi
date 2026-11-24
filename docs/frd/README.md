@@ -7,7 +7,7 @@
 | [01 Game Rules](01_Game_Rules_FRD.md) | **Active, single source of truth for rules** | `pkg/engine` scenario tests, `cardtown lint rules` |
 | [Keyword Interaction Matrix](keyword_interaction_matrix.md) | **Active, bounded edge-case register for FRD 01** | Closes when every cell has a ruling |
 | [02 Card Data & Ability Vocabulary](02_Card_Data_Pipeline_FRD.md) | **Active** (v2.0, M3 start): the card sheet schema and the `pkg/engine/ability` vocabulary | `cardtown lint sheets`, `syntax`, `frd`; `go doc -all ./pkg/engine/ability` wins any disagreement |
-| [03 Catalog Export](03_Card_Compiler_FRD.md) | **Active** (v2.0, M3 start): what the generated catalog holds, its determinism and checksum. The file keeps its old name | `cardtown lint frd`; the export itself is built last in M3 |
+| [03 Catalog Export](03_Card_Compiler_FRD.md) | **Frozen (v2.0)** as design intent: what the generated catalog holds, its determinism and checksum. The export moved from M3 to M5 (2026-11-23). The file keeps its old name | `cardtown lint frd`; rewritten at the start of M5, next to FRD 04 |
 | [04 Client-Engine Protocol & Networking](04_Client_Engine_Protocol_Networking_FRD.md) | Frozen as design intent | Rewritten at the start of M5 |
 | [05 Headless Game Engine](05_Headless_Game_Engine_FRD.md) | Frozen as design reference | `pkg/engine` is the engine's source of truth |
 
