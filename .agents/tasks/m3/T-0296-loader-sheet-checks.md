@@ -4,7 +4,7 @@ title: "LoadCards reports duplicate names, non-numeric or empty numeric cells, a
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part b)
-status: ready
+status: in-progress
 branch: m3/T-0296-loader-sheet-checks
 depends_on: [T-0295]
 claims: [func:engine.loadSheets, func:engine.readCards, type:engine.sheetErrors]
