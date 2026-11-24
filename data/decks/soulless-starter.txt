@@ -12,10 +12,11 @@ HQ: Colossus Platform
 2 Culverin Brigade
 2 Dolus Macrocannon
 2 Dolus Refiner
+1 Redlined Brawler
 1 MAX-8 Autonomous Warsuit
 2 Earthshaker Colossus
 3 Magic Management Seekers
-4 Bring it Down
+4 Bring It Down
 2 Visionary's Insight
 2 Inspired Salvage
 1 All-Out War
