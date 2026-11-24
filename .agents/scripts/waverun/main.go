@@ -8,8 +8,14 @@
 // per session, hours), on a failed session, on any refused tool call, and on
 // a missing or extra run row. It never merges the run branch: the user does.
 //
+// The wave belongs to the current milestone: the highest-numbered
+// .agents/tasks/m<N>/ whose BOARD.md on the integration branch has a Last
+// directive line (a closed milestone's board has none). -Milestone picks
+// another one.
+//
 //	go tool task wave-run -- -Wave B -Tasks 3
 //	go tool task wave-run -- -Wave B -DryRun
+//	go tool task wave-run -- -Wave B -Milestone m3 -DryRun
 package main
 
 import (
@@ -28,6 +34,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"animus-mundi/.agents/scripts/internal/board"
 )
 
 var (
@@ -35,7 +43,7 @@ var (
 	tasks         = flag.Int("Tasks", 3, "most sessions to run")
 	maxUsdPerTask = flag.Float64("MaxUsdPerTask", 40, "spend budget per session, passed to --max-budget-usd")
 	maxHours      = flag.Float64("MaxHours", 8, "no new session starts after this many hours")
-	milestone     = flag.String("Milestone", "m2", "milestone folder under .agents/tasks")
+	milestone     = flag.String("Milestone", "", "milestone folder under .agents/tasks (default: the highest m<N> whose BOARD.md on -Base has a Last directive line)")
 	base          = flag.String("Base", "main", "integration branch the run branch starts from")
 	effort        = flag.String("Effort", "", "--effort for each session, if set")
 	claudePath    = flag.String("Claude", "", "path to the claude CLI, if it is not on PATH")
@@ -45,6 +53,7 @@ var (
 // run is the state Stop reports on.
 type run struct {
 	branch, runFile, logDir string
+	resume                  string // flags Resume repeats besides -Wave
 	started                 time.Time
 	spent                   float64
 }
@@ -82,12 +91,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Resume repeats -Milestone only when the user gave it.
+	resume := ""
+	if *milestone == "" {
+		m, err := board.Current(*base)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		*milestone = m
+	} else {
+		resume = " -Milestone " + *milestone
+	}
+
 	branch := fmt.Sprintf("autoloop/%s-wave-%s", *milestone, strings.ToLower(*wave))
 	slug := strings.ReplaceAll(branch, "/", "-")
 	r := &run{
 		branch:  branch,
 		runFile: fmt.Sprintf(".agents/tasks/%s/runs/%s.md", *milestone, slug),
 		logDir:  filepath.Join(os.TempDir(), "wave-run", slug),
+		resume:  resume,
 		started: time.Now(),
 	}
 
@@ -119,6 +142,7 @@ func main() {
 	cliArgs = append(cliArgs, "--disallowedTools", "Bash(git push *),PowerShell(git push *)")
 
 	if *dryRun {
+		fmt.Printf("Milestone:  %s (board: %s on %s)\n", *milestone, board.Path(*milestone), *base)
 		fmt.Printf("Run branch: %s (exists: %t)\n", r.branch, branchExists(r.branch))
 		fmt.Printf("Run file:   %s (%d rows)\n", r.runFile, len(runRows(r.runText())))
 		fmt.Printf("Claude:     %s\n", exe)
@@ -235,7 +259,7 @@ func (r *run) stop(reason string, code int) {
 	fmt.Printf("   Review:  git log --oneline %s..%s\n", *base, r.branch)
 	fmt.Printf("            git show %s:%s\n", r.branch, r.runFile)
 	fmt.Printf("   Land it: git merge --no-ff %s   (on %s, when you are satisfied)\n", r.branch, *base)
-	fmt.Printf("   Resume:  go tool task wave-run -- -Wave %s -Tasks <n>\n", *wave)
+	fmt.Printf("   Resume:  go tool task wave-run -- -Wave %s%s -Tasks <n>\n", *wave, r.resume)
 	os.Exit(code)
 }
 

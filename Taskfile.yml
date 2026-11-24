@@ -3,8 +3,9 @@
 #   go tool task <name>     (or `task <name>` if Task is installed)
 #   go tool task            lists every task
 # Pass extra flags after `--`, e.g. `go tool task sim -- -games 50`.
-# `./...` skips dot-directories, so fmt, vet and test name the wave runner
-# (.agents/scripts/waverun) on their own.
+# `./...` skips dot-directories, so fmt, vet and test name the agent scripts
+# (.agents/scripts: the wave runner, next-directive and their shared board package)
+# on their own.
 version: '3'
 
 vars:
@@ -25,12 +26,12 @@ tasks:
   test:
     desc: Run every Go test
     cmds:
-      - go test ./... ./.agents/scripts/waverun {{.CLI_ARGS}}
+      - go test ./... ./.agents/scripts/... {{.CLI_ARGS}}
 
   vet:
     desc: Run go vet
     cmds:
-      - go vet ./... ./.agents/scripts/waverun
+      - go vet ./... ./.agents/scripts/...
 
   fmt:
     desc: Format Go source in place
@@ -123,11 +124,11 @@ tasks:
       - '{{.BIN}} hook install'
 
   next-directive:
-    desc: 'Number for a new board directive: one after the highest Last directive on main and every autoloop/ branch (.agents/rules/AGENTS.md)'
+    desc: 'Number for a new board directive: one after the highest Last directive on main and every autoloop/ branch (.agents/rules/AGENTS.md). Reads the current milestone''s board (the highest m<N> whose BOARD.md on main has a Last directive line), or another with `go tool task next-directive -- -Milestone m3`'
     cmds:
       - go run ./.agents/scripts/nextdirective {{.CLI_ARGS}}
 
   wave-run:
-    desc: 'Build one wave unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`'
+    desc: 'Build one wave of the current milestone unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`; add `-DryRun` to see the milestone, run branch and run file, or `-Milestone m<N>` for another milestone'
     cmds:
       - go run ./.agents/scripts/waverun {{.CLI_ARGS}}

@@ -8,7 +8,13 @@
 // autoloop/ branch and prints one more than the highest, so either side picks
 // a number the other hasn't used.
 //
+// The board is the current milestone's: the highest-numbered
+// .agents/tasks/m<N>/ whose BOARD.md on the integration branch has a Last
+// directive line. A closed milestone's board has none (M2's, since
+// 2026-11-23). -Milestone picks another board.
+//
 //	go tool task next-directive
+//	go tool task next-directive -- -Milestone m3
 package main
 
 import (
@@ -16,28 +22,15 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
-	"strconv"
 	"strings"
+
+	"animus-mundi/.agents/scripts/internal/board"
 )
 
 var (
-	milestone = flag.String("Milestone", "m2", "milestone folder under .agents/tasks")
+	milestone = flag.String("Milestone", "", "milestone folder under .agents/tasks (default: the highest m<N> whose BOARD.md on -Base has a Last directive line)")
 	base      = flag.String("Base", "main", "integration branch")
 )
-
-var lastDirective = regexp.MustCompile("(?m)^- \\*\\*Last directive:\\*\\* `#(\\d+)`")
-
-// parseLast returns the board's Last directive number, or false if the board
-// has no such line.
-func parseLast(board string) (int, bool) {
-	m := lastDirective.FindStringSubmatch(board)
-	if m == nil {
-		return 0, false
-	}
-	n, err := strconv.Atoi(m[1])
-	return n, err == nil
-}
 
 func git(args ...string) (string, error) {
 	out, err := exec.Command("git", args...).Output()
@@ -46,7 +39,15 @@ func git(args ...string) (string, error) {
 
 func main() {
 	flag.Parse()
-	path := ".agents/tasks/" + *milestone + "/BOARD.md"
+	if *milestone == "" {
+		m, err := board.Current(*base)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "nextdirective:", err)
+			os.Exit(1)
+		}
+		*milestone = m
+	}
+	path := board.Path(*milestone)
 
 	refs := []string{*base}
 	out, err := git("for-each-ref", "--format=%(refname:short)", "refs/heads/autoloop/")
@@ -63,7 +64,7 @@ func main() {
 	highest, from := -1, ""
 	var lines []string
 	for _, r := range refs {
-		board, err := git("show", r+":"+path)
+		text, err := git("show", r+":"+path)
 		if err != nil {
 			if r == *base {
 				fmt.Fprintf(os.Stderr, "nextdirective: no %s on %s\n", path, r)
@@ -71,7 +72,7 @@ func main() {
 			}
 			continue // a run branch from before this milestone's board
 		}
-		n, ok := parseLast(board)
+		n, ok := board.LastDirective(text)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "nextdirective: no Last directive line in %s:%s\n", r, path)
 			os.Exit(1)
@@ -83,7 +84,7 @@ func main() {
 	}
 
 	fmt.Printf("#%d\n", highest+1)
-	fmt.Printf("(one after #%d on %s; Last directive by branch:)\n", highest, from)
+	fmt.Printf("(%s board; one after #%d on %s; Last directive by branch:)\n", *milestone, highest, from)
 	for _, l := range lines {
 		fmt.Println(l)
 	}
