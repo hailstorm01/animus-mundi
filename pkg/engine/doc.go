@@ -105,8 +105,8 @@
 //     and its own hand-active cost reduction, Regroup N, replacement effects
 //     other than destruction replacement and damage redirection, and match
 //     clocks. Cards whose text needs any of these load with Card.Unsupported
-//     set and cannot be deployed or enacted. No in-scope M2 card is in that
-//     state, so cards.NotYetExecutable is empty.
+//     set and cannot be deployed or enacted. cards.NotYetExecutable lists every
+//     such card (pkg/cardcheck).
 //
 // Files:
 //   - setup.go: Config and NewGame. deck.go: DeckList, validation, loading.
