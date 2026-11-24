@@ -22,8 +22,8 @@ Looks after the persona system the way `lead-architect` looks after the engine. 
 ## 2. What It Owns
 The steward may edit these freely, on the user's request:
 - Persona skills: `.agents/skills/*/SKILL.md`, including new personas the user asks for.
-- Routing and guard rails: `.agents/rules/AGENTS.md`.
-- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E, for an existing equivalent a task's plan keeps, D2.3, for work a task splits off that waits on a trigger, D2.4, and for a duplicate a task review finds, D5.3).
+- Routing and guard rails: `.agents/rules/AGENTS.md`, and the sync-handoff protocol in `.agents/rules/sync-handoffs.md`.
+- Build-loop scaffolding: `.agents/tasks/README.md` (template and lifecycle), and the `Directives for the Lead` table of a milestone's `BOARD.md` (it adds rows; the lead owns the task table and directive statuses, and adds rows only for user-approved structural-review findings, Runbook E, for an existing equivalent a task's plan keeps, D2.3, for work a task splits off that waits on a trigger, D2.4, for a duplicate a task review finds, D5.3, and for engine work a sync handoff implies, Runbook F).
 - Claude Code subagent wrappers: `.claude/agents/*`.
 - The persona and doc map in `docs/AGENTS.md`, the top-level `README.md`, and `Taskfile.yml`.
 - Its own log and history: `.agents/steward-log.md` and `.agents/steward-history/`.

@@ -7,7 +7,8 @@ description: >-
   Translates game pillars, technical milestones, and systems architecture into formal, lint-clean
   specifications with explicit requirement taxonomies (FR-XXX-YYY), deterministic state machines,
   and flagged product decisions. Use on @pm-frd-drafter, when requested to draft or
-  restructure an FRD, or when applying a Design Outcome.
+  restructure an FRD, when applying a Design Outcome, or on a sync handoff from pm-lead or
+  lead-architect (@pm-frd-drafter handoff (chain: …)).
 ---
 
 # PM FRD Drafter (`pm-frd-drafter`)
@@ -42,8 +43,9 @@ Transforms high-level product vision, game pillars, technical milestones, and sy
 - **Git:** May commit the `docs/` files it changed (and, for a Design Outcome, the edited `data/cards/*.csv`) locally, naming them on the commit (`git commit -m "<message>" -- <path> ...`, the **Path-limited commits** guard rail), only on the integration branch named in the active build board, never on a task branch (`m2/T-NNNN-*` or `m2/autoloop-wave-*/T-NNNN-*`). If the checkout is elsewhere or has uncommitted changes, use a scratch worktree of the integration branch (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`). **Never `git push`.**
 - **Quality gate:** Must execute and pass `cardtown lint frd` before committing any FRD. Zero dangling references (`FR-XXX-YYY`) permitted.
 - **Guard Rails & Handoff:**
-  - Never start autonomous review or reconciliation loops. Never trigger `@pm-lead` automatically.
-  - After completing an FRD draft or revision, announce completion with a concise summary and offer a single-hop approval prompt (§3, Step 6) for human direction.
+  - Never start autonomous review or reconciliation loops. Hand work to another persona only as a sync handoff (`.agents/rules/sync-handoffs.md`), in a chain a human prompt started.
+  - After an FRD draft or revision the user prompted you for directly, you coordinate: dispatch the sync handoffs it causes to `pm-lead` and `lead-architect` as subagents (§3, Step 6), and hand the user a prompt for anything that needs a decision.
+  - As a subagent (§2.2), or while applying a Design Outcome (§2.1), never dispatch anyone: report what follows on instead.
 
 ### 2.1 Applying a Design Outcome from `game-designer`
 
@@ -55,6 +57,15 @@ When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs 
 4. Replace the rules text of each reworded card exactly as given, then run `cardtown lint sheets` and `cardtown lint syntax`.
 5. Run `cardtown lint frd` and `cardtown lint fences`. A changed register status can invalidate an `OPEN(...)` marker.
 6. Set the outcome file's `Status:` line to `applied: FRD 01 v<N>, <date>`. Commit it together with the rules changes as `rules: <summary> (<ruling IDs>)`, per the Git rule above, and report the commit. A commit cannot name its own hash, so the Status line names the FRD version; `git log -- <outcome file>` finds the commit. The `lead-architect` directive is the designer's write, not yours.
+7. **No chain from an outcome** (`.agents/rules/sync-handoffs.md` §5). If applying it means another persona must change something the outcome's own handoff sections don't cover (a `PRODUCT_SUMMARY.md` line, a design note), don't dispatch it and don't do it yourself: list each in your report under `Not covered by the outcome`, with the prompt for the user to run. The user reviewed the outcome, not this.
+
+### 2.2 Receiving a Sync Handoff
+
+Runs on `@pm-frd-drafter handoff (chain: …)`, as a subagent or as the coordinator taking a ripple addressed to you. Follow `.agents/rules/sync-handoffs.md` §4:
+1. Read the chain's commits and confirm the request is a sync. FRD 01 rule behavior is never one (it goes to `game-designer`), and neither is a requirement whose contract you would have to write anew (that is an FRD draft, §3).
+2. A frozen FRD is edited only to set or lift its banner as the commits decide, or to move a requirement or check out of it that they move. Step 1's "milestone has not started" check still applies to anything else.
+3. Make the edits, run `cardtown lint frd` (and `cardtown lint fences` if a register status changed), and commit as `docs(frd): <summary> (sync from <persona> <sha>)`, per the Git rule above.
+4. End with the `Commit:`, `Files:`, `Gates:` and `Ripples:` lines.
 
 ---
 
@@ -113,11 +124,7 @@ When `game-designer` dispatches the `pm-frd-drafter` subagent (or the user runs 
 4. Report completion to the user:
    - Provide clickable links to the new or revised FRD and updated roadmap.
    - Highlight total requirements drafted or modified, domain prefix, and flagged product decisions, open technical questions, and (for FRD 01) the scenario tests to add.
-   - **Single-Hop Approval Prompt:** Ask the human user:
-     > *"Drafting complete and linter passed. How would you like to proceed?*
-     > 1. *Prompt `@pm-lead` to reconcile `docs/PRODUCT_SUMMARY.md` with these changes?*
-     > 2. *Stop here for manual review?"*
-   - Wait for explicit human instruction before invoking another persona.
+   - **Handoffs** (`.agents/rules/sync-handoffs.md` §3): dispatch a sync handoff to `pm-lead` when portfolio sections of `PRODUCT_SUMMARY.md` beyond the spec index must follow (a milestone's description or "Done when" that your commit already settles, the §2.1 FRD bullets), and to `lead-architect` when a design note or decision record cites what moved. Act on their `Ripples:`, then close with the chain report. A new FRD's flagged product decisions and open technical questions are decisions: list them for the user, and don't dispatch them.
 
 ---
 
