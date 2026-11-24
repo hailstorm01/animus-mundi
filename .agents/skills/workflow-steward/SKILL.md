@@ -67,7 +67,7 @@ Write the row the user dictates, numbered with `go tool task next-directive` (`.
 ## 5. Working Rules
 - **Session start:** read `.agents/steward-log.md`, and not the history. Mention open threads that are relevant to the user's first request, and nothing more.
 - **History:** each change gets a short row in the `Changes` table of `.agents/steward-history/<YYYY-MM-DD>.md` in the same commit, starting the day's file if needed. The reasons in full go in the commit message, and anything still to do goes in `Open Threads`, not in the row. To look up a past change, find its day with Grep (`files_with_matches`, because long rows are left out of its content output) and read that one file.
-- **Commit placement:** only on the integration branch named in the active `BOARD.md`, never on a task branch (`m2/T-NNNN-*` or `m2/autoloop-wave-*/T-NNNN-*`). If the main checkout is elsewhere or dirty, follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
+- **Commit placement:** only on the integration branch named in the active `BOARD.md`, never on a task branch (`m<N>/T-NNNN-*` or `m<N>/autoloop-wave-*/T-NNNN-*`). If the main checkout is elsewhere or dirty, follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
 - **No chains:** never invoke another persona, dispatch a build task, or start a loop. Hand the user the prompt.
 - **Never `git push`.**
 - **Open threads:** when you offer something the user has not decided on, or a fix waits on another session, add it to the log's `Open Threads`. Remove it when it is resolved or declined.

@@ -37,11 +37,11 @@ queued → tests → tests-review → ready → in-progress → review → done
 
 **One at a time (current mode):** at most one task is in `tests`, `in-progress` or `changes`. Parallel work, with one git worktree per task, starts only when the lead says so in the milestone's `BOARD.md`.
 
-**Wave runs:** `go tool task wave-run -- -Wave <X>` builds one wave unattended. It runs one fresh lead session per task, merges into an `autoloop/<milestone>-wave-<x>` branch, and logs every task as a row in `<milestone>/runs/`. It stops on wave completion, on its task, spend or time budget, or on the first thing that needs the user (`lead-architect` D7). Nothing reaches the integration branch until the user merges the run branch.
+**Wave runs:** `go tool task wave-run -- -Wave <X>` builds one wave of the current milestone unattended (the highest `<milestone>/` whose `BOARD.md` has a `Last directive` line; `-Milestone m<N>` picks another). It runs one fresh lead session per task, merges into an `autoloop/<milestone>-wave-<x>` branch, and logs every task as a row in `<milestone>/runs/`. It stops on wave completion, on its task, spend or time budget, or on the first thing that needs the user (`lead-architect` D7). Nothing reaches the integration branch until the user merges the run branch.
 
 **Worktrees:** no persona switches the main checkout's branch. Task-branch work happens in a scratch worktree that is removed at handoff (the **Worktrees** guard rail in `.agents/rules/AGENTS.md`).
 
-## Task File Template (`.agents/tasks/m2/T-NNNN-<slug>.md`)
+## Task File Template (`.agents/tasks/<milestone>/T-NNNN-<slug>.md`, for example `m3/`)
 
 ```markdown
 ---
@@ -49,9 +49,9 @@ id: T-NNNN
 title: <short imperative title>
 kind: shape | card | harness
 tier: flash | sonnet
-wave: A1 | A2 | B | C | D | E | F | G
+wave: <survey wave, e.g. A1, B or B.1> | none
 status: queued
-branch: m2/T-NNNN-<slug>   # or m2/autoloop-wave-<x>/T-NNNN-<slug> in a wave run (lead-architect D7.4)
+branch: <milestone>/T-NNNN-<slug>   # or <milestone>/autoloop-wave-<x>/T-NNNN-<slug> in a wave run (lead-architect D7.4)
 depends_on: [T-NNNN]
 claims: [<shape or file this task alone may create or change, e.g. primitive:SCRATCH, hook:deploy>]
 cards: [<card names, for card tasks>]
@@ -65,7 +65,7 @@ One or two sentences: what runs when this is done.
 - FRD 01 sections: <FR IDs and line ranges>
 - Survey rows: docs/design/m2_starter_set_ability_survey.md (<cards>)
 - Rulings that apply: <SVY-*/KIM-* IDs, or none>
-- Design note: docs/architecture/m2-ability-model.md (<section>)
+- Design note: docs/architecture/<milestone>-<topic>.md (<section>), e.g. m3-full-catalog.md
 
 ## Acceptance Cases (harness tasks only; written by the lead)
 - <input or repository state> → <expected result, exit code or message>
