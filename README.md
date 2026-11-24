@@ -4,7 +4,7 @@ Animus Mundi (working title Card Town) is a strategy card game. A physical proto
 
 ## Status
 
-M2 is in progress: the **Animus vs Path starter set**. It covers construction-legal starter decks for both factions (`data/decks/`), every Animus and Path card made executable in the engine wave by wave, and a text-mode `cardtown play` for human playtests. Rift and Encampment move to M3. Milestones M1–M6 are in [`docs/PRODUCT_SUMMARY.md`](docs/PRODUCT_SUMMARY.md).
+M3 is in progress: the **Full Catalog**. Every card in `data/cards/` without a `needsRework` flag executes in the engine (all 169 today, 67 of them still to model), which brings in the Concordia and Soulless factions and the *Rift* and *Encampment* Headquarters. As in M2, starter decks come first (`data/decks/`), and M3 is done when a human finishes a Concordia vs Soulless `cardtown play` match. M2, the Animus vs Path starter set, was done on 2026-11-21. Milestones M1–M6 are in [`docs/PRODUCT_SUMMARY.md`](docs/PRODUCT_SUMMARY.md).
 
 ## Developer Setup
 
@@ -46,11 +46,11 @@ cardtown lint --all                                            # every linter
 - **One rules authority.** [`docs/frd/01_Game_Rules_FRD.md`](docs/frd/01_Game_Rules_FRD.md) is the source of truth. `pkg/engine` is its executable form. Scenario tests are named after requirement IDs (`TestFR_CBT_002_*`), and card tests are named `TestCard_*`. FRDs 02–05 are frozen design intent until their milestones.
 - **Abilities are data.** Card abilities are Go values built from the shapes in `pkg/engine/ability`, keyed by card name in `pkg/engine/cards`. Raw stats and rules text live only in `data/cards/*.csv`. Cards that cannot execute yet are listed in `cards.NotYetExecutable`, which shrinks as each wave lands.
 - **Player choices** go through a synchronous `Chooser` with rules-defined timeout fallbacks (ADR-0003). Decisions are always picks from options the engine offers.
-- **Decisions** are recorded one page each in [`docs/architecture/decisions/`](docs/architecture/decisions/). The M2 design note is [`docs/architecture/m2-ability-model.md`](docs/architecture/m2-ability-model.md).
+- **Decisions** are recorded one page each in [`docs/architecture/decisions/`](docs/architecture/decisions/). The design notes are [`docs/architecture/m2-ability-model.md`](docs/architecture/m2-ability-model.md) (M2) and [`docs/architecture/m3-full-catalog.md`](docs/architecture/m3-full-catalog.md) (M3, built on M2's).
 
 ## How Work Gets Done
 
-M2 is built by an agent task loop. The lead architect (Opus) writes tasks in `.agents/tasks/m2/` and reviews every change. A rules test author writes the failing tests from FRD 01, without reading the engine code. A kernel engineer (Sonnet or Gemini Flash) makes them pass. Each task merges into the integration branch once `go tool task check` passes. [`BOARD.md`](.agents/tasks/m2/BOARD.md) holds the task list and the owner's directives for the lead. The loop runs **one task per human prompt**. Persona instructions are in `.agents/skills/`, and routing and guard rails are in `.agents/rules/AGENTS.md`.
+Each milestone is built by an agent task loop. The lead architect (Opus) writes tasks in `.agents/tasks/<milestone>/` and reviews every change. A rules test author writes the failing tests from FRD 01, without reading the engine code. A kernel engineer (Sonnet or Gemini Flash) makes them pass. Each task merges into the integration branch once `go tool task check` passes. The current milestone's [`BOARD.md`](.agents/tasks/m3/BOARD.md) holds the task list and the owner's directives for the lead. The loop runs **one task per human prompt**, except in a wave run (`go tool task wave-run`), which opens one fresh lead session per task on an `autoloop/` branch that only the user merges. Persona instructions are in `.agents/skills/`, and routing and guard rails are in `.agents/rules/AGENTS.md`.
 
 ## Repository Structure
 
