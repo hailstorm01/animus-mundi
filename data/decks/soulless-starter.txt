@@ -1,2 +1,23 @@
 # Soulless starter deck (docs/architecture/m2-ability-model.md)
 HQ: Colossus Platform
+3 Visionary's Eye
+4 Conscript Rifles
+2 Hellfire Armorers
+4 Smelter Stoker
+3 Shrike Scout Suits
+3 Mobile Armory
+1 NO-AH-5
+4 Sentinel Warsuit Core
+1 Piston Fist Prototype
+2 Culverin Brigade
+2 Dolus Macrocannon
+2 Dolus Refiner
+1 MAX-8 Autonomous Warsuit
+2 Earthshaker Colossus
+3 Magic Management Seekers
+4 Bring it Down
+2 Visionary's Insight
+2 Inspired Salvage
+1 All-Out War
+2 Fire for Effect
+1 Armored Charge
