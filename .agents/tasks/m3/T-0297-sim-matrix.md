@@ -4,7 +4,7 @@ title: "cardtown sim -matrix plays every pairing of the starter decks or the str
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 3)
-status: ready
+status: in-progress
 branch: m3/T-0297-sim-matrix
 depends_on: [T-0296]
 claims: [type:sim.MatrixRun, func:sim.MatrixRuns, func:sim.DeckFactions, func:sim.StressFactions, func:sim.SimulateRun, type:sim.MatrixCoverage, flag:cardtown-sim-matrix, func:main.eachRule, task:sim-matrix]
