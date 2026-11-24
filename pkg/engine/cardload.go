@@ -126,6 +126,19 @@ func indexOf(lines []string, s string) int {
 	return -1
 }
 
+// sheetErrors lists every data error one load of the card sheets found
+// (FR-DAT-002, FR-DAT-006), in file then row order. Each names the file, the
+// row (the header is row 1), the card and the column.
+type sheetErrors []string
+
+func (e sheetErrors) Error() string {
+	return fmt.Sprintf("card sheets: %d data errors:\n  %s", len(e), strings.Join(e, "\n  "))
+}
+
+// loadSheets reads every CSV in dir, in file name order. A duplicate name, a
+// numeric cell that is not a whole number, a Unit or Structure with no zone,
+// or an unknown cardType is a data error: loading goes on through every sheet
+// and returns them all together, and no card is returned.
 func loadSheets(dir string) (map[string]*Card, error) {
 	paths, err := filepath.Glob(filepath.Join(dir, "*.csv"))
 	if err != nil {
@@ -133,32 +146,40 @@ func loadSheets(dir string) (map[string]*Card, error) {
 	}
 	sort.Strings(paths)
 	cards := make(map[string]*Card)
+	seen := make(map[string]string) // card name → "file row N" of its first row
+	var problems sheetErrors
 	for _, p := range paths {
 		f, err := os.Open(p)
 		if err != nil {
 			return nil, err
 		}
-		loaded, err := readCards(f)
+		loaded, found, err := readCards(f, filepath.Base(p), seen)
 		f.Close()
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", filepath.Base(p), err)
 		}
+		problems = append(problems, found...)
 		for _, c := range loaded {
 			cards[c.Name] = c
 		}
 	}
+	if len(problems) > 0 {
+		return nil, problems
+	}
 	return cards, nil
 }
 
-func readCards(r io.Reader) ([]*Card, error) {
+// readCards reads one sheet. file names it in data errors, and seen maps each
+// card name already read, in this sheet or an earlier one, to its row.
+func readCards(r io.Reader, file string, seen map[string]string) ([]*Card, sheetErrors, error) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	rows, err := cr.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(rows) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	col := make(map[string]int)
 	for i, h := range rows[0] {
@@ -174,26 +195,26 @@ func readCards(r io.Reader) ([]*Card, error) {
 		}
 		return ""
 	}
-	num := func(row []string, name string) int {
-		n, _ := strconv.Atoi(get(row, name))
-		return n
-	}
 
 	var out []*Card
-	for _, row := range rows[1:] {
+	var problems sheetErrors
+	for i, row := range rows[1:] {
 		name := get(row, "name")
 		if name == "" {
 			continue
 		}
+		at := fmt.Sprintf("%s row %d", file, i+2)
+		bad := func(column, format string, args ...any) {
+			problems = append(problems, fmt.Sprintf("%s (%s): %s: %s", at, name, column, fmt.Sprintf(format, args...)))
+		}
+		if first, dup := seen[name]; dup {
+			bad("name", "the same name as %s (FR-DAT-002)", first)
+		} else {
+			seen[name] = at
+		}
 		c := &Card{
 			Name:      name,
 			Faction:   get(row, "faction"),
-			ReqCost:   num(row, "requisitionCost"),
-			TacCost:   num(row, "tacticsCost"),
-			Power:     num(row, "power"),
-			Health:    num(row, "health"),
-			ReqYield:  num(row, "requisitionYield"),
-			TacYield:  num(row, "tacticsYield"),
 			Rarity:    get(row, "rarity"),
 			RulesText: get(row, "rulesText"),
 		}
@@ -207,7 +228,28 @@ func readCards(r io.Reader) ([]*Card, error) {
 		case "HEADQUARTERS":
 			c.Type = TypeHeadquarters
 		default:
-			return nil, fmt.Errorf("card %q: unknown cardType %q", name, get(row, "cardType"))
+			bad("cardType", "unknown cardType %q", get(row, "cardType"))
+			continue
+		}
+		num := func(column string) int {
+			v := get(row, column)
+			n, err := strconv.Atoi(v)
+			switch {
+			case err == nil:
+				return n
+			case v == "":
+				bad(column, "empty, want a whole number (FR-DAT-006)")
+			default:
+				bad(column, "%q is not a whole number (FR-DAT-006)", v)
+			}
+			return 0
+		}
+		// Costs are numeric on every card; power, health and yields on every
+		// card but a Maneuver, which has none (FR-DAT-005).
+		c.ReqCost, c.TacCost = num("requisitionCost"), num("tacticsCost")
+		if c.Type != TypeManeuver {
+			c.Power, c.Health = num("power"), num("health")
+			c.ReqYield, c.TacYield = num("requisitionYield"), num("tacticsYield")
 		}
 		for _, s := range strings.Split(get(row, "subtypes"), ",") {
 			if s = strings.TrimSpace(s); s != "" {
@@ -224,6 +266,9 @@ func readCards(r io.Reader) ([]*Card, error) {
 				c.DeployZones = append(c.DeployZones, ZoneHeadquarters)
 			}
 		}
+		if c.Deployable() && len(c.DeployZones) == 0 {
+			bad("deploymentZones", "a Unit or Structure needs a deployment zone (FR-DAT-006)")
+		}
 		for _, line := range strings.Split(strings.ReplaceAll(c.RulesText, "\r", ""), "\n") {
 			line = strings.TrimSpace(line)
 			if line == "" || line == "--" {
@@ -235,5 +280,5 @@ func readCards(r io.Reader) ([]*Card, error) {
 		}
 		out = append(out, c)
 	}
-	return out, nil
+	return out, problems, nil
 }

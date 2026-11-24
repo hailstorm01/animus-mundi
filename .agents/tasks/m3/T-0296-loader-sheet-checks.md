@@ -4,7 +4,7 @@ title: "LoadCards reports duplicate names, non-numeric or empty numeric cells, a
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part b)
-status: ready
+status: review
 branch: m3/T-0296-loader-sheet-checks
 depends_on: [T-0295]
 claims: [func:engine.loadSheets, func:engine.readCards, type:engine.sheetErrors]
@@ -386,11 +386,12 @@ No double quotes in either message: the allow-list refuses an escaped one.
 - `pkg/engine/cardload.go`
 
 ## Done When
-- [ ] `go test ./pkg/engine -run TestLoadCards_ -count=1` passes
-- [ ] `gofmt -l pkg/engine` prints nothing
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
+- [x] `go test ./pkg/engine -run TestLoadCards_ -count=1` passes
+- [x] `gofmt -l pkg/engine` prints nothing
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare` passes (starter and stress sims byte-identical to `main`)
 
 ## Log
 - 2026-11-23 lead-architect: queued with T-0295 as M3 Deliverable 1 (b). It doesn't depend on T-0295's code, and follows it in serial mode.
 - 2026-11-24 lead-architect: written in full against `main` f2c83b7c. Status `ready` (a harness task skips `tests`), tier `flash`. The FRD 02 lines that say "today the loader..." (98, 120) follow by sync handoff once this merges.
+- 2026-11-24 kernel-engineer: implemented in full. Commit 1813590 added `pkg/engine/cardload_sheet_test.go` covering Cases 1-9; verified build failure (`undefined: sheetErrors`). Commit f2efc02 updated `pkg/engine/cardload.go` with `sheetErrors` type, error collection in `loadSheets` and `readCards` (duplicates, non-numeric/empty cells, missing deployment zones on deployables, unknown card types). Verified `go test ./pkg/engine -run TestLoadCards_ -count=1`, `gofmt -l pkg/engine`, `go tool task check` and `go tool task sim-compare` all pass cleanly. Blobs match task spec: `cardload.go` 1645f52, `cardload_sheet_test.go` da41ffe.
