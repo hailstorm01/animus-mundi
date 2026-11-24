@@ -4,7 +4,7 @@
 - **Mode:** `serial` (at most one task in `tests`, `in-progress` or `changes`)
 - **Design note:** [`docs/architecture/m2-ability-model.md`](../../../docs/architecture/m2-ability-model.md) (written 2026-10-19). Shape and card tasks follow its Deliverables order.
 - **Scope:** every Animus and Path card plus the starter Headquarters *Animoceps Rager* and *Eternal Watchman*. *Rift* and *Encampment* moved to M3 on 2026-10-19.
-- **Closed:** M2 was done on 2026-11-21. On 2026-11-23 its 8 waiting directives (#6, #7, #15, #71, #91, #106, #120, #142) moved, unchanged, to the [M3 board](../m3/BOARD.md), which continues the numbering from `#179`. This board has no `Last directive` line, so `go tool task next-directive` without `-- -Milestone m3` fails instead of handing out a number M3 already used.
+- **Closed:** M2 was done on 2026-11-21. On 2026-11-23 its 8 waiting directives (#6, #7, #15, #71, #91, #106, #120, #142) moved, unchanged, to the [M3 board](../m3/BOARD.md), which continues the numbering from `#179`. This board has no `Last directive` line, so `go tool task next-directive` skips this board and reads M3's.
 - **Last task:** `T-0293` (done tasks and their files live in [`archive/tasks/`](archive/tasks/task_archive.md))
 
 Task files are the source of truth. This board is an index of active and waiting work.
