@@ -4,7 +4,7 @@ title: "LoadCards reports duplicate names, non-numeric or empty numeric cells, a
 kind: harness
 tier: flash
 wave: none (M3 design note Deliverable 1, part b)
-status: review
+status: done
 branch: m3/T-0296-loader-sheet-checks
 depends_on: [T-0295]
 claims: [func:engine.loadSheets, func:engine.readCards, type:engine.sheetErrors]
@@ -395,3 +395,4 @@ No double quotes in either message: the allow-list refuses an escaped one.
 - 2026-11-23 lead-architect: queued with T-0295 as M3 Deliverable 1 (b). It doesn't depend on T-0295's code, and follows it in serial mode.
 - 2026-11-24 lead-architect: written in full against `main` f2c83b7c. Status `ready` (a harness task skips `tests`), tier `flash`. The FRD 02 lines that say "today the loader..." (98, 120) follow by sync handoff once this merges.
 - 2026-11-24 kernel-engineer: implemented in full. Commit 1813590 added `pkg/engine/cardload_sheet_test.go` covering Cases 1-9; verified build failure (`undefined: sheetErrors`). Commit f2efc02 updated `pkg/engine/cardload.go` with `sheetErrors` type, error collection in `loadSheets` and `readCards` (duplicates, non-numeric/empty cells, missing deployment zones on deployables, unknown card types). Verified `go test ./pkg/engine -run TestLoadCards_ -count=1`, `gofmt -l pkg/engine`, `go tool task check` and `go tool task sim-compare` all pass cleanly. Blobs match task spec: `cardload.go` 1645f52, `cardload_sheet_test.go` da41ffe.
+- 2026-11-24 lead-architect: approved. Both files match the dry-run blobs, and each commit holds only its own file. Re-ran in a review worktree: `go test ./pkg/engine -run TestLoadCards_ -count=1` ok, `gofmt -l pkg/engine` clean, `go tool task check` exit 0, `go tool task sim-compare` `[PASS]`, `go tool task sim` exit 0 (P0 58.5% / P1 39.5% / draws 2.0%, unchanged). The test commit 1813590a fails alone. Merged into `main` (caf21327). M3 Deliverable 1 is done. Next: Deliverable 3, the starter sim matrix.

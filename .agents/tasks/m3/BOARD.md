@@ -34,4 +34,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0296 | `LoadCards` reports duplicate names, non-numeric or empty numeric cells, and Units or Structures with no zone (Deliverable 1 (b)) | ready |
