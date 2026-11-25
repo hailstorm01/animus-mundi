@@ -4,7 +4,7 @@ title: Make Swirling Dustdevil executable (a hand-active cost reduction, wave A,
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0305-swirling-dustdevil
 depends_on: [T-0304]
 claims: [card:Swirling Dustdevil]
@@ -57,13 +57,14 @@ In a new file `pkg/engine/cards_concordia_dustdevil_test.go`, from the CSV text,
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_SwirlingDustdevil`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_SwirlingDustdevil`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 7): written against ca30f9ec, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
 - 2026-11-25 rules-test-author: tests written in `pkg/engine/cards_concordia_dustdevil_test.go` (12 tests, all `TestCard_SwirlingDustdevil_*`: PrintedCostWithNoManeuverCards, OneLessPerManeuverCard, OpponentsPileNotCounted, ManeuverCardsElsewhereNotCounted, KilledScratchCompanyManeuverCounts, EnactedManeuverCounts, CostRisesWhenAManeuverLeavesThePile, CostClampsAtZero, DeployPaysTheLowerCost, EntersReservesAsSixFive, ReducesOnlyItself, PrintedCostInTheDiscardPile). They reuse `amalgamCost`, `amalgamDeployLegal`, `amalgamDeploy`. Helpers requested: none. Nothing left out. `go vet` is clean; the tests fail now with "needs rules the kernel does not implement yet" or the printed cost, as expected. The destroyed-Scratch test has player 1 attack the face-down unit on its turn (the spec did not name the killer). `cardtown lint rules` ran. Set to `tests-review`.
 - 2026-11-25 lead-architect: tests approved (D4, round 1). Each expected outcome agrees with the FRD 01 text it cites. A lead probe with the Definition, since reverted, passes all 12, and 13 of 15 mutants fail at least one (amount 0 and 2, kinds, no kind, opposing, any allegiance, no zone, a stat criterion, Scratch only, a subtype). The two survivors add a deploy trigger the card does not print (scratch, draw), which the code review checks in the diff. `go vet` and `gofmt` are clean. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Swirling Dustdevil in concordiaDefs (pkg/engine/cards/concordia.go) with CostReduction (Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindManeuver, Zone: ability.ZoneDiscard}); removed name from NotYetExecutable in pkg/engine/cards/cards.go. Reused shapes: ability.CostReduction (as pinned on Boneyard Amalgam T-0200) with KindManeuver filter (as on Boneyard Scavenger). Verified: go test ./pkg/engine -run TestCard_SwirlingDustdevil (ok, 12/12 passed), go tool task check (fmt, vet, all tests, linter checks passed clean), go tool task sim (200 games clean, all invariants hold), go tool task sim-matrix (24 starter + 24 stress runs clean, all invariants hold), TestCards_Executable passes. Set to review.
