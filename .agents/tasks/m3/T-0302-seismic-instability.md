@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: tests
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
@@ -64,3 +64,5 @@ In a new file `pkg/engine/cards_concordia_seismic_test.go`, from the CSV text, l
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 4): written against cf2d76d1, with the lead's probe above. No directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote the eleven tests in `pkg/engine/cards_concordia_seismic_test.go` as listed under Tests: ThreeToEveryUnitInTheMainTheater, StructuresTakeBothInstances, ReservesAndHeadquartersUntouched, ScratchCompanyInTheMainTheaterIsAUnit, ResistantAppliesToEachInstance, ArmorAbsorbsAcrossBothInstances, LethalStructureStillTakesTheSecondInstance, UnbowedStructureTriggersTwice, AsksNothing, EnactableWithAnEmptyMainTheater, PaysFourTactics. `go vet ./pkg/engine` is clean and `cardtown lint rules` passes. All eleven fail now (the card is not yet executable), as intended. Helpers requested: none. Cases left out: none. The Scratch test replaces the face-down asset's hidden card with a structure and moves it to the Main Theater, and it asserts one damage event and death.
+- 2026-11-25 lead-architect: tests round 1 returned (D4). Each test agrees with the FRD 01 text it cites, and the lead's probe passes all 11. Of 13 mutants of the Definition, 12 fail at least one test. Set to `tests` for one note:
+  1. `TestCard_SeismicInstability_StructuresTakeBothInstances` doesn't check the order the task names ("take 3 and then 4"): swapping the two steps passes every test. Also check that each structure's two damage events, in log order, carry the raw damage 3 and then 4 (`Event.Raw`). Change nothing else.
