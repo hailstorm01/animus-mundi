@@ -239,7 +239,7 @@ func main() {
 			}
 			fmt.Println("   Verifying gates on the run branch...")
 			if !r.gatesPass() {
-				r.stop("lead says complete, but check or sim fails on the run branch", 1)
+				r.stop("lead says complete, but check, sim or sim-matrix fails on the run branch", 1)
 			}
 			r.stop(fmt.Sprintf("wave %s complete", *wave), 0)
 		case strings.HasPrefix(sig, "STOP"):
@@ -333,14 +333,15 @@ func (r *run) pendingCards(text []string) ([]string, error) {
 	return pending(names, listed), nil
 }
 
-// gatesPass runs check and sim on the run branch in a temporary worktree.
+// gatesPass runs check, sim and sim-matrix on the run branch in a temporary
+// worktree.
 func (r *run) gatesPass() bool {
 	wt := filepath.Join(os.TempDir(), fmt.Sprintf("wave-run-verify-%d", os.Getpid()))
 	if _, err := git("worktree", "add", "--detach", wt, r.branch); err != nil {
 		return false
 	}
 	defer git("worktree", "remove", "--force", wt)
-	for _, gate := range []string{"check", "sim"} {
+	for _, gate := range []string{"check", "sim", "sim-matrix"} {
 		cmd := exec.Command("go", "-C", wt, "tool", "task", gate)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 		if cmd.Run() != nil {
