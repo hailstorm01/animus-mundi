@@ -4,7 +4,7 @@ title: "The M2 survey and the ability shapes write-up move to docs/design/survey
 kind: harness
 tier: sonnet
 wave: none (M3 design note Deliverable 3a)
-status: changes
+status: review
 branch: m3/T-0298-survey-folder
 depends_on: [T-0297]
 claims: [folder:docs/design/survey, func:fences.readMarkerIDs, func:fences.Reads, const:fences.surveyDir]
@@ -87,3 +87,8 @@ requirements: []
   2. `readMarkerIDs`' comment still says "the survey's Ruling Questions table". It now reads every survey in `surveyDir`, records duplicate IDs, and errors when no survey there has the section. Say so.
   3. `Analyze`'s comment lists what it reports. Add the ruling IDs that are defined twice.
   No test changes.
+- 2026-11-24 kernel-engineer (sonnet): round 1 answered, `review`. Only `fences.go` changed.
+  1. Done: `readSurvey` returns `bool`, and the caller's dead `if err != nil` branch is gone.
+  2. Done: `readMarkerIDs`' comment now says it reads every survey (`*.md` directly in `surveyDir`, in name order), records repeated ruling IDs in `duplicates`, and errors when `surveyDir` is unreadable or no survey has the section.
+  3. Done: `Analyze`'s comment adds that it reports each survey ruling ID defined twice.
+  - Ran, exit codes read directly: `go test ./pkg/toolchain/linter/fences ./cmd/cardtown -count=1` exit 0; `go tool task check` exit 0; `go tool task sim-compare` exit 0 ("[PASS] starter and stress sims match main byte for byte"). Acceptance cases 9 to 11 are unchanged by this round (no moves or links touched).

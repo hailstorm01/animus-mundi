@@ -75,7 +75,8 @@ type markerIDs struct {
 // Analyze scans non-test Go files under pkg/ (except pkg/engine/cards and pkg/toolchain)
 // for card names and invalid markers, checks the imports of the packages in
 // allowedImports (pkg/engine/cards included), and reports every type alias in the
-// non-test Go files under pkg/, cmd/ and tools/ (checkAliases).
+// non-test Go files under pkg/, cmd/ and tools/ (checkAliases). It also reports each
+// survey ruling ID that is defined twice.
 func Analyze(repoRoot string) (*Report, error) {
 	cards, err := loadCardNames(repoRoot)
 	if err != nil {
@@ -187,8 +188,10 @@ func loadCardNames(repoRoot string) ([]cardInfo, error) {
 	return cards, nil
 }
 
-// readMarkerIDs reads the open and ruled items of the keyword matrix and of the survey's
-// Ruling Questions table.
+// readMarkerIDs reads the open and ruled items of the keyword matrix and of the Ruling
+// Questions table of every survey (*.md directly in surveyDir, in name order). A ruling ID
+// that a survey defines a second time is recorded in the result's duplicates. It errors
+// when surveyDir cannot be read or no survey in it has a Ruling Questions section.
 func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 	openMatrix := make(map[string]bool)
 	ruledMatrix := make(map[string]bool)
@@ -220,11 +223,7 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", rel, err)
 		}
-		found, err := readSurvey(rel, string(content), ids, defined)
-		if err != nil {
-			return nil, err
-		}
-		if found {
+		if readSurvey(rel, string(content), ids, defined) {
 			sections++
 		}
 	}
@@ -238,7 +237,7 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 // whether the survey has that section. defined maps each ID read so far to the file and
 // line of its first definition; a later definition becomes a violation in ids.duplicates
 // and does not change the ID's status.
-func readSurvey(rel, content string, ids *markerIDs, defined map[string]string) (bool, error) {
+func readSurvey(rel, content string, ids *markerIDs, defined map[string]string) bool {
 	found := false
 	inRulingQuestions := false
 	for i, line := range strings.Split(content, "\n") {
@@ -282,7 +281,7 @@ func readSurvey(rel, content string, ids *markerIDs, defined map[string]string) 
 			ids.openSurvey[svyID] = true
 		}
 	}
-	return found, nil
+	return found
 }
 
 // scannedFiles lists the non-test Go files under pkg/ that the card-name and marker
