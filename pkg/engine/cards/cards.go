@@ -43,7 +43,6 @@ var NotYetExecutable = []string{
 	"Hurricane Outrigger",
 	"Inspired Salvage",
 	"Land Fortress",
-	"Leyline Regrowth",
 	"Light of the World Soul",
 	"MAX-8 Autonomous Warsuit",
 	"Macrocannon Barrage",

@@ -4,7 +4,7 @@ title: Make Leyline Regrowth executable (up to one unit card back, then draw, wa
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0301-leyline-regrowth
 depends_on: [T-0300]
 claims: [card:Leyline Regrowth]
@@ -51,11 +51,14 @@ In a new file `pkg/engine/cards_concordia_regrowth_test.go`, from the CSV text, 
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_LeylineRegrowth`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_LeylineRegrowth`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 3): written against b99a9e55, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. *Inspired Salvage* is the nearest sibling, a Soulless card with a different slot, and stays its own task. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_regrowth_test.go`: TestCard_LeylineRegrowth_ReturnsChosenUnitCardThenDraws, _ChoosingNoneStillDraws (empty answer and timeout subtests), _OnlyOwnUnitCardsOffered, _EnactableWithNoUnitCard (empty pile, no own unit card), _TargetLeftThePileStillDraws, _EmptyDeckReturnsThenLoses, _PaysTwoTactics. Helpers requested: none (a local `lrChoosePile` lives in the test file). Cases left out: none. `go vet` clean, `cardtown lint rules` passes; the tests fail now with "needs rules the kernel does not implement yet".
+- 2026-11-25 lead-architect: tests approved (D4, round 1), each checked against `FR-MNV-001`, `FR-TGT-001` to `003`, `FR-MOD-001` §6 and `FR-WIN-001`. A lead probe with the Definition, since reverted, passes all seven. Ten mutants (draw 2, no draw, `UpTo` 2, mandatory, two wider kinds, opposing or any allegiance, battlefield, deploy instead of return) each fail at least one. A step-order mutant didn't compile, so the order was not mutated; the hand-order check in the first test covers it. Set to `ready`.
+- 2026-11-25 kernel-engineer: added Leyline Regrowth definition to concordiaDefs in pkg/engine/cards/concordia.go with Targets slot (Filter with AllegianceAllied, KindUnit, ZoneDiscard, and UpTo: 1) and Steps (OpReturnToHand for target 0, OpDraw with Amount: 1). Removed Leyline Regrowth from NotYetExecutable in pkg/engine/cards/cards.go. Reused UpTo: 1 with OpReturnToHand and OpDraw: 1 (as in Tactical Withdrawal) and pile targeting filter (as in Allshan's Battle Trance). Commands ran: 'go test ./pkg/engine -run TestCard_LeylineRegrowth' passed (1.098s), 'go test ./pkg/cardcheck -run TestCards_Executable' passed (0.476s), 'go tool task check' passed (gofmt, go vet, all package tests, cardtown lint --all clean), 'go tool task sim' passed (200 matches clean, exit 0), and 'go tool task sim-matrix' passed (all 24 starter and 24 stress deck runs clean, exit 0). Set to review.
