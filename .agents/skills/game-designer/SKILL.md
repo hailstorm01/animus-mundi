@@ -114,4 +114,4 @@ Rulings: SVY-R<n>, … / none
 - Targets are locked on placement (`SVY-R3`). A clause says *"chosen"* when it targets, and *"a"*, *"an"* or a count when it is an untargeted pick made on resolution.
 - Prioritize board clarity over convoluted balance math.
 - Match states are strictly deterministic: no indeterminate rules or unresolvable timing disputes.
-- Frozen FRDs (02–05) are design intent only. Never design from them or route changes to them.
+- Frozen FRDs (a `Status: FROZEN` banner; 03–05 today) are design intent only. Never design from them or route changes to them. FRD 02 is active, but it holds card data and ability shapes: rules and rulings go to FRD 01 only.

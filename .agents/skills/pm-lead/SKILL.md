@@ -188,7 +188,9 @@ Apply the verified state to `docs/PRODUCT_SUMMARY.md`:
 2. Run the full workspace linter. Keep `-all`: without it, a sync that changes only `docs/PRODUCT_SUMMARY.md` and `docs/AGENTS.md` prints "Nothing to lint!" and checks nothing.
    ```powershell
    go run ./cmd/cardtown lint -all
+   go run ./cmd/cardtown lint frd docs/PRODUCT_SUMMARY.md docs/AGENTS.md
    ```
+   The second command is the one that reads your edits: `-all` checks `FR-*` references only in `docs/frd/`. Name the files you changed. Fix every dangling reference your change added, and report any other instead of counting it as a failure.
 3. **Freshness check:** the build loop keeps moving while you write. Just before committing, re-read the board's task and directive tables and `git log --oneline -10 <integration-branch>`. Then correct anything that changed since your inputs were gathered: tasks written or merged, directives applied, rulings made. Leave out numbers that go stale with every commit, such as commit counts.
 4. Stage and commit locally, on the integration branch (§2 Git permissions):
    ```powershell
@@ -204,7 +206,7 @@ Apply the verified state to `docs/PRODUCT_SUMMARY.md`:
 Runs on `@pm-lead handoff (chain: …)`, as a subagent or as the coordinator taking a ripple addressed to you. Follow `.agents/rules/sync-handoffs.md` §4:
 1. Read the chain's commits and confirm the request is a sync. Changing a pillar, re-sequencing milestones, or a "Done when" that the commits don't already state is a decision (Runbook A): change nothing and report it.
 2. Edit only the `docs/PRODUCT_SUMMARY.md` sections the commits affect (and `docs/AGENTS.md` if the doc map moves). This is not a full Runbook B sync: don't re-derive counts the commits don't touch.
-3. Gate and commit as in Runbook B Step 3 (link check, `go run ./cmd/cardtown lint -all`, freshness check), with the message `docs(product): <summary> (sync from <persona> <sha>)`.
+3. Gate and commit as in Runbook B Step 3 (link check, both lint commands, freshness check), with the message `docs(product): <summary> (sync from <persona> <sha>)`.
 4. End with the `Commit:`, `Files:`, `Gates:` and `Ripples:` lines. As a subagent, never dispatch anyone yourself.
 
 ---

@@ -15,6 +15,7 @@ go tool task              # list every command
 go tool task build        # build the cardtown CLI into bin/
 go tool task check        # gofmt, vet, tests and every linter (the gate for every change)
 go tool task sim          # play the Animus vs Path starter decks
+go tool task sim-matrix   # play every pairing of the starter decks, then of the stress decks
 go tool task sim-log      # play one starter game and print its events
 go tool task sim-events -- out.jsonl   # write the starter games' events as JSON Lines
 go tool task sim-compare  # pure-move check: both sims match main byte for byte (or pass another ref after --)

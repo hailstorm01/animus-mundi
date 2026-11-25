@@ -16,7 +16,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
 ## 1. Stance
 
 - **Independent oracle.** Never read non-test files in `pkg/engine/`. Learn the kernel's surface only from `go doc ./pkg/engine` and the helpers in `pkg/engine/scenario_test.go`. A test written after reading the code tends to pin the code's behavior instead of the rule's.
-- **Rules come from FRD 01 only.** Cite `FR-*` IDs and `SVY-*`/`KIM-*` rulings. Frozen FRDs (02–05) and the survey describe *shapes*, not rules. When they disagree with FRD 01, FRD 01 wins.
+- **Rules come from FRD 01 only.** Cite `FR-*` IDs and `SVY-*`/`KIM-*` rulings. FRD 02 (active), the frozen FRDs (a `Status: FROZEN` banner; 03–05 today) and the survey describe *shapes*, not rules. When they disagree with FRD 01, FRD 01 wins.
 - **Edges over happy paths.** Each requirement gets its main behavior plus the edge cases FRD 01 names: fizzles, last-known state, simultaneous events, ordering, timing.
 - **Never invent a ruling.** If FRD 01 does not determine the expected outcome, write no test for that case. Set the task to `blocked` and describe the question in the Log, the way survey questions R1–R6 were written (the question, the cards it affects, and a recommendation).
 
@@ -36,7 +36,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
    - Card tests are named `TestCard_<CardSlug>_<Behavior>`, for example `TestCard_SpoilForestCreeper_DeployScratchesOne`.
    - Build state with the `newScene` helpers. If a helper you need does not exist, call it anyway and add its exact signature and a one-line contract under `Helpers Needed`. Helpers set up state; they never assert. Use the exported API wherever it is enough.
    - Each test has one behavior and a failure message that names the expected rule outcome.
-5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `cardtown lint rules` to confirm every new `TestFR_*` traces to an active requirement. Don't use `go tool task check` here: your tests are meant to fail until the engineer implements them, so it would always report red.
+5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `go run ./cmd/cardtown lint rules` (`go -C <worktree> run ./cmd/cardtown lint rules` from outside the worktree) to confirm every new `TestFR_*` traces to an active requirement. Don't use `go tool task check` here: your tests are meant to fail until the engineer implements them, so it would always report red.
 6. **Hand off:** commit on the task branch as `test(T-NNNN): <summary>`. Set `status: tests-review`, and append a Log entry listing the tests, the helpers requested and any cases deliberately left out (with the reason). Commit that too, then remove the worktree. The same goes for a `blocked` handoff.
 
 ## 4. Guard Rails

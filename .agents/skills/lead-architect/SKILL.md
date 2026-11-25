@@ -34,7 +34,7 @@ Turns **what** the active spec says (FRD 01 for rules; a milestone's FRD once it
   - `docs/architecture/` (design notes `docs/architecture/<milestone>-<topic>.md` and decision records `docs/architecture/decisions/NNNN-<slug>.md`, plus the decisions index).
   - `docs/AGENTS.md` (updating the documentation map when new documents are created).
   - `docs/design/outcomes/` (`Status: open` ruling-question stubs only, when stopping on a rules question in Runbook D2/D6/D7, committed on the integration branch).
-  - `docs/design/survey/` (user, 2026-11-23): the M3 ability survey (`docs/design/survey/m3_<topic>.md`, M3 design note Deliverable 4), and later milestones' ability surveys and write-ups. A survey's ruling rows stay `pm-frd-drafter`'s, written from an applied Design Outcome; the lead records open ruling questions, never answers.
+  - `docs/design/survey/` (user, 2026-11-23): the M3 ability survey (`docs/design/survey/m3_full_catalog_ability_survey.md`, M3 design note Deliverable 4), and later milestones' ability surveys and write-ups. A survey's ruling rows stay `pm-frd-drafter`'s, written from an applied Design Outcome; the lead records open ruling questions, never answers.
   - `.agents/tasks/` (task files, each milestone's `BOARD.md`, and its `archive/directives/directive_archive.md` and `archive/tasks/` files, Runbook D only; and structural review reports in `runs/`, Runbook E6 and E7 only). It may add rows to `BOARD.md`'s `Directives for the Lead` table only in five cases: in Runbook E, for findings the user approved by number; in D2.3, for an existing equivalent a task's plan keeps; in D2.4, for work a task splits off that waits on a trigger; in D5.3, for a duplicate a review finds; and in Runbook F, for engine, test or card-definition work a sync handoff implies (never blocking).
   - Merges of approved task branches into the integration branch (Runbook D only), or into a wave run's `autoloop/` branch (D7), plus merges of the integration branch into that run branch. Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
@@ -51,7 +51,7 @@ Turns **what** the active spec says (FRD 01 for rules; a milestone's FRD once it
   - **Never `git push`** unless explicitly instructed by the human user.
   - **Sync handoffs** (`.agents/rules/sync-handoffs.md`, Runbook F): may dispatch `pm-lead` and `pm-frd-drafter` as subagents when a change you committed means their documents must follow, instead of handing the user the prompts. Never in a wave run, and never for a rules question, which goes to `game-designer` as a `Status: open` stub (D6).
   - **Worktrees:** never switch the main checkout's branch. Reviewing, running gates on a task branch, and merging all follow the **Worktrees** guard rail in `.agents/rules/AGENTS.md`.
-- **Mandatory Quality Gate:** for design notes and decision records, `cardtown lint frd` must still pass (no dangling `FR-*` references).
+- **Mandatory Quality Gate:** for design notes and decision records, run `go run ./cmd/cardtown lint frd <each file you changed>` (no dangling `FR-*` references). Name the files: without a path it reads only `docs/frd/`, never your change. Fix every dangling reference your change added, and report any other instead of counting it as a failure.
 
 ---
 
@@ -84,7 +84,7 @@ Runbooks B and C (full TDDs and GitHub issue slicing) were retired on 2026-11-03
 ### Runbook A: Milestone Design Note & Decision Records
 
 1. **Gate:** confirm the milestone is the current one in `docs/PRODUCT_SUMMARY.md` and its source spec is active. If the spec is frozen, stop (see §1).
-2. **Ground in what exists:** read the active spec sections by line range, the relevant `pkg/` code, `cardtown lint rules` output (for rules work), the open keyword-matrix items, and existing decision records.
+2. **Ground in what exists:** read the active spec sections by line range, the relevant `pkg/` code, `go run ./cmd/cardtown lint rules` output (for rules work), the open keyword-matrix items, and existing decision records.
 3. **Write the design note** at `docs/architecture/<milestone>-<topic>.md` (for example `docs/architecture/m2-triggers-and-replacement.md`), one to three pages:
    ```markdown
    # <Milestone>: <Topic>
@@ -111,7 +111,7 @@ Runbooks B and C (full TDDs and GitHub issue slicing) were retired on 2026-11-03
    Rules gaps (as matrix proposals or ruling questions for @game-designer) and technical unknowns.
    ```
 4. **Write decision records** for each irreversible or contested technical choice, using the template in `docs/architecture/decisions/README.md`, and add each to its index.
-5. **Verify and commit:** run `cardtown lint frd` (for dangling `FR-*` references), then commit locally.
+5. **Verify and commit:** run `go run ./cmd/cardtown lint frd <each file you changed>` (for dangling `FR-*` references, §2 Mandatory Quality Gate), then commit locally.
 6. **Hand off, report and stop:** dispatch the sync handoffs the note or records cause (Runbook F), for example a `PRODUCT_SUMMARY.md` deliverable list or an FRD 02 check that must follow. Then link the note and records, list the deliverables, give the chain report, and ask whether to start implementation or adjust the plan.
 
 ---
@@ -288,7 +288,7 @@ Finds code in the wrong place before more code lands on top of it. Directives #2
 
 1. **Coordinating** (from Runbook A or E, or an interactive Runbook D prompt once its task is `done` or `blocked`): dispatch `pm-lead` for `PRODUCT_SUMMARY.md` and `pm-frd-drafter` for FRD text that must follow your commit. Hand the user a prompt for anything that needs a decision, including every rules question.
 2. **Receiving** (`@lead-architect handoff (chain: …)`, as a subagent or as the coordinator taking a ripple addressed to you): read the chain's commits and confirm the request is a sync. Writing or superseding a decision record, or changing the order of Deliverables, is a decision: report it, change nothing.
-   - Edit the design notes, the decisions index and `docs/AGENTS.md` as the commits imply. Run `cardtown lint frd` and commit as `docs(architecture): <summary> (sync from <persona> <sha>)`.
+   - Edit the design notes, the decisions index and `docs/AGENTS.md` as the commits imply. Run `go run ./cmd/cardtown lint frd <each file you changed>` (§2 Mandatory Quality Gate) and commit as `docs(architecture): <summary> (sync from <persona> <sha>)`.
    - When the change means engine, test or card-definition work, don't write a task. Add a `Directives for the Lead` row instead, numbered with `go tool task next-directive`, with source `Sync from <persona> <sha>, <date>` and status `open`, or `waiting: <trigger>` in checkable form (D2.0). Never `open: before`. Commit it with the doc change, and the next build prompt picks it up under D2.0.
    - As a subagent, never touch Runbook D otherwise: no task files, task statuses, dispatches or merges.
 3. **End** with the `Commit:`, `Files:`, `Gates:` and `Ripples:` lines.
