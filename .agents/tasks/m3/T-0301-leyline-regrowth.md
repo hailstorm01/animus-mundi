@@ -4,7 +4,7 @@ title: Make Leyline Regrowth executable (up to one unit card back, then draw, wa
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0301-leyline-regrowth
 depends_on: [T-0300]
 claims: [card:Leyline Regrowth]
