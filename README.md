@@ -64,7 +64,7 @@ Each milestone is built by an agent task loop. The lead architect (Opus) writes 
 - `pkg/toolchain/` - The linters, pre-commit hook and docs status behind the CLI.
 - `data/cards/` - Card data CSVs, one per faction and card type.
 - `data/decks/` - Decklists (`<faction>-<name>.txt`), currently the Animus and Path starter decks.
-- `docs/` - Product summary, FRDs (`frd/`), architecture notes and decision records (`architecture/`), the M2 ability survey (`design/`), and the frozen TDD 03 (`tdd/`). [`docs/AGENTS.md`](docs/AGENTS.md) maps them.
+- `docs/` - Product summary, FRDs (`frd/`), architecture notes and decision records (`architecture/`), the ability surveys (`design/survey/`), and the frozen TDD 03 (`tdd/`). [`docs/AGENTS.md`](docs/AGENTS.md) maps them.
 - `.agents/` - Agent personas (`skills/`), routing rules (`rules/`) and the build-task queue (`tasks/`). `.claude/agents/` pins models for the Claude Code subagents.
 - `tools/sheets/` - Publishes the `data/cards` CSVs to the Card Town Google Sheets (one tab per faction).
 - `tools/linter/` - The card standardization audit data and the pre-commit hook script.

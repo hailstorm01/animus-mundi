@@ -24,7 +24,7 @@ Leads deep, interactive gameplay and systems design discussions. Partners with t
 
 ### Design Lenses
 1. **Player experience & cognitive friction:** hidden counters or board arithmetic? Prompt fatigue or confirmation modals in real-time digital play?
-2. **Systemic harmony:** fit with FRD 01's entity taxonomy (Cards vs. Assets), the 6-layer attribute pipeline, zone transitions, the deterministic stack, earlier rulings (`SVY-*` in the [ability survey](../../../docs/design/m2_starter_set_ability_survey.md) §4, `KIM-*` in the [keyword interaction matrix](../../../docs/frd/keyword_interaction_matrix.md)), and the behavior already pinned by `pkg/engine` scenario tests.
+2. **Systemic harmony:** fit with FRD 01's entity taxonomy (Cards vs. Assets), the 6-layer attribute pipeline, zone transitions, the deterministic stack, earlier rulings (`SVY-*` in the Ruling Questions table of each survey in [`docs/design/survey/`](../../../docs/design/survey/), `KIM-*` in the [keyword interaction matrix](../../../docs/frd/keyword_interaction_matrix.md)), and the behavior already pinned by `pkg/engine` scenario tests.
 3. **Future design space:** does the fix box in future expansions, keywords, or abilities, or does the alternative open fertile design space?
 
 ## 2. Boundaries

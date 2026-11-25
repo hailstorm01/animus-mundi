@@ -63,7 +63,7 @@ One or two sentences: what runs when this is done.
 
 ## Inputs
 - FRD 01 sections: <FR IDs and line ranges>
-- Survey rows: docs/design/m2_starter_set_ability_survey.md (<cards>)
+- Survey rows: docs/design/survey/<milestone>_<topic>.md (<cards>)
 - Rulings that apply: <SVY-*/KIM-* IDs, or none>
 - Design note: docs/architecture/<milestone>-<topic>.md (<section>), e.g. m3-full-catalog.md
 
