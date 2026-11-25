@@ -4,7 +4,7 @@ title: Make Leyline Regrowth executable (up to one unit card back, then draw, wa
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0301-leyline-regrowth
 depends_on: [T-0300]
 claims: [card:Leyline Regrowth]
@@ -60,3 +60,4 @@ In a new file `pkg/engine/cards_concordia_regrowth_test.go`, from the CSV text, 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 3): written against b99a9e55, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. *Inspired Salvage* is the nearest sibling, a Soulless card with a different slot, and stays its own task. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_regrowth_test.go`: TestCard_LeylineRegrowth_ReturnsChosenUnitCardThenDraws, _ChoosingNoneStillDraws (empty answer and timeout subtests), _OnlyOwnUnitCardsOffered, _EnactableWithNoUnitCard (empty pile, no own unit card), _TargetLeftThePileStillDraws, _EmptyDeckReturnsThenLoses, _PaysTwoTactics. Helpers requested: none (a local `lrChoosePile` lives in the test file). Cases left out: none. `go vet` clean, `cardtown lint rules` passes; the tests fail now with "needs rules the kernel does not implement yet".
+- 2026-11-25 lead-architect: tests approved (D4, round 1), each checked against `FR-MNV-001`, `FR-TGT-001` to `003`, `FR-MOD-001` §6 and `FR-WIN-001`. A lead probe with the Definition, since reverted, passes all seven. Ten mutants (draw 2, no draw, `UpTo` 2, mandatory, two wider kinds, opposing or any allegiance, battlefield, deploy instead of return) each fail at least one. A step-order mutant didn't compile, so the order was not mutated; the hand-order check in the first test covers it. Set to `ready`.
