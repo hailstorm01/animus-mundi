@@ -43,7 +43,7 @@ func TestSelectChanged_Case1_Paths(t *testing.T) {
 		},
 		{
 			name:  "ability survey",
-			paths: []string{"docs/design/m2_starter_set_ability_survey.md"},
+			paths: []string{"docs/design/survey/m2_starter_set_ability_survey.md"},
 			want:  lintSelection{fences: true},
 		},
 		{

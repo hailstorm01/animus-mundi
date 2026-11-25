@@ -71,7 +71,7 @@ func Clean() {}
 		t.Fatalf("write matrix: %v", err)
 	}
 
-	designDir := filepath.Join(dir, "docs", "design")
+	designDir := filepath.Join(dir, "docs", "design", "survey")
 	if err := os.MkdirAll(designDir, 0755); err != nil {
 		t.Fatalf("mkdir design: %v", err)
 	}
@@ -752,11 +752,11 @@ func TestFences_Case23_CardsSubtreeAndTestsExempt(t *testing.T) {
 	}
 }
 
-// 24. Missing matrix or survey -> Lint errors, naming the file.
+// 24. Missing matrix or survey -> Lint errors, naming the file (for the survey: the survey folder).
 func TestFences_Case24_MissingDocsError(t *testing.T) {
 	for _, rel := range []string{
 		filepath.Join("docs", "frd", "keyword_interaction_matrix.md"),
-		filepath.Join("docs", "design", "m2_starter_set_ability_survey.md"),
+		filepath.Join("docs", "design", "survey", "m2_starter_set_ability_survey.md"),
 	} {
 		repo := setupFixtureRepo(t)
 		if err := os.Remove(filepath.Join(repo, rel)); err != nil {
@@ -769,8 +769,12 @@ func TestFences_Case24_MissingDocsError(t *testing.T) {
 		if ok {
 			t.Fatalf("missing %s: expected ok=false", rel)
 		}
-		if !strings.Contains(err.Error(), filepath.Base(rel)) {
-			t.Fatalf("missing %s: error %q should name the file", rel, err)
+		want := filepath.Base(rel)
+		if strings.Contains(rel, "survey") {
+			want = "docs/design/survey"
+		}
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("missing %s: error %q should contain %q", rel, err, want)
 		}
 	}
 }
@@ -1021,7 +1025,12 @@ func TestReads(t *testing.T) {
 		{"pkg/sim/x_test.go", true},
 		{"data/cards/units.csv", true},
 		{"docs/frd/keyword_interaction_matrix.md", true},
-		{"docs/design/m2_starter_set_ability_survey.md", true},
+		{"docs/design/survey/m2_starter_set_ability_survey.md", true},
+		{"docs/design/survey/m3_x.md", true},
+		{"docs/design/m2_starter_set_ability_survey.md", false},
+		{"docs/design/outcomes/x.md", false},
+		{"docs/design/survey/sub/x.md", false},
+		{"docs/design/survey/x.txt", false},
 		{"pkg/toolchain/linter/fences/fences.go", true},
 		{"cmd/cardtown/main.go", true},
 		{"tools/importer/main.go", true},
@@ -1033,5 +1042,140 @@ func TestReads(t *testing.T) {
 		if got := fences.Reads(c.path); got != c.want {
 			t.Errorf("fences.Reads(%q) = %v, want %v", c.path, got, c.want)
 		}
+	}
+}
+
+const surveyM2Path = "docs/design/survey/m2_starter_set_ability_survey.md"
+
+// writeMarkerFile writes pkg/engine/x.go holding one OPEN(...) marker.
+func writeMarkerFile(t *testing.T, repo, id string) {
+	t.Helper()
+	writeEngineFile(t, repo, "x.go", "package engine\n\n// OPEN("+id+")\nfunc Marked() {}\n")
+}
+
+const surveyM3Content = `# M3 Survey
+
+## 4. Ruling Questions
+
+| ID | Question | Cards | Status |
+| :--- | :--- | :--- | :--- |
+| **R60** | Open question | Future Card | Open |
+| **R61** | Ruled question | Future Card | **Ruled: yes.** |
+`
+
+// 48. A second survey m3_x.md with R60 open and R61 ruled -> OPEN(SVY-R60) and the first survey's OPEN(SVY-R7) pass,
+// OPEN(SVY-R61) fails as ruled, OPEN(SVY-R62) fails as not in the survey.
+func TestFences_Case48_SecondSurvey(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "docs/design/survey/m3_x.md", surveyM3Content)
+	for _, id := range []string{"SVY-R60", "SVY-R7"} {
+		writeMarkerFile(t, repo, id)
+		ok, err, out := lintFixture(t, repo)
+		if err != nil || !ok {
+			t.Fatalf("OPEN(%s): expected pass, got ok=%v err=%v:\n%s", id, ok, err, out)
+		}
+	}
+	writeMarkerFile(t, repo, "SVY-R61")
+	ok, err, out := lintFixture(t, repo)
+	if err != nil || ok || !strings.Contains(out, "ruled") {
+		t.Fatalf("OPEN(SVY-R61): expected a ruled failure, got ok=%v err=%v:\n%s", ok, err, out)
+	}
+	writeMarkerFile(t, repo, "SVY-R62")
+	ok, err, out = lintFixture(t, repo)
+	if err != nil || ok || !strings.Contains(out, "not in the survey") {
+		t.Fatalf("OPEN(SVY-R62): expected a not-in-the-survey failure, got ok=%v err=%v:\n%s", ok, err, out)
+	}
+}
+
+// 49. R7 in both surveys -> one violation at the later row, naming both files and lines.
+func TestFences_Case49_DuplicateAcrossSurveys(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, "docs/design/survey/m3_x.md", `# M3 Survey
+
+## 4. Ruling Questions
+
+| ID | Question | Cards | Status |
+| :--- | :--- | :--- | :--- |
+| **R7** | Again | Future Card | Open |
+`)
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok {
+		t.Fatalf("expected failure")
+	}
+	want := "[ERROR] docs/design/survey/m3_x.md:7: SVY-R7 is already defined at " + surveyM2Path + ":8"
+	if strings.Count(out, "[ERROR]") != 1 || !strings.Contains(out, want) {
+		t.Fatalf("expected exactly one violation %q, got:\n%s", want, out)
+	}
+}
+
+// 50. The same ID twice in one survey -> fails, naming both lines.
+func TestFences_Case50_DuplicateInOneSurvey(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	writePkgFile(t, repo, surveyM2Path, `# Ability Survey
+
+## 4. Ruling Questions
+
+| ID | Question | Cards | Status |
+| :--- | :--- | :--- | :--- |
+| **R4a** | Repeated targets | Steel Rain | **Ruled: yes.** |
+| **R7** | Open question | Future Card | Open |
+| **R7** | Open again | Future Card | Open |
+`)
+	ok, err, out := lintFixture(t, repo)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ok {
+		t.Fatalf("expected failure")
+	}
+	want := "[ERROR] " + surveyM2Path + ":9: SVY-R7 is already defined at " + surveyM2Path + ":8"
+	if strings.Count(out, "[ERROR]") != 1 || !strings.Contains(out, want) {
+		t.Fatalf("expected exactly one violation %q, got:\n%s", want, out)
+	}
+}
+
+// 51. A write-up with a table but no Ruling Questions section, a .txt file and an .md in a subfolder -> no IDs from them.
+func TestFences_Case51_OnlySurveyMarkdownCounts(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	table := func(id string) string {
+		return "| ID | Question | Cards | Status |\n| :--- | :--- | :--- | :--- |\n| **" + id + "** | Q | C | Open |\n"
+	}
+	writePkgFile(t, repo, "docs/design/survey/m2_writeup.md", "# Write-up\n\n## 4. For M3\n\n"+table("R70"))
+	writePkgFile(t, repo, "docs/design/survey/notes.txt", "## 4. Ruling Questions\n\n"+table("R71"))
+	writePkgFile(t, repo, "docs/design/survey/sub/y.md", "## 4. Ruling Questions\n\n"+table("R72"))
+	for _, id := range []string{"SVY-R70", "SVY-R71", "SVY-R72"} {
+		writeMarkerFile(t, repo, id)
+		ok, err, out := lintFixture(t, repo)
+		if err != nil || ok {
+			t.Fatalf("OPEN(%s): expected a violation, got ok=%v err=%v", id, ok, err)
+		}
+		if strings.Count(out, "[ERROR]") != 1 || !strings.Contains(out, "not in the survey") {
+			t.Fatalf("OPEN(%s): expected one not-in-the-survey violation, got:\n%s", id, out)
+		}
+	}
+}
+
+// 52. The survey folder removed, or holding only a write-up -> an error naming docs/design/survey.
+func TestFences_Case52_NoSurveyIsAnError(t *testing.T) {
+	repo := setupFixtureRepo(t)
+	if err := os.RemoveAll(filepath.Join(repo, "docs", "design", "survey")); err != nil {
+		t.Fatalf("remove folder: %v", err)
+	}
+	ok, err, _ := lintFixture(t, repo)
+	if err == nil || ok || !strings.Contains(err.Error(), "docs/design/survey") {
+		t.Fatalf("folder removed: expected an error naming docs/design/survey, got ok=%v err=%v", ok, err)
+	}
+
+	repo = setupFixtureRepo(t)
+	if err := os.Remove(filepath.Join(repo, filepath.FromSlash(surveyM2Path))); err != nil {
+		t.Fatalf("remove survey: %v", err)
+	}
+	writePkgFile(t, repo, "docs/design/survey/m2_writeup.md", "# Write-up\n\n## 4. For M3\n\ntext\n")
+	ok, err, _ = lintFixture(t, repo)
+	if err == nil || ok || !strings.Contains(err.Error(), "docs/design/survey") {
+		t.Fatalf("write-up only: expected an error naming docs/design/survey, got ok=%v err=%v", ok, err)
 	}
 }
