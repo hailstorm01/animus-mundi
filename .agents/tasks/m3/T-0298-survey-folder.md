@@ -4,7 +4,7 @@ title: "The M2 survey and the ability shapes write-up move to docs/design/survey
 kind: harness
 tier: sonnet
 wave: none (M3 design note Deliverable 3a)
-status: review
+status: changes
 branch: m3/T-0298-survey-folder
 depends_on: [T-0297]
 claims: [folder:docs/design/survey, func:fences.readMarkerIDs, func:fences.Reads, const:fences.surveyDir]
@@ -82,3 +82,8 @@ requirements: []
   - Links: `](../` became `](../../` in the two moved files; the write-up's sibling link to the survey still resolves. Reference updates: `pkg/engine/doc.go`, `docs/AGENTS.md` 12-13, `docs/architecture/m2-ability-model.md` 3 and 244, `docs/architecture/m3-full-catalog.md` 5.
   - Ran (in the worktree): `go test ./pkg/toolchain/linter/fences ./cmd/cardtown -count=1` ok; `go test ./...` ok; `go tool task check` ok (ends in "All executed checks PASSED"); `go tool task sim-compare` "[PASS] starter and stress sims match main byte for byte".
   - Case 9: a shell loop over every `](.…)` link in both files found no missing target. Case 10: `git grep` for the two old paths (see the final report for what remains). Case 11: `git log --follow` on both files.
+- 2026-11-24 lead-architect: changes, round 1. Scope, the tests, the links and the move are right. In `fences.go`:
+  1. `readSurvey` returns an `error` that is always nil, so the caller's `if err != nil` is dead. Return only `bool`, and drop the branch.
+  2. `readMarkerIDs`' comment still says "the survey's Ruling Questions table". It now reads every survey in `surveyDir`, records duplicate IDs, and errors when no survey there has the section. Say so.
+  3. `Analyze`'s comment lists what it reports. Add the ruling IDs that are defined twice.
+  No test changes.
