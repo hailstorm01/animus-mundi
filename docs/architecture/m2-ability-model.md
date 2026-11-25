@@ -1,6 +1,6 @@
 # M2: Ability Model
 
-- **Milestone:** M2 | **Source spec:** [FRD 01](../frd/01_Game_Rules_FRD.md) v3.5 (`FR-TRG-*`, `FR-TGT-*`, `FR-MOD-001`, `FR-ACT-*`, `FR-TRN-003a`, `FR-MNV-001`, `FR-LAY-*`, `FR-REP-*`, `FR-ZON-004`, `FR-SET-001`), build order from the [starter set survey](../design/m2_starter_set_ability_survey.md) | **Date:** 2026-10-19
+- **Milestone:** M2 | **Source spec:** [FRD 01](../frd/01_Game_Rules_FRD.md) v3.5 (`FR-TRG-*`, `FR-TGT-*`, `FR-MOD-001`, `FR-ACT-*`, `FR-TRN-003a`, `FR-MNV-001`, `FR-LAY-*`, `FR-REP-*`, `FR-ZON-004`, `FR-SET-001`), build order from the [starter set survey](../design/survey/m2_starter_set_ability_survey.md) | **Date:** 2026-10-19
 
 FRD 02 is frozen. This note borrows its names for hooks and primitives (as the survey does) so that the M3 rewrite starts from familiar vocabulary. It does not design from FRD 02, and FRD 01 wins any conflict.
 
@@ -241,7 +241,7 @@ New vocabulary is added only by a `shape` task, which names it in `claims:`. A `
    - #179: the view's `StackView.Chosen` holds only the chosen assets still on the battlefield, as `ChosenCards` holds only the pile cards still in a pile, so a client only formats them.
 
    #177 is tests only, #178 is a pure move, and #179 changes only what the view returns, not the play screen's output. Done when every wave H.3 directive is `applied`, no `open: before` directive is left, every task's `go tool task sim-compare` passed, and `go tool task check` and `go tool task sim` pass. Deliverable 7 follows.
-7. **Write-up: ✅ done 2026-11-22.** [`docs/design/m2_ability_shapes.md`](../design/m2_ability_shapes.md) indexes `go doc ./pkg/engine/ability` at `09c7b523` and records what changed from FRD 02 (survey gaps G1–G3 plus 28 later changes, the primitive map and the shapes waiting for M3 cards). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold; they did (below).
+7. **Write-up: ✅ done 2026-11-22.** [`docs/design/survey/m2_ability_shapes.md`](../design/survey/m2_ability_shapes.md) indexes `go doc ./pkg/engine/ability` at `09c7b523` and records what changed from FRD 02 (survey gaps G1–G3 plus 28 later changes, the primitive map and the shapes waiting for M3 cards). Done when the M2 done-when checks in `PRODUCT_SUMMARY.md` §3.2 hold; they did (below).
 
    **M2 done-when checks, after wave H.3 (re-run by lead-architect on `main` at `d3e44ef5`, 2026-11-21):** `cardtown lint rules` reports 58 of 62 active FRD 01 requirements pinned (the M2 target), `cards.NotYetExecutable` is empty, every Design Outcome is applied and the matrix's one open item (`KIM-C01`) is unreachable, and `go tool task check` and `go tool task sim` pass with no invariant or monitor violation. **Manual play signed off (user, 2026-11-21):** the user finished a `cardtown play` match with every Animus and Path card executable, and the playtest raised no feedback for the board. So the write-up is the only M2 work left.
 
