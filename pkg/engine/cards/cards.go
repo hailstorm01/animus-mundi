@@ -38,7 +38,6 @@ var NotYetExecutable = []string{
 	"Forgemaster's Resilience",
 	"Frostfire Breath",
 	"Gemstone Titan",
-	"Growing Legion",
 	"Hellfire Armorers",
 	"Hourglass Diviner",
 	"Hurricane Outrigger",

@@ -82,6 +82,7 @@ func (c *Card) Supported() bool {
 }
 
 // scratchFace is the face-down Scratch Company characteristic set (FR-ZON-005).
+// Its Requisition and Tactics costs are 0 (SVY-R59).
 var scratchFace = &Card{
 	Name:     "Scratch Company",
 	Type:     TypeUnit,
