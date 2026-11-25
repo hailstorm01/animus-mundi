@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
