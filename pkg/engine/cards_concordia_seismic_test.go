@@ -37,6 +37,15 @@ func TestCard_SeismicInstability_StructuresTakeBothInstances(t *testing.T) {
 		if n := damageEventsOn(s, a); n != 2 {
 			t.Errorf("a structure takes 3 and then 4 as two instances: %d damage events, want 2 (FR-REP-004)", n)
 		}
+		var raws []int
+		for _, e := range damageEvents(s.g.Log) {
+			if e.Target == a.ID {
+				raws = append(raws, e.Raw)
+			}
+		}
+		if len(raws) != 2 || raws[0] != 3 || raws[1] != 4 {
+			t.Errorf("a structure takes the 3 instance and then the 4 instance, in log order: raw damage %v, want [3 4] (FR-REP-004)", raws)
+		}
 	}
 }
 

@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/cards_concordia_seismic_test.go`, from the CSV text, l
 - 2026-11-25 rules-test-author: wrote the eleven tests in `pkg/engine/cards_concordia_seismic_test.go` as listed under Tests: ThreeToEveryUnitInTheMainTheater, StructuresTakeBothInstances, ReservesAndHeadquartersUntouched, ScratchCompanyInTheMainTheaterIsAUnit, ResistantAppliesToEachInstance, ArmorAbsorbsAcrossBothInstances, LethalStructureStillTakesTheSecondInstance, UnbowedStructureTriggersTwice, AsksNothing, EnactableWithAnEmptyMainTheater, PaysFourTactics. `go vet ./pkg/engine` is clean and `cardtown lint rules` passes. All eleven fail now (the card is not yet executable), as intended. Helpers requested: none. Cases left out: none. The Scratch test replaces the face-down asset's hidden card with a structure and moves it to the Main Theater, and it asserts one damage event and death.
 - 2026-11-25 lead-architect: tests round 1 returned (D4). Each test agrees with the FRD 01 text it cites, and the lead's probe passes all 11. Of 13 mutants of the Definition, 12 fail at least one test. Set to `tests` for one note:
   1. `TestCard_SeismicInstability_StructuresTakeBothInstances` doesn't check the order the task names ("take 3 and then 4"): swapping the two steps passes every test. Also check that each structure's two damage events, in log order, carry the raw damage 3 and then 4 (`Event.Raw`). Change nothing else.
+- 2026-11-25 rules-test-author: applied note 1. `TestCard_SeismicInstability_StructuresTakeBothInstances` now also collects each structure's damage events in log order and checks their `Event.Raw` is 3 then 4, so swapping the two steps fails it. Nothing else changed. `go vet ./pkg/engine` is clean. Helpers requested: none. Set to `tests-review`.
