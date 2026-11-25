@@ -4,7 +4,7 @@ title: Make Growing Legion executable (Scratch 1; first Concordia card, wave A, 
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0299-growing-legion
 depends_on: [T-0295]
 claims: [card:Growing Legion, file:pkg/engine/cards/concordia.go]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/cards_concordia_maneuvers_test.go`, from the CSV text,
 - 2026-11-25 rules-test-author (wave A run): wrote `pkg/engine/cards_concordia_maneuvers_test.go` with `TestCard_GrowingLegion_ScratchesOne`, `_DoesNotUseTheHeadquarters`, `_EnactableWithAnExhaustedHeadquarters` and `_EmptyDeckScratchesNothingAndDoesNotLose`. No helpers requested (uses `onTop`, `setPool`, `scratched`, `faceDownCount`, `inDiscardPile`, `offersEnact`). `go vet` and `cardtown lint rules` pass; all four fail now with "needs rules the kernel does not implement yet", as expected. Nothing left out. Set to `tests-review`.
 - 2026-11-25 lead-architect: tests approved (D4, round 1), each checked against `FR-KWD-002m`, `FR-ZON-005` and `FR-MNV-001`. A lead probe with the Definition above, since reverted, passes all four, and a Scratch 2 mutant fails `ScratchesOne`. Set to `ready`.
 - 2026-11-25 kernel-engineer (wave A run): diff adds `pkg/engine/cards/concordia.go` defining Growing Legion with 1 step of `OpScratch` (reusing `ability.OpScratch` from `pkg/engine/ability` as seen in `animus.go`), removes `"Growing Legion"` from `NotYetExecutable` in `pkg/engine/cards/cards.go`, and updates `scratchFace` doc comment in `pkg/engine/card.go` to cite `SVY-R59` per Directive #185 (2). Ran `go test ./pkg/engine -run TestCard_GrowingLegion` (pass), `go tool task check` (pass), `go tool task sim` (pass: 200 games clean, all invariants holding), and `go tool task sim-matrix` (pass: 24 starter deck runs and 24 stress deck runs, 0 violations). Set to `review`.
+- 2026-11-25 lead-architect (wave A run, session 1): approved (D5, round 1), merged as 8f19acad. The diff is the task's Definition, the one name off `NotYetExecutable` and the `scratchFace` comment (#185 (2)), inside `Allowed Files`, and the test file changed only in ceb5ad2e. No new shape, no card name in engine code. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_GrowingLegion`, `go tool task check`, `go tool task sim`, `go tool task sim-matrix`, all 0. The merge has the same tree as the reviewed branch. The Animus vs Path sim is unchanged (P0 58.5% / P1 39.5% / draws 2.0%). The Flash run left no denied action.
