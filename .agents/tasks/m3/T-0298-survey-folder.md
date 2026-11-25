@@ -4,7 +4,7 @@ title: "The M2 survey and the ability shapes write-up move to docs/design/survey
 kind: harness
 tier: sonnet
 wave: none (M3 design note Deliverable 3a)
-status: ready
+status: in-progress
 branch: m3/T-0298-survey-folder
 depends_on: [T-0297]
 claims: [folder:docs/design/survey, func:fences.readMarkerIDs, func:fences.Reads, const:fences.surveyDir]
