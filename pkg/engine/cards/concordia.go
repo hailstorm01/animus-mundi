@@ -21,4 +21,28 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Icewind Regent": {
+		Text: []string{"Exhaust: Return chosen unit to its owner's hand."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{Kinds: ability.KindUnit},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
