@@ -14,7 +14,7 @@ Allied units in the same zone have Aggressive 1.","3","4","2","2","RARE","false"
 "Mage Hunter Brigade","UNIT","SOULLESS","Infantry, Specialist","3","0","RESERVES","Ward","3","3","1","2","COMMON","false"
 "Mobile Armory","UNIT","SOULLESS","Mechanized","3","0","MAIN_THEATER, RESERVES","Exhaust: Chosen allied unit in the same zone gets +1 power until end of turn.","1","3","1","2","UNCOMMON","false"
 "NO-AH-5","UNIT","SOULLESS","Officer, Cybernetic","3","0","RESERVES","Ward
-R2: Kill chosen allied non-Headquarters asset and tuck it face down under this unit.
+R2: Kill another chosen allied non-Headquarters asset and tuck it face down under this unit.
 This unit has +2 power for each card tucked under it.","2","5","1","2","MYTHIC","false"
 "Sentinel Warsuit Core","UNIT","SOULLESS","Mechanized","3","0","RESERVES","Armor 2","4","3","1","2","COMMON","false"
 "Culverin Brigade","UNIT","SOULLESS","Infantry","4","0","RESERVES","When this unit deploys, deal 1 damage to each of up to 2 chosen opposing assets.","5","4","1","2","RARE","false"

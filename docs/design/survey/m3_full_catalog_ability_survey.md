@@ -88,15 +88,15 @@ IDs continue from the [M2 survey](m2_starter_set_ability_survey.md) §4, which e
 
 | ID | Question | Cards | Status |
 | :--- | :--- | :--- | :--- |
-| **R57** | Must the target of "Regroup chosen X" be Exhausted? `FR-KWD-002n` says the player chooses Exhausted assets, but only *Visionary's Insight* prints "exhausted". If it must, *Armored Charge* can't be enacted for its heal and armor on a Readied unit. | Tempest Runner, Enclave, Armored Charge; Visionary's Insight | Open. Lead's recommendation: only the printed criteria count, and regrouping a Readied asset does nothing |
-| **R58** | Does "gets power equal to the number of cards discarded this way" add that much power, or set power to it? | All-Out War | Open. Lead's recommendation: it adds. Reword to "gets +X power" |
-| **R59** | What is the Requisition cost of a face-down Scratch Company on the battlefield? FRD 01 gives its stats and yields but no cost. The kernel reads 0, and no M2 card could tell. | Will Breaker | Open. Lead's recommendation: 0, so it is a legal target |
-| **R60** | A look that puts one card in each of two places, with only one card left in the deck: where does it go? | Hourglass Diviner, Samsara, Living Tempest | Open. Lead's recommendation: destinations fill in printed order, so it goes to hand. Samsara then discards nothing and deals no damage |
-| **R61** | In "deploy up to 2 unit cards from among them for free, and put up to 1 of those cards into your hand", does "those cards" mean the unit cards or any of the 7? | Light of the World Soul | Open. Lead's recommendation: any of the 7 not deployed. Reword to "put up to 1 of the other cards into your hand" |
-| **R62** | When is "the Main Theater or Reserves" chosen, may it be the zone the unit is already in, and what does a timeout take? | Sandstorm Lightbringer | Open. Lead's recommendation: chosen on declaration with the target (`SVY-R2`). Either zone is legal. A timeout takes Reserves (as `SVY-R43`) |
-| **R63** | "You may discard 2 cards. If you do, …" with fewer than 2 cards in hand: is X carried out in part, does it count as done, and is the "you may" asked? | Redlined Brawler | Open. Lead's recommendation: an X that can't be carried out in full isn't carried out, so nothing is discarded. With fewer than 2 cards as it would be placed, the "you may" is not asked (extending `SVY-R48`) |
-| **R64** | Can NO-AH-5 choose itself for "Kill chosen allied non-Headquarters asset and tuck it face down under this unit"? | NO-AH-5 | Open. Lead's recommendation: no. Reword to "another chosen allied non-Headquarters asset" (`SVY-R34`) |
-| **R65** | "Move chosen opposing unit … to its owner's Reserves": whose Reserves, when the opponent controls a unit you own (*Rhapsody's Hollow*)? `FR-ZON-002` uses the controller's Reserves, *Dread Manifestation* prints "its controller's", and *Tempest City Ray* prints only "to Reserves". | Awaken Nightmare; Tempest City Ray (default: its controller's) | Open. Lead's recommendation: always its controller's. Reword *Awaken Nightmare* |
+| **R57** | Must the target of "Regroup chosen X" be Exhausted? `FR-KWD-002n` says the player chooses Exhausted assets, but only *Visionary's Insight* prints "exhausted". If it must, *Armored Charge* can't be enacted for its heal and armor on a Readied unit. | Tempest Runner, Enclave, Armored Charge; Visionary's Insight | **Ruled (user, 2026-11-24).** A target needs only the criteria its text prints. Regroup may choose a Readied asset and does nothing to it. Recorded in FRD 01 v3.32 as `SVY-R57`. |
+| **R58** | Does "gets power equal to the number of cards discarded this way" add that much power, or set power to it? | All-Out War | **Ruled (user, 2026-11-24).** All-Out War adds power. Recorded in FRD 01 v3.32 as `SVY-R58`. |
+| **R59** | What is the Requisition cost of a face-down Scratch Company on the battlefield? FRD 01 gives its stats and yields but no cost. The kernel reads 0, and no M2 card could tell. | Will Breaker | **Ruled (user, 2026-11-24).** A face-down Scratch Company costs 0 Requisition and 0 Tactics. Recorded in FRD 01 v3.32 as `SVY-R59`. |
+| **R60** | A look that puts one card in each of two places, with only one card left in the deck: where does it go? | Hourglass Diviner, Samsara, Living Tempest | **Ruled (user, 2026-11-24).** A look with too few cards fills its destinations in printed order. Recorded in FRD 01 v3.32 as `SVY-R60`. |
+| **R61** | In "deploy up to 2 unit cards from among them for free, and put up to 1 of those cards into your hand", does "those cards" mean the unit cards or any of the 7? | Light of the World Soul | **Ruled (user, 2026-11-24).** The card put into hand is any of the looked-at cards not deployed. Recorded in FRD 01 v3.32 as `SVY-R61`. |
+| **R62** | When is "the Main Theater or Reserves" chosen, may it be the zone the unit is already in, and what does a timeout take? | Sandstorm Lightbringer | **Ruled (user, 2026-11-24).** "The Main Theater or Reserves" is chosen on declaration with the target. Either zone is legal. A timeout takes Reserves. Recorded in FRD 01 v3.32 as `SVY-R62`. |
+| **R63** | "You may discard 2 cards. If you do, …" with fewer than 2 cards in hand: is X carried out in part, does it count as done, and is the "you may" asked? | Redlined Brawler | **Ruled (user, 2026-11-24).** "You may discard N. If you do": all or nothing, and not asked with fewer than N cards. Recorded in FRD 01 v3.32 as `SVY-R63`. |
+| **R64** | Can NO-AH-5 choose itself for "Kill chosen allied non-Headquarters asset and tuck it face down under this unit"? | NO-AH-5 | **Ruled (user, 2026-11-24).** NO-AH-5 can't choose itself. Recorded in FRD 01 v3.32 as `SVY-R64`. |
+| **R65** | "Move chosen opposing unit … to its owner's Reserves": whose Reserves, when the opponent controls a unit you own (*Rhapsody's Hollow*)? `FR-ZON-002` uses the controller's Reserves, *Dread Manifestation* prints "its controller's", and *Tempest City Ray* prints only "to Reserves". | Awaken Nightmare; Tempest City Ray (default: its controller's) | **Ruled (user, 2026-11-24).** A unit moved to Reserves goes to its controller's Reserves. Recorded in FRD 01 v3.32 as `SVY-R65`. |
 
 **Noted but unreachable** (defaults, no ruling needed for M3):
 - *Piston Fist Prototype*, when its Attack fizzles and it survives: no after-attack trigger. No card lets a defender leave in Step 2 while the attacker stays.
@@ -128,20 +128,20 @@ IDs continue from the [M2 survey](m2_starter_set_ability_survey.md) §4, which e
 | Soul Whip | A | Maneuver | `OpDealDamage` with `Dealer` | `SVY-R27` | Built. Second use of `Dealer` |
 | Stormbolt Ray | A | Triggered + Activated | deploy → 3 to chosen asset; T2, exhaust: return self | `FR-ACT-001` | Built |
 | Swirling Dustdevil | A | `CostReduction` | R1 per Maneuver card in own discard | `FR-CST-001` | Built |
-| Tempest City Ray | A | Activated | T2, exhaust: `OpMoveZone` chosen opposing unit → Reserves | `FR-ZON-002` | Built. See R65 |
+| Tempest City Ray | A | Activated | T2, exhaust: `OpMoveZone` chosen opposing unit → its controller's Reserves | `FR-ZON-002` | Built. See `SVY-R65` |
 | Hurricane Outrigger | A | Triggered | deploy → own Headquarters +1 power until end of turn | `FR-LAY-003` | Built |
 | Echoing Nightmare | A | Triggered | deploy → return chosen opposing Main Theater unit; `IfDone` → move self | `SVY-R14`, `SVY-R1` | Built. The move fires move hooks |
-| Will Breaker | A | Triggered | deploy → `OpKill` chosen opposing unit, `StatRequisition` 3 | `FR-TGT-001` | Built. R59 |
-| Tempest Runner | B | Activated | exhaust: regroup another chosen allied unit in the same zone | `FR-KWD-002n`, `SVY-R34`, `SVY-R44` | G4. R57 |
-| Enclave (HQ) | B | Activated | discard a card, exhaust: regroup up to 2 chosen allied units | `FR-KWD-002n` | G4, G6. R57 |
+| Will Breaker | A | Triggered | deploy → `OpKill` chosen opposing unit, `StatRequisition` 3 | `FR-TGT-001` | Built. `SVY-R59` |
+| Tempest Runner | B | Activated | exhaust: regroup another chosen allied unit in the same zone | `FR-KWD-002n`, `SVY-R34`, `SVY-R44` | G4. `SVY-R57` |
+| Enclave (HQ) | B | Activated | discard a card, exhaust: regroup up to 2 chosen allied units | `FR-KWD-002n` | G4, G6. `SVY-R57` |
 | Frostfire Breath | B | Maneuver | 2 to chosen exhausted non-Scratch unit; if killed this way, draw 1 | `FR-LAY-002` | G5, G7 |
 | Cathedral of Self | C | Activated | T1, exhaust: damage = own Current Health to chosen unit | `SVY-R10` | G9 |
 | Consuming Earth | C | Maneuver | `OpKill` chosen opposing unit, power ≤ sum of own structures' Requisition yields | `FR-TGT-003` | G10 |
 | Dread Manifestation | C | Triggered + aura | combat kill of a unit (may) → chosen Main Theater unit → its controller's Reserves; opposing units in the same zone −2 power | `FR-CBT-002`, `SVY-R56` | G11. #182 gives its trade tests. `SVY-R19` too |
-| Sandstorm Lightbringer | C | Activated | exhaust: `OpMoveZone` chosen allied unit → chosen zone | `FR-ZON-002` | G14. R62 |
-| Hourglass Diviner | D | Triggered | deploy → look 2: 1 hand, 1 bottom | `SVY-R41` | G15. R60 |
-| Samsara, Living Tempest | D | Triggered | attack → look 2: 1 hand, 1 discard; if a Maneuver card, 2 to the chosen asset | `FR-TGT-001`, `FR-ZON-004` | G15. R60. Target locked on placement. Fires enter-discard |
-| Light of the World Soul | D | Maneuver | look 7: up to 2 units deployed free, up to 1 to hand, rest bottom | `FR-MOD-001` §4, `SVY-R41`–`SVY-R43` | G15. R61. The structured decision |
+| Sandstorm Lightbringer | C | Activated | exhaust: `OpMoveZone` chosen allied unit → chosen zone | `FR-ZON-002` | G14. `SVY-R62` |
+| Hourglass Diviner | D | Triggered | deploy → look 2: 1 hand, 1 bottom | `SVY-R41` | G15. `SVY-R60` |
+| Samsara, Living Tempest | D | Triggered | attack → look 2: 1 hand, 1 discard; if a Maneuver card, 2 to the chosen asset | `FR-TGT-001`, `FR-ZON-004` | G15. `SVY-R60`. Target locked on placement. Fires enter-discard |
+| Light of the World Soul | D | Maneuver | look 7: up to 2 units deployed free, up to 1 to hand, rest bottom | `FR-MOD-001` §4, `SVY-R41`–`SVY-R43` | G15. `SVY-R61`. The structured decision |
 | Tempest Surge | E | Triggered + Activated | Overkill: excess to chosen opposing Main Theater unit; T2: self +2 power | `FR-KWD-002p` | G16 |
 | Rage's Wake | E | Maneuver | chosen unit +2 power; delayed on its kill: deploy it from own discard → Reserves | `FR-TRG-006`, `FR-ZON-005` | G17. An opposing unit's card is in the other pile, so nothing is deployed |
 
@@ -149,7 +149,7 @@ IDs continue from the [M2 survey](m2_starter_set_ability_survey.md) §4, which e
 
 | Card | Wave | Form | Definition | Rules | Notes |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| Awaken Nightmare | F | Maneuver | `OpMoveZone` chosen opposing Main Theater unit; all opposing units −1 power | `FR-LAY-001` | Built. R65 |
+| Awaken Nightmare | F | Maneuver | `OpMoveZone` chosen opposing Main Theater unit; all opposing units −1 power | `FR-LAY-001` | Built. `SVY-R65` |
 | Flickering Ember | F | Activated | T4: allied assets in the same zone +1 power | `SVY-R44` | Built. Repeatable; includes itself |
 | Forgemaster's Resilience | F | Maneuver | `OpGrantKeyword` Stalwart | `FR-KWD-002c` | Built |
 | Reverberating Terror | F | Maneuver | up to 2 chosen units and structures −1 power | `FR-TGT-002` | Built |
@@ -178,11 +178,11 @@ IDs continue from the [M2 survey](m2_starter_set_ability_survey.md) §4, which e
 | Mobile Armory | A | Activated | exhaust: chosen allied unit in the same zone +1 power | `SVY-R44` | Built. May choose itself |
 | Visionary's Eye | A | Triggered | attack → draw 1 | | Built |
 | Visionary's Insight | B | Maneuver | regroup up to 1 chosen exhausted allied asset | `FR-KWD-002n` | G4, G5 |
-| Armored Charge | B | Maneuver | regroup chosen allied Mechanized unit; it heals 5 and gains 2 armor | `FR-KWD-002n` | G4. R57 |
-| All-Out War | B | Maneuver | discard hand; chosen allied asset +X power; Scratch X; regroup all Scratch Companies in own Reserves | `FR-TGT-003`, `FR-KWD-002n` | G4, G8. R58. Only the targeted clause can fizzle |
+| Armored Charge | B | Maneuver | regroup chosen allied Mechanized unit; it heals 5 and gains 2 armor | `FR-KWD-002n` | G4. `SVY-R57` |
+| All-Out War | B | Maneuver | discard hand; chosen allied asset +X power; Scratch X; regroup all Scratch Companies in own Reserves | `FR-TGT-003`, `FR-KWD-002n` | G4, G8. `SVY-R58`. Only the targeted clause can fizzle |
 | Piston Fist Prototype | C | Aggressive 9 + triggered | after attack → move self to own Reserves | `FR-CBT-002` | G12 |
-| Redlined Brawler | C | Triggered | deploy (may) → discard 2; if done, move self to the Main Theater | `SVY-R14` | G13. R63 |
-| NO-AH-5 | E | Ward + Activated + static | R2: kill chosen allied non-Headquarters asset and tuck it; +2 power per tucked card | `FR-ENT-102` | G18. R64. #142. Its filter excludes a Headquarters (`SVY-R55`) |
+| Redlined Brawler | C | Triggered | deploy (may) → discard 2; if done, move self to the Main Theater | `SVY-R14` | G13. `SVY-R63` |
+| NO-AH-5 | E | Ward + Activated + static | R2: kill another chosen allied non-Headquarters asset and tuck it; +2 power per tucked card | `FR-ENT-102` | G18. `SVY-R64`. #142. Its filter excludes a Headquarters (`SVY-R55`) |
 
 ### Soulless: non-deck
 

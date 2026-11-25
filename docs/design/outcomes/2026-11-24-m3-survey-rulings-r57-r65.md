@@ -1,4 +1,4 @@
-Status: approved (user, 2026-11-24)
+Status: applied: FRD 01 v3.32, 2026-11-24
 Directive: #185, #186, #187, #188, #189
 Rulings: SVY-R57, SVY-R58, SVY-R59, SVY-R60, SVY-R61, SVY-R62, SVY-R63, SVY-R64, SVY-R65
 

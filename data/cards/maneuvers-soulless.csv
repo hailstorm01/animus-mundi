@@ -8,8 +8,8 @@
 "Railway Reinforcements","MANEUVER","SOULLESS","0","2","Move up to 3 chosen allied units from your Reserves to the Main Theater.","COMMON","false"
 "Redline Infusion","MANEUVER","SOULLESS","0","2","Until end of turn, chosen allied unit gets +2 power and gains ""Overkill: Ready this unit."" At the end of your turn, kill that unit.","COMMON","false"
 "All-Out War","MANEUVER","SOULLESS","3","3","Discard your hand. Then:
-- Chosen allied asset gets power equal to the number of cards discarded this way until end of turn.
-- Scratch X, where X is the number of cards discarded this way.
+- Chosen allied asset gets +X power until end of turn, where X is the number of cards discarded this way.
+- Scratch X.
 - Regroup all Scratch Company units in your Reserves.","MYTHIC","false"
 "Armored Charge","MANEUVER","SOULLESS","0","3","Regroup chosen allied Mechanized unit. It heals 5 and gains 2 armor.","COMMON","false"
 "Macrocannon Barrage","MANEUVER","SOULLESS","0","3","Distribute 5 damage among up to 5 chosen units.","UNCOMMON","false"
