@@ -12,3 +12,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0299 | Make *Growing Legion* executable (wave A, first Concordia card, #185 (2)) | done |
 | T-0300 | Make *Icewind Regent* executable (wave A) | done |
 | T-0301 | Make *Leyline Regrowth* executable (wave A) | done |
+| T-0302 | Make *Seismic Instability* executable (wave A) | done |

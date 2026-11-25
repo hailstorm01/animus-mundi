@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
@@ -69,3 +69,4 @@ In a new file `pkg/engine/cards_concordia_seismic_test.go`, from the CSV text, l
 - 2026-11-25 rules-test-author: applied note 1. `TestCard_SeismicInstability_StructuresTakeBothInstances` now also collects each structure's damage events in log order and checks their `Event.Raw` is 3 then 4, so swapping the two steps fails it. Nothing else changed. `go vet ./pkg/engine` is clean. Helpers requested: none. Set to `tests-review`.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed. A lead probe with the Definition, since reverted, passes all 11, and all 13 mutants (both amounts, swapped amounts, step order, zones, kinds, allegiances, Scratch excluded, kill instead of damage) fail at least one. The committed test file is LF and gofmt-clean. Set to `ready`.
 - 2026-11-25 kernel-engineer: added ability definition for "Seismic Instability" to `concordiaDefs` in `pkg/engine/cards/concordia.go` with two untargeted `OpDealDamage` steps (amount 3 to all Main Theater assets, amount 4 to all Main Theater structures), reusing existing shapes (`ability.OpDealDamage`, `ability.SubjectAll`, and zone/kind filters as in *Despoiler's Emergence*). Removed card name from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Verified with `go test ./pkg/engine -run TestCard_SeismicInstability` (all 11 pass), `go test ./pkg/cardcheck -run TestCards_Executable` (pass), `go tool task check` (clean), `go tool task sim` (clean), and `go tool task sim-matrix` (24 starter + 24 stress matrix runs all pass with invariants holding). Set to `review`.
+- 2026-11-25 lead-architect (wave A run, session 4): approved (D5, round 1), merged as c255b1c8. The diff is the task's Definition and the one name off `NotYetExecutable`, inside `Allowed Files`. The test file changed only in 4e5d7b06 and 48340bce, both before the implementation. No new shape, no card name in engine code. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_SeismicInstability`, `go test ./pkg/cardcheck -run TestCards_Executable`, `go tool task check`, `go tool task sim`, `go tool task sim-matrix`, all 0. The merge has the same tree as the reviewed branch. The Animus vs Path sim is unchanged (P0 58.5% / P1 39.5% / draws 2.0%). The Flash run left no denied action.
