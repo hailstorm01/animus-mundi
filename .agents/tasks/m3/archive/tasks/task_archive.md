@@ -13,3 +13,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0300 | Make *Icewind Regent* executable (wave A) | done |
 | T-0301 | Make *Leyline Regrowth* executable (wave A) | done |
 | T-0302 | Make *Seismic Instability* executable (wave A) | done |
+| T-0303 | Make *Soul Whip* executable (wave A) | done |

@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0303](T-0303-soul-whip.md) | Make Soul Whip executable (a chosen allied unit deals its power, wave A, card, flash) | tests |

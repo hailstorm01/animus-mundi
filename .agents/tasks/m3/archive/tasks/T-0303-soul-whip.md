@@ -4,7 +4,7 @@ title: Make Soul Whip executable (a chosen allied unit deals its power, wave A, 
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0303-soul-whip
 depends_on: [T-0302]
 claims: [card:Soul Whip]
@@ -72,3 +72,4 @@ In a new file `pkg/engine/cards_concordia_soulwhip_test.go`, from the CSV text, 
 - 2026-11-25 rules-test-author: round 1 note 1 fixed in TestCard_SoulWhip_WardedOpposingUnitNotOffered (second allied and second opposing unit without Ward; the second question must offer exactly the two non-Ward opposing units). Nothing else changed. Set to tests-review.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed (the note's "§6" should read `FR-MOD-001` §1, the Single-Option Fast-Path, FRD 01 line 449). A lead probe with the Definition, since reverted, passes all 14, and all 21 mutants (dealer, target, fixed amounts, allegiances, kinds, zones, an optional slot, kill, all, a doubled step) fail at least one. `go vet`, `gofmt` and `cardtown lint rules` are clean. Set to `ready`.
 - 2026-11-25 kernel-engineer: implemented Soul Whip in pkg/engine/cards/concordia.go as specified in Definition (two Target slots: allied unit, then opposing unit; one OpDealDamage step with Target: 1, Dealer: 1, Amount from ValueSourcePower, reusing the OpDealDamage Dealer shape from Ambush Tactics). Removed Soul Whip from NotYetExecutable in pkg/engine/cards/cards.go. Commands run: go test ./pkg/engine -run TestCard_SoulWhip (all 14 tests pass), go test ./pkg/cardcheck -run TestCards_Executable (passes), go tool task check (gofmt, vet, test, cardtown lint --all pass), go tool task sim (passes starter decks, 200 games, all invariants hold), go tool task sim-matrix (passes 24 starter and 24 stress runs, all invariants hold). Set to review.
+- 2026-11-25 lead-architect (wave A run, session 5): approved (D5, round 1), merged as d9272bc3. The diff is the task's Definition and the one name off `NotYetExecutable`, inside `Allowed Files`. The test file changed only in 656394a5 and 311099f4, both before the implementation. No new shape, no card name in engine code. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_SoulWhip`, `go test ./pkg/cardcheck -run TestCards_Executable`, `go tool task check`, `go tool task sim`, `go tool task sim-matrix`, all 0. The merge has the same tree as the reviewed branch. The Animus vs Path sim is unchanged (P0 58.5% / P1 39.5% / draws 2.0%). The Flash run left no denied action.
