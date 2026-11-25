@@ -4,7 +4,7 @@ title: Make Icewind Regent executable (exhaust to return a chosen unit, wave A, 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0300-icewind-regent
 depends_on: [T-0299]
 claims: [card:Icewind Regent]
@@ -59,3 +59,4 @@ In a new file `pkg/engine/cards_concordia_regent_test.go`, from the CSV text, lo
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 2): written against 762f2ded, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists, and no other card prints an unrestricted exhaust-to-return. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_regent_test.go` with the seven listed tests: `TestCard_IcewindRegent_ReturnsChosenOpposingUnit`, `_AnyUnitInAnyZoneOffered`, `_MayReturnItself`, `_ReturnsControlledUnitToItsOwner`, `_ReturnsScratchCompanyToOwnersHand`, `_WardedOpposingUnitNotOffered`, `_NotOfferedWhileExhausted`. A file-local helper `regentChoose` picks an option by asset ID (option order is not specified). Helpers requested: none. Nothing left out. `go vet` is clean and `cardtown lint rules` passes. Six tests fail because the card has no activated ability yet; `NotOfferedWhileExhausted` passes now, which is expected before implementation. Set to `tests-review`.
