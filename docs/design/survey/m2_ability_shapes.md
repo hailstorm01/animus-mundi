@@ -149,7 +149,7 @@ FRD 02 has 26 primitives. Seventeen are `Op`s, two are folded into other shapes,
 | FRD 02 primitive | `ability` | Notes |
 | :--- | :--- | :--- |
 | `DEAL_DAMAGE` | `OpDealDamage` | `damageSource` → `Step.Dealer` (`SVY-R27`) |
-| `HEAL`, `ADD_ARMOR`, `KILL`, `RETURN_TO_HAND`, `SCRATCH`, `GAIN_CONTROL`, `MORPH_SCRATCH` | `OpHeal`, `OpAddArmor`, `OpKill`, `OpReturnToHand`, `OpScratch`, `OpGainControl`, `OpMorphScratch` | `OpKill` skips a Headquarters (`SVY-R46`) |
+| `HEAL`, `ADD_ARMOR`, `KILL`, `RETURN_TO_HAND`, `SCRATCH`, `GAIN_CONTROL`, `MORPH_SCRATCH` | `OpHeal`, `OpAddArmor`, `OpKill`, `OpReturnToHand`, `OpScratch`, `OpGainControl`, `OpMorphScratch` | `OpKill` skips a Headquarters (`SVY-R55`) |
 | `MODIFY_STAT` | `OpModifyStat` | `Step.Stat` (power or Maximum Health) and `Step.Until`. No `PERSISTENT` |
 | `MOVE_ZONE` | `OpMoveZone` | `Step.To`. No `CHOSEN_ZONE` |
 | `DRAW_CARD` | `OpDraw` | `SubjectController` or `SubjectOpponents`. "Each player" waits on #71 |
@@ -185,7 +185,7 @@ Each of these waits for the first card that needs it, and none is reachable by a
 | A granted triggered ability ("gains 'Overkill: Ready this unit.'") | *Redline Infusion*, design note Open Question 12 |
 | A count `Value`, reading `countPileCards` | #138 (applied; it names the reader the first count uses) |
 | A targeted distributed pool | `FR-TGT-002`, *Macrocannon Barrage* |
-| A Headquarters killed outright | Unruled (`SVY-R46`) |
+| A Headquarters killed outright | Ruled, provisional (`SVY-R55`): no shape is needed |
 | A combat-kill attacker that dies in the same sweep; a pile card that leaves and returns while targeted | Design note Open Questions 9 and 10 |
 
 The rest of FRD 02's vocabulary that §3 marks *not built* (ValueToken aggregates, an opponent's-turn gate, from-zone gates, else branches, `negateSubtypes`, `readiness` filters, other stat operators, `PERSISTENT`, `SHUFFLED_IN`, `CHOSEN_ZONE`, `MOVE_CARD_ZONE`, `WOULD_DEPLOY`, subtype grants, aura modifiers other than power and keywords, and the four primitives in §3.3's last row) has no card yet. It should come back only when the M3 survey finds a card that prints it.

@@ -4,7 +4,7 @@ title: "The M2 survey and the ability shapes write-up move to docs/design/survey
 kind: harness
 tier: sonnet
 wave: none (M3 design note Deliverable 3a)
-status: review
+status: done
 branch: m3/T-0298-survey-folder
 depends_on: [T-0297]
 claims: [folder:docs/design/survey, func:fences.readMarkerIDs, func:fences.Reads, const:fences.surveyDir]
@@ -92,3 +92,4 @@ requirements: []
   2. Done: `readMarkerIDs`' comment now says it reads every survey (`*.md` directly in `surveyDir`, in name order), records repeated ruling IDs in `duplicates`, and errors when `surveyDir` is unreadable or no survey has the section.
   3. Done: `Analyze`'s comment adds that it reports each survey ruling ID defined twice.
   - Ran, exit codes read directly: `go test ./pkg/toolchain/linter/fences ./cmd/cardtown -count=1` exit 0; `go tool task check` exit 0; `go tool task sim-compare` exit 0 ("[PASS] starter and stress sims match main byte for byte"). Acceptance cases 9 to 11 are unchanged by this round (no moves or links touched).
+- 2026-11-24 lead-architect: approved after round 1 (three `fences.go` notes, all fixed in 34c66569). Re-ran in a review worktree: the two test packages ok, `go tool task check` exit 0, `go tool task sim-compare` exit 0, `go tool task sim` exit 0 (P0 58.5% / P1 39.5% / draws 2.0%, unchanged). Case 9: no missing link. Case 10: only frozen history, the files other personas update, #181's row, this file, and `TestReads`' false case. Case 11: 34 and 3 commits of history. The edited and new tests fail on the test commit a073363d. Merged into `main` (ec56a67a). #181 (4) applied with this commit. Next: Deliverable 4, the M3 ability survey.
