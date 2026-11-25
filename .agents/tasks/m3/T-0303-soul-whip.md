@@ -4,7 +4,7 @@ title: Make Soul Whip executable (a chosen allied unit deals its power, wave A, 
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0303-soul-whip
 depends_on: [T-0302]
 claims: [card:Soul Whip]
@@ -70,3 +70,4 @@ In a new file `pkg/engine/cards_concordia_soulwhip_test.go`, from the CSV text, 
 - 2026-11-25 lead-architect: tests round 1 returned (D4). Each test agrees with the FRD 01 text it cites. With the lead's probe, 13 of 14 pass. Set to `tests` for one note:
   1. `TestCard_SoulWhip_WardedOpposingUnitNotOffered` fails against a correct definition ("two target questions are asked, got 0"): each slot has one legal unit, so neither choice is asked (`FR-MOD-001` §6, the single-option fast path). Put a second allied unit without Ward and a second opposing unit without Ward in its first scene, so both questions are asked, and check that the second question offers exactly the two opposing units without Ward. Change nothing else.
 - 2026-11-25 rules-test-author: round 1 note 1 fixed in TestCard_SoulWhip_WardedOpposingUnitNotOffered (second allied and second opposing unit without Ward; the second question must offer exactly the two non-Ward opposing units). Nothing else changed. Set to tests-review.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed (the note's "§6" should read `FR-MOD-001` §1, the Single-Option Fast-Path, FRD 01 line 449). A lead probe with the Definition, since reverted, passes all 14, and all 21 mutants (dealer, target, fixed amounts, allegiances, kinds, zones, an optional slot, kill, all, a doubled step) fail at least one. `go vet`, `gofmt` and `cardtown lint rules` are clean. Set to `ready`.
