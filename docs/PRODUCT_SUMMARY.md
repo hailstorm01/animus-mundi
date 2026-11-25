@@ -153,7 +153,7 @@ Berserk N was retired on 2026-10-28 and replaced by Overkill (`SVY-R12`, [Design
   - `cardtown lint frd` enforces a single owner per requirement ID and rejects keyword definitions restated outside FRD 01.
 - **Native Go Developer CLI & Automated Linter Suite (`cardtown lint`, `cmd/cardtown`)**:
   - Blazing-fast sub-100ms native Go toolchain replacing legacy PowerShell scripts.
-  - Validates **208 defined requirement IDs** (160 active, 48 subsumed traceability stubs) and verifies **2,037 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`). Copies in `docs/frd/reference/` are not scanned.
+  - Validates **208 defined requirement IDs** (160 active, 48 subsumed traceability stubs) and verifies **2,074 cross-references** across 7 FRD files, with **0 dangling references** (`cardtown lint frd`). Copies in `docs/frd/reference/` are not scanned.
   - Validates CSV table integrity, column consistency, and target enum conformance across 10 balance sheets (`cardtown lint sheets`).
   - Audits card rules text against forbidden terminology (`friendly` $\rightarrow$ `allied`, raw `~`, raw `attack` $\rightarrow$ `power`) (`cardtown lint syntax`).
 - **Workflow Tooling & Pre-commit Hooks**:
