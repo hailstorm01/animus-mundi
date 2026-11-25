@@ -4,7 +4,7 @@ title: Make Soul Whip executable (a chosen allied unit deals its power, wave A, 
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0303-soul-whip
 depends_on: [T-0302]
 claims: [card:Soul Whip]
