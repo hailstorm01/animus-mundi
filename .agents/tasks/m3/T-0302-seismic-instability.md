@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
@@ -67,3 +67,4 @@ In a new file `pkg/engine/cards_concordia_seismic_test.go`, from the CSV text, l
 - 2026-11-25 lead-architect: tests round 1 returned (D4). Each test agrees with the FRD 01 text it cites, and the lead's probe passes all 11. Of 13 mutants of the Definition, 12 fail at least one test. Set to `tests` for one note:
   1. `TestCard_SeismicInstability_StructuresTakeBothInstances` doesn't check the order the task names ("take 3 and then 4"): swapping the two steps passes every test. Also check that each structure's two damage events, in log order, carry the raw damage 3 and then 4 (`Event.Raw`). Change nothing else.
 - 2026-11-25 rules-test-author: applied note 1. `TestCard_SeismicInstability_StructuresTakeBothInstances` now also collects each structure's damage events in log order and checks their `Event.Raw` is 3 then 4, so swapping the two steps fails it. Nothing else changed. `go vet ./pkg/engine` is clean. Helpers requested: none. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed. A lead probe with the Definition, since reverted, passes all 11, and all 13 mutants (both amounts, swapped amounts, step order, zones, kinds, allegiances, Scratch excluded, kill instead of damage) fail at least one. The committed test file is LF and gofmt-clean. Set to `ready`.
