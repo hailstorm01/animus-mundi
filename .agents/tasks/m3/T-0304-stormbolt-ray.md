@@ -4,7 +4,7 @@ title: Make Stormbolt Ray executable (deploy damage and return itself, wave A, c
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0304-stormbolt-ray
 depends_on: [T-0303]
 claims: [card:Stormbolt Ray]
