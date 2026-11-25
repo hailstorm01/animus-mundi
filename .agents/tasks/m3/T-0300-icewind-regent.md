@@ -4,7 +4,7 @@ title: Make Icewind Regent executable (exhaust to return a chosen unit, wave A, 
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0300-icewind-regent
 depends_on: [T-0299]
 claims: [card:Icewind Regent]
@@ -51,13 +51,14 @@ In a new file `pkg/engine/cards_concordia_regent_test.go`, from the CSV text, lo
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_IcewindRegent`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_IcewindRegent`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 2): written against 762f2ded, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists, and no other card prints an unrestricted exhaust-to-return. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_regent_test.go` with the seven listed tests: `TestCard_IcewindRegent_ReturnsChosenOpposingUnit`, `_AnyUnitInAnyZoneOffered`, `_MayReturnItself`, `_ReturnsControlledUnitToItsOwner`, `_ReturnsScratchCompanyToOwnersHand`, `_WardedOpposingUnitNotOffered`, `_NotOfferedWhileExhausted`. A file-local helper `regentChoose` picks an option by asset ID (option order is not specified). Helpers requested: none. Nothing left out. `go vet` is clean and `cardtown lint rules` passes. Six tests fail because the card has no activated ability yet; `NotOfferedWhileExhausted` passes now, which is expected before implementation. Set to `tests-review`.
 - 2026-11-25 lead-architect: tests approved (D4, round 1), each checked against `FR-ACT-001`, `FR-ACT-002`, `FR-TGT-001`, `FR-ZON-003` to `005` and `FR-KWD-002h`. A lead probe with the Definition, since reverted, passes all seven. Mutants without the exhaust cost, with an opposing-only, asset-wide or Main Theater-only filter each fail at least two. Set to `ready`.
+- 2026-11-25 kernel-engineer: added Icewind Regent definition to concordiaDefs in pkg/engine/cards/concordia.go with Activated ability (CostExhaustSelf cost, Effect with one unit target filter and OpReturnToHand step targeting target 0). Removed Icewind Regent from NotYetExecutable in pkg/engine/cards/cards.go. Reused CostExhaustSelf (as in Cliff of Portents) and OpReturnToHand with SubjectTarget (as in Ambush Tactics mode 2). Commands ran: 'go test ./pkg/engine -run TestCard_IcewindRegent' passed (1.104s), 'go tool task check' passed (gofmt, go vet, all unit/package tests, all cardtown linters clean), 'go tool task sim' passed (200 matches with all invariants holding), and 'go tool task sim-matrix' passed (all 24 starter deck matches and 24 stress deck matches clean, exit 0). Set to review.

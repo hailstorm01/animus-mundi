@@ -41,7 +41,6 @@ var NotYetExecutable = []string{
 	"Hellfire Armorers",
 	"Hourglass Diviner",
 	"Hurricane Outrigger",
-	"Icewind Regent",
 	"Inspired Salvage",
 	"Land Fortress",
 	"Leyline Regrowth",
