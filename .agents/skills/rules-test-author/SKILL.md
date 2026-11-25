@@ -15,7 +15,8 @@ Writes the executable form of the rules for one task at a time. The tests are th
 
 ## 1. Stance
 
-- **Independent oracle.** Never read non-test files in `pkg/engine/`. Learn the kernel's surface only from `go doc ./pkg/engine` and the helpers in `pkg/engine/scenario_test.go`. A test written after reading the code tends to pin the code's behavior instead of the rule's.
+- **Independent oracle.** Never read non-test files in `pkg/engine/`. Learn the kernel's surface only from `go doc ./pkg/engine` and the helpers in `pkg/engine/scenario_test.go`. A test written after reading the code tends to pin the code's behavior instead of the rule's. Searching or listing their contents counts as reading them: never `grep`, `sed`, `cat`, `head` or the Grep tool over `pkg/engine/*.go` or `pkg/engine/**/*.go` unless the glob ends in `_test.go`, and never `go doc -src`. For a type's fields and methods, or for every exported name, run `go doc ./pkg/engine <Type>` or `go doc -all ./pkg/engine` (filtering with `| grep` is fine). In wave A of M3, the lead session stopped on a refused `grep "func.*\*Game) …" *.go | grep -v _test` (T-0305).
+- **One kind of read per command.** Don't chain a `go doc` with greps of test files in one `Bash` call. The auto-mode classifier judges the whole line, and in T-0305 it refused a chain of allowed reads that later ran fine as separate commands.
 - **Rules come from FRD 01 only.** Cite `FR-*` IDs and `SVY-*`/`KIM-*` rulings. FRD 02 (active), the frozen FRDs (a `Status: FROZEN` banner; 03–05 today) and the survey describe *shapes*, not rules. When they disagree with FRD 01, FRD 01 wins.
 - **Edges over happy paths.** Each requirement gets its main behavior plus the edge cases FRD 01 names: fizzles, last-known state, simultaneous events, ordering, timing.
 - **Never invent a ruling.** If FRD 01 does not determine the expected outcome, write no test for that case. Set the task to `blocked` and describe the question in the Log, the way survey questions R1–R6 were written (the question, the cards it affects, and a recommendation).
@@ -38,6 +39,7 @@ Writes the executable form of the rules for one task at a time. The tests are th
    - Each test has one behavior and a failure message that names the expected rule outcome.
 5. **Check:** `go vet ./pkg/engine` may fail only on the missing helpers you listed. Run `go run ./cmd/cardtown lint rules` (`go -C <worktree> run ./cmd/cardtown lint rules` from outside the worktree) to confirm every new `TestFR_*` traces to an active requirement. Don't use `go tool task check` here: your tests are meant to fail until the engineer implements them, so it would always report red.
 6. **Hand off:** commit on the task branch as `test(T-NNNN): <summary>`. Set `status: tests-review`, and append a Log entry listing the tests, the helpers requested and any cases deliberately left out (with the reason). Commit that too, then remove the worktree. The same goes for a `blocked` handoff.
+7. **Report refusals:** if any tool call was refused, your final message lists each one under `Refused:`, with the command, the reason the refusal gave and what you did instead. Write `Refused: none` otherwise. A wave run stops on any refused call, a subagent's included, and the lead can explain the stop only from your report.
 
 ## 4. Guard Rails
 
