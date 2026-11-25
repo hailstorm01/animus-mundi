@@ -1,7 +1,7 @@
 # M2 Starter Set Ability Survey (Animus vs Path)
 
 - **Date:** 2026-10-19
-- **Source:** `data/cards/*.csv` at `8cb8bc2`; [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) Domains 3–4 (frozen design intent); [FRD 01](../frd/01_Game_Rules_FRD.md) v3.4.
+- **Source:** `data/cards/*.csv` at `8cb8bc2`; [FRD 02](../../frd/02_Card_Data_Pipeline_FRD.md) Domains 3–4 (frozen design intent); [FRD 01](../../frd/01_Game_Rules_FRD.md) v3.4.
 - **Purpose:** map every Animus and Path card onto FRD 02's ability model, find what FRD 02 cannot express, and order the M2 kernel work by how many cards each step unlocks. This is the first draft of M2 deliverable 5 (the ability write-up).
 
 FRD 01 is the rules source. This document names requirement IDs and never restates the rules.
@@ -13,7 +13,7 @@ FRD 01 is the rules source. This document names requirement IDs and never restat
 - **82 cards in M2:** 40 Animus, 40 Path, and the 2 starter Headquarters (Animoceps Rager, Eternal Watchman). Rift and Encampment moved to M3 on 2026-10-19; their rows stay in §6 for reference. **9 already execute** (standalone keywords only), leaving **73 to model**.
 - **By FRD 02 ability type:** 33 triggered, 25 Maneuver effects, 5 activated, 8 continuous-only, 2 replacement watchers.
 - **FRD 02 fit:** all 73 cards map onto FRD 02's six ability types and existing primitives. There is **one real schema gap** (triggers that work off the battlefield, §3). The other problems were about *when* targets are chosen (§4, R3–R4); since 2026-10-20 every target is locked on placement.
-- **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
+- **Ready-made test cases:** 6 starter cards already have full FRD 02 blueprints in [the benchmark reference](../../frd/reference/02_Benchmark_Card_Blueprints.md): Infested Apostle, Funeral Fungus, Veil Render, Mutation Swell, Allshan's Battle Trance and Animoceps Spore Cloud.
 - **FRD 01 reach:** the starter set reaches **27 of the 30** unpinned FRD 01 requirements, including `FR-SET-001` because starter decks must be construction-legal (Q1). It does not reach `FR-ENT-102` (tucking), `FR-KWD-002n` (Regroup) or `FR-TRG-006` (delayed triggers).
 - **Rulings:** R1–R6 (plus the R4a follow-up) were ruled on 2026-10-19, R7 on 2026-10-20, R8–R11 on 2026-10-21, R13–R17 on 2026-10-23, R18 on 2026-10-26, R12 and R19 on 2026-10-28, R20–R24 on 2026-10-29, R25–R31 on 2026-10-30, R32–R35 on 2026-11-02, and R36–R38 on 2026-11-04; R3 was revised on 2026-10-20 (targets locked on placement, with new text for Animoceps Spores and Steel Rain), and R5 on 2026-10-29. They are recorded in FRD 01 as `SVY-R1`–`SVY-R38`; R12 (Berserk is replaced by Overkill) is in v3.14. Nothing in the starter set is blocked.
 

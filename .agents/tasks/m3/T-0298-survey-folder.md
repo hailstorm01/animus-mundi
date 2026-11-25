@@ -4,7 +4,7 @@ title: "The M2 survey and the ability shapes write-up move to docs/design/survey
 kind: harness
 tier: sonnet
 wave: none (M3 design note Deliverable 3a)
-status: in-progress
+status: review
 branch: m3/T-0298-survey-folder
 depends_on: [T-0297]
 claims: [folder:docs/design/survey, func:fences.readMarkerIDs, func:fences.Reads, const:fences.surveyDir]
@@ -76,3 +76,9 @@ requirements: []
 
 ## Log
 - 2026-11-24 lead-architect: written from M3 design note Deliverable 3a. Status `ready` (a harness task skips `tests`), tier `sonnet` (needs `git mv`).
+- 2026-11-24 kernel-engineer (sonnet): done, `review`. Commits: `test(T-0298)` (edits to `setupFixtureRepo`, Case24, `TestReads`, `TestSelectChanged_Case1_Paths`; new Case48-52, which failed before the feature), then `feat(fences)` (the `git mv` of both files, `fences.go`, reference updates).
+  - `fences.go`: `SurveyFile` deleted, `surveyDir` is `docs/design/survey`. `readMarkerIDs` reads the `*.md` files directly in the folder in name order (`os.ReadDir` sorts) through a new `readSurvey` (the row rules are unchanged). A repeated ID goes into `markerIDs.duplicates`, which `Analyze` appends before the sort; the first definition's status decides markers. A missing or empty folder, or no file with a Ruling Questions section, is an error naming `docs/design/survey`. `Reads` accepts a `*.md` directly in the folder. Reuse: `violationItem` and the existing sorted violation list; no new shape.
+  - Case 49's expected line is `m3_x.md:7` and `m2_...survey.md:8` (the fixture's R7 is on line 8, so the task's example numbers are only illustrative). Case 51's .txt and subfolder files carry a Ruling Questions table with R71 and R72.
+  - Links: `](../` became `](../../` in the two moved files; the write-up's sibling link to the survey still resolves. Reference updates: `pkg/engine/doc.go`, `docs/AGENTS.md` 12-13, `docs/architecture/m2-ability-model.md` 3 and 244, `docs/architecture/m3-full-catalog.md` 5.
+  - Ran (in the worktree): `go test ./pkg/toolchain/linter/fences ./cmd/cardtown -count=1` ok; `go test ./...` ok; `go tool task check` ok (ends in "All executed checks PASSED"); `go tool task sim-compare` "[PASS] starter and stress sims match main byte for byte".
+  - Case 9: a shell loop over every `](.…)` link in both files found no missing target. Case 10: `git grep` for the two old paths (see the final report for what remains). Case 11: `git log --follow` on both files.

@@ -166,7 +166,7 @@
 //
 // Where FRD 01 leaves a case undefined, the kernel picks a behavior and marks
 // it with an "OPEN(KIM-...)" comment pointing at docs/frd/keyword_interaction_matrix.md
-// or an "OPEN(SVY-...)" comment pointing at the survey's ruling questions in
-// docs/design/m2_starter_set_ability_survey.md. The fences linter
+// or an "OPEN(SVY-...)" comment pointing at the ruling questions of the surveys under
+// docs/design/survey/. The fences linter
 // (cardtown lint fences) checks both against those files.
 package engine

@@ -31,12 +31,9 @@ var (
 // modulePath is the Go module path that import rules are written against.
 const modulePath = "animus-mundi"
 
-// SurveyFile is the ability survey's file name, in surveyDir. OPEN(...) markers may cite
-// the items of its Ruling Questions table.
-const SurveyFile = "m2_starter_set_ability_survey.md"
-
-// surveyDir is the repo-relative directory that holds SurveyFile, slash-separated.
-const surveyDir = "docs/design"
+// surveyDir is the repo-relative directory of the surveys, slash-separated. OPEN(...)
+// markers may cite the items of the Ruling Questions table of any *.md directly in it.
+const surveyDir = "docs/design/survey"
 
 // allowedImports maps a package directory to the in-module import paths (relative to
 // the module root) its non-test files may use. Packages not listed are not checked.
@@ -71,6 +68,8 @@ type cardInfo struct {
 // OPEN(...) markers are checked against.
 type markerIDs struct {
 	openMatrix, ruledMatrix, openSurvey, ruledSurvey map[string]bool
+	// duplicates holds a violation for each ruling ID that a survey defines a second time.
+	duplicates []violationItem
 }
 
 // Analyze scans non-test Go files under pkg/ (except pkg/engine/cards and pkg/toolchain)
@@ -94,6 +93,7 @@ func Analyze(repoRoot string) (*Report, error) {
 	if err != nil {
 		return nil, err
 	}
+	items = append(items, ids.duplicates...)
 	importItems, err := checkAllImports(repoRoot, files)
 	if err != nil {
 		return nil, err
@@ -204,19 +204,48 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 		}
 	}
 
-	openSurvey := make(map[string]bool)
-	ruledSurvey := make(map[string]bool)
-	surveyPath := filepath.Join(repoRoot, surveyDir, SurveyFile)
-	sContent, err := os.ReadFile(surveyPath)
+	ids := &markerIDs{openMatrix: openMatrix, ruledMatrix: ruledMatrix, openSurvey: make(map[string]bool), ruledSurvey: make(map[string]bool)}
+	entries, err := os.ReadDir(filepath.Join(repoRoot, filepath.FromSlash(surveyDir)))
 	if err != nil {
-		return nil, fmt.Errorf("reading %s: %w", SurveyFile, err)
+		return nil, fmt.Errorf("reading %s: %w", surveyDir, err)
 	}
-	surveyLines := strings.Split(string(sContent), "\n")
+	defined := make(map[string]string) // survey ID -> "file:line" of its first definition
+	sections := 0
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+			continue
+		}
+		rel := surveyDir + "/" + e.Name()
+		content, err := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", rel, err)
+		}
+		found, err := readSurvey(rel, string(content), ids, defined)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			sections++
+		}
+	}
+	if sections == 0 {
+		return nil, fmt.Errorf("reading %s: no survey with a Ruling Questions section", surveyDir)
+	}
+	return ids, nil
+}
+
+// readSurvey adds the rows of one survey's Ruling Questions table to ids, and reports
+// whether the survey has that section. defined maps each ID read so far to the file and
+// line of its first definition; a later definition becomes a violation in ids.duplicates
+// and does not change the ID's status.
+func readSurvey(rel, content string, ids *markerIDs, defined map[string]string) (bool, error) {
+	found := false
 	inRulingQuestions := false
-	for _, line := range surveyLines {
+	for i, line := range strings.Split(content, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "## 4. Ruling Questions") {
 			inRulingQuestions = true
+			found = true
 			continue
 		}
 		if inRulingQuestions && (strings.HasPrefix(trimmed, "## ") || strings.HasPrefix(trimmed, "---")) {
@@ -236,14 +265,24 @@ func readMarkerIDs(repoRoot string) (*markerIDs, error) {
 			continue
 		}
 		svyID := "SVY-" + cleanID
+		at := fmt.Sprintf("%s:%d", rel, i+1)
+		if first, dup := defined[svyID]; dup {
+			ids.duplicates = append(ids.duplicates, violationItem{
+				file: rel,
+				line: i + 1,
+				msg:  fmt.Sprintf("%s is already defined at %s", svyID, first),
+			})
+			continue
+		}
+		defined[svyID] = at
 		lastCell := strings.TrimSpace(cells[len(cells)-2])
 		if strings.Contains(lastCell, "Ruled") {
-			ruledSurvey[svyID] = true
+			ids.ruledSurvey[svyID] = true
 		} else {
-			openSurvey[svyID] = true
+			ids.openSurvey[svyID] = true
 		}
 	}
-	return &markerIDs{openMatrix: openMatrix, ruledMatrix: ruledMatrix, openSurvey: openSurvey, ruledSurvey: ruledSurvey}, nil
+	return found, nil
 }
 
 // scannedFiles lists the non-test Go files under pkg/ that the card-name and marker
@@ -383,7 +422,7 @@ func Lint(repoRoot string, _ []string) (bool, error) {
 
 // Reads reports whether a change to path (repo-relative, slash-separated and lower-cased)
 // can affect the fences: any Go file under aliasRoots (the alias check reads them all),
-// a card sheet, the keyword matrix or the ability survey.
+// a card sheet, the keyword matrix or a survey (a *.md directly in surveyDir).
 func Reads(path string) bool {
 	if strings.HasSuffix(path, ".go") {
 		for _, root := range aliasRoots {
@@ -393,9 +432,11 @@ func Reads(path string) bool {
 		}
 		return false
 	}
+	if rest, ok := strings.CutPrefix(path, strings.ToLower(surveyDir)+"/"); ok && strings.HasSuffix(rest, ".md") && !strings.Contains(rest, "/") {
+		return true
+	}
 	return (strings.HasPrefix(path, strings.ToLower(cardsheet.Dir)+"/") && strings.HasSuffix(path, ".csv")) ||
-		path == strings.ToLower(specdoc.FRDDir+"/"+specdoc.MatrixFile) ||
-		path == strings.ToLower(surveyDir+"/"+SurveyFile)
+		path == strings.ToLower(specdoc.FRDDir+"/"+specdoc.MatrixFile)
 }
 
 // goFilesUnder lists non-test Go files under a repo-relative directory, slash-separated.

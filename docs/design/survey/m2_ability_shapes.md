@@ -1,17 +1,17 @@
 # M2 Ability Shapes: the `ability` Vocabulary and What Changed From FRD 02
 
 - **Milestone:** M2 → M3 (M2 Deliverable 7, carried over) | **Date:** 2026-11-22 | **Author:** `lead-architect`
-- **Source:** `go doc -all ./pkg/engine/ability` and `pkg/engine/cards` at `09c7b523`; frozen [FRD 02](../frd/reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md) v1.3 Domains 3–4; the [M2 survey](m2_starter_set_ability_survey.md) §3; the [M2 design note](../architecture/m2-ability-model.md).
+- **Source:** `go doc -all ./pkg/engine/ability` and `pkg/engine/cards` at `09c7b523`; frozen [FRD 02](../../frd/reference/02_Card_Data_Pipeline_FRD_v1.3_frozen.md) v1.3 Domains 3–4; the [M2 survey](m2_starter_set_ability_survey.md) §3; the [M2 design note](../../architecture/m2-ability-model.md).
 - **Purpose:** the input `pm-frd-drafter` rewrites FRD 02/03 from at M3 start (`PRODUCT_SUMMARY.md` §4, M3), and the vocabulary the M3 ability survey maps the remaining cards onto.
 
-The package is the authority. This file indexes it and doesn't copy its field comments: for a field's exact meaning, read `go doc -all ./pkg/engine/ability` (or `ability.go` and `keywords.go`, 623 lines together). Rules behavior is cited by `FR-*` and `SVY-R*` IDs from [FRD 01](../frd/01_Game_Rules_FRD.md), never restated.
+The package is the authority. This file indexes it and doesn't copy its field comments: for a field's exact meaning, read `go doc -all ./pkg/engine/ability` (or `ability.go` and `keywords.go`, 623 lines together). Rules behavior is cited by `FR-*` and `SVY-R*` IDs from [FRD 01](../../frd/01_Game_Rules_FRD.md), never restated.
 
 ---
 
 ## 1. The Model in Brief
 
-- **One `ability.Def` per card**, a plain Go value in `cards.Defs`, keyed by card name (`animus.go`, `path.go`, `headquarters.go`; 73 definitions). The kernel interprets it ([ADR 0004](../architecture/decisions/0004-abilities-as-data-in-go.md)). There's no JSON and no blueprint ID yet: the M3 catalog export writes these values out.
-- **Standalone keywords aren't abilities.** `engine.LoadCards` parses each standalone keyword line in the CSV's rules text with `ability.ParseKeywordLine` into an `ability.Keywords` set ([ADR 0008](../architecture/decisions/0008-keywords-live-in-ability.md)). A card with only keyword lines needs no `Def`.
+- **One `ability.Def` per card**, a plain Go value in `cards.Defs`, keyed by card name (`animus.go`, `path.go`, `headquarters.go`; 73 definitions). The kernel interprets it ([ADR 0004](../../architecture/decisions/0004-abilities-as-data-in-go.md)). There's no JSON and no blueprint ID yet: the M3 catalog export writes these values out.
+- **Standalone keywords aren't abilities.** `engine.LoadCards` parses each standalone keyword line in the CSV's rules text with `ability.ParseKeywordLine` into an `ability.Keywords` set ([ADR 0008](../../architecture/decisions/0008-keywords-live-in-ability.md)). A card with only keyword lines needs no `Def`.
 - **`Def.Text` ties a definition to the card text.** It lists the exact non-keyword lines the `Def` implements. `LoadCards` removes each one from `Card.Unsupported`. If a `Text` line is missing from the CSV, that's a load error, so a reworded card stops running instead of running stale logic. A card with any line left in `Unsupported` can't be deployed or enacted. `cards.NotYetExecutable` lists those, and it's empty at the end of M2.
 - **No field is set where nothing reads it.** `engine.checkShapeReads` (`cardload.go`) rejects these at load time: `Trigger.Watches` off `HookAttacks`, `Step.Split` anywhere but an `OpAddArmor` `SubjectPick` over assets with `UpTo` 0, `Step.ControllerChooses` off `OpDiscard`, and an aura's `Static.Filter.Stat` (#162, T-0278).
 - **New vocabulary arrives only through a `shape` task.** A `card` task only combines values that already exist (design note, Boundaries).
@@ -139,7 +139,7 @@ Survey §3 found these gaps at M2 start. The design note's Open Question 2 decid
 | 24 | `ReplacementWatcherDef.interceptHook` (`WOULD_TAKE_DAMAGE`, `WOULD_BE_DESTROYED`, `WOULD_DEPLOY`) + `replacementAction` | `Would`: `WouldBeDestroyed` with `Steps`, and `WouldBeDealtDamage` with no `Steps`, where the damage is always dealt to the source (`FR-REP-004` Stage 1). The `REDIRECT_DAMAGE_TARGET` primitive is folded in. `WOULD_DEPLOY` isn't built: Deploys Exhausted is a keyword | The sweep order and choice rulings are `SVY-R20`–`SVY-R24` |
 | 25 | `ManeuverEffectDef` (`targeting`, `effect`, `modalCount`, `options`) and the root `additionalDeploymentCosts` | `Def.Effect`, with `Modes` and `ChooseN` for modal cards: chosen on placement before targets, from the legal modes, resolved in printed order (`SVY-R6`, `SVY-R28`–`SVY-R31`). Declaration costs are `Def.ExtraCosts` (`FR-TRN-003a`) | A mode with a cost waits on #91 (2) (`SVY-R33`) |
 | 26 | `MODIFY_STAT.duration` / `GRANT_KEYWORD.duration` (`END_OF_TURN`, `END_OF_OPPONENT_TURN`, `PERSISTENT`) | `Duration`: the first two. A modify step is Layer 5. Armor never expires (`SVY-R39`) | No starter card grants a permanent modifier |
-| 27 | `FR-TGT-101` bound payloads and `TargetRole`s, `FR-TRG-007` causality lineage | Not in `ability`. Choices go through `engine.Decision` and a per-seat `Chooser` ([ADR 0003](../architecture/decisions/0003-synchronous-chooser-for-player-choices.md)). A resolution records what each step did, for `IfDone` | The wire format is M5 (the FRD 04 rewrite) |
+| 27 | `FR-TGT-101` bound payloads and `TargetRole`s, `FR-TRG-007` causality lineage | Not in `ability`. Choices go through `engine.Decision` and a per-seat `Chooser` ([ADR 0003](../../architecture/decisions/0003-synchronous-chooser-for-player-choices.md)). A resolution records what each step did, for `IfDone` | The wire format is M5 (the FRD 04 rewrite) |
 | 28 | `FR-VAL-002` rules-text parity checker | `Def.Text` must equal the printed lines, or the card loads unsupported (§1) | A check on text identity only. Full parity stays frozen for FRD 08 (M6) |
 
 ### 3.3 Primitives (`FR-PRM-001`) → `Op`

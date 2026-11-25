@@ -2,7 +2,7 @@
 
 - **Milestone:** M3 | **Source spec:** [FRD 01](../frd/01_Game_Rules_FRD.md) v3.29 (`FR-ENT-102`, `FR-KWD-002n`, `FR-TRG-006`, `FR-KWD-002p` still to pin; `FR-CBT-003`), [FRD 02](../frd/02_Card_Data_Pipeline_FRD.md) v2.0 (`FR-DAT-*`, `FR-ABL-*`), build order in [`PRODUCT_SUMMARY.md`](../PRODUCT_SUMMARY.md) §4 M3, inputs from the pm-lead review of 2026-11-23 | **Date:** 2026-11-23, revised 2026-11-23 (the catalog export moved to M5)
 
-M3 builds on the [M2 design note](m2-ability-model.md): its Boundaries, key types, task kinds and test conventions all still hold, and this note gives only what M3 changes. The ability vocabulary is [`go doc ./pkg/engine/ability`](../design/m2_ability_shapes.md), which FRD 02 v2.0 specifies.
+M3 builds on the [M2 design note](m2-ability-model.md): its Boundaries, key types, task kinds and test conventions all still hold, and this note gives only what M3 changes. The ability vocabulary is [`go doc ./pkg/engine/ability`](../design/survey/m2_ability_shapes.md), which FRD 02 v2.0 specifies.
 
 **The catalog export is not M3 work.** The stakeholder moved it to M5 on 2026-11-23, because nothing reads it before the M5 session checksum handshake. [FRD 03](../frd/03_Card_Compiler_FRD.md) is frozen as design intent until then, and this note designs nothing from it. In this note "the catalog" means the card set: the sheets in `data/cards/` and the definitions in `pkg/engine/cards`. It does not mean a generated file.
 
