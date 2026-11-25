@@ -11,3 +11,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0298 | The M2 survey and the ability shapes write-up move to `docs/design/survey/`, and the fences linter reads every survey there (Deliverable 3a) | done |
 | T-0299 | Make *Growing Legion* executable (wave A, first Concordia card, #185 (2)) | done |
 | T-0300 | Make *Icewind Regent* executable (wave A) | done |
+| T-0301 | Make *Leyline Regrowth* executable (wave A) | done |
