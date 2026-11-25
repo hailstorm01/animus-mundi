@@ -4,7 +4,7 @@ title: Make Stormbolt Ray executable (deploy damage and return itself, wave A, c
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0304-stormbolt-ray
 depends_on: [T-0303]
 claims: [card:Stormbolt Ray]
@@ -67,11 +67,11 @@ Activating (a Readied Ray put in player 0's Main Theater, R0 T2, unless the case
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_StormboltRay`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_StormboltRay`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 6): written against a6dc8a21, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists; no other card returns itself from the battlefield. Set to `tests`.
@@ -81,3 +81,4 @@ Activating (a Readied Ray put in player 0's Main Theater, R0 T2, unless the case
   2. `TestCard_StormboltRay_CostsPaidBeforeItResolves` and `TestCard_StormboltRay_GoneBeforeResolutionStaysGone` use `s.ptPlaceHook` on the ability's own placement. That event comes while the ability is being declared, before its costs are paid (targets and costs are one declaration, `SVY-R2`), so the first sees unpaid costs and the second removes the Ray before its exhaust is paid (a nil-pointer panic). Nothing is between declaration and resolution but the triggers the costs fire, so use one (`FR-TRN-003a`, `SVY-R17`): put a copy of the real card (copy the `Card` and its `Def`, so the shared definition isn't changed) whose `Triggers` also hold one synthetic `HookExhausted` trigger. It is placed on top of the ability and resolves first. In `CostsPaidBeforeItResolves` give it a harmless targetless step, and check at its placement (the second one) that the Ray is on the battlefield and Exhausted, the 2 Tactics are gone, and the return is still on the stack below; then the Ray ends in hand. In `GoneBeforeResolutionStaysGone` its step is `{Op: ability.OpKill, Subject: ability.SubjectSelf}`; the Ray ends in the discard pile and not in hand.
 - 2026-11-25 rules-test-author: tests round 2, both notes fixed in `pkg/engine/cards_concordia_stormbolt_test.go` only. (1) `DealsThreeToEachKind/the_Ray_itself`: the card is now created before the chooser is set, and a new file-local `stormDeployCard` deploys that card, so `assetOf(s.g, c)` finds the Ray while the question is asked. (2) `CostsPaidBeforeItResolves` and `GoneBeforeResolutionStaysGone` no longer hook the ability's own placement. A new file-local `stormTapCard` copies the real `Card` and its `Def` (the shared definition is untouched) and adds one synthetic `HookExhausted` trigger. In `CostsPaid...` its step is `actHQDamage(1)` (targetless) and, at the second placement, the test checks the Ray is on the battlefield and Exhausted, Tactics are 0 and the return is the stack item below; then the Ray ends in hand. In `GoneBefore...` its step is `OpKill` on `SubjectSelf`; the Ray ends in the discard pile and not in hand. `go vet ./pkg/engine` and gofmt are clean. The card is not executable here, so the card tests still fail on the missing definition; not run against it. Helpers requested: none.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). Both notes are applied and nothing else changed. A lead probe with the Definition, since reverted, passes all 18, and all 28 mutants (amounts, optional, hook, an optional slot, allegiances, kinds, zone, other, non-Scratch, all, self, dealer, a doubled step, kill, each cost, the return's op and subject, an extra draw) fail at least one. `go vet` and `gofmt` are clean. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Stormbolt Ray in concordiaDefs (pkg/engine/cards/concordia.go) with a deploy trigger dealing 3 damage to one chosen asset and an activated ability (cost T2 + exhaust self) returning the structure to owner's hand; removed name from NotYetExecutable in pkg/engine/cards/cards.go. Reused shapes: HookDeploy, OpDealDamage, CostResources, CostExhaustSelf, OpReturnToHand with SubjectSelf. Verified: go test ./pkg/engine -run TestCard_StormboltRay (ok, 18/18 passed), go test ./pkg/cardcheck -run TestCards_Executable (ok), go tool task check (fmt, vet, tests, lint all passed), go tool task sim (200 games clean, all invariants hold), go tool task sim-matrix (24 starter + 24 stress runs clean, all invariants hold). Set to review.
