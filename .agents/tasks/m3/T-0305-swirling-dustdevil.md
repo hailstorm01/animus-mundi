@@ -4,7 +4,7 @@ title: Make Swirling Dustdevil executable (a hand-active cost reduction, wave A,
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0305-swirling-dustdevil
 depends_on: [T-0304]
 claims: [card:Swirling Dustdevil]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/cards_concordia_dustdevil_test.go`, from the CSV text,
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 7): written against ca30f9ec, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
+- 2026-11-25 rules-test-author: tests written in `pkg/engine/cards_concordia_dustdevil_test.go` (12 tests, all `TestCard_SwirlingDustdevil_*`: PrintedCostWithNoManeuverCards, OneLessPerManeuverCard, OpponentsPileNotCounted, ManeuverCardsElsewhereNotCounted, KilledScratchCompanyManeuverCounts, EnactedManeuverCounts, CostRisesWhenAManeuverLeavesThePile, CostClampsAtZero, DeployPaysTheLowerCost, EntersReservesAsSixFive, ReducesOnlyItself, PrintedCostInTheDiscardPile). They reuse `amalgamCost`, `amalgamDeployLegal`, `amalgamDeploy`. Helpers requested: none. Nothing left out. `go vet` is clean; the tests fail now with "needs rules the kernel does not implement yet" or the printed cost, as expected. The destroyed-Scratch test has player 1 attack the face-down unit on its turn (the spec did not name the killer). `cardtown lint rules` ran. Set to `tests-review`.
