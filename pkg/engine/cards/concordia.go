@@ -98,4 +98,32 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Soul Whip": {
+		Text: []string{"Chosen allied unit deals damage equal to its power to chosen opposing unit."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+					},
+				},
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Kinds:      ability.KindUnit,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{From: ability.ValueSourcePower},
+					Subject: ability.SubjectTarget,
+					Target:  1,
+					Dealer:  1,
+				},
+			},
+		},
+	},
 }

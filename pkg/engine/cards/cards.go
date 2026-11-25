@@ -63,7 +63,6 @@ var NotYetExecutable = []string{
 	"Samsara, Living Tempest",
 	"Sandstorm Lightbringer",
 	"Screaming Palisade",
-	"Soul Whip",
 	"Stardust Colossus",
 	"Stormbolt Ray",
 	"Swirling Dustdevil",
