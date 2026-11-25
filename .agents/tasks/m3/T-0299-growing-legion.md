@@ -4,7 +4,7 @@ title: Make Growing Legion executable (Scratch 1; first Concordia card, wave A, 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0299-growing-legion
 depends_on: [T-0295]
 claims: [card:Growing Legion, file:pkg/engine/cards/concordia.go]
@@ -57,11 +57,14 @@ In a new file `pkg/engine/cards_concordia_maneuvers_test.go`, from the CSV text,
 - `pkg/engine/card.go` (`scratchFace`'s doc comment only)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_GrowingLegion`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_GrowingLegion`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 1): written against 6414ae6d, with the lead's probe above. Board read twice (D2.0). #185 is `open: before the first wave A card task`: its (2) is in this task. Triggers of #186 to #189 have fired (the outcome reads `Status: applied: FRD 01 v3.32`), so they are now `open: before` the wave B to E tasks they name. Every other waiting trigger was checked and none has fired. Searched `pkg/engine` and the task archives: every part of the Definition exists, and no other card prints just "Scratch 1." Set to `tests`.
+- 2026-11-25 rules-test-author (wave A run): wrote `pkg/engine/cards_concordia_maneuvers_test.go` with `TestCard_GrowingLegion_ScratchesOne`, `_DoesNotUseTheHeadquarters`, `_EnactableWithAnExhaustedHeadquarters` and `_EmptyDeckScratchesNothingAndDoesNotLose`. No helpers requested (uses `onTop`, `setPool`, `scratched`, `faceDownCount`, `inDiscardPile`, `offersEnact`). `go vet` and `cardtown lint rules` pass; all four fail now with "needs rules the kernel does not implement yet", as expected. Nothing left out. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 1), each checked against `FR-KWD-002m`, `FR-ZON-005` and `FR-MNV-001`. A lead probe with the Definition above, since reverted, passes all four, and a Scratch 2 mutant fails `ScratchesOne`. Set to `ready`.
+- 2026-11-25 kernel-engineer (wave A run): diff adds `pkg/engine/cards/concordia.go` defining Growing Legion with 1 step of `OpScratch` (reusing `ability.OpScratch` from `pkg/engine/ability` as seen in `animus.go`), removes `"Growing Legion"` from `NotYetExecutable` in `pkg/engine/cards/cards.go`, and updates `scratchFace` doc comment in `pkg/engine/card.go` to cite `SVY-R59` per Directive #185 (2). Ran `go test ./pkg/engine -run TestCard_GrowingLegion` (pass), `go tool task check` (pass), `go tool task sim` (pass: 200 games clean, all invariants holding), and `go tool task sim-matrix` (pass: 24 starter deck runs and 24 stress deck runs, 0 violations). Set to `review`.
