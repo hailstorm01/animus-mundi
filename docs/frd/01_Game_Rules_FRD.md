@@ -125,7 +125,7 @@ Rulings made by the user on 2026-10-21 for *Craterfall Ancient* and *Necropolis 
 1. **Default Order for Unanswered Trigger Ordering (`SVY-R7`, `FR-MOD-001`, `FR-TRG-003`)**: when a player does not order their own simultaneous triggers in time, they are placed in a fixed default order. This records the behavior the kernel already pins (`TestFR_TRG_003_FallbackIsCollectionOrder`), accepted by the user on 2026-10-19 and confirmed on 2026-10-20.
 
 ### Revision Summary (v3.4 -> v3.5): Starter Set Survey Rulings (2026-10-19)
-Rulings on the questions raised by the [M2 starter set ability survey](../design/m2_starter_set_ability_survey.md):
+Rulings on the questions raised by the [M2 starter set ability survey](../design/survey/m2_starter_set_ability_survey.md):
 1. **Deploying Is Not Moving (`SVY-R1`, `FR-ZON-002`)**: only the March action and effects that say to move something to a zone count as moving it.
 2. **Targets and Costs Are Committed Together (`SVY-R2`, `FR-TGT-001`, `FR-ACT-001`)**: an asset sacrificed as a cost is not yet in the Discard pile when targets are chosen, so it cannot target itself there.
 3. **Resolution-Time Targets for Dependent Clauses (`SVY-R3`, `SVY-R4`, `FR-TGT-001`)**: a targeted clause whose possible targets, or number of targets, depend on an earlier clause of the same effect is targeted as it resolves. Per-card repeats are chosen separately. *Superseded in v3.7: targets are locked on placement.*

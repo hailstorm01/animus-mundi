@@ -10,7 +10,7 @@
 
 This document says what a card is as data: the CSV sheets in `data/cards/` that hold every card's printed characteristics and rules text, and the vocabulary in which a card's non-keyword abilities are written, which `pkg/engine/ability` defines and `pkg/engine` interprets. It exists so that three readers agree on one vocabulary: the kernel that executes a card, the designer who maps a new card onto it (the M3 ability survey), and the catalog export that serializes it mechanically. The export is built in M5, and its FRD ([`03_Card_Compiler_FRD.md`](03_Card_Compiler_FRD.md)) is frozen as design intent until then. It states no game rule. Each shape cites the `FR-*` and `SVY-R*` IDs of [FRD 01](01_Game_Rules_FRD.md) that give its behavior, and FRD 01 owns them.
 
-It is written from what M2 built, not from what v1.3 proposed. M2 made 75 Animus and Path cards executable with 73 ability definitions as Go values (ADR-0004), with no compiler, and the [ability shapes write-up](../design/m2_ability_shapes.md) records how the kernel's vocabulary differs from v1.3's. The sheets hold 169 cards in 10 files.
+It is written from what M2 built, not from what v1.3 proposed. M2 made 75 Animus and Path cards executable with 73 ability definitions as Go values (ADR-0004), with no compiler, and the [ability shapes write-up](../design/survey/m2_ability_shapes.md) records how the kernel's vocabulary differs from v1.3's. The sheets hold 169 cards in 10 files.
 
 ```text
 data/cards/*.csv ── FR-DAT-006..008 ──> printed characteristics + rules-text lines
@@ -334,7 +334,7 @@ Step   = Op + Subject (+ Target, Filter, Amount, ...)          FR-PRM-001, FR-TG
 
 #### FR-ABL-013: New Vocabulary Arrives With Its First Card
 - **Contract**: A shape the kernel does not have is added only when a card needs it, in a `shape` task that changes the package, its interpreter and its tests together (ADR-0004). A `card` task only combines shapes that exist. This document is updated in the same milestone to name the new value.
-- **Invariants**: Nothing is specified ahead of its card. The shapes still waiting are tracked in the [ability shapes write-up](../design/m2_ability_shapes.md) §4.1 and in the board directives. The frozen v1.3 text lists what a past design wanted, and is a source to read, not a requirement.
+- **Invariants**: Nothing is specified ahead of its card. The shapes still waiting are tracked in the [ability shapes write-up](../design/survey/m2_ability_shapes.md) §4.1 and in the board directives. The frozen v1.3 text lists what a past design wanted, and is a source to read, not a requirement.
 - **Edge Cases**: A card that needs a shape the vocabulary lacks stays held back (`FR-DAT-007`) until the shape task lands.
 
 #### FR-ABL-014: A Definition Matches the Printed Text
