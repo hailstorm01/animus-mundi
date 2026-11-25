@@ -4,7 +4,7 @@ title: Make Seismic Instability executable (two untargeted Main Theater damage s
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0302-seismic-instability
 depends_on: [T-0301]
 claims: [card:Seismic Instability]
@@ -55,11 +55,17 @@ In a new file `pkg/engine/cards_concordia_seismic_test.go`, from the CSV text, l
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_SeismicInstability`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_SeismicInstability`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 4): written against cf2d76d1, with the lead's probe above. No directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote the eleven tests in `pkg/engine/cards_concordia_seismic_test.go` as listed under Tests: ThreeToEveryUnitInTheMainTheater, StructuresTakeBothInstances, ReservesAndHeadquartersUntouched, ScratchCompanyInTheMainTheaterIsAUnit, ResistantAppliesToEachInstance, ArmorAbsorbsAcrossBothInstances, LethalStructureStillTakesTheSecondInstance, UnbowedStructureTriggersTwice, AsksNothing, EnactableWithAnEmptyMainTheater, PaysFourTactics. `go vet ./pkg/engine` is clean and `cardtown lint rules` passes. All eleven fail now (the card is not yet executable), as intended. Helpers requested: none. Cases left out: none. The Scratch test replaces the face-down asset's hidden card with a structure and moves it to the Main Theater, and it asserts one damage event and death.
+- 2026-11-25 lead-architect: tests round 1 returned (D4). Each test agrees with the FRD 01 text it cites, and the lead's probe passes all 11. Of 13 mutants of the Definition, 12 fail at least one test. Set to `tests` for one note:
+  1. `TestCard_SeismicInstability_StructuresTakeBothInstances` doesn't check the order the task names ("take 3 and then 4"): swapping the two steps passes every test. Also check that each structure's two damage events, in log order, carry the raw damage 3 and then 4 (`Event.Raw`). Change nothing else.
+- 2026-11-25 rules-test-author: applied note 1. `TestCard_SeismicInstability_StructuresTakeBothInstances` now also collects each structure's damage events in log order and checks their `Event.Raw` is 3 then 4, so swapping the two steps fails it. Nothing else changed. `go vet ./pkg/engine` is clean. Helpers requested: none. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed. A lead probe with the Definition, since reverted, passes all 11, and all 13 mutants (both amounts, swapped amounts, step order, zones, kinds, allegiances, Scratch excluded, kill instead of damage) fail at least one. The committed test file is LF and gofmt-clean. Set to `ready`.
+- 2026-11-25 kernel-engineer: added ability definition for "Seismic Instability" to `concordiaDefs` in `pkg/engine/cards/concordia.go` with two untargeted `OpDealDamage` steps (amount 3 to all Main Theater assets, amount 4 to all Main Theater structures), reusing existing shapes (`ability.OpDealDamage`, `ability.SubjectAll`, and zone/kind filters as in *Despoiler's Emergence*). Removed card name from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Verified with `go test ./pkg/engine -run TestCard_SeismicInstability` (all 11 pass), `go test ./pkg/cardcheck -run TestCards_Executable` (pass), `go tool task check` (clean), `go tool task sim` (clean), and `go tool task sim-matrix` (24 starter + 24 stress matrix runs all pass with invariants holding). Set to `review`.

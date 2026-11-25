@@ -71,4 +71,31 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Seismic Instability": {
+		Text: []string{
+			"Deal 3 damage to all assets in the Main Theater.",
+			"Deal 4 damage to all structures in the Main Theater.",
+		},
+		Effect: ability.Effect{
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 3},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Zone: ability.ZoneMainTheater,
+					},
+				},
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 4},
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Kinds: ability.KindStructure,
+						Zone:  ability.ZoneMainTheater,
+					},
+				},
+			},
+		},
+	},
 }
