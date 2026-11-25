@@ -4,7 +4,7 @@ title: Make Soul Whip executable (a chosen allied unit deals its power, wave A, 
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0303-soul-whip
 depends_on: [T-0302]
 claims: [card:Soul Whip]
@@ -58,11 +58,11 @@ In a new file `pkg/engine/cards_concordia_soulwhip_test.go`, from the CSV text, 
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_SoulWhip`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_SoulWhip`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 5): written against 0972bf78, with the lead's probe above. No directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
@@ -71,3 +71,4 @@ In a new file `pkg/engine/cards_concordia_soulwhip_test.go`, from the CSV text, 
   1. `TestCard_SoulWhip_WardedOpposingUnitNotOffered` fails against a correct definition ("two target questions are asked, got 0"): each slot has one legal unit, so neither choice is asked (`FR-MOD-001` §6, the single-option fast path). Put a second allied unit without Ward and a second opposing unit without Ward in its first scene, so both questions are asked, and check that the second question offers exactly the two opposing units without Ward. Change nothing else.
 - 2026-11-25 rules-test-author: round 1 note 1 fixed in TestCard_SoulWhip_WardedOpposingUnitNotOffered (second allied and second opposing unit without Ward; the second question must offer exactly the two non-Ward opposing units). Nothing else changed. Set to tests-review.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). Note 1 is applied and nothing else changed (the note's "§6" should read `FR-MOD-001` §1, the Single-Option Fast-Path, FRD 01 line 449). A lead probe with the Definition, since reverted, passes all 14, and all 21 mutants (dealer, target, fixed amounts, allegiances, kinds, zones, an optional slot, kill, all, a doubled step) fail at least one. `go vet`, `gofmt` and `cardtown lint rules` are clean. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Soul Whip in pkg/engine/cards/concordia.go as specified in Definition (two Target slots: allied unit, then opposing unit; one OpDealDamage step with Target: 1, Dealer: 1, Amount from ValueSourcePower, reusing the OpDealDamage Dealer shape from Ambush Tactics). Removed Soul Whip from NotYetExecutable in pkg/engine/cards/cards.go. Commands run: go test ./pkg/engine -run TestCard_SoulWhip (all 14 tests pass), go test ./pkg/cardcheck -run TestCards_Executable (passes), go tool task check (gofmt, vet, test, cardtown lint --all pass), go tool task sim (passes starter decks, 200 games, all invariants hold), go tool task sim-matrix (passes 24 starter and 24 stress runs, all invariants hold). Set to review.
