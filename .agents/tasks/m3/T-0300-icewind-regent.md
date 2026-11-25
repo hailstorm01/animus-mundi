@@ -4,7 +4,7 @@ title: Make Icewind Regent executable (exhaust to return a chosen unit, wave A, 
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0300-icewind-regent
 depends_on: [T-0299]
 claims: [card:Icewind Regent]
