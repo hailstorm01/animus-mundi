@@ -1,0 +1,77 @@
+---
+id: T-0304
+title: Make Stormbolt Ray executable (deploy damage and return itself, wave A, card, flash)
+kind: card
+tier: flash
+wave: A
+status: tests
+branch: m3/autoloop-wave-a/T-0304-stormbolt-ray
+depends_on: [T-0303]
+claims: [card:Stormbolt Ray]
+cards: [Stormbolt Ray]
+requirements: [FR-TRN-003, FR-TGT-001, FR-TGT-003, FR-ACT-001, FR-ACT-002, FR-ZON-004, FR-REP-004]
+---
+
+## Goal
+*Stormbolt Ray* (a Concordia structure, R3 T0, 0/7, Main Theater; 2 copies in the starter deck): *"When this structure deploys, deal 3 damage to chosen asset."* and *"T2, exhaust: Return this structure to its owner's hand."* It only combines shapes that are `done`: a deploy trigger that damages one chosen target (*Chainbreaker Sappers*), and an activated ability paid with Tactics and `CostExhaustSelf` (*Cliff of Portents*) whose one step is `OpReturnToHand` on `SubjectSelf`. *Unceasing Tide* already returns itself that way from the discard pile; here the source is a battlefield asset, which `stepAssets` handles.
+
+Covers:
+- The definition in `pkg/engine/cards/concordia.go`, as under Definition below.
+- The name off `cards.NotYetExecutable`.
+
+## Inputs
+- Card (`data/cards/units-and-structures-concordia.csv` lines 16-17).
+- Survey row: `docs/design/survey/m3_full_catalog_ability_survey.md` §6, "Concordia: deck" (*Stormbolt Ray*).
+- FRD 01: `FR-TRN-003` (line 394), `FR-TGT-001` (lines 407-413), `FR-TGT-003` (lines 435-442), `FR-ACT-001` and `FR-ACT-002` (lines 388-391), `FR-ZON-003` (line 250), `FR-ZON-004` (lines 278-283), `FR-SET-004` Immediate Readiness (line 203), `FR-REP-004` (lines 562-588), `FR-KWD-002h` (line 648), `FR-MOD-001` §1 (the single-option fast path) and §6 (timeouts).
+- Rulings: `SVY-R3` (targets are chosen on placement), `SVY-R36` (an ability with no target slot needs only its costs), `SVY-R57` (only the stated criteria count). "chosen asset" has no allegiance, zone or exclusion, so any unit, structure or Headquarters is legal, the Ray itself and its controller's Headquarters included, and the trigger is mandatory.
+- Design note: `docs/architecture/m3-full-catalog.md`, Boundaries (`pkg/engine/cards`), Deliverable 5.
+
+### Definition (the engineer adds it to `concordiaDefs`)
+- `"Stormbolt Ray"`, `Text`: `"When this structure deploys, deal 3 damage to chosen asset."`, then `"T2, exhaust: Return this structure to its owner's hand."`.
+- One `Trigger`: `Hook: ability.HookDeploy`, not `Optional`. `Effect`: `Targets` is one exactly-one slot with `Filter: ability.Filter{}`; `Steps` is one `{Op: ability.OpDealDamage, Amount: ability.Value{N: 3}, Subject: ability.SubjectTarget, Target: 0}`.
+- One `Activated`: `Costs` is `{Kind: ability.CostResources, Tac: 2}`, then `{Kind: ability.CostExhaustSelf}`. `Effect`: no targets; `Steps` is one `{Op: ability.OpReturnToHand, Subject: ability.SubjectSelf}`.
+
+A lead probe with the definition on the run branch at a6dc8a21, since reverted, passed `go tool task check` and `go tool task sim-matrix`.
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+In a new file `pkg/engine/cards_concordia_stormbolt_test.go`, from the CSV text, loading the real card (`s.card`), in the style of the *Chainbreaker Sappers* tests (`cards_path_test.go`) and `cards_concordia_regent_test.go`. Player 0 controls the Ray and is the active player. Reuse the existing test helpers (`deployTo`, `s.targetBoard`, `s.scriptRefs`, `wantOptions`, `s.wantDamage`, `totalDamage`, `damageTo`, `nonCombatDamage`, `activate`, `offersActivate`, `s.reject`, `s.setPool`, `inHand`, `inDiscardPile`, `s.putControlled`, `s.ptPlaceHook`). The other cards may be synthetic.
+
+Deploying:
+- `TestCard_StormboltRay_EntersMainTheaterAsZeroSeven` (`FR-TRN-003`): deployed from hand for R3 it is a Readied 0/7 structure in the Main Theater; deploying it to Reserves is rejected, and with R2 it can't be deployed.
+- `TestCard_StormboltRay_AnyAssetOffered` (`FR-TGT-001`, `SVY-R57`): one mandatory single `DecideTarget` for player 0, whose options are exactly every battlefield asset: both players' units in the Main Theater and Reserves, a face-down Scratch Company of each, a structure of each, both Headquarters and the Ray itself.
+- `TestCard_StormboltRay_DealsThreeToEachKind` (`FR-TGT-001`): a table over an allied unit, an opposing unit in Reserves, an allied and an opposing structure, both Headquarters and the Ray itself: the chosen asset has exactly 3 damage, and nothing else has any.
+- `TestCard_StormboltRay_DamageIsNotCombat` (`FR-REP-004`): one damage event of 3, naming the Ray as `Event.Source`, not combat damage. A target with Stalwart takes the full 3. Against Resistant 1 and Armor 1, 1 damage is marked and the Armor is gone.
+- `TestCard_StormboltRay_LethalDamageKills` (`FR-LAY-002`): an opposing unit with Health 3 dies and its card is in its owner's discard pile. With Health 4 it survives.
+- `TestCard_StormboltRay_OpposingHeadquartersToZeroWins` (`FR-CBT-003`): an opposing Headquarters with 3 Current Health loses the match.
+- `TestCard_StormboltRay_WardedOpposingAssetNotOffered` (`FR-KWD-002h`): an opposing Ward asset is not offered, and an allied one is.
+- `TestCard_StormboltRay_TimeoutTakesTheFirstOption` (`FR-MOD-001`): a timeout still deals exactly 3 to exactly one legal target. FRD 01 `FR-MOD-001` §6's fixed order says which: assert that one.
+- `TestCard_StormboltRay_TargetGoneDealsNothing` (`FR-TGT-003`): the target leaves between placement and resolution (`s.ptPlaceHook`). No damage event is logged, and the Ray stays.
+- `TestCard_StormboltRay_SourceGoneStillDeals` (`FR-TGT-003`): the Ray leaves between placement and resolution, and another asset was chosen. The chosen asset still takes 3.
+
+Activating (a Readied Ray put in player 0's Main Theater, R0 T2, unless the case says otherwise):
+- `TestCard_StormboltRay_ReturnsToOwnersHand` (`FR-ACT-001`, `FR-ZON-004`): the Ray leaves the battlefield, its card is in player 0's hand and not in a discard pile, and the pool is R0 T0. Nothing is asked, and no other asset changes.
+- `TestCard_StormboltRay_CostsPaidBeforeItResolves` (`FR-ACT-001`): when the ability is placed on the stack the Ray is still on the battlefield and Exhausted, and the 2 Tactics are gone.
+- `TestCard_StormboltRay_GoesToItsOwnersHand` (`FR-ZON-003`): a Ray that player 1 owns and player 0 controls returns to player 1's hand, and not player 0's.
+- `TestCard_StormboltRay_RedeployedIsNew` (`FR-ZON-004`, `FR-SET-004`): a Ray with damage and Armor, returned and deployed again the same turn, is a new Readied 0/7 with no damage and no Armor, and its deploy trigger deals 3 again.
+- `TestCard_StormboltRay_MayActivateTheTurnItDeploys` (`FR-SET-004`): deployed from hand with R3 T2, its ability is offered right away.
+- `TestCard_StormboltRay_NotOfferedWithoutTwoTactics` (`FR-ACT-001`): with R5 T1 it is not offered, and a rejected activation moves nothing.
+- `TestCard_StormboltRay_NotOfferedWhileExhausted` (`FR-ACT-002`): with R0 T4 an Exhausted Ray isn't offered, and a rejected activation moves nothing.
+- `TestCard_StormboltRay_GoneBeforeResolutionStaysGone` (`FR-ZON-004`, `FR-TGT-003`): the Ray is killed between placement and resolution. Its card stays in its owner's discard pile and is not in hand.
+- **Existing tests:** every other test passes unchanged, including `TestCards_Executable` with the name removed.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected.
+
+## Allowed Files
+- `pkg/engine/cards/concordia.go` (the definition)
+- `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
+
+## Done When
+- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_StormboltRay`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+
+## Log
+- 2026-11-25 lead-architect (wave A run, session 6): written against a6dc8a21, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists; no other card returns itself from the battlefield. Set to `tests`.
