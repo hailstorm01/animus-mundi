@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0304](T-0304-stormbolt-ray.md) | Make Stormbolt Ray executable (deploy damage and return itself, wave A, card, flash) | tests |
