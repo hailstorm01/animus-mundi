@@ -36,7 +36,13 @@ func stormChoose(s *scene, pick func() *Asset) {
 // into zone. It returns the card; find the asset with assetOf.
 func stormDeploy(s *scene, req, tac int, zone Zone) (*Card, *Instance) {
 	s.t.Helper()
-	c := s.card("Stormbolt Ray")
+	return stormDeployCard(s, s.card("Stormbolt Ray"), req, tac, zone)
+}
+
+// stormDeployCard is stormDeploy for a card the test already made, so the Ray
+// can be found by that card while a question is being asked.
+func stormDeployCard(s *scene, c *Card, req, tac int, zone Zone) (*Card, *Instance) {
+	s.t.Helper()
 	inst := s.give(0, c)
 	s.setPool(0, req, tac)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: zone})
@@ -50,6 +56,23 @@ func stormRay(t *testing.T) (*scene, *Asset) {
 	r := s.put(0, ZoneMainTheater, s.card("Stormbolt Ray"))
 	s.setPool(0, 0, 2)
 	return s, r
+}
+
+// stormTapCard is a copy of the real Ray (the shared definition is not changed)
+// whose triggers also hold one synthetic HookExhausted trigger with step. Paying
+// the ability's exhaust cost fires it, so it is placed on top of the ability and
+// resolves first (FR-TRN-003a, SVY-R17).
+func stormTapCard(s *scene, step ability.Step) *Card {
+	s.t.Helper()
+	c := *s.card("Stormbolt Ray")
+	if c.Ability == nil {
+		s.t.Fatalf("the Ray has no executable definition")
+	}
+	d := *c.Ability
+	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
+		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{step}}})
+	c.Ability = &d
+	return &c
 }
 
 // stormKill removes a from the battlefield into its owner's discard pile.
@@ -138,14 +161,14 @@ func TestCard_StormboltRay_DealsThreeToEachKind(t *testing.T) {
 			s := newScene(t)
 			b := s.targetBoard()
 			res := s.put(1, ZoneReserves, unit("FoeRes", 1, 5, ability.Keywords{}))
-			var c *Card
+			c := s.card("Stormbolt Ray")
 			stormChoose(s, func() *Asset {
 				if w := tc.pick(s, b, res); w != nil {
 					return w
 				}
 				return assetOf(s.g, c)
 			})
-			c, _ = stormDeploy(s, 3, 0, ZoneMainTheater)
+			stormDeployCard(s, c, 3, 0, ZoneMainTheater)
 			want := tc.pick(s, b, res)
 			if want == nil {
 				want = assetOf(s.g, c)
@@ -337,23 +360,38 @@ func TestCard_StormboltRay_ReturnsToOwnersHand(t *testing.T) {
 
 func TestCard_StormboltRay_CostsPaidBeforeItResolves(t *testing.T) {
 	// Covers: FR-ACT-001
-	s, r := stormRay(t)
+	s := newScene(t)
+	r := s.put(0, ZoneMainTheater, stormTapCard(s, actHQDamage(1)))
+	s.setPool(0, 0, 2)
 	places := 0
-	var onField, exhausted bool
+	var onField, exhausted, returnBelow bool
 	var tac int
 	s.ptPlaceHook(func(int, StackItem) {
 		places++
+		if places != 2 {
+			return
+		}
 		onField, exhausted, tac = s.alive(r), r.Exhausted, s.g.Players[0].Tac
+		if n := len(s.g.Stack); n >= 2 {
+			below := s.g.Stack[n-2]
+			returnBelow = below.Kind == StackAbility && len(below.Effect.Steps) == 1 && below.Effect.Steps[0].Op == ability.OpReturnToHand
+		}
 	})
 	s.do(activate(r, 0))
-	if places != 1 {
-		t.Fatalf("one ability item is placed, got %d", places)
+	if places != 2 {
+		t.Fatalf("the ability and the exhaust trigger are placed, got %d items (SVY-R17)", places)
+	}
+	if !returnBelow {
+		t.Errorf("when the trigger is placed the return is still on the stack below it (FR-ACT-001)")
 	}
 	if !onField || !exhausted {
-		t.Errorf("when the ability is placed the Ray is still on the battlefield and Exhausted: on battlefield %v, exhausted %v (FR-ACT-001)", onField, exhausted)
+		t.Errorf("when the trigger is placed the Ray is still on the battlefield and Exhausted: on battlefield %v, exhausted %v (FR-ACT-001)", onField, exhausted)
 	}
 	if tac != 0 {
-		t.Errorf("the 2 Tactics are paid on declaration: %d left when placed (FR-ACT-001)", tac)
+		t.Errorf("the 2 Tactics are paid on declaration: %d left when the trigger is placed (FR-ACT-001)", tac)
+	}
+	if s.alive(r) || !inHand(s.g.Players[0], r.Inst) {
+		t.Errorf("the return then resolves: the Ray is in its owner's hand (FR-ZON-004)")
 	}
 }
 
@@ -446,12 +484,9 @@ func TestCard_StormboltRay_NotOfferedWhileExhausted(t *testing.T) {
 
 func TestCard_StormboltRay_GoneBeforeResolutionStaysGone(t *testing.T) {
 	// Covers: FR-ZON-004, FR-TGT-003
-	s, r := stormRay(t)
-	s.ptPlaceHook(func(int, StackItem) {
-		if s.alive(r) {
-			stormKill(s, r)
-		}
-	})
+	s := newScene(t)
+	r := s.put(0, ZoneMainTheater, stormTapCard(s, ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf}))
+	s.setPool(0, 0, 2)
 	s.do(activate(r, 0))
 	p := s.g.Players[0]
 	if s.alive(r) {
