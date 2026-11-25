@@ -168,4 +168,8 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Swirling Dustdevil": {
+		Text:          []string{"This unit costs R1 less to deploy for each maneuver card in your discard pile."},
+		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindManeuver, Zone: ability.ZoneDiscard}},
+	},
 }
