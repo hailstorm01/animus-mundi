@@ -45,4 +45,30 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Leyline Regrowth": {
+		Text: []string{"Return up to one chosen unit card from your discard pile to your hand. Draw a card."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Kinds:      ability.KindUnit,
+						Zone:       ability.ZoneDiscard,
+					},
+					UpTo: 1,
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+				{
+					Op:     ability.OpDraw,
+					Amount: ability.Value{N: 1},
+				},
+			},
+		},
+	},
 }
