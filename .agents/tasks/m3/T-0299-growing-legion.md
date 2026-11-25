@@ -4,7 +4,7 @@ title: Make Growing Legion executable (Scratch 1; first Concordia card, wave A, 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0299-growing-legion
 depends_on: [T-0295]
 claims: [card:Growing Legion, file:pkg/engine/cards/concordia.go]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/cards_concordia_maneuvers_test.go`, from the CSV text,
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 1): written against 6414ae6d, with the lead's probe above. Board read twice (D2.0). #185 is `open: before the first wave A card task`: its (2) is in this task. Triggers of #186 to #189 have fired (the outcome reads `Status: applied: FRD 01 v3.32`), so they are now `open: before` the wave B to E tasks they name. Every other waiting trigger was checked and none has fired. Searched `pkg/engine` and the task archives: every part of the Definition exists, and no other card prints just "Scratch 1." Set to `tests`.
+- 2026-11-25 rules-test-author (wave A run): wrote `pkg/engine/cards_concordia_maneuvers_test.go` with `TestCard_GrowingLegion_ScratchesOne`, `_DoesNotUseTheHeadquarters`, `_EnactableWithAnExhaustedHeadquarters` and `_EmptyDeckScratchesNothingAndDoesNotLose`. No helpers requested (uses `onTop`, `setPool`, `scratched`, `faceDownCount`, `inDiscardPile`, `offersEnact`). `go vet` and `cardtown lint rules` pass; all four fail now with "needs rules the kernel does not implement yet", as expected. Nothing left out. Set to `tests-review`.
