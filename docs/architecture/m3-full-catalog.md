@@ -46,7 +46,7 @@ The M2 package table stands. M3 changes:
 - **Coverage:** `TestStarterSet_Executable` becomes `TestCards_Executable`, a catalog-wide check: every unflagged card that can't run is on `NotYetExecutable`, and nothing else is. Its checkers move out of `defs_test.go` into a non-test file in `pkg/cardcheck` in the same task (the "test files hold only tests" rule, which `defs_test.go` predates), with `TestDefs_MatchRulesText` and its checker beside them, unchanged in behavior. A new test validates every `data/decks/*-starter.txt` under `FR-SET-001`.
 - **Sheet checks:** loader tests on fixture sheets for each data error: a duplicate name across two files, a non-numeric and an empty numeric cell, a Unit and a Structure with no zone, and several problems in one load, reported together in file then row order.
 - **Headquarters kills:** `TestCards_HeadquartersKills` (Deliverable 6a).
-- **Sim:** `go tool task sim` stays the Animus vs Path starter run that every review runs (Runbook D5), and `go tool task sim-compare` is unchanged. The matrix (Deliverable 3) is the Done-when's "every pairing" check, run in the review of every card task once the Concordia and Soulless decks are committed.
+- **Sim:** `go tool task sim` stays the Animus vs Path starter run that every review runs (Runbook D5), and `go tool task sim-compare` is unchanged. The matrix (Deliverable 3, `go tool task sim-matrix`) is the Done-when's "every pairing" check, run in the review of every card and shape task (user, 2026-11-24; Runbook D5.5, a624e7f0).
 - **Monitor coverage, tracked, not a gate:** the matrix prints which monitor rule IDs no run reached. Measured 2026-11-23 (200 games, `-seed 1`):
 
   | Rule | Starter, progress | Starter, random | Stress A v P, progress | Why |
