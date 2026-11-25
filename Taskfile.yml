@@ -136,6 +136,6 @@ tasks:
       - go run ./.agents/scripts/nextdirective {{.CLI_ARGS}}
 
   wave-run:
-    desc: 'Build one wave of the current milestone unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`; add `-DryRun` to see the milestone, run branch and run file, or `-Milestone m<N>` for another milestone'
+    desc: 'Build one wave of the current milestone unattended on an autoloop/ branch (lead-architect D7), e.g. `go tool task wave-run -- -Wave B -Tasks 3`. A complete wave gets a structural review, and its findings must be decided before another wave starts. Add `-DryRun` to see the milestone, run branch and run file, or `-Milestone m<N>` for another milestone'
     cmds:
       - go run ./.agents/scripts/waverun {{.CLI_ARGS}}

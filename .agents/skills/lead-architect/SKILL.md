@@ -5,8 +5,8 @@ description: >-
   note (docs/architecture/) plus one-page decision records (docs/architecture/decisions/) and an ordered
   list of code-plus-test deliverables. Code and tests are the detailed design. During a build milestone,
   owns the task queue (.agents/tasks/) and reviews every task from rules-test-author and kernel-engineer
-  (Runbook D, always on Opus). On request, reviews the code's structure and turns approved findings into
-  board directives (Runbook E). Passes and receives sync handoffs with pm-lead and pm-frd-drafter
+  (Runbook D, always on Opus). On request, and when a wave run completes a wave, reviews the code's
+  structure; turns findings the user approves into board directives (Runbook E). Passes and receives sync handoffs with pm-lead and pm-frd-drafter
   (Runbook F). Never designs from a frozen FRD. Use on @lead-architect, when a milestone starts, when a
   technical decision needs recording, to run, plan or review build tasks, for a structural review, or on
   a sync handoff.
@@ -35,7 +35,7 @@ Turns **what** the active spec says (FRD 01 for rules; a milestone's FRD once it
   - `docs/AGENTS.md` (updating the documentation map when new documents are created).
   - `docs/design/outcomes/` (`Status: open` ruling-question stubs only, when stopping on a rules question in Runbook D2/D6/D7, committed on the integration branch).
   - `docs/design/survey/` (user, 2026-11-23): the M3 ability survey (`docs/design/survey/m3_<topic>.md`, M3 design note Deliverable 4), and later milestones' ability surveys and write-ups. A survey's ruling rows stay `pm-frd-drafter`'s, written from an applied Design Outcome; the lead records open ruling questions, never answers.
-  - `.agents/tasks/` (task files, each milestone's `BOARD.md`, and its `archive/directives/directive_archive.md` and `archive/tasks/` files, Runbook D only). It may add rows to `BOARD.md`'s `Directives for the Lead` table only in five cases: in Runbook E, for findings the user approved by number; in D2.3, for an existing equivalent a task's plan keeps; in D2.4, for work a task splits off that waits on a trigger; in D5.3, for a duplicate a review finds; and in Runbook F, for engine, test or card-definition work a sync handoff implies (never blocking).
+  - `.agents/tasks/` (task files, each milestone's `BOARD.md`, and its `archive/directives/directive_archive.md` and `archive/tasks/` files, Runbook D only; and structural review reports in `runs/`, Runbook E6 and E7 only). It may add rows to `BOARD.md`'s `Directives for the Lead` table only in five cases: in Runbook E, for findings the user approved by number; in D2.3, for an existing equivalent a task's plan keeps; in D2.4, for work a task splits off that waits on a trigger; in D5.3, for a duplicate a review finds; and in Runbook F, for engine, test or card-definition work a sync handoff implies (never blocking).
   - Merges of approved task branches into the integration branch (Runbook D only), or into a wave run's `autoloop/` branch (D7), plus merges of the integration branch into that run branch. Never edits code or tests on a task branch; it returns review notes instead.
 - **Read-only everywhere else:**
   - `docs/frd/`, `docs/PRODUCT_SUMMARY.md`, `data/`, `pkg/`, `src/`, `tools/` (reads specifications, schemas, CSVs, and existing code to ground designs in actual repository conventions).
@@ -69,6 +69,8 @@ Invoke `lead-architect` (`@lead-architect`) when:
    - The user asks whether a milestone is ready to build, or wants coverage metrics.
 4. **Runbook E — Structural Review:**
    - The user asks for a structural review of the code (`@lead-architect structural review [scope]`).
+   - A wave run's runner starts a review session with `@lead-architect structural review (wave run: …)` (E6).
+   - The user decides a report's findings with `@lead-architect decide structural review (branch <branch>, report <path>)` (E7).
    - Suggest one, without running it, before writing the first task of a deliverable that adds a new kind of code (a new client, driver or output format).
 5. **Runbook F — Sync Handoff:**
    - `pm-lead` or `pm-frd-drafter` dispatches `@lead-architect handoff (chain: …)` to you as a subagent, or reports it as a ripple for you while you coordinate the chain.
@@ -242,10 +244,11 @@ The user starts one with `go tool task wave-run -- -Wave <X> [-Tasks N]` (Go pro
      - `go tool task check`, `go tool task sim` and `go tool task sim-matrix` pass on the run branch. The matrix needs a timeout above the two-minute default (D5.5).
    - `STOP: <reason>`: anything that would make a normal prompt stop and wait for the user. That includes a `blocked` task, a rules question (D6), a directive that conflicts with the design note or FRD 01, a placement that needs a new package (D2.3), a structural review worth suggesting (§3), a mode change, a Flash run that `agy` didn't finish after the one resume D3 allows, a task D5 would split or block after escalation, failing gates on the run branch after a merge, a sync conflict that step 2 doesn't let you resolve, a refused command you could not work around, a skill or MCP tool the work needs but the session doesn't have (the runner can't see that on its own), or a next task that falls outside this wave and is not a directive that D2.0 says to apply first.
 7. **Stop the session after its row.** Report as in any build-loop prompt. Never dispatch a sync handoff in a wave run (`.agents/rules/sync-handoffs.md` §5): note it in the row's Task cell, after the task id, as `(handoff for <persona>: <what>)`, and give its prompt in the report. The runner decides whether to continue. A `Next:` line in a task's Log or the run file is only a hint to the next session, which starts fresh and takes its work from the board (D2.0, D2.1). So any follow-up this session commits to is already a board row (D2.4).
+8. **The structural review is another session's.** After a `WAVE-COMPLETE` row, the runner checks the cards and the gates itself, then opens one review session (E6). Never review, or write a report, in a task session.
 
 When the run ends, the user reviews `git log <integration branch>..<run branch>` and the run file. Only the user merges the run branch into the integration branch, or asks `workflow-steward` to (its Runbook D).
 
-### Runbook E: Structural Review (on request, Opus)
+### Runbook E: Structural Review (on request, or when a wave completes; Opus)
 
 Finds code in the wrong place before more code lands on top of it. Directives #22 (sim code inside `engine`) and #26 (engine files with several jobs) came from the user's own audits. This runbook is how the lead finds such problems itself.
 
@@ -258,6 +261,26 @@ Finds code in the wrong place before more code lands on top of it. Directives #2
 3. **Report and stop:** a numbered table `# | Where | Finding | Evidence | Proposed fix | Cost | Blocks`. Evidence is `file:line` or command output. Mark every duplication finding `yes` under Blocks: once approved, its fix goes before the next regularly scheduled task (D2.0). Shape each fix as a pure move where possible. Order the findings by what the next deliverables would build on, and flag any that need a decision record. Ask the user which numbers to accept. Change nothing yet.
 4. **Record approved findings:** for each number the user approves, add a row to `BOARD.md`'s `Directives for the Lead` table, numbered with `go tool task next-directive` (`.agents/rules/AGENTS.md`, **Directive numbers**), and update `Last directive: #NN` to match. Use source `lead-architect structural review, approved by user, <date>`. A blocking finding gets status `open: before <next task>`, naming the next regularly scheduled task by id (or `the next Deliverables task` if none is written), unless its fix waits on a ruling or design decision (`waiting:`, D2.0). Other findings get `open` or `waiting: <trigger>`. Write a `waiting:` trigger so it can be checked from the repo: name the ruling ID and file, the task id, or the mode. The row holds the finding, the fix and its acceptance cases. For a pure move, those are the same declarations, the same test names and a passing `go tool task sim-compare`. If a fix adds a package, update the design note's Boundaries too. Commit on the integration branch as `chore(tasks): directives #<a>–#<b> from structural review`. Rejected findings are not recorded. Ones the user defers go under the design note's Open Questions.
 5. **Stop.** D2 writes the tasks on the next build prompt, like any other directive ("No unattended chains").
+6. **In a wave run** (`@lead-architect structural review (wave run: wave <X>, run branch <branch>, base <integration branch>, report <path>, scratch <folder>)`; user, 2026-11-24). The session is headless, with no user to ask. Follow steps 1 and 2, then write a report in place of steps 3 to 5:
+   - **Read** in a worktree of the run branch in the scratch folder (`git worktree add <folder>/review <branch>`), under D7's worktree and cleanup rules. The scope is every package the wave changed (`git diff --stat <integration branch>...<branch>`), read whole, not only the diff. Leave out anything an unapplied directive on the run branch's `BOARD.md` already covers.
+   - **Write only the report,** and commit it on the run branch as `chore(tasks): structural review of wave <X>` (path-limited). Change no code, test, design note, board or run file, and add no run-file row. A rules question is a finding (Blocks: `waiting`, naming the question), not a ruling stub. Dispatch nothing: no task, engineer, `agy` run or sync handoff.
+     ```markdown
+     # Structural Review: <milestone> wave <X>
+
+     - **Status:** open
+     - **Findings:** <n> (<d> duplicates)
+     - **Reviewed:** `<branch>` at `<sha>`, <date>
+
+     | # | Where | Finding | Evidence | Proposed fix | Cost | Blocks | Decision |
+     | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+     ```
+     The columns are step 3's, and `Decision` is `pending` in every row. The runner reads the `Status` and `Findings` lines, so keep their form. With no findings, write `0 (0 duplicates)` and `Status: decided (no findings)`. Never mark a report with findings decided: only the user's decisions do that (step 7).
+   - **Stop** after the commit.
+7. **Decide** (`@lead-architect decide structural review (branch <branch>, report <path>)`, interactive). Until every finding is decided, the runner starts no other wave.
+   - **Branch:** work on `<branch>`, unless it is merged into the integration branch or gone, in which case work on the integration branch. On a run branch, use a scratch worktree (the **Worktrees** guard rail), and first check that no wave run is using it.
+   - **Show:** check that each finding still holds at that branch's head, then show the table with any change marked, and ask which numbers to accept, defer or reject. Change nothing until the user answers for every finding.
+   - **Record** in one commit on that branch, in place of step 4's integration branch: the accepted findings' directives and the deferred ones' Open Questions, as in step 4, and the report. Each `Decision` cell becomes `accepted (#NN)`, `deferred`, `rejected` or `no longer holds`, and the status becomes `decided (<date>)` once none is `pending`. A finding the user leaves for later is `deferred`, unless it is a duplicate: a duplicate is accepted or rejected. An accepted duplicate blocks as step 4 says.
+   - **Stop,** and give the user the merge command if the branch isn't merged.
 
 ### Runbook F: Sync Handoffs
 

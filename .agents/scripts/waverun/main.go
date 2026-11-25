@@ -8,6 +8,10 @@
 // per session, hours), on a failed session, on any refused tool call, and on
 // a missing or extra run row. It never merges the run branch: the user does.
 //
+// A complete wave gets one more headless session, a structural review that
+// commits only its report to the run branch (review.go). The user decides its
+// findings, and no other wave starts while a report has undecided ones.
+//
 // The wave belongs to the current milestone: the highest-numbered
 // .agents/tasks/m<N>/ whose BOARD.md on the integration branch has a Last
 // directive line (a closed milestone's board has none). -Milestone picks
@@ -40,7 +44,7 @@ import (
 
 var (
 	wave          = flag.String("Wave", "", "wave letter (required)")
-	tasks         = flag.Int("Tasks", 3, "most sessions to run")
+	tasks         = flag.Int("Tasks", 3, "most task sessions to run; a complete wave's structural review is one more")
 	maxUsdPerTask = flag.Float64("MaxUsdPerTask", 40, "spend budget per session, passed to --max-budget-usd")
 	maxHours      = flag.Float64("MaxHours", 8, "no new session starts after this many hours")
 	milestone     = flag.String("Milestone", "", "milestone folder under .agents/tasks (default: the highest m<N> whose BOARD.md on -Base has a Last directive line)")
@@ -52,10 +56,12 @@ var (
 
 // run is the state Stop reports on.
 type run struct {
-	branch, runFile, logDir string
-	resume                  string // flags Resume repeats besides -Wave
-	started                 time.Time
-	spent                   float64
+	branch, runFile, reportFile, logDir string
+	resume                              string // flags Resume repeats besides -Wave
+	started                             time.Time
+	spent                               float64
+	notes                               []string // the structural review, for stop
+	undecided                           bool     // the review has findings to decide
 }
 
 // result is the part of `claude -p --output-format json` the runner reads.
@@ -107,11 +113,12 @@ func main() {
 	branch := fmt.Sprintf("autoloop/%s-wave-%s", *milestone, strings.ToLower(*wave))
 	slug := strings.ReplaceAll(branch, "/", "-")
 	r := &run{
-		branch:  branch,
-		runFile: fmt.Sprintf(".agents/tasks/%s/runs/%s.md", *milestone, slug),
-		logDir:  filepath.Join(os.TempDir(), "wave-run", slug),
-		resume:  resume,
-		started: time.Now(),
+		branch:     branch,
+		runFile:    fmt.Sprintf(".agents/tasks/%s/runs/%s.md", *milestone, slug),
+		reportFile: fmt.Sprintf(".agents/tasks/%s/runs/%s%s", *milestone, slug, reportSuffix),
+		logDir:     filepath.Join(os.TempDir(), "wave-run", slug),
+		resume:     resume,
+		started:    time.Now(),
 	}
 
 	exe := findClaude()
@@ -141,13 +148,30 @@ func main() {
 	}
 	cliArgs = append(cliArgs, "--disallowedTools", "Bash(git push *),PowerShell(git push *)")
 
+	reps, err := allReports(*base)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	waiting := undecided(reps, r.reportFile)
+	for _, l := range blocked(waiting) {
+		fmt.Println(l)
+	}
+
 	if *dryRun {
+		if len(waiting) > 0 {
+			fmt.Println("Blocked:    a real run stops here until the reviews above are decided")
+		}
 		fmt.Printf("Milestone:  %s (board: %s on %s)\n", *milestone, board.Path(*milestone), *base)
 		fmt.Printf("Run branch: %s (exists: %t)\n", r.branch, branchExists(r.branch))
 		fmt.Printf("Run file:   %s (%d rows)\n", r.runFile, len(runRows(r.runText())))
 		fmt.Printf("Claude:     %s\n", exe)
 		fmt.Printf("Session:    claude -p \"@lead-architect next (wave run: ...)\" %s\n", strings.Join(cliArgs, " "))
 		os.Exit(0)
+	}
+	if len(waiting) > 0 {
+		fmt.Println("== Wave run not started: decide the structural reviews above first")
+		os.Exit(1)
 	}
 	keepAwake()
 
@@ -169,52 +193,21 @@ func main() {
 		}
 
 		before := len(runRows(r.runText()))
-		session := fmt.Sprintf("%s-%d", time.Now().Format("20060102-150405"), n)
-		// A headless session has no scratch folder of its own. Left to choose,
-		// the lead put its worktrees under /tmp, which is C:\tmp here.
-		scratch := filepath.Join(r.logDir, session)
-		if err := os.MkdirAll(scratch, 0o755); err != nil {
-			r.stop(fmt.Sprintf("could not create the scratch folder: %v", err), 1)
+		s, err := r.session(exe, cliArgs, strconv.Itoa(n), func(scratch string) string {
+			// The path saves a search: nothing in a session's context says what
+			// @lead-architect means, and every session looked for it first.
+			return fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s, scratch %s). Your instructions are in .agents/skills/lead-architect/SKILL.md; read that first.", *wave, r.branch, r.runFile, scratch)
+		})
+		if err != nil {
+			r.stop(err.Error(), 1)
 		}
-		// The path saves a search: nothing in a session's context says what
-		// @lead-architect means, and every session looked for it first.
-		prompt := fmt.Sprintf("@lead-architect next (wave run: wave %s, run branch %s, run file %s, scratch %s). Your instructions are in .agents/skills/lead-architect/SKILL.md; read that first.", *wave, r.branch, r.runFile, filepath.ToSlash(scratch))
-		logPath := filepath.Join(r.logDir, session+".json")
-		fmt.Printf("[%d/%d] %s lead session on %s (log: %s)\n", n, *tasks, time.Now().Format("15:04"), r.branch, logPath)
-
-		// The result JSON's duration_ms covers only a session's last segment
-		// when it waited on a background command, so time it here.
-		began := time.Now()
-		cmd := exec.Command(exe, append([]string{"-p", prompt, "-n", fmt.Sprintf("wave-run %s #%d", *wave, n)}, cliArgs...)...)
-		cmd.Stderr = os.Stderr
-		out, runErr := cmd.Output()
-		took := time.Since(began).Round(time.Second)
-		if err := os.WriteFile(logPath, out, 0o644); err != nil {
-			fmt.Printf("   could not write the session log: %v\n", err)
+		if s.runErr != nil || !s.parsed {
+			r.stop(fmt.Sprintf("session %d exited with code %d", n, exitCode(s.runErr)), 1)
 		}
-		// Remove fails on a folder that isn't empty, which is left for the user.
-		if os.Remove(scratch) != nil {
-			fmt.Printf("   scratch folder not empty, left in place: %s\n", scratch)
+		if s.res.IsError {
+			r.stop(fmt.Sprintf("session %d ended with %s", n, s.res.Subtype), 1)
 		}
-
-		var res result
-		parsed := json.Unmarshal(out, &res) == nil
-		if parsed {
-			r.spent += res.TotalCostUSD
-		}
-		fmt.Printf("   took %s, $%.2f\n", took, res.TotalCostUSD)
-		if runErr != nil || !parsed || res.IsError || len(res.PermissionDenials) > 0 {
-			for _, l := range diagnosis(res, parsed, out, runErr) {
-				fmt.Println("   " + l)
-			}
-		}
-		if runErr != nil || !parsed {
-			r.stop(fmt.Sprintf("session %d exited with code %d", n, exitCode(runErr)), 1)
-		}
-		if res.IsError {
-			r.stop(fmt.Sprintf("session %d ended with %s", n, res.Subtype), 1)
-		}
-		if len(res.PermissionDenials) > 0 {
+		if len(s.res.PermissionDenials) > 0 {
 			r.stop(fmt.Sprintf("session %d had refused tool calls", n), 1)
 		}
 
@@ -241,6 +234,7 @@ func main() {
 			if !r.gatesPass() {
 				r.stop("lead says complete, but check, sim or sim-matrix fails on the run branch", 1)
 			}
+			r.review(exe, cliArgs)
 			r.stop(fmt.Sprintf("wave %s complete", *wave), 0)
 		case strings.HasPrefix(sig, "STOP"):
 			r.stop("lead: "+sig, 1)
@@ -251,14 +245,80 @@ func main() {
 	r.stop(fmt.Sprintf("task budget of %d used up", *tasks), 0)
 }
 
+// session is how one headless session ended.
+type session struct {
+	res    result
+	parsed bool
+	runErr error
+}
+
+// clean is true for a session that exited well and had nothing refused.
+func (s session) clean() bool {
+	return s.runErr == nil && s.parsed && !s.res.IsError && len(s.res.PermissionDenials) == 0
+}
+
+// session runs one headless lead session with its own log and scratch folder,
+// and prints why if it didn't end cleanly. id is the task session's number, or
+// reviewID.
+func (r *run) session(exe string, cliArgs []string, id string, prompt func(scratch string) string) (session, error) {
+	stamp := time.Now().Format("20060102-150405") + "-" + id
+	// A headless session has no scratch folder of its own. Left to choose,
+	// the lead put its worktrees under /tmp, which is C:\tmp here.
+	scratch := filepath.Join(r.logDir, stamp)
+	if err := os.MkdirAll(scratch, 0o755); err != nil {
+		return session{}, fmt.Errorf("could not create the scratch folder: %v", err)
+	}
+	logPath := filepath.Join(r.logDir, stamp+".json")
+	label := id
+	if id != reviewID {
+		label = fmt.Sprintf("%s/%d", id, *tasks)
+	}
+	fmt.Printf("[%s] %s lead session on %s (log: %s)\n", label, time.Now().Format("15:04"), r.branch, logPath)
+
+	// The result JSON's duration_ms covers only a session's last segment
+	// when it waited on a background command, so time it here.
+	began := time.Now()
+	cmd := exec.Command(exe, append([]string{"-p", prompt(filepath.ToSlash(scratch)), "-n", fmt.Sprintf("wave-run %s #%s", *wave, id)}, cliArgs...)...)
+	cmd.Stderr = os.Stderr
+	out, runErr := cmd.Output()
+	took := time.Since(began).Round(time.Second)
+	if err := os.WriteFile(logPath, out, 0o644); err != nil {
+		fmt.Printf("   could not write the session log: %v\n", err)
+	}
+	// Remove fails on a folder that isn't empty, which is left for the user.
+	if os.Remove(scratch) != nil {
+		fmt.Printf("   scratch folder not empty, left in place: %s\n", scratch)
+	}
+
+	s := session{runErr: runErr}
+	s.parsed = json.Unmarshal(out, &s.res) == nil
+	if s.parsed {
+		r.spent += s.res.TotalCostUSD
+	}
+	fmt.Printf("   took %s, $%.2f\n", took, s.res.TotalCostUSD)
+	if !s.clean() {
+		for _, l := range diagnosis(s.res, s.parsed, out, runErr) {
+			fmt.Println("   " + l)
+		}
+	}
+	return s, nil
+}
+
 func (r *run) stop(reason string, code int) {
 	hours := time.Since(r.started).Hours()
 	fmt.Println()
 	fmt.Printf("== Wave run stopped: %s\n", reason)
+	for _, l := range r.notes {
+		fmt.Println("   " + l)
+	}
+	when := "when you are satisfied"
+	if r.undecided {
+		when = "after deciding the structural review"
+	}
 	fmt.Printf("   Spent: $%.2f over %.2f h. Session logs: %s\n", r.spent, hours, r.logDir)
 	fmt.Printf("   Review:  git log --oneline %s..%s\n", *base, r.branch)
 	fmt.Printf("            git show %s:%s\n", r.branch, r.runFile)
-	fmt.Printf("   Land it: git merge --no-ff %s   (on %s, when you are satisfied)\n", r.branch, *base)
+	fmt.Printf("   Land it: git merge --no-ff %s   (on %s, %s)\n", r.branch, *base, when)
 	fmt.Printf("   Resume:  go tool task wave-run -- -Wave %s%s -Tasks <n>\n", *wave, r.resume)
 	os.Exit(code)
 }
