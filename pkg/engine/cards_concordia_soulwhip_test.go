@@ -263,7 +263,9 @@ func TestCard_SoulWhip_WardedOpposingUnitNotOffered(t *testing.T) {
 	s := newScene(t)
 	allyWard := s.put(0, ZoneMainTheater, unit("AllyWard", 2, 30, ability.Keywords{Ward: true}))
 	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 2, 30, ability.Keywords{Ward: true}))
+	ally2 := s.put(0, ZoneMainTheater, unit("Ally2", 2, 30, ability.Keywords{}))
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 30, ability.Keywords{}))
+	foe2 := s.put(1, ZoneReserves, unit("Foe2", 2, 30, ability.Keywords{}))
 	inst := enactFor(s, "Soul Whip")
 	s.scriptModal(0, nil, nil, nil, pick(allyWard), pick(foe))
 	s.do(enactAction(inst))
@@ -271,11 +273,11 @@ func TestCard_SoulWhip_WardedOpposingUnitNotOffered(t *testing.T) {
 	if len(asks) != 2 {
 		t.Fatalf("two target questions are asked, got %d", len(asks))
 	}
-	if !swOffers(asks[0], allyWard) {
+	if !swOffers(asks[0], allyWard) || !swOffers(asks[0], ally2) {
 		t.Errorf("an allied Ward unit is offered as the dealer (FR-KWD-002h)")
 	}
-	if swOffers(asks[1], foeWard) || !swOffers(asks[1], foe) {
-		t.Errorf("an opposing Ward unit is not offered beside one without Ward: options %v (FR-KWD-002h)", labels(asks[1]))
+	if got, want := refs(asks[1]), sortedCopy(ids(foe, foe2)); !reflect.DeepEqual(got, want) || swOffers(asks[1], foeWard) {
+		t.Errorf("the second question offers exactly the two opposing units without Ward: options %v (FR-KWD-002h)", labels(asks[1]))
 	}
 
 	s2 := newScene(t)
