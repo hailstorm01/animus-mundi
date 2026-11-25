@@ -4,7 +4,7 @@ title: Make Stormbolt Ray executable (deploy damage and return itself, wave A, c
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0304-stormbolt-ray
 depends_on: [T-0303]
 claims: [card:Stormbolt Ray]
@@ -75,3 +75,4 @@ Activating (a Readied Ray put in player 0's Main Theater, R0 T2, unless the case
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 6): written against a6dc8a21, with the lead's probe above. Board read twice (D2.0): no directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists; no other card returns itself from the battlefield. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_stormbolt_test.go`, 21 tests, all in the task's list: Deploying (`EntersMainTheaterAsZeroSeven`, `AnyAssetOffered`, `DealsThreeToEachKind`, `DamageIsNotCombat`, `LethalDamageKills`, `OpposingHeadquartersToZeroWins`, `WardedOpposingAssetNotOffered`, `TimeoutTakesTheFirstOption`, `TargetGoneDealsNothing`, `SourceGoneStillDeals`) and Activating (`ReturnsToOwnersHand`, `CostsPaidBeforeItResolves`, `GoesToItsOwnersHand`, `RedeployedIsNew`, `MayActivateTheTurnItDeploys`, `NotOfferedWithoutTwoTactics`, `NotOfferedWhileExhausted`, `GoneBeforeResolutionStaysGone`). Helpers requested: none (file-local `stormChoose`, `stormDeploy`, `stormRay`, `stormKill`). `go vet ./pkg/engine` and `cardtown lint rules` are clean; 16 tests fail as expected until the card is executable (the two `NotOffered` tests pass trivially). The timeout test asserts the FR-MOD-001 sec. 6 fixed order: the choosing player's own Headquarters takes the 3. Nothing left out.
