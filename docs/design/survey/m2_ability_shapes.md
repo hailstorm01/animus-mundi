@@ -37,7 +37,7 @@ The package is the authority. This file indexes it and doesn't copy its field co
 | `Value` | A number a step reads when it resolves | `N`, `From` |
 | `CostReduction` | The card's own hand-active Requisition reduction (`FR-CST-001`) | `Req`, `Per` (a pile filter) |
 | `WhileCornered` | What a card has, or an aura grants, only while Cornered (`FR-KWD-002e`, `SVY-R18`) | `Keywords`, `Power` |
-| `Keywords` | The standalone keyword set (`FR-KWD-002`) | `Resistant`, `Stalwart`, `Aggressive`, `Ethereal`, `Ward`, `Versatile`, `Guardian`, `Armor`, `DeploysExhausted` |
+| `Keywords` | The standalone keyword set (`FR-KWD-002b`, `FR-KWD-002c` and `FR-KWD-002f` to `FR-KWD-002l`) | `Resistant`, `Stalwart`, `Aggressive`, `Ethereal`, `Ward`, `Versatile`, `Guardian`, `Armor`, `DeploysExhausted` |
 
 ### 2.2 Enums
 

@@ -5,7 +5,7 @@
 
 ## Context
 
-A card's standalone keywords (`FR-KWD-002`: Resistant N, Stalwart, Aggressive N, Ethereal, Ward, Versatile, Guardian, Armor N, Deploys Exhausted) are one set, `engine.Keywords`, with one table of names, `keywordDefs`, and one fold. The printed set is Layer 1. A Cornered grant, an aura's grant and a step's grant are Layer 3 grants of the same keywords (`FR-LAY-001`, `FR-KWD-002e`).
+A card's standalone keywords (`FR-KWD-002b`, `FR-KWD-002c` and `FR-KWD-002f` to `FR-KWD-002l`: Resistant N, Stalwart, Aggressive N, Ethereal, Ward, Versatile, Guardian, Armor N, Deploys Exhausted) are one set, `engine.Keywords`, with one table of names, `keywordDefs`, and one fold. The printed set is Layer 1. A Cornered grant, an aura's grant and a step's grant are Layer 3 grants of the same keywords (`FR-LAY-001`, `FR-KWD-002e`).
 
 The grants are written in card definitions, which are `ability` values (ADR 0004), and `ability` can't import `engine`. So each grant that arrived spelled its own fields instead of naming the set: `WhileCornered` has `Aggressive` and `Resistant` with its own `Add` (T-0180), `Static.Resistant` grants one keyword (T-0258), and `Step.Keyword` is an `ability.Keyword`, an enum that names only Aggressive and Stalwart, so `OpGrantKeyword` can grant only Stalwart (T-0219). `Game.Keywords` adds the Cornered and aura fields by hand beside the one fold. Structural review 13 recorded this as a duplication (board directive #159).
 
