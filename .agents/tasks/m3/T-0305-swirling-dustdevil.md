@@ -4,7 +4,7 @@ title: Make Swirling Dustdevil executable (a hand-active cost reduction, wave A,
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0305-swirling-dustdevil
 depends_on: [T-0304]
 claims: [card:Swirling Dustdevil]
