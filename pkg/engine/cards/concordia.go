@@ -126,4 +126,46 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Stormbolt Ray": {
+		Text: []string{
+			"When this structure deploys, deal 3 damage to chosen asset.",
+			"T2, exhaust: Return this structure to its owner's hand.",
+		},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 3},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 2},
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectSelf,
+						},
+					},
+				},
+			},
+		},
+	},
 }
