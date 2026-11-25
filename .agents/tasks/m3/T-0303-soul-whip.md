@@ -4,7 +4,7 @@ title: Make Soul Whip executable (a chosen allied unit deals its power, wave A, 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0303-soul-whip
 depends_on: [T-0302]
 claims: [card:Soul Whip]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/cards_concordia_soulwhip_test.go`, from the CSV text, 
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 5): written against 0972bf78, with the lead's probe above. No directive is due here (#185 (3) and (4) are *Will Breaker*'s and *Tempest City Ray*'s), and no waiting trigger has fired. Every part of the Definition exists. Set to `tests`.
+- 2026-11-25 rules-test-author: tests written in pkg/engine/cards_concordia_soulwhip_test.go (all fail until the card is executable): TestCard_SoulWhip_ChosenAllyDealsItsPower, _TwoTargetQuestions, _AnyZoneAndExhausted, _DealerUsesItsCurrentPower, _PowerReadOnResolution, _DealerGoneDealsNothing, _TargetGoneDealsNothing, _StalwartDoesNotCapIt, _ResistantAndArmorApply, _LethalDamageKills, _UnbowedTriggers, _WardedOpposingUnitNotOffered, _NeedsBothUnits, _PaysTwoTactics. Helpers requested: none. Cases left out: none. go vet is clean, gofmt clean, cardtown lint rules passes. Set to tests-review.
