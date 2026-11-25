@@ -4,7 +4,7 @@ title: Make Growing Legion executable (Scratch 1; first Concordia card, wave A, 
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0299-growing-legion
 depends_on: [T-0295]
 claims: [card:Growing Legion, file:pkg/engine/cards/concordia.go]
