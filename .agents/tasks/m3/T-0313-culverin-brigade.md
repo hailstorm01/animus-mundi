@@ -4,7 +4,7 @@ title: Make Culverin Brigade executable (deploy trigger, 1 damage to each of up 
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0313-culverin-brigade
 depends_on: [T-0312]
 claims: [card:Culverin Brigade]
@@ -60,13 +60,14 @@ In a new file `pkg/engine/cards_soulless_culverin_test.go`, from the CSV text, l
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_CulverinBrigade`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_CulverinBrigade`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 15): written against 080ed9ac, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard (#120), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2)), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Conscript Rifles*. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Conscript Rifles*' `HookDeploy` trigger, *Craterfall Ancient*'s `UpTo` 2 slot, the `AllegianceOpposing` filter, `OpDealDamage` on `SubjectTarget`), so no kernel change. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote 12 tests in pkg/engine/cards_soulless_culverin_test.go: TestCard_CulverinBrigade_{EntersReservesAsFiveFour, DealsOneToEachOfTwoChosen, OffersEveryOpposingAsset, MayChooseOne, MayChooseNone, TimeoutChoosesNone, OnlyTheHeadquartersStillAsks, LethalDamageKills, ArmorAbsorbs, OneTargetGoneTheOtherStillTakesOne, TargetGainsWardDealsNothingToIt, SourceGoneStillDeals, OnlyItsOwnDeployTriggers}. Helpers requested: none. Cases left out: none. go vet clean, cardtown lint rules passes; the tests fail now because the card is not yet executable, except OnlyItsOwnDeployTriggers, which passes until the definition exists (it pins that nothing else triggers). Set to tests-review.
 - 2026-11-25 lead-architect: tests approved (D4, round 1). cafcbd23 adds only `pkg/engine/cards_soulless_culverin_test.go` (13 tests, one per case; the entry above says 12 by mistake) and the task file. Each expected outcome agrees with the FRD 01 text it cites: `FR-TGT-002` and `SVY-R11` for up to 2 distinct picks (one, two or none), `FR-MOD-001` §6 for the timeout taking none, §1 for the one-option case still asking (Min 0, Max 1), `FR-TGT-001`, `FR-KWD-002h` and `FR-ZON-005` for the opposing-asset filter (the opposing Headquarters, structure and Scratch Company offered, Ward and every allied asset not), `FR-TGT-003` for Partial Invalidation and for Ward gained before resolution, `FR-ZON-004` for the source gone, and `FR-LAY-002`, `FR-REP-004` Stage 4 and `FR-CBT-003` for the damage. A lead probe with the Definition, since reverted, passes all 13, and each of 10 mutants (any allegiance, allied, units only, Scratch excluded, `UpTo` 1, exactly one, `UpTo` 3, 2 damage, attack hook, `Optional`) fails at least one. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Culverin Brigade in pkg/engine/cards/soulless.go and removed it from NotYetExecutable in pkg/engine/cards/cards.go (06b811c6). Reused HookDeploy (Conscript Rifles), UpTo: 2 target slot (Craterfall Ancient), AllegianceOpposing filter, and OpDealDamage on SubjectTarget. Verifications: all 13 card tests pass (go test ./pkg/engine -run TestCard_CulverinBrigade), TestCards_Executable passes, go tool task check passes (fmt-check, vet, all tests, cardtown lint --all), go tool task sim passes (P0 58.5% / P1 39.5% / draws 2.0%), and go tool task sim-matrix passes all 24 runs (both starter and stress decks) with 0 invariant violations. Set to review.
