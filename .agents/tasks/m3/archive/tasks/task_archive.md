@@ -16,3 +16,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0303 | Make *Soul Whip* executable (wave A) | done |
 | T-0304 | Make *Stormbolt Ray* executable (wave A) | done |
 | T-0305 | Make *Swirling Dustdevil* executable (wave A) | done |
+| T-0306 | Make *Tempest City Ray* executable (wave A, #185 (4)) | done |
