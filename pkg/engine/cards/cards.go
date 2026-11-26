@@ -40,7 +40,6 @@ var NotYetExecutable = []string{
 	"Gemstone Titan",
 	"Hellfire Armorers",
 	"Hourglass Diviner",
-	"Hurricane Outrigger",
 	"Inspired Salvage",
 	"Land Fortress",
 	"Light of the World Soul",

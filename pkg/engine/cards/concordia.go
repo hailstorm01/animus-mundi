@@ -21,6 +21,27 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Hurricane Outrigger": {
+		Text: []string{"When this unit deploys, your Headquarters gets +1 power until the end of your turn."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpModifyStat,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectAll,
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindHeadquarters,
+							},
+						},
+					},
+				},
+			},
+		},
+	},
 	"Icewind Regent": {
 		Text: []string{"Exhaust: Return chosen unit to its owner's hand."},
 		Activated: []ability.Activated{

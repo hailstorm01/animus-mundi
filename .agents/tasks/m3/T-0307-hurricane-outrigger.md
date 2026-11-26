@@ -4,7 +4,7 @@ title: Make Hurricane Outrigger executable (a deploy trigger gives its controlle
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0307-hurricane-outrigger
 depends_on: [T-0306]
 claims: [card:Hurricane Outrigger]
@@ -53,11 +53,14 @@ In a new file `pkg/engine/cards_concordia_outrigger_test.go`, from the CSV text,
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_HurricaneOutrigger`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_HurricaneOutrigger`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 9): written against 4800bb61, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote the nine tests in pkg/engine/cards_concordia_outrigger_test.go: EntersReservesAsTwoOne, HeadquartersGetsOnePower, ExpiresAtEndOfTurn, HeadquartersAttacksForFour, TwoDeploysStack, OpponentsOutriggerBoostsTheirHeadquarters, OtherDeploysDoNothing, SourceGoneStillBoosts, FaceDownScratchDoesNothing. Helpers requested: none (reuses deployTo, vrHQ, effectEvents, ptPlaceHook, glEnact, enactAction, faceDownCount). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes. Seven tests fail because the card is not yet executable; OtherDeploysDoNothing and FaceDownScratchDoesNothing pass already (they pin that nothing happens), and must still pass after the engineer's change.
+- 2026-11-25 lead-architect: tests approved (D4, round 1). The file holds the nine listed tests, and each expected outcome agrees with the FRD 01 text it cites. A lead probe with the Definition, since reverted, passes all nine, and all 7 mutants fail at least one test: any Headquarters, the opposing one, `SubjectSelf`, +2, allied units and Headquarters, until the end of the opponent's turn, Maximum Health. `go vet` is clean. `OtherDeploysDoNothing` and `FaceDownScratchDoesNothing` pass before the implementation, as the author reported: they pin what must not happen. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Hurricane Outrigger (feat(engine): make Hurricane Outrigger executable (T-0307), c8a82aee). In pkg/engine/cards/concordia.go, added definition in concordiaDefs with Trigger on HookDeploy, executing OpModifyStat +1 power on SubjectAll with Filter {Allegiance: AllegianceAllied, Kinds: KindHeadquarters} (reusing shapes from Rapturous Sermon and Arkha, Sun's Fury). Removed "Hurricane Outrigger" from NotYetExecutable in pkg/engine/cards/cards.go. Ran 'go test ./pkg/engine -run TestCard_HurricaneOutrigger' (ok, 9/9 passed), 'go test ./pkg/cardcheck -run TestCards_Executable' (ok), 'go tool task check' (all fmt, vet, tests, and cardtown linters passed), 'go tool task sim' (200 games passed, all invariants held), and 'go tool task sim-matrix' (all 24 starter and 24 stress runs passed, invariants held). Set to review.
