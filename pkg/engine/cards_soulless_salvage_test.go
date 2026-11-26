@@ -77,6 +77,16 @@ func TestCard_InspiredSalvage_ReturnsTwoChosenMechanizedCards(t *testing.T) {
 	isChoose(s, a, b)
 	before := append([]*Instance(nil), s.g.Players[0].Hand...)
 	s.do(enactAction(inst))
+	asks := s.asked(0)
+	if len(asks) != 1 || asks[0].Kind != DecideTarget {
+		t.Fatalf("one target question is asked, got %d decisions (FR-TGT-001)", len(asks))
+	}
+	if got, want := sortedCopy(refs(asks[0])), sortedCopy(idsOf(piles)); !reflect.DeepEqual(got, want) {
+		t.Errorf("the question offers all three Mechanized cards in the pile: got %v, want %v (FR-TGT-001)", got, want)
+	}
+	if asks[0].Min != 0 || asks[0].Max != 2 {
+		t.Errorf("the question takes up to two of the three, and may take none: min %d max %d (FR-TGT-001, FR-TGT-002)", asks[0].Min, asks[0].Max)
+	}
 	p := s.g.Players[0]
 	for _, c := range []*Instance{a, b} {
 		if inDiscardPile(p, c) || !inHand(p, c) {

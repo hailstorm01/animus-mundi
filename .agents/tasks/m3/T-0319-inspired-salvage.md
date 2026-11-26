@@ -4,7 +4,7 @@ title: Make Inspired Salvage executable (up to 2 Mechanized cards from the pile 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0319-inspired-salvage
 depends_on: [T-0318]
 claims: [card:Inspired Salvage]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/cards_soulless_salvage_test.go`, from the CSV text, lo
 - 2026-11-26 rules-test-author (round 1 revision): fixed both notes in `pkg/engine/cards_soulless_salvage_test.go`. (1) `ReturnsTwoChosenMechanizedCards`, `SameCardCannotBeChosenTwice` and both `EnactableWithNoMechanizedCard` subtests no longer count the whole hand: they snapshot the hand after the Maneuver is dealt, before the enact, and check exactly which cards entered it (new local helpers `isEntered`, `idsOf`). (2) `SameCardCannotBeChosenTwice` keeps the `Repeats` check, counts one `EventInvalidAnswer`, and asserts both pile cards stay in the pile and nothing enters the hand (`SVY-R11`, `SVY-R16`, `FR-MOD-001` §6). Helpers requested: none. `gofmt`, `go vet ./pkg/engine` and `cardtown lint rules` are clean; the tests still fail only because the card is in `NotYetExecutable`. Set to `tests-review`.
 - 2026-11-26 lead-architect: tests returned (D4, round 2). d18d9ebc settles both round-1 notes, and with the lead's probe Definition all 8 pass. Of 8 mutants, 7 fail 2 to 6 tests each (`UpTo` 1, mandatory, no subtype, Cybernetic in place of Mechanized, any allegiance, battlefield in place of the pile, `OpPutOnDeck`). `UpTo: 3` passes every test: the only `Max` check (`OnlyOwnMechanizedCardsOffered`) has exactly two legal cards, so it can't tell a cap of 2 from more. One note:
   1. In `ReturnsTwoChosenMechanizedCards`, with three Mechanized cards in the pile, assert that the one `DecideTarget` question offers all three, with `Min` 0 and `Max` 2. The lead's task text left this out, and the Tests bullet now says it. Set to `tests`.
+- 2026-11-26 rules-test-author (round 2 revision): fixed the one note in `pkg/engine/cards_soulless_salvage_test.go`. `ReturnsTwoChosenMechanizedCards` now asserts the one `DecideTarget` question offers all three Mechanized pile cards, with `Min` 0 and `Max` 2 (so `UpTo: 3` fails it). No other test changed. Helpers requested: none. `gofmt`, `go vet ./pkg/engine` and `cardtown lint rules` are clean; the tests still fail only because the card is in `NotYetExecutable`. Set to `tests-review`.
