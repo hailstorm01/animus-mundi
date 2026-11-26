@@ -333,25 +333,25 @@ func TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards(t *testing.T) {
 	deck := s.onTop(0, vanilla("D1", "D2", "D3")...)
 	r := s.put(0, ZoneMainTheater, drfTapCard(s))
 	s.setPool(0, 0, 0)
-	s.script(0, Answer{Picks: []int{0, 1}})
+	// When the discard is asked, the ability's steps are already under way,
+	// so the Refiner must already be off the battlefield and in the pile.
+	goneWhenAsked, pileWhenAsked := false, false
+	s.byKind(0, func(d Decision) Answer {
+		if d.Kind == DecideHand {
+			goneWhenAsked = !s.alive(r)
+			pileWhenAsked = inDiscardPile(p, r.Inst)
+		}
+		return Answer{Picks: []int{0, 1}}
+	})
 	s.do(activate(r, 0))
 	if s.alive(r) {
 		t.Fatalf("setup: the Refiner should have been killed before the ability resolved")
 	}
+	if !goneWhenAsked || !pileWhenAsked {
+		t.Errorf("the Refiner is off the battlefield and in the discard pile before the discard is asked (FR-ZON-004): gone %v, in pile %v", goneWhenAsked, pileWhenAsked)
+	}
 	if !inDiscardPile(p, r.Inst) {
 		t.Errorf("the Refiner's card is in player 0's discard pile")
-	}
-	killSeq, drawSeq := -1, -1
-	for _, e := range s.g.Log {
-		if (e.Kind == EventDestroy || e.Kind == EventLeave) && (e.Source == r.ID || e.Target == r.ID) && killSeq < 0 {
-			killSeq = e.Seq
-		}
-		if e.Kind == EventDraw && drawSeq < 0 {
-			drawSeq = e.Seq
-		}
-	}
-	if killSeq < 0 || drawSeq < 0 || killSeq > drawSeq {
-		t.Errorf("the Refiner is gone before the draw: kill seq %d, first draw seq %d", killSeq, drawSeq)
 	}
 	for _, d := range askedKind(s, 0, DecideHand) {
 		for _, o := range d.Options {

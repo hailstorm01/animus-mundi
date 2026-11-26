@@ -4,7 +4,7 @@ title: Make Dolus Refiner executable (exhaust: draw 2, then discard 2; wave A, c
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0315-dolus-refiner
 depends_on: [T-0314]
 claims: [card:Dolus Refiner]
@@ -75,3 +75,4 @@ Activating (a Readied Refiner put in player 0's Main Theater, pool R0 T0, unless
 - 2026-11-26 lead-architect: tests need changes (D4, round 1). e02ac47b adds only `pkg/engine/cards_soulless_refiner_test.go` (12 tests, one per case) and the task file. With the lead's probe Definition 11 pass, and each of 8 mutants (draw 1, draw 3, discard 1, discard 3, discard before draw, steps on the opponents, an added R1 cost, no exhaust cost) fails at least 3. Expected outcomes agree with the FRD 01 text they cite. Note:
   1. `TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards` fails against the correct Definition: "kill seq 6, first draw seq -1". It looks for an `EventDraw` in the log, but a draw that takes a card logs no event: `EventDraw` is logged only for a draw from an empty deck (`pkg/engine/zones.go:26-33`), so the check rests on an implementation detail. Drop the log scan. Show the kill came first from the game state instead: in the `DecideHand` answer (a `s.byKind` responder that also picks the first two options), record whether the Refiner is still on the battlefield (`s.alive(r)`) and whether its card is in player 0's discard pile, and assert it was gone and in the pile when the discard was asked. The discard comes after the draw in the same resolution, so this pins the kill before the ability's steps. Keep the other assertions (D1 and D2 drawn, the two picked discarded, the Refiner's card never offered).
 Set to `tests`.
+- 2026-11-26 rules-test-author: round 1 note 1 addressed. `TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards` no longer scans the log for `EventDraw`. A `s.byKind` responder picks the first two options and, when the `DecideHand` discard is asked, records `!s.alive(r)` and `inDiscardPile(p, r.Inst)`; the test asserts both were true then (the kill came before the ability's steps). The other assertions are kept (Refiner's card never offered, D1 and D2 drawn, the two picked discarded). No other test changed; no helpers requested. `go vet` clean, `cardtown lint rules` PASS; the card tests still fail only because the definition doesn't exist yet. Set to `tests-review`.
