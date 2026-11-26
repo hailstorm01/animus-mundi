@@ -82,4 +82,30 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Culverin Brigade": {
+		Text: []string{"When this unit deploys, deal 1 damage to each of up to 2 chosen opposing assets."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+							},
+							UpTo: 2,
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }

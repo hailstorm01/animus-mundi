@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Command Barge",
 	"Comms Relay",
 	"Consuming Earth",
-	"Culverin Brigade",
 	"Dolus Infusion",
 	"Dolus Macrocannon",
 	"Dolus Refiner",
