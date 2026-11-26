@@ -4,7 +4,7 @@ title: Make Bring It Down executable (2 damage to a chosen non-Scratch asset; fi
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0310-bring-it-down
 depends_on: [T-0309]
 claims: [card:Bring It Down, file:pkg/engine/cards/soulless.go]
@@ -70,3 +70,4 @@ In a new file `pkg/engine/cards_soulless_maneuvers_test.go`, from the CSV text, 
 - 2026-11-25 lead-architect: tests returned (D4, round 1). A lead probe with the Definition, since reverted, passes 9 of the 10, and each of 8 mutants (no Scratch filter, 1 damage, 3 damage, units only, no Headquarters, opposing only, Main Theater only, kill in place of damage) fails at least one of those 9. Note:
   1. `TestCard_BringItDown_TargetGoneDealsNothing` fails its setup check ("the chosen unit should have left before resolution") with the Definition in place: `s.ptPlaceHook` (`pile_target_test.go:27`) calls its function only when the top stack item is a `StackAbility`, so it never fires for a Maneuver. The helper was the lead's suggestion in the task text, now corrected under Tests. Remove the unit through a `recorder` on `s.g.obs` whose `onEvent` acts on `e.Kind == "place" && e.Card == "Bring It Down"` while the unit is alive (`stormKill` or `s.g.removeFromBattlefield`), as `TestCard_SoulWhip_TargetGoneDealsNothing` (`cards_concordia_soulwhip_test.go:185`) does. Keep the assertions. Change nothing else. Set to `tests`.
 - 2026-11-25 rules-test-author: applied lead note 1 (D4 round 1). `TestCard_BringItDown_TargetGoneDealsNothing` now removes the chosen unit through a `recorder` on `s.g.obs` whose `onEvent` calls `stormKill` on the `place` event for *Bring It Down* while the unit is alive, in place of `s.ptPlaceHook`. Assertions unchanged, nothing else changed, no helpers requested. `go vet` is clean; the test fails only because the card has no definition yet. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). 3b4b4fb6 changes only `TestCard_BringItDown_TargetGoneDealsNothing`, as note 1 asked: a `recorder` removes the chosen unit on *Bring It Down*'s `place` event. Each expected outcome agrees with the FRD 01 text it cites (`SVY-R29` for the Headquarters, `FR-TGT-001` and `FR-ENT-103` for the Scratch exclusion, `FR-REP-004` Stage 2 and `FR-KWD-002k` for Resistant and Armor, `FR-KWD-002h` for Ward, `FR-TGT-003` for the target gone at resolution). A lead probe with the Definition, since reverted, passes all ten, and each of the 8 round 1 mutants fails at least one. The committed test file is gofmt-clean (the test author's `gofmt -l` listing came from a CRLF working copy). Set to `ready`.
