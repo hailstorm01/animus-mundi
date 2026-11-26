@@ -4,7 +4,7 @@ title: Make Will Breaker executable (a deploy trigger kills a chosen opposing un
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0309-will-breaker
 depends_on: [T-0308]
 claims: [card:Will Breaker]
@@ -73,3 +73,4 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
 - 2026-11-25 lead-architect: tests returned (D4, round 1). A lead probe with the Definition, since reverted, passes 11 of the 12, and each of 7 mutants (no stat bound, `AtMost` 2, any allegiance, any kind, Main Theater only, return in place of kill, a power bound) fails at least one of those 11. Note:
   1. `TestCard_WillBreaker_NoTargetDoesNothing` asserts that no trigger is placed (`placed` through `s.ptPlaceHook`). FRD 01 line 442 doesn't say that: it lets the trigger be placed with no legal target, and then only its targeted clause fizzles ("when that trigger is placed on the stack or resolves"). The kernel places it and it fizzles. The "no trigger is placed" wording was the lead's, in the task text, and is now corrected under Tests. Drop the placement assertion. Assert instead what the rule fixes: *Will Breaker* is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty after the deploy, no destroy event is logged (`effectEvents(s.g, 0, "destroy")` is empty), and every unit stays. Change nothing else. Set to `tests`.
 - 2026-11-25 rules-test-author: round 1 note 1 applied to `TestCard_WillBreaker_NoTargetDoesNothing`: dropped the `s.ptPlaceHook` placement assertion; it now asserts Will Breaker is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty, no destroy event is logged and every unit stays. Nothing else changed. Helpers requested: none. Set to tests-review.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). 2c6f9fbb changes only `TestCard_WillBreaker_NoTargetDoesNothing`, as note 1 asked. Each expected outcome agrees with the FRD 01 text it cites (`SVY-R59` for the face-down cases, `FR-TGT-001` Dynamic Stats for the cost bound, `FR-TGT-003` for the re-check at resolution and the deploy without a legal target). A lead probe with the Definition, since reverted, passes all twelve, and each of the 7 round 1 mutants fails at least one. `FaceDownScratchDoesNothing` passes before the implementation: it pins what must not happen. Set to `ready`.
