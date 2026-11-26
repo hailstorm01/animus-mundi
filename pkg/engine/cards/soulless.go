@@ -249,4 +249,26 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Inspired Salvage": {
+		Text: []string{"Return up to 2 chosen Mechanized cards from your discard pile to your hand."},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceAllied,
+						Subtypes:   []string{"Mechanized"},
+						Zone:       ability.ZoneDiscard,
+					},
+					UpTo: 2,
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpReturnToHand,
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 }
