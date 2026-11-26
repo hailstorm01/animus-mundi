@@ -4,7 +4,7 @@ title: Make Echoing Nightmare executable (a deploy trigger returns a chosen oppo
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0308-echoing-nightmare
 depends_on: [T-0307]
 claims: [card:Echoing Nightmare]
@@ -67,3 +67,4 @@ In a new file `pkg/engine/cards_concordia_nightmare_test.go`, from the CSV text,
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 10): written against 146dc507, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_nightmare_test.go`, 11 tests as listed under Tests: EntersReservesAsSixTwo, ReturnsTheUnitAndMoves, MovedNightmareMayAttack, OnlyOpposingMainTheaterUnitsOffered, NoTargetStaysInReserves, WardedUnitNotOffered, TargetGoneNoMove, TargetLeftTheMainTheaterNoMove, SourceGoneStillReturns, ControlledUnitGoesToItsOwnersHand, MoveFiresMovesHooks, FaceDownScratchDoesNothing (12 with the last). `go vet` and `cardtown lint rules` pass; 11 fail until the definition is added, and FaceDownScratchDoesNothing passes already (a regression guard). Helpers requested: none (reuses stormChoose, stormKill from the Stormbolt test file). Cases left out: none. Set to `tests-review`.
