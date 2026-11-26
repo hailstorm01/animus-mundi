@@ -30,4 +30,30 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Conscript Rifles": {
+		Text: []string{"When this unit deploys, deal 1 damage to chosen non-Scratch Company unit."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Kinds:   ability.KindUnit,
+								Scratch: ability.ScratchExcluded,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
