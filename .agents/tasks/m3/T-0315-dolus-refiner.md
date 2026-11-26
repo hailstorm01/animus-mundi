@@ -4,7 +4,7 @@ title: Make Dolus Refiner executable (exhaust: draw 2, then discard 2; wave A, c
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0315-dolus-refiner
 depends_on: [T-0314]
 claims: [card:Dolus Refiner]
@@ -71,3 +71,4 @@ Activating (a Readied Refiner put in player 0's Main Theater, pool R0 T0, unless
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 17): written against 607c9752, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71, both steps act on the controller), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard in a cost (#120: the discard is an effect step), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2): it draws, but adds no hook), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Dolus Macrocannon*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`CostExhaustSelf`, *Improvised Orders*' `OpDraw` and `OpDiscard` steps through `stepDiscard`), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_refiner_test.go` (12 tests, all in the Tests section: EntersMainTheaterAsZeroNine, DrawsTwoThenDiscardsTheTwoPicked, MayDiscardTheCardsJustDrawn, TimeoutDiscardsTheTwoCardsJustDrawn, EmptyHandDiscardsBothDrawnWithoutAsking, ShortDeckDrawsWhatIsThereThenLoses, OnlyTheControllersHandAndDeckAreUsed, DiscardingEerieRemnantFiresItsTrigger, NotOfferedWhileExhausted, NotOfferedWhileTheStackIsNotEmpty, MayActivateTheTurnItDeploys, SourceGoneStillDrawsAndDiscards). Helpers requested: none (test-local helpers drfScene, drfHand, drfTapCard, drfHandIs). `go vet ./pkg/engine` clean, `cardtown lint rules` PASS. Ten fail until the definition exists; NotOfferedWhileExhausted and NotOfferedWhileTheStackIsNotEmpty already pass (the ability is absent). Source-gone uses the kill trigger from `drfTapCard` and checks via the log that the kill precedes the first draw, rather than a `ptPlaceHook` (the exhaust trigger is only placed after costs are paid). Nothing left out.
