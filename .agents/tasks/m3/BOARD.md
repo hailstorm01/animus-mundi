@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0307](T-0307-hurricane-outrigger.md) | Make *Hurricane Outrigger* executable (wave A) | tests |
