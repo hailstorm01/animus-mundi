@@ -203,4 +203,36 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Fire for Effect": {
+		Text: []string{
+			"Opposing assets in the Main Theater gain Resistant -1 until end of turn.",
+			"Deal 1 damage to chosen asset in the Main Theater.",
+		},
+		Effect: ability.Effect{
+			Targets: []ability.Target{
+				{
+					Filter: ability.Filter{
+						Zone: ability.ZoneMainTheater,
+					},
+				},
+			},
+			Steps: []ability.Step{
+				{
+					Op:      ability.OpGrantKeyword,
+					Subject: ability.SubjectAll,
+					Filter: ability.Filter{
+						Allegiance: ability.AllegianceOpposing,
+						Zone:       ability.ZoneMainTheater,
+					},
+					Keywords: ability.Keywords{Resistant: -1},
+				},
+				{
+					Op:      ability.OpDealDamage,
+					Amount:  ability.Value{N: 1},
+					Subject: ability.SubjectTarget,
+					Target:  0,
+				},
+			},
+		},
+	},
 }

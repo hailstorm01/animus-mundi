@@ -25,7 +25,6 @@ var NotYetExecutable = []string{
 	"Encampment",
 	"Enclave",
 	"Field Mechanic",
-	"Fire for Effect",
 	"Flickering Ember",
 	"Forgemaster's Resilience",
 	"Frostfire Breath",
