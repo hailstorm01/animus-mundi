@@ -4,7 +4,7 @@ title: Make Hellfire Armorers executable (Ward; allied units in the same zone ha
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0318-hellfire-armorers
 depends_on: [T-0317]
 claims: [card:Hellfire Armorers]
@@ -54,13 +54,14 @@ In a new file `pkg/engine/cards_soulless_hellfire_test.go`, from the CSV text, l
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_HellfireArmorers`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_HellfireArmorers`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 21): written against b6167f50, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no discard cost (#120), no tuck (#142), no pile round trip (#183 (2)) and no turn-boundary or draw hook (#15 (2): Aggressive's "until end of turn" is a power bonus that expires at the existing end-of-turn expiry and can make nothing lethal), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Fire for Effect*. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Hulking Incongruity*'s same-zone `StaticAura` keyword grant, the loader's Ward keyword line, and `fireAttacks` reading granted Aggressive), so no kernel change. Set to `tests`.
 - 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_hellfire_test.go`: TestCard_HellfireArmorers_AlliedUnitsInItsZone, _HasWard, _AlliedAttackerGetsOneMorePower, _ItselfAttacksWithOneMore, _AddsToPrintedAggressive, _TwoArmorersAddUp, _FollowsItsZone, _GoneBeforeTheAttackGrantsNothing, _BonusOutlastsTheAura. Helpers requested: none (reuses stormChoose, crDeployCard, crOneQuestion, crWantOffered, recordPlaced, stormKill). HasWard offers the Armorers to Conscript Rifles' chosen target. `go vet` clean, `cardtown lint rules` passes. Today 7 fail on the missing aura and 2 (HasWard, GoneBeforeTheAttack) already pass, as expected. No cases left out. Set to `tests-review`.
 - 2026-11-26 lead-architect: tests approved (D4, round 1). 5d07b6a5 adds only `pkg/engine/cards_soulless_hellfire_test.go` and the task file's Log, 9 tests, one per case. With the lead's probe Definition all 9 pass. Each of 7 mutants fails 1 to 7 of them: `Other: true` (excludes itself), no `Kinds` (structures gain it), Aggressive 2, no allegiance, no zone criterion, a fixed Main Theater zone in place of `ZoneRefSame`, and +1 power in place of the keyword. The expected outcomes match the FRD 01 text they cite: `BonusOutlastsTheAura` pins line 532 (a resolved one-shot bonus is kept), `FollowsItsZone` line 411 (`SVY-R44`, the source's current zone), and `HasWard` line 648 (*Conscript Rifles*' any-allegiance slot offers the allied Armorers, not the opposing one). `TwoArmorersAddUp` scripts a timeout for a possible ordering question and asserts only the damage, as the task asks. The test author's report (not its Log) names one read of non-test engine files whose output was discarded (`head -0`); the tests use nothing from it. Set to `ready`.
+- 2026-11-26 kernel-engineer (Gemini Flash): implemented Hellfire Armorers in pkg/engine/cards/soulless.go after Fire for Effect, matching the Definition (Text: ["Allied units in the same zone have Aggressive 1."]; Statics: one StaticAura with Filter {Allegiance: AllegianceAllied, Kinds: KindUnit, ZoneRef: ZoneRefSame} and Keywords: {Aggressive: 1}). Removed Hellfire Armorers from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing StaticAura shape, ZoneRefSame, and engine Aggressive aura evaluation. Ran go test ./pkg/engine -run TestCard_HellfireArmorers (all 9 passed), go test ./pkg/cardcheck -run TestCards_Executable (passed), go tool task check (gofmt, vet, all tests, cardtown lint --all passed), go tool task sim (200 starter deck games passed with all invariants holding), and go tool task sim-matrix (24 starter + 24 stress runs passed, all invariants holding, exit 0). Set to `review`.
