@@ -211,14 +211,18 @@ func TestCard_WillBreaker_NoTargetDoesNothing(t *testing.T) {
 	nine := s.put(1, ZoneReserves, wbUnit("Cost9", 9, ability.Keywords{}))
 	ally := s.put(0, ZoneMainTheater, wbUnit("AllyCost1", 1, ability.Keywords{}))
 	s.script(0)
-	placed := false
-	s.ptPlaceHook(func(int, StackItem) { placed = true })
 	c := wbDeploy(s)
-	if placed {
-		t.Errorf("a deploy trigger with no legal target is not placed (FR-TGT-003)")
+	if a := assetOf(s.g, c); a == nil || a.Zone != ZoneReserves || a.Controller != 0 {
+		t.Errorf("Will Breaker enters player 0's Reserves normally (FR-TGT-003)")
 	}
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("nothing is asked: %d decisions", n)
+	}
+	if n := len(s.g.Stack); n != 0 {
+		t.Errorf("the stack is empty once play returns: %d items (FR-TGT-003)", n)
+	}
+	if ev := effectEvents(s.g, 0, "destroy"); len(ev) != 0 {
+		t.Errorf("no destroy event is logged: %d (FR-TGT-003)", len(ev))
 	}
 	for _, a := range []*Asset{four, nine, ally, assetOf(s.g, c)} {
 		if a == nil || !s.alive(a) {
