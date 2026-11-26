@@ -4,7 +4,7 @@ title: Make MAX-8 Autonomous Warsuit executable (deploy: 2 damage to one chosen 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0320-max-8-autonomous-warsuit
 depends_on: [T-0319]
 claims: [card:MAX-8 Autonomous Warsuit]
@@ -70,3 +70,4 @@ In a new file `pkg/engine/cards_soulless_max8_test.go`, from the CSV text, loadi
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 23): written against e6573b07, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no mode or "another" slot (#91: its two slots may pick the same asset, `SVY-R35`, so no `Another`), no deck search (#106), no discard cost (#120), no tuck (#142), no turn-boundary or draw hook (#15 (2)), and no pile (#183 (2)); the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Inspired Salvage*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`chooseTargets` asks one decision per slot in slot order, `stepDealDamage` and `stepHeal` act on `SubjectTarget` by slot, and the sweep runs only after the item resolves), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_max8_test.go`, 15 `TestCard_MAX8AutonomousWarsuit_*` tests, one per case under Tests (EntersReservesAsFourSeven, AsksTwoSlotsDamageFirst, AlliedWardedUnitIsOffered, SameAssetForBothTakesTwoThenHealsTwo, HealsAnotherAssetLethallyDamagedOneDies, HealNeverGoesBelowZero, CanHealAHeadquarters, CanDamageItself, ScratchCompanyCanBeKilled, ArmorAbsorbsAndHealLeavesArmor, TimeoutTakesTheFirstOptionForEach, DamageTargetGoneStillHeals, HealTargetGoneStillDamages, SourceGoneStillResolves, FaceDownScratchDoesNothing). Helpers requested: none (a file-local `mxChoose` picks per-slot answers). `go vet` is clean and `cardtown lint rules` passes. 14 tests fail until the card is defined; FaceDownScratchDoesNothing passes already (a Scratch Company has no ability, so nothing happens either way). No cases left out. Set to `tests-review`.
