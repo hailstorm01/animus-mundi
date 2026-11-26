@@ -4,7 +4,7 @@ title: Make Dolus Refiner executable (exhaust: draw 2, then discard 2; wave A, c
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0315-dolus-refiner
 depends_on: [T-0314]
 claims: [card:Dolus Refiner]
