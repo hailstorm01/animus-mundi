@@ -4,7 +4,7 @@ title: Make Echoing Nightmare executable (a deploy trigger returns a chosen oppo
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0308-echoing-nightmare
 depends_on: [T-0307]
 claims: [card:Echoing Nightmare]
