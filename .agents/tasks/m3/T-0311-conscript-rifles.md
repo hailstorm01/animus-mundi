@@ -4,7 +4,7 @@ title: Make Conscript Rifles executable (deploy trigger, 1 damage to a chosen no
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0311-conscript-rifles
 depends_on: [T-0310]
 claims: [card:Conscript Rifles]
@@ -68,3 +68,4 @@ Remember the Single-Option Fast-Path (line 449): when exactly one unit is legal,
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 13): written against e298f225, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired. Searched `pkg/engine` and the task archives: every part of the Definition exists (the `HookDeploy` trigger of *Will Breaker*, the `KindUnit` filter of *Icewind Regent*, `ScratchExcluded` and the step of *Bring It Down*), so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_soulless_conscript_test.go` with the 11 tests listed under Tests (EntersReservesAsTwoTwo, AloneDealsOneToItself, DealsOneToTheChosenUnit, OffersEveryNonScratchUnit, UnitTurnedFaceDownNotOffered, LethalDamageKills, ResistantAndArmorApply, WardedOpposingUnitNotOffered, TargetGoneDealsNothing, SourceGoneStillDeals, FaceDownScratchDoesNothing). No helpers requested (file-local `cr*` helpers only). Option lists are compared as sets, since FRD 01 fixes no order. `go vet` and `cardtown lint rules` are clean; 10 tests fail as expected until the definition exists, and FaceDownScratchDoesNothing already passes as a guard (the card has no ability yet, and a Scratch Company never gets one). No case left out.
