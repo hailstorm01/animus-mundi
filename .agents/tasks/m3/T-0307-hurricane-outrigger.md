@@ -4,7 +4,7 @@ title: Make Hurricane Outrigger executable (a deploy trigger gives its controlle
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0307-hurricane-outrigger
 depends_on: [T-0306]
 claims: [card:Hurricane Outrigger]
@@ -62,3 +62,4 @@ In a new file `pkg/engine/cards_concordia_outrigger_test.go`, from the CSV text,
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 9): written against 4800bb61, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote the nine tests in pkg/engine/cards_concordia_outrigger_test.go: EntersReservesAsTwoOne, HeadquartersGetsOnePower, ExpiresAtEndOfTurn, HeadquartersAttacksForFour, TwoDeploysStack, OpponentsOutriggerBoostsTheirHeadquarters, OtherDeploysDoNothing, SourceGoneStillBoosts, FaceDownScratchDoesNothing. Helpers requested: none (reuses deployTo, vrHQ, effectEvents, ptPlaceHook, glEnact, enactAction, faceDownCount). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes. Seven tests fail because the card is not yet executable; OtherDeploysDoNothing and FaceDownScratchDoesNothing pass already (they pin that nothing happens), and must still pass after the engineer's change.
+- 2026-11-25 lead-architect: tests approved (D4, round 1). The file holds the nine listed tests, and each expected outcome agrees with the FRD 01 text it cites. A lead probe with the Definition, since reverted, passes all nine, and all 7 mutants fail at least one test: any Headquarters, the opposing one, `SubjectSelf`, +2, allied units and Headquarters, until the end of the opponent's turn, Maximum Health. `go vet` is clean. `OtherDeploysDoNothing` and `FaceDownScratchDoesNothing` pass before the implementation, as the author reported: they pin what must not happen. Set to `ready`.
