@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0310](T-0310-bring-it-down.md) | Make Bring It Down executable (first Soulless card, wave A) | tests |
