@@ -4,7 +4,7 @@ title: Make Visionary's Eye executable (whenever this unit attacks, draw a card,
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0322-visionarys-eye
 depends_on: [T-0321]
 claims: [card:Visionary's Eye]
@@ -68,3 +68,4 @@ Attacking (a Readied Eye put in player 0's Main Theater, with a known card on to
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 25): written against 0085610c, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71: only its controller draws), no mode or "another" slot (#91), no deck search (#106), no cost at all (#120), no tuck (#142), no turn-start, turn-end or draw hook (#15 (2): it draws as an effect of an attack hook, and the draw expires nothing), and no pile (#183 (2)); the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Mobile Armory*; it is the last header card on `NotYetExecutable`. Searched `pkg/engine` and the task archives: every part of the Definition exists (`fireHook` places self `HookAttacks` triggers in Step 2, and `OpDraw` with no `Subject` draws for the controller), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_eye_test.go`, 11 tests, all from the task's Tests section: EntersReservesAsOneOne, CannotAttackFromReserves, MarchesThenAttacksAndDraws, AttackDrawsOneCard, DrawResolvesBeforeCombatDamage, DrawsEvenWhenItDiesInTheTrade, ZeroPowerAttackStillDraws (power lowered with a Layer 5 `Modifier{Power: -1}`), KilledBeforeItsTriggerStillDraws, EachAttackDrawsAgain, DefendingDoesNotDraw, OnlyItsOwnAttackDraws. Helpers requested: none (file-local `eyeCounts`, `eyeWantCounts`, `eyeInMain`). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes; the deploy, attack-draw and empty-deck tests fail until the definition exists (CannotAttackFromReserves and DefendingDoesNotDraw already pass, as they pin existing rules). Set to `tests-review`.
