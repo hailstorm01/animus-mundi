@@ -4,7 +4,7 @@ title: Make Visionary's Eye executable (whenever this unit attacks, draw a card,
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0322-visionarys-eye
 depends_on: [T-0321]
 claims: [card:Visionary's Eye]
@@ -78,3 +78,4 @@ Attacking (a Readied Eye put in player 0's Main Theater, with a known card on to
   - Removed "Visionary's Eye" from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
   - Reuse: `ability.HookAttacks` (self attack trigger as in Earthshaker Colossus and Colossus Platform) and `ability.OpDraw` (as in Dolus Refiner and Leyline Regrowth). No new shapes, helpers, or kernel modifications.
   - Verified: `go test ./pkg/engine -run TestCard_VisionarysEye` (all 11 tests pass), `go test ./pkg/cardcheck` (passes), `go tool task check` (gofmt, go vet, all package tests, cardtown lint --all pass), `go tool task sim` (passes cleanly), and `go tool task sim-matrix` (24 starter runs and 24 stress runs pass, all invariants hold, exits 0).
+- 2026-11-26 lead-architect (wave A run, session 26): code review round 1, **approved**, merged into `autoloop/m3-wave-a` as 47ff1004. d1b22055 changes only the two Allowed Files, and its definition is the one the lead probed. The test file is unchanged since 11645441. Re-run in the review worktree: `go tool task check`, `go tool task sim` (P0 58.5% / P1 39.5% / draws 2.0%, unchanged) and `go tool task sim-matrix` (exit 0) pass, and the merge's tree matches the reviewed branch. `agy` conversation `604905b3-e0de-46e1-bb8d-a4135a66e4fa`, no `denied_actions`, no resume. It was the last wave A header card on `NotYetExecutable`. Done.

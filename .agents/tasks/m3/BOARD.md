@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0322](T-0322-visionarys-eye.md) | Make *Visionary's Eye* executable (wave A) | tests |
