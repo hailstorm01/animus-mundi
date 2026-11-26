@@ -4,7 +4,7 @@ title: Make Mobile Armory executable (exhaust: chosen allied unit in the same zo
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0321-mobile-armory
 depends_on: [T-0320]
 claims: [card:Mobile Armory]
@@ -91,3 +91,4 @@ Between placement and resolution (`dmcTapCard`'s technique: a copy of the real c
     - `go tool task sim`: PASS (P0 58.5% / P1 39.5% / draws 2.0%)
     - `go tool task sim-matrix`: PASS (all 24 starter and 24 stress runs terminated clean with exit 0)
   Set to `review`.
+- 2026-11-26 lead-architect (wave A run, session 24): approved (D5, round 1), merged as a9f0fd7d. The diff (f6078909) is the task's Definition in `pkg/engine/cards/soulless.go` and the one name off `NotYetExecutable`, inside `Allowed Files`. The test file changed only in 869350e8, before the implementation. No new shape, no card name in engine code, and no duplicate: the cost is *Icewind Regent*'s `CostExhaustSelf`, the slot is the activated same-zone slot `TestFR_ACT_001_SameZoneActivatedAbility` pins (`sameZoneLock`, `legalTarget`), and the step is *Chainbreaker's Tenacity*'s `OpModifyStat`. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_MobileArmory` (16 pass), `go test ./pkg/cardcheck`, `go tool task check`, `go tool task sim`, `go tool task sim-matrix`, all 0. The merge has the same tree as the reviewed branch. The Animus vs Path sim is unchanged (P0 58.5% / P1 39.5% / draws 2.0%). The Flash run (`agy` conversation `7270c803-732d-4ca5-a5a2-5838980e14f3`) left no denied action.

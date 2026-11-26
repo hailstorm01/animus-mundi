@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0321](T-0321-mobile-armory.md) | Make Mobile Armory executable (wave A, card, flash) | tests |
