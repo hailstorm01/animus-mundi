@@ -29,7 +29,6 @@ var NotYetExecutable = []string{
 	"Dominator Warsuit",
 	"Dread Manifestation",
 	"Earthshaker Colossus",
-	"Echoing Nightmare",
 	"Encampment",
 	"Enclave",
 	"Field Mechanic",
