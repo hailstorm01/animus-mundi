@@ -168,6 +168,35 @@ var concordiaDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Tempest City Ray": {
+		Text: []string{"T2, exhaust: Move chosen opposing unit to its controller's Reserves."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Tac: 2},
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindUnit,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpMoveZone,
+							To:      ability.ZoneReserves,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Swirling Dustdevil": {
 		Text:          []string{"This unit costs R1 less to deploy for each maneuver card in your discard pile."},
 		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindManeuver, Zone: ability.ZoneDiscard}},
