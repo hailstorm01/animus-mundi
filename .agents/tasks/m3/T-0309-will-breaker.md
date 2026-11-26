@@ -4,7 +4,7 @@ title: Make Will Breaker executable (a deploy trigger kills a chosen opposing un
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0309-will-breaker
 depends_on: [T-0308]
 claims: [card:Will Breaker]
