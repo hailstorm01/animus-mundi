@@ -67,6 +67,5 @@ var NotYetExecutable = []string{
 	"Tidal Leviathan",
 	"Visionary's Eye",
 	"Visionary's Insight",
-	"Will Breaker",
 	"World Soul Messenger",
 }
