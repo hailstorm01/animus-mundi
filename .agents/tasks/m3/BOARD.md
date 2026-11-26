@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0315](T-0315-dolus-refiner.md) | Make Dolus Refiner executable (wave A, card, flash) | tests |
