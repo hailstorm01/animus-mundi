@@ -30,6 +30,32 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Colossus Platform": {
+		Text: []string{"Whenever this Headquarters attacks, chosen allied unit gains 1 armor."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookAttacks,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpAddArmor,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Conscript Rifles": {
 		Text: []string{"When this unit deploys, deal 1 damage to chosen non-Scratch Company unit."},
 		Triggers: []ability.Trigger{
