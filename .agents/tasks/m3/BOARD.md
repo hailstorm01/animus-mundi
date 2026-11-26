@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0316](T-0316-earthshaker-colossus.md) | Make Earthshaker Colossus executable (wave A, card, flash) | tests |
