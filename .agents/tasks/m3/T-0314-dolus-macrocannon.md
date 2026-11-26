@@ -4,7 +4,7 @@ title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Sc
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
 depends_on: [T-0313]
 claims: [card:Dolus Macrocannon]
@@ -68,11 +68,11 @@ Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, un
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_DolusMacrocannon`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_DolusMacrocannon`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 16): written against 6471772b, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard (#120), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2)), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Culverin Brigade*. Searched `pkg/engine` and the task archives: every part of the Definition exists (the `Req` resource cost, `CostExhaustSelf`, *Bring It Down*'s `ScratchExcluded` slot, `OpDealDamage` on `SubjectTarget`), so no kernel change. Set to `tests`.
@@ -83,3 +83,4 @@ Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, un
 Set to `tests`.
 - 2026-11-26 rules-test-author: round 1 notes addressed. (1) TargetGoneDealsNothing now uses dmcTapCard with an OpReturnToHand step on SubjectAll (opposing units); it asserts the target is in player 1's hand, no damage event, pool R0 and the Macrocannon Exhausted. (2) TargetGainsWardDealsNothing uses a dmcTapCard Macrocannon (a harmless OpAddArmor 0 trigger) and sets Ward from a placement hook that acts only once the exhaust cost is paid (the synthetic trigger's placement); it asserts the hook fired once, with the target already chosen and the ability on the stack, then no damage and costs paid. Only those two tests changed; no helpers requested. gofmt and go vet clean; both fail now because the card is not yet executable.
 - 2026-11-26 lead-architect: tests approved (D4, round 2). 3de6fae9 changes only the two tests the round 1 notes named, in `pkg/engine/cards_soulless_macrocannon_test.go`. `TargetGoneDealsNothing` now returns the target to hand from a `dmcTapCard` `HookExhausted` trigger, after the costs are paid, and asserts it is in player 1's hand. `TargetGainsWardDealsNothing` sets Ward from a placement hook that acts only once the Macrocannon is Exhausted (the synthetic trigger's placement), and asserts it fired once with the target decision asked and two items on the stack. With the lead's probe Definition all 17 tests pass, and the mutants still fail (no exhaust cost fails 6, among them both revised tests; 3 damage fails 7). Set to `ready`.
+- 2026-11-26 kernel-engineer: implemented Dolus Macrocannon. Diff shows: (1) pkg/engine/cards/soulless.go: added "Dolus Macrocannon" definition to soullessDefs with Text ["R1, exhaust: Deal 2 damage to chosen non-Scratch asset."], one Activated ability with Costs [CostResources Req: 1, CostExhaustSelf], single-target slot with Filter.Scratch: ScratchExcluded, and Step OpDealDamage 2 on SubjectTarget 0; (2) pkg/engine/cards/cards.go: removed "Dolus Macrocannon" from NotYetExecutable. Reused shapes: CostResources Req: 1 (animus), CostExhaustSelf (concordia structures), Bring It Down's ScratchExcluded target filter, OpDealDamage 2 on SubjectTarget. Commands run and results: go test ./pkg/engine -run TestCard_DolusMacrocannon (all 17 tests passed), go test ./pkg/cardcheck -run TestCards_Executable (passed), go tool task check (gofmt, go vet, all package tests, full cardtown linter passed), go tool task sim (starter decks ANIMUS vs PATH 200 games passed clean with P0 58.5% / P1 39.5% / draws 2.0%), go tool task sim-matrix (24 starter runs and 24 stress runs exited 0 with all invariants holding). Set to review.
