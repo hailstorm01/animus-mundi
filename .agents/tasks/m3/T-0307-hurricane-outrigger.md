@@ -4,7 +4,7 @@ title: Make Hurricane Outrigger executable (a deploy trigger gives its controlle
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0307-hurricane-outrigger
 depends_on: [T-0306]
 claims: [card:Hurricane Outrigger]
@@ -61,3 +61,4 @@ In a new file `pkg/engine/cards_concordia_outrigger_test.go`, from the CSV text,
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 9): written against 4800bb61, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote the nine tests in pkg/engine/cards_concordia_outrigger_test.go: EntersReservesAsTwoOne, HeadquartersGetsOnePower, ExpiresAtEndOfTurn, HeadquartersAttacksForFour, TwoDeploysStack, OpponentsOutriggerBoostsTheirHeadquarters, OtherDeploysDoNothing, SourceGoneStillBoosts, FaceDownScratchDoesNothing. Helpers requested: none (reuses deployTo, vrHQ, effectEvents, ptPlaceHook, glEnact, enactAction, faceDownCount). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes. Seven tests fail because the card is not yet executable; OtherDeploysDoNothing and FaceDownScratchDoesNothing pass already (they pin that nothing happens), and must still pass after the engineer's change.
