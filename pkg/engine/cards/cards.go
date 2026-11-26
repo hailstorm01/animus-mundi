@@ -20,7 +20,6 @@ var NotYetExecutable = []string{
 	"Comms Relay",
 	"Consuming Earth",
 	"Dolus Infusion",
-	"Dolus Refiner",
 	"Dominator Warsuit",
 	"Dread Manifestation",
 	"Earthshaker Colossus",

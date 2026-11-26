@@ -136,4 +136,26 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Dolus Refiner": {
+		Text: []string{"Exhaust: Draw 2 cards, then discard 2 cards."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:     ability.OpDraw,
+							Amount: ability.Value{N: 2},
+						},
+						{
+							Op:     ability.OpDiscard,
+							Amount: ability.Value{N: 2},
+						},
+					},
+				},
+			},
+		},
+	},
 }
