@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0314](T-0314-dolus-macrocannon.md) | Make Dolus Macrocannon executable (wave A, card, flash) | tests |
