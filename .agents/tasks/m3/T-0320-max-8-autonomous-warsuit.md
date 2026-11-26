@@ -4,7 +4,7 @@ title: Make MAX-8 Autonomous Warsuit executable (deploy: 2 damage to one chosen 
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0320-max-8-autonomous-warsuit
 depends_on: [T-0319]
 claims: [card:MAX-8 Autonomous Warsuit]
