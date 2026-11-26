@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0308](T-0308-echoing-nightmare.md) | Make Echoing Nightmare executable (wave A, card, flash) | tests |
