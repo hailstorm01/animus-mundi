@@ -4,7 +4,7 @@ title: Make Conscript Rifles executable (deploy trigger, 1 damage to a chosen no
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0311-conscript-rifles
 depends_on: [T-0310]
 claims: [card:Conscript Rifles]
