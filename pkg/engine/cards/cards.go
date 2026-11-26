@@ -53,7 +53,6 @@ var NotYetExecutable = []string{
 	"Tempest Runner",
 	"Tempest Surge",
 	"Tidal Leviathan",
-	"Visionary's Eye",
 	"Visionary's Insight",
 	"World Soul Messenger",
 }

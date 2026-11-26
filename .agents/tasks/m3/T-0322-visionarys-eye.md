@@ -4,7 +4,7 @@ title: Make Visionary's Eye executable (whenever this unit attacks, draw a card,
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0322-visionarys-eye
 depends_on: [T-0321]
 claims: [card:Visionary's Eye]
@@ -38,7 +38,7 @@ In a new file `pkg/engine/cards_soulless_eye_test.go`, from the CSV text, loadin
 Deploying:
 - `TestCard_VisionarysEye_EntersReservesAsOneOne` (`FR-TRN-003`, `FR-CAP-001`): deployed from hand with exactly R1, it is a Readied 1/1 unit in player 0's Reserves, and the pool is empty. A deploy to the Main Theater is rejected (`s.reject`), and with R0 it can't be deployed: in both cases the card stays in hand.
 - `TestCard_VisionarysEye_CannotAttackFromReserves` (`FR-CBT-001`, `FR-CAP-001`): a Readied Eye in player 0's Reserves can't attack player 1's Headquarters (`s.reject`): player 0's hand and deck are unchanged, and the Eye is still Readied.
-- `TestCard_VisionarysEye_MarchesThenAttacksAndDraws` (`FR-SET-004`, `FR-CAP-001`): deployed from hand to Reserves, it may March the same turn (`ActMarch`) and is then in the Main Theater, Exhausted. After `s.endTurn()` twice, its attack on an opposing 0/30 unit in the Main Theater draws one card (beyond player 0's Draw Phase draw).
+- `TestCard_VisionarysEye_MarchesThenAttacksAndDraws` (`FR-SET-004`, `FR-CAP-001`): deployed from hand to Reserves, it may March the same turn (`ActMarch`) and is then in the Main Theater, Exhausted, and the March draws nothing: player 0's hand and deck are the same before and after it (a March exhausts the Eye but is not an attack). After `s.endTurn()` twice, its attack on an opposing 0/30 unit in the Main Theater draws one card (beyond player 0's Draw Phase draw).
 
 Attacking (a Readied Eye put in player 0's Main Theater, with a known card on top of player 0's deck, unless the case says otherwise):
 - `TestCard_VisionarysEye_AttackDrawsOneCard` (`FR-CBT-002`): attacking player 1's Headquarters puts the top card of player 0's deck into player 0's hand: the hand has one card more, the deck one fewer, and no decision is asked of either player (the draw is mandatory, with no targets). Player 1's 3/20 Headquarters takes 1 damage, its 3 retaliation destroys the Eye (its card in player 0's discard pile), and the drawn card stays in hand. Player 1's hand and deck are unchanged.
@@ -60,11 +60,21 @@ Attacking (a Readied Eye put in player 0's Main Theater, with a known card on to
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_VisionarysEye`
-- [ ] `go test ./pkg/cardcheck` passes with the name removed
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_VisionarysEye`
+- [x] `go test ./pkg/cardcheck` passes with the name removed
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 25): written against 0085610c, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71: only its controller draws), no mode or "another" slot (#91), no deck search (#106), no cost at all (#120), no tuck (#142), no turn-start, turn-end or draw hook (#15 (2): it draws as an effect of an attack hook, and the draw expires nothing), and no pile (#183 (2)); the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Mobile Armory*; it is the last header card on `NotYetExecutable`. Searched `pkg/engine` and the task archives: every part of the Definition exists (`fireHook` places self `HookAttacks` triggers in Step 2, and `OpDraw` with no `Subject` draws for the controller), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_eye_test.go`, 11 tests, all from the task's Tests section: EntersReservesAsOneOne, CannotAttackFromReserves, MarchesThenAttacksAndDraws, AttackDrawsOneCard, DrawResolvesBeforeCombatDamage, DrawsEvenWhenItDiesInTheTrade, ZeroPowerAttackStillDraws (power lowered with a Layer 5 `Modifier{Power: -1}`), KilledBeforeItsTriggerStillDraws, EachAttackDrawsAgain, DefendingDoesNotDraw, OnlyItsOwnAttackDraws. Helpers requested: none (file-local `eyeCounts`, `eyeWantCounts`, `eyeInMain`). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes; the deploy, attack-draw and empty-deck tests fail until the definition exists (CannotAttackFromReserves and DefendingDoesNotDraw already pass, as they pin existing rules). Set to `tests-review`.
+- 2026-11-26 lead-architect (wave A run, session 26): tests review round 1, **changes**. Session 25 ended before dispatching; this session removed its clean worktrees and dispatched the test author. Probe (the Definition, uncommitted, in the review worktree): all 11 tests pass, and `go test ./pkg/cardcheck` passes. Lead mutants: `Amount` 2, `SubjectOpponents`, `Optional`, `HookDamaged`, `HookMoves` and a `Watches` allied-unit trigger are all caught; `HookExhausted` in place of `HookAttacks` is not (every test passes). Notes:
+  1. `TestCard_VisionarysEye_MarchesThenAttacksAndDraws`: also assert that the March itself draws nothing. Record player 0's hand and deck sizes right before `ActMarch` and check them unchanged right after it (`eyeWantCounts`), since a March exhausts the Eye but is not an attack (`FR-CAP-001`, `FR-CBT-002`). This catches an "exhausts" hook in place of the "attacks" hook. The case was missing from the lead's task text, now corrected in the Tests section. Change nothing else.
+- 2026-11-26 rules-test-author (round 2): fixed review note 1. `TestCard_VisionarysEye_MarchesThenAttacksAndDraws` now records player 0's hand and deck sizes right before `ActMarch` and checks them unchanged right after it (`eyeWantCounts`: a March exhausts the Eye but is not an attack, FR-CAP-001, FR-CBT-002). Nothing else changed. Helpers requested: none. `go vet`, gofmt and `cardtown lint rules` are clean; the test still fails until the definition exists. Set to `tests-review`.
+- 2026-11-26 lead-architect (wave A run, session 26): tests review round 2, **approved**. 11645441 adds only note 1's two lines. With the Definition probed again (uncommitted), all 11 tests pass, and the `HookExhausted` mutant now fails `MarchesThenAttacksAndDraws`, so all 7 lead mutants are caught. Set to `ready`; dispatching Flash.
+- 2026-11-26 kernel-engineer (flash): done, `review`.
+  - Added "Visionary's Eye" to `soullessDefs` in `pkg/engine/cards/soulless.go` after Mobile Armory with trigger on `ability.HookAttacks` and effect step `Op: ability.OpDraw, Amount: ability.Value{N: 1}` (no Subject, draws for controller).
+  - Removed "Visionary's Eye" from `NotYetExecutable` in `pkg/engine/cards/cards.go`.
+  - Reuse: `ability.HookAttacks` (self attack trigger as in Earthshaker Colossus and Colossus Platform) and `ability.OpDraw` (as in Dolus Refiner and Leyline Regrowth). No new shapes, helpers, or kernel modifications.
+  - Verified: `go test ./pkg/engine -run TestCard_VisionarysEye` (all 11 tests pass), `go test ./pkg/cardcheck` (passes), `go tool task check` (gofmt, go vet, all package tests, cardtown lint --all pass), `go tool task sim` (passes cleanly), and `go tool task sim-matrix` (24 starter runs and 24 stress runs pass, all invariants hold, exits 0).
