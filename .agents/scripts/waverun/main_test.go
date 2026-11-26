@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -92,10 +94,55 @@ func TestDiagnosis(t *testing.T) {
 		"API error: 429 usage_limit_reached",
 		"result: You've hit your 5-hour limit · resets 9:30pm (America/New_York)",
 	}
-	if got := diagnosis(res, true, []byte(usageLimit), nil); !reflect.DeepEqual(got, want) {
+	if got := diagnosis(res, true, []byte(usageLimit), nil, nil); !reflect.DeepEqual(got, want) {
 		t.Errorf("usage limit:\n got %q\nwant %q", got, want)
 	}
-	if got := diagnosis(result{}, false, []byte("panic: boom\n"), nil); !reflect.DeepEqual(got, []string{"output is not a result JSON; it ends:", "panic: boom"}) {
+	if got := diagnosis(result{}, false, []byte("panic: boom\n"), nil, nil); !reflect.DeepEqual(got, []string{"output is not a result JSON; it ends:", "panic: boom"}) {
 		t.Errorf("unparsed output: got %q", got)
+	}
+}
+
+// refusals has two refused calls like those of m3 wave A session 2: one made
+// by a rules-test-author subagent, and one the lead made itself.
+const refusals = `{"session_id":"5fe9c892-0e2b-4ba5-9f86-430166932202","permission_denials":[` +
+	`{"tool_name":"Bash","tool_use_id":"toolu_sub","tool_input":{"command":"grep -n func *.go"}},` +
+	`{"tool_name":"Bash","tool_use_id":"toolu_lead","tool_input":{"command":"rm $S/x"}}]}`
+
+func TestRefusedBy(t *testing.T) {
+	var res result
+	if err := json.Unmarshal([]byte(refusals), &res); err != nil {
+		t.Fatal(err)
+	}
+	projects := t.TempDir()
+	sub := filepath.Join(projects, "c--repo", res.SessionID, "subagents")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(name, text string) {
+		if err := os.WriteFile(filepath.Join(sub, name), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("agent-a1.jsonl", `{"message":{"content":[{"type":"tool_use","id":"toolu_sub","name":"Bash"}]}}`+"\n")
+	write("agent-a1.meta.json", `{"agentType":"rules-test-author"}`)
+	write("agent-b2.jsonl", `{"message":{"content":[{"type":"tool_use","id":"toolu_other","name":"Read"}]}}`+"\n")
+	write("agent-b2.meta.json", `{"agentType":"kernel-engineer"}`)
+
+	by := refusedBy(projects, res)
+	want := map[string]string{"toolu_sub": "rules-test-author", "toolu_lead": "lead"}
+	if !reflect.DeepEqual(by, want) {
+		t.Fatalf("refusedBy = %q, want %q", by, want)
+	}
+	got := diagnosis(res, true, nil, nil, by)
+	wantLines := []string{
+		"session 5fe9c892-0e2b-4ba5-9f86-430166932202: subtype , terminal reason , is_error false, 0 turns",
+		`refused (rules-test-author): Bash {"command":"grep -n func *.go"}`,
+		`refused (lead): Bash {"command":"rm $S/x"}`,
+	}
+	if !reflect.DeepEqual(got, wantLines) {
+		t.Errorf("diagnosis:\n got %q\nwant %q", got, wantLines)
+	}
+	if by := refusedBy(filepath.Join(projects, "missing"), res); by["toolu_sub"] != "lead" {
+		t.Errorf("no transcripts: toolu_sub = %q, want lead", by["toolu_sub"])
 	}
 }

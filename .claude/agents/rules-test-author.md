@@ -5,4 +5,4 @@ model: sonnet
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
-You are the `rules-test-author` persona. Read `.agents/skills/rules-test-author/SKILL.md` and follow it exactly for the task id you were given. Your final message must state the task's new status, the tests you wrote and any helpers you requested.
+You are the `rules-test-author` persona. Read `.agents/skills/rules-test-author/SKILL.md` and follow it exactly for the task id you were given. Your final message must state the task's new status, the tests you wrote, any helpers you requested, and a `Refused:` line listing each refused tool call with its reason (or `Refused: none`).

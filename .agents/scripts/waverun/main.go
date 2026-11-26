@@ -23,6 +23,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -77,6 +78,7 @@ type result struct {
 	Result            string  `json:"result"`
 	PermissionDenials []struct {
 		ToolName  string          `json:"tool_name"`
+		ToolUseID string          `json:"tool_use_id"`
 		ToolInput json.RawMessage `json:"tool_input"`
 	} `json:"permission_denials"`
 }
@@ -297,7 +299,7 @@ func (r *run) session(exe string, cliArgs []string, id string, prompt func(scrat
 	}
 	fmt.Printf("   took %s, $%.2f\n", took, s.res.TotalCostUSD)
 	if !s.clean() {
-		for _, l := range diagnosis(s.res, s.parsed, out, runErr) {
+		for _, l := range diagnosis(s.res, s.parsed, out, runErr, refusedBy(claudeProjects(), s.res)) {
 			fmt.Println("   " + l)
 		}
 	}
@@ -326,8 +328,9 @@ func (r *run) stop(reason string, code int) {
 // diagnosis says why a session failed: the exit error, the result's error
 // fields and refused tool calls, or the end of the output when it is not a
 // result. A usage limit, for example, exits 1 with is_error set, a 429 in
-// api_error_status and the reset time in result.
-func diagnosis(res result, parsed bool, out []byte, runErr error) []string {
+// api_error_status and the reset time in result. by names the persona behind
+// each refused call (refusedBy).
+func diagnosis(res result, parsed bool, out []byte, runErr error, by map[string]string) []string {
 	var ls []string
 	if runErr != nil {
 		ls = append(ls, fmt.Sprintf("exit: %v", runErr))
@@ -354,9 +357,67 @@ func diagnosis(res result, parsed bool, out []byte, runErr error) []string {
 		ls = append(ls, "result: "+msg)
 	}
 	for _, d := range res.PermissionDenials {
-		ls = append(ls, fmt.Sprintf("refused: %s %s", d.ToolName, d.ToolInput))
+		who := ""
+		if p := by[d.ToolUseID]; p != "" {
+			who = " (" + p + ")"
+		}
+		ls = append(ls, fmt.Sprintf("refused%s: %s %s", who, d.ToolName, d.ToolInput))
 	}
 	return ls
+}
+
+// claudeProjects is the folder holding Claude Code's session transcripts.
+func claudeProjects() string {
+	dir := os.Getenv("CLAUDE_CONFIG_DIR")
+	if dir == "" {
+		home, _ := os.UserHomeDir()
+		dir = filepath.Join(home, ".claude")
+	}
+	return filepath.Join(dir, "projects")
+}
+
+// refusedBy maps each refused call's tool_use_id to the persona that made it.
+// The result JSON lists a subagent's refusals with the lead's, so a stop on
+// "refused tool calls" once got blamed on the wrong persona (wave A of m3,
+// session 2: rules-test-author, not the Flash engineer). A subagent's calls
+// are in <projects>/<project>/<session>/subagents/agent-<id>.jsonl, and its
+// persona is the agentType in agent-<id>.meta.json. A call found in none of
+// them is the lead's own.
+func refusedBy(projects string, res result) map[string]string {
+	by := map[string]string{}
+	if len(res.PermissionDenials) == 0 || res.SessionID == "" {
+		return by
+	}
+	files, _ := filepath.Glob(filepath.Join(projects, "*", res.SessionID, "subagents", "agent-*.jsonl"))
+	texts := make([][]byte, len(files))
+	for i, f := range files {
+		texts[i], _ = os.ReadFile(f)
+	}
+	for _, d := range res.PermissionDenials {
+		if d.ToolUseID == "" {
+			continue
+		}
+		by[d.ToolUseID] = "lead"
+		for i, f := range files {
+			if bytes.Contains(texts[i], []byte(`"`+d.ToolUseID+`"`)) {
+				by[d.ToolUseID] = agentType(strings.TrimSuffix(f, ".jsonl") + ".meta.json")
+				break
+			}
+		}
+	}
+	return by
+}
+
+// agentType reads a subagent's persona from its meta file, or names the
+// file when it can't.
+func agentType(meta string) string {
+	var m struct {
+		AgentType string `json:"agentType"`
+	}
+	if b, err := os.ReadFile(meta); err == nil && json.Unmarshal(b, &m) == nil && m.AgentType != "" {
+		return m.AgentType
+	}
+	return "subagent " + strings.TrimSuffix(filepath.Base(meta), ".meta.json")
 }
 
 // runText is the run file as committed on the run branch, or nothing before
