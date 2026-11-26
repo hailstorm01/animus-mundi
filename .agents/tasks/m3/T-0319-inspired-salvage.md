@@ -4,7 +4,7 @@ title: Make Inspired Salvage executable (up to 2 Mechanized cards from the pile 
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0319-inspired-salvage
 depends_on: [T-0318]
 claims: [card:Inspired Salvage]
