@@ -235,4 +235,18 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Hellfire Armorers": {
+		Text: []string{"Allied units in the same zone have Aggressive 1."},
+		Statics: []ability.Static{
+			{
+				Kind: ability.StaticAura,
+				Filter: ability.Filter{
+					Allegiance: ability.AllegianceAllied,
+					Kinds:      ability.KindUnit,
+					ZoneRef:    ability.ZoneRefSame,
+				},
+				Keywords: ability.Keywords{Aggressive: 1},
+			},
+		},
+	},
 }
