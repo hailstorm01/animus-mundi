@@ -19,7 +19,6 @@ var NotYetExecutable = []string{
 	"Colossus Platform",
 	"Command Barge",
 	"Comms Relay",
-	"Conscript Rifles",
 	"Consuming Earth",
 	"Culverin Brigade",
 	"Dolus Infusion",
