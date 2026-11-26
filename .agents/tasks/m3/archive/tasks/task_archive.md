@@ -28,3 +28,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0315 | Make *Dolus Refiner* executable (wave A) | done |
 | T-0316 | Make *Earthshaker Colossus* executable (wave A) | done |
 | T-0317 | Make *Fire for Effect* executable (wave A) | done |
+| T-0318 | Make *Hellfire Armorers* executable (wave A) | done |
