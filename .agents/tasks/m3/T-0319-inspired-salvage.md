@@ -4,7 +4,7 @@ title: Make Inspired Salvage executable (up to 2 Mechanized cards from the pile 
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0319-inspired-salvage
 depends_on: [T-0318]
 claims: [card:Inspired Salvage]
@@ -52,11 +52,11 @@ In a new file `pkg/engine/cards_soulless_salvage_test.go`, from the CSV text, lo
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_InspiredSalvage`
-- [ ] `go test ./pkg/cardcheck -run TestCards_Executable` passes with the name removed
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_InspiredSalvage`
+- [x] `go test ./pkg/cardcheck -run TestCards_Executable` passes with the name removed
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 22): written against 009107e7, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no discard cost (#120), no tuck (#142), no turn-boundary or draw hook (#15 (2)), and no pile round trip (#183 (2): it takes cards out of a pile and never puts one back while an item below targets or tracks it), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Hellfire Armorers*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`stepRelocate` returns each card of a pile slot through `stepCards`, `Filter.Subtypes` reads a pile card's printed subtypes, and `UpTo` gives one distinct `Min` 0 decision), so no kernel change. Set to `tests`.
@@ -70,3 +70,4 @@ In a new file `pkg/engine/cards_soulless_salvage_test.go`, from the CSV text, lo
   1. In `ReturnsTwoChosenMechanizedCards`, with three Mechanized cards in the pile, assert that the one `DecideTarget` question offers all three, with `Min` 0 and `Max` 2. The lead's task text left this out, and the Tests bullet now says it. Set to `tests`.
 - 2026-11-26 rules-test-author (round 2 revision): fixed the one note in `pkg/engine/cards_soulless_salvage_test.go`. `ReturnsTwoChosenMechanizedCards` now asserts the one `DecideTarget` question offers all three Mechanized pile cards, with `Min` 0 and `Max` 2 (so `UpTo: 3` fails it). No other test changed. Helpers requested: none. `gofmt`, `go vet ./pkg/engine` and `cardtown lint rules` are clean; the tests still fail only because the card is in `NotYetExecutable`. Set to `tests-review`.
 - 2026-11-26 lead-architect: tests approved (D4, round 3). c88a3a99 adds the round-2 note's cap check to `ReturnsTwoChosenMechanizedCards` and changes nothing else. With the lead's probe Definition all 8 pass, and each of the 9 lead mutants fails 1 to 6 of them (`UpTo` 1, `UpTo` 3, mandatory, no subtype, Cybernetic in place of Mechanized, any allegiance, battlefield in place of the pile, `OpPutOnDeck`). The expected outcomes match the text they cite: `FR-TGT-001` line 412 (a printed subtype, read from the CSV's cards, whichever position Mechanized has in the list), `FR-TGT-002` line 428 (`SVY-R11`), `FR-TGT-003`, `FR-MOD-001` §6 (`SVY-R16`, and `choose`'s invalid-answer fallback), and `SVY-R29`. Set to `ready`.
+- 2026-11-26 kernel-engineer: added ability definition for "Inspired Salvage" in pkg/engine/cards/soulless.go (Target with AllegianceAllied, ZoneDiscard, Subtypes: []string{"Mechanized"}, UpTo: 2; Step OpReturnToHand on SubjectTarget) and removed "Inspired Salvage" from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing shapes (AllegianceAllied, ZoneDiscard, Subtypes, UpTo, OpReturnToHand). Ran go test ./pkg/engine -run TestCard_InspiredSalvage (passed 0.297s), go test ./pkg/cardcheck -run TestCards_Executable (passed 0.512s), go tool task check (gofmt, vet, tests, all linters clean), go tool task sim (starter decks clean, all invariants held), and go tool task sim-matrix (24 starter runs + 24 stress runs clean, all invariants held). Set to review.
