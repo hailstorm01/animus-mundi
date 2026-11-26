@@ -45,6 +45,29 @@ func isChoose(s *scene, targets ...*Instance) {
 	}
 }
 
+// isEntered lists the cards in the player's hand that were not in it in before.
+func isEntered(p *Player, before []*Instance) []*Instance {
+	had := map[*Instance]bool{}
+	for _, c := range before {
+		had[c] = true
+	}
+	var out []*Instance
+	for _, c := range p.Hand {
+		if !had[c] {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func idsOf(cs []*Instance) []int {
+	out := []int{}
+	for _, c := range cs {
+		out = append(out, c.ID)
+	}
+	return out
+}
+
 func TestCard_InspiredSalvage_ReturnsTwoChosenMechanizedCards(t *testing.T) {
 	// Covers: FR-MNV-001, FR-TGT-001
 	s := newScene(t)
@@ -52,6 +75,7 @@ func TestCard_InspiredSalvage_ReturnsTwoChosenMechanizedCards(t *testing.T) {
 	a, b, rest := piles[0], piles[2], piles[1]
 	inst := isEnact(s)
 	isChoose(s, a, b)
+	before := append([]*Instance(nil), s.g.Players[0].Hand...)
 	s.do(enactAction(inst))
 	p := s.g.Players[0]
 	for _, c := range []*Instance{a, b} {
@@ -62,8 +86,8 @@ func TestCard_InspiredSalvage_ReturnsTwoChosenMechanizedCards(t *testing.T) {
 	if !inDiscardPile(p, rest) || inHand(p, rest) {
 		t.Errorf("the unchosen Mechanized card stays in the discard pile (FR-TGT-001)")
 	}
-	if n := len(p.Hand); n != 2 {
-		t.Errorf("only the two returned cards are in hand once the Maneuver is enacted: hand has %d (FR-MNV-001)", n)
+	if got := sortedCopy(idsOf(isEntered(p, before))); !reflect.DeepEqual(got, sortedCopy([]int{a.ID, b.ID})) {
+		t.Errorf("only the two chosen cards enter the hand: new hand cards %v (FR-MNV-001)", got)
 	}
 	if lastDiscard(p) != inst {
 		t.Errorf("the Maneuver ends in its owner's discard pile (FR-MNV-001)")
@@ -146,27 +170,24 @@ func TestCard_InspiredSalvage_SameCardCannotBeChosenTwice(t *testing.T) {
 	piles := s.inDiscard(0, s.card("Brass Adjutant"), s.card("Shrike Scout Suits"))
 	inst := isEnact(s)
 	isChoose(s, piles[0], piles[0])
+	before := append([]*Instance(nil), s.g.Players[0].Hand...)
 	s.do(enactAction(inst))
 	for _, d := range s.asked(0) {
 		if d.Repeats {
 			t.Errorf("the up-to slot may not pick one pile card twice (SVY-R11)")
 		}
 	}
+	if invalid := len(eventsOfKind(s.g.Log, EventInvalidAnswer)); invalid != 1 {
+		t.Errorf("an answer naming one pile card twice is invalid: %d EventInvalidAnswer logged, want 1 (SVY-R11)", invalid)
+	}
 	p := s.g.Players[0]
-	once := 0
-	for _, c := range p.Hand {
-		if c == piles[0] {
-			once++
+	for _, c := range piles {
+		if !inDiscardPile(p, c) || inHand(p, c) {
+			t.Errorf("the invalid answer falls back to selecting none, so both cards stay in the pile (SVY-R11, SVY-R16, FR-MOD-001)")
 		}
 	}
-	if once != 1 || inDiscardPile(p, piles[0]) {
-		t.Errorf("a card named twice moves once: it is in hand %d times (SVY-R11)", once)
-	}
-	if !inDiscardPile(p, piles[1]) || inHand(p, piles[1]) {
-		t.Errorf("the other Mechanized card does not move (SVY-R11)")
-	}
-	if n := len(p.Hand); n != 1 {
-		t.Errorf("nothing else moves to the hand: hand has %d cards (SVY-R11)", n)
+	if got := isEntered(p, before); len(got) != 0 {
+		t.Errorf("nothing enters the hand: new hand cards %v (SVY-R11)", idsOf(got))
 	}
 }
 
@@ -179,13 +200,14 @@ func TestCard_InspiredSalvage_EnactableWithNoMechanizedCard(t *testing.T) {
 			t.Fatalf("an up-to slot never stops an Enact, even with no Mechanized card to choose (SVY-R29)")
 		}
 		s.script(0)
+		before := append([]*Instance(nil), s.g.Players[0].Hand...)
 		s.do(enactAction(inst))
 		if n := len(s.asked(0)); n != 0 {
 			t.Errorf("no legal target, so no decision is asked: asked %d times (FR-TGT-002)", n)
 		}
 		p := s.g.Players[0]
-		if len(p.Hand) != 0 {
-			t.Errorf("nothing is returned to the hand: hand has %d cards (FR-TGT-002)", len(p.Hand))
+		if got := isEntered(p, before); len(got) != 0 {
+			t.Errorf("nothing is returned to the hand: new hand cards %v (FR-TGT-002)", idsOf(got))
 		}
 		if lastDiscard(p) != inst {
 			t.Errorf("the Maneuver resolves into its owner's discard pile (FR-MNV-001)")

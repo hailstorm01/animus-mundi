@@ -4,7 +4,7 @@ title: Make Inspired Salvage executable (up to 2 Mechanized cards from the pile 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0319-inspired-salvage
 depends_on: [T-0318]
 claims: [card:Inspired Salvage]
@@ -65,3 +65,4 @@ In a new file `pkg/engine/cards_soulless_salvage_test.go`, from the CSV text, lo
   1. `ReturnsTwoChosenMechanizedCards` (line 66), `SameCardCannotBeChosenTwice` (line 169) and both subtests of `EnactableWithNoMechanizedCard` (line 195) count the whole hand, but `newScene` deals an opening hand (the probe saw 8 and 6 cards). Compare against the hand before the enact (less the Maneuver itself), or check exactly which cards entered the hand.
   2. `SameCardCannotBeChosenTwice` expects the twice-named card in the hand once. The answer `[i, i]` is not a valid one, so `choose` logs `EventInvalidAnswer` and takes the `FR-MOD-001` §6 fallback, which for an "up to" slot selects none (`SVY-R16`): the card stays in the pile. That expectation was the lead's task text, now corrected under Tests. Keep the `Repeats` check, count one `EventInvalidAnswer`, and assert that both cards stay in the pile and nothing enters the hand.
   The rest checks out against `FR-MNV-001`, `FR-TGT-001` to `003` and `FR-MOD-001` §6: the fixtures' subtypes match the CSV (*Conscript Rifles* is Infantry, *MAX-8* lists Mechanized second), and the offered set, `Min` 0 / `Max` 2, the timeout, the left-the-pile and the cost cases are right. Set to `tests`.
+- 2026-11-26 rules-test-author (round 1 revision): fixed both notes in `pkg/engine/cards_soulless_salvage_test.go`. (1) `ReturnsTwoChosenMechanizedCards`, `SameCardCannotBeChosenTwice` and both `EnactableWithNoMechanizedCard` subtests no longer count the whole hand: they snapshot the hand after the Maneuver is dealt, before the enact, and check exactly which cards entered it (new local helpers `isEntered`, `idsOf`). (2) `SameCardCannotBeChosenTwice` keeps the `Repeats` check, counts one `EventInvalidAnswer`, and asserts both pile cards stay in the pile and nothing enters the hand (`SVY-R11`, `SVY-R16`, `FR-MOD-001` §6). Helpers requested: none. `gofmt`, `go vet ./pkg/engine` and `cardtown lint rules` are clean; the tests still fail only because the card is in `NotYetExecutable`. Set to `tests-review`.
