@@ -4,7 +4,7 @@ title: Make Echoing Nightmare executable (a deploy trigger returns a chosen oppo
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0308-echoing-nightmare
 depends_on: [T-0307]
 claims: [card:Echoing Nightmare]
@@ -59,11 +59,14 @@ In a new file `pkg/engine/cards_concordia_nightmare_test.go`, from the CSV text,
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_EchoingNightmare`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_EchoingNightmare`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 10): written against 146dc507, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_nightmare_test.go`, 11 tests as listed under Tests: EntersReservesAsSixTwo, ReturnsTheUnitAndMoves, MovedNightmareMayAttack, OnlyOpposingMainTheaterUnitsOffered, NoTargetStaysInReserves, WardedUnitNotOffered, TargetGoneNoMove, TargetLeftTheMainTheaterNoMove, SourceGoneStillReturns, ControlledUnitGoesToItsOwnersHand, MoveFiresMovesHooks, FaceDownScratchDoesNothing (12 with the last). `go vet` and `cardtown lint rules` pass; 11 fail until the definition is added, and FaceDownScratchDoesNothing passes already (a regression guard). Helpers requested: none (reuses stormChoose, stormKill from the Stormbolt test file). Cases left out: none. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 1). The file holds the twelve listed tests, and each expected outcome agrees with the FRD 01 text it cites (`SVY-R14` for the move, `FR-TGT-003` for the target checks and the deploy without a legal target, `FR-ZON-002` for the owner's hand). A lead probe with the Definition, since reverted, passes all twelve, and all 7 mutants fail at least one test: no `IfDone`, no zone filter, any allegiance, any kind, kill in place of return, put on deck in place of return, no move. `FaceDownScratchDoesNothing` passes before the implementation, as the author reported: it pins what must not happen. Set to `ready`.
+- 2026-11-25 kernel-engineer: added ability definition for "Echoing Nightmare" to concordiaDefs in pkg/engine/cards/concordia.go with HookDeploy trigger, 1 target slot (opposing unit in Main Theater), OpReturnToHand step on SubjectTarget target 0, and OpMoveZone to Main Theater on SubjectSelf with IfDone: true. Removed "Echoing Nightmare" from NotYetExecutable in pkg/engine/cards/cards.go. Reused existing shapes (HookDeploy, OpReturnToHand, OpMoveZone, SubjectTarget, SubjectSelf, IfDone). Ran `go test ./pkg/engine -run TestCard_EchoingNightmare` (12/12 pass), `go tool task check` (all tests, linters, gofmt, go vet pass), `go tool task sim` (200 matches clean, all invariants hold), and `go tool task sim-matrix` (all 24 starter and 24 stress runs pass, all invariants hold). Set to `review`.

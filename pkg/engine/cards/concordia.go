@@ -10,6 +10,38 @@ func init() {
 
 // concordiaDefs holds ability definitions for Concordia cards.
 var concordiaDefs = map[string]*ability.Def{
+	"Echoing Nightmare": {
+		Text: []string{"When this unit deploys, return chosen opposing unit in the Main Theater to its owner's hand. If a unit is returned this way, move this unit to the Main Theater."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindUnit,
+								Zone:       ability.ZoneMainTheater,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpReturnToHand,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+						{
+							Op:      ability.OpMoveZone,
+							To:      ability.ZoneMainTheater,
+							Subject: ability.SubjectSelf,
+							IfDone:  true,
+						},
+					},
+				},
+			},
+		},
+	},
 	"Growing Legion": {
 		Text: []string{"Scratch 1."},
 		Effect: ability.Effect{
