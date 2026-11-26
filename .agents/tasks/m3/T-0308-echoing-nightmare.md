@@ -4,7 +4,7 @@ title: Make Echoing Nightmare executable (a deploy trigger returns a chosen oppo
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0308-echoing-nightmare
 depends_on: [T-0307]
 claims: [card:Echoing Nightmare]
@@ -68,3 +68,4 @@ In a new file `pkg/engine/cards_concordia_nightmare_test.go`, from the CSV text,
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 10): written against 146dc507, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 stays for (3) *Will Breaker* and (4)'s *Awaken Nightmare* half, wave F), and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_nightmare_test.go`, 11 tests as listed under Tests: EntersReservesAsSixTwo, ReturnsTheUnitAndMoves, MovedNightmareMayAttack, OnlyOpposingMainTheaterUnitsOffered, NoTargetStaysInReserves, WardedUnitNotOffered, TargetGoneNoMove, TargetLeftTheMainTheaterNoMove, SourceGoneStillReturns, ControlledUnitGoesToItsOwnersHand, MoveFiresMovesHooks, FaceDownScratchDoesNothing (12 with the last). `go vet` and `cardtown lint rules` pass; 11 fail until the definition is added, and FaceDownScratchDoesNothing passes already (a regression guard). Helpers requested: none (reuses stormChoose, stormKill from the Stormbolt test file). Cases left out: none. Set to `tests-review`.
+- 2026-11-25 lead-architect: tests approved (D4, round 1). The file holds the twelve listed tests, and each expected outcome agrees with the FRD 01 text it cites (`SVY-R14` for the move, `FR-TGT-003` for the target checks and the deploy without a legal target, `FR-ZON-002` for the owner's hand). A lead probe with the Definition, since reverted, passes all twelve, and all 7 mutants fail at least one test: no `IfDone`, no zone filter, any allegiance, any kind, kill in place of return, put on deck in place of return, no move. `FaceDownScratchDoesNothing` passes before the implementation, as the author reported: it pins what must not happen. Set to `ready`.
