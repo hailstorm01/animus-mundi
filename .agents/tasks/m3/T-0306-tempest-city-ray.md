@@ -4,7 +4,7 @@ title: Make Tempest City Ray executable (move an opposing unit to its controller
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0306-tempest-city-ray
 depends_on: [T-0305]
 claims: [card:Tempest City Ray]
@@ -72,3 +72,4 @@ Activating (a Readied Ray put in player 0's Main Theater, pool R0 T2, unless the
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 8): written against aeb9f187 (the run branch after syncing `main`'s 94e9c254), with the lead's probe above. Board read twice (D2.0): #185 (4) is due here, for its *Tempest City Ray* half; #185 (3) stays for *Will Breaker* and the *Awaken Nightmare* half of (4) for wave F. No waiting trigger has fired. Every part of the Definition exists; `stepMoveZone` already uses the controller's Reserves, so #185 (4) needs no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_concordia_tempest_ray_test.go` (committed as test(T-0306)). Tests: EntersMainTheaterAsZeroEight, MovesChosenOpposingUnitToReserves (with a face-down Scratch subtest), OnlyOpposingUnitsOffered, UnitAlreadyInReservesStaysPut, ControlledUnitGoesToItsControllersReserves (real Rhapsody's Hollow), WardedOpposingUnitNotOffered, NotOfferedWithoutAnOpposingUnit, NotOfferedWithoutTwoTactics, NotOfferedWhileExhausted, MayActivateTheTurnItDeploys, TargetGoneMovesNothing, TargetNowAlliedMovesNothing, SourceGoneStillMoves. Helpers requested: none. Cases left out: none. `go vet ./pkg/engine` is clean and `cardtown lint rules` passes; the card tests fail until the definition is added (the card is still NotYetExecutable). Moves-vs-deploy trigger is told apart by a synthetic unit whose deploy trigger adds 4 Armor and Moves trigger adds 1 (expected Armor 2 from a start of 1). The Hollow test ends turn 1 first so player 1 is active.
