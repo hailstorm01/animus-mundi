@@ -19,3 +19,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0306 | Make *Tempest City Ray* executable (wave A, #185 (4)) | done |
 | T-0307 | Make *Hurricane Outrigger* executable (wave A) | done |
 | T-0308 | Make *Echoing Nightmare* executable (wave A) | done |
+| T-0309 | Make *Will Breaker* executable (wave A) | done |
