@@ -4,7 +4,7 @@ title: Make Tempest City Ray executable (move an opposing unit to its controller
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0306-tempest-city-ray
 depends_on: [T-0305]
 claims: [card:Tempest City Ray]
@@ -64,11 +64,11 @@ Activating (a Readied Ray put in player 0's Main Theater, pool R0 T2, unless the
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_TempestCityRay`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_TempestCityRay`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 8): written against aeb9f187 (the run branch after syncing `main`'s 94e9c254), with the lead's probe above. Board read twice (D2.0): #185 (4) is due here, for its *Tempest City Ray* half; #185 (3) stays for *Will Breaker* and the *Awaken Nightmare* half of (4) for wave F. No waiting trigger has fired. Every part of the Definition exists; `stepMoveZone` already uses the controller's Reserves, so #185 (4) needs no kernel change. Set to `tests`.
@@ -77,3 +77,4 @@ Activating (a Readied Ray put in player 0's Main Theater, pool R0 T2, unless the
   1. `TestCard_TempestCityRay_UnitAlreadyInReservesStaysPut` (line 193) and `TestCard_TempestCityRay_WardedOpposingUnitNotOffered` (line 253) expect one target question, but each scene has only one legal option, so the Single-Option Fast-Path (`FR-MOD-001` §1, FRD 01 line 449) takes it and asks nothing. Both fail against a correct definition ("asked 0 times"). In `UnitAlreadyInReservesStaysPut`, put a second opposing unit in player 1's Main Theater so the question is asked, script the Reserves unit's pick (find its index in the question's options; don't assume 0), and also check that the Main Theater unit didn't move. In the first half of `WardedOpposingUnitNotOffered`, the plain unit is the only legal option: drop the `len(asked) != 1` and `wantOptions` checks there and assert the outcome instead (the plain unit moved, the Ward unit didn't), or add a second plain opposing unit and keep `wantOptions` with both plain units as the options. The other tests stay as they are.
 - 2026-11-25 rules-test-author: round 1 note 1 applied in cards_concordia_tempest_ray_test.go only. UnitAlreadyInReservesStaysPut now has a second opposing unit in the Main Theater, picks the Reserves unit by its ref, and checks the Main Theater unit stayed. WardedOpposingUnitNotOffered drops the question and wantOptions checks in its first half (single option, fast path) and asserts the outcome with an empty script, so a question would fail it. Nothing else changed; no helpers.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). The note is applied (ed8f53ae), and nothing else changed. A lead probe with the Definition, since reverted, passes all 13, and all 11 mutants fail at least one test: any allegiance, allied, units and structures, a Main Theater destination, a Main Theater zone filter, non-Scratch, `OpReturnToHand`, T1, T3, no exhaust cost, an up-to slot. `go vet` and `gofmt` are clean. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Tempest City Ray (feat(engine): make Tempest City Ray executable (T-0306), 39e82475). In pkg/engine/cards/concordia.go, added definition in concordiaDefs with Activated ability paying CostResources (Tac 2) and CostExhaustSelf, targeting one opposing unit (AllegianceOpposing, KindUnit), and executing OpMoveZone to ZoneReserves on SubjectTarget (reusing shapes from Stormbolt Ray and Ensnaring Mist). Removed "Tempest City Ray" from NotYetExecutable in pkg/engine/cards/cards.go. Ran 'go test ./pkg/engine -run TestCard_TempestCityRay' (ok, 13/13 passed), 'go test ./pkg/cardcheck -run TestCards_Executable' (ok), 'go tool task check' (all fmt, vet, tests, and cardtown linters passed), 'go tool task sim' (200 games passed, all invariants held), and 'go tool task sim-matrix' (all 24 starter and 24 stress runs passed, invariants held). Set to review.
