@@ -4,7 +4,7 @@ title: Make Hellfire Armorers executable (Ward; allied units in the same zone ha
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0318-hellfire-armorers
 depends_on: [T-0317]
 claims: [card:Hellfire Armorers]
