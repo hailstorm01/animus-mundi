@@ -4,7 +4,7 @@ title: Make Tempest City Ray executable (move an opposing unit to its controller
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0306-tempest-city-ray
 depends_on: [T-0305]
 claims: [card:Tempest City Ray]
@@ -76,3 +76,4 @@ Activating (a Readied Ray put in player 0's Main Theater, pool R0 T2, unless the
 - 2026-11-25 lead-architect: tests round 1 returned (D4). Each expected outcome agrees with the FRD 01 text it cites, and the file holds 13 tests, as listed. With the lead's probe of the Definition, 11 of 13 pass. Set to `tests` for one note; change nothing else:
   1. `TestCard_TempestCityRay_UnitAlreadyInReservesStaysPut` (line 193) and `TestCard_TempestCityRay_WardedOpposingUnitNotOffered` (line 253) expect one target question, but each scene has only one legal option, so the Single-Option Fast-Path (`FR-MOD-001` §1, FRD 01 line 449) takes it and asks nothing. Both fail against a correct definition ("asked 0 times"). In `UnitAlreadyInReservesStaysPut`, put a second opposing unit in player 1's Main Theater so the question is asked, script the Reserves unit's pick (find its index in the question's options; don't assume 0), and also check that the Main Theater unit didn't move. In the first half of `WardedOpposingUnitNotOffered`, the plain unit is the only legal option: drop the `len(asked) != 1` and `wantOptions` checks there and assert the outcome instead (the plain unit moved, the Ward unit didn't), or add a second plain opposing unit and keep `wantOptions` with both plain units as the options. The other tests stay as they are.
 - 2026-11-25 rules-test-author: round 1 note 1 applied in cards_concordia_tempest_ray_test.go only. UnitAlreadyInReservesStaysPut now has a second opposing unit in the Main Theater, picks the Reserves unit by its ref, and checks the Main Theater unit stayed. WardedOpposingUnitNotOffered drops the question and wantOptions checks in its first half (single option, fast path) and asserts the outcome with an empty script, so a question would fail it. Nothing else changed; no helpers.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). The note is applied (ed8f53ae), and nothing else changed. A lead probe with the Definition, since reverted, passes all 13, and all 11 mutants fail at least one test: any allegiance, allied, units and structures, a Main Theater destination, a Main Theater zone filter, non-Scratch, `OpReturnToHand`, T1, T3, no exhaust cost, an up-to slot. `go vet` and `gofmt` are clean. Set to `ready`.
