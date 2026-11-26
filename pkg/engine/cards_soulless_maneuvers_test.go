@@ -175,11 +175,13 @@ func TestCard_BringItDown_TargetGoneDealsNothing(t *testing.T) {
 	other := s.put(1, ZoneMainTheater, unit("Other", 1, 5, ability.Keywords{}))
 	inst := bidEnact(s)
 	chooseAsset(s, foe)
-	s.ptPlaceHook(func(int, StackItem) {
-		if s.alive(foe) {
+	r := &recorder{}
+	r.onEvent = func(e Event) {
+		if e.Kind == "place" && e.Card == "Bring It Down" && s.alive(foe) {
 			stormKill(s, foe)
 		}
-	})
+	}
+	s.g.obs = r
 	s.do(enactAction(inst))
 	if s.alive(foe) {
 		t.Fatalf("setup: the chosen unit should have left before resolution")
