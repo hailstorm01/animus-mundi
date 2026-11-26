@@ -23,3 +23,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0310 | Make *Bring It Down* executable (wave A) | done |
 | T-0311 | Make *Conscript Rifles* executable (wave A) | done |
 | T-0312 | Make *Colossus Platform* executable (wave A) | done |
+| T-0313 | Make *Culverin Brigade* executable (wave A) | done |

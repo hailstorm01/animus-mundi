@@ -4,7 +4,7 @@ title: Make Culverin Brigade executable (deploy trigger, 1 damage to each of up 
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0313-culverin-brigade
 depends_on: [T-0312]
 claims: [card:Culverin Brigade]
