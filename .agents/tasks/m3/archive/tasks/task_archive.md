@@ -30,3 +30,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0317 | Make *Fire for Effect* executable (wave A) | done |
 | T-0318 | Make *Hellfire Armorers* executable (wave A) | done |
 | T-0319 | Make *Inspired Salvage* executable (wave A) | done |
+| T-0320 | Make *MAX-8 Autonomous Warsuit* executable (wave A) | done |
