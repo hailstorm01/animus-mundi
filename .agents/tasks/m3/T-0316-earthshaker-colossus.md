@@ -4,7 +4,7 @@ title: Make Earthshaker Colossus executable (deploys or attacks: 2 to a chosen n
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0316-earthshaker-colossus
 depends_on: [T-0315]
 claims: [card:Earthshaker Colossus]
