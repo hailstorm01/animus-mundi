@@ -1,0 +1,78 @@
+---
+id: T-0314
+title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Scratch asset; wave A, card, flash)
+kind: card
+tier: flash
+wave: A
+status: tests
+branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
+depends_on: [T-0313]
+claims: [card:Dolus Macrocannon]
+cards: [Dolus Macrocannon]
+requirements: [FR-TRN-003, FR-SET-004, FR-ACT-001, FR-ACT-002, FR-TGT-001, FR-TGT-003, FR-MOD-001, FR-KWD-002h, FR-LAY-002, FR-REP-004, FR-ZON-004, FR-ZON-005, FR-ENT-103, FR-CBT-003]
+---
+
+## Goal
+*Dolus Macrocannon* (Soulless structure, Emplacement, R4 T0, Main Theater, power 2, health 6; two copies in `data/decks/soulless-starter.txt`): *"R1, exhaust: Deal 2 damage to chosen non-Scratch asset."* It only combines shapes that are `done`: one `Activated` ability whose costs are `CostResources` with `Req: 1` (*Animus*' `Req`/`Tac` cost in `pkg/engine/cards/animus.go`) and `CostExhaustSelf` (*Stormbolt Ray*, *Tempest City Ray*), one exactly-one target slot with *Bring It Down*'s `Scratch: ability.ScratchExcluded` filter, and one `OpDealDamage` 2 step on that slot. The slot has no `Allegiance` and no `Kinds`, so every non-Scratch asset is legal: both Headquarters, allied assets, opposing structures, and the Macrocannon itself (`FR-TGT-001`, `SVY-R57`). Because the Macrocannon itself is always a legal target, `SVY-R36` never stops the ability once its costs can be paid.
+
+Covers:
+- The definition in `soullessDefs` (`pkg/engine/cards/soulless.go`), as under Definition below.
+- The name off `cards.NotYetExecutable`.
+
+## Inputs
+- Card (`data/cards/units-and-structures-soulless.csv` line 21): Soulless structure, Emplacement, Requisition cost 4, Tactics cost 0, Main Theater, power 2, health 6.
+- Survey row: `docs/design/survey/m3_full_catalog_ability_survey.md` §6, "Soulless: deck" (*Dolus Macrocannon*, line 171).
+- FRD 01 (`docs/frd/01_Game_Rules_FRD.md`): `FR-TRN-003` (line 394), `FR-SET-004` Immediate Readiness (line 203), `FR-ACT-001` (lines 389-390, the clean-stack requirement and `SVY-R36`), `FR-ACT-002` (line 391), `FR-TGT-001` (lines 408-413, with `SVY-R57`), `FR-TGT-003` (lines 436-442), `FR-MOD-001` §1 and §6 (lines 449-465), `FR-KWD-002h` Ward (line 648), `FR-LAY-002` (lines 536-538), `FR-REP-004` Stage 4 (`FR-KWD-002k`, line 651), `FR-ZON-004` (line 279, last-known state), `FR-ZON-005` (line 288), `FR-CBT-003` (line 632, Headquarters defeat). Line 248 names *Dolus Macrocannon*: "non-Scratch assets" include Headquarters.
+- Rulings that apply: `SVY-R36` (an activated ability needs a legal entity for each exactly-one slot), `SVY-R2` (targets and costs are one declaration), `SVY-R3` (targets chosen on placement), `SVY-R57` (only stated criteria count), `SVY-R59` (a face-down Scratch Company is a Scratch Company, whatever card it is).
+- Design note: `docs/architecture/m3-full-catalog.md`, Boundaries (`pkg/engine/cards`), Deliverable 5.
+
+### Definition (the engineer adds it to `soullessDefs`)
+- `"Dolus Macrocannon"`, `Text`: `"R1, exhaust: Deal 2 damage to chosen non-Scratch asset."` (one string).
+- One `Activated`: `Costs` is `{Kind: ability.CostResources, Req: 1}`, then `{Kind: ability.CostExhaustSelf}`. `Effect`:
+  - `Targets`: one slot, `Filter: ability.Filter{Scratch: ability.ScratchExcluded}`.
+  - `Steps`: `{Op: ability.OpDealDamage, Amount: ability.Value{N: 2}, Subject: ability.SubjectTarget, Target: 0}`.
+
+A lead probe with the definition on the run branch at 6471772b, since reverted, passed `go tool task check`, `go tool task sim` (P0 58.5% / P1 39.5% / draws 2.0%, unchanged) and `go tool task sim-matrix` (exit 0).
+
+## Tests (shape and card tasks: written by rules-test-author; engineers never edit these)
+In a new file `pkg/engine/cards_soulless_macrocannon_test.go`, from the CSV text, loading the real card (`s.card("Dolus Macrocannon")`), in the style of `cards_concordia_stormbolt_test.go` and `cards_concordia_tempest_ray_test.go` (an activated `CostResources` and `CostExhaustSelf` ability on a structure) and `cards_soulless_maneuvers_test.go` (*Bring It Down*'s non-Scratch slot). Player 0 controls the Macrocannon and is the active player, unless a case says otherwise. Reuse the existing test helpers (`s.put`, `s.putScratch`, `s.setPool`, `s.script`, `s.reject`, `s.alive`, `s.wantDamage`, `activate`, `offersActivate`, `wantOptions`, `wantDealt`, `nonCombatDamage`, `damageEvents`, `totalDamage`, `inDiscardPile`, `inAssets`). The other cards may be synthetic. Every asset that a case doesn't mean to kill has enough health to survive 2 damage.
+
+Deploying:
+- `TestCard_DolusMacrocannon_EntersMainTheaterAsTwoSix` (`FR-TRN-003`): deployed from hand with exactly R4 it is a Readied 2/6 structure in player 0's Main Theater, and the pool is empty. Deploying it to Reserves is rejected, and with R3 it can't be deployed; in both cases the card stays in hand.
+
+Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, unless the case says otherwise):
+- `TestCard_DolusMacrocannon_DealsTwoToTheChosenAsset` (`FR-ACT-001`, `FR-LAY-002`): choosing an opposing unit gives it 2 damage, one non-combat damage instance from the Macrocannon. Afterwards the pool is R0 T0, the Macrocannon is Exhausted and on the battlefield, and no other asset is damaged.
+- `TestCard_DolusMacrocannon_OffersEveryNonScratchAsset` (`FR-TGT-001`, `SVY-R57`, `FR-ZON-005`, `FR-KWD-002h`): with an allied and an opposing unit in each of the Reserves and the Main Theater, an allied and an opposing structure, a face-down Scratch Company on each side (`s.putScratch`), an allied Warded unit and an opposing Warded unit, one exactly-one `DecideTarget` for player 0 offers exactly both Headquarters, the four units, both structures, the allied Warded unit and the Macrocannon itself. Neither Scratch Company is offered, nor the opposing Warded unit.
+- `TestCard_DolusMacrocannon_UnitTurnedFaceDownNotOffered` (`FR-ENT-103`, `SVY-R59`): an opposing unit turned face down by `morphEnact(s, morphManeuver())`, as in `TestCard_BringItDown_UnitTurnedFaceDownNotOffered`, is a Scratch Company and not offered. A face-up opposing unit beside it is.
+- `TestCard_DolusMacrocannon_MayChooseItself` (`FR-TGT-001`): choosing the Macrocannon deals it 2 damage, and it stays on the battlefield, Exhausted.
+- `TestCard_DolusMacrocannon_OfferedWithOnlyItselfAndHeadquarters` (`SVY-R36`, `FR-ACT-001`): with no other asset on the battlefield, the ability is offered, and its decision offers exactly the two Headquarters and the Macrocannon.
+- `TestCard_DolusMacrocannon_DamagesTheOpposingHeadquarters` (`FR-CBT-003`, `FR-LAY-002`): choosing player 1's Headquarters lowers its remaining Health by 2, and the match isn't over. With player 1's Headquarters at 2 remaining Health, the same activation ends the match with player 0 the winner.
+- `TestCard_DolusMacrocannon_LethalDamageKills` (`FR-LAY-002`): a chosen opposing unit with health 2 is destroyed, and its card is in player 1's discard pile.
+- `TestCard_DolusMacrocannon_ArmorAbsorbs` (`FR-REP-004` Stage 4, `FR-KWD-002k`): a chosen opposing unit with printed Armor 1 loses its Armor and takes 1 damage.
+- `TestCard_DolusMacrocannon_NotOfferedWithoutOneRequisition` (`FR-ACT-001`): with R0 T5 it is not offered, and a rejected activation deals no damage, leaves the pool at R0 T5 and leaves the Macrocannon Readied.
+- `TestCard_DolusMacrocannon_NotOfferedWhileExhausted` (`FR-ACT-002`): with R5 T0 an Exhausted Macrocannon isn't offered, and a rejected activation deals no damage and pays nothing.
+- `TestCard_DolusMacrocannon_NotOfferedWhileTheStackIsNotEmpty` (`FR-ACT-001` clean-stack requirement): while an item is on the stack, the ability isn't offered to the player who holds priority, as in `TestFR_ACT_001_NeedsAnEmptyStack` (`pkg/engine/activated_test.go:117`; reuse its setup).
+- `TestCard_DolusMacrocannon_MayActivateTheTurnItDeploys` (`FR-SET-004`): deployed from hand with R5, its ability is offered right away, and activating it on an opposing unit deals 2.
+- `TestCard_DolusMacrocannon_TimeoutTakesTheFirstOption` (`FR-MOD-001` §6, `SVY-R16`): a timed-out exactly-one target decision (`s.script(0, Answer{Timeout: true})`) takes its first option in fixed order, as in `TestCard_StormboltRay_TimeoutTakesTheFirstOption`, so player 0's own Headquarters takes 2 damage, and the total damage dealt is 2.
+- `TestCard_DolusMacrocannon_TargetGoneDealsNothing` (`FR-TGT-003`): the chosen opposing unit leaves the battlefield between placement and resolution. No damage is dealt, and the costs stay paid (pool R0, the Macrocannon Exhausted).
+- `TestCard_DolusMacrocannon_TargetGainsWardDealsNothing` (`FR-TGT-003`, `FR-KWD-002h`): the chosen opposing unit gains Ward between placement and resolution (on a synthetic card, setting `Inst.Card.Keywords.Ward = true`, as in `attack_reverify_test.go`). It takes no damage.
+- `TestCard_DolusMacrocannon_SourceGoneStillDeals` (`FR-ZON-004`, `FR-TGT-003`): the Macrocannon is killed between placement and resolution. The chosen opposing unit still takes 2 damage, and the card is in player 0's discard pile.
+- **Between placement and resolution:** `s.ptPlaceHook` on the ability's own placement fires while it is being declared, before its costs are paid (`SVY-R2`; T-0304's tests round 1, note 2). Use T-0304's technique (`stormTapCard` in `cards_concordia_stormbolt_test.go`, `trayTapCard` in `cards_concordia_tempest_ray_test.go`): a copy of the real card (copy the `Card` and its `Def`, so the shared definition isn't changed) whose `Triggers` also hold one synthetic `HookExhausted` trigger. It is placed on top of the ability and resolves first, and its step does the change (`{Op: ability.OpKill, Subject: ability.SubjectSelf}` for the Macrocannon, an `OpReturnToHand` step on `SubjectAll` with an opposing-unit filter for the target), or a hook at its placement does it.
+- **Existing tests:** every other test passes unchanged, including `TestCards_Executable` with the name removed.
+
+## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
+- None expected.
+
+## Allowed Files
+- `pkg/engine/cards/soulless.go` (the definition)
+- `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
+
+## Done When
+- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_DolusMacrocannon`
+- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [ ] `go tool task sim` runs clean on the starter decks
+- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+
+## Log
+- 2026-11-26 lead-architect (wave A run, session 16): written against 6471772b, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard (#120), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2)), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Culverin Brigade*. Searched `pkg/engine` and the task archives: every part of the Definition exists (the `Req` resource cost, `CostExhaustSelf`, *Bring It Down*'s `ScratchExcluded` slot, `OpDealDamage` on `SubjectTarget`), so no kernel change. Set to `tests`.
