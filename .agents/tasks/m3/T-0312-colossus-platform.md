@@ -4,7 +4,7 @@ title: Make Colossus Platform executable (Headquarters attack trigger, 1 armor t
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0312-colossus-platform
 depends_on: [T-0311]
 claims: [card:Colossus Platform]
@@ -51,7 +51,7 @@ Remember the Single-Option Fast-Path (line 449): when exactly one allied unit is
 - **Existing tests:** every other test passes unchanged, including `TestCards_Executable` with the name removed.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected.
+- None. The tests use only existing helpers (`hqScene`, `scriptRefs`, `wantOptions`, `stormKill`, `ptPlaceHook`) and file-local helpers `cpScene`, `cpAttack`, `cpWantResolved`, `cpWantNoArmor` in the new test file.
 
 ## Allowed Files
 - `pkg/engine/cards/soulless.go` (the definition)
@@ -66,3 +66,4 @@ Remember the Single-Option Fast-Path (line 449): when exactly one allied unit is
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 14): written against 6eaa2afb, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired. Taken next in the survey's Soulless deck order: session 13 went on to *Conscript Rifles* without writing down why it passed over this card, and nothing on the board or in the survey holds it back. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Ironclad Colossus*' `HookAttacks` trigger and `OpAddArmor` step, *Eternal Watchman*'s Headquarters self trigger, the `AllegianceAllied` and `KindUnit` filter), so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_soulless_colossus_test.go` (gofmt and `go vet` clean, `cardtown lint rules` clean). Tests: `TestCard_ColossusPlatform_IsAThreeTwentyHeadquarters`, `_AttackGivesTheChosenUnitOneArmor`, `_OffersOnlyAlliedUnits`, `_OneAlliedUnitTakesItWithoutAsking`, `_NoAlliedUnitStillAttacks`, `_ArmorStacksAndLasts`, `_ArmorAbsorbsLaterDamage`, `_TargetGoneGivesNothing`, `_OnlyItsOwnAttackTriggers`. Helpers requested: none. Cases left out: none. Today the first test passes (the card loads) and the armor tests fail until the definition is added; the no-armor tests pass trivially before it exists.
