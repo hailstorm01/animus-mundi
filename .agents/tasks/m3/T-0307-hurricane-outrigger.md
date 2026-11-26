@@ -4,7 +4,7 @@ title: Make Hurricane Outrigger executable (a deploy trigger gives its controlle
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0307-hurricane-outrigger
 depends_on: [T-0306]
 claims: [card:Hurricane Outrigger]
