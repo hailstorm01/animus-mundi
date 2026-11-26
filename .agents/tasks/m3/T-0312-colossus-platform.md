@@ -4,7 +4,7 @@ title: Make Colossus Platform executable (Headquarters attack trigger, 1 armor t
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0312-colossus-platform
 depends_on: [T-0311]
 claims: [card:Colossus Platform]
@@ -58,13 +58,14 @@ Remember the Single-Option Fast-Path (line 449): when exactly one allied unit is
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_ColossusPlatform`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_ColossusPlatform`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 14): written against 6eaa2afb, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired. Taken next in the survey's Soulless deck order: session 13 went on to *Conscript Rifles* without writing down why it passed over this card, and nothing on the board or in the survey holds it back. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Ironclad Colossus*' `HookAttacks` trigger and `OpAddArmor` step, *Eternal Watchman*'s Headquarters self trigger, the `AllegianceAllied` and `KindUnit` filter), so no kernel change. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote `pkg/engine/cards_soulless_colossus_test.go` (gofmt and `go vet` clean, `cardtown lint rules` clean). Tests: `TestCard_ColossusPlatform_IsAThreeTwentyHeadquarters`, `_AttackGivesTheChosenUnitOneArmor`, `_OffersOnlyAlliedUnits`, `_OneAlliedUnitTakesItWithoutAsking`, `_NoAlliedUnitStillAttacks`, `_ArmorStacksAndLasts`, `_ArmorAbsorbsLaterDamage`, `_TargetGoneGivesNothing`, `_OnlyItsOwnAttackTriggers`. Helpers requested: none. Cases left out: none. Today the first test passes (the card loads) and the armor tests fail until the definition is added; the no-armor tests pass trivially before it exists.
 - 2026-11-25 lead-architect: tests approved (D4, round 1). 393e06bf adds only `pkg/engine/cards_soulless_colossus_test.go` (9 tests, one per case) and the task file. Each expected outcome agrees with the FRD 01 text it cites: `FR-CAP-001` for the Headquarters attack, the Single-Option Fast-Path for the one-unit case, `FR-TGT-001` and `FR-KWD-002h` for the allied-unit filter (Ward stops only opponents, a Scratch Company is a unit), `FR-TGT-003` line 442 for the no-target case (only outcomes asserted), `FR-KWD-002k` and `FR-REP-004` Stage 4 for stacking, lasting and absorbing, and `SVY-R25` for the target gone. A lead probe with the Definition, since reverted, passes all 9, and each of 9 mutants (any allegiance, opposing, any kind, Scratch excluded, 2 armor, heal in place of armor, deploy hook, `Watches`, `UpTo` 1) fails at least one. Set to `ready`.
+- 2026-11-25 kernel-engineer: Added ability definition for "Colossus Platform" to soullessDefs in pkg/engine/cards/soulless.go (HookAttacks trigger with one slot Filter{Allegiance: AllegianceAllied, Kinds: KindUnit} and OpAddArmor step of amount 1 on SubjectTarget 0; reused shapes from Ironclad Colossus and Eternal Watchman). Removed "Colossus Platform" from NotYetExecutable in pkg/engine/cards/cards.go. Verified: go test ./pkg/engine -run 'TestCard_ColossusPlatform' (pass, 0.296s), go test ./pkg/cardcheck -run 'TestCards_Executable' (pass), go tool task check (gofmt, go vet, all tests, cardtown lint --all all clean), go tool task sim (pass, 200 games, P0 58.5% / P1 39.5% / draws 2.0%), and go tool task sim-matrix (pass, 24 starter and 24 stress runs terminated clean). Set to review.
