@@ -271,4 +271,36 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"MAX-8 Autonomous Warsuit": {
+		Text: []string{"When this unit deploys, deal 2 damage to chosen asset. Chosen asset heals 2."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{},
+						},
+						{
+							Filter: ability.Filter{},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+						{
+							Op:      ability.OpHeal,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  1,
+						},
+					},
+				},
+			},
+		},
+	},
 }

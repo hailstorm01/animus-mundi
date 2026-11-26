@@ -32,7 +32,6 @@ var NotYetExecutable = []string{
 	"Hourglass Diviner",
 	"Land Fortress",
 	"Light of the World Soul",
-	"MAX-8 Autonomous Warsuit",
 	"Macrocannon Barrage",
 	"Mage Seeker's Inquisition",
 	"March of Progress",
