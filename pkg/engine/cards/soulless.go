@@ -332,4 +332,20 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Visionary's Eye": {
+		Text: []string{"Whenever this unit attacks, draw a card."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookAttacks,
+				Effect: ability.Effect{
+					Steps: []ability.Step{
+						{
+							Op:     ability.OpDraw,
+							Amount: ability.Value{N: 1},
+						},
+					},
+				},
+			},
+		},
+	},
 }
