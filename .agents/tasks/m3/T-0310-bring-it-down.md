@@ -4,7 +4,7 @@ title: Make Bring It Down executable (2 damage to a chosen non-Scratch asset; fi
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: tests
 branch: m3/autoloop-wave-a/T-0310-bring-it-down
 depends_on: [T-0309]
 claims: [card:Bring It Down, file:pkg/engine/cards/soulless.go]
@@ -46,7 +46,7 @@ In a new file `pkg/engine/cards_soulless_maneuvers_test.go`, from the CSV text, 
 - `TestCard_BringItDown_LethalDamageKills` (`FR-LAY-002`): a chosen opposing unit with health 2 is destroyed, and its card is in player 1's discard pile.
 - `TestCard_BringItDown_ResistantAndArmorApply` (`FR-REP-004`, `FR-KWD-002k`): a chosen unit with Resistant 1 takes 1 damage; a chosen unit with Armor 1 loses its Armor and takes 1 damage to its Health.
 - `TestCard_BringItDown_WardedOpposingAssetNotOffered` (`FR-KWD-002h`): an opposing Warded unit is not offered. An allied Warded unit is (Ward stops only opponents).
-- `TestCard_BringItDown_TargetGoneDealsNothing` (`FR-TGT-003`): the chosen unit is removed between the Maneuver's placement and its resolution (`s.ptPlaceHook`, `stormKill`). Nothing else is dealt damage, and *Bring It Down* is in player 0's discard pile.
+- `TestCard_BringItDown_TargetGoneDealsNothing` (`FR-TGT-003`): the chosen unit is removed between the Maneuver's placement and its resolution: a `recorder` on `s.g.obs` whose `onEvent` removes it on the `place` event for *Bring It Down* (`e.Kind == "place" && e.Card == "Bring It Down"`), as in `TestCard_SoulWhip_TargetGoneDealsNothing`. (`s.ptPlaceHook` fires only for an ability on the stack, never for a Maneuver.) Nothing else is dealt damage, and *Bring It Down* is in player 0's discard pile.
 - `TestCard_BringItDown_PaysOneTactics` (`FR-MNV-001`): with R0 T0 the Enact is not offered; with R0 T1 it is, and the pool is empty after it resolves.
 - **Existing tests:** every other test passes unchanged, including `TestCards_Executable` with the name removed.
 
@@ -67,3 +67,5 @@ In a new file `pkg/engine/cards_soulless_maneuvers_test.go`, from the CSV text, 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 12): written against 2a79a87d, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Pincer Tactics*' second slot and step are the same clause), so no kernel change. Set to `tests`.
 - 2026-11-25 rules-test-author: wrote `pkg/engine/cards_soulless_maneuvers_test.go` with all ten listed tests: TestCard_BringItDown_DealsTwoToTheChosenAsset, _OffersEveryNonScratchAsset, _UnitTurnedFaceDownNotOffered, _EnactableWithOnlyHeadquarters, _DamagesTheOpposingHeadquarters, _LethalDamageKills, _ResistantAndArmorApply, _WardedOpposingAssetNotOffered, _TargetGoneDealsNothing, _PaysOneTactics. No helpers requested; no cases left out. `go vet` is clean and `cardtown lint rules` passes. All ten fail now because the card has no definition ("needs rules the kernel does not implement yet"). Set to `tests-review`.
+- 2026-11-25 lead-architect: tests returned (D4, round 1). A lead probe with the Definition, since reverted, passes 9 of the 10, and each of 8 mutants (no Scratch filter, 1 damage, 3 damage, units only, no Headquarters, opposing only, Main Theater only, kill in place of damage) fails at least one of those 9. Note:
+  1. `TestCard_BringItDown_TargetGoneDealsNothing` fails its setup check ("the chosen unit should have left before resolution") with the Definition in place: `s.ptPlaceHook` (`pile_target_test.go:27`) calls its function only when the top stack item is a `StackAbility`, so it never fires for a Maneuver. The helper was the lead's suggestion in the task text, now corrected under Tests. Remove the unit through a `recorder` on `s.g.obs` whose `onEvent` acts on `e.Kind == "place" && e.Card == "Bring It Down"` while the unit is alive (`stormKill` or `s.g.removeFromBattlefield`), as `TestCard_SoulWhip_TargetGoneDealsNothing` (`cards_concordia_soulwhip_test.go:185`) does. Keep the assertions. Change nothing else. Set to `tests`.
