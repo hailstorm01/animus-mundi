@@ -4,7 +4,7 @@ title: Make Will Breaker executable (a deploy trigger kills a chosen opposing un
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0309-will-breaker
 depends_on: [T-0308]
 claims: [card:Will Breaker]
@@ -69,3 +69,4 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 11): written against 370c9464, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): #185 (3) is due here and is the three tests marked #185 (3); #185 (4)'s *Awaken Nightmare* half stays for wave F, and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote pkg/engine/cards_concordia_willbreaker_test.go, 12 tests: EntersReservesAsFiveFour, KillsTheChosenUnit, OnlyCostThreeOrLessOffered, MayChooseAScratchCompany, MustChooseTheOnlyScratchCompany, MayChooseAUnitTurnedFaceDown (the three #185 (3) tests are the Scratch and face-down ones), NoTargetDoesNothing, WardedUnitNotOffered, TargetGoneDoesNothing, TargetChangedControllerDoesNothing, SourceGoneStillKills, FaceDownScratchDoesNothing. Helpers requested: none (test-local wbUnit, wbStructure, wbDeployCard, wbDeploy, wbDestroys are in the new file). Cases left out: none. go vet clean, cardtown lint rules passes. 11 fail until the definition exists; FaceDownScratchDoesNothing passes now and guards the rule. Set to tests-review.
