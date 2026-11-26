@@ -4,7 +4,7 @@ title: Make Will Breaker executable (a deploy trigger kills a chosen opposing un
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0309-will-breaker
 depends_on: [T-0308]
 claims: [card:Will Breaker]
@@ -61,11 +61,11 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_WillBreaker`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_WillBreaker`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 11): written against 370c9464, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): #185 (3) is due here and is the three tests marked #185 (3); #185 (4)'s *Awaken Nightmare* half stays for wave F, and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
@@ -74,3 +74,4 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
   1. `TestCard_WillBreaker_NoTargetDoesNothing` asserts that no trigger is placed (`placed` through `s.ptPlaceHook`). FRD 01 line 442 doesn't say that: it lets the trigger be placed with no legal target, and then only its targeted clause fizzles ("when that trigger is placed on the stack or resolves"). The kernel places it and it fizzles. The "no trigger is placed" wording was the lead's, in the task text, and is now corrected under Tests. Drop the placement assertion. Assert instead what the rule fixes: *Will Breaker* is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty after the deploy, no destroy event is logged (`effectEvents(s.g, 0, "destroy")` is empty), and every unit stays. Change nothing else. Set to `tests`.
 - 2026-11-25 rules-test-author: round 1 note 1 applied to `TestCard_WillBreaker_NoTargetDoesNothing`: dropped the `s.ptPlaceHook` placement assertion; it now asserts Will Breaker is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty, no destroy event is logged and every unit stays. Nothing else changed. Helpers requested: none. Set to tests-review.
 - 2026-11-25 lead-architect: tests approved (D4, round 2). 2c6f9fbb changes only `TestCard_WillBreaker_NoTargetDoesNothing`, as note 1 asked. Each expected outcome agrees with the FRD 01 text it cites (`SVY-R59` for the face-down cases, `FR-TGT-001` Dynamic Stats for the cost bound, `FR-TGT-003` for the re-check at resolution and the deploy without a legal target). A lead probe with the Definition, since reverted, passes all twelve, and each of the 7 round 1 mutants fails at least one. `FaceDownScratchDoesNothing` passes before the implementation: it pins what must not happen. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Will Breaker in concordiaDefs (pkg/engine/cards/concordia.go) with HookDeploy trigger, targeting ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, Stat: ability.StatRequisition, AtMost: 3} and OpKill step on target 0. Removed "Will Breaker" from NotYetExecutable in pkg/engine/cards/cards.go. Reused HookDeploy with target slot (Echoing Nightmare), Filter.Stat bound (Devilhorn Scouting Party in path.go), and OpKill (animus.go). Ran go test ./pkg/engine -run TestCard_WillBreaker (pass), go tool task check (pass: fmt-check, vet, tests, cardtown lint --all), go tool task sim (pass: P0 58.5% / P1 39.5% / draws 2.0%), and go tool task sim-matrix (pass: 24 starter and 24 stress runs terminated clean with all invariants holding). Set to review.
