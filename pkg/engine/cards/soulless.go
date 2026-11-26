@@ -108,4 +108,32 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Dolus Macrocannon": {
+		Text: []string{"R1, exhaust: Deal 2 damage to chosen non-Scratch asset."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostResources, Req: 1},
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Scratch: ability.ScratchExcluded,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
