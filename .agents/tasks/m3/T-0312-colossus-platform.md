@@ -4,7 +4,7 @@ title: Make Colossus Platform executable (Headquarters attack trigger, 1 armor t
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0312-colossus-platform
 depends_on: [T-0311]
 claims: [card:Colossus Platform]
