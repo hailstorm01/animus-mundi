@@ -4,7 +4,7 @@ title: Make Mobile Armory executable (exhaust: chosen allied unit in the same zo
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0321-mobile-armory
 depends_on: [T-0320]
 claims: [card:Mobile Armory]
@@ -78,3 +78,4 @@ Between placement and resolution (`dmcTapCard`'s technique: a copy of the real c
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 24): written against e0d72c38, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no mode, and its slot is not an "another" slot (#91: no "other", so it may choose itself), no deck search (#106), no discard cost (#120: its only cost is an exhaust), no tuck (#142), no turn-boundary or draw hook (#15 (2)), and no pile (#183 (2)); the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *MAX-8 Autonomous Warsuit*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`activatedPlacement` locks the zone through `sameZoneLock`, `legalTarget` reads the lock at both checks, and `stepModifyStat` acts on `SubjectTarget`), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_armory_test.go`, 16 tests: TestCard_MobileArmory_ EntersEitherZoneAsOneThree, ChosenAllyGetsPlusOnePower, OffersAlliedUnitsInItsZoneOnly, FromReservesOffersOwnReservesOnly, MayChooseItself, AloneInItsZoneBuffsItselfWithoutAsking, PowerExpiresAtEndOfTurn, BuffStaysWhenTheAllyMovesAfterwards, NotOfferedWhileExhausted, NotOfferedWhileTheStackIsNotEmpty, MayActivateTheTurnItDeploys, TimeoutTakesTheFirstOption, TargetLeftTheZoneGetsNothing, SourceMovedStillBuffsInTheLockedZone, SourceGoneStillBuffs, TargetGoneGetsNothing (16 listed cases; the deploy test covers both zones plus the R2 rejection). Helpers requested: none (file-local helpers maScene, maTapCard, maActivate, maHookScene). `go vet` clean, `cardtown lint rules` PASS; all fail now (card not yet executable). Notes: the three synthetic-trigger cases that move or return the other allied units use `Filter{Other: true, Zone: ability.ZoneMainTheater}` on a SubjectAll step so the Armory itself is untouched; the timeout test reads the first option from the decision rather than assuming an order. No case left out.
