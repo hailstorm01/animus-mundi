@@ -254,4 +254,31 @@ var concordiaDefs = map[string]*ability.Def{
 		Text:          []string{"This unit costs R1 less to deploy for each maneuver card in your discard pile."},
 		CostReduction: ability.CostReduction{Req: 1, Per: ability.Filter{Allegiance: ability.AllegianceAllied, Kinds: ability.KindManeuver, Zone: ability.ZoneDiscard}},
 	},
+	"Will Breaker": {
+		Text: []string{"When this unit deploys, kill chosen opposing unit with Requisition cost 3 or less."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceOpposing,
+								Kinds:      ability.KindUnit,
+								Stat:       ability.StatRequisition,
+								AtMost:     3,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpKill,
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }

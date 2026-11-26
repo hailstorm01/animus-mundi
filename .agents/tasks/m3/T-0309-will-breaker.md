@@ -4,7 +4,7 @@ title: Make Will Breaker executable (a deploy trigger kills a chosen opposing un
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0309-will-breaker
 depends_on: [T-0308]
 claims: [card:Will Breaker]
@@ -45,7 +45,7 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
 - `TestCard_WillBreaker_MayChooseAScratchCompany` (`SVY-R59`, `FR-ZON-005`; #185 (3)): with an opposing face-down Scratch Company (`s.putScratch(1)`, whose hidden card has a printed cost over 3) and an opposing unit of cost 3, both are offered, and choosing the Scratch Company kills it.
 - `TestCard_WillBreaker_MustChooseTheOnlyScratchCompany` (`SVY-R59`, `FR-TGT-003`; #185 (3)): with an opposing face-down Scratch Company the only opposing unit, nothing is asked and it is killed.
 - `TestCard_WillBreaker_MayChooseAUnitTurnedFaceDown` (`SVY-R59`, `FR-ENT-103`; #185 (3)): an opposing unit with printed cost 5 is turned face down (`morphEnact` with `morphManeuver()`, or the real *Forced Mutation*) before *Will Breaker* deploys. Beside an opposing face-up unit of cost 5, it is the only target offered (or nothing is asked), and it is killed; the face-up one stays.
-- `TestCard_WillBreaker_NoTargetDoesNothing` (`FR-TGT-003` Deployment Triggers Without Legal Targets): with only opposing units of cost 4 or more and an allied unit of cost 1, no trigger is placed, nothing is asked, and every unit stays.
+- `TestCard_WillBreaker_NoTargetDoesNothing` (`FR-TGT-003` Deployment Triggers Without Legal Targets): with only opposing units of cost 4 or more and an allied unit of cost 1, *Will Breaker* enters Reserves normally, nothing is asked, the stack is empty once play returns, no destroy event is logged, and every unit stays. Whether the trigger is placed (its targeted clause then fizzles) is not pinned: line 442 allows either ("when that trigger is placed on the stack or resolves").
 - `TestCard_WillBreaker_WardedUnitNotOffered` (`FR-KWD-002h`): with only an opposing Warded unit of cost 2, it stays. With a Warded and a plain one of cost 2, only the plain one is offered.
 - `TestCard_WillBreaker_TargetGoneDoesNothing` (`FR-TGT-003`): the chosen unit is removed between the trigger's placement and its resolution (`s.ptPlaceHook`, `stormKill`). Nothing else is killed.
 - `TestCard_WillBreaker_TargetChangedControllerDoesNothing` (`FR-TGT-003`, `FR-ZON-002`): between placement and resolution, the chosen unit (player 1's) comes under player 0's control (set its `Controller` in the hook, or use the real *Rhapsody's Hollow* as in `TestCard_TempestCityRay_ControlledUnitGoesToItsControllersReserves`). It is no longer an opposing unit, so it stays on the battlefield.
@@ -61,11 +61,17 @@ In a new file `pkg/engine/cards_concordia_willbreaker_test.go`, from the CSV tex
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_WillBreaker`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_WillBreaker`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 11): written against 370c9464, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): #185 (3) is due here and is the three tests marked #185 (3); #185 (4)'s *Awaken Nightmare* half stays for wave F, and no waiting trigger has fired. Every part of the Definition exists, so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote pkg/engine/cards_concordia_willbreaker_test.go, 12 tests: EntersReservesAsFiveFour, KillsTheChosenUnit, OnlyCostThreeOrLessOffered, MayChooseAScratchCompany, MustChooseTheOnlyScratchCompany, MayChooseAUnitTurnedFaceDown (the three #185 (3) tests are the Scratch and face-down ones), NoTargetDoesNothing, WardedUnitNotOffered, TargetGoneDoesNothing, TargetChangedControllerDoesNothing, SourceGoneStillKills, FaceDownScratchDoesNothing. Helpers requested: none (test-local wbUnit, wbStructure, wbDeployCard, wbDeploy, wbDestroys are in the new file). Cases left out: none. go vet clean, cardtown lint rules passes. 11 fail until the definition exists; FaceDownScratchDoesNothing passes now and guards the rule. Set to tests-review.
+- 2026-11-25 lead-architect: tests returned (D4, round 1). A lead probe with the Definition, since reverted, passes 11 of the 12, and each of 7 mutants (no stat bound, `AtMost` 2, any allegiance, any kind, Main Theater only, return in place of kill, a power bound) fails at least one of those 11. Note:
+  1. `TestCard_WillBreaker_NoTargetDoesNothing` asserts that no trigger is placed (`placed` through `s.ptPlaceHook`). FRD 01 line 442 doesn't say that: it lets the trigger be placed with no legal target, and then only its targeted clause fizzles ("when that trigger is placed on the stack or resolves"). The kernel places it and it fizzles. The "no trigger is placed" wording was the lead's, in the task text, and is now corrected under Tests. Drop the placement assertion. Assert instead what the rule fixes: *Will Breaker* is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty after the deploy, no destroy event is logged (`effectEvents(s.g, 0, "destroy")` is empty), and every unit stays. Change nothing else. Set to `tests`.
+- 2026-11-25 rules-test-author: round 1 note 1 applied to `TestCard_WillBreaker_NoTargetDoesNothing`: dropped the `s.ptPlaceHook` placement assertion; it now asserts Will Breaker is in player 0's Reserves, nothing is asked, `s.g.Stack` is empty, no destroy event is logged and every unit stays. Nothing else changed. Helpers requested: none. Set to tests-review.
+- 2026-11-25 lead-architect: tests approved (D4, round 2). 2c6f9fbb changes only `TestCard_WillBreaker_NoTargetDoesNothing`, as note 1 asked. Each expected outcome agrees with the FRD 01 text it cites (`SVY-R59` for the face-down cases, `FR-TGT-001` Dynamic Stats for the cost bound, `FR-TGT-003` for the re-check at resolution and the deploy without a legal target). A lead probe with the Definition, since reverted, passes all twelve, and each of the 7 round 1 mutants fails at least one. `FaceDownScratchDoesNothing` passes before the implementation: it pins what must not happen. Set to `ready`.
+- 2026-11-25 kernel-engineer: implemented Will Breaker in concordiaDefs (pkg/engine/cards/concordia.go) with HookDeploy trigger, targeting ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit, Stat: ability.StatRequisition, AtMost: 3} and OpKill step on target 0. Removed "Will Breaker" from NotYetExecutable in pkg/engine/cards/cards.go. Reused HookDeploy with target slot (Echoing Nightmare), Filter.Stat bound (Devilhorn Scouting Party in path.go), and OpKill (animus.go). Ran go test ./pkg/engine -run TestCard_WillBreaker (pass), go tool task check (pass: fmt-check, vet, tests, cardtown lint --all), go tool task sim (pass: P0 58.5% / P1 39.5% / draws 2.0%), and go tool task sim-matrix (pass: 24 starter and 24 stress runs terminated clean with all invariants holding). Set to review.
