@@ -4,7 +4,7 @@ title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Sc
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
 depends_on: [T-0313]
 claims: [card:Dolus Macrocannon]
