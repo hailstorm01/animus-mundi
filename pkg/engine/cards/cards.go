@@ -15,7 +15,6 @@ var NotYetExecutable = []string{
 	"All-Out War",
 	"Armored Charge",
 	"Awaken Nightmare",
-	"Bring It Down",
 	"Cathedral of Self",
 	"Colossus Platform",
 	"Command Barge",
