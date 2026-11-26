@@ -4,7 +4,7 @@ title: Make MAX-8 Autonomous Warsuit executable (deploy: 2 damage to one chosen 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: review
 branch: m3/autoloop-wave-a/T-0320-max-8-autonomous-warsuit
 depends_on: [T-0319]
 claims: [card:MAX-8 Autonomous Warsuit]
@@ -62,11 +62,15 @@ In a new file `pkg/engine/cards_soulless_max8_test.go`, from the CSV text, loadi
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_MAX8AutonomousWarsuit`
-- [ ] `go test ./pkg/cardcheck` passes with the name removed
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_MAX8AutonomousWarsuit`
+- [x] `go test ./pkg/cardcheck` passes with the name removed
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 23): written against e6573b07, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no mode or "another" slot (#91: its two slots may pick the same asset, `SVY-R35`, so no `Another`), no deck search (#106), no discard cost (#120), no tuck (#142), no turn-boundary or draw hook (#15 (2)), and no pile (#183 (2)); the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Inspired Salvage*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`chooseTargets` asks one decision per slot in slot order, `stepDealDamage` and `stepHeal` act on `SubjectTarget` by slot, and the sweep runs only after the item resolves), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_max8_test.go`, 15 `TestCard_MAX8AutonomousWarsuit_*` tests, one per case under Tests (EntersReservesAsFourSeven, AsksTwoSlotsDamageFirst, AlliedWardedUnitIsOffered, SameAssetForBothTakesTwoThenHealsTwo, HealsAnotherAssetLethallyDamagedOneDies, HealNeverGoesBelowZero, CanHealAHeadquarters, CanDamageItself, ScratchCompanyCanBeKilled, ArmorAbsorbsAndHealLeavesArmor, TimeoutTakesTheFirstOptionForEach, DamageTargetGoneStillHeals, HealTargetGoneStillDamages, SourceGoneStillResolves, FaceDownScratchDoesNothing). Helpers requested: none (a file-local `mxChoose` picks per-slot answers). `go vet` is clean and `cardtown lint rules` passes. 14 tests fail until the card is defined; FaceDownScratchDoesNothing passes already (a Scratch Company has no ability, so nothing happens either way). No cases left out. Set to `tests-review`.
+- 2026-11-26 lead-architect: tests approved (D4, round 1). 8c48b370 adds the 15 tests under Tests and changes nothing else. With the lead's probe Definition all 15 pass, and each of the 11 lead mutants fails 1 to 13 of them (the two slots' targets swapped, one slot for both steps, heal 1, damage 1, the heal step before the damage step, `ScratchExcluded` on both slots, units only on the heal slot, opposing only on the damage slot, `Another: 1` on the heal slot, `UpTo: 1` on the heal slot, `HookAttacks` in place of `HookDeploy`). The expected outcomes match the text they cite: `FR-TGT-001` line 432 (`SVY-R35`: two slots, the same asset allowed), `FR-LAY-002` line 535 (no sweep between the steps, so the same 2-health unit survives), `FR-KWD-002d` (heal never below 0, Armor untouched), `FR-KWD-002h`, `FR-TGT-003` Partial Invalidation, `FR-MOD-001` §6 (`SVY-R16`: each timeout takes player 0's Headquarters), `FR-ZON-004` and `FR-ZON-005`. `FaceDownScratchDoesNothing` passes before the implementation too, as a Scratch Company has no ability. Set to `ready`.
+- 2026-11-26 kernel-engineer: implemented MAX-8 Autonomous Warsuit in `pkg/engine/cards/soulless.go` and removed its name from `NotYetExecutable` in `pkg/engine/cards/cards.go`. Reused `ability.HookDeploy`, two unfiltered `ability.Target` slots (`ability.Filter{}`), `ability.OpDealDamage` (Amount 2, SubjectTarget 0), and `ability.OpHeal` (Amount 2, SubjectTarget 1). Verified: `go test ./pkg/engine -run TestCard_MAX8AutonomousWarsuit` passes (15/15), `go test ./pkg/cardcheck` passes, `go tool task check` passes (gofmt, vet, tests, linters clean), `go tool task sim` runs clean (P0 58.5% / P1 39.5% / draws 2.0%), and `go tool task sim-matrix` exits 0 (all 24 runs pass invariants across starter and stress decks). Committed implementation as 8a9f890f. Set to `review`.
+- 2026-11-26 lead-architect (wave A run, session 23): approved (D5, round 1). The diff (8a9f890f) is the task's Definition in `pkg/engine/cards/soulless.go` and the one name off `NotYetExecutable`, inside `Allowed Files`. The test file changed only in 8c48b370, before the implementation. No new shape, no card name in engine code, and no duplicate: the deploy trigger is *Spoil Forest Colossus*', the two slots are *Ensnaring Mist*'s form with *Spoil Forest Colossus*' `Filter{}`, and the steps are `stepDealDamage` and `stepHeal`. Re-run by the reviewer on the task branch, with exit codes: `go test ./pkg/engine -run TestCard_MAX8AutonomousWarsuit` (15 pass), `go test ./pkg/cardcheck`, `go tool task check`, `go tool task sim`, `go tool task sim-matrix`, all 0. The Animus vs Path sim is unchanged (P0 58.5% / P1 39.5% / draws 2.0%). The Flash run (`agy` conversation `cf9fd23c-4c79-4492-afda-210e615c9356`) left no denied action.
