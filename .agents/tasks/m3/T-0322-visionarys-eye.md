@@ -4,7 +4,7 @@ title: Make Visionary's Eye executable (whenever this unit attacks, draw a card,
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0322-visionarys-eye
 depends_on: [T-0321]
 claims: [card:Visionary's Eye]
@@ -71,3 +71,4 @@ Attacking (a Readied Eye put in player 0's Main Theater, with a known card on to
 - 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_eye_test.go`, 11 tests, all from the task's Tests section: EntersReservesAsOneOne, CannotAttackFromReserves, MarchesThenAttacksAndDraws, AttackDrawsOneCard, DrawResolvesBeforeCombatDamage, DrawsEvenWhenItDiesInTheTrade, ZeroPowerAttackStillDraws (power lowered with a Layer 5 `Modifier{Power: -1}`), KilledBeforeItsTriggerStillDraws, EachAttackDrawsAgain, DefendingDoesNotDraw, OnlyItsOwnAttackDraws. Helpers requested: none (file-local `eyeCounts`, `eyeWantCounts`, `eyeInMain`). Cases left out: none. `go vet` is clean and `cardtown lint rules` passes; the deploy, attack-draw and empty-deck tests fail until the definition exists (CannotAttackFromReserves and DefendingDoesNotDraw already pass, as they pin existing rules). Set to `tests-review`.
 - 2026-11-26 lead-architect (wave A run, session 26): tests review round 1, **changes**. Session 25 ended before dispatching; this session removed its clean worktrees and dispatched the test author. Probe (the Definition, uncommitted, in the review worktree): all 11 tests pass, and `go test ./pkg/cardcheck` passes. Lead mutants: `Amount` 2, `SubjectOpponents`, `Optional`, `HookDamaged`, `HookMoves` and a `Watches` allied-unit trigger are all caught; `HookExhausted` in place of `HookAttacks` is not (every test passes). Notes:
   1. `TestCard_VisionarysEye_MarchesThenAttacksAndDraws`: also assert that the March itself draws nothing. Record player 0's hand and deck sizes right before `ActMarch` and check them unchanged right after it (`eyeWantCounts`), since a March exhausts the Eye but is not an attack (`FR-CAP-001`, `FR-CBT-002`). This catches an "exhausts" hook in place of the "attacks" hook. The case was missing from the lead's task text, now corrected in the Tests section. Change nothing else.
+- 2026-11-26 rules-test-author (round 2): fixed review note 1. `TestCard_VisionarysEye_MarchesThenAttacksAndDraws` now records player 0's hand and deck sizes right before `ActMarch` and checks them unchanged right after it (`eyeWantCounts`: a March exhausts the Eye but is not an attack, FR-CAP-001, FR-CBT-002). Nothing else changed. Helpers requested: none. `go vet`, gofmt and `cardtown lint rules` are clean; the test still fails until the definition exists. Set to `tests-review`.

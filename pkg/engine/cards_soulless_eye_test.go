@@ -93,7 +93,9 @@ func TestCard_VisionarysEye_MarchesThenAttacksAndDraws(t *testing.T) {
 	s.setPool(0, 1, 0)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
 	eye := assetOf(s.g, c)
+	mh, md := eyeCounts(s, 0)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: eye.ID})
+	eyeWantCounts(s, 0, mh, md, "a March exhausts the Eye but is not an attack, so it draws nothing (FR-CAP-001, FR-CBT-002)")
 	if eye.Zone != ZoneMainTheater || !eye.Exhausted {
 		t.Fatalf("the Eye may March the turn it deploys (FR-SET-004) and is then Exhausted in the Main Theater: zone %s exhausted %v", eye.Zone, eye.Exhausted)
 	}
