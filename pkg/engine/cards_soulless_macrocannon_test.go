@@ -300,17 +300,17 @@ func TestCard_DolusMacrocannon_TimeoutTakesTheFirstOption(t *testing.T) {
 
 func TestCard_DolusMacrocannon_TargetGoneDealsNothing(t *testing.T) {
 	// Covers: FR-TGT-003
-	s, m := dmcScene(t)
+	s := newScene(t)
+	opposingUnits := ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}
+	m := s.put(0, ZoneMainTheater, dmcTapCard(s, ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: opposingUnits}))
+	s.setPool(0, 1, 0)
 	foe := s.put(1, ZoneMainTheater, unit("Fleeting", 1, 5, ability.Keywords{}))
-	chooseAsset(s, foe)
-	s.ptPlaceHook(func(int, StackItem) {
-		if s.alive(foe) {
-			s.g.removeFromBattlefield(foe)
-		}
-	})
-	s.do(activate(m, 0))
+	dmcActivate(s, m, foe)
 	if s.alive(foe) {
-		t.Fatalf("setup: the target should have left before resolution")
+		t.Fatalf("setup: the synthetic trigger should have returned the target to hand before the ability resolves")
+	}
+	if !inHand(s.g.Players[1], foe.Inst) {
+		t.Fatalf("setup: the target's card should be in player 1's hand")
 	}
 	if n := len(damageEvents(s.g.Log)); n != 0 {
 		t.Errorf("a target that left before resolution is skipped and no damage event is logged: %d (FR-TGT-003)", n)
@@ -318,23 +318,41 @@ func TestCard_DolusMacrocannon_TargetGoneDealsNothing(t *testing.T) {
 	if got := totalDamage(s.g); got != 0 {
 		t.Errorf("nothing takes damage: total %d (FR-TGT-003)", got)
 	}
-	if p := s.g.Players[0]; p.Req != 0 || !m.Exhausted {
-		t.Errorf("the costs stay paid: pool R%d, exhausted %v (FR-TGT-003)", p.Req, m.Exhausted)
+	if p := s.g.Players[0]; p.Req != 0 || !m.Exhausted || !s.alive(m) {
+		t.Errorf("the costs stay paid and the Macrocannon stays: pool R%d, exhausted %v, alive %v (FR-TGT-003)", p.Req, m.Exhausted, s.alive(m))
 	}
 }
 
 func TestCard_DolusMacrocannon_TargetGainsWardDealsNothing(t *testing.T) {
 	// Covers: FR-TGT-003, FR-KWD-002h
-	s, m := dmcScene(t)
+	s := newScene(t)
+	m := s.put(0, ZoneMainTheater, dmcTapCard(s, ability.Step{Op: ability.OpAddArmor, Amount: ability.Value{N: 0}, Subject: ability.SubjectSelf}))
+	s.setPool(0, 1, 0)
 	foe := s.put(1, ZoneMainTheater, unit("Warding", 1, 5, ability.Keywords{}))
 	chooseAsset(s, foe)
-	s.ptPlaceHook(func(int, StackItem) {
-		foe.Inst.Card.Keywords.Ward = true
+	fired, askedAtFire, stackAtFire := 0, 0, 0
+	s.ptPlaceHook(func(asked int, _ StackItem) {
+		// The synthetic trigger is placed after the exhaust cost is paid, above the
+		// ability, which is already on the stack with its target chosen.
+		if m.Exhausted && !foe.Inst.Card.Keywords.Ward {
+			fired++
+			askedAtFire, stackAtFire = asked, len(s.g.Stack)
+			foe.Inst.Card.Keywords.Ward = true
+		}
 	})
 	s.do(activate(m, 0))
+	if fired != 1 {
+		t.Fatalf("setup: Ward should be set once, after the costs were paid: fired %d", fired)
+	}
+	if askedAtFire < 1 || stackAtFire < 2 {
+		t.Fatalf("setup: the target should have been chosen with the ability on the stack before Ward was set: asked %d, stack %d", askedAtFire, stackAtFire)
+	}
 	s.wantDamage(foe, 0)
 	if got := totalDamage(s.g); got != 0 {
 		t.Errorf("a target that gained Ward before resolution is no longer legal and takes no damage: total %d (FR-TGT-003, FR-KWD-002h)", got)
+	}
+	if p := s.g.Players[0]; p.Req != 0 || !m.Exhausted {
+		t.Errorf("the costs stay paid: pool R%d, exhausted %v (FR-TGT-003)", p.Req, m.Exhausted)
 	}
 }
 
