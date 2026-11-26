@@ -4,7 +4,7 @@ title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Sc
 kind: card
 tier: flash
 wave: A
-status: tests-review
+status: ready
 branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
 depends_on: [T-0313]
 claims: [card:Dolus Macrocannon]
@@ -82,3 +82,4 @@ Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, un
   2. `TestCard_DolusMacrocannon_TargetGainsWardDealsNothing` has the same problem: it sets Ward from `s.ptPlaceHook` during declaration. Make the change after the costs are paid: put a `dmcTapCard` Macrocannon in play and set Ward from a placement hook that acts only on the synthetic `HookExhausted` trigger's item (it is placed after the exhaust cost is paid, above the ability), or from that trigger's resolution. Assert that the ability was on the stack with the target chosen before Ward was set (for example, the hook fires once and the target decision was asked before it).
 Set to `tests`.
 - 2026-11-26 rules-test-author: round 1 notes addressed. (1) TargetGoneDealsNothing now uses dmcTapCard with an OpReturnToHand step on SubjectAll (opposing units); it asserts the target is in player 1's hand, no damage event, pool R0 and the Macrocannon Exhausted. (2) TargetGainsWardDealsNothing uses a dmcTapCard Macrocannon (a harmless OpAddArmor 0 trigger) and sets Ward from a placement hook that acts only once the exhaust cost is paid (the synthetic trigger's placement); it asserts the hook fired once, with the target already chosen and the ability on the stack, then no damage and costs paid. Only those two tests changed; no helpers requested. gofmt and go vet clean; both fail now because the card is not yet executable.
+- 2026-11-26 lead-architect: tests approved (D4, round 2). 3de6fae9 changes only the two tests the round 1 notes named, in `pkg/engine/cards_soulless_macrocannon_test.go`. `TargetGoneDealsNothing` now returns the target to hand from a `dmcTapCard` `HookExhausted` trigger, after the costs are paid, and asserts it is in player 1's hand. `TargetGainsWardDealsNothing` sets Ward from a placement hook that acts only once the Macrocannon is Exhausted (the synthetic trigger's placement), and asserts it fired once with the target decision asked and two items on the stack. With the lead's probe Definition all 17 tests pass, and the mutants still fail (no exhaust cost fails 6, among them both revised tests; 3 damage fails 7). Set to `ready`.
