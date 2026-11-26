@@ -4,7 +4,7 @@ title: Make Hellfire Armorers executable (Ward; allied units in the same zone ha
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0318-hellfire-armorers
 depends_on: [T-0317]
 claims: [card:Hellfire Armorers]
@@ -62,3 +62,4 @@ In a new file `pkg/engine/cards_soulless_hellfire_test.go`, from the CSV text, l
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 21): written against b6167f50, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no discard cost (#120), no tuck (#142), no pile round trip (#183 (2)) and no turn-boundary or draw hook (#15 (2): Aggressive's "until end of turn" is a power bonus that expires at the existing end-of-turn expiry and can make nothing lethal), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Fire for Effect*. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Hulking Incongruity*'s same-zone `StaticAura` keyword grant, the loader's Ward keyword line, and `fireAttacks` reading granted Aggressive), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_hellfire_test.go`: TestCard_HellfireArmorers_AlliedUnitsInItsZone, _HasWard, _AlliedAttackerGetsOneMorePower, _ItselfAttacksWithOneMore, _AddsToPrintedAggressive, _TwoArmorersAddUp, _FollowsItsZone, _GoneBeforeTheAttackGrantsNothing, _BonusOutlastsTheAura. Helpers requested: none (reuses stormChoose, crDeployCard, crOneQuestion, crWantOffered, recordPlaced, stormKill). HasWard offers the Armorers to Conscript Rifles' chosen target. `go vet` clean, `cardtown lint rules` passes. Today 7 fail on the missing aura and 2 (HasWard, GoneBeforeTheAttack) already pass, as expected. No cases left out. Set to `tests-review`.
