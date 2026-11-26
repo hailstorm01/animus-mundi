@@ -22,7 +22,6 @@ var NotYetExecutable = []string{
 	"Dolus Infusion",
 	"Dominator Warsuit",
 	"Dread Manifestation",
-	"Earthshaker Colossus",
 	"Encampment",
 	"Enclave",
 	"Field Mechanic",
