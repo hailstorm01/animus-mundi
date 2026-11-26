@@ -185,12 +185,28 @@ func TestCard_TempestCityRay_UnitAlreadyInReservesStaysPut(t *testing.T) {
 	s, r := trayRay(t)
 	foe := s.put(1, ZoneReserves, unit("FoeRes", 2, 5, ability.Keywords{}))
 	foe.Damage, foe.Exhausted = 2, true
+	other := s.put(1, ZoneMainTheater, unit("FoeMain", 2, 5, ability.Keywords{}))
+	// Two legal options, so the question is asked (FR-MOD-001 sec. 1): pick the
+	// Reserves unit by its ref, not by position.
 	s.script(0, Answer{Picks: []int{0}})
+	s.g.choosers[0] = func(_ *Game, d Decision) Answer {
+		s.asks[0] = append(s.asks[0], d)
+		for i, o := range d.Options {
+			if o.Ref == foe.ID {
+				return Answer{Picks: []int{i}}
+			}
+		}
+		t.Errorf("the Reserves unit is not among the options %v (SVY-R57)", refs(d))
+		return Answer{Timeout: true}
+	}
 	from := len(s.g.Log)
 	s.do(activate(r, 0))
 	asked := s.asked(0)
 	if len(asked) != 1 {
 		t.Fatalf("an opposing unit in Reserves is a legal choice: asked %d times (SVY-R57)", len(asked))
+	}
+	if other.Zone != ZoneMainTheater || !inAssets(s.g.Theater, other) {
+		t.Errorf("the other opposing unit was not chosen and stays in the Main Theater")
 	}
 	if s.g.Asset(foe.ID) != foe || foe.Zone != ZoneReserves || !trayInReserves(s.g.Players[1], foe) {
 		t.Errorf("the unit is still the same asset in player 1's Reserves (SVY-R57)")
@@ -246,13 +262,10 @@ func TestCard_TempestCityRay_WardedOpposingUnitNotOffered(t *testing.T) {
 	s, r := trayRay(t)
 	ward := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	plain := s.put(1, ZoneMainTheater, unit("FoePlain", 1, 5, ability.Keywords{}))
-	s.script(0, Answer{Picks: []int{0}})
+	// The plain unit is the only legal option, so the Single-Option Fast-Path
+	// takes it and asks nothing (FR-MOD-001 sec. 1); assert the outcome.
+	s.script(0)
 	s.do(activate(r, 0))
-	asked := s.asked(0)
-	if len(asked) != 1 {
-		t.Fatalf("one question, got %d", len(asked))
-	}
-	wantOptions(t, asked[0], "an opposing Ward unit is not offered (FR-KWD-002h)", plain)
 	if plain.Zone != ZoneReserves || ward.Zone != ZoneMainTheater {
 		t.Errorf("only the unit without Ward moves: plain %v, ward %v", plain.Zone, ward.Zone)
 	}
