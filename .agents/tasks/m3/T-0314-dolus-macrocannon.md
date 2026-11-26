@@ -4,7 +4,7 @@ title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Sc
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
 depends_on: [T-0313]
 claims: [card:Dolus Macrocannon]
@@ -81,3 +81,4 @@ Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, un
   1. `TestCard_DolusMacrocannon_TargetGoneDealsNothing` removes the target from `s.ptPlaceHook` at the ability's own placement. That hook fires while the ability is being declared, before its costs are paid (`SVY-R2`), so the test doesn't place the change between placement and resolution, as the task's "Between placement and resolution" bullet says (T-0304's tests round 1, note 2). Use `dmcTapCard` with a step that removes the target, for example `{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}}` with the target the only opposing unit, as `trayTapCard` does in `cards_concordia_tempest_ray_test.go`. Keep the assertions (no damage event, costs paid, Macrocannon Exhausted), and assert that the synthetic trigger resolved first (the target is in player 1's hand).
   2. `TestCard_DolusMacrocannon_TargetGainsWardDealsNothing` has the same problem: it sets Ward from `s.ptPlaceHook` during declaration. Make the change after the costs are paid: put a `dmcTapCard` Macrocannon in play and set Ward from a placement hook that acts only on the synthetic `HookExhausted` trigger's item (it is placed after the exhaust cost is paid, above the ability), or from that trigger's resolution. Assert that the ability was on the stack with the target chosen before Ward was set (for example, the hook fires once and the target decision was asked before it).
 Set to `tests`.
+- 2026-11-26 rules-test-author: round 1 notes addressed. (1) TargetGoneDealsNothing now uses dmcTapCard with an OpReturnToHand step on SubjectAll (opposing units); it asserts the target is in player 1's hand, no damage event, pool R0 and the Macrocannon Exhausted. (2) TargetGainsWardDealsNothing uses a dmcTapCard Macrocannon (a harmless OpAddArmor 0 trigger) and sets Ward from a placement hook that acts only once the exhaust cost is paid (the synthetic trigger's placement); it asserts the hook fired once, with the target already chosen and the ability on the stack, then no damage and costs paid. Only those two tests changed; no helpers requested. gofmt and go vet clean; both fail now because the card is not yet executable.
