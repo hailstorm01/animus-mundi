@@ -4,7 +4,7 @@ title: Make Dolus Macrocannon executable (R1, exhaust: 2 damage to chosen non-Sc
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0314-dolus-macrocannon
 depends_on: [T-0313]
 claims: [card:Dolus Macrocannon]
@@ -76,3 +76,4 @@ Activating (a Readied Macrocannon put in player 0's Main Theater, pool R1 T0, un
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 16): written against 6471772b, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard (#120), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2)), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Culverin Brigade*. Searched `pkg/engine` and the task archives: every part of the Definition exists (the `Req` resource cost, `CostExhaustSelf`, *Bring It Down*'s `ScratchExcluded` slot, `OpDealDamage` on `SubjectTarget`), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_macrocannon_test.go`, 18 `TestCard_DolusMacrocannon_*` tests, one per case under Tests (EntersMainTheaterAsTwoSix, DealsTwoToTheChosenAsset, OffersEveryNonScratchAsset, UnitTurnedFaceDownNotOffered, MayChooseItself, OfferedWithOnlyItselfAndHeadquarters, DamagesTheOpposingHeadquarters, LethalDamageKills, ArmorAbsorbs, NotOfferedWithoutOneRequisition, NotOfferedWhileExhausted, NotOfferedWhileTheStackIsNotEmpty, MayActivateTheTurnItDeploys, TimeoutTakesTheFirstOption, TargetGoneDealsNothing, TargetGainsWardDealsNothing, SourceGoneStillDeals). Helpers requested: none. Cases left out: none. `gofmt`, `go vet ./pkg/engine` and `cardtown lint rules` are clean; the tests fail now because the card is not yet executable. The target-gone and Ward cases use `ptPlaceHook` on the ability's own placement; the source-gone case uses a copied card with a `HookExhausted` kill trigger.
