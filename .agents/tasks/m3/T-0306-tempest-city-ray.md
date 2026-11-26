@@ -4,7 +4,7 @@ title: Make Tempest City Ray executable (move an opposing unit to its controller
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0306-tempest-city-ray
 depends_on: [T-0305]
 claims: [card:Tempest City Ray]
