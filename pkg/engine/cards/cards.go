@@ -30,7 +30,6 @@ var NotYetExecutable = []string{
 	"Frostfire Breath",
 	"Gemstone Titan",
 	"Hourglass Diviner",
-	"Inspired Salvage",
 	"Land Fortress",
 	"Light of the World Soul",
 	"MAX-8 Autonomous Warsuit",
