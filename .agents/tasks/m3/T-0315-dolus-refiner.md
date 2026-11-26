@@ -4,7 +4,7 @@ title: Make Dolus Refiner executable (exhaust: draw 2, then discard 2; wave A, c
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0315-dolus-refiner
 depends_on: [T-0314]
 claims: [card:Dolus Refiner]
@@ -63,11 +63,11 @@ Activating (a Readied Refiner put in player 0's Main Theater, pool R0 T0, unless
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_DolusRefiner`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_DolusRefiner`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 17): written against 607c9752, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71, both steps act on the controller), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard in a cost (#120: the discard is an effect step), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2): it draws, but adds no hook), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Dolus Macrocannon*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`CostExhaustSelf`, *Improvised Orders*' `OpDraw` and `OpDiscard` steps through `stepDiscard`), so no kernel change. Set to `tests`.
@@ -77,3 +77,4 @@ Activating (a Readied Refiner put in player 0's Main Theater, pool R0 T0, unless
 Set to `tests`.
 - 2026-11-26 rules-test-author: round 1 note 1 addressed. `TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards` no longer scans the log for `EventDraw`. A `s.byKind` responder picks the first two options and, when the `DecideHand` discard is asked, records `!s.alive(r)` and `inDiscardPile(p, r.Inst)`; the test asserts both were true then (the kill came before the ability's steps). The other assertions are kept (Refiner's card never offered, D1 and D2 drawn, the two picked discarded). No other test changed; no helpers requested. `go vet` clean, `cardtown lint rules` PASS; the card tests still fail only because the definition doesn't exist yet. Set to `tests-review`.
 - 2026-11-26 lead-architect: tests approved (D4, round 2). 18c07d7b changes only `TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards`, the test the round 1 note named: the log scan is gone, and a `s.byKind` responder records, when the `DecideHand` discard is asked, that the Refiner is off the battlefield and its card in player 0's discard pile. With the lead's probe Definition all 12 tests pass, and the 8 mutants still fail (3 to 9 tests each). Set to `ready`.
+- 2026-11-26 kernel-engineer: implemented Dolus Refiner. Diff in 873e4be4 adds the "Dolus Refiner" definition to soullessDefs in pkg/engine/cards/soulless.go with Text: "Exhaust: Draw 2 cards, then discard 2 cards.", an Activated ability with CostExhaustSelf and Steps OpDraw (amount 2) then OpDiscard (amount 2), reusing the existing CostExhaustSelf and OpDraw/OpDiscard steps (as in Improvised Orders). Removed "Dolus Refiner" from NotYetExecutable in pkg/engine/cards/cards.go. Commands run: `go test ./pkg/engine -run TestCard_DolusRefiner` (PASS 12/12), `go tool task check` (PASS: fmt, vet, all tests, linter --all), `go test ./pkg/cardcheck -run TestCards_Executable` (PASS), `go tool task sim` (PASS: P0 58.5% / P1 39.5% / draws 2.0%), `go tool task sim-matrix` (PASS: all 24 starter and 24 stress runs terminated clean with exit 0). Set to `review`.
