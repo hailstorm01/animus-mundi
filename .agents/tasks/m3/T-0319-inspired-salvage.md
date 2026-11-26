@@ -4,7 +4,7 @@ title: Make Inspired Salvage executable (up to 2 Mechanized cards from the pile 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0319-inspired-salvage
 depends_on: [T-0318]
 claims: [card:Inspired Salvage]
@@ -60,3 +60,4 @@ In a new file `pkg/engine/cards_soulless_salvage_test.go`, from the CSV text, lo
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 22): written against 009107e7, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no discard cost (#120), no tuck (#142), no turn-boundary or draw hook (#15 (2)), and no pile round trip (#183 (2): it takes cards out of a pile and never puts one back while an item below targets or tracks it), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Hellfire Armorers*. Searched `pkg/engine` and the task archives: every part of the Definition exists (`stepRelocate` returns each card of a pile slot through `stepCards`, `Filter.Subtypes` reads a pile card's printed subtypes, and `UpTo` gives one distinct `Min` 0 decision), so no kernel change. Set to `tests`.
+- 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_salvage_test.go` (helpers `isEnact`, `isChoose` are local to it): TestCard_InspiredSalvage_ReturnsTwoChosenMechanizedCards, _ChoosingOneReturnsOne, _ChoosingNoneReturnsNothing (empty answer and timeout subtests), _OnlyOwnMechanizedCardsOffered, _SameCardCannotBeChosenTwice, _EnactableWithNoMechanizedCard (empty pile and no own Mechanized card subtests), _OneTargetLeftThePileTheOtherStillReturns, _PaysTwoAndTwo (pays R2 T2 from R3 T3; not offered with R1 T5 or R5 T1). Helpers requested: none. Cases left out: none. `go vet ./pkg/engine` is clean and `cardtown lint rules` passes; the tests fail today because the card is still in `NotYetExecutable`. Set to `tests-review`.
