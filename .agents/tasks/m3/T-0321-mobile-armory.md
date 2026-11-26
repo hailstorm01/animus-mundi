@@ -4,7 +4,7 @@ title: Make Mobile Armory executable (exhaust: chosen allied unit in the same zo
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0321-mobile-armory
 depends_on: [T-0320]
 claims: [card:Mobile Armory]
