@@ -35,7 +35,6 @@ var NotYetExecutable = []string{
 	"Macrocannon Barrage",
 	"Mage Seeker's Inquisition",
 	"March of Progress",
-	"Mobile Armory",
 	"NO-AH-5",
 	"Natural Attunement",
 	"Piston Fist",
