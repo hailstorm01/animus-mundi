@@ -303,4 +303,33 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Mobile Armory": {
+		Text: []string{"Exhaust: Chosen allied unit in the same zone gets +1 power until end of turn."},
+		Activated: []ability.Activated{
+			{
+				Costs: []ability.Cost{
+					{Kind: ability.CostExhaustSelf},
+				},
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Allegiance: ability.AllegianceAllied,
+								Kinds:      ability.KindUnit,
+								ZoneRef:    ability.ZoneRefSame,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpModifyStat,
+							Amount:  ability.Value{N: 1},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
