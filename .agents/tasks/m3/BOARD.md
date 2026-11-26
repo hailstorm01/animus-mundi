@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| T-0317 | Make *Fire for Effect* executable (wave A) | tests |

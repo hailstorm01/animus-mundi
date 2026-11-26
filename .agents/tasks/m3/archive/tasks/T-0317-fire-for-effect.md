@@ -4,7 +4,7 @@ title: Make Fire for Effect executable (opposing Main Theater assets gain Resist
 kind: card
 tier: flash
 wave: A
-status: review
+status: done
 branch: m3/autoloop-wave-a/T-0317-fire-for-effect
 depends_on: [T-0316]
 claims: [card:Fire for Effect]
