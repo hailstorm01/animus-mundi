@@ -4,7 +4,7 @@ title: Make Bring It Down executable (2 damage to a chosen non-Scratch asset; fi
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0310-bring-it-down
 depends_on: [T-0309]
 claims: [card:Bring It Down, file:pkg/engine/cards/soulless.go]
@@ -66,3 +66,4 @@ In a new file `pkg/engine/cards_soulless_maneuvers_test.go`, from the CSV text, 
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 12): written against 2a79a87d, with the lead's probe above. `main` has no commits the run branch lacks. Board read twice (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Pincer Tactics*' second slot and step are the same clause), so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote `pkg/engine/cards_soulless_maneuvers_test.go` with all ten listed tests: TestCard_BringItDown_DealsTwoToTheChosenAsset, _OffersEveryNonScratchAsset, _UnitTurnedFaceDownNotOffered, _EnactableWithOnlyHeadquarters, _DamagesTheOpposingHeadquarters, _LethalDamageKills, _ResistantAndArmorApply, _WardedOpposingAssetNotOffered, _TargetGoneDealsNothing, _PaysOneTactics. No helpers requested; no cases left out. `go vet` is clean and `cardtown lint rules` passes. All ten fail now because the card has no definition ("needs rules the kernel does not implement yet"). Set to `tests-review`.
