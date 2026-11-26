@@ -39,4 +39,3 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
-| [T-0311](T-0311-conscript-rifles.md) | Make Conscript Rifles executable (wave A) | tests |
