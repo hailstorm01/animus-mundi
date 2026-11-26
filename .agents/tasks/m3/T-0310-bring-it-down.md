@@ -4,7 +4,7 @@ title: Make Bring It Down executable (2 damage to a chosen non-Scratch asset; fi
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0310-bring-it-down
 depends_on: [T-0309]
 claims: [card:Bring It Down, file:pkg/engine/cards/soulless.go]
