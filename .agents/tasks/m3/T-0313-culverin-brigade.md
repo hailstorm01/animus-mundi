@@ -4,7 +4,7 @@ title: Make Culverin Brigade executable (deploy trigger, 1 damage to each of up 
 kind: card
 tier: flash
 wave: A
-status: tests
+status: tests-review
 branch: m3/autoloop-wave-a/T-0313-culverin-brigade
 depends_on: [T-0312]
 claims: [card:Culverin Brigade]
@@ -53,7 +53,7 @@ In a new file `pkg/engine/cards_soulless_culverin_test.go`, from the CSV text, l
 - **Existing tests:** every other test passes unchanged, including `TestCards_Executable` with the name removed.
 
 ## Helpers Needed (engineer adds these to pkg/engine/scenario_test.go)
-- None expected. Write any file-local helpers (deploy, scene) in the new test file with a `cb` prefix.
+- None requested. File-local helpers (cbDeploy, cbWantOffered, cbOneQuestion, cbFoe) are in the new test file.
 
 ## Allowed Files
 - `pkg/engine/cards/soulless.go` (the definition)
@@ -68,3 +68,4 @@ In a new file `pkg/engine/cards_soulless_culverin_test.go`, from the CSV text, l
 
 ## Log
 - 2026-11-25 lead-architect (wave A run, session 15): written against 080ed9ac, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no mandatory discard (#120), no tuck (#142), no pile round trip (#183 (2)) and no draw or end-of-turn hook (#15 (2)), and no `needsRework` row exists (#184). Taken next in the survey's Soulless deck order, after *Conscript Rifles*. Searched `pkg/engine` and the task archives: every part of the Definition exists (*Conscript Rifles*' `HookDeploy` trigger, *Craterfall Ancient*'s `UpTo` 2 slot, the `AllegianceOpposing` filter, `OpDealDamage` on `SubjectTarget`), so no kernel change. Set to `tests`.
+- 2026-11-25 rules-test-author: wrote 12 tests in pkg/engine/cards_soulless_culverin_test.go: TestCard_CulverinBrigade_{EntersReservesAsFiveFour, DealsOneToEachOfTwoChosen, OffersEveryOpposingAsset, MayChooseOne, MayChooseNone, TimeoutChoosesNone, OnlyTheHeadquartersStillAsks, LethalDamageKills, ArmorAbsorbs, OneTargetGoneTheOtherStillTakesOne, TargetGainsWardDealsNothingToIt, SourceGoneStillDeals, OnlyItsOwnDeployTriggers}. Helpers requested: none. Cases left out: none. go vet clean, cardtown lint rules passes; the tests fail now because the card is not yet executable, except OnlyItsOwnDeployTriggers, which passes until the definition exists (it pins that nothing else triggers). Set to tests-review.
