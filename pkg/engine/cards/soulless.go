@@ -158,4 +158,49 @@ var soullessDefs = map[string]*ability.Def{
 			},
 		},
 	},
+	"Earthshaker Colossus": {
+		Text: []string{"Whenever this unit deploys or attacks, deal 2 damage to chosen non-Scratch asset."},
+		Triggers: []ability.Trigger{
+			{
+				Hook: ability.HookDeploy,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Scratch: ability.ScratchExcluded,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+			{
+				Hook: ability.HookAttacks,
+				Effect: ability.Effect{
+					Targets: []ability.Target{
+						{
+							Filter: ability.Filter{
+								Scratch: ability.ScratchExcluded,
+							},
+						},
+					},
+					Steps: []ability.Step{
+						{
+							Op:      ability.OpDealDamage,
+							Amount:  ability.Value{N: 2},
+							Subject: ability.SubjectTarget,
+							Target:  0,
+						},
+					},
+				},
+			},
+		},
+	},
 }
