@@ -4,7 +4,7 @@ title: Make Visionary's Eye executable (whenever this unit attacks, draw a card,
 kind: card
 tier: flash
 wave: A
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a/T-0322-visionarys-eye
 depends_on: [T-0321]
 claims: [card:Visionary's Eye]
