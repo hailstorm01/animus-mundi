@@ -4,7 +4,7 @@ title: Make Earthshaker Colossus executable (deploys or attacks: 2 to a chosen n
 kind: card
 tier: flash
 wave: A
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a/T-0316-earthshaker-colossus
 depends_on: [T-0315]
 claims: [card:Earthshaker Colossus]
@@ -67,13 +67,23 @@ Attacking (the Colossus deployed as above, its deploy trigger answered with play
 - `pkg/engine/cards/cards.go` (remove the name from `NotYetExecutable`)
 
 ## Done When
-- [ ] The card tests pass: `go test ./pkg/engine -run TestCard_EarthshakerColossus`
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim` runs clean on the starter decks
-- [ ] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
-- [ ] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
+- [x] The card tests pass: `go test ./pkg/engine -run TestCard_EarthshakerColossus`
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim` runs clean on the starter decks
+- [x] `go tool task sim-matrix` exits 0 (just over two minutes: use a timeout above the two-minute default)
+- [x] The card loads with no unsupported lines (`TestCards_Executable` passes with the name removed)
 
 ## Log
 - 2026-11-26 lead-architect (wave A run, session 18): written against 8333f9e2, with the lead's probe above. `main` has no commits the run branch lacks. Board read (D2.0): no directive is due here (#185 has only (4)'s *Awaken Nightmare* half left, wave F), and no waiting trigger has fired: the card has no each-player effect (#71), no cost on a mode (#91 (2)), no deck search (#106), no discard cost (#120), no tuck (#142), no pile round trip (#183 (2)) and no turn-boundary or draw hook (#15 (2): its hooks are deploy and attack), the mode is still `serial` (#6, #7), and no `needsRework` row exists (#184). #182 is about combat-kill triggers, which this card doesn't have. Taken next in the survey's Soulless deck order, after *Dolus Refiner*. Searched `pkg/engine` and the task archives: every part of the Definition exists (the M2 Colossi's `HookDeploy` and `HookAttacks` pair, *Bring It Down*'s `ScratchExcluded` slot and `OpDealDamage` step), so no kernel change. The repeated effect in the two triggers is card data, as in *Spoil Forest Colossus* and *Ironclad Colossus*, not a rule written twice. Set to `tests`.
 - 2026-11-26 rules-test-author: wrote `pkg/engine/cards_soulless_earthshaker_test.go` (17 `TestCard_EarthshakerColossus_*` tests, one per bullet under Tests, deploying and attacking, plus helpers local to the file `ecDeploy`, `ecBoard`, `ecAttackScene`). `go vet` is clean; every test fails except `FaceDownScratchDoesNothing` (passes trivially until the card is executable) until the definition lands. Helpers requested: none. Cases left out: none. In the offers cases the opposing Warded unit sits in Reserves, so no attack rule can interfere with the defender.
 - 2026-11-26 lead-architect: tests approved (D4, round 1). 4f12eb7e adds only `pkg/engine/cards_soulless_earthshaker_test.go` (17 tests, one per case) and the task file. With the lead's probe Definition all 17 pass, and each of 9 mutants (damage 1, damage 3, no `ScratchExcluded`, opposing only, units only, no Headquarters, no deploy trigger, no attack trigger, `HookDamaged` in place of `HookAttacks`) fails 3 to 15 of them. Expected outcomes agree with the FRD 01 text they cite: `AttackTriggerResolvesBeforeCombat` pins `FR-LAY-002`'s death sweep after the trigger and `FR-CBT-002`'s fizzle (no retaliation). The opposing Warded unit sits in Reserves in the two offers cases, which keeps it out of the attack's defender rules and still tests Ward. Set to `ready`.
+- 2026-11-26 kernel-engineer: implemented Earthshaker Colossus in `pkg/engine/cards/soulless.go` and removed the name from `pkg/engine/cards/cards.go` `NotYetExecutable`. The diff shows:
+  - Added "Earthshaker Colossus" to `soullessDefs` with two triggers: `HookDeploy` and `HookAttacks`. Each trigger specifies an effect targeting one slot with `ability.Filter{Scratch: ability.ScratchExcluded}` and an `OpDealDamage` step dealing 2 to `SubjectTarget` (reusing the trigger pair structure from `Spoil Forest Colossus` / `Ironclad Colossus` and the non-Scratch targeting shape from `Bring It Down` / `Dolus Macrocannon`).
+  - Removed "Earthshaker Colossus" from `NotYetExecutable` in `cards.go`.
+  - Commands run:
+    - `go test ./pkg/engine -run TestCard_EarthshakerColossus`: pass (17/17 tests pass).
+    - `go tool task check`: pass (gofmt, `go vet`, all tests, `cardtown lint --all`).
+    - `go tool task sim`: pass (200 games, P0 58.5% / P1 39.5% / draws 2.0%, clean termination).
+    - `go tool task sim-matrix`: pass (24 starter and 24 stress matrix runs all pass with code 0).
+    - `go test -count=1 ./pkg/cardcheck`: pass (executable check).
+  - Ready for review. Set to `review`.
