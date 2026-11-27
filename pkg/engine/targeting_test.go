@@ -63,6 +63,15 @@ func ids(as ...*Asset) []int {
 	return out
 }
 
+// wantOptions checks that d offers exactly the given assets, in any order
+// (refs and ids both sort).
+func wantOptions(t *testing.T, d Decision, what string, want ...*Asset) {
+	t.Helper()
+	if got, w := refs(d), ids(want...); !reflect.DeepEqual(got, w) {
+		t.Errorf("%s: options got %v, want %v", what, got, w)
+	}
+}
+
 // totalDamage is the damage on every asset still on the battlefield.
 func totalDamage(g *Game) int {
 	n := 0

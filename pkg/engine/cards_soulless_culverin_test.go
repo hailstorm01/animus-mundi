@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -22,17 +20,6 @@ func cbDeploy(s *scene, c *Card) *Instance {
 	s.setPool(0, 4, 0)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
 	return inst
-}
-
-// cbWantOffered checks that d offers exactly the given assets, in any order.
-func cbWantOffered(t *testing.T, d Decision, what string, want ...*Asset) {
-	t.Helper()
-	got, w := append([]int(nil), refs(d)...), ids(want...)
-	sort.Ints(got)
-	sort.Ints(w)
-	if !reflect.DeepEqual(got, w) {
-		t.Errorf("%s: options got %v, want %v", what, got, w)
-	}
 }
 
 // cbOneQuestion returns the one "up to" DecideTarget question put to player 0.
@@ -122,7 +109,7 @@ func TestCard_CulverinBrigade_OffersEveryOpposingAsset(t *testing.T) {
 	s.scriptPlan(0, nil, nil, pick())
 	cbDeploy(s, s.card("Culverin Brigade"))
 	d := cbOneQuestion(t, s, 2)
-	cbWantOffered(t, d, "player 1's Headquarters, the two opposing units, the opposing structure and the opposing Scratch Company; no allied asset, Culverin Brigade or Warded unit (FR-TGT-001, FR-KWD-002h, FR-ZON-005)",
+	wantOptions(t, d, "player 1's Headquarters, the two opposing units, the opposing structure and the opposing Scratch Company; no allied asset, Culverin Brigade or Warded unit (FR-TGT-001, FR-KWD-002h, FR-ZON-005)",
 		s.g.Players[1].HQ, foeMain, foeRes, foeStruct, foeScratch)
 }
 

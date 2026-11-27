@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"reflect"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -21,13 +20,6 @@ func ecnDeploy(s *scene, c *Card) *Instance {
 	s.setPool(0, 5, 0)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
 	return inst
-}
-
-func ecnSameIDs(t *testing.T, d Decision, what string, want ...*Asset) {
-	t.Helper()
-	if got, w := sortedCopy(refs(d)), sortedCopy(ids(want...)); !reflect.DeepEqual(got, w) {
-		t.Errorf("%s: options got %v, want %v", what, got, w)
-	}
 }
 
 func ecnEvents(s *scene, kind string, id int) []Event {
@@ -161,7 +153,7 @@ func TestCard_EchoingNightmare_OnlyOpposingMainTheaterUnitsOffered(t *testing.T)
 	if d.Kind != DecideTarget || d.Player != 0 || d.Min != 1 || d.Max != 1 {
 		t.Errorf("the question is a mandatory single DecideTarget for player 0: %+v", d)
 	}
-	ecnSameIDs(t, d, "exactly the two opposing units in the Main Theater", foeA, foeB)
+	wantOptions(t, d, "exactly the two opposing units in the Main Theater", foeA, foeB)
 	if !inHand(s.g.Players[1], foeB.Inst) || s.alive(foeB) {
 		t.Errorf("the chosen unit returns to player 1's hand (FR-ZON-002)")
 	}

@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -27,13 +26,6 @@ func deployPath(s *scene, name string, req int) *Card {
 
 func deploySaboteur(s *scene) *Card { return deployPath(s, "Saboteur", 3) }
 func deploySappers(s *scene) *Card  { return deployPath(s, "Chainbreaker Sappers", 2) }
-
-func wantOptions(t *testing.T, d Decision, what string, want ...*Asset) {
-	t.Helper()
-	if got, w := refs(d), ids(want...); !reflect.DeepEqual(got, w) {
-		t.Errorf("%s: options got %v, want %v", what, got, w)
-	}
-}
 
 // --- Saboteur ---
 // "When this unit deploys, deal 2 damage to chosen opposing non-Scratch unit
