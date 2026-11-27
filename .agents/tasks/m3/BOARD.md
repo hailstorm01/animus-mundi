@@ -5,7 +5,7 @@
 - **Design note:** [`docs/architecture/m3-full-catalog.md`](../../../docs/architecture/m3-full-catalog.md) (written 2026-11-23), on top of the [M2 design note](../../../docs/architecture/m2-ability-model.md). Tasks follow its Deliverables order.
 - **Scope:** every card in `data/cards/` without a `needsRework` flag: the 67 cards outside the Animus and Path set that don't execute yet, including the *Rift* and *Encampment* Headquarters, deck cards first (Concordia and Soulless starter decks in `data/decks/`).
 - **Last directive:** `#193` (applied directives live in [`archive/directives/directive_archive.md`](archive/directives/directive_archive.md); numbers continue from M2. Number new rows with `go tool task next-directive`)
-- **Last task:** `T-0325` (done tasks and their files live in [`archive/tasks/`](archive/tasks/task_archive.md); ids continue from M2)
+- **Last task:** `T-0326` (done tasks and their files live in [`archive/tasks/`](archive/tasks/task_archive.md); ids continue from M2)
 
 Task files are the source of truth. This board is an index of active and waiting work.
 
@@ -40,3 +40,4 @@ Active and queued tasks only. When a task reaches `done`, the lead moves its fil
 
 | id | title | status |
 | :--- | :--- | :--- |
+| [T-0326](T-0326-shared-test-setup.md) | Shared test setup: `cardWithTrigger`, `deployPaid` and `activateChoosing` replace twelve per-card helpers (directive #193, wave A.1) | ready |
