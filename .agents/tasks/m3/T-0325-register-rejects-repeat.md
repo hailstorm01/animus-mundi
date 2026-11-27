@@ -4,7 +4,7 @@ title: "One `register` copies each definition file into `Defs` and refuses a rep
 kind: harness
 tier: flash
 wave: A.1 (board directive #192, design note Deliverable 5a)
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a.1/T-0325-register-rejects-repeat
 depends_on: [T-0324]
 claims: [func:cards.register]
@@ -118,10 +118,18 @@ No double quotes and no `#` in either message.
 - Test: `pkg/engine/cards/cards_test.go` (new).
 
 ## Done When
-- [ ] Edit 1 is committed as `test(engine): … (T-0325)`, and Edits 2-3 as `refactor(engine): … (T-0325)`
-- [ ] Cases 1-5 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] Edit 1 is committed as `test(engine): … (T-0325)`, and Edits 2-3 as `refactor(engine): … (T-0325)`
+- [x] Cases 1-5 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-11-26 lead-architect: Wrote the task from board directive #192, the third of wave A.1's four directives (design note Deliverable 5a). Harness, tier flash: one function and five one-line `init` bodies inside `pkg/engine/cards`, plus one test, with no shape change. The lead dry-ran the edits (Inputs). Status `ready` on `m3/autoloop-wave-a.1/T-0325-register-rejects-repeat`, from `autoloop/m3-wave-a.1`. #193 follows.
+- 2026-11-26 kernel-engineer: Implemented directive #192. Added `TestDefs_RegisterRejectsRepeat` in `pkg/engine/cards/cards_test.go` and verified failure (`undefined: register`) prior to implementation, committed as c470cd34. Implemented `register(defs map[string]*ability.Def)` in `pkg/engine/cards/cards.go` which panics with "cards: <name> is defined twice" if a card name already exists in `Defs`, then updated `init` in `animus.go`, `concordia.go`, `soulless.go`, `headquarters.go`, and `path.go` to call `register(...)`. Reused map check semantics with no external dependencies or new types; blob hashes match exact expected hashes from Inputs (`cards.go` 03c997e, `animus.go` 433b184, `concordia.go` eba398c, `soulless.go` 7146150, `headquarters.go` df01498, `path.go` 123281e, `cards_test.go` a97a87b). Committed refactor as 6b7ab3ed. Verified all acceptance cases:
+  1. `TestDefs_RegisterRejectsRepeat` in `pkg/engine/cards/cards_test.go` passes (`go test ./pkg/engine/cards/ -run TestDefs_RegisterRejectsRepeat -v`: PASS).
+  2. `git grep -n -F "Defs[name] = def" -- pkg/engine/cards` finds exactly 1 line (`cards.go:20`). `git grep -n -F "register(" -- pkg/engine/cards` finds exactly 8 lines (`cards.go:15`, `animus.go:6`, `cards_test.go:20,34`, `concordia.go:6`, `headquarters.go:6`, `path.go:6`, `soulless.go:6`).
+  3. `go test -list . ./pkg/engine/...` returned 1726 test names (the run branch's 1725 plus `TestDefs_RegisterRejectsRepeat`); `go test ./...` passed.
+  4. `git diff --stat autoloop/m3-wave-a.1 HEAD` shows only the 7 Allowed Files and this task file.
+  5. `go tool task sim-compare -- autoloop/m3-wave-a.1` passed: starter and stress sims match byte for byte, exit codes included.
+  6. `go tool task check` passed cleanly (gofmt, go vet, all package tests, cardtown lint --all).
+  Moved status to `review`.
