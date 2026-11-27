@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -22,17 +20,6 @@ func crDeployCard(s *scene, c *Card) *Instance {
 	s.setPool(0, 2, 0)
 	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
 	return inst
-}
-
-// crWantOffered checks that d offers exactly the given assets, in any order.
-func crWantOffered(t *testing.T, d Decision, what string, want ...*Asset) {
-	t.Helper()
-	got, w := append([]int(nil), refs(d)...), ids(want...)
-	sort.Ints(got)
-	sort.Ints(w)
-	if !reflect.DeepEqual(got, w) {
-		t.Errorf("%s: options got %v, want %v", what, got, w)
-	}
 }
 
 // crOneQuestion returns the one DecideTarget question put to player 0.
@@ -120,7 +107,7 @@ func TestCard_ConscriptRifles_DealsOneToTheChosenUnit(t *testing.T) {
 	c := s.card("Conscript Rifles")
 	crDeployCard(s, c)
 	d := crOneQuestion(t, s)
-	crWantOffered(t, d, "the opposing unit and Conscript Rifles itself (FR-TGT-001)", foe, assetOf(s.g, c))
+	wantOptions(t, d, "the opposing unit and Conscript Rifles itself (FR-TGT-001)", foe, assetOf(s.g, c))
 	s.wantDamage(foe, 1)
 	s.wantDamage(assetOf(s.g, c), 0)
 	if got := totalDamage(s.g); got != 1 {
@@ -143,7 +130,7 @@ func TestCard_ConscriptRifles_OffersEveryNonScratchUnit(t *testing.T) {
 	c := s.card("Conscript Rifles")
 	crDeployCard(s, c)
 	d := crOneQuestion(t, s)
-	crWantOffered(t, d, "the four units and Conscript Rifles; no structure, Headquarters or Scratch Company (FR-TGT-001, FR-ZON-005)",
+	wantOptions(t, d, "the four units and Conscript Rifles; no structure, Headquarters or Scratch Company (FR-TGT-001, FR-ZON-005)",
 		allyMain, allyRes, foeMain, foeRes, assetOf(s.g, c))
 }
 
@@ -160,7 +147,7 @@ func TestCard_ConscriptRifles_UnitTurnedFaceDownNotOffered(t *testing.T) {
 	c := s.card("Conscript Rifles")
 	crDeployCard(s, c)
 	d := crOneQuestion(t, s)
-	crWantOffered(t, d, "a unit turned face down is a Scratch Company and is not offered; the face-up unit and Conscript Rifles are (FR-ENT-103, FR-TGT-001)",
+	wantOptions(t, d, "a unit turned face down is a Scratch Company and is not offered; the face-up unit and Conscript Rifles are (FR-ENT-103, FR-TGT-001)",
 		foe, assetOf(s.g, c))
 	s.wantDamage(morphed, 0)
 	s.wantDamage(foe, 1)
@@ -216,7 +203,7 @@ func TestCard_ConscriptRifles_WardedOpposingUnitNotOffered(t *testing.T) {
 	c2 := s2.card("Conscript Rifles")
 	crDeployCard(s2, c2)
 	d := crOneQuestion(t, s2)
-	crWantOffered(t, d, "an allied Warded unit is offered, the opposing one is not (FR-KWD-002h)", allyWard, assetOf(s2.g, c2))
+	wantOptions(t, d, "an allied Warded unit is offered, the opposing one is not (FR-KWD-002h)", allyWard, assetOf(s2.g, c2))
 	s2.wantDamage(allyWard, 1)
 }
 

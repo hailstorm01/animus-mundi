@@ -9,7 +9,6 @@
 package engine
 
 import (
-	"sort"
 	"testing"
 
 	"animus-mundi/pkg/engine/ability"
@@ -58,30 +57,6 @@ func ffeBoardOf(s *scene) ffeBoard {
 	return b
 }
 
-// ffeWantSet checks the decision offers exactly the wanted assets, in any order.
-func ffeWantSet(t *testing.T, d Decision, what string, want ...*Asset) {
-	t.Helper()
-	var got, w []int
-	for _, o := range d.Options {
-		got = append(got, o.Ref)
-	}
-	for _, a := range want {
-		w = append(w, a.ID)
-	}
-	sort.Ints(got)
-	sort.Ints(w)
-	if len(got) != len(w) {
-		t.Errorf("%s: options got %v, want %v", what, got, w)
-		return
-	}
-	for i := range got {
-		if got[i] != w[i] {
-			t.Errorf("%s: options got %v, want %v", what, got, w)
-			return
-		}
-	}
-}
-
 func TestCard_FireForEffect_ChosenOpposingAssetTakesTwo(t *testing.T) {
 	// Covers: FR-REP-004, FR-KWD-002b, FR-LAY-001
 	s := newScene(t)
@@ -128,7 +103,7 @@ func TestCard_FireForEffect_OffersEveryMainTheaterAsset(t *testing.T) {
 	if len(asks) != 1 {
 		t.Fatalf("one target slot, so exactly one target question: asked %d (FR-MNV-001)", len(asks))
 	}
-	ffeWantSet(t, asks[0], "the Main Theater units, structures, Scratch Companies and the allied Warded unit",
+	wantOptions(t, asks[0], "the Main Theater units, structures, Scratch Companies and the allied Warded unit",
 		b.allyUnit, b.foeUnit, b.allyWall, b.foeWall, b.allyScratch, b.foeScrat, b.allyWard)
 }
 
