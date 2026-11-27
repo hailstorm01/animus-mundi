@@ -4,7 +4,7 @@ title: "One `register` copies each definition file into `Defs` and refuses a rep
 kind: harness
 tier: flash
 wave: A.1 (board directive #192, design note Deliverable 5a)
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a.1/T-0325-register-rejects-repeat
 depends_on: [T-0324]
 claims: [func:cards.register]
