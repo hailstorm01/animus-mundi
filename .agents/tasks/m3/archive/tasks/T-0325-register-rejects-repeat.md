@@ -4,7 +4,7 @@ title: "One `register` copies each definition file into `Defs` and refuses a rep
 kind: harness
 tier: flash
 wave: A.1 (board directive #192, design note Deliverable 5a)
-status: review
+status: done
 branch: m3/autoloop-wave-a.1/T-0325-register-rejects-repeat
 depends_on: [T-0324]
 claims: [func:cards.register]
@@ -25,7 +25,7 @@ Each of the five definition files in `pkg/engine/cards` copies its map into `Def
   	}
   }
   ```
-  in `animus.go` (`animusDefs`), `concordia.go` (`concordiaDefs`), `soulless.go` (`soullessDefs`), `headquarters.go` (`headquartersDefs`) and `path.go` (`pathDefs`). `Defs` is declared at [cards.go:9](../../../pkg/engine/cards/cards.go).
+  in `animus.go` (`animusDefs`), `concordia.go` (`concordiaDefs`), `soulless.go` (`soullessDefs`), `headquarters.go` (`headquartersDefs`) and `path.go` (`pathDefs`). `Defs` is declared at [cards.go:9](../../../../../pkg/engine/cards/cards.go).
 - `pkg/engine/cards` has no test file yet. The new test goes in `pkg/engine/cards/cards_test.go`, in package `cards` (not `cards_test`), because `register` is unexported. The fence linter scans only non-test files, and a test file may import the standard library.
 - The panic message is built with `+`, so `cards.go` imports nothing new.
 - Rulings that apply: none. No behavior changes.
@@ -133,3 +133,7 @@ No double quotes and no `#` in either message.
   5. `go tool task sim-compare -- autoloop/m3-wave-a.1` passed: starter and stress sims match byte for byte, exit codes included.
   6. `go tool task check` passed cleanly (gofmt, go vet, all package tests, cardtown lint --all).
   Moved status to `review`.
+- 2026-11-26 lead-architect: Review: **approved**, merged into `autoloop/m3-wave-a.1` as 2cf583e9, status `done`. Directive #192 is `applied`.
+  - Scope: dd6c18fd and b1b91fd2 change only this file. c470cd34 (`test(T-0325)`) adds only `pkg/engine/cards/cards_test.go`, and fails to build at that commit (`undefined: register`). 6b7ab3ed changes only the six non-test files under Allowed Files, and doesn't touch the test. All seven blobs are the lead's dry-run blobs. `register` copies and refuses; it adds no shape, alias or wrapper, and `Defs[name] = def` survives only inside it.
+  - Checks, re-run in a scratch worktree of the task branch: `go test -list . ./pkg/engine/...` gives 1726 tests (1725 plus `TestDefs_RegisterRejectsRepeat`); case 2's greps find one and eight lines. The dry run's two lead mutants, on the same blobs: `register` without its check fails the new test ("did not panic"), and *Animoceps Node* in both `animusDefs` and `pathDefs` panics at init with `cards: Animoceps Node is defined twice`.
+  - Gates: `go tool task check` exit 0; `go tool task sim` clean (P0 58.5% / P1 39.5% / draws 2.0%, unchanged); `go tool task sim-compare -- autoloop/m3-wave-a.1` `[PASS]`. `sim-matrix` is not this harness task's gate (D5.5); it runs with the wave's completion check.

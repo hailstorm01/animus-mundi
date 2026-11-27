@@ -35,3 +35,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0322 | Make *Visionary's Eye* executable (wave A) | done |
 | T-0323 | One `wantOptions` check for card tests (directive #190, wave A.1) | done |
 | T-0324 | One `deploysOrAttacks` for the deploy-or-attack trigger pair (directive #191, wave A.1) | done |
+| T-0325 | One `register` copies each definition file into `Defs` and refuses a repeat (directive #192, wave A.1) | done |
