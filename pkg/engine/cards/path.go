@@ -589,48 +589,25 @@ var pathDefs = map[string]*ability.Def{
 	},
 	"Ironclad Colossus": {
 		Text: []string{"Whenever this unit deploys or attacks, chosen unit gains 2 armor."},
-		Triggers: []ability.Trigger{
-			{
-				Hook: ability.HookDeploy,
-				Effect: ability.Effect{
-					Targets: []ability.Target{
-						{
-							Filter: ability.Filter{
-								Kinds: ability.KindUnit,
-							},
-						},
-					},
-					Steps: []ability.Step{
-						{
-							Op:      ability.OpAddArmor,
-							Amount:  ability.Value{N: 2},
-							Subject: ability.SubjectTarget,
-							Target:  0,
+		Triggers: deploysOrAttacks(ability.Trigger{
+			Effect: ability.Effect{
+				Targets: []ability.Target{
+					{
+						Filter: ability.Filter{
+							Kinds: ability.KindUnit,
 						},
 					},
 				},
-			},
-			{
-				Hook: ability.HookAttacks,
-				Effect: ability.Effect{
-					Targets: []ability.Target{
-						{
-							Filter: ability.Filter{
-								Kinds: ability.KindUnit,
-							},
-						},
-					},
-					Steps: []ability.Step{
-						{
-							Op:      ability.OpAddArmor,
-							Amount:  ability.Value{N: 2},
-							Subject: ability.SubjectTarget,
-							Target:  0,
-						},
+				Steps: []ability.Step{
+					{
+						Op:      ability.OpAddArmor,
+						Amount:  ability.Value{N: 2},
+						Subject: ability.SubjectTarget,
+						Target:  0,
 					},
 				},
 			},
-		},
+		}),
 	},
 	"Macabre Dancers": {
 		Text: []string{
