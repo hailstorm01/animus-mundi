@@ -9,3 +9,27 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0296 | `LoadCards` reports duplicate names, non-numeric or empty numeric cells, and Units or Structures with no zone (Deliverable 1 (b)) | done |
 | T-0297 | `cardtown sim -matrix` plays every pairing of the starter decks or the stress decks, both seat orders, both policies, with one coverage table (Deliverable 3) | done |
 | T-0298 | The M2 survey and the ability shapes write-up move to `docs/design/survey/`, and the fences linter reads every survey there (Deliverable 3a) | done |
+| T-0299 | Make *Growing Legion* executable (wave A, first Concordia card, #185 (2)) | done |
+| T-0300 | Make *Icewind Regent* executable (wave A) | done |
+| T-0301 | Make *Leyline Regrowth* executable (wave A) | done |
+| T-0302 | Make *Seismic Instability* executable (wave A) | done |
+| T-0303 | Make *Soul Whip* executable (wave A) | done |
+| T-0304 | Make *Stormbolt Ray* executable (wave A) | done |
+| T-0305 | Make *Swirling Dustdevil* executable (wave A) | done |
+| T-0306 | Make *Tempest City Ray* executable (wave A, #185 (4)) | done |
+| T-0307 | Make *Hurricane Outrigger* executable (wave A) | done |
+| T-0308 | Make *Echoing Nightmare* executable (wave A) | done |
+| T-0309 | Make *Will Breaker* executable (wave A) | done |
+| T-0310 | Make *Bring It Down* executable (wave A) | done |
+| T-0311 | Make *Conscript Rifles* executable (wave A) | done |
+| T-0312 | Make *Colossus Platform* executable (wave A) | done |
+| T-0313 | Make *Culverin Brigade* executable (wave A) | done |
+| T-0314 | Make *Dolus Macrocannon* executable (wave A) | done |
+| T-0315 | Make *Dolus Refiner* executable (wave A) | done |
+| T-0316 | Make *Earthshaker Colossus* executable (wave A) | done |
+| T-0317 | Make *Fire for Effect* executable (wave A) | done |
+| T-0318 | Make *Hellfire Armorers* executable (wave A) | done |
+| T-0319 | Make *Inspired Salvage* executable (wave A) | done |
+| T-0320 | Make *MAX-8 Autonomous Warsuit* executable (wave A) | done |
+| T-0321 | Make *Mobile Armory* executable (wave A) | done |
+| T-0322 | Make *Visionary's Eye* executable (wave A) | done |
