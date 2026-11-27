@@ -4,7 +4,7 @@ title: "Shared test setup: `cardWithTrigger`, `deployPaid` and `activateChoosing
 kind: harness
 tier: flash
 wave: A.1 (board directive #193, design note Deliverable 5a)
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a.1/T-0326-shared-test-setup
 depends_on: [T-0325]
 claims: [func:scene.cardWithTrigger, func:scene.deployPaid, func:activateChoosing]
