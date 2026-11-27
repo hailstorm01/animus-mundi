@@ -4,7 +4,7 @@ title: "One `wantOptions` check for card tests, beside `refs` and `ids` (directi
 kind: harness
 tier: flash
 wave: A.1 (board directive #190, design note Deliverable 5a)
-status: review
+status: done
 branch: m3/autoloop-wave-a.1/T-0323-one-want-options
 depends_on: []
 claims: [func:engine.wantOptions (test helper)]
@@ -17,12 +17,12 @@ requirements: []
 
 ## Inputs
 - Board directive #190 (structural review 16, finding 1), approved by the user 2026-11-26, `open: before the next Deliverables task`. Design note `docs/architecture/m3-full-catalog.md` Deliverable 5a.
-- **A fifth copy the directive missed (lead decision, 2026-11-26).** `wantOptions` already exists, with the directive's exact signature and message, in [cards_path_test.go:31-36](../../../pkg/engine/cards_path_test.go) (T-0018, commit 9fa20500), and 57 call sites in 19 files use it, *Culverin Brigade*'s own `TestCard_CulverinBrigade_OnlyTheHeadquartersStillAsks` among them. Adding a second `wantOptions` in `targeting_test.go` would not compile, and a second name would keep the duplicate. So this task **moves that declaration** into `targeting_test.go`, below `ids`, with its body unchanged, and gives it a doc comment. Its body is `refs(d), ids(want...)` rather than the directive's `sortedCopy(refs(d)), sortedCopy(ids(want...))`. Both `refs` and `ids` already return sorted slices ([targeting_test.go:48-64](../../../pkg/engine/targeting_test.go)), so `sortedCopy` would be a no-op, and keeping the moved body as it was keeps the move pure. Every other caller compiles unchanged.
+- **A fifth copy the directive missed (lead decision, 2026-11-26).** `wantOptions` already exists, with the directive's exact signature and message, in [cards_path_test.go:31-36](../../../../../pkg/engine/cards_path_test.go) (T-0018, commit 9fa20500), and 57 call sites in 19 files use it, *Culverin Brigade*'s own `TestCard_CulverinBrigade_OnlyTheHeadquartersStillAsks` among them. Adding a second `wantOptions` in `targeting_test.go` would not compile, and a second name would keep the duplicate. So this task **moves that declaration** into `targeting_test.go`, below `ids`, with its body unchanged, and gives it a doc comment. Its body is `refs(d), ids(want...)` rather than the directive's `sortedCopy(refs(d)), sortedCopy(ids(want...))`. Both `refs` and `ids` already return sorted slices ([targeting_test.go:48-64](../../../../../pkg/engine/targeting_test.go)), so `sortedCopy` would be a no-op, and keeping the moved body as it was keeps the move pure. Every other caller compiles unchanged.
 - The four copies (at `autoloop/m3-wave-a.1` 2ea08269), all the same check, `refs`/`ids` compared order-free, message `"%s: options got %v, want %v"`:
-  - `crWantOffered`, [cards_soulless_conscript_test.go:27-36](../../../pkg/engine/cards_soulless_conscript_test.go); callers at :123, :146, :163, :219, and [cards_soulless_hellfire_test.go:68](../../../pkg/engine/cards_soulless_hellfire_test.go);
-  - `cbWantOffered`, [cards_soulless_culverin_test.go:27-36](../../../pkg/engine/cards_soulless_culverin_test.go), byte for byte the same; caller at :125;
-  - `ecnSameIDs`, [cards_concordia_nightmare_test.go:26-31](../../../pkg/engine/cards_concordia_nightmare_test.go); caller at :164;
-  - `ffeWantSet`, [cards_soulless_fire_for_effect_test.go:61-83](../../../pkg/engine/cards_soulless_fire_for_effect_test.go), the same check with a hand-rolled loop (it also stops at the first mismatch and reports once, as `reflect.DeepEqual` does); caller at :131.
+  - `crWantOffered`, [cards_soulless_conscript_test.go:27-36](../../../../../pkg/engine/cards_soulless_conscript_test.go); callers at :123, :146, :163, :219, and [cards_soulless_hellfire_test.go:68](../../../../../pkg/engine/cards_soulless_hellfire_test.go);
+  - `cbWantOffered`, [cards_soulless_culverin_test.go:27-36](../../../../../pkg/engine/cards_soulless_culverin_test.go), byte for byte the same; caller at :125;
+  - `ecnSameIDs`, [cards_concordia_nightmare_test.go:26-31](../../../../../pkg/engine/cards_concordia_nightmare_test.go); caller at :164;
+  - `ffeWantSet`, [cards_soulless_fire_for_effect_test.go:61-83](../../../../../pkg/engine/cards_soulless_fire_for_effect_test.go), the same check with a hand-rolled loop (it also stops at the first mismatch and reports once, as `reflect.DeepEqual` does); caller at :131.
 - Inline copies in earlier tests (`activated_test.go:320`, `:424`, `:451`) are left alone (directive #190).
 - Rulings that apply: none.
 - **Expected output difference:** none. No non-test file changes, so `go tool task sim-compare -- autoloop/m3-wave-a.1` passes.
@@ -97,3 +97,7 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
     5. `go tool task sim-compare -- autoloop/m3-wave-a.1`: [PASS] starter and stress sims match autoloop/m3-wave-a.1 byte for byte, exit codes included.
     6. `go tool task check`: [PASS] (gofmt, go vet, all tests, cardtown lint --all).
   - Status -> review.
+- 2026-11-26 lead-architect: Review: **approved**, merged into `autoloop/m3-wave-a.1` as f2819a4d, status `done`. Directive #190 is `applied`.
+  - Scope: 27d5c3e0 and 199a9f39 change only this file. 69bc5a43 changes only the seven `_test.go` files under Allowed Files, and its diff is identical to the lead's dry run (index lines aside): the T-0018 `wantOptions` moves unchanged below `ids` with a doc comment, the four copies and their unused imports go, and the 8 calls are renamed. No non-test file changes.
+  - Checks, re-run in a scratch worktree of the task branch: `go test -list . ./pkg/engine` gives 1725 tests, as on the run branch; case 2's grep finds only `targeting_test.go:68`; case 3's finds nothing. A lead mutant (dropping *Conscript Rifles* itself from `TestCard_ConscriptRifles_DealsOneToTheChosenUnit`'s wanted set) fails with `options got [45 48], want [45]`, so the moved check still catches a wrong set.
+  - Gates: `go tool task check` exit 0; `go tool task sim` clean (P0 58.5% / P1 39.5% / draws 2.0%, unchanged); `go tool task sim-compare -- autoloop/m3-wave-a.1` `[PASS]`. `sim-matrix` is not this harness task's gate (D5.5); it runs with the wave's completion check.

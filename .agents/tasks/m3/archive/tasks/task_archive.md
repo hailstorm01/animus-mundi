@@ -33,3 +33,4 @@ Completed task rows moved from [`../../BOARD.md`](../../BOARD.md). Each task's f
 | T-0320 | Make *MAX-8 Autonomous Warsuit* executable (wave A) | done |
 | T-0321 | Make *Mobile Armory* executable (wave A) | done |
 | T-0322 | Make *Visionary's Eye* executable (wave A) | done |
+| T-0323 | One `wantOptions` check for card tests (directive #190, wave A.1) | done |
