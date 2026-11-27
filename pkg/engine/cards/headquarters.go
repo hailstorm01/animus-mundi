@@ -3,9 +3,7 @@ package cards
 import "animus-mundi/pkg/engine/ability"
 
 func init() {
-	for name, def := range headquartersDefs {
-		Defs[name] = def
-	}
+	register(headquartersDefs)
 }
 
 // headquartersDefs holds ability definitions for Headquarters cards.

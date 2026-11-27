@@ -8,6 +8,19 @@ import "animus-mundi/pkg/engine/ability"
 // Defs maps a card name to its ability definition.
 var Defs = map[string]*ability.Def{}
 
+// register adds one definition file's map to Defs. It panics, naming the card,
+// if a name is already there: Go rejects a repeated key inside one map literal
+// but not across files, so a card defined in two files would otherwise compile,
+// and whichever init ran last would win.
+func register(defs map[string]*ability.Def) {
+	for name, def := range defs {
+		if _, ok := Defs[name]; ok {
+			panic("cards: " + name + " is defined twice")
+		}
+		Defs[name] = def
+	}
+}
+
 // deploysOrAttacks builds a "Whenever this unit deploys or attacks" ability:
 // one printed ability, two triggers, t on HookDeploy and t on HookAttacks.
 // t's own Hook is not used. The two copies share t's Effect slices, which is

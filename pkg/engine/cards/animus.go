@@ -3,9 +3,7 @@ package cards
 import "animus-mundi/pkg/engine/ability"
 
 func init() {
-	for name, def := range animusDefs {
-		Defs[name] = def
-	}
+	register(animusDefs)
 }
 
 // animusDefs holds ability definitions for Animus cards.

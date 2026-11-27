@@ -3,9 +3,7 @@ package cards
 import "animus-mundi/pkg/engine/ability"
 
 func init() {
-	for name, def := range concordiaDefs {
-		Defs[name] = def
-	}
+	register(concordiaDefs)
 }
 
 // concordiaDefs holds ability definitions for Concordia cards.
