@@ -4,7 +4,7 @@ title: "One `wantOptions` check for card tests, beside `refs` and `ids` (directi
 kind: harness
 tier: flash
 wave: A.1 (board directive #190, design note Deliverable 5a)
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a.1/T-0323-one-want-options
 depends_on: []
 claims: [func:engine.wantOptions (test helper)]
