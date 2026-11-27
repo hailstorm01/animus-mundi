@@ -26,20 +26,11 @@ func wbStructure(name string, cost int) *Card {
 	return c
 }
 
-// wbDeployCard gives player 0 the card c and R4, and deploys it to Reserves.
-func wbDeployCard(s *scene, c *Card) *Instance {
-	s.t.Helper()
-	inst := s.give(0, c)
-	s.setPool(0, 4, 0)
-	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
-	return inst
-}
-
 // wbDeploy deploys a fresh real Will Breaker and returns its card.
 func wbDeploy(s *scene) *Card {
 	s.t.Helper()
 	c := s.card("Will Breaker")
-	wbDeployCard(s, c)
+	s.deployPaid(0, c, 4, 0)
 	return c
 }
 
@@ -303,7 +294,7 @@ func TestCard_WillBreaker_SourceGoneStillKills(t *testing.T) {
 			stormKill(s, wb)
 		}
 	})
-	inst := wbDeployCard(s, c)
+	inst := s.deployPaid(0, c, 4, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: Will Breaker should have left before resolution")
 	}

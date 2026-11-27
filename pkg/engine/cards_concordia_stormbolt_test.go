@@ -58,23 +58,6 @@ func stormRay(t *testing.T) (*scene, *Asset) {
 	return s, r
 }
 
-// stormTapCard is a copy of the real Ray (the shared definition is not changed)
-// whose triggers also hold one synthetic HookExhausted trigger with step. Paying
-// the ability's exhaust cost fires it, so it is placed on top of the ability and
-// resolves first (FR-TRN-003a, SVY-R17).
-func stormTapCard(s *scene, step ability.Step) *Card {
-	s.t.Helper()
-	c := *s.card("Stormbolt Ray")
-	if c.Ability == nil {
-		s.t.Fatalf("the Ray has no executable definition")
-	}
-	d := *c.Ability
-	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
-		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{step}}})
-	c.Ability = &d
-	return &c
-}
-
 // stormKill removes a from the battlefield into its owner's discard pile.
 func stormKill(s *scene, a *Asset) {
 	s.g.removeFromBattlefield(a)
@@ -361,7 +344,7 @@ func TestCard_StormboltRay_ReturnsToOwnersHand(t *testing.T) {
 func TestCard_StormboltRay_CostsPaidBeforeItResolves(t *testing.T) {
 	// Covers: FR-ACT-001
 	s := newScene(t)
-	r := s.put(0, ZoneMainTheater, stormTapCard(s, actHQDamage(1)))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Stormbolt Ray", exhaustTrigger(actHQDamage(1))))
 	s.setPool(0, 0, 2)
 	places := 0
 	var onField, exhausted, returnBelow bool
@@ -485,7 +468,7 @@ func TestCard_StormboltRay_NotOfferedWhileExhausted(t *testing.T) {
 func TestCard_StormboltRay_GoneBeforeResolutionStaysGone(t *testing.T) {
 	// Covers: FR-ZON-004, FR-TGT-003
 	s := newScene(t)
-	r := s.put(0, ZoneMainTheater, stormTapCard(s, ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf}))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Stormbolt Ray", exhaustTrigger(ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf})))
 	s.setPool(0, 0, 2)
 	s.do(activate(r, 0))
 	p := s.g.Players[0]

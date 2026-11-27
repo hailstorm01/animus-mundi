@@ -32,6 +32,14 @@ func chooseAsset(s *scene, target *Asset) {
 	}
 }
 
+// activateChoosing activates a's first activated ability, player 0 choosing
+// target for every decision it asks (chooseAsset).
+func activateChoosing(s *scene, a, target *Asset) {
+	s.t.Helper()
+	chooseAsset(s, target)
+	s.do(activate(a, 0))
+}
+
 // targetOffers returns the Ref set of the first target decision seat 0 was asked.
 func targetOffers(s *scene) map[int]bool {
 	for _, d := range s.asked(0) {

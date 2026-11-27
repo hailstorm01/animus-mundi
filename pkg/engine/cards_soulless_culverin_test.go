@@ -13,15 +13,6 @@ import (
 // otherwise. The other cards are synthetic. Every opposing asset a case does not
 // mean to kill has enough health to survive 1 damage.
 
-// cbDeploy gives player 0 the card c and R4 T0, and deploys it to Reserves.
-func cbDeploy(s *scene, c *Card) *Instance {
-	s.t.Helper()
-	inst := s.give(0, c)
-	s.setPool(0, 4, 0)
-	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
-	return inst
-}
-
 // cbOneQuestion returns the one "up to" DecideTarget question put to player 0.
 func cbOneQuestion(t *testing.T, s *scene, max int) Decision {
 	t.Helper()
@@ -45,7 +36,7 @@ func TestCard_CulverinBrigade_EntersReservesAsFiveFour(t *testing.T) {
 	s := newScene(t)
 	s.scriptPlan(0, nil, nil, pick())
 	c := s.card("Culverin Brigade")
-	cbDeploy(s, c)
+	s.deployPaid(0, c, 4, 0)
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves || a.Controller != 0 {
 		t.Fatalf("Culverin Brigade is on the battlefield in player 0's Reserves after deploying (FR-TRN-003)")
@@ -78,7 +69,7 @@ func TestCard_CulverinBrigade_DealsOneToEachOfTwoChosen(t *testing.T) {
 	f3 := cbFoe(s, "Foe3", ZoneMainTheater, 5)
 	s.scriptPlan(0, nil, nil, pick(f1, f2))
 	c := s.card("Culverin Brigade")
-	cbDeploy(s, c)
+	s.deployPaid(0, c, 4, 0)
 	cbOneQuestion(t, s, 2)
 	s.wantDamage(f1, 1)
 	s.wantDamage(f2, 1)
@@ -107,7 +98,7 @@ func TestCard_CulverinBrigade_OffersEveryOpposingAsset(t *testing.T) {
 	foeScratch := s.putScratch(1)
 	s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	s.scriptPlan(0, nil, nil, pick())
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	d := cbOneQuestion(t, s, 2)
 	wantOptions(t, d, "player 1's Headquarters, the two opposing units, the opposing structure and the opposing Scratch Company; no allied asset, Culverin Brigade or Warded unit (FR-TGT-001, FR-KWD-002h, FR-ZON-005)",
 		s.g.Players[1].HQ, foeMain, foeRes, foeStruct, foeScratch)
@@ -119,7 +110,7 @@ func TestCard_CulverinBrigade_MayChooseOne(t *testing.T) {
 	f1 := cbFoe(s, "Foe1", ZoneMainTheater, 5)
 	f2 := cbFoe(s, "Foe2", ZoneMainTheater, 5)
 	s.scriptPlan(0, nil, nil, pick(f1))
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	wantDealt(t, s.g, f1, 1, 1, "the one chosen unit takes 1 damage")
 	wantDealt(t, s.g, f2, 0, 0, "the unchosen unit takes none")
 	if n := len(nonCombatDamage(s.g.Log)); n != 1 {
@@ -133,7 +124,7 @@ func TestCard_CulverinBrigade_MayChooseNone(t *testing.T) {
 	cbFoe(s, "Foe1", ZoneMainTheater, 5)
 	s.scriptPlan(0, nil, nil, pick())
 	c := s.card("Culverin Brigade")
-	cbDeploy(s, c)
+	s.deployPaid(0, c, 4, 0)
 	cbOneQuestion(t, s, 2)
 	wantNoNonCombatDamage(t, s.g, "up to 2 allows choosing none")
 	if got := totalDamage(s.g); got != 0 {
@@ -150,7 +141,7 @@ func TestCard_CulverinBrigade_TimeoutChoosesNone(t *testing.T) {
 	cbFoe(s, "Foe1", ZoneMainTheater, 5)
 	cbFoe(s, "Foe2", ZoneReserves, 5)
 	s.scriptPlan(0, nil, nil, timeoutPick)
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	cbOneQuestion(t, s, 2)
 	wantNoNonCombatDamage(t, s.g, "an up-to-N selection that times out chooses none (FR-MOD-001 section 6)")
 	if got := totalDamage(s.g); got != 0 {
@@ -163,7 +154,7 @@ func TestCard_CulverinBrigade_OnlyTheHeadquartersStillAsks(t *testing.T) {
 	s := newScene(t)
 	hq1 := s.g.Players[1].HQ
 	s.scriptPlan(0, nil, nil, pick(hq1))
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	d := cbOneQuestion(t, s, 1)
 	wantOptions(t, d, "only player 1's Headquarters is legal", hq1)
 	s.wantDamage(hq1, 1)
@@ -179,7 +170,7 @@ func TestCard_CulverinBrigade_LethalDamageKills(t *testing.T) {
 	inst := frail.Inst
 	other := cbFoe(s, "Sturdy", ZoneReserves, 5)
 	s.scriptPlan(0, nil, nil, pick(frail, other))
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	if s.alive(frail) || !inDiscardPile(s.g.Players[1], inst) {
 		t.Errorf("a Health 1 unit taking 1 dies and its card is in its owner's discard pile (FR-LAY-002)")
 	}
@@ -191,7 +182,7 @@ func TestCard_CulverinBrigade_ArmorAbsorbs(t *testing.T) {
 	s := newScene(t)
 	arm := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
 	s.scriptPlan(0, nil, nil, pick(arm))
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	s.wantDamage(arm, 0)
 	if arm.Armor != 0 {
 		t.Errorf("the 1 Armor absorbs the 1 damage and is spent: Armor %d, want 0 (FR-KWD-002k)", arm.Armor)
@@ -211,7 +202,7 @@ func TestCard_CulverinBrigade_OneTargetGoneTheOtherStillTakesOne(t *testing.T) {
 			stormKill(s, gone)
 		}
 	})
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	if !done {
 		t.Fatalf("setup: the trigger should have been placed")
 	}
@@ -234,7 +225,7 @@ func TestCard_CulverinBrigade_TargetGainsWardDealsNothingToIt(t *testing.T) {
 			warded.Inst.Card.Keywords.Ward = true
 		}
 	})
-	cbDeploy(s, s.card("Culverin Brigade"))
+	s.deployPaid(0, s.card("Culverin Brigade"), 4, 0)
 	if !done {
 		t.Fatalf("setup: the trigger should have been placed")
 	}
@@ -253,7 +244,7 @@ func TestCard_CulverinBrigade_SourceGoneStillDeals(t *testing.T) {
 			stormKill(s, cb)
 		}
 	})
-	inst := cbDeploy(s, c)
+	inst := s.deployPaid(0, c, 4, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: Culverin Brigade should have left before resolution")
 	}

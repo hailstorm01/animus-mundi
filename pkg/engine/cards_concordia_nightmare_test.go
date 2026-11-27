@@ -12,16 +12,6 @@ import (
 // Theater." The real card is loaded from data/cards. Player 0 deploys it from
 // hand to Reserves with R5 and is the active player unless a case says otherwise.
 
-// ecnDeploy gives player 0 the card and R5 T0, deploys it to Reserves and
-// returns its hand instance.
-func ecnDeploy(s *scene, c *Card) *Instance {
-	s.t.Helper()
-	inst := s.give(0, c)
-	s.setPool(0, 5, 0)
-	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
-	return inst
-}
-
 func ecnEvents(s *scene, kind string, id int) []Event {
 	var out []Event
 	for _, e := range eventsOfKind(s.g.Log, kind) {
@@ -47,7 +37,7 @@ func TestCard_EchoingNightmare_EntersReservesAsSixTwo(t *testing.T) {
 	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves || !inAssets(s.g.Players[0].Reserves, a) {
 		t.Fatalf("the Nightmare is in player 0's Reserves after deploying (FR-TRN-003)")
@@ -93,7 +83,7 @@ func TestCard_EchoingNightmare_ReturnsTheUnitAndMoves(t *testing.T) {
 	inst := foe.Inst
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	if s.alive(foe) || inAssets(s.g.Theater, foe) {
 		t.Errorf("the returned unit is off the battlefield (FR-ZON-002)")
 	}
@@ -125,7 +115,7 @@ func TestCard_EchoingNightmare_MovedNightmareMayAttack(t *testing.T) {
 	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	nm := assetOf(s.g, c)
 	if nm == nil || nm.Zone != ZoneMainTheater {
 		t.Fatalf("setup: the Nightmare moved to the Main Theater")
@@ -144,7 +134,7 @@ func TestCard_EchoingNightmare_OnlyOpposingMainTheaterUnitsOffered(t *testing.T)
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	stormChoose(s, func() *Asset { return foeB })
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	asked := s.asked(0)
 	if len(asked) != 1 {
 		t.Fatalf("one chosen target is one question: asked %d times (FR-TGT-001)", len(asked))
@@ -172,7 +162,7 @@ func TestCard_EchoingNightmare_NoTargetStaysInReserves(t *testing.T) {
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	ecnStays(t, s, c, "no opposing unit is in the Main Theater (FR-TGT-003, Deployment Triggers Without Legal Targets)")
 	if !s.alive(foeRes) || foeRes.Zone != ZoneReserves || !s.alive(ally) || ally.Zone != ZoneMainTheater {
 		t.Errorf("nothing returns or moves (FR-TGT-003)")
@@ -188,7 +178,7 @@ func TestCard_EchoingNightmare_WardedUnitNotOffered(t *testing.T) {
 	ward := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	if !s.alive(ward) || ward.Zone != ZoneMainTheater {
 		t.Errorf("a Ward unit cannot be chosen by an opposing effect and stays on the battlefield (FR-KWD-002h)")
 	}
@@ -199,7 +189,7 @@ func TestCard_EchoingNightmare_WardedUnitNotOffered(t *testing.T) {
 	plain := s2.put(1, ZoneMainTheater, unit("FoePlain", 1, 5, ability.Keywords{}))
 	s2.script(0)
 	c2 := s2.card("Echoing Nightmare")
-	ecnDeploy(s2, c2)
+	s2.deployPaid(0, c2, 5, 0)
 	if s2.alive(plain) || !inHand(s2.g.Players[1], plain.Inst) {
 		t.Errorf("the unit without Ward is the only legal target and returns (FR-KWD-002h)")
 	}
@@ -223,7 +213,7 @@ func TestCard_EchoingNightmare_TargetGoneNoMove(t *testing.T) {
 		}
 	})
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	if s.alive(foe) {
 		t.Fatalf("setup: the chosen unit should have died before resolution")
 	}
@@ -248,7 +238,7 @@ func TestCard_EchoingNightmare_TargetLeftTheMainTheaterNoMove(t *testing.T) {
 		}
 	})
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	if foe.Zone != ZoneReserves {
 		t.Fatalf("setup: the chosen unit should have moved to Reserves before resolution")
 	}
@@ -269,7 +259,7 @@ func TestCard_EchoingNightmare_SourceGoneStillReturns(t *testing.T) {
 			stormKill(s, nm)
 		}
 	})
-	inst := ecnDeploy(s, c)
+	inst := s.deployPaid(0, c, 5, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: the Nightmare should have left before resolution")
 	}
@@ -302,7 +292,7 @@ func TestCard_EchoingNightmare_ControlledUnitGoesToItsOwnersHand(t *testing.T) {
 	}
 	s.script(0)
 	c := s.card("Echoing Nightmare")
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	if s.alive(mine) {
 		t.Fatalf("the controlled unit is a legal target and leaves the battlefield (FR-TGT-001)")
 	}
@@ -335,7 +325,7 @@ func TestCard_EchoingNightmare_MoveFiresMovesHooks(t *testing.T) {
 	s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	s.script(0)
 	c := watcher(s)
-	ecnDeploy(s, c)
+	s.deployPaid(0, c, 5, 0)
 	nm := assetOf(s.g, c)
 	if nm == nil || nm.Zone != ZoneMainTheater {
 		t.Fatalf("setup: the Nightmare moved to the Main Theater")
@@ -347,7 +337,7 @@ func TestCard_EchoingNightmare_MoveFiresMovesHooks(t *testing.T) {
 	s2 := newScene(t)
 	s2.script(0)
 	c2 := watcher(s2)
-	ecnDeploy(s2, c2)
+	s2.deployPaid(0, c2, 5, 0)
 	if nm := assetOf(s2.g, c2); nm == nil || nm.Zone != ZoneReserves || nm.Armor != 0 {
 		t.Errorf("with no target the Nightmare does not move and gains no Armor (SVY-R1)")
 	}

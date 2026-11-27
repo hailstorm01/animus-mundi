@@ -63,7 +63,7 @@ func TestCard_HellfireArmorers_HasWard(t *testing.T) {
 		t.Errorf("Hellfire Armorers has Ward (FR-KWD-002h)")
 	}
 	stormChoose(s, func() *Asset { return allyArm })
-	rifles := crDeployCard(s, s.card("Conscript Rifles"))
+	rifles := s.deployPaid(0, s.card("Conscript Rifles"), 2, 0)
 	d := crOneQuestion(t, s)
 	wantOptions(t, d, "player 0's own Warded Armorers is offered, the opposing one is not (FR-KWD-002h)", allyArm, assetOf(s.g, rifles.Card))
 	s.wantDamage(foeArm, 0)

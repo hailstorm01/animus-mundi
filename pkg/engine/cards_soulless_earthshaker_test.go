@@ -13,16 +13,6 @@ import (
 // data/cards: "Whenever this unit deploys or attacks, deal 2 damage to chosen
 // non-Scratch asset." Player 0 controls it and is the active player.
 
-// ecDeploy gives player 0 the card with exactly R6 and deploys it to Reserves.
-// It returns the card's instance.
-func ecDeploy(s *scene, c *Card) *Instance {
-	s.t.Helper()
-	inst := s.give(0, c)
-	s.setPool(0, 6, 0)
-	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
-	return inst
-}
-
 // ecBoard puts the board used by the offers cases (the Colossus excluded):
 // units in Reserves and the Main Theater for both sides, a structure each, a
 // Scratch Company each, and a Warded unit each. It returns the assets that must
@@ -59,7 +49,7 @@ func ecAttackScene(t *testing.T) *ecAttacker {
 	e.pick = e.hq1
 	stormChoose(s, func() *Asset { return e.pick })
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	e.col = assetOf(s.g, c)
 	if e.col == nil {
 		t.Fatalf("precondition: the Colossus is on the battlefield")
@@ -74,7 +64,7 @@ func TestCard_EarthshakerColossus_EntersReservesAsSixSeven(t *testing.T) {
 	s := newScene(t)
 	s.script(0, Answer{Picks: []int{0}})
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves || a.Controller != 0 {
 		t.Fatalf("the Colossus is on the battlefield in player 0's Reserves after deploying (FR-TRN-003)")
@@ -116,7 +106,7 @@ func TestCard_EarthshakerColossus_DeployDealsTwoToTheChosenAsset(t *testing.T) {
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
 	chooseAsset(s, hit)
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	col := assetOf(s.g, c)
 	s.wantDamage(hit, 2)
 	evs := damageTo(s.g.Log, hit)
@@ -140,7 +130,7 @@ func TestCard_EarthshakerColossus_DeployOffersEveryNonScratchAsset(t *testing.T)
 	offered := ecBoard(s)
 	chooseAsset(s, s.g.Players[1].HQ)
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	d := targetAsk(t, s)
 	if d.Player != 0 || d.Min != 1 || d.Max != 1 {
 		t.Errorf("the question is a mandatory single target decision for player 0: %+v", d)
@@ -160,7 +150,7 @@ func TestCard_EarthshakerColossus_UnitTurnedFaceDownNotOffered(t *testing.T) {
 	up := s.put(1, ZoneMainTheater, unit("FaceUp", 1, 5, ability.Keywords{}))
 	chooseAsset(s, up)
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	wantOptions(t, targetAsk(t, s), "a face-down unit is a Scratch Company and not offered; the face-up unit, both Headquarters and the Colossus are",
 		up, s.g.Players[0].HQ, s.g.Players[1].HQ, assetOf(s.g, c))
 }
@@ -170,7 +160,7 @@ func TestCard_EarthshakerColossus_AloneStillAsks(t *testing.T) {
 	s := newScene(t)
 	c := s.card("Earthshaker Colossus")
 	stormChoose(s, func() *Asset { return assetOf(s.g, c) })
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	col := assetOf(s.g, c)
 	wantOptions(t, targetAsk(t, s), "both Headquarters are always legal, so the target is asked: the two Headquarters and the Colossus",
 		s.g.Players[0].HQ, s.g.Players[1].HQ, col)
@@ -186,7 +176,7 @@ func TestCard_EarthshakerColossus_DeployDamagesTheOpposingHeadquarters(t *testin
 	hq1 := s.g.Players[1].HQ
 	before := s.g.CurrentHealth(hq1)
 	chooseAsset(s, hq1)
-	ecDeploy(s, s.card("Earthshaker Colossus"))
+	s.deployPaid(0, s.card("Earthshaker Colossus"), 6, 0)
 	if got := s.g.CurrentHealth(hq1); got != before-2 {
 		t.Errorf("the opposing Headquarters remaining Health drops by 2: got %d, want %d (FR-CBT-003)", got, before-2)
 	}
@@ -200,7 +190,7 @@ func TestCard_EarthshakerColossus_TimeoutTakesTheFirstOption(t *testing.T) {
 	s := newScene(t)
 	s.targetBoard()
 	s.script(0, Answer{Timeout: true})
-	ecDeploy(s, s.card("Earthshaker Colossus"))
+	s.deployPaid(0, s.card("Earthshaker Colossus"), 6, 0)
 	if n := len(s.asked(0)); n != 1 {
 		t.Fatalf("asked %d times, want 1", n)
 	}
@@ -215,7 +205,7 @@ func TestCard_EarthshakerColossus_LethalDamageKills(t *testing.T) {
 	s := newScene(t)
 	foe := s.put(1, ZoneMainTheater, unit("Frail", 1, 2, ability.Keywords{}))
 	chooseAsset(s, foe)
-	ecDeploy(s, s.card("Earthshaker Colossus"))
+	s.deployPaid(0, s.card("Earthshaker Colossus"), 6, 0)
 	if s.alive(foe) || !inDiscardPile(s.g.Players[1], foe.Inst) {
 		t.Errorf("a Health 2 unit taking 2 dies and its card is in its owner's discard pile (FR-LAY-002)")
 	}
@@ -226,7 +216,7 @@ func TestCard_EarthshakerColossus_ArmorAbsorbs(t *testing.T) {
 	s := newScene(t)
 	arm := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
 	chooseAsset(s, arm)
-	ecDeploy(s, s.card("Earthshaker Colossus"))
+	s.deployPaid(0, s.card("Earthshaker Colossus"), 6, 0)
 	if arm.Armor != 0 {
 		t.Errorf("the first point of damage removes the 1 Armor: Armor %d, want 0 (FR-KWD-002k)", arm.Armor)
 	}
@@ -244,7 +234,7 @@ func TestCard_EarthshakerColossus_TargetGoneDealsNothing(t *testing.T) {
 		}
 	})
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	if s.alive(foe) {
 		t.Fatalf("setup: the target should have left before the trigger resolves")
 	}
@@ -270,7 +260,7 @@ func TestCard_EarthshakerColossus_SourceGoneStillDeals(t *testing.T) {
 			stormKill(s, col)
 		}
 	})
-	inst := ecDeploy(s, c)
+	inst := s.deployPaid(0, c, 6, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: the Colossus should have left before the trigger resolves")
 	}
@@ -370,7 +360,7 @@ func TestCard_EarthshakerColossus_DefendingDoesNotTrigger(t *testing.T) {
 	hq1 := s.g.Players[1].HQ
 	chooseAsset(s, hq1)
 	c := s.card("Earthshaker Colossus")
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	col := assetOf(s.g, c)
 	s.do(Action{Kind: ActMarch, Player: 0, Asset: col.ID})
 	s.endTurn()

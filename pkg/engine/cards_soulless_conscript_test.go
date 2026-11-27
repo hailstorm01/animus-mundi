@@ -13,15 +13,6 @@ import (
 // is always a legal target of its own trigger, so a case with no other legal
 // unit asks nothing (the Single-Option Fast-Path, FR-TGT-003).
 
-// crDeployCard gives player 0 the card c and R2, and deploys it to Reserves.
-func crDeployCard(s *scene, c *Card) *Instance {
-	s.t.Helper()
-	inst := s.give(0, c)
-	s.setPool(0, 2, 0)
-	s.do(Action{Kind: ActDeploy, Player: 0, Card: inst.ID, Zone: ZoneReserves})
-	return inst
-}
-
 // crOneQuestion returns the one DecideTarget question put to player 0.
 func crOneQuestion(t *testing.T, s *scene) Decision {
 	t.Helper()
@@ -41,7 +32,7 @@ func TestCard_ConscriptRifles_EntersReservesAsTwoTwo(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves || a.Controller != 0 {
 		t.Fatalf("Conscript Rifles is on the battlefield in player 0's Reserves after deploying (FR-TRN-003)")
@@ -80,7 +71,7 @@ func TestCard_ConscriptRifles_AloneDealsOneToItself(t *testing.T) {
 	s := newScene(t)
 	s.script(0)
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("the only legal unit is Conscript Rifles itself, so nothing is asked: asked %d times (Single-Option Fast-Path)", n)
 	}
@@ -105,7 +96,7 @@ func TestCard_ConscriptRifles_DealsOneToTheChosenUnit(t *testing.T) {
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 3, ability.Keywords{}))
 	stormChoose(s, func() *Asset { return foe })
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	d := crOneQuestion(t, s)
 	wantOptions(t, d, "the opposing unit and Conscript Rifles itself (FR-TGT-001)", foe, assetOf(s.g, c))
 	s.wantDamage(foe, 1)
@@ -128,7 +119,7 @@ func TestCard_ConscriptRifles_OffersEveryNonScratchUnit(t *testing.T) {
 	s.putScratch(1)
 	stormChoose(s, func() *Asset { return foeMain })
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	d := crOneQuestion(t, s)
 	wantOptions(t, d, "the four units and Conscript Rifles; no structure, Headquarters or Scratch Company (FR-TGT-001, FR-ZON-005)",
 		allyMain, allyRes, foeMain, foeRes, assetOf(s.g, c))
@@ -145,7 +136,7 @@ func TestCard_ConscriptRifles_UnitTurnedFaceDownNotOffered(t *testing.T) {
 	foe := s.put(1, ZoneReserves, unit("FaceUp", 1, 5, ability.Keywords{}))
 	stormChoose(s, func() *Asset { return foe })
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	d := crOneQuestion(t, s)
 	wantOptions(t, d, "a unit turned face down is a Scratch Company and is not offered; the face-up unit and Conscript Rifles are (FR-ENT-103, FR-TGT-001)",
 		foe, assetOf(s.g, c))
@@ -159,7 +150,7 @@ func TestCard_ConscriptRifles_LethalDamageKills(t *testing.T) {
 	foe := s.put(1, ZoneMainTheater, unit("Frail", 1, 1, ability.Keywords{}))
 	inst := foe.Inst
 	stormChoose(s, func() *Asset { return foe })
-	crDeployCard(s, s.card("Conscript Rifles"))
+	s.deployPaid(0, s.card("Conscript Rifles"), 2, 0)
 	if s.alive(foe) || !inDiscardPile(s.g.Players[1], inst) {
 		t.Errorf("a Health 1 unit taking 1 dies and its card is in its owner's discard pile (FR-LAY-002, FR-ZON-002)")
 	}
@@ -170,13 +161,13 @@ func TestCard_ConscriptRifles_ResistantAndArmorApply(t *testing.T) {
 	s := newScene(t)
 	res := s.put(1, ZoneMainTheater, unit("Resistant", 1, 5, ability.Keywords{Resistant: 1}))
 	stormChoose(s, func() *Asset { return res })
-	crDeployCard(s, s.card("Conscript Rifles"))
+	s.deployPaid(0, s.card("Conscript Rifles"), 2, 0)
 	s.wantDamage(res, 0)
 
 	s2 := newScene(t)
 	arm := s2.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
 	stormChoose(s2, func() *Asset { return arm })
-	crDeployCard(s2, s2.card("Conscript Rifles"))
+	s2.deployPaid(0, s2.card("Conscript Rifles"), 2, 0)
 	s2.wantDamage(arm, 0)
 	if arm.Armor != 0 {
 		t.Errorf("the 1 Armor absorbs the 1 damage and is spent: Armor %d, want 0 (FR-KWD-002k)", arm.Armor)
@@ -189,7 +180,7 @@ func TestCard_ConscriptRifles_WardedOpposingUnitNotOffered(t *testing.T) {
 	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	s.script(0)
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	if n := len(s.asked(0)); n != 0 {
 		t.Errorf("an opposing Warded unit is not offered, so Conscript Rifles is the only option and nothing is asked: asked %d (FR-KWD-002h)", n)
 	}
@@ -201,7 +192,7 @@ func TestCard_ConscriptRifles_WardedOpposingUnitNotOffered(t *testing.T) {
 	s2.put(1, ZoneMainTheater, unit("FoeWard2", 1, 5, ability.Keywords{Ward: true}))
 	stormChoose(s2, func() *Asset { return allyWard })
 	c2 := s2.card("Conscript Rifles")
-	crDeployCard(s2, c2)
+	s2.deployPaid(0, c2, 2, 0)
 	d := crOneQuestion(t, s2)
 	wantOptions(t, d, "an allied Warded unit is offered, the opposing one is not (FR-KWD-002h)", allyWard, assetOf(s2.g, c2))
 	s2.wantDamage(allyWard, 1)
@@ -218,7 +209,7 @@ func TestCard_ConscriptRifles_TargetGoneDealsNothing(t *testing.T) {
 		}
 	})
 	c := s.card("Conscript Rifles")
-	crDeployCard(s, c)
+	s.deployPaid(0, c, 2, 0)
 	if n := len(damageEvents(s.g.Log)); n != 0 {
 		t.Errorf("a target that left before resolution is skipped and no damage event is logged: %d (FR-TGT-003, SVY-R25)", n)
 	}
@@ -241,7 +232,7 @@ func TestCard_ConscriptRifles_SourceGoneStillDeals(t *testing.T) {
 			stormKill(s, cr)
 		}
 	})
-	inst := crDeployCard(s, c)
+	inst := s.deployPaid(0, c, 2, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: Conscript Rifles should have left before resolution")
 	}

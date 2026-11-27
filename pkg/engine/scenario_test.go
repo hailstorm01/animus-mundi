@@ -102,6 +102,16 @@ func (s *scene) give(p PlayerID, c *Card) *Instance {
 	return inst
 }
 
+// deployPaid gives p the card c, sets p's pool to req Requisition and tac
+// Tactics, deploys it from hand to Reserves, and returns its hand instance.
+func (s *scene) deployPaid(p PlayerID, c *Card, req, tac int) *Instance {
+	s.t.Helper()
+	inst := s.give(p, c)
+	s.setPool(p, req, tac)
+	s.do(Action{Kind: ActDeploy, Player: p, Card: inst.ID, Zone: ZoneReserves})
+	return inst
+}
+
 func (s *scene) do(a Action) {
 	s.t.Helper()
 	if err := s.g.Apply(a); err != nil {
@@ -168,6 +178,22 @@ func (s *scene) card(name string) *Card {
 	if err != nil {
 		s.t.Fatalf("%v", err)
 	}
+	return c
+}
+
+// cardWithTrigger returns a copy of the real named card whose definition's
+// triggers also hold trig. The shared definition is not changed. With an
+// exhaustTrigger, paying the card's exhaust cost fires trig, so it is placed on
+// top of the ability and resolves first (FR-TRN-003a, SVY-R17).
+func (s *scene) cardWithTrigger(name string, trig ability.Trigger) *Card {
+	s.t.Helper()
+	c := s.card(name)
+	if c.Ability == nil {
+		s.t.Fatalf("%s has no executable definition", name)
+	}
+	d := *c.Ability
+	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...), trig)
+	c.Ability = &d
 	return c
 }
 
