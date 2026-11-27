@@ -3,9 +3,7 @@ package cards
 import "animus-mundi/pkg/engine/ability"
 
 func init() {
-	for name, def := range pathDefs {
-		Defs[name] = def
-	}
+	register(pathDefs)
 }
 
 // pathDefs holds ability definitions for Path cards.

@@ -3,9 +3,7 @@ package cards
 import "animus-mundi/pkg/engine/ability"
 
 func init() {
-	for name, def := range soullessDefs {
-		Defs[name] = def
-	}
+	register(soullessDefs)
 }
 
 // soullessDefs holds ability definitions for Soulless cards.
