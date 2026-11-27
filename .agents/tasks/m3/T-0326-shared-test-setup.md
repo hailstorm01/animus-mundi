@@ -4,7 +4,7 @@ title: "Shared test setup: `cardWithTrigger`, `deployPaid` and `activateChoosing
 kind: harness
 tier: flash
 wave: A.1 (board directive #193, design note Deliverable 5a)
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a.1/T-0326-shared-test-setup
 depends_on: [T-0325]
 claims: [func:scene.cardWithTrigger, func:scene.deployPaid, func:activateChoosing]
@@ -122,10 +122,25 @@ Edit with the file tool, file by file. Then run `go -C <worktree> tool task fmt`
 - Tests, all in `pkg/engine` (no non-test file changes): `scenario_test.go`, `cards_path_maneuvers_test.go`, `cards_concordia_nightmare_test.go`, `cards_concordia_stormbolt_test.go`, `cards_concordia_tempest_ray_test.go`, `cards_concordia_willbreaker_test.go`, `cards_soulless_armory_test.go`, `cards_soulless_conscript_test.go`, `cards_soulless_culverin_test.go`, `cards_soulless_earthshaker_test.go`, `cards_soulless_hellfire_test.go`, `cards_soulless_macrocannon_test.go`, `cards_soulless_max8_test.go`, `cards_soulless_refiner_test.go`. The twelve card test files change only to delete a helper and update the references to it, so under the D2.4 move exception they don't count toward the four-file limit.
 
 ## Done When
-- [ ] Edits 1-5 are committed as the one `test(T-0326): …` commit
-- [ ] Cases 1-5 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] Edits 1-5 are committed as the one `test(T-0326): …` commit
+- [x] Cases 1-5 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-11-26 lead-architect: Wrote the task from board directive #193, the last of wave A.1's four directives (design note Deliverable 5a). Harness, tier flash: three shared setup helpers and the call-site updates in 14 test files, with no non-test change. The lead dry-ran the edits (Inputs). Status `ready` on `m3/autoloop-wave-a.1/T-0326-shared-test-setup`, from `autoloop/m3-wave-a.1`. Once this task is `done`, all of wave A.1's header work is applied.
+- 2026-11-26 kernel-engineer: Implemented shared test setup helpers for directive #193 (Edits 1-5):
+  - Added deployPaid and cardWithTrigger in scenario_test.go.
+  - Added activateChoosing in cards_path_maneuvers_test.go.
+  - Deleted twelve per-card helpers: stormTapCard, trayTapCard, maTapCard, dmcTapCard, drfTapCard, ecnDeploy, wbDeployCard, crDeployCard, cbDeploy, ecDeploy, maActivate, dmcActivate across 12 card test files.
+  - Rewrote 98 call sites (69 deploys, 10 tap cards, 19 activates) to use the shared helpers, and updated cards_soulless_max8_test.go header comment.
+  - Verified all 14 resulting blobs match lead dry-run hashes: scenario_test.go (5e394c4), cards_path_maneuvers_test.go (2251863), cards_concordia_nightmare_test.go (d0cd884), cards_concordia_stormbolt_test.go (26fd7ac), cards_concordia_tempest_ray_test.go (616a0b0), cards_concordia_willbreaker_test.go (69b3497), cards_soulless_armory_test.go (f247abe), cards_soulless_conscript_test.go (94d19be), cards_soulless_culverin_test.go (5c45d9f), cards_soulless_earthshaker_test.go (85eca79), cards_soulless_hellfire_test.go (5decd11), cards_soulless_macrocannon_test.go (d42f431), cards_soulless_max8_test.go (755754f), cards_soulless_refiner_test.go (d604df1).
+  - Committed as ac5df2fb `test(T-0326): shared cardWithTrigger, deployPaid and activateChoosing setup, for directive 193`.
+  - Acceptance Cases:
+    1. `git grep -n -w -e stormTapCard ... -- pkg cmd docs`: exit code 1 (no output).
+    2. Shared helpers grep counts: deployPaid 71 lines, cardWithTrigger 12 lines, activateChoosing 21 lines.
+    3. `go test -list . ./pkg/engine/...`: 1726 tests, all tests pass.
+    4. `git diff --stat autoloop/m3-wave-a.1 HEAD`: only the 14 allowed test files and task file modified.
+    5. `go tool task sim-compare -- autoloop/m3-wave-a.1`: [PASS] starter and stress sims match autoloop/m3-wave-a.1 byte for byte, exit codes included.
+    6. `go tool task check`: PASS (fmt-check, vet, tests, build, lint --all).
+  Status `review`.
