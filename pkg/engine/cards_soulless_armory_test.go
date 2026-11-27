@@ -21,29 +21,6 @@ func maScene(t *testing.T) (*scene, *Asset) {
 	return s, m
 }
 
-// maTapCard is a copy of the real card (the shared definition is not changed)
-// whose triggers also hold one synthetic HookExhausted trigger with step. It is
-// placed on top of the ability and resolves first.
-func maTapCard(s *scene, step ability.Step) *Card {
-	s.t.Helper()
-	c := *s.card("Mobile Armory")
-	if c.Ability == nil {
-		s.t.Fatalf("Mobile Armory has no executable definition")
-	}
-	d := *c.Ability
-	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
-		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{step}}})
-	c.Ability = &d
-	return &c
-}
-
-// maActivate activates the Armory, player 0 choosing target.
-func maActivate(s *scene, m, target *Asset) {
-	s.t.Helper()
-	chooseAsset(s, target)
-	s.do(activate(m, 0))
-}
-
 func maWantPower(t *testing.T, s *scene, a *Asset, want int, why string) {
 	t.Helper()
 	if got := s.g.Power(a); got != want {
@@ -90,7 +67,7 @@ func TestCard_MobileArmory_ChosenAllyGetsPlusOnePower(t *testing.T) {
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
 	other := s.put(0, ZoneMainTheater, unit("Other", 2, 5, ability.Keywords{}))
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 2, 5, ability.Keywords{}))
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	maWantPower(t, s, ally, 3, "the chosen ally gets +1 power (FR-ACT-001)")
 	maWantPower(t, s, m, 1, "the Armory's own power is unchanged")
 	maWantPower(t, s, other, 2, "an unchosen ally is unchanged")
@@ -140,7 +117,7 @@ func TestCard_MobileArmory_FromReservesOffersOwnReservesOnly(t *testing.T) {
 	m2 := s2.put(0, ZoneReserves, s2.card("Mobile Armory"))
 	sc2 := s2.putScratch(0)
 	s2.put(0, ZoneReserves, unit("AllyRes", 1, 5, ability.Keywords{}))
-	maActivate(s2, m2, sc2)
+	activateChoosing(s2, m2, sc2)
 	maWantPower(t, s2, sc2, 2, "the Scratch Company is a unit and gets +1 power")
 }
 
@@ -148,7 +125,7 @@ func TestCard_MobileArmory_MayChooseItself(t *testing.T) {
 	// Covers: FR-TGT-001
 	s, m := maScene(t)
 	s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
-	maActivate(s, m, m)
+	activateChoosing(s, m, m)
 	maWantPower(t, s, m, 2, "the Armory may choose itself (no \"other\")")
 	if !m.Exhausted {
 		t.Errorf("the Armory is Exhausted (FR-ACT-001)")
@@ -178,7 +155,7 @@ func TestCard_MobileArmory_PowerExpiresAtEndOfTurn(t *testing.T) {
 	// Covers: FR-LAY-003
 	s, m := maScene(t)
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	maWantPower(t, s, ally, 3, "the buff applies")
 	s.endTurn()
 	maWantPower(t, s, ally, 2, "the buff ends at end of turn (FR-LAY-003)")
@@ -188,7 +165,7 @@ func TestCard_MobileArmory_BuffStaysWhenTheAllyMovesAfterwards(t *testing.T) {
 	// Covers: SVY-R44, FR-ZON-004
 	s, m := maScene(t)
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	s.moveTo(ally, ZoneReserves)
 	maWantPower(t, s, ally, 3, "the zone is checked only on placement and resolution, so the buff stays")
 }
@@ -238,7 +215,7 @@ func TestCard_MobileArmory_MayActivateTheTurnItDeploys(t *testing.T) {
 	if !offersActivate(s.g, m, 0) {
 		t.Fatalf("a unit deployed this turn may activate right away (FR-SET-004)")
 	}
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	maWantPower(t, s, ally, 3, "the ally gets +1 power")
 }
 
@@ -268,7 +245,7 @@ func TestCard_MobileArmory_TimeoutTakesTheFirstOption(t *testing.T) {
 func maHookScene(t *testing.T, step ability.Step) (*scene, *Asset, *Asset) {
 	t.Helper()
 	s := newScene(t)
-	m := s.put(0, ZoneMainTheater, maTapCard(s, step))
+	m := s.put(0, ZoneMainTheater, s.cardWithTrigger("Mobile Armory", exhaustTrigger(step)))
 	s.setPool(0, 0, 0)
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 2, 5, ability.Keywords{}))
 	return s, m, ally
@@ -279,7 +256,7 @@ var otherAlliedMainUnits = ability.Filter{Allegiance: ability.AllegianceAllied, 
 func TestCard_MobileArmory_TargetLeftTheZoneGetsNothing(t *testing.T) {
 	// Covers: FR-TGT-003, SVY-R44
 	s, m, ally := maHookScene(t, ability.Step{Op: ability.OpMoveZone, Subject: ability.SubjectAll, Filter: otherAlliedMainUnits, To: ability.ZoneReserves})
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	if ally.Zone != ZoneReserves {
 		t.Fatalf("setup: the synthetic trigger should have moved the target to Reserves before the ability resolves")
 	}
@@ -292,7 +269,7 @@ func TestCard_MobileArmory_TargetLeftTheZoneGetsNothing(t *testing.T) {
 func TestCard_MobileArmory_SourceMovedStillBuffsInTheLockedZone(t *testing.T) {
 	// Covers: SVY-R44, FR-TGT-003
 	s, m, ally := maHookScene(t, ability.Step{Op: ability.OpMoveZone, Subject: ability.SubjectSelf, To: ability.ZoneReserves})
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	if m.Zone != ZoneReserves {
 		t.Fatalf("setup: the Armory should have moved to Reserves before the ability resolves")
 	}
@@ -302,7 +279,7 @@ func TestCard_MobileArmory_SourceMovedStillBuffsInTheLockedZone(t *testing.T) {
 func TestCard_MobileArmory_SourceGoneStillBuffs(t *testing.T) {
 	// Covers: FR-ZON-004, SVY-R44
 	s, m, ally := maHookScene(t, ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf})
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	if s.alive(m) {
 		t.Fatalf("setup: the Armory should be dead before the ability resolves")
 	}
@@ -315,7 +292,7 @@ func TestCard_MobileArmory_SourceGoneStillBuffs(t *testing.T) {
 func TestCard_MobileArmory_TargetGoneGetsNothing(t *testing.T) {
 	// Covers: FR-TGT-003, SVY-R25
 	s, m, ally := maHookScene(t, ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: otherAlliedMainUnits})
-	maActivate(s, m, ally)
+	activateChoosing(s, m, ally)
 	if s.alive(ally) || !inHand(s.g.Players[0], ally.Inst) {
 		t.Fatalf("setup: the target should be back in player 0's hand before the ability resolves")
 	}

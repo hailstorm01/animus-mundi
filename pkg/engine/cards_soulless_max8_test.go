@@ -13,7 +13,7 @@ import (
 // deploys, deal 2 damage to chosen asset. Chosen asset heals 2." Each chosen
 // asset is its own slot (SVY-R35): the first is dealt 2 damage, the second is
 // healed 2, and the two may be the same asset. Player 0 controls the Warsuit
-// and is the active player. Uses ecDeploy from cards_soulless_earthshaker_test.go.
+// and is the active player, deploying it from hand to Reserves with exactly R6 T0.
 
 const mxName = "MAX-8 Autonomous Warsuit"
 
@@ -63,7 +63,7 @@ func TestCard_MAX8AutonomousWarsuit_EntersReservesAsFourSeven(t *testing.T) {
 	s := newScene(t)
 	mxChoose(s, mxFixed(s.g.Players[0].HQ), mxFixed(s.g.Players[0].HQ))
 	c := s.card(mxName)
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	a := assetOf(s.g, c)
 	if a == nil || a.Zone != ZoneReserves || a.Controller != 0 {
 		t.Fatalf("the Warsuit is on the battlefield in player 0's Reserves after deploying (FR-TRN-003)")
@@ -111,7 +111,7 @@ func TestCard_MAX8AutonomousWarsuit_AsksTwoSlotsDamageFirst(t *testing.T) {
 		}
 	})
 	c := s.card(mxName)
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	war := assetOf(s.g, c)
 	if war == nil {
 		t.Fatalf("the Warsuit is on the battlefield")
@@ -147,7 +147,7 @@ func TestCard_MAX8AutonomousWarsuit_AlliedWardedUnitIsOffered(t *testing.T) {
 	foeWard := s.put(1, ZoneMainTheater, unit("FoeWard", 1, 5, ability.Keywords{Ward: true}))
 	hq := s.g.Players[0].HQ
 	mxChoose(s, mxFixed(hq), mxFixed(hq))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	asks := targetAsks(s.asked(0))
 	if len(asks) != 2 {
 		t.Fatalf("two target questions: asked %d", len(asks))
@@ -172,7 +172,7 @@ func TestCard_MAX8AutonomousWarsuit_SameAssetForBothTakesTwoThenHealsTwo(t *test
 	s := newScene(t)
 	foe := s.put(1, ZoneMainTheater, unit("Frail", 1, 2, ability.Keywords{}))
 	mxChoose(s, mxFixed(foe), mxFixed(foe))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if !s.alive(foe) {
 		t.Fatalf("the death sweep runs only after the whole trigger, so the unit healed back to 0 damage survives (FR-LAY-002, SVY-R35)")
 	}
@@ -193,7 +193,7 @@ func TestCard_MAX8AutonomousWarsuit_HealsAnotherAssetLethallyDamagedOneDies(t *t
 	ally := s.put(0, ZoneMainTheater, unit("Hurt", 1, 9, ability.Keywords{}))
 	ally.Damage = 3
 	mxChoose(s, mxFixed(foe), mxFixed(ally))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if s.alive(foe) || !inDiscardPile(s.g.Players[1], foe.Inst) {
 		t.Errorf("a Health 2 unit taking 2 dies at the sweep and its card is in its owner's discard pile (FR-LAY-002)")
 	}
@@ -206,13 +206,13 @@ func TestCard_MAX8AutonomousWarsuit_HealNeverGoesBelowZero(t *testing.T) {
 	ally := s.put(0, ZoneMainTheater, unit("Hurt", 1, 9, ability.Keywords{}))
 	ally.Damage = 1
 	mxChoose(s, mxFixed(s.g.Players[1].HQ), mxFixed(ally))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	s.wantDamage(ally, 0)
 
 	s2 := newScene(t)
 	whole := s2.put(0, ZoneMainTheater, unit("Whole", 1, 9, ability.Keywords{}))
 	mxChoose(s2, mxFixed(s2.g.Players[1].HQ), mxFixed(whole))
-	ecDeploy(s2, s2.card(mxName))
+	s2.deployPaid(0, s2.card(mxName), 6, 0)
 	s2.wantDamage(whole, 0)
 	if h := mxHeals(s2.g.Log, whole); len(h) != 1 || h[0].Amount != 0 {
 		t.Errorf("healing an undamaged asset logs a heal of 0 and changes nothing: %+v", h)
@@ -226,7 +226,7 @@ func TestCard_MAX8AutonomousWarsuit_CanHealAHeadquarters(t *testing.T) {
 	hq0.Damage = 3
 	before := s.g.CurrentHealth(hq1)
 	mxChoose(s, mxFixed(hq1), mxFixed(hq0))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	s.wantDamage(hq0, 1)
 	if got := s.g.CurrentHealth(hq1); got != before-2 {
 		t.Errorf("the opposing Headquarters remaining Health drops by 2: got %d, want %d", got, before-2)
@@ -242,7 +242,7 @@ func TestCard_MAX8AutonomousWarsuit_CanDamageItself(t *testing.T) {
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 9, ability.Keywords{}))
 	c := s.card(mxName)
 	mxChoose(s, mxSelf(s, c), mxFixed(ally))
-	ecDeploy(s, c)
+	s.deployPaid(0, c, 6, 0)
 	war := assetOf(s.g, c)
 	if war == nil {
 		t.Fatalf("a 4/7 Warsuit survives 2 damage")
@@ -256,7 +256,7 @@ func TestCard_MAX8AutonomousWarsuit_ScratchCompanyCanBeKilled(t *testing.T) {
 	sc := s.putScratch(1)
 	hq := s.g.Players[0].HQ
 	mxChoose(s, mxFixed(sc), mxFixed(hq))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if s.alive(sc) {
 		t.Errorf("a Scratch Company (1/1) taking 2 damage is destroyed at the sweep (FR-ZON-005, FR-LAY-002)")
 	}
@@ -267,7 +267,7 @@ func TestCard_MAX8AutonomousWarsuit_ArmorAbsorbsAndHealLeavesArmor(t *testing.T)
 	s := newScene(t)
 	arm := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
 	mxChoose(s, mxFixed(arm), mxFixed(s.g.Players[0].HQ))
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if arm.Armor != 0 {
 		t.Errorf("the first point of damage removes the 1 Armor: Armor %d, want 0 (FR-KWD-002k)", arm.Armor)
 	}
@@ -277,7 +277,7 @@ func TestCard_MAX8AutonomousWarsuit_ArmorAbsorbsAndHealLeavesArmor(t *testing.T)
 	arm2 := s2.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
 	arm2.Damage = 1
 	mxChoose(s2, mxFixed(arm2), mxFixed(arm2))
-	ecDeploy(s2, s2.card(mxName))
+	s2.deployPaid(0, s2.card(mxName), 6, 0)
 	s2.wantDamage(arm2, 0)
 	if arm2.Armor != 0 {
 		t.Errorf("heal leaves Armor alone and never restores it: Armor %d, want 0 (FR-KWD-002d)", arm2.Armor)
@@ -291,7 +291,7 @@ func TestCard_MAX8AutonomousWarsuit_TimeoutTakesTheFirstOptionForEach(t *testing
 	hq0 := s.g.Players[0].HQ
 	hq0.Damage = 1
 	s.script(0, Answer{Timeout: true}, Answer{Timeout: true})
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if n := len(s.asked(0)); n != 2 {
 		t.Fatalf("asked %d times, want 2", n)
 	}
@@ -313,7 +313,7 @@ func TestCard_MAX8AutonomousWarsuit_DamageTargetGoneStillHeals(t *testing.T) {
 			stormKill(s, foe)
 		}
 	})
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if s.alive(foe) {
 		t.Fatalf("setup: the damage target should have left before the trigger resolves")
 	}
@@ -335,7 +335,7 @@ func TestCard_MAX8AutonomousWarsuit_HealTargetGoneStillDamages(t *testing.T) {
 			stormKill(s, ally)
 		}
 	})
-	ecDeploy(s, s.card(mxName))
+	s.deployPaid(0, s.card(mxName), 6, 0)
 	if s.alive(ally) {
 		t.Fatalf("setup: the heal target should have left before the trigger resolves")
 	}
@@ -355,7 +355,7 @@ func TestCard_MAX8AutonomousWarsuit_SourceGoneStillResolves(t *testing.T) {
 			stormKill(s, war)
 		}
 	})
-	inst := ecDeploy(s, c)
+	inst := s.deployPaid(0, c, 6, 0)
 	if assetOf(s.g, c) != nil {
 		t.Fatalf("setup: the Warsuit should have left before the trigger resolves")
 	}

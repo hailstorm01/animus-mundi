@@ -22,29 +22,6 @@ func dmcScene(t *testing.T) (*scene, *Asset) {
 	return s, m
 }
 
-// dmcTapCard is a copy of the real card (the shared definition is not changed)
-// whose triggers also hold one synthetic HookExhausted trigger with step. It is
-// placed on top of the ability and resolves first.
-func dmcTapCard(s *scene, step ability.Step) *Card {
-	s.t.Helper()
-	c := *s.card("Dolus Macrocannon")
-	if c.Ability == nil {
-		s.t.Fatalf("the Macrocannon has no executable definition")
-	}
-	d := *c.Ability
-	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
-		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{step}}})
-	c.Ability = &d
-	return &c
-}
-
-// dmcActivate activates the Macrocannon, player 0 choosing target.
-func dmcActivate(s *scene, m, target *Asset) {
-	s.t.Helper()
-	chooseAsset(s, target)
-	s.do(activate(m, 0))
-}
-
 func TestCard_DolusMacrocannon_EntersMainTheaterAsTwoSix(t *testing.T) {
 	// Covers: FR-TRN-003, FR-SET-004
 	s := newScene(t)
@@ -91,7 +68,7 @@ func TestCard_DolusMacrocannon_DealsTwoToTheChosenAsset(t *testing.T) {
 	hit := s.put(1, ZoneMainTheater, unit("Hit", 1, 5, ability.Keywords{}))
 	other := s.put(1, ZoneMainTheater, unit("Other", 1, 5, ability.Keywords{}))
 	ally := s.put(0, ZoneMainTheater, unit("Ally", 1, 5, ability.Keywords{}))
-	dmcActivate(s, m, hit)
+	activateChoosing(s, m, hit)
 	s.wantDamage(hit, 2)
 	evs := damageTo(s.g.Log, hit)
 	if len(evs) != 1 {
@@ -156,7 +133,7 @@ func TestCard_DolusMacrocannon_UnitTurnedFaceDownNotOffered(t *testing.T) {
 func TestCard_DolusMacrocannon_MayChooseItself(t *testing.T) {
 	// Covers: FR-TGT-001
 	s, m := dmcScene(t)
-	dmcActivate(s, m, m)
+	activateChoosing(s, m, m)
 	s.wantDamage(m, 2)
 	if !s.alive(m) || !m.Exhausted {
 		t.Errorf("a 2/6 Macrocannon survives 2 damage and stays Exhausted: alive %v exhausted %v (FR-TGT-001)", s.alive(m), m.Exhausted)
@@ -180,7 +157,7 @@ func TestCard_DolusMacrocannon_DamagesTheOpposingHeadquarters(t *testing.T) {
 	s, m := dmcScene(t)
 	hq1 := s.g.Players[1].HQ
 	before := s.g.CurrentHealth(hq1)
-	dmcActivate(s, m, hq1)
+	activateChoosing(s, m, hq1)
 	if got := s.g.CurrentHealth(hq1); got != before-2 {
 		t.Errorf("the opposing Headquarters remaining Health drops by 2: got %d, want %d (FR-CBT-003)", got, before-2)
 	}
@@ -194,7 +171,7 @@ func TestCard_DolusMacrocannon_DamagesTheOpposingHeadquarters(t *testing.T) {
 	if got := s2.g.CurrentHealth(hq); got != 2 {
 		t.Fatalf("setup: the opposing Headquarters has 2 Health left, got %d", got)
 	}
-	dmcActivate(s2, m2, hq)
+	activateChoosing(s2, m2, hq)
 	if !s2.g.Outcome.Over || s2.g.Outcome.Draw || s2.g.Outcome.Winner != 0 {
 		t.Errorf("an opposing Headquarters at 0 Health loses the match: outcome %+v (FR-CBT-003)", s2.g.Outcome)
 	}
@@ -204,7 +181,7 @@ func TestCard_DolusMacrocannon_LethalDamageKills(t *testing.T) {
 	// Covers: FR-LAY-002
 	s, m := dmcScene(t)
 	foe := s.put(1, ZoneMainTheater, unit("Frail", 1, 2, ability.Keywords{}))
-	dmcActivate(s, m, foe)
+	activateChoosing(s, m, foe)
 	if s.alive(foe) || !inDiscardPile(s.g.Players[1], foe.Inst) {
 		t.Errorf("a Health 2 unit taking 2 dies and its card is in its owner's discard pile (FR-LAY-002)")
 	}
@@ -214,7 +191,7 @@ func TestCard_DolusMacrocannon_ArmorAbsorbs(t *testing.T) {
 	// Covers: FR-REP-004, FR-KWD-002k
 	s, m := dmcScene(t)
 	arm := s.put(1, ZoneMainTheater, unit("Armored", 1, 5, ability.Keywords{Armor: 1}))
-	dmcActivate(s, m, arm)
+	activateChoosing(s, m, arm)
 	if arm.Armor != 0 {
 		t.Errorf("the first point of damage removes the 1 Armor: Armor %d, want 0 (FR-KWD-002k)", arm.Armor)
 	}
@@ -279,7 +256,7 @@ func TestCard_DolusMacrocannon_MayActivateTheTurnItDeploys(t *testing.T) {
 	if !offersActivate(s.g, m, 0) {
 		t.Fatalf("a structure deployed this turn may activate right away (FR-SET-004)")
 	}
-	dmcActivate(s, m, foe)
+	activateChoosing(s, m, foe)
 	s.wantDamage(foe, 2)
 }
 
@@ -302,10 +279,10 @@ func TestCard_DolusMacrocannon_TargetGoneDealsNothing(t *testing.T) {
 	// Covers: FR-TGT-003
 	s := newScene(t)
 	opposingUnits := ability.Filter{Allegiance: ability.AllegianceOpposing, Kinds: ability.KindUnit}
-	m := s.put(0, ZoneMainTheater, dmcTapCard(s, ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: opposingUnits}))
+	m := s.put(0, ZoneMainTheater, s.cardWithTrigger("Dolus Macrocannon", exhaustTrigger(ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: opposingUnits})))
 	s.setPool(0, 1, 0)
 	foe := s.put(1, ZoneMainTheater, unit("Fleeting", 1, 5, ability.Keywords{}))
-	dmcActivate(s, m, foe)
+	activateChoosing(s, m, foe)
 	if s.alive(foe) {
 		t.Fatalf("setup: the synthetic trigger should have returned the target to hand before the ability resolves")
 	}
@@ -326,7 +303,7 @@ func TestCard_DolusMacrocannon_TargetGoneDealsNothing(t *testing.T) {
 func TestCard_DolusMacrocannon_TargetGainsWardDealsNothing(t *testing.T) {
 	// Covers: FR-TGT-003, FR-KWD-002h
 	s := newScene(t)
-	m := s.put(0, ZoneMainTheater, dmcTapCard(s, ability.Step{Op: ability.OpAddArmor, Amount: ability.Value{N: 0}, Subject: ability.SubjectSelf}))
+	m := s.put(0, ZoneMainTheater, s.cardWithTrigger("Dolus Macrocannon", exhaustTrigger(ability.Step{Op: ability.OpAddArmor, Amount: ability.Value{N: 0}, Subject: ability.SubjectSelf})))
 	s.setPool(0, 1, 0)
 	foe := s.put(1, ZoneMainTheater, unit("Warding", 1, 5, ability.Keywords{}))
 	chooseAsset(s, foe)
@@ -359,10 +336,10 @@ func TestCard_DolusMacrocannon_TargetGainsWardDealsNothing(t *testing.T) {
 func TestCard_DolusMacrocannon_SourceGoneStillDeals(t *testing.T) {
 	// Covers: FR-ZON-004, FR-TGT-003
 	s := newScene(t)
-	m := s.put(0, ZoneMainTheater, dmcTapCard(s, ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf}))
+	m := s.put(0, ZoneMainTheater, s.cardWithTrigger("Dolus Macrocannon", exhaustTrigger(ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf})))
 	s.setPool(0, 1, 0)
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
-	dmcActivate(s, m, foe)
+	activateChoosing(s, m, foe)
 	if s.alive(m) {
 		t.Fatalf("setup: the Macrocannon should be dead before the ability resolves")
 	}

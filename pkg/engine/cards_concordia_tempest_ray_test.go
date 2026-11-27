@@ -23,23 +23,6 @@ func trayRay(t *testing.T) (*scene, *Asset) {
 	return s, r
 }
 
-// trayTapCard is a copy of the real Ray (the shared definition is not changed)
-// whose triggers also hold one synthetic HookExhausted trigger with step. Paying
-// the ability's exhaust cost fires it, so it is placed on top of the ability and
-// resolves first (FR-TRN-003a, SVY-R17, SVY-R2).
-func trayTapCard(s *scene, step ability.Step) *Card {
-	s.t.Helper()
-	c := *s.card("Tempest City Ray")
-	if c.Ability == nil {
-		s.t.Fatalf("the Ray has no executable definition")
-	}
-	d := *c.Ability
-	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
-		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{step}}})
-	c.Ability = &d
-	return &c
-}
-
 func trayInReserves(p *Player, a *Asset) bool { return inAssets(p.Reserves, a) }
 
 // trayWatcher is a unit printing a deploy trigger (+4 Armor) and a Moves
@@ -334,7 +317,7 @@ func TestCard_TempestCityRay_MayActivateTheTurnItDeploys(t *testing.T) {
 func TestCard_TempestCityRay_TargetGoneMovesNothing(t *testing.T) {
 	// Covers: FR-TGT-003
 	s := newScene(t)
-	r := s.put(0, ZoneMainTheater, trayTapCard(s, ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: trayOpposingUnits}))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Tempest City Ray", exhaustTrigger(ability.Step{Op: ability.OpReturnToHand, Subject: ability.SubjectAll, Filter: trayOpposingUnits})))
 	s.setPool(0, 0, 2)
 	foe := s.put(1, ZoneMainTheater, unit("Fleeting", 1, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
@@ -354,7 +337,7 @@ func TestCard_TempestCityRay_TargetGoneMovesNothing(t *testing.T) {
 func TestCard_TempestCityRay_TargetNowAlliedMovesNothing(t *testing.T) {
 	// Covers: FR-TGT-003, FR-ZON-002
 	s := newScene(t)
-	r := s.put(0, ZoneMainTheater, trayTapCard(s, ability.Step{Op: ability.OpGainControl, Subject: ability.SubjectAll, Filter: trayOpposingUnits}))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Tempest City Ray", exhaustTrigger(ability.Step{Op: ability.OpGainControl, Subject: ability.SubjectAll, Filter: trayOpposingUnits})))
 	s.setPool(0, 0, 2)
 	foe := s.put(1, ZoneMainTheater, unit("Turncoat", 1, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})
@@ -374,7 +357,7 @@ func TestCard_TempestCityRay_TargetNowAlliedMovesNothing(t *testing.T) {
 func TestCard_TempestCityRay_SourceGoneStillMoves(t *testing.T) {
 	// Covers: FR-TGT-003, FR-ZON-004
 	s := newScene(t)
-	r := s.put(0, ZoneMainTheater, trayTapCard(s, ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf}))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Tempest City Ray", exhaustTrigger(ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf})))
 	s.setPool(0, 0, 2)
 	foe := s.put(1, ZoneMainTheater, unit("Foe", 1, 5, ability.Keywords{}))
 	s.script(0, Answer{Picks: []int{0}})

@@ -33,22 +33,6 @@ func drfScene(t *testing.T) (*scene, *Asset, []*Instance, []*Instance) {
 	return s, r, hand, deck
 }
 
-// drfTapCard is a copy of the real card (the shared definition is not changed)
-// whose triggers also hold one synthetic HookExhausted trigger killing the
-// Refiner. It is placed on top of the ability and resolves first.
-func drfTapCard(s *scene) *Card {
-	s.t.Helper()
-	c := *s.card("Dolus Refiner")
-	if c.Ability == nil {
-		s.t.Fatalf("the Refiner has no executable definition")
-	}
-	d := *c.Ability
-	d.Triggers = append(append([]ability.Trigger(nil), d.Triggers...),
-		ability.Trigger{Hook: ability.HookExhausted, Effect: ability.Effect{Steps: []ability.Step{{Op: ability.OpKill, Subject: ability.SubjectSelf}}}})
-	c.Ability = &d
-	return &c
-}
-
 // drfHandIs reports whether player 0's hand is exactly want, in order.
 func drfHandIs(s *scene, want ...*Instance) bool {
 	h := s.g.Players[0].Hand
@@ -331,7 +315,7 @@ func TestCard_DolusRefiner_SourceGoneStillDrawsAndDiscards(t *testing.T) {
 	p := s.g.Players[0]
 	hand := drfHand(s)
 	deck := s.onTop(0, vanilla("D1", "D2", "D3")...)
-	r := s.put(0, ZoneMainTheater, drfTapCard(s))
+	r := s.put(0, ZoneMainTheater, s.cardWithTrigger("Dolus Refiner", exhaustTrigger(ability.Step{Op: ability.OpKill, Subject: ability.SubjectSelf})))
 	s.setPool(0, 0, 0)
 	// When the discard is asked, the ability's steps are already under way,
 	// so the Refiner must already be off the battlefield and in the pile.
