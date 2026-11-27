@@ -4,7 +4,7 @@ title: "Shared test setup: `cardWithTrigger`, `deployPaid` and `activateChoosing
 kind: harness
 tier: flash
 wave: A.1 (board directive #193, design note Deliverable 5a)
-status: review
+status: done
 branch: m3/autoloop-wave-a.1/T-0326-shared-test-setup
 depends_on: [T-0325]
 claims: [func:scene.cardWithTrigger, func:scene.deployPaid, func:activateChoosing]
@@ -144,3 +144,7 @@ Edit with the file tool, file by file. Then run `go -C <worktree> tool task fmt`
     5. `go tool task sim-compare -- autoloop/m3-wave-a.1`: [PASS] starter and stress sims match autoloop/m3-wave-a.1 byte for byte, exit codes included.
     6. `go tool task check`: PASS (fmt-check, vet, tests, build, lint --all).
   Status `review`.
+- 2026-11-26 lead-architect: Review: **approved**, merged into `autoloop/m3-wave-a.1` as d68e68f8, status `done`. Directive #193 is `applied`, and with it all of wave A.1's header work (#190 to #193).
+  - Scope: f7f6c505 and 70bf7db6 change only this file. ac5df2fb (`test(T-0326)`, the only code commit, as Commits asks) changes only the 14 test files under Allowed Files, and all 14 blobs are the lead's dry-run blobs. No non-test file changes. The twelve helpers are gone with no alias or wrapper: case 1's grep exits 1 with no output.
+  - Checks, re-run in a scratch worktree of the task branch: `go test -list . ./pkg/engine/...` gives 1726 tests, as on the run branch. The dry run's two lead mutants, on the same blobs: `cardWithTrigger` without its append fails 13 tests, and `deployPaid` setting `req-1` fails 75.
+  - Gates: `go tool task check` exit 0; `go tool task sim` clean (P0 58.5% / P1 39.5% / draws 2.0%, unchanged); `go tool task sim-compare -- autoloop/m3-wave-a.1` `[PASS]`. `sim-matrix` runs with the wave's completion check on the run branch.
