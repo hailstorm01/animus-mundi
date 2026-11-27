@@ -4,7 +4,7 @@ title: "One `wantOptions` check for card tests, beside `refs` and `ids` (directi
 kind: harness
 tier: flash
 wave: A.1 (board directive #190, design note Deliverable 5a)
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a.1/T-0323-one-want-options
 depends_on: []
 claims: [func:engine.wantOptions (test helper)]
@@ -76,10 +76,24 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
 - No non-test file.
 
 ## Done When
-- [ ] Edits 1-7 are committed as `test(T-0323): …`
-- [ ] Cases 1-5 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] Edits 1-7 are committed as `test(T-0323): …`
+- [x] Cases 1-5 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-11-26 lead-architect: Wrote the task from board directive #190, the first of wave A.1's four directives (design note Deliverable 5a). Harness, tier flash: a pure move of one test helper. The directive's `wantOptions` already existed in `cards_path_test.go` (Inputs), so the existing declaration moves instead of a new one being added; the directive's acceptance (the same test names pass, the four helpers gone, `check`, `sim-compare`) is unchanged. Status `ready` on `m3/autoloop-wave-a.1/T-0323-one-want-options`, from `autoloop/m3-wave-a.1`. #191, #192 and #193 follow, one task each.
+- 2026-11-26 kernel-engineer: Implemented directive #190 pure move of wantOptions test helper across the 7 allowed test files:
+  - Moved wantOptions declaration from pkg/engine/cards_path_test.go into pkg/engine/targeting_test.go (below ids) with doc comment, and removed unused "reflect" import from cards_path_test.go.
+  - Deleted duplicate helpers crWantOffered (cards_soulless_conscript_test.go), cbWantOffered (cards_soulless_culverin_test.go), ecnSameIDs (cards_concordia_nightmare_test.go), and ffeWantSet (cards_soulless_fire_for_effect_test.go) along with unused imports ("reflect", "sort").
+  - Updated 8 call sites across 5 files to call wantOptions.
+  - Blob hashes match lead dry run exactly: targeting_test.go (3612b2a), cards_path_test.go (4db601c), cards_soulless_conscript_test.go (8de88a4), cards_soulless_culverin_test.go (064c28a), cards_concordia_nightmare_test.go (22fa96d), cards_soulless_fire_for_effect_test.go (a02d435), cards_soulless_hellfire_test.go (4287f0b).
+  - Committed in 69bc5a43 as `test(T-0323): one wantOptions check beside refs and ids, for directive 190`.
+  - Acceptance results:
+    1. `go test -list . ./pkg/engine`: 1725 tests before and after. `go test ./pkg/engine`: ok (0.832s).
+    2. `git grep -n -E "func (crWantOffered|cbWantOffered|ecnSameIDs|ffeWantSet|wantOptions)\b" -- pkg`: exactly one line in pkg/engine/targeting_test.go:68.
+    3. `git grep -n -E "crWantOffered|cbWantOffered|ecnSameIDs|ffeWantSet" -- pkg`: 0 matches (exit 1).
+    4. `git diff --stat autoloop/m3-wave-a.1 HEAD`: lists only the seven _test.go files and task file.
+    5. `go tool task sim-compare -- autoloop/m3-wave-a.1`: [PASS] starter and stress sims match autoloop/m3-wave-a.1 byte for byte, exit codes included.
+    6. `go tool task check`: [PASS] (gofmt, go vet, all tests, cardtown lint --all).
+  - Status -> review.
