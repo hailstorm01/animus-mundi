@@ -4,7 +4,7 @@ title: "\"Whenever this unit deploys or attacks\" is built in one place, `deploy
 kind: harness
 tier: flash
 wave: A.1 (board directive #191, design note Deliverable 5a)
-status: review
+status: done
 branch: m3/autoloop-wave-a.1/T-0324-deploys-or-attacks
 depends_on: [T-0323]
 claims: [func:cards.deploysOrAttacks]
@@ -18,9 +18,9 @@ requirements: []
 ## Inputs
 - Board directive #191 (structural review 16, finding 2), approved by the user 2026-11-26, `open: before the next Deliverables task`. Design note `docs/architecture/m3-full-catalog.md` Deliverable 5a. Directive #190 (T-0323) is `applied`, so #191 is next in board order.
 - The three copies, at `autoloop/m3-wave-a.1` fe4a56b3. Each card's `Triggers` is two literals that differ only in `Hook` (the lead checked each pair is identical text):
-  - *Earthshaker Colossus*, [soulless.go:161-205](../../../pkg/engine/cards/soulless.go): deal 2 damage to a chosen non-Scratch asset;
-  - *Spoil Forest Colossus*, [animus.go:703-743](../../../pkg/engine/cards/animus.go): the chosen asset heals 2;
-  - *Ironclad Colossus*, [path.go:590-634](../../../pkg/engine/cards/path.go): the chosen unit gains 2 armor.
+  - *Earthshaker Colossus*, [soulless.go:161-205](../../../../../pkg/engine/cards/soulless.go): deal 2 damage to a chosen non-Scratch asset;
+  - *Spoil Forest Colossus*, [animus.go:703-743](../../../../../pkg/engine/cards/animus.go): the chosen asset heals 2;
+  - *Ironclad Colossus*, [path.go:590-634](../../../../../pkg/engine/cards/path.go): the chosen unit gains 2 armor.
 - No other card has the pattern: `git grep -n -i "deploys or attacks" -- data pkg/engine/cards` finds only these three definitions, and *Stardust Colossus* in `data/cards/units-and-structures-concordia.csv` (not executable yet).
 - Not a `Hooks []Hook` field on `Trigger`: that is a shape change FRD 02 would have to follow, and the survey records two triggers (directive #191).
 - The two triggers may share their `Effect` slices: definitions are read-only package values (directive #191).
@@ -113,3 +113,7 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
   5. `go tool task sim-compare -- autoloop/m3-wave-a.1` passed: starter and stress sims match byte for byte, exit codes included.
   6. `go tool task check` passed cleanly (gofmt, go vet, all package tests, cardtown lint --all).
   Committed implementation as 15f41b80. Moved status to `review`.
+- 2026-11-26 lead-architect: Review: **approved**, merged into `autoloop/m3-wave-a.1` as 1e4b5a8e, status `done`. Directive #191 is `applied`.
+  - Scope: 487d7e17 and 30d0b18a change only this file. 15f41b80 changes only the four files under Allowed Files, and its blobs are the lead's dry-run blobs (`cards.go` a585473, `soulless.go` 25eaf13, `animus.go` e64c9ef, `path.go` 4f29a30). No test file changes. `deploysOrAttacks` copies `t` and sets only `Hook`, so it adds no shape, alias or wrapper.
+  - Checks, re-run in a scratch worktree of the task branch: `go test -list . ./pkg/engine/...` gives 1725 tests, as on the run branch; case 2's grep finds the five lines; case 3's counts are one lower per file. The three `Defs` entries are equal in value to the old ones (the dry run's JSON and `%#v` dump, same blobs). A lead mutant (`deploysOrAttacks` returning only the deploy trigger) fails the attack tests of all three cards, among them `TestCard_EarthshakerColossus_AttackDealsTwoToTheChosenAsset` and `TestCard_IroncladColossus_AttackGrantResolvesBeforeCombatDamage`.
+  - Gates: `go tool task check` exit 0; `go tool task sim` clean (P0 58.5% / P1 39.5% / draws 2.0%, unchanged); `go tool task sim-compare -- autoloop/m3-wave-a.1` `[PASS]`. `sim-matrix` is not this harness task's gate (D5.5); it runs with the wave's completion check.
