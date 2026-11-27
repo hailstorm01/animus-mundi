@@ -4,7 +4,7 @@ title: "\"Whenever this unit deploys or attacks\" is built in one place, `deploy
 kind: harness
 tier: flash
 wave: A.1 (board directive #191, design note Deliverable 5a)
-status: ready
+status: in-progress
 branch: m3/autoloop-wave-a.1/T-0324-deploys-or-attacks
 depends_on: [T-0323]
 claims: [func:cards.deploysOrAttacks]
