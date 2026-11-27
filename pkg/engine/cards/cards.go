@@ -8,6 +8,17 @@ import "animus-mundi/pkg/engine/ability"
 // Defs maps a card name to its ability definition.
 var Defs = map[string]*ability.Def{}
 
+// deploysOrAttacks builds a "Whenever this unit deploys or attacks" ability:
+// one printed ability, two triggers, t on HookDeploy and t on HookAttacks.
+// t's own Hook is not used. The two copies share t's Effect slices, which is
+// safe because definitions are read-only package values.
+func deploysOrAttacks(t ability.Trigger) []ability.Trigger {
+	deploys, attacks := t, t
+	deploys.Hook = ability.HookDeploy
+	attacks.Hook = ability.HookAttacks
+	return []ability.Trigger{deploys, attacks}
+}
+
 // NotYetExecutable lists, sorted, every card in data/cards the kernel cannot
 // execute yet (pkg/cardcheck's TestCards_Executable). Card tasks remove names
 // from it; M3 is done when it is empty.
