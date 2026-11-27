@@ -4,7 +4,7 @@ title: "\"Whenever this unit deploys or attacks\" is built in one place, `deploy
 kind: harness
 tier: flash
 wave: A.1 (board directive #191, design note Deliverable 5a)
-status: in-progress
+status: review
 branch: m3/autoloop-wave-a.1/T-0324-deploys-or-attacks
 depends_on: [T-0323]
 claims: [func:cards.deploysOrAttacks]
@@ -98,10 +98,18 @@ These are checks recorded in the Log, and the reviewer re-runs them. No new test
 - No test file.
 
 ## Done When
-- [ ] Edits 1-2 are committed as `refactor(engine): … (T-0324)`
-- [ ] Cases 1-5 hold, with their commands and results in the Log
-- [ ] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
-- [ ] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
+- [x] Edits 1-2 are committed as `refactor(engine): … (T-0324)`
+- [x] Cases 1-5 hold, with their commands and results in the Log
+- [x] `go tool task check` passes (gofmt, `go vet`, every test, `cardtown lint --all`)
+- [x] `go tool task sim-compare -- autoloop/m3-wave-a.1` passes (starter and stress sims byte-identical to the run branch)
 
 ## Log
 - 2026-11-26 lead-architect: Wrote the task from board directive #191, the second of wave A.1's four directives (design note Deliverable 5a). Harness, tier flash: a pure move inside `pkg/engine/cards`, one helper and three definitions, with no shape change. The lead dry-ran the edits (Inputs). Status `ready` on `m3/autoloop-wave-a.1/T-0324-deploys-or-attacks`, from `autoloop/m3-wave-a.1`. #192 and #193 follow, one task each.
+- 2026-11-26 kernel-engineer: Implemented directive #191. Added `deploysOrAttacks(t ability.Trigger) []ability.Trigger` in `pkg/engine/cards/cards.go` to construct the HookDeploy and HookAttacks trigger pair sharing t's Effect slices. Refactored Earthshaker Colossus (`soulless.go`), Spoil Forest Colossus (`animus.go`), and Ironclad Colossus (`path.go`) to use `Triggers: deploysOrAttacks(...)`, eliminating duplicate trigger literals. Reused existing ability primitives with no new shapes or type additions. Resulting blob hashes match exact expected hashes from Inputs (`cards.go` a585473, `soulless.go` 25eaf13, `animus.go` e64c9ef, `path.go` 4f29a30). Verified all acceptance cases:
+  1. `go test -list . ./pkg/engine/...` returned 1725 test names before and after; `go test ./pkg/engine/...` passed (0.840s).
+  2. `git grep -n "deploysOrAttacks" -- pkg` found exactly 5 lines (`cards.go:11,15`, `animus.go:705`, `path.go:592`, `soulless.go:163`).
+  3. `git grep -n -c "ability.HookAttacks"` and `HookDeploy` confirmed exactly 1 fewer hook count per file vs `autoloop/m3-wave-a.1` (HookAttacks: animus 3->2, path 3->2, soulless 3->2; HookDeploy: animus 5->4, path 5->4, soulless 4->3).
+  4. `git diff --stat autoloop/m3-wave-a.1 HEAD` shows only the 4 Allowed Files and the task file.
+  5. `go tool task sim-compare -- autoloop/m3-wave-a.1` passed: starter and stress sims match byte for byte, exit codes included.
+  6. `go tool task check` passed cleanly (gofmt, go vet, all package tests, cardtown lint --all).
+  Committed implementation as 15f41b80. Moved status to `review`.
